@@ -1,0 +1,66 @@
+{
+  "name": "@damatjs/utils",
+  "description": "Asset Gallery utils definition",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./dal": {
+      "types": "./dist/dal/index.d.ts",
+      "default": "./dist/dal/index.js"
+    },
+    "./dml": {
+      "types": "./dist/dml/index.d.ts",
+      "default": "./dist/dml/index.js"
+    },
+    "./redis": {
+      "types": "./dist/redis/index.d.ts",
+      "default": "./dist/redis/index.js"
+    },
+    "./router": {
+      "types": "./dist/router/index.d.ts",
+      "default": "./dist/router/index.js"
+    },
+    "./config": {
+      "types": "./dist/config/index.d.ts",
+      "default": "./dist/config/index.js"
+    },
+    "./logger": {
+      "types": "./dist/logger/index.d.ts",
+      "default": "./dist/logger/index.js"
+    }
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "files": [
+    "dist",
+    "!dist/**/__tests__",
+    "!dist/**/__fixtures__",
+    "!dist/**/__mocks__"
+  ],
+  "author": "Abel Lamesgen",
+  "dependencies": {
+    "@damatjs/deps": "*",
+    "@damatjs/types": "*",
+    "dotenv": "^17.3.1",
+    "reflect-metadata": "^0.2.2",
+    "ulid": "^3.0.2"
+  },
+  "devDependencies": {
+    "@damatjs/typescript-config": "*",
+    "@types/bun": "1.3.9",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
+    "dev": "bun run build --watch",
+    "watch": "tsc --watch",
+    "test": "exit 0"
+  }
+}

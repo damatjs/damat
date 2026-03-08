@@ -1,0 +1,27 @@
+{
+  "name": "@damatjs/workflow-engine",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@damatjs/utils": "*",
+    "effect": "^3.12.0",
+    "nanoid": "^5.1.6"
+  },
+  "devDependencies": {
+    "@types/bun": "1.3.9",
+    "typescript": "^5.0.0",
+    "@damatjs/typescript-config": "*"
+  },
+  "scripts": {
+    "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
+    "watch": "tsc --watch"
+  }
+}

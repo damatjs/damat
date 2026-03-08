@@ -25,16 +25,31 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
+    "baseUrl": "../",
     "paths": {
+      "@damatjs/backend": [
+        "./backend/default/src"
+      ],
       "@damatjs/deps": [
         "./packages/deps/src"
       ],
-      "@damatjs/framework": [
-        "./packages/core/framework/src"
+      "@damatjs/deps/*": [
+        "./packages/deps/src/*"
+      ],
+      "@damatjs/service": [
+        "./packages/service/src"
       ],
       "@damatjs/types": [
-        "./packages/core/types/src"
+        "./packages/types/src"
+      ],
+      "@damatjs/utils": [
+        "./packages/utils/src"
+      ],
+      "@damatjs/utils/*": [
+        "./packages/utils/src/*"
+      ],
+      "@damatjs/workflow-engine": [
+        "./packages/workflow-engine/src"
       ]
     }
   },

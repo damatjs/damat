@@ -38,7 +38,8 @@
     "yocto-spinner": "^0.1.2"
   },
   "devDependencies": {
-    "@types/bun": "1.3.9"
+    "@types/bun": "1.3.9",
+    "@damatjs/typescript-config": "*"
   },
   "engines": {
     "bun": ">=1.1.0"

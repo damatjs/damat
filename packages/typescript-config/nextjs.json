@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./base.json",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowJs": true,
+    "jsx": "preserve",
+    "noEmit": true,
+    "baseUrl": "../",
+    "paths": {
+      "@damatjs/ui": [
+        "./packages/ui/src"
+      ],
+      "@damatjs/typescript-config": [
+        "./packages/typescript-config/src"
+      ],
+      "@damatjs/eslint-config": [
+        "./packages/eslint-config/src"
+      ],
+      "@damatjs/tailwind-config": [
+        "./packages/tailwind-config/src"
+      ]
+    }
+  }
+}

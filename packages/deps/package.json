@@ -1,51 +1,124 @@
 {
   "name": "@damatjs/deps",
   "version": "0.0.1",
-  "description": "Dependencies for damat",
+  "description": "Dependencies for damatjs",
+  "type": "module",
   "main": "dist/index.js",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/damatjs/damat",
-    "directory": "packages/deps"
-  },
+  "types": "dist/index.d.ts",
   "engines": {
     "bun": ">=1.1.0"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "files": [
     "dist"
   ],
   "exports": {
-    ".": "./dist/index.js",
-    "./mikro-orm/cli": "./dist/mikro-orm-cli.js",
-    "./mikro-orm/core": "./dist/mikro-orm-core.js",
-    "./mikro-orm/knex": "./dist/mikro-orm-knex.js",
-    "./mikro-orm/migrations": "./dist/mikro-orm-migrations.js",
-    "./mikro-orm/postgresql": "./dist/mikro-orm-postgresql.js",
-    "./awilix": "./dist/awilix.js",
-    "./pg": "./dist/pg.js",
-    "./zod": "./dist/zod.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./better-auth": {
+      "types": "./dist/better-auth.d.ts",
+      "default": "./dist/better-auth.js"
+    },
+    "./effect": {
+      "types": "./dist/effect.d.ts",
+      "default": "./dist/effect.js"
+    },
+    "./mikro-orm/cli": {
+      "types": "./dist/mikro-orm-cli.d.ts",
+      "default": "./dist/mikro-orm-cli.js"
+    },
+    "./mikro-orm/core": {
+      "types": "./dist/mikro-orm-core.d.ts",
+      "default": "./dist/mikro-orm-core.js"
+    },
+    "./mikro-orm/knex": {
+      "types": "./dist/mikro-orm-knex.d.ts",
+      "default": "./dist/mikro-orm-knex.js"
+    },
+    "./mikro-orm/migrations": {
+      "types": "./dist/mikro-orm-migrations.d.ts",
+      "default": "./dist/mikro-orm-migrations.js"
+    },
+    "./mikro-orm/postgresql": {
+      "types": "./dist/mikro-orm-postgresql.d.ts",
+      "default": "./dist/mikro-orm-postgresql.js"
+    },
+    "./mikro-orm/reflection": {
+      "types": "./dist/mikro-orm-reflection.d.ts",
+      "default": "./dist/mikro-orm-reflection.js"
+    },
+    "./awilix": {
+      "types": "./dist/awilix.d.ts",
+      "default": "./dist/awilix.js"
+    },
+    "./pg": {
+      "types": "./dist/pg.d.ts",
+      "default": "./dist/pg.js"
+    },
+    "./hono": {
+      "types": "./dist/hono.d.ts",
+      "default": "./dist/hono.js"
+    },
+    "./dotenv": {
+      "types": "./dist/dotenv.d.ts",
+      "default": "./dist/dotenv.js"
+    },
+    "./dotenv-expand": {
+      "types": "./dist/dotenv-expand.d.ts",
+      "default": "./dist/dotenv-expand.js"
+    },
+    "./uuid": {
+      "types": "./dist/uuid.d.ts",
+      "default": "./dist/uuid.js"
+    },
+    "./langchain/openai": {
+      "types": "./dist/langchain-openai.d.ts",
+      "default": "./dist/langchain-openai.js"
+    },
+    "./zod": {
+      "types": "./dist/zod.d.ts",
+      "import": "./dist/zod.js",
+      "default": "./dist/zod.js"
+    },
+    "./ioredis": {
+      "types": "./dist/ioredis.d.ts",
+      "default": "./dist/ioredis.js"
+    },
+    "./nanoid": {
+      "types": "./dist/nanoid.d.ts",
+      "default": "./dist/nanoid.js"
+    }
   },
   "author": "Abel Lamesgen",
-  "license": "MIT",
   "scripts": {
-    "build": "bun run rm -rf dist && bun tsc --build"
+    "build": "rm -rf dist tsconfig.tsbuildinfo && tsc --build"
   },
   "dependencies": {
+    "@langchain/openai": "^1.2.9",
     "@mikro-orm/cli": "6.6.7",
     "@mikro-orm/core": "6.6.7",
     "@mikro-orm/knex": "6.6.7",
     "@mikro-orm/migrations": "6.6.7",
     "@mikro-orm/postgresql": "6.6.7",
+    "@mikro-orm/reflection": "^6.6.7",
     "awilix": "^13.0.0",
+    "better-auth": "^1.4.18",
+    "dotenv": "^17.3.1",
+    "dotenv-expand": "^12.0.3",
+    "effect": "^3.19.18",
+    "hono": "^4.12.0",
+    "ioredis": "^5.9.3",
+    "nanoid": "^5.1.6",
     "pg": "^8.18.0",
+    "uuid": "^13.0.0",
     "zod": "4.3.6"
   },
   "devDependencies": {
+    "@damatjs/typescript-config": "*",
+    "@types/bun": "1.3.9",
     "@types/pg": "^8.16.0",
-    "@types/bun": "1.3.9"
+    "typescript": "^5.9.3"
   },
-  "gitHead": "88279c89e019c471d226216f4bc5be9f9a0c2a4a"
+  "gitHead": "f4e64d965f2485219c313f9adb7f40ad89539eaf"
 }

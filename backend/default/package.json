@@ -1,0 +1,56 @@
+{
+  "name": "@damatjs/default",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup src/index.ts --format esm --clean",
+    "start": "bun dist/index.js",
+    "db:migrate": "tsx src/lib/database/migrations/cli.ts migrate",
+    "db:migrate:status": "tsx src/lib/database/migrations/cli.ts status",
+    "db:migrate:create": "tsx src/lib/database/migrations/cli.ts create",
+    "db:migrate:revert": "tsx src/lib/database/migrations/cli.ts revert",
+    "db:migrate:list": "tsx src/lib/database/migrations/cli.ts list",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "docker:build": "docker build -t @damatjs/api .",
+    "docker:run": "docker run -p 3000:3000 --env-file .env @damatjs/api"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "dependencies": {
+    "@damatjs/deps": "*",
+    "@damatjs/services": "*",
+    "@damatjs/types": "*",
+    "@damatjs/utils": "*",
+    "@damatjs/workflow-engine": "*",
+    "@hono/node-server": "^1.13.7",
+    "bcryptjs": "^2.4.3",
+    "jose": "^5.2.0",
+    "reflect-metadata": "^0.2.2",
+    "sharp": "^0.34.5",
+    "stripe": "^14.14.0"
+  },
+  "devDependencies": {
+    "@damatjs/typescript-config": "*",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/bun": "1.3.9",
+    "@types/node": "^22.10.2",
+    "@types/pg": "^8.16.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vitest/coverage-v8": "^1.3.0",
+    "bun-types": "^1.3.9",
+    "eslint": "^8.57.0",
+    "tsup": "^8.5.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
