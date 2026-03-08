@@ -20,8 +20,8 @@ const routeFiles = findRouteFiles(baseDir);
 
 const collection = {
   info: {
-    name: "Asset Gallery API",
-    description: "Postman Collection for the Asset Gallery API",
+    name: "Damatjs API",
+    description: "Postman Collection for the Damatjs API",
     schema:
       "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
   },

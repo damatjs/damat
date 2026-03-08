@@ -42,7 +42,7 @@ export function createRootRoute(fileRouter: FileRouter): Hono {
     }
 
     return c.json({
-      name: "Asset Gallery API",
+      name: "Damatjs API",
       version: "2.0.0",
       description:
         "API for searching design inspiration sections using semantic similarity",

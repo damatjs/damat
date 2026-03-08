@@ -18,7 +18,7 @@ export function startServer(app: Hono): void {
       port,
     },
     (info) => {
-      logger.info(`Asset Gallery API running`, {
+      logger.info(`Damatjs API running`, {
         url: `http://localhost:${info.port}`,
         env: projectConfig.nodeEnv,
       });

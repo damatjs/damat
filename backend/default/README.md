@@ -1,6 +1,6 @@
-# Asset Gallery API - Backend Developer Guide
+# Damatjs API - Backend Developer Guide
 
-A production-ready backend for the Asset Gallery design inspiration platform. Built with Hono, Prisma, PostgreSQL, Redis, and Stripe.
+A production-ready backend for the Damatjs design inspiration platform. Built with Hono, Prisma, PostgreSQL, Redis, and Stripe.
 
 ## Table of Contents
 

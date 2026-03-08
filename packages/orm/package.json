@@ -1,6 +1,6 @@
 {
-  "name": "@damatjs/utils",
-  "description": "Damatjs utils definition",
+  "name": "@damatjs/orm",
+  "description": "Damatjs orm utils definition",
   "version": "0.0.1",
   "type": "module",
   "main": "dist/index.js",
@@ -9,32 +9,11 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./env": {
-      "types": "./dist/env/index.d.ts",
-      "default": "./dist/env/index.js"
-    },
-    "./redis": {
-      "types": "./dist/redis/index.d.ts",
-      "default": "./dist/redis/index.js"
-    },
-    "./router": {
-      "types": "./dist/router/index.d.ts",
-      "default": "./dist/router/index.js"
-    },
-    "./config": {
-      "types": "./dist/config/index.d.ts",
-      "default": "./dist/config/index.js"
-    },
-    "./logger": {
-      "types": "./dist/logger/index.d.ts",
-      "default": "./dist/logger/index.js"
     }
   },
   "engines": {
     "bun": ">=1.1.0"
   },
-  "license": "MIT",
   "files": [
     "dist",
     "!dist/**/__tests__",
@@ -45,7 +24,6 @@
   "dependencies": {
     "@damatjs/deps": "*",
     "@damatjs/types": "*",
-    "@damatjs/orm": "*",
     "dotenv": "^17.3.1",
     "reflect-metadata": "^0.2.2",
     "ulid": "^3.0.2"

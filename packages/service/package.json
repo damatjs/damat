@@ -1,6 +1,6 @@
 {
   "name": "@damatjs/services",
-  "description": "Asset Gallery services definition",
+  "description": "Damatjs services definition",
   "version": "0.0.1",
   "type": "module",
   "main": "dist/index.js",
@@ -24,6 +24,7 @@
   "dependencies": {
     "@damatjs/deps": "*",
     "@damatjs/utils": "*",
+    "@damatjs/orm": "*",
     "@damatjs/types": "*"
   },
   "devDependencies": {

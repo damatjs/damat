@@ -1,5 +1,5 @@
 /**
- * Asset Gallery API - Main Entry Point
+ * Damatjs API - Main Entry Point
  *
  * Full-featured backend with auth, teams, billing, and usage tracking.
  * Uses Next.js-style file-based routing for API routes.

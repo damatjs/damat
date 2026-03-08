@@ -15,7 +15,7 @@ import {
   closeConnection,
   createOrmConfig,
   type DatabaseModule,
-} from "../../dal";
+} from "@damatjs/orm";
 
 // Database config
 let ormConfig: Options | null = null;

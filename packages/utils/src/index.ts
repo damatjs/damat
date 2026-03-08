@@ -1,4 +1,3 @@
-export * from "./dal";
 export * from "./logger";
 export * from "./router";
 export * from "./redis";
