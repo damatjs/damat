@@ -1,0 +1,552 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`transform snapshots Category schema 1`] = `
+{
+  "columns": [
+    {
+      "array": false,
+      "autoincrement": false,
+      "default": "generate_id('cat')",
+      "name": "id",
+      "nullable": false,
+      "primaryKey": true,
+      "type": "text",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "length": 128,
+      "name": "name",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "varchar",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "length": 128,
+      "name": "slug",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "varchar",
+      "unique": true,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "name": "description",
+      "nullable": true,
+      "primaryKey": false,
+      "type": "text",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "default": "now()",
+      "name": "createdAt",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "timestamptz",
+      "unique": false,
+    },
+  ],
+  "foreignKeys": [],
+  "indexes": [],
+  "name": "categories",
+  "primaryKey": {
+    "columns": [
+      "id",
+    ],
+    "name": "categories_pkey",
+  },
+}
+`;
+
+exports[`transform snapshots User schema (with postgres schema name + indexes) 1`] = `
+{
+  "columns": [
+    {
+      "array": false,
+      "autoincrement": false,
+      "default": "generate_id('usr')",
+      "name": "id",
+      "nullable": false,
+      "primaryKey": true,
+      "type": "text",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "name": "email",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "text",
+      "unique": true,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "name": "name",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "text",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "name": "age",
+      "nullable": true,
+      "primaryKey": false,
+      "type": "integer",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "default": "false",
+      "name": "verified",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "boolean",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "name": "metadata",
+      "nullable": true,
+      "primaryKey": false,
+      "type": "jsonb",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "default": "now()",
+      "name": "createdAt",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "timestamptz",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "default": "now()",
+      "name": "updatedAt",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "timestamptz",
+      "unique": false,
+    },
+  ],
+  "foreignKeys": [],
+  "indexes": [
+    {
+      "columns": [
+        {
+          "name": "email",
+        },
+      ],
+      "name": "uniq_users_email",
+      "unique": true,
+    },
+    {
+      "columns": [
+        {
+          "name": "createdAt",
+        },
+      ],
+      "name": "idx_users_created_at",
+      "unique": false,
+    },
+  ],
+  "name": "users",
+  "primaryKey": {
+    "columns": [
+      "id",
+    ],
+    "name": "users_pkey",
+  },
+  "schema": "store",
+}
+`;
+
+exports[`transform snapshots Product schema (decimal, enum, array, nullable FK) 1`] = `
+{
+  "columns": [
+    {
+      "array": false,
+      "autoincrement": false,
+      "default": "generate_id('prd')",
+      "name": "id",
+      "nullable": false,
+      "primaryKey": true,
+      "type": "text",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "length": 64,
+      "name": "sku",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "varchar",
+      "unique": true,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "name": "title",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "text",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "length": 10,
+      "name": "price",
+      "nullable": false,
+      "primaryKey": false,
+      "scale": 2,
+      "type": "decimal",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "default": "0",
+      "name": "stock",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "integer",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "enumValues": [
+        "draft",
+        "active",
+        "archived",
+      ],
+      "name": "status",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "enum",
+      "unique": false,
+    },
+    {
+      "array": true,
+      "autoincrement": false,
+      "name": "tags",
+      "nullable": true,
+      "primaryKey": false,
+      "type": "text",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "name": "specs",
+      "nullable": true,
+      "primaryKey": false,
+      "type": "json",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "default": "now()",
+      "name": "createdAt",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "timestamp",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "name": "category_id",
+      "nullable": true,
+      "primaryKey": false,
+      "type": "text",
+      "unique": false,
+    },
+  ],
+  "foreignKeys": [
+    {
+      "columns": [
+        "category_id",
+      ],
+      "name": "fk_products_category_id",
+      "onDelete": "SET NULL",
+      "referencedColumns": [
+        "id",
+      ],
+      "referencedTable": "categories",
+      "unique": false,
+    },
+  ],
+  "indexes": [
+    {
+      "columns": [
+        {
+          "name": "sku",
+        },
+      ],
+      "name": "uniq_products_sku_0",
+      "unique": true,
+    },
+    {
+      "columns": [
+        {
+          "name": "status",
+        },
+        {
+          "name": "createdAt",
+        },
+      ],
+      "name": "idx_products_status_createdAt_1",
+      "type": "btree",
+      "unique": false,
+    },
+  ],
+  "name": "products",
+  "primaryKey": {
+    "columns": [
+      "id",
+    ],
+    "name": "products_pkey",
+  },
+}
+`;
+
+exports[`transform snapshots Order schema (belongsTo User) 1`] = `
+{
+  "columns": [
+    {
+      "array": false,
+      "autoincrement": false,
+      "default": "generate_id('ord')",
+      "name": "id",
+      "nullable": false,
+      "primaryKey": true,
+      "type": "text",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "length": 12,
+      "name": "total",
+      "nullable": false,
+      "primaryKey": false,
+      "scale": 2,
+      "type": "decimal",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "enumValues": [
+        "pending",
+        "confirmed",
+        "shipped",
+        "delivered",
+        "cancelled",
+      ],
+      "name": "status",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "enum",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "name": "notes",
+      "nullable": true,
+      "primaryKey": false,
+      "type": "text",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "default": "now()",
+      "name": "placedAt",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "timestamptz",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "name": "user_id",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "text",
+      "unique": false,
+    },
+  ],
+  "foreignKeys": [
+    {
+      "columns": [
+        "user_id",
+      ],
+      "name": "fk_orders_user_id",
+      "onDelete": "SET NULL",
+      "referencedColumns": [
+        "id",
+      ],
+      "referencedTable": "users",
+      "unique": false,
+    },
+  ],
+  "indexes": [],
+  "name": "orders",
+  "primaryKey": {
+    "columns": [
+      "id",
+    ],
+    "name": "orders_pkey",
+  },
+}
+`;
+
+exports[`transform snapshots OrderItem schema (two belongsTo + composite unique index) 1`] = `
+{
+  "columns": [
+    {
+      "array": false,
+      "autoincrement": false,
+      "default": "generate_id('oi')",
+      "name": "id",
+      "nullable": false,
+      "primaryKey": true,
+      "type": "text",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "name": "quantity",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "integer",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "length": 10,
+      "name": "unitPrice",
+      "nullable": false,
+      "primaryKey": false,
+      "scale": 2,
+      "type": "decimal",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "name": "order_id",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "text",
+      "unique": false,
+    },
+    {
+      "array": false,
+      "autoincrement": false,
+      "name": "product_id",
+      "nullable": false,
+      "primaryKey": false,
+      "type": "text",
+      "unique": false,
+    },
+  ],
+  "foreignKeys": [
+    {
+      "columns": [
+        "order_id",
+      ],
+      "name": "fk_order_items_order_id",
+      "onDelete": "SET NULL",
+      "referencedColumns": [
+        "id",
+      ],
+      "referencedTable": "orders",
+      "unique": false,
+    },
+    {
+      "columns": [
+        "product_id",
+      ],
+      "name": "fk_order_items_product_id",
+      "onDelete": "SET NULL",
+      "referencedColumns": [
+        "id",
+      ],
+      "referencedTable": "products",
+      "unique": false,
+    },
+  ],
+  "indexes": [
+    {
+      "columns": [
+        {
+          "name": "order_id",
+        },
+        {
+          "name": "product_id",
+        },
+      ],
+      "name": "uniq_order_items_order_product",
+      "unique": true,
+    },
+  ],
+  "name": "order_items",
+  "primaryKey": {
+    "columns": [
+      "id",
+    ],
+    "name": "order_items_pkey",
+  },
+}
+`;
+
+exports[`transform snapshots minimal model snapshot 1`] = `
+{
+  "columns": [
+    {
+      "array": false,
+      "autoincrement": false,
+      "name": "id",
+      "nullable": false,
+      "primaryKey": true,
+      "type": "text",
+      "unique": false,
+    },
+  ],
+  "foreignKeys": [],
+  "indexes": [],
+  "name": "simple",
+  "primaryKey": {
+    "columns": [
+      "id",
+    ],
+    "name": "simple_pkey",
+  },
+}
+`;

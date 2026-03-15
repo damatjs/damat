@@ -1,6 +1,6 @@
-import { convertIndexDefinition } from './convertIndex';
-import { IndexSchema, IndexType } from "../../../types/properties/indexType";
-import { IndexColumnConfig, IndexDefinition } from '../../types';
+import { convertIndexDefinition } from "./convertIndex";
+import { IndexSchema, IndexType } from "../../types/indexType";
+import { IndexColumnConfig, IndexDefinition } from "../../types";
 
 /**
  * Index builder for fluent API

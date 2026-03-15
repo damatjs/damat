@@ -1,5 +1,5 @@
-import { ForeignKeyAction } from "../../../types/properties/foreignKey";
-import { RelationDefinition, RelationType } from '../../types/foreignKey';
+import { ForeignKeyAction } from "../../types/foreignKey";
+import { RelationDefinition, RelationType } from "../../types/foreignKey";
 
 /**
  * Base relation builder
