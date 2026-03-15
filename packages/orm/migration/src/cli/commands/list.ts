@@ -6,13 +6,15 @@
 
 import type { CliOptions } from "../../types";
 import { discoverAllMigrations } from "../../discovery";
+import { DEFAULT_MODULES_DIR } from "../../generator";
 import type { CommandResult } from "./types";
 
 /**
  * List all modules with migrations.
  */
 export async function commandList(options: CliOptions): Promise<CommandResult> {
-  const { modulesDir, activeModules } = options;
+  const { activeModules } = options;
+  const modulesDir = options.modulesDir ?? DEFAULT_MODULES_DIR;
 
   console.log("");
   console.log("Modules with migrations:");
@@ -22,7 +24,7 @@ export async function commandList(options: CliOptions): Promise<CommandResult> {
   const moduleMap = new Map<string, number>();
 
   for (const m of allMigrations) {
-    moduleMap.set(m.module, (moduleMap.get(m.module) || 0) + 1);
+    moduleMap.set(m.module, (moduleMap.get(m.module) ?? 0) + 1);
   }
 
   if (moduleMap.size === 0) {
@@ -32,7 +34,7 @@ export async function commandList(options: CliOptions): Promise<CommandResult> {
       console.log(`  - ${mod} (${count} migration${count > 1 ? "s" : ""})`);
     }
   }
-  console.log("");
 
+  console.log("");
   return { exitCode: 0 };
 }

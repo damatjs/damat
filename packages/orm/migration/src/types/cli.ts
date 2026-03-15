@@ -1,4 +1,4 @@
-import type { Options } from "@damatjs/deps/mikro-orm/postgresql";
+import type { DatabaseConfig } from "./config";
 import type { DatabaseModule } from "./module";
 
 // =============================================================================
@@ -9,13 +9,14 @@ import type { DatabaseModule } from "./module";
  * CLI options for migration commands
  */
 export interface CliOptions {
-  /** MikroORM configuration */
-  ormConfig: Options;
-  /** Path to modules directory */
-  modulesDir: string;
+  /** Database connection configuration */
+  database: DatabaseConfig;
+  /** Path to modules directory (default: "src/modules") */
+  modulesDir?: string;
   /** List of active module names */
   activeModules: string[];
-  /** Database modules with entities (required for create command) */
+  /** Database modules (optional — models auto-discovered when omitted) */
   modules?: DatabaseModule[];
+  /** CLI sub-command to run */
   command: string;
 }

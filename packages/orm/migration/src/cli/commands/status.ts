@@ -4,9 +4,11 @@
  * Show migration status for all modules.
  */
 
-import { MikroORM } from "@damatjs/deps/mikro-orm/postgresql";
+import { Pool } from "@damatjs/deps/pg";
 import type { CliOptions } from "../../types";
 import { getMigrationStatus, getModuleMigrationStatus } from "../../executor";
+import { log } from "../../logger";
+import { DEFAULT_MODULES_DIR } from "../../generator";
 import type { CommandResult } from "./types";
 
 /**
@@ -16,67 +18,61 @@ export async function commandStatus(
   options: CliOptions,
   args: string[],
 ): Promise<CommandResult> {
-  const { ormConfig, modulesDir, activeModules } = options;
-
+  const { database, activeModules } = options;
+  const modulesDir = options.modulesDir ?? DEFAULT_MODULES_DIR;
   const [moduleName] = args;
 
+  console.log("");
   if (moduleName) {
-    console.log("");
-    console.log(`Checking migration status for module '${moduleName}'...`);
-    console.log("");
+    log("info", `Checking migration status for module '${moduleName}'...`);
   } else {
-    console.log("");
-    console.log("Checking migration status...");
-    console.log("");
+    log("info", "Checking migration status...");
   }
+  console.log("");
 
-  const orm = await MikroORM.init(ormConfig);
+  const pool = new Pool({
+    connectionString: database.url,
+    min: database.poolMin,
+    max: database.poolMax,
+  });
 
-  let noMigration = true;
+  let hasModules = false;
+
   if (moduleName) {
+    const status = await getModuleMigrationStatus(pool, modulesDir, moduleName);
+    const mod = status.module;
 
-    const status = await getModuleMigrationStatus(orm, modulesDir, moduleName);
-    const mod = status.module
-    const statusIcon =
-      mod.pending > 0 ? "\x1b[33m○\x1b[0m" : "\x1b[32m✓\x1b[0m";
-    console.log(
-      `${statusIcon} ${mod.name}: ${mod.applied} applied, ${mod.pending} pending`,
+    hasModules = true;
+    log(
+      mod.pending > 0 ? "warn" : "success",
+      `${mod.name}: ${mod.applied} applied, ${mod.pending} pending`,
     );
 
     for (const m of mod.migrations) {
-      const icon = m.applied ? "\x1b[32m✓\x1b[0m" : "\x1b[33m○\x1b[0m";
-      console.log(`  ${icon} ${m.name}`);
-    }
-
-    if (mod.migrations.length === 0) {
-      noMigration = false
+      log(m.applied ? "success" : "warn", `  ${m.name}`);
     }
   } else {
+    const status = await getMigrationStatus(pool, modulesDir, activeModules);
 
-    const status = await getMigrationStatus(orm, modulesDir, activeModules);
+    hasModules = status.modules.length > 0;
 
     for (const mod of status.modules) {
-      const statusIcon =
-        mod.pending > 0 ? "\x1b[33m○\x1b[0m" : "\x1b[32m✓\x1b[0m";
-      console.log(
-        `${statusIcon} ${mod.name}: ${mod.applied} applied, ${mod.pending} pending`,
+      log(
+        mod.pending > 0 ? "warn" : "success",
+        `${mod.name}: ${mod.applied} applied, ${mod.pending} pending`,
       );
 
       for (const m of mod.migrations) {
-        const icon = m.applied ? "\x1b[32m✓\x1b[0m" : "\x1b[33m○\x1b[0m";
-        console.log(`  ${icon} ${m.name}`);
+        log(m.applied ? "success" : "warn", `  ${m.name}`);
       }
     }
-
-    if (status.modules.length === 0)
-      noMigration = false
   }
 
-  if (noMigration) {
-    console.log("\x1b[90mNo modules with migrations found.\x1b[0m");
+  if (!hasModules) {
+    log("skip", "No modules with migrations found.");
   }
 
   console.log("");
 
-  return { exitCode: 0, orm };
+  return { exitCode: 0, pool };
 }

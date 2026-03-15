@@ -1,112 +1,61 @@
 /**
  * Create Command
  *
- * Create a new migration file by comparing current model definitions against the schema snapshot.
+ * Create a new migration file by auto-discovering model definitions from
+ * {modulesDir}/{module}/models/ and comparing against the schema snapshot.
  * Automatically detects if this is an initial migration (no snapshot) or a diff migration.
  */
 
 import fs from "node:fs";
 import path from "node:path";
-import { MikroORM } from "@damatjs/deps/mikro-orm/postgresql";
 
 import type { CliOptions } from "../../types";
-import { createInitialMigration, createDiffMigration } from "../../generator";
+import {
+  createInitialMigration,
+  createDiffMigration,
+  DEFAULT_MODULES_DIR,
+} from "../../generator";
 import { listModulesWithMigrations } from "../../discovery";
+import { log } from "../../logger";
+import { snapshotExist } from "../../snapshot";
 import type { CommandResult } from "./types";
-import { getSnapshotPath } from "@/snapshot";
 
 /**
  * Create a new migration by comparing model definitions against the schema snapshot.
  *
- * - If no snapshot exists: creates an initial migration with all tables
- * - If snapshot exists: creates a diff migration with only the changes
+ * - No snapshot → initial migration (full CREATE TABLE SQL)
+ * - Snapshot exists → diff migration (only the changes)
  */
 export async function commandCreate(
   options: CliOptions,
   args: string[],
 ): Promise<CommandResult> {
-  const { ormConfig, modulesDir, activeModules, modules } = options;
-  const [moduleName, migrationName] = args;
+  const { activeModules } = options;
+  const modulesDir = options.modulesDir ?? DEFAULT_MODULES_DIR;
+  const [moduleName] = args;
 
-  // Validate required arguments
-  if (!moduleName || !migrationName) {
+  if (!moduleName) {
     printUsage(modulesDir, activeModules);
-    return { exitCode: 1 };
-  }
-
-  // Validate modules are configured
-  if (!modules || modules.length === 0) {
-    console.error(
-      "\x1b[31mError: No modules configured. Add 'modules' to CLI options.\x1b[0m",
-    );
-    console.error("");
-    console.error("Example:");
-    console.error("  runCli({");
-    console.error("    ormConfig,");
-    console.error("    modulesDir: './src/modules',");
-    console.error("    activeModules: ['user'],");
-    console.error(
-      "    modules: [{ name: 'user', entities: [User, Profile], models: [UserModel, ProfileModel] }],",
-    );
-    console.error("  });");
-    return { exitCode: 1 };
-  }
-
-  // Find the module
-  const dbModule = modules.find((m) => m.name === moduleName);
-  if (!dbModule) {
-    console.error(
-      `\x1b[31mError: Module '${moduleName}' not found in configured modules.\x1b[0m`,
-    );
-    console.error("");
-    console.error("Available modules:");
-    for (const m of modules) {
-      console.error(`  - ${m.name}`);
-    }
-    return { exitCode: 1 };
-  }
-
-  // Validate module has models
-  if (!dbModule.models || dbModule.models.length === 0) {
-    console.error(
-      `\x1b[31mError: Module '${moduleName}' has no models defined.\x1b[0m`,
-    );
     return { exitCode: 1 };
   }
 
   // Check if module directory exists
   const moduleDir = path.join(modulesDir, moduleName);
   if (!fs.existsSync(moduleDir)) {
-    console.error(
-      `\x1b[31mError: Module directory not found at ${moduleDir}\x1b[0m`,
-    );
+    log("error", `Module directory not found at ${moduleDir}`);
     return { exitCode: 1 };
   }
 
-  let orm: MikroORM | undefined;
-
   try {
-    // Initialize ORM
-    orm = await MikroORM.init(ormConfig);
-
-    // Check if this is an initial migration (no snapshot exists)
     const migrationsDir = path.join(moduleDir, "migrations");
-    const snapshotPath = getSnapshotPath(migrationsDir);
-    const isInitial = !fs.existsSync(snapshotPath);
+    const isInitial = !snapshotExist(migrationsDir);
 
     if (isInitial) {
       console.log("");
-      console.log(
-        `Creating initial migration for module '\x1b[36m${moduleName}\x1b[0m'...`,
-      );
+      log("info", `Creating initial migration for module '${moduleName}'...`);
       console.log("");
 
-      const filePath = createInitialMigration(
-        modulesDir,
-        moduleName,
-        migrationName,
-        dbModule.models,
-      );
+      const filePath = await createInitialMigration(moduleName, modulesDir);
 
       console.log("");
       console.log("Next steps:");
@@ -115,25 +64,18 @@ export async function commandCreate(
       console.log("");
     } else {
       console.log("");
-      console.log(
-        `Creating diff migration for module '\x1b[36m${moduleName}\x1b[0m'...`,
-      );
+      log("info", `Creating diff migration for module '${moduleName}'...`);
       console.log("");
 
-      const result = createDiffMigration(
-        modulesDir,
-        moduleName,
-        migrationName,
-        dbModule.models,
-      );
+      const result = await createDiffMigration(moduleName, modulesDir);
 
       if (!result.hasChanges) {
-        console.log("\x1b[33mNo changes detected.\x1b[0m");
+        log("skip", "No changes detected.");
         console.log(
-          "The current model definitions match the schema snapshot. No migration created.",
+          "The current models match the schema snapshot. No migration created.",
         );
         console.log("");
-        return buildResult(0, orm);
+        return { exitCode: 0 };
       }
 
       console.log("");
@@ -143,43 +85,27 @@ export async function commandCreate(
       console.log("");
 
       if (result.warnings.length > 0) {
-        console.log("\x1b[33mWarnings:\x1b[0m");
         for (const warning of result.warnings) {
-          console.log(`  - ${warning}`);
+          log("warn", warning);
         }
         console.log("");
       }
     }
 
-    return buildResult(0, orm);
+    return { exitCode: 0 };
   } catch (error) {
-    console.error(
-      "\x1b[31mError:\x1b[0m",
-      error instanceof Error ? error.message : error,
-    );
-    return buildResult(1, orm);
+    log("error", error instanceof Error ? error.message : String(error));
+    return { exitCode: 1 };
   }
-}
-
-/**
- * Build command result with optional ORM
- */
-function buildResult(exitCode: number, orm?: MikroORM): CommandResult {
-  if (orm) {
-    return { exitCode, orm };
-  }
-  return { exitCode };
 }
 
 /**
  * Print usage information
  */
 function printUsage(modulesDir: string, activeModules: string[]): void {
-  console.error(
-    "\x1b[31mError: Module name and migration name are required\x1b[0m",
-  );
+  log("error", "Module name is required");
   console.error("");
-  console.error("Usage: npm run db:migrate:create <module> <name>");
+  console.error("Usage: npm run db:migrate:create <module>");
   console.error("");
   console.error("Modules with migrations:");
 
@@ -191,16 +117,14 @@ function printUsage(modulesDir: string, activeModules: string[]): void {
   } else {
     console.error("  (no modules found)");
   }
+
   console.error("");
   console.error("Examples:");
   console.error(
-    "  npm run db:migrate:create user Initial       # First migration",
-  );
-  console.error(
-    "  npm run db:migrate:create user AddPhoneColumn # Add changes",
+    "  npm run db:migrate:create user    # First or diff migration",
   );
   console.error("");
   console.error(
-    "The command automatically detects if this is an initial or diff migration.",
+    "Models are auto-discovered from {modulesDir}/{module}/models/",
   );
 }

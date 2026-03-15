@@ -1,11 +1,11 @@
 /**
  * Migration Status Operations
  *
- * Functions for checking migration status across modules.
+ * Functions for checking migration status across modules using pg Pool.
  */
 
-import type { MikroORM } from "@damatjs/deps/mikro-orm/core";
-import type { MigrationInfo } from "../types";
+import type { Pool } from "@damatjs/deps/pg";
+import type { MigrationStatus, ModuleMigrationStatus } from "../types";
 import {
   discoverModuleMigrations,
   listModulesWithMigrations,
@@ -14,50 +14,23 @@ import { MigrationTracker } from "../tracker";
 
 /**
  * Get migration status for all modules.
- *
- * @param orm - MikroORM instance
- * @param modulesDir - Path to the modules directory
- * @param activeModules - List of active module names
- * @returns Migration status for all modules
- *
- * @example
- * ```typescript
- * const status = await getMigrationStatus(orm, './src/modules', ['user', 'billing']);
- *
- * for (const mod of status.modules) {
- *   console.log(`${mod.name}: ${mod.applied} applied, ${mod.pending} pending`);
- * }
- * ```
  */
 export async function getMigrationStatus(
-  orm: MikroORM,
+  pool: Pool,
   modulesDir: string,
   activeModules: string[],
-): Promise<{
-  modules: Array<{
-    name: string;
-    applied: number;
-    pending: number;
-    migrations: MigrationInfo[];
-  }>;
-}> {
-  const tracker = new MigrationTracker(orm);
+): Promise<MigrationStatus> {
+  const tracker = new MigrationTracker(pool);
   await tracker.ensureTable();
 
   const modules = listModulesWithMigrations(modulesDir, activeModules);
-  const result: Array<{
-    name: string;
-    applied: number;
-    pending: number;
-    migrations: MigrationInfo[];
-  }> = [];
+  const result: ModuleMigrationStatus[] = [];
 
   for (const moduleName of modules) {
     const migrations = discoverModuleMigrations(modulesDir, moduleName);
     const applied = await tracker.getApplied(moduleName);
     const appliedNames = new Set(applied.map((a) => a.name));
 
-    // Update applied status
     for (const m of migrations) {
       m.applied = appliedNames.has(m.name);
     }
@@ -73,36 +46,15 @@ export async function getMigrationStatus(
   return { modules: result };
 }
 
-
-
 /**
- * Get migration status for a module.
- *
- * @param orm - MikroORM instance
- * @param modulesDir - Path to the modules directory
- * @param moduleName - Name of the module
- * @returns Migration status for the module
- *
- * @example
- * ```typescript
- * const status = await getModuleMigrationStatus(orm, './src/modules', 'user');
- *
- * console.log(`${status.module.name}: ${status.module.applied} applied, ${status.module.pending} pending`);
- * ```
+ * Get migration status for a single module.
  */
 export async function getModuleMigrationStatus(
-  orm: MikroORM,
+  pool: Pool,
   modulesDir: string,
   moduleName: string,
-): Promise<{
-  module: {
-    name: string;
-    applied: number;
-    pending: number;
-    migrations: MigrationInfo[];
-  };
-}> {
-  const tracker = new MigrationTracker(orm);
+): Promise<{ module: ModuleMigrationStatus }> {
+  const tracker = new MigrationTracker(pool);
   await tracker.ensureTable();
 
   const modules = listModulesWithMigrations(modulesDir, [moduleName]);
@@ -111,12 +63,11 @@ export async function getModuleMigrationStatus(
     throw new Error(`Module '${moduleName}' not found at ${modulesDir}`);
   }
 
-  const module = modules[0]!
-  const migrations = discoverModuleMigrations(modulesDir, module);
+  const mod = modules[0]!;
+  const migrations = discoverModuleMigrations(modulesDir, mod);
   const applied = await tracker.getApplied(moduleName);
   const appliedNames = new Set(applied.map((a) => a.name));
 
-  // Update applied status
   for (const m of migrations) {
     m.applied = appliedNames.has(m.name);
   }
@@ -127,6 +78,6 @@ export async function getModuleMigrationStatus(
       applied: migrations.filter((m) => m.applied).length,
       pending: migrations.filter((m) => !m.applied).length,
       migrations,
-    }
+    },
   };
 }

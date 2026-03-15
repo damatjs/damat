@@ -4,7 +4,6 @@
  * Main entry point for the migration command-line interface.
  */
 
-import "reflect-metadata";
 import "dotenv/config";
 import {
   commandUp,
@@ -15,29 +14,24 @@ import {
   commandHelp,
   commandUnknown,
 } from "./commands";
-import { CliOptions } from "../types";
+import { log } from "../logger";
+import type { CliOptions } from "../types";
 
 /**
  * Run the migration CLI.
- *
- * Parses command-line arguments and executes the appropriate command.
  *
  * @param options - CLI configuration options
  *
  * @example
  * ```typescript
  * // scripts/db-migrate.ts
- * import { runCli, createSimpleOrmConfig } from '@damatjs/utils';
- *
- * const ormConfig = createSimpleOrmConfig(
- *   process.env.DATABASE_URL,
- *   [],
- * );
+ * import { runCli } from '@damatjs/orm-migration';
  *
  * runCli({
- *   ormConfig,
- *   modulesDir: './src/modules',
- *   activeModules: ['user', 'billing', 'notifications'],
+ *   database: { url: process.env.DATABASE_URL! },
+ *   modulesDir: 'src/modules',           // optional, defaults to "src/modules"
+ *   activeModules: ['user', 'billing'],
+ *   command: process.env.MIGRATION_CMD ?? 'up',
  * });
  * ```
  */
@@ -87,16 +81,18 @@ export async function runCli(options: CliOptions): Promise<void> {
         result = commandUnknown(options.command);
     }
 
-    // Close ORM if opened
-    if (result.orm) {
-      await result.orm.close();
+    // Close pool if opened
+    if (result.pool) {
+      await result.pool.end();
     }
 
     process.exit(result.exitCode);
   } catch (error) {
     console.error("");
-    console.error("\x1b[31mUnexpected error:\x1b[0m");
-    console.error(error instanceof Error ? error.message : error);
+    log(
+      "error",
+      `Unexpected error: ${error instanceof Error ? error.message : error}`,
+    );
     console.error("");
     process.exit(1);
   }

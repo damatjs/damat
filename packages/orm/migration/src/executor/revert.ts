@@ -1,44 +1,31 @@
 /**
  * Migration Revert Operations
  *
- * Functions for reverting/undoing applied migrations.
+ * Functions for reverting/undoing applied migrations using pg Pool.
  */
 
-import type { MikroORM } from "@damatjs/deps/mikro-orm/core";
+import type { Pool } from "@damatjs/deps/pg";
 import { log } from "../logger";
 import { discoverModuleMigrations } from "../discovery";
 import { MigrationTracker } from "../tracker";
 import { executeMigration } from "./migration";
-import { ModuleMigrationResult } from "../types";
+import type { ModuleMigrationResult } from "../types";
 
 /**
  * Revert migrations for a module.
  *
- * @param orm - MikroORM instance
+ * @param pool       - pg connection pool
  * @param modulesDir - Path to the modules directory
  * @param moduleName - Module to revert migrations for
- * @param count - Number of migrations to revert (default: 1)
- * @returns Migration result
- *
- * @example
- * ```typescript
- * // Revert last migration
- * const result = await revertMigrations(orm, './src/modules', 'user');
- *
- * // Revert last 3 migrations
- * const result = await revertMigrations(orm, './src/modules', 'user', 3);
- *
- * // Revert all migrations
- * const result = await revertMigrations(orm, './src/modules', 'user', 9999);
- * ```
+ * @param count      - Number of migrations to revert (default: 1)
  */
 export async function revertMigrations(
-  orm: MikroORM,
+  pool: Pool,
   modulesDir: string,
   moduleName: string,
   count: number = 1,
 ): Promise<ModuleMigrationResult> {
-  const tracker = new MigrationTracker(orm);
+  const tracker = new MigrationTracker(pool);
   await tracker.ensureTable();
 
   const result: ModuleMigrationResult = {
@@ -53,7 +40,7 @@ export async function revertMigrations(
     const migrations = discoverModuleMigrations(modulesDir, moduleName);
     const applied = await tracker.getApplied(moduleName);
 
-    // Get the most recent N applied migrations (in reverse order)
+    // Most-recent N migrations in reverse order
     const toRevert = applied.slice(-count).reverse();
 
     if (toRevert.length === 0) {
@@ -79,7 +66,7 @@ export async function revertMigrations(
       }
 
       const revertResult = await executeMigration(
-        orm,
+        pool,
         migrationFile,
         moduleName,
         tracker,

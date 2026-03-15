@@ -4,11 +4,12 @@
  * Revert migrations for a specific module.
  */
 
-import { MikroORM } from "@damatjs/deps/mikro-orm/postgresql";
+import { Pool } from "@damatjs/deps/pg";
 import type { CliOptions } from "../../types";
 import { revertMigrations } from "../../executor";
 import { listModulesWithMigrations } from "../../discovery";
-import { successBanner, errorBanner } from "../../logger";
+import { log, successBanner, errorBanner } from "../../logger";
+import { DEFAULT_MODULES_DIR } from "../../generator";
 import type { CommandResult } from "./types";
 
 /**
@@ -18,14 +19,15 @@ export async function commandRevert(
   options: CliOptions,
   args: string[],
 ): Promise<CommandResult> {
-  const { ormConfig, modulesDir, activeModules } = options;
+  const { database, activeModules } = options;
+  const modulesDir = options.modulesDir ?? DEFAULT_MODULES_DIR;
 
   const moduleName = args.find((a) => !a.startsWith("--"));
   const allFlag = args.includes("--all");
   const countArg = args.find((a) => /^\d+$/.test(a));
 
   if (!moduleName) {
-    console.error("\x1b[31mError: Module name is required\x1b[0m");
+    log("error", "Module name is required");
     console.error("");
     console.error("Usage: npm run db:migrate:revert <module> [count] [--all]");
     console.error("");
@@ -44,21 +46,25 @@ export async function commandRevert(
   }
 
   console.log("");
-  console.log(`Reverting migrations for module '${moduleName}'...`);
+  log("info", `Reverting migrations for module '${moduleName}'...`);
   console.log("");
 
-  const orm = await MikroORM.init(ormConfig);
+  const pool = new Pool({
+    connectionString: database.url,
+    min: database.poolMin,
+    max: database.poolMax,
+  });
   const count = allFlag ? 9999 : countArg ? parseInt(countArg, 10) : 1;
-  const result = await revertMigrations(orm, modulesDir, moduleName, count);
+  const result = await revertMigrations(pool, modulesDir, moduleName, count);
 
   console.log("");
 
   if (result.success) {
     successBanner("Revert completed successfully");
-    console.log(`  Reverted: ${result.reverted.length}`);
+    log("info", `Reverted: ${result.reverted.length}`);
   } else {
     errorBanner("Revert failed");
   }
 
-  return { exitCode: result.success ? 0 : 1, orm };
+  return { exitCode: result.success ? 0 : 1, pool };
 }
