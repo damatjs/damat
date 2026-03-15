@@ -12,10 +12,3 @@ export * from "./module";
 export * from "./migration";
 export * from "./snapshot";
 export * from "./diff";
-
-export type {
-  Options,
-  MikroORM,
-  EntityManager,
-  EntityClass,
-} from "@damatjs/deps/mikro-orm/postgresql";

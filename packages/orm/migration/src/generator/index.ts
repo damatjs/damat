@@ -4,13 +4,11 @@
  * Entry point for creating migration files.
  * Automatically detects whether to create an initial or diff migration
  * based on whether a snapshot already exists on disk.
+ *
+ * Models are auto-discovered from {modulesDir}/{moduleName}/models/.
  */
 
 import path from "node:path";
-import type {
-  ModelDefinition,
-  ModelProperties,
-} from "@damatjs/orm-model/types";
 import { snapshotExist } from "@/snapshot";
 import type { CreateDiffMigrationOptions, DiffMigrationResult } from "@/types";
 import { createInitialMigration } from "./initialMigration";
@@ -19,35 +17,44 @@ import { createDiffMigration } from "./diffMigration";
 export { createInitialMigration } from "./initialMigration";
 export { createDiffMigration } from "./diffMigration";
 
+/** Default modules root directory */
+export const DEFAULT_MODULES_DIR = "src/modules";
+
 /**
  * Create a migration for a module.
  *
- * - If no snapshot exists for the module: creates an initial migration that
- *   generates full CREATE TABLE SQL for every model.
- * - If a snapshot already exists: creates a diff migration that generates
- *   only the statements needed to move from the old schema to the new one.
+ * - If no snapshot exists: creates an initial migration (full CREATE TABLE SQL)
+ * - If a snapshot exists: creates a diff migration (only the changes)
  *
- * @param modulesDir - Path to the modules directory
- * @param moduleName - Name of the module
- * @param name       - Human-readable label for the migration (e.g. "Initial", "AddPhoneColumn")
- * @param models     - Model definitions for the module
- * @param options    - Generation options
+ * Models are automatically discovered from:
+ *   `{modulesDir}/{moduleName}/models/`
+ *
+ * @param moduleName  - Name of the module (e.g. `"user"`)
+ * @param modulesDir  - Path to the modules directory (default: `"src/modules"`)
+ * @param options     - Generation options
  * @returns
- *   - Initial migration: the absolute path to the written `.ts` file
- *   - Diff migration: a `DiffMigrationResult` (may have `filePath: null` when there are no changes)
+ *   - Initial migration: absolute path to the written `.ts` file
+ *   - Diff migration: a `DiffMigrationResult` (may have `filePath: null` when no changes)
+ *
+ * @example
+ * ```typescript
+ * // Simplest usage — uses src/modules/user/models/ automatically
+ * await createMigration('user');
+ *
+ * // Custom modules directory
+ * await createMigration('billing', 'app/modules');
+ * ```
  */
-export function createMigration(
-  modulesDir: string,
+export async function createMigration(
   moduleName: string,
-  name: string,
-  models: ModelDefinition<ModelProperties>[],
+  modulesDir: string = DEFAULT_MODULES_DIR,
   options: CreateDiffMigrationOptions = {},
-): string | DiffMigrationResult {
+): Promise<string | DiffMigrationResult> {
   const migrationsDir = path.join(modulesDir, moduleName, "migrations");
 
   if (snapshotExist(migrationsDir)) {
-    return createDiffMigration(modulesDir, moduleName, name, models, options);
+    return createDiffMigration(moduleName, modulesDir, options);
   }
 
-  return createInitialMigration(modulesDir, moduleName, name, models, options);
+  return createInitialMigration(moduleName, modulesDir, options);
 }

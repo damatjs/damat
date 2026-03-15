@@ -1,26 +1,33 @@
 /**
- * Migration Discovery
+ * Module Filter — Migrations Present
  *
- * Functions for discovering migration files across modules.
+ * Filters a list of module names down to only those that actually have at
+ * least one `Migration*.ts` file on disk.  Used by the executor and CLI to
+ * avoid processing modules that have never had a migration generated.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
 /**
- * Lists all modules that have migrations.
+ * Return the subset of `activeModules` that have at least one migration file.
  *
- * @param modulesDir - Path to the modules directory
- * @param activeModules - List of active module names
- * @returns Array of module names that have migrations
+ * A module "has migrations" when its
+ * `{modulesDir}/{module}/migrations/` directory exists and contains at least
+ * one file matching `Migration*.ts`.
+ *
+ * @param modulesDir    - Root modules directory (e.g. `"src/modules"`)
+ * @param activeModules - Candidate module names to check
+ * @returns Module names (in original order) that have migrations
  *
  * @example
  * ```typescript
- * const modules = listModulesWithMigrations(
- *   './src/modules',
- *   ['user', 'billing', 'notifications'],
- * );
- * // Returns: ['user', 'billing'] (if notifications has no migrations)
+ * listModulesWithMigrations('src/modules', ['user', 'billing', 'notifications']);
+ * // → ['user', 'billing']  (if notifications/ has no Migration files yet)
  * ```
  */
 export function listModulesWithMigrations(
@@ -31,11 +38,13 @@ export function listModulesWithMigrations(
     return [];
   }
 
-  return activeModules.filter((d) => {
-    const migrationsDir = path.join(modulesDir, d, "migrations");
-    if (!fs.existsSync(migrationsDir)) return false;
-    return fs
-      .readdirSync(migrationsDir)
-      .some((f) => f.startsWith("Migration") && f.endsWith(".ts"));
+  return activeModules.filter((moduleName) => {
+    const migrationsDir = path.join(modulesDir, moduleName, "migrations");
+    return (
+      fs.existsSync(migrationsDir) &&
+      fs
+        .readdirSync(migrationsDir)
+        .some((f) => f.startsWith("Migration") && f.endsWith(".ts"))
+    );
   });
 }

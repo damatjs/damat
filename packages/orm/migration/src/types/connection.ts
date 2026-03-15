@@ -1,24 +1,21 @@
-import type {
-  MikroORM,
-  EntityManager,
-} from "@damatjs/deps/mikro-orm/postgresql";
+import type { Pool, PoolClient } from "@damatjs/deps/pg";
 
 // =============================================================================
 // CONNECTION
 // =============================================================================
 
 /**
- * Database connection instance
+ * Database connection instance wrapping a pg Pool.
  */
 export interface DatabaseConnection {
-  /** MikroORM instance */
-  orm: MikroORM;
-  /** Entity manager */
-  em: EntityManager;
-  /** Close the connection */
+  /** pg connection pool */
+  pool: Pool;
+  /** Execute a raw SQL query */
+  query: Pool["query"];
+  /** Acquire a client from the pool */
+  connect: () => Promise<PoolClient>;
+  /** End the pool (close all connections) */
   close: () => Promise<void>;
-  /** Check if connected */
+  /** Check if the pool can reach the database */
   isConnected: () => Promise<boolean>;
-  /** Fork entity manager for a request */
-  fork: () => EntityManager;
 }

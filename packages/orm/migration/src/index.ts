@@ -11,10 +11,13 @@
  *   revertMigrations,
  *   createMigration,
  *   runCli,
- * } from '@damatjs/utils';
+ *   BaseMigration,
+ * } from '@damatjs/orm-migration';
  * ```
  */
 
+// Base migration class (used by generated migration files)
+export * from "./migration";
 
 // Logger
 export * from "./logger";

@@ -1,24 +1,32 @@
 /**
- * Migration Discovery
+ * Module Migration Discovery
  *
- * Functions for discovering migration files across modules.
+ * Scans `{modulesDir}/{moduleName}/migrations/` for timestamped migration
+ * files and returns them as structured `MigrationInfo` objects.
+ *
+ * Migration filename convention: `Migration{YYYYMMDDHHMMSS}_{Label}.ts`
+ * e.g. `Migration20260316103000_Initial.ts`
  */
 
-import { MigrationInfo } from '../types';
 import fs from "node:fs";
 import path from "node:path";
+import type { MigrationInfo } from "../types";
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
 
 /**
- * Discovers migrations for a specific module.
+ * Discover all migration files for a single module, sorted by timestamp.
  *
- * @param modulesDir - Path to the modules directory
- * @param moduleName - Name of the module
- * @returns Array of migration info objects
+ * @param modulesDir - Root modules directory (e.g. `"src/modules"`)
+ * @param moduleName - Name of the module   (e.g. `"user"`)
+ * @returns Sorted array of migration info objects (oldest first)
  *
  * @example
  * ```typescript
- * const migrations = discoverModuleMigrations('./src/modules', 'user');
- * // Returns migrations from ./src/modules/user/migrations/
+ * const migrations = discoverModuleMigrations('src/modules', 'user');
+ * // Scans src/modules/user/migrations/ for Migration*.ts files
  * ```
  */
 export function discoverModuleMigrations(
@@ -31,22 +39,21 @@ export function discoverModuleMigrations(
     return [];
   }
 
-  const files = fs
+  return fs
     .readdirSync(migrationsDir)
-    .filter((f) => f.endsWith(".ts") && f.startsWith("Migration"))
-    .sort();
+    .filter((f) => f.startsWith("Migration") && f.endsWith(".ts"))
+    .sort()
+    .map((file) => {
+      // Extract the numeric timestamp from e.g. "Migration20260316103000_Initial.ts"
+      const match = file.match(/Migration(\d+)/);
+      const timestamp = match?.[1] ? parseInt(match[1], 10) : 0;
 
-  return files.map((file) => {
-    // Extract timestamp from filename like Migration20260211_Initial.ts
-    const match = file.match(/Migration(\d+)/);
-    const timestamp = match && match[1] ? parseInt(match[1], 10) : 0;
-
-    return {
-      name: file.replace(".ts", ""),
-      module: moduleName,
-      path: path.join(migrationsDir, file),
-      timestamp,
-      applied: false, // Will be updated when checking against DB
-    };
-  });
+      return {
+        name: file.replace(".ts", ""),
+        module: moduleName,
+        path: path.join(migrationsDir, file),
+        timestamp,
+        applied: false, // updated when cross-referenced with the DB tracker
+      };
+    });
 }

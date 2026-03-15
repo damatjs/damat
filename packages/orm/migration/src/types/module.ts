@@ -1,4 +1,3 @@
-import type { EntityClass } from "@damatjs/deps/mikro-orm/postgresql";
 import type {
   ModelDefinition,
   ModelProperties,
@@ -10,16 +9,15 @@ import type {
 
 /**
  * Database module definition.
- * Each feature module registers its entities and migrations path here.
+ * Each feature module registers its migrations path and models here.
  */
 export interface DatabaseModule {
   /** Unique module name */
   name: string;
-  /** Entity classes owned by this module (used by MikroORM) */
-  entities: EntityClass<any>[];
-  /** Model definitions for schema snapshot and migration generation */
-  models: ModelDefinition<ModelProperties>[];
-  /** Path to migrations directory (relative to module) */
+  /** Model definitions for schema snapshot and migration generation.
+   *  Auto-discovered from {modulesDir}/{name}/models/ when not provided. */
+  models?: ModelDefinition<ModelProperties>[];
+  /** Path to migrations directory (relative to modulesDir/{name}) */
   migrationsPath?: string;
 }
 

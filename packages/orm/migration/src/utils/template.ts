@@ -1,59 +1,23 @@
-import { GeneratedMigration } from "@/types";
-
-// /**
-//  * Get the base migration template (empty)
-//  */
-// export const getMigrationTemplate = (
-//   className: string,
-//   name: string,
-//   moduleName: string,
-//   timestamp: Date,
-// ): string => {
-//   return `import { Migration } from '@mikro-orm/migrations';
-
-// /**
-//  * Migration: ${name}
-//  * Module: ${moduleName}
-//  * Created: ${timestamp.toISOString()}
-//  */
-// export class ${className} extends Migration {
-//     /**
-//      * Apply the migration
-//      */
-//     async up(): Promise<void> {
-//         // Write your UP migration SQL here
-//         // this.addSql('CREATE TABLE ...');
-//     }
-
-//     /**
-//      * Revert the migration
-//      */
-//     async down(): Promise<void> {
-//         // Write your DOWN migration SQL here
-//         // this.addSql('DROP TABLE IF EXISTS ...');
-//     }
-// }
-// `;
-// };
+import type { GeneratedMigration } from "@/types";
 
 /**
- * Format SQL statements for use in migration template
+ * Format SQL statements for use in a migration method body.
  */
 function formatSqlStatements(statements: string[]): string {
   return statements
     .map((sql) => {
-      // Handle multi-line SQL (like DO blocks)
+      // Multi-line SQL (DO blocks etc.) uses template literals
       if (sql.includes("\n")) {
         return `this.addSql(\`${sql}\`);`;
       }
-      // Single line SQL
+      // Single-line SQL — escape single quotes
       return `this.addSql('${sql.replace(/'/g, "\\'")}');`;
     })
     .join("\n        ");
 }
 
 /**
- * Get a migration template with generated SQL code
+ * Get a migration template with auto-generated SQL.
  */
 export const getMigrationTemplateWithSQL = (
   className: string,
@@ -72,13 +36,12 @@ export const getMigrationTemplateWithSQL = (
       ? formatSqlStatements(migration.downStatements)
       : "// No automatic down migration generated";
 
-  // Generate warning comments if any
   const warningComments =
     migration.warnings.length > 0
       ? migration.warnings.map((w) => ` * WARNING: ${w}`).join("\n") + "\n *\n"
       : "";
 
-  return `import { Migration } from '@mikro-orm/migrations';
+  return `import { BaseMigration } from '@damatjs/orm-migration';
 
 /**
  * Migration: ${name}
@@ -90,7 +53,7 @@ export const getMigrationTemplateWithSQL = (
 ${warningComments} * This migration was auto-generated based on schema changes.
  * Review the SQL statements before running in production.
  */
-export class ${className} extends Migration {
+export class ${className} extends BaseMigration {
     /**
      * Apply the migration
      */
