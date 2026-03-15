@@ -37,6 +37,6 @@
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
     "dev": "bun run build --watch",
     "watch": "tsc --watch",
-    "test": "exit 0"
+    "test": "bun test src/transform/transform.test.ts"
   }
 }
