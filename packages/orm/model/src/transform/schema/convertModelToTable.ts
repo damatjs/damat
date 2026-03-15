@@ -1,15 +1,16 @@
-import { TableSchema, PrimaryKeySchema } from "../types/table";
-import { ColumnSchema } from "../types/column";
-import { IndexSchema } from "../types/indexType";
-import { ForeignKeySchema } from "../types/foreignKey";
+import {
+  TableSchema,
+  PrimaryKeySchema,
+  ColumnSchema, IndexSchema,
+  ForeignKeySchema,
+  ModelDefinition,
+  ModelProperties
+} from "@/types";
 import {
   ColumnBuilder,
-} from "../properties/column";
-import { convertIndexDefinition } from "../properties/indexes";
-import {
   BelongsToBuilder,
-} from "../properties/foreignKeys";
-import { ModelDefinition, ModelProperties } from '../types';
+  convertIndexDefinition
+} from "../properties";
 
 /**
  * Convert a model definition to TableSchema

@@ -1,5 +1,5 @@
-import { HasManyOptions } from '../../types/foreignKey';
-import { RelationBuilder } from './base';
+import { HasManyOptions } from "@/types";
+import { RelationBuilder } from "./base";
 
 /**
  * HasOne relation builder - does not create a foreign key column

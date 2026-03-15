@@ -1,5 +1,4 @@
-import { ForeignKeySchema } from "../../types/foreignKey";
-import { BelongsToOptions } from "../../types/foreignKey";
+import { BelongsToOptions, ForeignKeySchema } from "@/types";
 import { ColumnBuilder, TextColumnBuilder } from "../column";
 import { RelationBuilder } from "./base";
 

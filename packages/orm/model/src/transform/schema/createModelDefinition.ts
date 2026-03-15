@@ -1,6 +1,4 @@
-import { TableSchema } from "../types/table";
-
-import { IndexDefinition, ModelDefinition, ModelProperties } from '../types';
+import { TableSchema, IndexDefinition, ModelDefinition, ModelProperties } from '@/types';
 import { convertModelToTableSchema } from './convertModelToTable';
 
 /**

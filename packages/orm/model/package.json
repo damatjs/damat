@@ -9,6 +9,14 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./transform": {
+      "types": "./dist/transform/index.d.ts",
+      "default": "./dist/transform/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/types/index.js"
     }
   },
   "engines": {
@@ -18,7 +26,8 @@
     "dist",
     "!dist/**/__tests__",
     "!dist/**/__fixtures__",
-    "!dist/**/__mocks__"
+    "!dist/**/__mocks__",
+    "!dist/**/__snapshots__"
   ],
   "author": "Abel Lamesgen",
   "dependencies": {
@@ -37,6 +46,6 @@
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
     "dev": "bun run build --watch",
     "watch": "tsc --watch",
-    "test": "bun test src/transform/transform.test.ts"
+    "test": "bun test src/transform/transform.test.ts && bun test src/connection/connection.test.ts"
   }
 }

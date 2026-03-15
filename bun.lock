@@ -122,6 +122,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@damatjs/deps": "*",
+        "@damatjs/orm-model": "*",
         "@damatjs/types": "*",
         "dotenv": "^17.3.1",
         "reflect-metadata": "^0.2.2",

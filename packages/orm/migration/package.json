@@ -23,6 +23,7 @@
   "author": "Abel Lamesgen",
   "dependencies": {
     "@damatjs/deps": "*",
+    "@damatjs/orm-model": "*",
     "@damatjs/types": "*",
     "dotenv": "^17.3.1",
     "reflect-metadata": "^0.2.2",

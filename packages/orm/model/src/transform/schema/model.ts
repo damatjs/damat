@@ -12,15 +12,13 @@ import {
   EnumColumnBuilder,
   UuidColumnBuilder,
   ByteaColumnBuilder,
-} from "../properties/column";
-import {
   BelongsToBuilder,
   HasManyBuilder,
   HasOneBuilder,
   ModelReference,
   createLazyReference,
-} from "../properties/foreignKeys";
-import { BelongsToOptions, HasManyOptions, ModelDefinition, ModelProperties } from '../types';
+} from "../properties";
+import { BelongsToOptions, HasManyOptions, ModelDefinition, ModelProperties } from '@/types';
 import { createModelDefinition } from './createModelDefinition';
 
 

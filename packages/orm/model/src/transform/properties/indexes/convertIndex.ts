@@ -1,5 +1,4 @@
-import { IndexSchema } from "../../types/indexType";
-import { IndexDefinition } from "../../types";
+import { IndexSchema, IndexDefinition } from "@/types";
 
 /**
  * Convert user-friendly index definition to IndexSchema

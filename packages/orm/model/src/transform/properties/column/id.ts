@@ -1,5 +1,5 @@
 import { ColumnBuilder } from './base';
-import { ColumnSchema } from "../../types/column";
+import { ColumnSchema } from "@/types";
 /**
  * ID column builder with prefix support
  */

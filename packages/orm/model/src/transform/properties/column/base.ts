@@ -1,4 +1,4 @@
-import { ColumnSchema, ColumnType } from "../../types/column";
+import { ColumnSchema, ColumnType } from "@/types";
 
 /**
  * Base column builder providing fluent API for column definition

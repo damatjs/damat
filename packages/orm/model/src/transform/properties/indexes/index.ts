@@ -1,4 +1,4 @@
-import { IndexColumnConfig } from '../../types';
+import { IndexColumnConfig } from '@/types';
 import { IndexBuilder } from './base';
 
 /**
