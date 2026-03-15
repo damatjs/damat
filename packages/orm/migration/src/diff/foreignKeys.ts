@@ -1,20 +1,15 @@
-/**
- * Foreign Key Diff
- *
- * Compare foreign keys between two tables and detect changes.
- */
-
+import type { ForeignKeySchema } from "@damatjs/orm-model/types";
 import type {
   AddForeignKeyChange,
   DropForeignKeyChange,
-  ForeignKeySchema,
   SchemaChange,
-} from "../types";
+} from "../types/diff";
 import { PRIORITY } from "./priority";
 import { createNameMap, foreignKeysEqual } from "./utils";
 
 /**
- * Diff foreign keys between two tables
+ * Diff foreign keys between two versions of a table.
+ * A changed FK is handled as drop + re-add since PostgreSQL has no ALTER CONSTRAINT.
  */
 export function diffForeignKeys(
   tableName: string,
@@ -26,7 +21,7 @@ export function diffForeignKeys(
   const oldMap = createNameMap(oldFKs);
   const newMap = createNameMap(newFKs);
 
-  // Find added foreign keys
+  // Added or changed
   for (const [name, newFK] of newMap) {
     const oldFK = oldMap.get(name);
     if (!oldFK) {
@@ -37,7 +32,6 @@ export function diffForeignKeys(
         priority: PRIORITY.ADD_FOREIGN_KEY,
       } as AddForeignKeyChange);
     } else if (!foreignKeysEqual(oldFK, newFK)) {
-      // Foreign key changed - drop and recreate
       changes.push({
         type: "drop_foreign_key",
         tableName,
@@ -53,7 +47,7 @@ export function diffForeignKeys(
     }
   }
 
-  // Find removed foreign keys
+  // Removed
   for (const [name] of oldMap) {
     if (!newMap.has(name)) {
       changes.push({

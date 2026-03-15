@@ -1,35 +1,27 @@
-/**
- * Enum Diff
- *
- * Compare enums between two schemas and detect changes.
- */
-
 import type {
   AlterEnumChange,
   CreateEnumChange,
   DropEnumChange,
-  EnumSchema,
   SchemaChange,
-} from "../types";
+} from "../types/diff";
+import type { NativeEnum } from "../types/snapshot";
 import { PRIORITY } from "./priority";
-import { createNameMap, enumsEqual } from "./utils";
+import { nativeEnumsEqual } from "./utils";
 
 /**
- * Diff enums between two schemas
+ * Diff native enum types between two snapshots.
+ * Both sides are keyed records — the same shape stored in `ModuleSnapshot.nativeEnums`.
  */
 export function diffEnums(
-  oldEnums: EnumSchema[],
-  newEnums: EnumSchema[],
+  oldEnums: Record<string, NativeEnum>,
+  newEnums: Record<string, NativeEnum>,
 ): { changes: SchemaChange[]; warnings: string[] } {
   const changes: SchemaChange[] = [];
   const warnings: string[] = [];
 
-  const oldMap = createNameMap(oldEnums);
-  const newMap = createNameMap(newEnums);
-
-  // Find added enums
-  for (const [name, newEnum] of newMap) {
-    if (!oldMap.has(name)) {
+  // Added enums
+  for (const [name, newEnum] of Object.entries(newEnums)) {
+    if (!(name in oldEnums)) {
       changes.push({
         type: "create_enum",
         enumDef: newEnum,
@@ -38,9 +30,9 @@ export function diffEnums(
     }
   }
 
-  // Find removed enums
-  for (const [name] of oldMap) {
-    if (!newMap.has(name)) {
+  // Removed enums
+  for (const name of Object.keys(oldEnums)) {
+    if (!(name in newEnums)) {
       changes.push({
         type: "drop_enum",
         enumName: name,
@@ -49,15 +41,15 @@ export function diffEnums(
     }
   }
 
-  // Find altered enums
-  for (const [name, newEnum] of newMap) {
-    const oldEnum = oldMap.get(name);
-    if (oldEnum && !enumsEqual(oldEnum, newEnum)) {
+  // Altered enums
+  for (const [name, newEnum] of Object.entries(newEnums)) {
+    const oldEnum = oldEnums[name];
+    if (oldEnum && !nativeEnumsEqual(oldEnum, newEnum)) {
       const oldSet = new Set(oldEnum.values);
       const newSet = new Set(newEnum.values);
 
-      const addValues = newEnum.values.filter((v: string) => !oldSet.has(v));
-      const removeValues = oldEnum.values.filter((v: string) => !newSet.has(v));
+      const addValues = newEnum.values.filter((v) => !oldSet.has(v));
+      const removeValues = oldEnum.values.filter((v) => !newSet.has(v));
 
       if (addValues.length > 0 || removeValues.length > 0) {
         changes.push({

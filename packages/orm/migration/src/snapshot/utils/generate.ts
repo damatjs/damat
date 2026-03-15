@@ -1,5 +1,5 @@
 import type { ModuleSnapshot } from "../../types/snapshot";
-import type { SnapshotDiff } from "./diff";
+import type { SchemaDiff } from "../../types/diff";
 
 /**
  * Ordered SQL statements for a migration.
@@ -30,7 +30,7 @@ export function generateFromSnapshot(_snapshot: ModuleSnapshot): GeneratedSQL {
  * @stub  Implementation lives in the SQL generator layer (not yet wired).
  */
 export function generateFromDiff(
-  _diff: SnapshotDiff,
+  _diff: SchemaDiff,
   _previous: ModuleSnapshot,
   _current: ModuleSnapshot,
 ): GeneratedSQL {

@@ -1,41 +1,39 @@
-/**
- * Schema Diff
- *
- * Compare two schemas (tables and enums) and generate a diff.
- */
-
-import type {
-  EnumSchema,
-  SchemaDiff,
-  SchemaChange,
-  TableSchema,
-} from "../types";
+import type { SchemaDiff, SchemaChange } from "../types/diff";
+import type { ModuleSnapshot } from "../types/snapshot";
 import { createNameMap } from "./utils";
 import { diffTable } from "./tables";
 import { diffEnums } from "./enums";
 
 /**
- * Compare two table schemas and generate a diff
+ * Compare two module snapshots and produce a full `SchemaDiff`.
  *
- * @param oldTables - Previous schema state (empty array for new tables)
- * @param newTables - Current/desired schema state
- * @returns Schema diff with changes and warnings
+ * This is the primary entry point for the diff layer. Pass the snapshot
+ * loaded from disk as `previous` and the snapshot built from live models
+ * as `current` (use `compareSnapshots` from the snapshot layer to get both).
+ *
+ * Changes are sorted by priority so the SQL generator can emit them in
+ * the correct dependency order (enums before tables, FKs after columns, etc.)
  */
-export function diffTables(
-  oldTables: TableSchema[],
-  newTables: TableSchema[],
+export function diffSnapshots(
+  previous: ModuleSnapshot,
+  current: ModuleSnapshot,
 ): SchemaDiff {
   const allChanges: SchemaChange[] = [];
   const allWarnings: string[] = [];
 
-  const oldMap = createNameMap(oldTables);
-  const newMap = createNameMap(newTables);
+  // Diff native enum types
+  const { changes: enumChanges, warnings: enumWarnings } = diffEnums(
+    previous.nativeEnums,
+    current.nativeEnums,
+  );
+  allChanges.push(...enumChanges);
+  allWarnings.push(...enumWarnings);
 
-  // Get all table names
-  const allTableNames = new Set([...oldMap.keys(), ...newMap.keys()]);
+  // Diff tables
+  const oldMap = createNameMap(previous.tables);
+  const newMap = createNameMap(current.tables);
 
-  // Diff each table
-  for (const tableName of allTableNames) {
+  for (const tableName of new Set([...oldMap.keys(), ...newMap.keys()])) {
     const { changes, warnings } = diffTable(
       oldMap.get(tableName),
       newMap.get(tableName),
@@ -44,47 +42,11 @@ export function diffTables(
     allWarnings.push(...warnings);
   }
 
-  // Sort changes by priority
   allChanges.sort((a, b) => a.priority - b.priority);
 
   return {
     hasChanges: allChanges.length > 0,
     changes: allChanges,
     warnings: allWarnings,
-  };
-}
-
-/**
- * Compare two full module schemas (tables + enums)
- *
- * @param oldTables - Previous tables
- * @param newTables - New tables
- * @param oldEnums - Previous enums
- * @param newEnums - New enums
- * @returns Complete schema diff
- */
-export function diffSchemas(
-  oldTables: TableSchema[],
-  newTables: TableSchema[],
-  oldEnums: EnumSchema[] = [],
-  newEnums: EnumSchema[] = [],
-): SchemaDiff {
-  // Diff tables
-  const tableDiff = diffTables(oldTables, newTables);
-
-  // Diff enums
-  const { changes: enumChanges, warnings: enumWarnings } = diffEnums(
-    oldEnums,
-    newEnums,
-  );
-
-  // Merge and sort all changes
-  const allChanges = [...enumChanges, ...tableDiff.changes];
-  allChanges.sort((a, b) => a.priority - b.priority);
-
-  return {
-    hasChanges: allChanges.length > 0,
-    changes: allChanges,
-    warnings: [...enumWarnings, ...tableDiff.warnings],
   };
 }

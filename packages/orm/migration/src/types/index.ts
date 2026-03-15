@@ -11,6 +11,7 @@ export * from "./log";
 export * from "./module";
 export * from "./migration";
 export * from "./snapshot";
+export * from "./diff";
 
 export type {
   Options,

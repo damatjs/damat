@@ -11,9 +11,9 @@ import { MikroORM } from "@damatjs/deps/mikro-orm/postgresql";
 
 import type { CliOptions } from "../../types";
 // import { createDiffMigration, createInitialMigration } from "../../generator";
-import { getSnapshotPath } from "../../generator/snapshot";
 import { listModulesWithMigrations } from "../../discovery";
 import type { CommandResult } from "./types";
+import { getSnapshotPath } from '@/snapshot';
 
 /**
  * Create a new migration by comparing entities against the schema snapshot.

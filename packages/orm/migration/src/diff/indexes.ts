@@ -1,20 +1,15 @@
-/**
- * Index Diff
- *
- * Compare indexes between two tables and detect changes.
- */
-
+import type { IndexSchema } from "@damatjs/orm-model/types";
 import type {
   AddIndexChange,
   DropIndexChange,
-  IndexSchema,
   SchemaChange,
-} from "../types";
+} from "../types/diff";
 import { PRIORITY } from "./priority";
 import { createNameMap, indexesEqual } from "./utils";
 
 /**
- * Diff indexes between two tables
+ * Diff indexes between two versions of a table.
+ * A changed index is handled as drop + re-add since indexes cannot be altered in place.
  */
 export function diffIndexes(
   tableName: string,
@@ -26,7 +21,7 @@ export function diffIndexes(
   const oldMap = createNameMap(oldIndexes);
   const newMap = createNameMap(newIndexes);
 
-  // Find added indexes
+  // Added or changed
   for (const [name, newIdx] of newMap) {
     const oldIdx = oldMap.get(name);
     if (!oldIdx) {
@@ -37,7 +32,6 @@ export function diffIndexes(
         priority: PRIORITY.ADD_INDEX,
       } as AddIndexChange);
     } else if (!indexesEqual(oldIdx, newIdx)) {
-      // Index changed - drop and recreate
       changes.push({
         type: "drop_index",
         tableName,
@@ -53,7 +47,7 @@ export function diffIndexes(
     }
   }
 
-  // Find removed indexes
+  // Removed
   for (const [name] of oldMap) {
     if (!newMap.has(name)) {
       changes.push({

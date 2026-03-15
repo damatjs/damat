@@ -1,22 +1,16 @@
-/**
- * Table Diff
- *
- * Compare two tables and detect changes.
- */
-
+import type { TableSchema } from "@damatjs/orm-model/types";
 import type {
   CreateTableChange,
   DropTableChange,
   SchemaChange,
-  TableSchema,
-} from "../types";
+} from "../types/diff";
 import { PRIORITY } from "./priority";
 import { diffColumns } from "./columns";
 import { diffIndexes } from "./indexes";
 import { diffForeignKeys } from "./foreignKeys";
 
 /**
- * Diff a single table
+ * Diff a single table between two snapshots.
  */
 export function diffTable(
   oldTable: TableSchema | undefined,
@@ -25,7 +19,7 @@ export function diffTable(
   const changes: SchemaChange[] = [];
   const warnings: string[] = [];
 
-  // Table was added
+  // Added
   if (!oldTable && newTable) {
     changes.push({
       type: "create_table",
@@ -36,7 +30,7 @@ export function diffTable(
     return { changes, warnings };
   }
 
-  // Table was removed
+  // Removed
   if (oldTable && !newTable) {
     changes.push({
       type: "drop_table",
@@ -50,31 +44,21 @@ export function diffTable(
     return { changes, warnings };
   }
 
-  // Both exist - diff contents
+  // Both exist — diff internals
   if (oldTable && newTable) {
-    // Diff columns
-    const columnChanges = diffColumns(
-      newTable.name,
-      oldTable.columns,
-      newTable.columns,
+    changes.push(
+      ...diffColumns(newTable.name, oldTable.columns, newTable.columns),
     );
-    changes.push(...columnChanges);
-
-    // Diff indexes
-    const indexChanges = diffIndexes(
-      newTable.name,
-      oldTable.indexes,
-      newTable.indexes,
+    changes.push(
+      ...diffIndexes(newTable.name, oldTable.indexes, newTable.indexes),
     );
-    changes.push(...indexChanges);
-
-    // Diff foreign keys
-    const fkChanges = diffForeignKeys(
-      newTable.name,
-      oldTable.foreignKeys,
-      newTable.foreignKeys,
+    changes.push(
+      ...diffForeignKeys(
+        newTable.name,
+        oldTable.foreignKeys,
+        newTable.foreignKeys,
+      ),
     );
-    changes.push(...fkChanges);
   }
 
   return { changes, warnings };
