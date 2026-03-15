@@ -1,20 +1,22 @@
 /**
  * Initial Migration Creation
  *
- * Creates initial migrations that set up all tables for a module.
- * Useful for new modules or baseline migrations.
+ * Creates the first migration for a module — generates full CREATE TABLE SQL
+ * from the current model definitions and saves an initial snapshot.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 import type {
-    MikroORM,
-    EntityClass,
-} from "@damatjs/deps/mikro-orm/postgresql";
+  ModelDefinition,
+  ModelProperties,
+} from "@damatjs/orm-model/types";
 
 import { log } from "../logger";
-import type { MigrationGeneratorOptions } from "./types";
-import { buildSnapshot, loadSnapshot, snapshotExist } from '@/snapshot';
+import { captureSnapshot, generateFromSnapshot } from "../snapshot";
+import { getMigrationTemplateWithSQL } from "../utils/template";
+import { generateTimestamp } from "../utils/timestamp";
+import type { MigrationGeneratorOptions } from "../types";
 
 /**
  * Create an initial migration that creates all tables for a module.
@@ -22,8 +24,8 @@ import { buildSnapshot, loadSnapshot, snapshotExist } from '@/snapshot';
  *
  * @param modulesDir - Path to the modules directory
  * @param moduleName - Name of the module
- * @param entities - Entity classes for the module
- * @param orm - MikroORM instance for metadata extraction
+ * @param name - Human-readable label for the migration (e.g. "Initial")
+ * @param models - Model definitions for the module
  * @param options - Generation options
  * @returns Path to the created migration file
  *
@@ -32,66 +34,61 @@ import { buildSnapshot, loadSnapshot, snapshotExist } from '@/snapshot';
  * const filePath = createInitialMigration(
  *   './src/modules',
  *   'user',
- *   [User, UserProfile],
- *   orm,
+ *   'Initial',
+ *   [UserModel, UserProfileModel],
  * );
  * ```
  */
 export function createInitialMigration(
-    modulesDir: string,
-    moduleName: string,
-    options: MigrationGeneratorOptions = {},
+  modulesDir: string,
+  moduleName: string,
+  name: string,
+  models: ModelDefinition<ModelProperties>[],
+  options: MigrationGeneratorOptions = {},
 ): string {
+  const moduleDir = path.join(modulesDir, moduleName);
+  const migrationsDir = path.join(moduleDir, "migrations");
 
-    const newsnapshot = buildSnapshot()
+  if (!fs.existsSync(moduleDir)) {
+    throw new Error(`Module '${moduleName}' not found at ${moduleDir}`);
+  }
 
-    const migrationsDir = path.join(moduleDir, "migrations");
+  if (!fs.existsSync(migrationsDir)) {
+    fs.mkdirSync(migrationsDir, { recursive: true });
+  }
 
-    if (!fs.existsSync(moduleDir)) {
-        throw new Error(`Module '${moduleName}' not found at ${moduleDir}`);
+  // Build snapshot from current models (pure — no I/O)
+  // then immediately persist it and generate SQL from it
+  const snapshot = captureSnapshot(migrationsDir, moduleName, models);
+
+  // Generate full baseline SQL from the snapshot
+  const migration = generateFromSnapshot(snapshot, options);
+
+  // Build migration file
+  const now = new Date();
+  const timestamp = generateTimestamp(now);
+  const className = `Migration${timestamp}_${name}`;
+  const filename = `${className}.ts`;
+  const filePath = path.join(migrationsDir, filename);
+
+  const template = getMigrationTemplateWithSQL(
+    className,
+    name,
+    moduleName,
+    now,
+    migration,
+  );
+
+  fs.writeFileSync(filePath, template);
+  log("success", `Created initial migration: ${moduleName}/${filename}`);
+
+  if (migration.warnings.length > 0) {
+    for (const warning of migration.warnings) {
+      log("warn", warning);
     }
+  }
 
-    if (!fs.existsSync(migrationsDir)) {
-        fs.mkdirSync(migrationsDir, { recursive: true });
-    }
+  log("info", `Created schema snapshot for ${moduleName}`);
 
-    // Extract schema from entities
-    const schema = extractModuleSchema(moduleName, entities, orm);
-
-    // Generate SQL for all tables
-    const upStatements: string[] = [];
-    const downStatements: string[] = [];
-
-    for (const table of schema.tables) {
-        const createStatements = generateCreateTableSQL(table, options);
-        upStatements.push(...createStatements);
-
-        const dropStatement = generateDropTableSQL(table.name, options);
-        downStatements.unshift(dropStatement); // Reverse order for down
-    }
-
-    // Create migration file
-    const now = new Date();
-    const timestamp = generateTimestamp(now);
-    const className = `Migration${timestamp}_Initial`;
-    const filename = `${className}.ts`;
-    const filePath = path.join(migrationsDir, filename);
-
-    const template = getInitialMigrationTemplate(
-        className,
-        "Initial",
-        moduleName,
-        now,
-        upStatements,
-        downStatements,
-    );
-
-    fs.writeFileSync(filePath, template);
-    log("success", `Created initial migration: ${moduleName}/${filename}`);
-
-    // Save initial schema snapshot
-    saveSchemaSnapshot(migrationsDir, schema.tables, schema.enums);
-    log("info", `Created schema snapshot for ${moduleName}`);
-
-    return filePath;
+  return filePath;
 }

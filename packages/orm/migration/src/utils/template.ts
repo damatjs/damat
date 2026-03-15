@@ -1,40 +1,40 @@
-import { GeneratedMigration } from '@/types';
+import { GeneratedMigration } from "@/types";
 
-/**
- * Get the base migration template (empty)
- */
-export const getMigrationTemplate = (
-  className: string,
-  name: string,
-  moduleName: string,
-  timestamp: Date,
-): string => {
-  return `import { Migration } from '@mikro-orm/migrations';
+// /**
+//  * Get the base migration template (empty)
+//  */
+// export const getMigrationTemplate = (
+//   className: string,
+//   name: string,
+//   moduleName: string,
+//   timestamp: Date,
+// ): string => {
+//   return `import { Migration } from '@mikro-orm/migrations';
 
-/**
- * Migration: ${name}
- * Module: ${moduleName}
- * Created: ${timestamp.toISOString()}
- */
-export class ${className} extends Migration {
-    /**
-     * Apply the migration
-     */
-    async up(): Promise<void> {
-        // Write your UP migration SQL here
-        // this.addSql('CREATE TABLE ...');
-    }
+// /**
+//  * Migration: ${name}
+//  * Module: ${moduleName}
+//  * Created: ${timestamp.toISOString()}
+//  */
+// export class ${className} extends Migration {
+//     /**
+//      * Apply the migration
+//      */
+//     async up(): Promise<void> {
+//         // Write your UP migration SQL here
+//         // this.addSql('CREATE TABLE ...');
+//     }
 
-    /**
-     * Revert the migration
-     */
-    async down(): Promise<void> {
-        // Write your DOWN migration SQL here
-        // this.addSql('DROP TABLE IF EXISTS ...');
-    }
-}
-`;
-};
+//     /**
+//      * Revert the migration
+//      */
+//     async down(): Promise<void> {
+//         // Write your DOWN migration SQL here
+//         // this.addSql('DROP TABLE IF EXISTS ...');
+//     }
+// }
+// `;
+// };
 
 /**
  * Format SQL statements for use in migration template
@@ -100,55 +100,6 @@ export class ${className} extends Migration {
 
     /**
      * Revert the migration
-     */
-    async down(): Promise<void> {
-        ${downSql}
-    }
-}
-`;
-};
-
-/**
- * Get a migration template for creating initial tables
- * (Full schema generation without diffing)
- */
-export const getInitialMigrationTemplate = (
-  className: string,
-  name: string,
-  moduleName: string,
-  timestamp: Date,
-  upStatements: string[],
-  downStatements: string[],
-): string => {
-  const upSql =
-    upStatements.length > 0
-      ? formatSqlStatements(upStatements)
-      : "// No tables to create";
-
-  const downSql =
-    downStatements.length > 0
-      ? formatSqlStatements(downStatements)
-      : "// No tables to drop";
-
-  return `import { Migration } from '@mikro-orm/migrations';
-
-/**
- * Migration: ${name}
- * Module: ${moduleName}
- * Created: ${timestamp.toISOString()}
- *
- * Initial migration - creates all tables for the ${moduleName} module.
- */
-export class ${className} extends Migration {
-    /**
-     * Apply the migration - create tables
-     */
-    async up(): Promise<void> {
-        ${upSql}
-    }
-
-    /**
-     * Revert the migration - drop tables
      */
     async down(): Promise<void> {
         ${downSql}
