@@ -18,15 +18,15 @@ import { MigrationTracker } from "../tracker";
 export async function getMigrationStatus(
   pool: Pool,
   modulesDir: string,
-  activeModules: string[],
+  modules?: string[],
 ): Promise<MigrationStatus> {
   const tracker = new MigrationTracker(pool);
   await tracker.ensureTable();
 
-  const modules = listModulesWithMigrations(modulesDir, activeModules);
+  const modulesData = listModulesWithMigrations(modulesDir, modules);
   const result: ModuleMigrationStatus[] = [];
 
-  for (const moduleName of modules) {
+  for (const moduleName of modulesData) {
     const migrations = discoverModuleMigrations(modulesDir, moduleName);
     const applied = await tracker.getApplied(moduleName);
     const appliedNames = new Set(applied.map((a) => a.name));

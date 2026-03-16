@@ -25,18 +25,18 @@ import { executeMigration } from "./migration";
 export async function runMigrations(
   pool: Pool,
   modulesDir: string,
-  activeModules: string[],
+  modules?: string[],
   moduleName?: string,
 ): Promise<ModuleMigrationResult[]> {
   const tracker = new MigrationTracker(pool);
   await tracker.ensureTable();
 
   const results: ModuleMigrationResult[] = [];
-  const modules = moduleName
+  const modulesData = moduleName
     ? [moduleName]
-    : listModulesWithMigrations(modulesDir, activeModules);
+    : listModulesWithMigrations(modulesDir, modules);
 
-  for (const mod of modules) {
+  for (const mod of modulesData) {
     const result = await runModuleMigrations(pool, modulesDir, mod, tracker);
     results.push(result);
   }

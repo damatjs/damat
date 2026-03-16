@@ -18,7 +18,7 @@ export async function commandStatus(
   options: CliOptions,
   args: string[],
 ): Promise<CommandResult> {
-  const { database, activeModules } = options;
+  const { database, modules } = options;
   const modulesDir = options.modulesDir ?? DEFAULT_MODULES_DIR;
   const [moduleName] = args;
 
@@ -52,7 +52,7 @@ export async function commandStatus(
       log(m.applied ? "success" : "warn", `  ${m.name}`);
     }
   } else {
-    const status = await getMigrationStatus(pool, modulesDir, activeModules);
+    const status = await getMigrationStatus(pool, modulesDir, modules);
 
     hasModules = status.modules.length > 0;
 

@@ -32,13 +32,13 @@ import path from "node:path";
  */
 export function listModulesWithMigrations(
   modulesDir: string,
-  activeModules: string[],
+  modules?: string[],
 ): string[] {
-  if (!fs.existsSync(modulesDir)) {
+  if (!fs.existsSync(modulesDir) || !modules) {
     return [];
   }
 
-  return activeModules.filter((moduleName) => {
+  return modules.filter((moduleName) => {
     const migrationsDir = path.join(modulesDir, moduleName, "migrations");
     return (
       fs.existsSync(migrationsDir) &&

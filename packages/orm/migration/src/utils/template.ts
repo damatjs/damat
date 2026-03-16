@@ -1,4 +1,4 @@
-import type { GeneratedMigration } from "@/types";
+import { GeneratedMigration } from '@damatjs/orm-processor';
 
 /**
  * Format SQL statements for use in a migration method body.

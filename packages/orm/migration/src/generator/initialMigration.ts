@@ -10,11 +10,11 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { log } from "../logger";
-import { captureSnapshot, generateFromSnapshot } from "../snapshot";
+import { captureSnapshot, generateFromSnapshot } from "@damatjs/orm-processor";
 import { getMigrationTemplateWithSQL } from "../utils/template";
 import { generateTimestamp } from "../utils/timestamp";
 import { discoverModels } from "../discovery";
-import type { MigrationGeneratorOptions } from "../types";
+import type { MigrationGeneratorOptions } from "@damatjs/orm-processor";
 
 const DEFAULT_MODULES_DIR = "src/modules";
 

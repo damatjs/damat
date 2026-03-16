@@ -24,6 +24,7 @@
   "dependencies": {
     "@damatjs/deps": "*",
     "@damatjs/orm-model": "*",
+    "@damatjs/orm-processor": "*",
     "@damatjs/types": "*",
     "dotenv": "^17.3.1",
     "reflect-metadata": "^0.2.2",

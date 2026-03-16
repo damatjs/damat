@@ -19,9 +19,9 @@ import {
   buildSnapshot,
   diffSnapshots,
   generateFromDiff,
-} from "../snapshot";
+} from "@damatjs/orm-processor";
 import { discoverModels } from "../discovery";
-import type { CreateDiffMigrationOptions, DiffMigrationResult } from "../types";
+import type { CreateDiffMigrationOptions, DiffMigrationResult } from "@damatjs/orm-processor";
 
 const DEFAULT_MODULES_DIR = "src/modules";
 

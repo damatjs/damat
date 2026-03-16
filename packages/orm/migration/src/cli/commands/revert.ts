@@ -19,7 +19,7 @@ export async function commandRevert(
   options: CliOptions,
   args: string[],
 ): Promise<CommandResult> {
-  const { database, activeModules } = options;
+  const { database, modules } = options;
   const modulesDir = options.modulesDir ?? DEFAULT_MODULES_DIR;
 
   const moduleName = args.find((a) => !a.startsWith("--"));
@@ -33,9 +33,9 @@ export async function commandRevert(
     console.error("");
     console.error("Modules with migrations:");
 
-    const modules = listModulesWithMigrations(modulesDir, activeModules);
-    if (modules.length > 0) {
-      for (const m of modules) {
+    const modulesData = listModulesWithMigrations(modulesDir, modules);
+    if (modulesData.length > 0) {
+      for (const m of modulesData) {
         console.error(`  - ${m}`);
       }
     } else {

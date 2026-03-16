@@ -15,9 +15,8 @@ import {
   createDiffMigration,
   DEFAULT_MODULES_DIR,
 } from "../../generator";
-import { listModulesWithMigrations } from "../../discovery";
 import { log } from "../../logger";
-import { snapshotExist } from "../../snapshot";
+import { snapshotExist } from "@damatjs/orm-processor";
 import type { CommandResult } from "./types";
 
 /**
@@ -30,12 +29,11 @@ export async function commandCreate(
   options: CliOptions,
   args: string[],
 ): Promise<CommandResult> {
-  const { activeModules } = options;
   const modulesDir = options.modulesDir ?? DEFAULT_MODULES_DIR;
   const [moduleName] = args;
 
   if (!moduleName) {
-    printUsage(modulesDir, activeModules);
+    printUsage();
     return { exitCode: 1 };
   }
 
@@ -102,27 +100,16 @@ export async function commandCreate(
 /**
  * Print usage information
  */
-function printUsage(modulesDir: string, activeModules: string[]): void {
+function printUsage(): void {
   log("error", "Module name is required");
   console.error("");
   console.error("Usage: npm run db:migrate:create <module>");
   console.error("");
   console.error("Modules with migrations:");
-
-  const foundModules = listModulesWithMigrations(modulesDir, activeModules);
-  if (foundModules.length > 0) {
-    for (const m of foundModules) {
-      console.error(`  - ${m}`);
-    }
-  } else {
-    console.error("  (no modules found)");
-  }
-
+  console.error("  (no modules found)");
   console.error("");
   console.error("Examples:");
-  console.error(
-    "  npm run db:migrate:create user    # First or diff migration",
-  );
+  console.error("  npm run db:migrate:create user");
   console.error("");
   console.error(
     "Models are auto-discovered from {modulesDir}/{module}/models/",

@@ -15,7 +15,7 @@ import type { CommandResult } from "./types";
  * Run all pending migrations (up command).
  */
 export async function commandUp(options: CliOptions): Promise<CommandResult> {
-  const { database, activeModules } = options;
+  const { database, modules } = options;
   const modulesDir = options.modulesDir ?? DEFAULT_MODULES_DIR;
 
   console.log("");
@@ -27,7 +27,7 @@ export async function commandUp(options: CliOptions): Promise<CommandResult> {
     min: database.poolMin,
     max: database.poolMax,
   });
-  const results = await runMigrations(pool, modulesDir, activeModules);
+  const results = await runMigrations(pool, modulesDir, modules);
 
   const hasFailures = results.some((r) => !r.success);
   console.log("");
