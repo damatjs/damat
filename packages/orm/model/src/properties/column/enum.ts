@@ -1,27 +1,27 @@
-import { ColumnBuilder } from './base';
+import { EnumBuilder } from "@/properties/enum";
+import { ColumnBuilder } from "./base";
 
 /**
- * Enum column builder
+ * Enum column builder.
+ *
+ * Accepts a pre-declared EnumBuilder. At construction time the enum name and
+ * its TS type string are extracted and stored as plain strings — the column
+ * holds no live reference to the EnumBuilder afterwards. This mirrors how
+ * PostgreSQL columns reference a named CREATE TYPE by name rather than
+ * re-declaring the values inline.
+ *
+ * Usage:
+ *   const Status = new EnumBuilder(['active', 'inactive']).name('Status');
+ *   new EnumColumnBuilder(Status)
+ *     // toSchema().enum  → "Status"
+ *     // toTsType()       → "Status"  (name, not the expanded union)
  */
 export class EnumColumnBuilder extends ColumnBuilder {
-  constructor(enumNameOrValues: string | string[]) {
+  constructor(enumType: EnumBuilder) {
     super("enum");
-    if (Array.isArray(enumNameOrValues)) {
-      this._enumValues = enumNameOrValues;
-    } else {
-      this._enumName = enumNameOrValues;
-    }
-  }
-
-  /** Set enum name */
-  enumName(name: string): this {
-    this._enumName = name;
-    return this;
-  }
-
-  /** Set enum values */
-  values(vals: string[]): this {
-    this._enumValues = vals;
-    return this;
+    // Store only the name — used as the PG type reference in the schema
+    this._enum = enumType.toTsTypeName();
+    // Store the TS type string — used by toTsType() to bypass pgTypeToTsBase
+    this._enumTsType = enumType.toTsTypeName();
   }
 }

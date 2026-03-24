@@ -1,3 +1,4 @@
+
 /**
  * Foreign key on delete/update action
  */
@@ -8,6 +9,7 @@ export type ForeignKeyAction =
   | "RESTRICT"
   | "NO ACTION";
 
+export type ForeignKeySchemaMatch = "SIMPLE" | "FULL"
 /**
  * Foreign key definition
  */
@@ -29,7 +31,9 @@ export interface ForeignKeySchema {
   /** If deferrable, start as INITIALLY DEFERRED instead of IMMEDIATE */
   initiallyDeferred?: boolean;
   /** How multi-column FKs are matched ("SIMPLE" default, or "FULL") */
-  match?: "SIMPLE" | "FULL";
+  match?: ForeignKeySchemaMatch;
   /** Whether the relationship one to many or one to one */
   unique?: boolean;
+  /** Whether the foreign key is nullable or not**/
+  nullable?: boolean;
 }

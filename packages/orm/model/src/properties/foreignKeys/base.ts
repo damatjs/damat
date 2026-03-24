@@ -1,27 +1,35 @@
-import { ForeignKeyAction, RelationDefinition, RelationType } from "@/types";
+import { ForeignKeyAction, ForeignKeySchema, ForeignKeySchemaMatch } from "@/types";
 
 /**
- * Base relation builder
+ * Base ForeignKey builder
  */
-export abstract class RelationBuilder {
-  protected _type: RelationType;
-  protected _target: () => string;
-  protected _foreignKey?: string;
-  protected _mappedBy?: string;
-  protected _nullable: boolean = false;
+export abstract class ForeignKeyBuilder {
+  protected _name: string;
+  protected _columns: string[];
+  protected _referencedTable: string;
+  protected _referencedColumns: string[];
   protected _onDelete?: ForeignKeyAction;
   protected _onUpdate?: ForeignKeyAction;
+  protected _deferrable?: boolean;
+  protected _initiallyDeferred?: boolean;
+  protected _match?: ForeignKeySchemaMatch;
+  protected _unique?: boolean;
+  protected _nullable?: boolean;
 
-  constructor(type: RelationType, target: () => string) {
-    this._type = type;
-    this._target = target;
+
+  constructor(
+    { name, referencedTable, columns, referencedColumns }: {
+      name: string,
+      columns?: string[],
+      referencedTable: string,
+      referencedColumns?: string[],
+    }) {
+    this._name = name;
+    this._columns = columns ? columns : [`${referencedTable}_id`];
+    this._referencedTable = referencedTable;
+    this._referencedColumns = referencedColumns ? referencedColumns : [`id`]
   }
 
-  /** Mark relation as nullable */
-  nullable(): this {
-    this._nullable = true;
-    return this;
-  }
 
   /** Set on delete action */
   onDelete(action: ForeignKeyAction): this {
@@ -35,43 +43,61 @@ export abstract class RelationBuilder {
     return this;
   }
 
-  /** Get the target table name */
-  getTargetTableName(): string {
-    return this._target();
+  /** Mark relation as nullable */
+  unique(): this {
+    this._unique = true;
+    return this;
   }
 
-  /** Get the mappedBy property name */
-  getMappedBy(): string | undefined {
-    return this._mappedBy;
+
+  /** Mark relation as nullable */
+  deferrable(): this {
+    this._deferrable = true;
+    return this;
   }
 
-  /** Get relation definition */
-  toDefinition(): RelationDefinition {
-    const def: RelationDefinition = {
-      type: this._type,
-      target: this._target,
-      nullable: this._nullable,
+  /** Mark relation as nullable */
+  initiallyDeferred(): this {
+    this._initiallyDeferred = true;
+    return this;
+  }
+  /** Mark relation as nullable */
+  match(data: ForeignKeySchemaMatch): this {
+    this._match = data;
+    return this;
+  }
+
+  /** Convert to ColumnSchema */
+  toSchema(): ForeignKeySchema {
+    const schema: ForeignKeySchema = {
+      name: this._name,
+      columns: this._columns,
+      referencedColumns: this._referencedColumns,
+      referencedTable: this._referencedTable
     };
 
-    if (this._foreignKey !== undefined) {
-      def.foreignKey = this._foreignKey;
-    }
-    if (this._mappedBy !== undefined) {
-      def.mappedBy = this._mappedBy;
-    }
+    // Only add optional properties if they have values
     if (this._onDelete !== undefined) {
-      def.onDelete = this._onDelete;
+      schema.onDelete = this._onDelete;
     }
     if (this._onUpdate !== undefined) {
-      def.onUpdate = this._onUpdate;
+      schema.onUpdate = this._onUpdate;
+    }
+    if (this._unique !== undefined) {
+      schema.unique = this._unique;
+    }
+    if (this._deferrable !== undefined) {
+      schema.deferrable = this._deferrable;
+    }
+    if (this._initiallyDeferred !== undefined) {
+      schema.initiallyDeferred = this._initiallyDeferred;
+    }
+    if (this._match !== undefined) {
+      schema.match = this._match;
     }
 
-    return def;
+    return schema;
   }
 
-  /** Check if this relation creates a foreign key column */
-  abstract createsForeignKey(): boolean;
 
-  /** Get the foreign key column name if this relation creates one */
-  abstract getForeignKeyColumn(): string | undefined;
 }

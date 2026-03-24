@@ -13,8 +13,8 @@ export class ColumnBuilder {
   protected _default?: string;
   protected _length?: number;
   protected _scale?: number;
-  protected _enumName?: string;
-  protected _enumValues?: string[];
+  protected _enum?: string;
+  protected _enumTsType?: string;
   protected _array: boolean = false;
   protected _fieldName?: string;
   protected _autoincrement: boolean = false;
@@ -87,7 +87,6 @@ export class ColumnBuilder {
       autoincrement: this._autoincrement,
     };
 
-    // Only add optional properties if they have values
     if (this._default !== undefined) {
       schema.default = this._default;
     }
@@ -97,11 +96,8 @@ export class ColumnBuilder {
     if (this._scale !== undefined) {
       schema.scale = this._scale;
     }
-    if (this._enumName !== undefined) {
-      schema.enumName = this._enumName;
-    }
-    if (this._enumValues !== undefined) {
-      schema.enumValues = this._enumValues;
+    if (this._enum !== undefined) {
+      schema.enum = this._enum;
     }
     if (this._fieldName !== undefined) {
       schema.fieldName = this._fieldName;
@@ -111,47 +107,33 @@ export class ColumnBuilder {
   }
 
   /**
-   * Returns the TypeScript type string for this column as it would be written
-   * by hand — accounting for the PG→TS type mapping, array wrapping, and
-   * nullability.
+   * Returns the TypeScript type string for this column — accounting for array
+   * wrapping and nullability.
    *
-   * Special cases handled:
-   *   - Multirange types already produce Array<...> from pgTypeToTsBase; a
-   *     second .array() call wraps the whole thing again correctly.
-   *   - Structured types (ranges, geometric, interval) that contain spaces or
-   *     braces are parenthesised before appending | null so the union is
-   *     unambiguous.
-   *   - Enum unions with multiple members are parenthesised before | null.
+   * For enum columns the TS type string is taken directly from the EnumBuilder
+   * that was passed at construction time (stored in _enumTsType), so pgTypeToTsBase
+   * is bypassed entirely. The union is declared once on the EnumBuilder; here
+   * we only reference the name.
    *
    * Examples:
    *   integer                            → "number"
    *   integer         + nullable         → "number | null"
    *   text            + array            → "Array<string>"
    *   text            + array + nullable → "Array<string> | null"
-   *   real            + array            → "Array<number>"  (embedding vector)
-   *   enum(['a','b'])                    → "'a' | 'b'"
-   *   enum(['a','b']) + nullable         → "('a' | 'b') | null"
+   *   enum(Status)                       → "Status"
+   *   enum(Status)    + nullable         → "Status | null"
+   *   enum(Status)    + array            → "Array<Status>"
    *   point                              → "{ x: number; y: number }"
    *   point           + nullable         → "{ x: number; y: number } | null"
-   *   int4range                          → "{ lower: number | null; upper: number | null; ... }"
-   *   int4range       + nullable         → "{ lower: number | null; ... } | null"
-   *   interval                           → "{ years: number; months: number; ... }"
    */
   toTsType(): string {
-    const base = pgTypeToTsBase(this._type, this._enumValues);
+    // Enum: use the TS type extracted from the EnumBuilder, bypassing pgTypeToTsBase
+    const base =
+      this._type === "enum" && this._enumTsType
+        ? this._enumTsType
+        : pgTypeToTsBase(this._type);
 
-    // Determine whether the base string itself needs parentheses when combined
-    // with | null. This is needed for:
-    //   - enum unions:  'a' | 'b'  →  ('a' | 'b') | null
-    //   - object types: { x: number; y: number }  →  no parens needed (braces
-    //     already delimit the type), BUT we add them anyway for consistency when
-    //     there is a top-level union inside (range types have "| null" inside).
     const baseNeedsParens = (b: string): boolean => {
-      // Multi-member enum union — contains " | " at the top level outside braces
-      if (this._type === "enum" && (this._enumValues?.length ?? 0) > 1)
-        return true;
-      // Any other top-level union in the base string (e.g. bigint | null inside ranges)
-      // We detect this by checking for " | " outside of any <> or {} nesting.
       let depth = 0;
       for (let i = 0; i < b.length - 3; i++) {
         const ch = b[i];
@@ -162,17 +144,12 @@ export class ColumnBuilder {
       return false;
     };
 
-    // Apply array wrapping when _array is true.
-    // Structured base types (objects, unions) are safe inside Array<>.
     const withArray = this._array ? `Array<${base}>` : base;
 
     if (!this._nullable) {
       return withArray;
     }
 
-    // For nullable: decide whether to parentheses.
-    // After array-wrapping the result is always unambiguous (Array<X> | null
-    // needs no parentheses). Only bare base types that contain top-level unions need it.
     if (!this._array && baseNeedsParens(base)) {
       return `(${base}) | null`;
     }

@@ -30,10 +30,7 @@ import { ColumnType } from "@/types";
  *   - Where the pg driver returns a structured object the type string is the
  *     inline object literal that exactly matches that shape.
  */
-export function pgTypeToTsBase(
-  type: ColumnType,
-  enumValues?: string[],
-): string {
+export function pgTypeToTsBase(type: ColumnType): string {
   switch (type) {
     // ── Integers ────────────────────────────────────────────────────────
     // smallint / integer / serial / smallserial all fit in JS number
@@ -91,11 +88,9 @@ export function pgTypeToTsBase(
       return "boolean";
 
     // ── Enum ─────────────────────────────────────────────────────────────
-    // Tight string-literal union when values are known, plain string otherwise
+    // Columns that use EnumBuilder resolve to the named type alias before
+    // reaching this function. This fallback handles raw / unresolved cases.
     case "enum":
-      if (enumValues && enumValues.length > 0) {
-        return enumValues.map((v) => `'${v}'`).join(" | ");
-      }
       return "string";
 
     // ── JSON ─────────────────────────────────────────────────────────────
@@ -203,4 +198,17 @@ export function pgTypeToTsBase(
     case "pg_snapshot":
       return "string";
   }
+}
+
+/**
+ * Maps enum values to a TypeScript string-literal union type.
+ * Returns plain `string` when no values are provided.
+ * Can be used independently wherever an enum type string is needed
+ * without going through the full pgTypeToTsBase switch.
+ */
+export function enumTypeToTsBase(enumValues?: string[]): string {
+  if (enumValues && enumValues.length > 0) {
+    return enumValues.map((v) => `'${v}'`).join(" | ");
+  }
+  return "string";
 }

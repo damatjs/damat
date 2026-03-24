@@ -98,10 +98,8 @@ export interface ColumnSchema {
   default?: string;
   /** Is this column unique */
   unique: boolean;
-  /** Enum name for PostgreSQL */
-  enumName?: string;
-  /** Enum values if type is enum */
-  enumValues?: string[];
+  /** Enum type name (references a named EnumBuilder) */
+  enum?: string;
   /** Whether the column is an array type */
   array?: boolean;
   /** Database field name (if different from property name) */

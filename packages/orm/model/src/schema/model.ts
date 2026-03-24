@@ -19,6 +19,7 @@ import {
   InferModelProperties,
   createLazyReference,
 } from "../properties";
+import { EnumBuilder } from "../properties/enum";
 import {
   BelongsToOptions,
   HasManyOptions,
@@ -95,8 +96,8 @@ export const model = {
   },
 
   /** Create an enum column */
-  enum(enumNameOrValues: string | string[]): EnumColumnBuilder {
-    return new EnumColumnBuilder(enumNameOrValues);
+  enum(enumType: EnumBuilder): EnumColumnBuilder {
+    return new EnumColumnBuilder(enumType);
   },
 
   /** Create a UUID column */
