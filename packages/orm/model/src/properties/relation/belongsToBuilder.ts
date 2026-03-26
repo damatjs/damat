@@ -208,10 +208,12 @@ export class BelongsTo extends Relation {
    */
   getForeignKey(): ForeignKeyType[] {
     if (!this._foreignKey || this._foreignKey.length === 0) {
-      this._foreignKey = [{
-        name: `${this.getModuleTarget()._tableName}_id`,
-        type: "text"
-      }]
+      this._foreignKey = [
+        {
+          name: `${this.getModuleTarget()._tableName}_id`,
+          type: "text",
+        },
+      ];
     }
     return this._foreignKey;
   }
@@ -219,15 +221,14 @@ export class BelongsTo extends Relation {
   getConstrainName(): string {
     if (!this._constraintName) {
       const fk = this.getForeignKey();
-      this._constraintName = `${this.getModuleTarget()._tableName}_${fk.map((fk) => fk.name).join("_")}_fk`
+      this._constraintName = `${this.getModuleTarget()._tableName}_${fk.map((fk) => fk.name).join("_")}_fk`;
     }
     return this._constraintName;
   }
 
-
   getReference(): string[] {
     if (!this._reference || this._reference.length === 0) {
-      this._reference = ["id"]
+      this._reference = ["id"];
     }
     return this._reference;
   }
@@ -249,6 +250,11 @@ export class BelongsTo extends Relation {
    */
   getMappedBy(): string {
     return this._mappedBy ?? removeLastS(this.getModuleTarget()._tableName);
+  }
+
+  /** Returns `true` only when `mappedBy` was explicitly provided. */
+  hasExplicitMappedBy(): boolean {
+    return this._mappedBy !== undefined;
   }
 
   // ─── Schema generation ────────────────────────────────────────────────────
@@ -316,12 +322,12 @@ export class BelongsTo extends Relation {
     return cols;
   }
   /**
-  * Build a `ColumnBuilder` for the FK column.
-  * The column name is set externally by `ModelDefinition` via `_setName`.
-  */
+   * Build a `ColumnBuilder` for the FK column.
+   * The column name is set externally by `ModelDefinition` via `_setName`.
+   */
   toColumnSchema(): ColumnSchema[] {
     const cols = this.toColumnBuilder().map((columnBuilder) => {
-      return columnBuilder.toSchema()
+      return columnBuilder.toSchema();
     });
 
     return cols;

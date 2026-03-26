@@ -2,4 +2,4 @@ export * from "./base";
 export * from "./belongsToBuilder";
 export * from "./hasManyBuilder";
 export * from "./hasOneBuilder";
-export * from "./validate";
+export * from "./validate/index";
