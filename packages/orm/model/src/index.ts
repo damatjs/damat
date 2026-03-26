@@ -6,3 +6,5 @@ export * from "./schema";
 
 export * from "./types";
 
+// Export type code generator
+export * from "./codegen";
