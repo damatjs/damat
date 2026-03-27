@@ -53,6 +53,21 @@
           "array": false,
           "autoincrement": false,
           "default": "now()"
+        },
+        {
+          "name": "created_at",
+          "type": "date",
+          "nullable": false,
+          "default": "now()",
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "name": "updated_at",
+          "type": "date",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
         }
       ],
       "indexes": [],
@@ -158,6 +173,21 @@
           "unique": false,
           "array": false,
           "autoincrement": false
+        },
+        {
+          "name": "created_at",
+          "type": "date",
+          "nullable": false,
+          "default": "now()",
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "name": "updated_at",
+          "type": "date",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
         }
       ],
       "indexes": [
@@ -256,6 +286,21 @@
           "array": false,
           "autoincrement": false,
           "default": "now()"
+        },
+        {
+          "name": "created_at",
+          "type": "date",
+          "nullable": false,
+          "default": "now()",
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "name": "updated_at",
+          "type": "date",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
         }
       ],
       "indexes": [
@@ -329,6 +374,21 @@
           "unique": false,
           "array": false,
           "autoincrement": false
+        },
+        {
+          "name": "created_at",
+          "type": "date",
+          "nullable": false,
+          "default": "now()",
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "name": "updated_at",
+          "type": "date",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
         }
       ],
       "indexes": [
@@ -454,6 +514,21 @@
           "array": false,
           "autoincrement": false,
           "default": "now()"
+        },
+        {
+          "name": "created_at",
+          "type": "date",
+          "nullable": false,
+          "default": "now()",
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "name": "updated_at",
+          "type": "date",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
         }
       ],
       "indexes": [

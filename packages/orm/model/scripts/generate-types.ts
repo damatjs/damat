@@ -40,7 +40,7 @@ const output = generateTypes(schema);
 
 // ─── Write output ─────────────────────────────────────────────────────────────
 
-const outPath = join(import.meta.dir, "../src/generated/types.ts");
+const outPath = join(import.meta.dir, "./generated/types.ts");
 
 mkdirSync(dirname(outPath), { recursive: true });
 writeFileSync(outPath, output, "utf8");

@@ -8,3 +8,8 @@ export const toPascalCase = (str: string): string => {
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join("");
 }
+
+/** snake_case → camelCase (simple single-pass) */
+export const toCamelCase = (str: string): string => {
+  return str.replace(/_([a-z])/g, (_, ch) => ch.toUpperCase());
+}

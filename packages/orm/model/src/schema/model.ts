@@ -13,7 +13,7 @@ import { HasManyBuilder } from "@/properties/relation/hasManyBuilder";
 import { HasOneBuilder } from "@/properties/relation/hasOneBuilder";
 import { IndexBuilder } from "@/properties/indexes/base";
 import { ConstraintBuilder } from "@/properties/constraints/base";
-import { toPascalCase } from "@/utils/toPascalCase";
+import { toPascalCase } from "@/utils/stringConvertor";
 
 // ─── ModelDefinition class ────────────────────────────────────────────────────
 
@@ -146,6 +146,23 @@ export class ModelDefinition {
         relations.push(propValue.toRelationSchema(this._tableName));
       }
     }
+
+    columns.push({
+      name: "created_at",
+      type: "date",
+      nullable: false,
+      default: "now()",
+      primaryKey: false,
+      unique: false,
+    })
+
+    columns.push({
+      name: "updated_at",
+      type: "date",
+      nullable: true,
+      primaryKey: false,
+      unique: false,
+    })
 
     const schema: TableSchema & { schema?: string } = {
       name: this._tableName,
