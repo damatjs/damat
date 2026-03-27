@@ -1,197 +1,158 @@
-import { ColumnSchema } from "@/types";
-import {
-  BuiltQuery,
-  ColumnValueMap,
-  RawWhereClause,
-  TableRef,
-  WhereClause,
-} from "./types";
-import {
-  assembleQuery,
-  assertKnownColumns,
-  assertKnownColumnList,
-  buildReturningClause,
-  buildTableRef,
-  buildWhereClause,
-  knownColumns,
-  quoteIdent,
-} from "./helpers";
+import { ModelDefinition } from "@/schema/model";
+import { BuiltQuery, UpdateDescriptor, ValuesMap } from "./types";
+import { assembleQuery, quoteIdent } from "./helpers";
+import { QueryBase } from "./base";
 
-// ─── UpdateQueryBuilder ───────────────────────────────────────────────────────
+// ─── UpdateBuilder ────────────────────────────────────────────────────────────
 
 /**
  * Fluent builder for `UPDATE … SET … WHERE … RETURNING …` queries.
  *
- * Constructed via `ModelDefinition.update()` — never directly.
- *
- * ### Example
+ * ### Usage
  * ```ts
- * const q = UserSchema
- *   .update()
+ * const q = new UpdateBuilder(UserSchema)
  *   .set({ name: "Alice", verified: true })
  *   .where({ id: "usr_1" })
  *   .returning(["id", "name", "updated_at"])
- *   .build();
+ *   .generateSql();
  *
- * // q.sql    → UPDATE "store"."user" SET "name" = $1, "verified" = $2
+ * // q.sql    → UPDATE "store"."user"
+ * //            SET "name" = $1, "verified" = $2
  * //            WHERE "id" = $3
- * //            RETURNING "id","name","updated_at"
+ * //            RETURNING "id", "name", "updated_at"
  * // q.params → ["Alice", true, "usr_1"]
  * ```
  *
- * ### Raw WHERE
+ * ### Safety
+ * `.generateSql()` throws when no WHERE / whereRaw clause is present —
+ * preventing accidental full-table updates.  Opt in with `.allowFullTable()`.
+ *
+ * ### Standalone usage pattern
  * ```ts
- * .whereRaw({ sql: "lower(email) = lower($1)", params: [email] })
+ * const user = { update: new UpdateBuilder(UserSchema) };
+ * const q = user.update
+ *   .set({ verified: true })
+ *   .where({ email: "a@b.com" })
+ *   .generateSql();
  * ```
  *
- * > **Safety**: calling `.build()` without any `.where()` / `.whereRaw()` clause
- * > will throw to prevent accidental full-table updates.  Use `.allowFullTable()`
- * > to opt-in when you genuinely need to update every row.
+ * ### Generic column-name narrowing (with codegen)
+ * ```ts
+ * type UserCols = "id" | "email" | "name" | "verified" | "created_at" | "updated_at";
+ * const q = new UpdateBuilder<UserCols>(UserSchema);
+ * q.set({ bogus: 1 }); // ← TypeScript error
+ * ```
  */
-export class UpdateQueryBuilder {
-  private readonly _tableRef: TableRef;
-  private readonly _knownCols: Set<string>;
+export class UpdateBuilder<
+  Cols extends string = string,
+> extends QueryBase<Cols> {
+  private _set: ValuesMap<Cols> = {};
+  private _allowFullTable = false;
 
-  private _set: ColumnValueMap = {};
-  private _whereClauses: WhereClause[] = [];
-  private _rawWhereClauses: RawWhereClause[] = [];
-  private _returning: string[] = [];
-  private _allowFullTable: boolean = false;
-
-  constructor(tableRef: TableRef, columns: ColumnSchema[]) {
-    this._tableRef = tableRef;
-    this._knownCols = knownColumns(columns);
+  constructor(model: ModelDefinition) {
+    super(model);
   }
 
-  // ─── SET ───────────────────────────────────────────────────────────────────
+  // ─── SET ──────────────────────────────────────────────────────────────────
 
   /**
    * Provide the column → value pairs to update.
    *
-   * All keys are validated against the model's column list.  Calling `.set()`
-   * multiple times merges the values (later calls win on duplicate keys).
+   * All keys are validated against the model's column list.  Multiple `.set()`
+   * calls are merged — later calls win on duplicate keys.
    *
-   * @example
    * ```ts
    * .set({ name: "Alice", verified: true })
-   * .set({ updated_at: new Date() })   // merged into the same SET clause
+   * .set({ updated_at: new Date() })   // merged into same SET clause
    * ```
    */
-  set(values: ColumnValueMap): this {
-    assertKnownColumns(values, this._knownCols, "update.set");
+  set(values: ValuesMap<Cols>): this {
+    this._assertCols(values as Record<string, unknown>, "update.set");
     this._set = { ...this._set, ...values };
     return this;
   }
 
-  // ─── WHERE ─────────────────────────────────────────────────────────────────
+  // ─── Safety opt-out ────────────────────────────────────────────────────────
 
   /**
-   * Add object-style WHERE conditions (AND-ed together).
+   * Allow building an UPDATE without a WHERE clause (affects all rows).
    *
-   * @example
-   * ```ts
-   * .where({ id: "usr_1" })
-   * .where({ status: { in: ["active", "pending"] } })
-   * ```
-   */
-  where(clause: WhereClause): this {
-    this._whereClauses.push(clause);
-    return this;
-  }
-
-  /**
-   * Add a raw SQL WHERE fragment.
-   *
-   * Parameters must be numbered from `$1` — they are re-numbered automatically
-   * to avoid clashes with SET parameters.
-   *
-   * @example
-   * ```ts
-   * .whereRaw({ sql: "created_at < now() - interval $1", params: ["1 year"] })
-   * ```
-   */
-  whereRaw(clause: RawWhereClause): this {
-    this._rawWhereClauses.push(clause);
-    return this;
-  }
-
-  // ─── RETURNING ─────────────────────────────────────────────────────────────
-
-  /**
-   * Specify which columns to return after the update.
-   *
-   * Calling without arguments is equivalent to `RETURNING *`.
-   *
-   * @example `.returning(["id", "updated_at"])`
-   */
-  returning(columns: string[] = []): this {
-    assertKnownColumnList(columns, this._knownCols, "update.returning");
-    this._returning = columns;
-    return this;
-  }
-
-  // ─── Safety escape hatch ───────────────────────────────────────────────────
-
-  /**
-   * Allow building an `UPDATE` without a `WHERE` clause, affecting all rows.
-   *
-   * Use with care — this is intentionally opt-in.
+   * This is intentionally opt-in to prevent accidental full-table updates.
    */
   allowFullTable(): this {
     this._allowFullTable = true;
     return this;
   }
 
-  // ─── Build ─────────────────────────────────────────────────────────────────
+  // ─── generateSql ──────────────────────────────────────────────────────────
 
-  /**
-   * Compile the builder state into a `{ sql, params }` object.
-   */
-  build(): BuiltQuery {
+  generateSql(): BuiltQuery {
     if (Object.keys(this._set).length === 0) {
       throw new Error(
-        "[query:update] No columns to update — call .set() before .build()",
+        "[query:update] No columns to update — call .set() before .generateSql()",
       );
     }
 
     const hasWhere =
       this._whereClauses.length > 0 || this._rawWhereClauses.length > 0;
-
     if (!hasWhere && !this._allowFullTable) {
       throw new Error(
-        "[query:update] No WHERE clause provided. " +
-          "This would update every row. " +
-          "Add a .where() condition or call .allowFullTable() to opt-in.",
+        "[query:update] No WHERE clause — this would update every row. " +
+          "Add .where() or call .allowFullTable() to opt-in.",
       );
     }
 
     const params: unknown[] = [];
 
-    // SET clause
-    const setFragments = Object.entries(this._set).map(([col, val]) => {
+    // SET clause — params built first so $N numbering starts at 1
+    const setFragments = Object.entries(
+      this._set as Record<string, unknown>,
+    ).map(([col, val]) => {
       params.push(val);
       return `${quoteIdent(col)} = $${params.length}`;
     });
-    const setClause = `SET ${setFragments.join(", ")}`;
 
-    // UPDATE clause
-    const updateClause = `UPDATE ${buildTableRef(this._tableRef)}`;
+    const parts = [
+      `UPDATE ${this._table()}`,
+      `SET ${setFragments.join(", ")}`,
+      this._buildWhere(params), // WHERE params continue from after SET params
+      this._buildOrderBy(),
+      this._buildReturning(),
+    ];
 
-    // WHERE clause (params are appended after SET params)
-    const whereClause = buildWhereClause(
-      this._whereClauses,
-      this._rawWhereClauses,
-      params,
-      this._knownCols,
-    );
+    return assembleQuery(parts, params);
+  }
 
-    // RETURNING
-    const returningClause =
-      this._returning.length >= 0 ? buildReturningClause(this._returning) : "";
+  // ─── generateJson ─────────────────────────────────────────────────────────
 
-    return assembleQuery(
-      [updateClause, setClause, whereClause, returningClause],
-      params,
-    );
+  /**
+   * Produce a structured `UpdateDescriptor` describing this query without
+   * generating a SQL string.
+   *
+   * ```ts
+   * const json = new UpdateBuilder(UserSchema)
+   *   .set({ verified: true })
+   *   .where({ id: "usr_1" })
+   *   .generateJson();
+   * // json.type  → "update"
+   * // json.set   → { verified: true }
+   * // json.where → [{ id: "usr_1" }]
+   * ```
+   */
+  generateJson(): UpdateDescriptor {
+    const desc: UpdateDescriptor = {
+      type: "update",
+      table: this._tableRef.name,
+      set: { ...(this._set as Record<string, unknown>) },
+      where: this._whereClauses.map((c) => ({
+        ...c,
+      })) as UpdateDescriptor["where"],
+      whereRaw: this._rawWhereClauses.map((c) => ({ ...c })),
+      orderBy: this._orderByClauses.map((c) => ({ ...c })),
+      returning: [...this._returningCols],
+    };
+    if (this._tableRef.schema !== undefined)
+      desc.schema = this._tableRef.schema;
+    return desc;
   }
 }

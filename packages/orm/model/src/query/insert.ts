@@ -1,177 +1,155 @@
-import { ColumnSchema } from "@/types";
-import {
-  BuiltQuery,
-  ColumnValueMap,
-  RawWhereClause,
-  TableRef,
-  WhereClause,
-} from "./types";
-import {
-  assembleQuery,
-  assertKnownColumns,
-  assertKnownColumnList,
-  buildReturningClause,
-  buildTableRef,
-  buildWhereClause,
-  knownColumns,
-  quoteIdent,
-} from "./helpers";
+import { ModelDefinition } from "@/schema/model";
+import { BuiltQuery, InsertDescriptor, ValuesMap } from "./types";
+import { assembleQuery, quoteIdent } from "./helpers";
+import { QueryBase } from "./base";
 
-// ─── InsertQueryBuilder ───────────────────────────────────────────────────────
+// ─── ON CONFLICT types ────────────────────────────────────────────────────────
+
+export type OnConflictAction = "nothing" | "update";
 
 /**
- * Fluent builder for `INSERT INTO … VALUES … RETURNING …` queries.
+ * Configuration for `ON CONFLICT` handling.
  *
- * Constructed via `ModelDefinition.insert()` — never directly.
+ * ```ts
+ * // Silently skip duplicate rows
+ * .onConflict({ action: "nothing" })
+ *
+ * // Upsert — update specific columns when a conflict is detected
+ * .onConflict({
+ *   conflictColumns: ["email"],
+ *   action: "update",
+ *   set: { name: "Alice", updated_at: new Date() },
+ * })
+ * ```
+ */
+export interface OnConflictClause<Cols extends string = string> {
+  /** The unique-constraint column(s) that define the conflict target. */
+  conflictColumns?: Cols[];
+  /** What to do when a conflict is detected. */
+  action: OnConflictAction;
+  /**
+   * `action: "update"` — the column→value pairs to apply on conflict.
+   * Omit to fall back to `EXCLUDED.<col>` for every inserted column.
+   */
+  set?: ValuesMap<Cols>;
+}
+
+// ─── InsertBuilder ────────────────────────────────────────────────────────────
+
+/**
+ * Fluent builder for `INSERT INTO … VALUES … ON CONFLICT … RETURNING …` queries.
  *
  * ### Single-row insert
  * ```ts
- * const q = OrderSchema
- *   .insert()
+ * const q = new InsertBuilder(OrderSchema)
  *   .values({ id: "ord_1", total: 99.99, status: "pending" })
  *   .returning(["id", "total"])
- *   .build();
+ *   .generateSql();
  *
- * // q.sql    → INSERT INTO "order" ("id","total","status")
- * //            VALUES ($1,$2,$3)
- * //            RETURNING "id","total"
+ * // q.sql    → INSERT INTO "order" ("id", "total", "status")
+ * //            VALUES ($1, $2, $3)
+ * //            RETURNING "id", "total"
  * // q.params → ["ord_1", 99.99, "pending"]
  * ```
  *
- * ### Bulk insert (multiple rows)
+ * ### Bulk insert
  * ```ts
- * const q = OrderSchema
- *   .insert()
+ * new InsertBuilder(OrderSchema)
  *   .values([
  *     { id: "ord_1", total: 10, status: "pending" },
  *     { id: "ord_2", total: 20, status: "confirmed" },
  *   ])
- *   .build();
+ *   .generateSql();
  * ```
  *
- * ### ON CONFLICT DO NOTHING
+ * ### Standalone usage pattern
  * ```ts
- * .onConflict({ action: "nothing" })
+ * const order = { insert: new InsertBuilder(OrderSchema) };
+ * const q = order.insert.values({ id: "ord_1", total: 99 }).generateSql();
  * ```
  *
- * ### ON CONFLICT DO UPDATE (upsert)
+ * ### Generic column-name narrowing (with codegen)
  * ```ts
- * .onConflict({
- *   columns: ["email"],
- *   action: "update",
- *   set: { name: "new name" },
- * })
+ * type OrderCols = "id" | "total" | "status" | "notes" | "placed_at" | "created_at" | "updated_at";
+ * const q = new InsertBuilder<OrderCols>(OrderSchema);
+ * q.values({ id: "ord_1", bogus: 1 }); // ← TypeScript error
  * ```
  */
-export class InsertQueryBuilder {
-  private readonly _tableRef: TableRef;
-  private readonly _knownCols: Set<string>;
+export class InsertBuilder<
+  Cols extends string = string,
+> extends QueryBase<Cols> {
+  private _rows: ValuesMap<Cols>[] = [];
+  private _onConflict?: OnConflictClause<Cols>;
 
-  private _rows: ColumnValueMap[] = [];
-  private _returning: string[] = [];
-  private _onConflict?: OnConflictClause;
-
-  constructor(tableRef: TableRef, columns: ColumnSchema[]) {
-    this._tableRef = tableRef;
-    this._knownCols = knownColumns(columns);
+  constructor(model: ModelDefinition) {
+    super(model);
   }
 
-  // ─── Values ────────────────────────────────────────────────────────────────
+  // ─── Values ───────────────────────────────────────────────────────────────
 
   /**
    * Provide the row(s) to insert.
    *
-   * Every key is validated against the model's column list.  All rows must
-   * share the same set of columns (the first row's keys define the column list).
+   * All keys are validated against the model's column list.  For a bulk insert,
+   * every row must contain the same set of columns (the first row's keys define
+   * the column list for the VALUES clause).
    *
-   * @example
    * ```ts
-   * // single row
-   * .values({ id: "ord_1", total: 99.99 })
+   * // single
+   * .values({ id: "ord_1", total: 99.99, status: "pending" })
    *
-   * // multiple rows (bulk insert)
+   * // bulk
    * .values([
-   *   { id: "ord_1", total: 99.99 },
-   *   { id: "ord_2", total: 49.99 },
+   *   { id: "ord_1", total: 10, status: "pending" },
+   *   { id: "ord_2", total: 20, status: "confirmed" },
    * ])
    * ```
    */
-  values(row: ColumnValueMap): this;
-  values(rows: ColumnValueMap[]): this;
-  values(input: ColumnValueMap | ColumnValueMap[]): this {
+  values(row: ValuesMap<Cols>): this;
+  values(rows: ValuesMap<Cols>[]): this;
+  values(input: ValuesMap<Cols> | ValuesMap<Cols>[]): this {
     const rows = Array.isArray(input) ? input : [input];
     if (rows.length === 0) return this;
-
-    // Validate all rows
     for (const row of rows) {
-      assertKnownColumns(row, this._knownCols, "insert.values");
+      this._assertCols(row as Record<string, unknown>, "insert.values");
     }
-
     this._rows = rows;
     return this;
   }
 
-  // ─── RETURNING ─────────────────────────────────────────────────────────────
+  // ─── ON CONFLICT ──────────────────────────────────────────────────────────
 
   /**
-   * Specify which columns to return after the insert.
+   * Add an `ON CONFLICT` clause.
    *
-   * Calling `.returning()` without arguments (or with an empty array) is
-   * equivalent to `RETURNING *`.
-   *
-   * @example
    * ```ts
-   * .returning(["id", "created_at"])
-   * ```
-   */
-  returning(columns: string[] = []): this {
-    assertKnownColumnList(columns, this._knownCols, "insert.returning");
-    this._returning = columns;
-    return this;
-  }
-
-  // ─── ON CONFLICT ───────────────────────────────────────────────────────────
-
-  /**
-   * Add an `ON CONFLICT` clause to the insert.
-   *
-   * @example
-   * ```ts
-   * // silently skip duplicate rows
    * .onConflict({ action: "nothing" })
-   *
-   * // upsert — update specific columns on conflict
-   * .onConflict({
-   *   columns: ["email"],
-   *   action: "update",
-   *   set: { name: "new name", updated_at: new Date() },
-   * })
+   * .onConflict({ conflictColumns: ["email"], action: "update", set: { name: "Alice" } })
    * ```
    */
-  onConflict(clause: OnConflictClause): this {
-    if (clause.action === "update" && clause.set) {
-      assertKnownColumns(clause.set, this._knownCols, "insert.onConflict.set");
+  onConflict(clause: OnConflictClause<Cols>): this {
+    if (clause.conflictColumns) {
+      this._assertColList(
+        clause.conflictColumns as string[],
+        "insert.onConflict.conflictColumns",
+      );
     }
-    if (clause.columns) {
-      assertKnownColumnList(
-        clause.columns,
-        this._knownCols,
-        "insert.onConflict.columns",
+    if (clause.action === "update" && clause.set) {
+      this._assertCols(
+        clause.set as Record<string, unknown>,
+        "insert.onConflict.set",
       );
     }
     this._onConflict = clause;
     return this;
   }
 
-  // ─── Build ─────────────────────────────────────────────────────────────────
+  // ─── generateSql ──────────────────────────────────────────────────────────
 
-  /**
-   * Compile the builder state into a `{ sql, params }` object.
-   */
-  build(): BuiltQuery {
+  generateSql(): BuiltQuery {
     if (this._rows.length === 0) {
       throw new Error(
-        "[query:insert] No values provided — call .values() before .build()",
+        "[query:insert] No values provided — call .values() before .generateSql()",
       );
     }
 
@@ -179,87 +157,101 @@ export class InsertQueryBuilder {
     const colNames = Object.keys(this._rows[0]!);
     const quotedCols = colNames.map(quoteIdent).join(", ");
 
-    // Build per-row value tuples
     const valueTuples = this._rows.map((row) => {
-      const placeholders = colNames.map((col) => {
-        params.push(row[col]);
+      const ph = colNames.map((col) => {
+        params.push((row as Record<string, unknown>)[col]);
         return `$${params.length}`;
       });
-      return `(${placeholders.join(", ")})`;
+      return `(${ph.join(", ")})`;
     });
 
-    const insertClause = `INSERT INTO ${buildTableRef(this._tableRef)} (${quotedCols})`;
-    const valuesClause = `VALUES ${valueTuples.join(", ")}`;
+    const conflictClause = this._onConflict
+      ? buildOnConflictSql(this._onConflict, params)
+      : "";
 
-    // ON CONFLICT
-    let conflictClause = "";
+    const parts = [
+      `INSERT INTO ${this._table()} (${quotedCols})`,
+      `VALUES ${valueTuples.join(", ")}`,
+      conflictClause,
+      this._buildReturning(),
+    ];
+
+    return assembleQuery(parts, params);
+  }
+
+  // ─── generateJson ─────────────────────────────────────────────────────────
+
+  /**
+   * Produce a structured `InsertDescriptor` describing this query without
+   * generating a SQL string.
+   *
+   * ```ts
+   * const json = new InsertBuilder(UserSchema)
+   *   .values({ id: "usr_1", email: "a@b.com" })
+   *   .generateJson();
+   * // json.type  → "insert"
+   * // json.rows  → [{ id: "usr_1", email: "a@b.com" }]
+   * ```
+   */
+  generateJson(): InsertDescriptor {
+    const desc: InsertDescriptor = {
+      type: "insert",
+      table: this._tableRef.name,
+      rows: this._rows.map((r) => ({ ...(r as Record<string, unknown>) })),
+      returning: [...this._returningCols],
+    };
+    if (this._tableRef.schema !== undefined)
+      desc.schema = this._tableRef.schema;
     if (this._onConflict) {
-      conflictClause = buildOnConflictClause(this._onConflict, params);
+      const oc = this._onConflict;
+      desc.onConflict = {
+        action: oc.action,
+        ...(oc.conflictColumns
+          ? { conflictColumns: [...oc.conflictColumns] }
+          : {}),
+        ...(oc.set ? { set: { ...(oc.set as Record<string, unknown>) } } : {}),
+      };
     }
-
-    // RETURNING
-    const returningClause =
-      this._returning.length > 0 || this._onConflict?.action === "update"
-        ? buildReturningClause(this._returning)
-        : this._returning.length === 0 && this._rows.length > 0
-          ? buildReturningClause([])
-          : "";
-
-    return assembleQuery(
-      [insertClause, valuesClause, conflictClause, returningClause],
-      params,
-    );
+    return desc;
   }
 }
 
-// ─── ON CONFLICT clause types ─────────────────────────────────────────────────
+// ─── ON CONFLICT SQL builder ──────────────────────────────────────────────────
 
-export type OnConflictAction = "nothing" | "update";
-
-export interface OnConflictClause {
-  /** Conflict target — the column(s) that define the unique constraint. */
-  columns?: string[];
-  /** What to do on conflict. */
-  action: OnConflictAction;
-  /**
-   * When `action = "update"`: the columns to update with their new values.
-   * Omit to update all inserted columns (using `EXCLUDED`).
-   */
-  set?: ColumnValueMap;
-}
-
-// ─── Internal helper ──────────────────────────────────────────────────────────
-
-function buildOnConflictClause(
+function buildOnConflictSql(
   clause: OnConflictClause,
   params: unknown[],
 ): string {
   const target =
-    clause.columns && clause.columns.length > 0
-      ? `(${clause.columns.map(quoteIdent).join(", ")})`
+    clause.conflictColumns && clause.conflictColumns.length > 0
+      ? `(${clause.conflictColumns.map(quoteIdent).join(", ")})`
       : "";
 
   if (clause.action === "nothing") {
-    return `ON CONFLICT ${target} DO NOTHING`.trim();
+    return `ON CONFLICT ${target} DO NOTHING`.trimEnd();
   }
 
   // action === "update"
+  const set = clause.set as Record<string, unknown> | undefined;
   let setFragments: string[];
-  if (clause.set && Object.keys(clause.set).length > 0) {
-    setFragments = Object.entries(clause.set).map(([col, val]) => {
+
+  if (set && Object.keys(set).length > 0) {
+    setFragments = Object.entries(set).map(([col, val]) => {
       params.push(val);
       return `${quoteIdent(col)} = $${params.length}`;
     });
   } else {
-    // No explicit set → use EXCLUDED (re-insert all columns)
-    setFragments = [`${quoteIdent("id")} = EXCLUDED.${quoteIdent("id")}`];
+    // No explicit set provided — use EXCLUDED for every column in the target
+    const targetCols = clause.conflictColumns ?? [];
+    if (targetCols.length > 0) {
+      setFragments = targetCols.map(
+        (col) => `${quoteIdent(col)} = EXCLUDED.${quoteIdent(col)}`,
+      );
+    } else {
+      // Fallback: generic excluded reference (caller should provide explicit set)
+      setFragments = [`"id" = EXCLUDED."id"`];
+    }
   }
 
-  return `ON CONFLICT ${target} DO UPDATE SET ${setFragments.join(", ")}`.trim();
+  return `ON CONFLICT ${target} DO UPDATE SET ${setFragments.join(", ")}`.trimEnd();
 }
-
-// ─── Standalone INSERT builder ────────────────────────────────────────────────
-
-// Re-export types for use in WHERE-filtered helpers
-export type { WhereClause, RawWhereClause };
-export { buildWhereClause };

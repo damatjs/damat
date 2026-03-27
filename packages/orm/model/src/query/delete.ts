@@ -1,148 +1,112 @@
-import { ColumnSchema } from "@/types";
-import { BuiltQuery, RawWhereClause, TableRef, WhereClause } from "./types";
-import {
-  assembleQuery,
-  assertKnownColumnList,
-  buildReturningClause,
-  buildTableRef,
-  buildWhereClause,
-  knownColumns,
-} from "./helpers";
+import { ModelDefinition } from "@/schema/model";
+import { BuiltQuery, DeleteDescriptor } from "./types";
+import { assembleQuery } from "./helpers";
+import { QueryBase } from "./base";
 
-// ─── DeleteQueryBuilder ───────────────────────────────────────────────────────
+// ─── DeleteBuilder ────────────────────────────────────────────────────────────
 
 /**
  * Fluent builder for `DELETE FROM … WHERE … RETURNING …` queries.
  *
- * Constructed via `ModelDefinition.delete()` — never directly.
- *
- * ### Example
+ * ### Usage
  * ```ts
- * const q = UserSchema
- *   .delete()
+ * const q = new DeleteBuilder(UserSchema)
  *   .where({ id: "usr_1" })
  *   .returning(["id"])
- *   .build();
+ *   .generateSql();
  *
  * // q.sql    → DELETE FROM "store"."user" WHERE "id" = $1 RETURNING "id"
  * // q.params → ["usr_1"]
  * ```
  *
- * ### Raw WHERE
+ * ### Safety
+ * `.generateSql()` throws when no WHERE / whereRaw clause is present —
+ * preventing accidental full-table deletes.  Opt in with `.allowFullTable()`.
+ *
+ * ### Standalone usage pattern
  * ```ts
- * .whereRaw({ sql: "created_at < now() - interval $1", params: ["1 year"] })
+ * const user = { delete: new DeleteBuilder(UserSchema) };
+ * const q = user.delete.where({ id: "usr_1" }).generateSql();
  * ```
  *
- * > **Safety**: calling `.build()` without any `.where()` / `.whereRaw()` clause
- * > will throw to prevent accidental full-table deletes.  Use `.allowFullTable()`
- * > to opt-in when you genuinely want to truncate via DELETE.
+ * ### Generic column-name narrowing (with codegen)
+ * ```ts
+ * type UserCols = "id" | "email" | "name" | "created_at" | "updated_at";
+ * const q = new DeleteBuilder<UserCols>(UserSchema);
+ * q.where({ typo: "x" }); // ← TypeScript error
+ * ```
  */
-export class DeleteQueryBuilder {
-  private readonly _tableRef: TableRef;
-  private readonly _knownCols: Set<string>;
+export class DeleteBuilder<
+  Cols extends string = string,
+> extends QueryBase<Cols> {
+  private _allowFullTable = false;
 
-  private _whereClauses: WhereClause[] = [];
-  private _rawWhereClauses: RawWhereClause[] = [];
-  private _returning: string[] = [];
-  private _allowFullTable: boolean = false;
-
-  constructor(tableRef: TableRef, columns: ColumnSchema[]) {
-    this._tableRef = tableRef;
-    this._knownCols = knownColumns(columns);
+  constructor(model: ModelDefinition) {
+    super(model);
   }
 
-  // ─── WHERE ─────────────────────────────────────────────────────────────────
+  // ─── Safety opt-out ────────────────────────────────────────────────────────
 
   /**
-   * Add object-style WHERE conditions (AND-ed together).
+   * Allow building a DELETE without a WHERE clause (removes all rows).
    *
-   * @example
-   * ```ts
-   * .where({ id: "usr_1" })
-   * .where({ status: "inactive", age: { lt: 18 } })
-   * ```
-   */
-  where(clause: WhereClause): this {
-    this._whereClauses.push(clause);
-    return this;
-  }
-
-  /**
-   * Add a raw SQL WHERE fragment.
-   *
-   * Parameters must be numbered from `$1` — they are re-numbered automatically.
-   *
-   * @example
-   * ```ts
-   * .whereRaw({ sql: "created_at < now() - interval $1", params: ["1 year"] })
-   * ```
-   */
-  whereRaw(clause: RawWhereClause): this {
-    this._rawWhereClauses.push(clause);
-    return this;
-  }
-
-  // ─── RETURNING ─────────────────────────────────────────────────────────────
-
-  /**
-   * Specify which columns to return after the delete.
-   *
-   * Calling without arguments is equivalent to `RETURNING *`.
-   *
-   * @example `.returning(["id"])`
-   */
-  returning(columns: string[] = []): this {
-    assertKnownColumnList(columns, this._knownCols, "delete.returning");
-    this._returning = columns;
-    return this;
-  }
-
-  // ─── Safety escape hatch ───────────────────────────────────────────────────
-
-  /**
-   * Allow building a `DELETE` without a `WHERE` clause, removing all rows.
-   *
-   * Use with care — this is intentionally opt-in.
+   * This is intentionally opt-in to prevent accidental full-table deletes.
    */
   allowFullTable(): this {
     this._allowFullTable = true;
     return this;
   }
 
-  // ─── Build ─────────────────────────────────────────────────────────────────
+  // ─── generateSql ──────────────────────────────────────────────────────────
 
-  /**
-   * Compile the builder state into a `{ sql, params }` object.
-   */
-  build(): BuiltQuery {
+  generateSql(): BuiltQuery {
     const hasWhere =
       this._whereClauses.length > 0 || this._rawWhereClauses.length > 0;
 
     if (!hasWhere && !this._allowFullTable) {
       throw new Error(
-        "[query:delete] No WHERE clause provided. " +
-          "This would delete every row. " +
-          "Add a .where() condition or call .allowFullTable() to opt-in.",
+        "[query:delete] No WHERE clause — this would delete every row. " +
+          "Add .where() or call .allowFullTable() to opt-in.",
       );
     }
 
     const params: unknown[] = [];
 
-    // DELETE FROM clause
-    const deleteClause = `DELETE FROM ${buildTableRef(this._tableRef)}`;
+    const parts = [
+      `DELETE FROM ${this._table()}`,
+      this._buildWhere(params),
+      this._buildReturning(),
+    ];
 
-    // WHERE clause
-    const whereClause = buildWhereClause(
-      this._whereClauses,
-      this._rawWhereClauses,
-      params,
-      this._knownCols,
-    );
+    return assembleQuery(parts, params);
+  }
 
-    // RETURNING
-    const returningClause =
-      this._returning.length >= 0 ? buildReturningClause(this._returning) : "";
+  // ─── generateJson ─────────────────────────────────────────────────────────
 
-    return assembleQuery([deleteClause, whereClause, returningClause], params);
+  /**
+   * Produce a structured `DeleteDescriptor` describing this query without
+   * generating a SQL string.
+   *
+   * ```ts
+   * const json = new DeleteBuilder(UserSchema)
+   *   .where({ id: "usr_1" })
+   *   .generateJson();
+   * // json.type  → "delete"
+   * // json.where → [{ id: "usr_1" }]
+   * ```
+   */
+  generateJson(): DeleteDescriptor {
+    const desc: DeleteDescriptor = {
+      type: "delete",
+      table: this._tableRef.name,
+      where: this._whereClauses.map((c) => ({
+        ...c,
+      })) as DeleteDescriptor["where"],
+      whereRaw: this._rawWhereClauses.map((c) => ({ ...c })),
+      returning: [...this._returningCols],
+    };
+    if (this._tableRef.schema !== undefined)
+      desc.schema = this._tableRef.schema;
+    return desc;
   }
 }

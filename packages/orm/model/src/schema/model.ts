@@ -14,11 +14,6 @@ import { HasOneBuilder } from "@/properties/relation/hasOneBuilder";
 import { IndexBuilder } from "@/properties/indexes/base";
 import { ConstraintBuilder } from "@/properties/constraints/base";
 import { toPascalCase } from "@/utils/stringConvertor";
-import { SelectQueryBuilder } from "@/query/select";
-import { InsertQueryBuilder } from "@/query/insert";
-import { UpdateQueryBuilder } from "@/query/update";
-import { DeleteQueryBuilder } from "@/query/delete";
-import { TableRef } from "@/query/types";
 
 // ─── ModelDefinition class ────────────────────────────────────────────────────
 
@@ -230,96 +225,6 @@ export class ModelDefinition {
     }
 
     return `export interface ${name} {\n${lines.join("\n")}\n}`;
-  }
-
-  // ─── Private helper ──────────────────────────────────────────────────────────
-
-  /**
-   * Build the `TableRef` used by all query builders.
-   * Resolves the table + optional schema name without triggering a full
-   * `toTableSchema()` traversal.
-   */
-  private _tableRef(): TableRef {
-    const ref: TableRef = { name: this._tableName };
-    if (this._schemaName !== undefined) ref.schema = this._schemaName;
-    return ref;
-  }
-
-  /**
-   * Resolve the full `ColumnSchema[]` for this model (including auto-columns).
-   * Used internally by query builders for column validation.
-   */
-  private _resolvedColumns(): ColumnSchema[] {
-    return this.toTableSchema().columns;
-  }
-
-  // ─── Query factory methods ────────────────────────────────────────────────────
-
-  /**
-   * Start a `SELECT` query against this model's table.
-   *
-   * Optionally pass the column names to return up-front — every name is
-   * validated against the schema.  Omit to start with `SELECT *` (can be
-   * narrowed later with `.select(columns)`).
-   *
-   * ```ts
-   * UserSchema.select(["id", "email"])
-   *   .where({ verified: true })
-   *   .orderBy("name", "ASC")
-   *   .limit(10)
-   *   .build();
-   * ```
-   */
-  select(columns: string[] = []): SelectQueryBuilder {
-    const builder = new SelectQueryBuilder(
-      this._tableRef(),
-      this._resolvedColumns(),
-    );
-    if (columns.length > 0) builder.select(columns);
-    return builder;
-  }
-
-  /**
-   * Start an `INSERT INTO` query against this model's table.
-   *
-   * ```ts
-   * UserSchema.insert()
-   *   .values({ id: "usr_1", email: "a@b.com", name: "Alice" })
-   *   .returning(["id"])
-   *   .build();
-   * ```
-   */
-  insert(): InsertQueryBuilder {
-    return new InsertQueryBuilder(this._tableRef(), this._resolvedColumns());
-  }
-
-  /**
-   * Start an `UPDATE … SET` query against this model's table.
-   *
-   * ```ts
-   * UserSchema.update()
-   *   .set({ name: "Bob", verified: true })
-   *   .where({ id: "usr_1" })
-   *   .returning(["id", "name"])
-   *   .build();
-   * ```
-   */
-  update(): UpdateQueryBuilder {
-    return new UpdateQueryBuilder(this._tableRef(), this._resolvedColumns());
-  }
-
-  /**
-   * Start a `DELETE FROM` query against this model's table.
-   *
-   * ```ts
-   * UserSchema.delete()
-   *   .where({ id: "usr_1" })
-   *   .returning(["id"])
-   *   .build();
-   * ```
-   */
-  delete(): DeleteQueryBuilder {
-    return new DeleteQueryBuilder(this._tableRef(), this._resolvedColumns());
   }
 }
 
