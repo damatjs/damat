@@ -227,6 +227,51 @@ export interface OrderByJson {
  * }
  * ```
  */
+/**
+ * JSON descriptor for a relation include in a query.
+ * Used in SelectDescriptor to represent nested relation loading.
+ */
+export interface RelationDescriptor {
+  /** The relation property name on the parent model. */
+  relation: string;
+
+  /** The target table name. */
+  table: string;
+
+  /** The target table schema (if any). */
+  schema?: string;
+
+  /** Relation type: belongsTo, hasMany, or hasOne. */
+  type: "belongsTo" | "hasMany" | "hasOne";
+
+  /** The FK column(s) that link parent to child. */
+  foreignKey: string[];
+
+  /** The referenced column(s) on the target table. */
+  references: string[];
+
+  /** Columns to select from the related table. */
+  columns: string[];
+
+  /** WHERE conditions for the related rows. */
+  where: WhereConditionJson[];
+
+  /** Raw WHERE fragments. */
+  whereRaw: RawWhereClause[];
+
+  /** ORDER BY clauses. */
+  orderBy: OrderByJson[];
+
+  /** LIMIT for the relation (hasMany only). */
+  limit?: number;
+
+  /** OFFSET for the relation (hasMany only). */
+  offset?: number;
+
+  /** Nested relation includes. */
+  with: RelationDescriptor[];
+}
+
 export interface SelectDescriptor {
   type: "select";
   table: string;
@@ -240,6 +285,8 @@ export interface SelectDescriptor {
   limit?: number;
   offset?: number;
   distinct: boolean;
+  /** Relations to include with the query (Drizzle-style nested loading). */
+  with?: RelationDescriptor[];
 }
 
 /**

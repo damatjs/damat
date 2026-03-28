@@ -16,6 +16,7 @@ import { SelectBuilder } from "./select";
 import { InsertBuilder } from "./insert";
 import { UpdateBuilder } from "./update";
 import { DeleteBuilder } from "./delete";
+import { RelationIncludeMap } from "./relations";
 
 // ─── Option bag types ─────────────────────────────────────────────────────────
 
@@ -51,6 +52,12 @@ export interface FindOptions<Cols extends string = string> {
   offset?: number;
   /** Add DISTINCT. */
   distinct?: boolean;
+  /**
+   * Relations to include with the query (Drizzle-style nested loading).
+   * Every key must match a relation property on the model — enforced by
+   * the schema guard in `SelectBuilder.with()`.
+   */
+  with?: RelationIncludeMap;
 }
 
 /**
@@ -417,5 +424,6 @@ export class ModelAccessor<Cols extends string = string> {
     if (options.limit !== undefined) b.limit(options.limit);
     if (options.offset !== undefined) b.offset(options.offset);
     if (options.distinct) b.distinct();
+    if (options.with) b.with(options.with);
   }
 }
