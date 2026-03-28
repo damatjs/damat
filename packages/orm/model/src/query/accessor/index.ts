@@ -1,160 +1,16 @@
 import { ModelDefinition } from "@/schema/model";
 import {
-  BuiltQuery,
   DeleteDescriptor,
   InsertDescriptor,
-  OrderDirection,
-  QueryDescriptor,
-  RawWhereClause,
   SelectDescriptor,
   UpdateDescriptor,
-  ValuesMap,
-  WhereClause,
-} from "./types";
-import { OnConflictClause } from "./insert";
-import { SelectBuilder } from "./select";
-import { InsertBuilder } from "./insert";
-import { UpdateBuilder } from "./update";
-import { DeleteBuilder } from "./delete";
-import { RelationIncludeMap } from "./relations";
+} from "../types";
+import { SelectBuilder } from "../select";
+import { InsertBuilder } from "../insert";
+import { UpdateBuilder } from "../update";
+import { DeleteBuilder } from "../delete";
+import { FindOptions, QueryResult, CreateOptions, CreateManyOptions, UpdateOptions, DeleteOptions } from './type';
 
-// ─── Option bag types ─────────────────────────────────────────────────────────
-
-/**
- * Options for `findMany` / `findOne`.
- *
- * ```ts
- * user.findMany({
- *   select: ["id", "email"],
- *   where: { verified: true, age: { gte: 18 } },
- *   orderBy: [{ column: "name", direction: "ASC" }],
- *   limit: 10,
- *   offset: 0,
- * })
- * ```
- */
-export interface FindOptions<Cols extends string = string> {
-  /** Columns to return.  Omit for all columns (`SELECT *`). */
-  select?: Cols[];
-  /** Object-style WHERE conditions. */
-  where?: WhereClause<Cols>;
-  /** Raw SQL WHERE fragments. */
-  whereRaw?: RawWhereClause | RawWhereClause[];
-  /** ORDER BY clauses. */
-  orderBy?: Array<{
-    column: Cols;
-    direction?: OrderDirection;
-    nulls?: "NULLS FIRST" | "NULLS LAST";
-  }>;
-  /** Max rows to return. */
-  limit?: number;
-  /** Rows to skip. */
-  offset?: number;
-  /** Add DISTINCT. */
-  distinct?: boolean;
-  /**
-   * Relations to include with the query (Drizzle-style nested loading).
-   * Every key must match a relation property on the model — enforced by
-   * the schema guard in `SelectBuilder.with()`.
-   */
-  with?: RelationIncludeMap;
-}
-
-/**
- * Options for `create`.
- *
- * ```ts
- * user.create({
- *   data: { id: "usr_1", email: "a@b.com", name: "Alice" },
- *   returning: ["id", "email"],
- * })
- * ```
- */
-export interface CreateOptions<Cols extends string = string> {
-  /** The row to insert. */
-  data: ValuesMap<Cols>;
-  /** Columns to return.  Omit for `RETURNING *`. */
-  returning?: Cols[];
-  /** ON CONFLICT handling. */
-  onConflict?: OnConflictClause<Cols>;
-}
-
-/**
- * Options for `createMany`.
- *
- * ```ts
- * user.createMany({
- *   data: [
- *     { id: "usr_1", email: "a@b.com" },
- *     { id: "usr_2", email: "b@b.com" },
- *   ],
- *   returning: ["id"],
- * })
- * ```
- */
-export interface CreateManyOptions<Cols extends string = string> {
-  /** The rows to insert. */
-  data: ValuesMap<Cols>[];
-  /** Columns to return.  Omit for `RETURNING *`. */
-  returning?: Cols[];
-  /** ON CONFLICT handling. */
-  onConflict?: OnConflictClause<Cols>;
-}
-
-/**
- * Options for `update`.
- *
- * ```ts
- * user.update({
- *   set: { verified: true },
- *   where: { email: "a@b.com" },
- *   returning: ["id", "verified"],
- * })
- * ```
- */
-export interface UpdateOptions<Cols extends string = string> {
-  /** Column → value pairs to apply. */
-  set: ValuesMap<Cols>;
-  /** Object-style WHERE conditions. */
-  where?: WhereClause<Cols>;
-  /** Raw SQL WHERE fragments. */
-  whereRaw?: RawWhereClause | RawWhereClause[];
-  /** Columns to return.  Omit for `RETURNING *`. */
-  returning?: Cols[];
-  /** Allow updating without a WHERE clause (affects all rows). */
-  allowFullTable?: boolean;
-}
-
-/**
- * Options for `delete`.
- *
- * ```ts
- * user.delete({
- *   where: { id: "usr_1" },
- *   returning: ["id"],
- * })
- * ```
- */
-export interface DeleteOptions<Cols extends string = string> {
-  /** Object-style WHERE conditions. */
-  where?: WhereClause<Cols>;
-  /** Raw SQL WHERE fragments. */
-  whereRaw?: RawWhereClause | RawWhereClause[];
-  /** Columns to return.  Omit for `RETURNING *`. */
-  returning?: Cols[];
-  /** Allow deleting without a WHERE clause (removes all rows). */
-  allowFullTable?: boolean;
-}
-
-// ─── Each method can return SQL or JSON ───────────────────────────────────────
-
-/** The output of every accessor method — both representations available. */
-export interface QueryResult<D extends QueryDescriptor> {
-  /** Parameterised SQL ready for a database driver. */
-  sql: BuiltQuery;
-  /** Structured JSON descriptor for inspection / transformation. */
-  json: D;
-}
 
 // ─── ModelAccessor ────────────────────────────────────────────────────────────
 
