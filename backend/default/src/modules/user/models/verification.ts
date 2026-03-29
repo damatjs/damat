@@ -4,18 +4,18 @@
  * Email verification tokens (Better Auth compatible)
  */
 
-import { model } from "@damatjs/orm-model";
+import { model, columns } from "@damatjs/orm-model";
 
-export const Verification = model
-  .define("verifications", {
-    id: model.id({ prefix: "ver" }).primaryKey(),
+export const Verification = model("verifications", {
+  id: columns.id({ prefix: "ver" }).primaryKey(),
 
-    identifier: model.text(), // email or phone
-    value: model.text(), // token or code
+  identifier: columns.text(), // email or phone
+  value: columns.text(), // token or code
 
-    expiresAt: model.timestamp({ withTimezone: true }),
+  expiresAt: columns.timestamp({ withTimezone: true }),
 
-    createdAt: model.timestamp({ withTimezone: true }).defaultRaw("now()"),
-    updatedAt: model.timestamp({ withTimezone: true }).defaultRaw("now()"),
-  })
-  .indexes([{ on: ["identifier"], name: "idx_verifications_identifier" }]);
+  createdAt: columns.timestamp({ withTimezone: true }).defaultRaw("now()"),
+  updatedAt: columns.timestamp({ withTimezone: true }).defaultRaw("now()"),
+}).indexes([
+  columns.indexes("idx_verifications_identifier").columns(["identifier"]),
+]);

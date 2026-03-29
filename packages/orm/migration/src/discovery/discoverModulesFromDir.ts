@@ -2,7 +2,7 @@
  * Module Directory Discovery
  *
  * Scans `modulesDir` for subdirectories that contain at least one
- * `Migration*.ts` file under their `migrations/` folder.  Used as the
+ * `Migration*.sql` file under their `migrations/` folder.  Used as the
  * automatic fallback when no explicit module list is provided.
  */
 
@@ -13,7 +13,7 @@ import path from "node:path";
  * Discover all module names that have migrations by scanning the filesystem.
  *
  * Walks every immediate subdirectory of `modulesDir` and returns those whose
- * `migrations/` folder contains at least one `Migration*.ts` file.
+ * `migrations/` folder contains at least one `Migration*.sql` file.
  *
  * @param modulesDir - Root modules directory (e.g. `"src/modules"`)
  * @returns Sorted array of module names that have at least one migration file
@@ -39,7 +39,7 @@ export function discoverModulesFromDir(modulesDir: string): string[] {
         fs.existsSync(migrationsDir) &&
         fs
           .readdirSync(migrationsDir)
-          .some((f) => f.startsWith("Migration") && f.endsWith(".ts"))
+          .some((f) => f.startsWith("Migration") && f.endsWith(".sql"))
       );
     })
     .sort();

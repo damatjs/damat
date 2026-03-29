@@ -4,38 +4,38 @@
  * OAuth/Auth provider accounts linked to users (Better Auth compatible)
  */
 
-import { model } from "@damatjs/orm-model";
+import { model, columns } from "@damatjs/orm-model";
 import { User } from "./user";
 
-export const Account = model
-  .define("accounts", {
-    id: model.id({ prefix: "acc" }).primaryKey(),
+export const Account = model("accounts", {
+  id: columns.id({ prefix: "acc" }).primaryKey(),
 
-    user: model.belongsTo(User, { foreignKey: "user_id" }).onDelete("CASCADE"),
+  user: columns
+    .belongsTo(() => User)
+    .link({ foreignKey: "user_id" })
+    .onDelete("CASCADE"),
 
-    accountId: model.text(),
-    providerId: model.text(),
+  accountId: columns.text(),
+  providerId: columns.text(),
 
-    // OAuth tokens
-    accessToken: model.text().nullable(),
-    refreshToken: model.text().nullable(),
-    accessTokenExpiresAt: model.timestamp({ withTimezone: true }).nullable(),
-    refreshTokenExpiresAt: model.timestamp({ withTimezone: true }).nullable(),
-    scope: model.text().nullable(),
-    idToken: model.text().nullable(),
+  // OAuth tokens
+  accessToken: columns.text().nullable(),
+  refreshToken: columns.text().nullable(),
+  accessTokenExpiresAt: columns.timestamp({ withTimezone: true }).nullable(),
+  refreshTokenExpiresAt: columns.timestamp({ withTimezone: true }).nullable(),
+  scope: columns.text().nullable(),
+  idToken: columns.text().nullable(),
 
-    // Password for credential auth
-    password: model.text().nullable(),
+  // Password for credential auth
+  password: columns.text().nullable(),
 
-    createdAt: model.timestamp({ withTimezone: true }).defaultRaw("now()"),
-    updatedAt: model.timestamp({ withTimezone: true }).defaultRaw("now()"),
-  })
-  .indexes([
-    { on: ["accountId"], name: "idx_accounts_account_id" },
-    { on: ["providerId"], name: "idx_accounts_provider_id" },
-    {
-      on: ["providerId", "accountId"],
-      unique: true,
-      name: "uniq_accounts_provider_account",
-    },
-  ]);
+  createdAt: columns.timestamp({ withTimezone: true }).defaultRaw("now()"),
+  updatedAt: columns.timestamp({ withTimezone: true }).defaultRaw("now()"),
+}).indexes([
+  columns.indexes().columns(["accountId"]),
+  columns.indexes().columns(["providerId"]),
+  columns
+    .indexes()
+    .columns(["providerId", "accountId"])
+    .unique(),
+]);

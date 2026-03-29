@@ -147,22 +147,25 @@ export class ModelDefinition {
       }
     }
 
-    columns.push({
-      name: "created_at",
-      type: "date",
-      nullable: false,
-      default: "now()",
-      primaryKey: false,
-      unique: false,
-    });
-
-    columns.push({
-      name: "updated_at",
-      type: "date",
-      nullable: true,
-      primaryKey: false,
-      unique: false,
-    });
+    if (!columns.some(c => c.name === "created_at" || c.name === "createdAt")) {
+      columns.push({
+        name: "created_at",
+        type: "date",
+        nullable: false,
+        default: "now()",
+        primaryKey: false,
+        unique: false,
+      });
+    }
+    if (!columns.some(c => c.name === "updated_at" || c.name === "updatedAt")) {
+      columns.push({
+        name: "updated_at",
+        type: "date",
+        nullable: true,
+        primaryKey: false,
+        unique: false,
+      });
+    }
 
     const schema: TableSchema & { schema?: string } = {
       name: this._tableName,

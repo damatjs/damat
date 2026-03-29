@@ -1,7 +1,7 @@
 /**
  * All-Modules Migration Discovery
  *
- * Aggregates migration files across every active module and returns them
+ * Aggregates `.sql` migration files across every active module and returns them
  * sorted by timestamp so the executor can apply them in the correct global order.
  */
 

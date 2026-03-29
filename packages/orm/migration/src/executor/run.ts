@@ -10,6 +10,7 @@ import { log } from "../logger";
 import { discoverModuleMigrations, resolveModules } from "../discovery";
 import { MigrationTracker } from "../tracker";
 import { executeMigration } from "./migration";
+import { bootstrapDatabase } from "./bootstrap";
 
 /**
  * Run pending migrations for all or specific modules.
@@ -27,6 +28,7 @@ export async function runMigrations(
 ): Promise<ModuleMigrationResult[]> {
   const tracker = new MigrationTracker(pool);
   await tracker.ensureTable();
+  await bootstrapDatabase(pool);
 
   const modules = moduleName
     ? [moduleName]

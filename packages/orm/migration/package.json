@@ -43,6 +43,7 @@
   },
   "scripts": {
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
+    "postbuild": "chmod +x dist/cli/bin.js",
     "dev": "bun run build --watch",
     "watch": "tsc --watch",
     "test": "exit 0"

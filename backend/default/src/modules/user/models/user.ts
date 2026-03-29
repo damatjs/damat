@@ -4,19 +4,23 @@
  * Core user identity for authentication (Better Auth compatible)
  */
 
-import { model } from "@damatjs/orm-model";
+import { model, columns } from "@damatjs/orm-model";
+import { Account } from "./account";
+import { Session } from "./session";
 
-export const User = model
-  .define("users", {
-    id: model.id({ prefix: "usr" }).primaryKey(),
+export const User = model("users", {
+  id: columns.id({ prefix: "usr" }).primaryKey(),
 
-    email: model.text(),
-    emailVerified: model.boolean().default(false),
-    name: model.text().nullable(),
-    image: model.text().nullable(),
+  email: columns.text().unique(),
+  emailVerified: columns.boolean().default(false),
+  name: columns.text().nullable(),
+  image: columns.text().nullable(),
 
-    createdAt: model.timestamp({ withTimezone: true }).defaultRaw("now()"),
-    updatedAt: model.timestamp({ withTimezone: true }).defaultRaw("now()"),
-    deletedAt: model.timestamp({ withTimezone: true }).nullable(),
-  })
-  .indexes([{ on: ["email"], unique: true, name: "uniq_users_email" }]);
+  accounts: columns.hasMany(() => Account).mappedBy("user"),
+  sessions: columns.hasMany(() => Session).mappedBy("user"),
+
+  createdAt: columns.timestamp({ withTimezone: true }).defaultRaw("now()"),
+  updatedAt: columns.timestamp({ withTimezone: true }).defaultRaw("now()"),
+  deletedAt: columns.timestamp({ withTimezone: true }).nullable(),
+});
+// .constrain([columns.constrains().columns(["email"]).unique()]);

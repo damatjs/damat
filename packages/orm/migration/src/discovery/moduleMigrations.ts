@@ -4,8 +4,8 @@
  * Scans `{modulesDir}/{moduleName}/migrations/` for timestamped migration
  * files and returns them as structured `MigrationInfo` objects.
  *
- * Migration filename convention: `Migration{YYYYMMDDHHMMSS}_{Label}.ts`
- * e.g. `Migration20260316103000_Initial.ts`
+ * Migration filename convention: `Migration{YYYYMMDDHHMMSS}_{Label}.sql`
+ * e.g. `Migration20260316103000_Initial.sql`
  */
 
 import fs from "node:fs";
@@ -26,7 +26,7 @@ import type { MigrationInfo } from "../types";
  * @example
  * ```typescript
  * const migrations = discoverModuleMigrations('src/modules', 'user');
- * // Scans src/modules/user/migrations/ for Migration*.ts files
+ * // Scans src/modules/user/migrations/ for Migration*.sql files
  * ```
  */
 export function discoverModuleMigrations(
@@ -41,15 +41,15 @@ export function discoverModuleMigrations(
 
   return fs
     .readdirSync(migrationsDir)
-    .filter((f) => f.startsWith("Migration") && f.endsWith(".ts"))
+    .filter((f) => f.startsWith("Migration") && f.endsWith(".sql"))
     .sort()
     .map((file) => {
-      // Extract the numeric timestamp from e.g. "Migration20260316103000_Initial.ts"
+      // Extract the numeric timestamp from e.g. "Migration20260316103000_Initial.sql"
       const match = file.match(/Migration(\d+)/);
       const timestamp = match?.[1] ? parseInt(match[1], 10) : 0;
 
       return {
-        name: file.replace(".ts", ""),
+        name: file.replace(".sql", ""),
         module: moduleName,
         path: path.resolve(migrationsDir, file),
         timestamp,
