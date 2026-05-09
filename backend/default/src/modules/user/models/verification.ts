@@ -4,18 +4,26 @@
  * Email verification tokens (Better Auth compatible)
  */
 
-import { model, columns } from "@damatjs/orm-model";
+import { Entity, PrimaryKey, Property, Index } from "@damatjs/deps/mikro-orm/core";
 
-export const Verification = model("verifications", {
-  id: columns.id({ prefix: "ver" }).primaryKey(),
+@Entity({ tableName: "verifications" })
+@Index({ properties: ["identifier"] })
+export class Verification {
+  @PrimaryKey()
+  id!: string;
 
-  identifier: columns.text(), // email or phone
-  value: columns.text(), // token or code
+  @Property()
+  identifier!: string;
 
-  expiresAt: columns.timestamp({ withTimezone: true }),
+  @Property()
+  value!: string;
 
-  createdAt: columns.timestamp({ withTimezone: true }).defaultRaw("now()"),
-  updatedAt: columns.timestamp({ withTimezone: true }).defaultRaw("now()"),
-}).indexes([
-  columns.indexes("idx_verifications_identifier").columns(["identifier"]),
-]);
+  @Property()
+  expiresAt!: Date;
+
+  @Property({ defaultRaw: "now()" })
+  createdAt: Date = new Date();
+
+  @Property({ defaultRaw: "now()", onUpdate: () => new Date() })
+  updatedAt: Date = new Date();
+}

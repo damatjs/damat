@@ -4,38 +4,50 @@
  * OAuth/Auth provider accounts linked to users (Better Auth compatible)
  */
 
-import { model, columns } from "@damatjs/orm-model";
+import { Entity, PrimaryKey, Property, ManyToOne, Index } from "@damatjs/deps/mikro-orm/core";
 import { User } from "./user";
 
-export const Account = model("accounts", {
-  id: columns.id({ prefix: "acc" }).primaryKey(),
+@Entity({ tableName: "accounts" })
+@Index({ properties: ["accountId"] })
+@Index({ properties: ["providerId"] })
+@Index({ properties: ["providerId", "accountId"] })
+export class Account {
+  @PrimaryKey()
+  id!: string;
 
-  user: columns
-    .belongsTo(() => User)
-    .link({ foreignKey: "user_id" })
-    .onDelete("CASCADE"),
+  @ManyToOne(() => User)
+  user!: User;
 
-  accountId: columns.text(),
-  providerId: columns.text(),
+  @Property()
+  accountId!: string;
 
-  // OAuth tokens
-  accessToken: columns.text().nullable(),
-  refreshToken: columns.text().nullable(),
-  accessTokenExpiresAt: columns.timestamp({ withTimezone: true }).nullable(),
-  refreshTokenExpiresAt: columns.timestamp({ withTimezone: true }).nullable(),
-  scope: columns.text().nullable(),
-  idToken: columns.text().nullable(),
+  @Property()
+  providerId!: string;
 
-  // Password for credential auth
-  password: columns.text().nullable(),
+  @Property({ nullable: true })
+  accessToken?: string;
 
-  createdAt: columns.timestamp({ withTimezone: true }).defaultRaw("now()"),
-  updatedAt: columns.timestamp({ withTimezone: true }).defaultRaw("now()"),
-}).indexes([
-  columns.indexes().columns(["accountId"]),
-  columns.indexes().columns(["providerId"]),
-  columns
-    .indexes()
-    .columns(["providerId", "accountId"])
-    .unique(),
-]);
+  @Property({ nullable: true })
+  refreshToken?: string;
+
+  @Property({ nullable: true })
+  accessTokenExpiresAt?: Date;
+
+  @Property({ nullable: true })
+  refreshTokenExpiresAt?: Date;
+
+  @Property({ nullable: true })
+  scope?: string;
+
+  @Property({ nullable: true })
+  idToken?: string;
+
+  @Property({ nullable: true })
+  password?: string;
+
+  @Property({ defaultRaw: "now()" })
+  createdAt: Date = new Date();
+
+  @Property({ defaultRaw: "now()", onUpdate: () => new Date() })
+  updatedAt: Date = new Date();
+}

@@ -2,10 +2,14 @@
     "name": "@damatjs/types",
     "description": "Damat Types definition",
     "version": "0.0.1",
+    "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
-    "export": {
-        ".": "./dist/index.js"
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        }
     },
     "engines": {
         "bun": ">=1.1.0"

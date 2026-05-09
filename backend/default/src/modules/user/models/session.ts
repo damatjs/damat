@@ -4,26 +4,34 @@
  * User sessions for authentication (Better Auth compatible)
  */
 
-import { model, columns } from "@damatjs/orm-model";
+import { Entity, PrimaryKey, Property, ManyToOne, Index } from "@damatjs/deps/mikro-orm/core";
 import { User } from "./user";
 
-export const Session = model("sessions", {
-  id: columns.id({ prefix: "ses" }).primaryKey(),
+@Entity({ tableName: "sessions" })
+@Index({ properties: ["user"] })
+@Index({ properties: ["token"] })
+export class Session {
+  @PrimaryKey()
+  id!: string;
 
-  user: columns
-    .belongsTo(() => User)
-    .link({ foreignKey: "user_id" })
-    .onDelete("CASCADE"),
+  @ManyToOne(() => User)
+  user!: User;
 
-  token: columns.text(),
-  expiresAt: columns.timestamp({ withTimezone: true }),
+  @Property()
+  token!: string;
 
-  ipAddress: columns.varchar(45).nullable(),
-  userAgent: columns.text().nullable(),
+  @Property()
+  expiresAt!: Date;
 
-  createdAt: columns.timestamp({ withTimezone: true }).defaultRaw("now()"),
-  updatedAt: columns.timestamp({ withTimezone: true }).defaultRaw("now()"),
-}).indexes([
-  columns.indexes("idx_sessions_user_id").columns(["user_id"]),
-  columns.indexes("uniq_sessions_token").columns(["token"]).unique(),
-]);
+  @Property({ nullable: true, length: 45 })
+  ipAddress?: string;
+
+  @Property({ nullable: true, type: "text" })
+  userAgent?: string;
+
+  @Property({ defaultRaw: "now()" })
+  createdAt: Date = new Date();
+
+  @Property({ defaultRaw: "now()", onUpdate: () => new Date() })
+  updatedAt: Date = new Date();
+}

@@ -2,25 +2,42 @@
  * User Model
  *
  * Core user identity for authentication (Better Auth compatible)
+ * Uses MikroORM decorators for entity definition.
  */
 
-import { model, columns } from "@damatjs/orm-model";
+import { Entity, PrimaryKey, Property, OneToMany, Collection } from "@damatjs/deps/mikro-orm/core";
 import { Account } from "./account";
 import { Session } from "./session";
 
-export const User = model("users", {
-  id: columns.id({ prefix: "usr" }).primaryKey(),
+@Entity({ tableName: "users" })
+export class User {
+  @PrimaryKey()
+  id!: string;
 
-  email: columns.text().unique(),
-  emailVerified: columns.boolean().default(false),
-  name: columns.text().nullable(),
-  image: columns.text().nullable(),
+  @Property({ unique: true })
+  email!: string;
 
-  accounts: columns.hasMany(() => Account).mappedBy("user"),
-  sessions: columns.hasMany(() => Session).mappedBy("user"),
+  @Property({ default: false })
+  emailVerified: boolean = false;
 
-  createdAt: columns.timestamp({ withTimezone: true }).defaultRaw("now()"),
-  updatedAt: columns.timestamp({ withTimezone: true }).defaultRaw("now()"),
-  deletedAt: columns.timestamp({ withTimezone: true }).nullable(),
-});
-// .constrain([columns.constrains().columns(["email"]).unique()]);
+  @Property({ nullable: true })
+  name?: string;
+
+  @Property({ nullable: true })
+  image?: string;
+
+  @OneToMany(() => Account, (account) => account.user)
+  accounts = new Collection<Account>(this);
+
+  @OneToMany(() => Session, (session) => session.user)
+  sessions = new Collection<Session>(this);
+
+  @Property({ defaultRaw: "now()" })
+  createdAt: Date = new Date();
+
+  @Property({ defaultRaw: "now()", onUpdate: () => new Date() })
+  updatedAt: Date = new Date();
+
+  @Property({ nullable: true })
+  deletedAt?: Date;
+}

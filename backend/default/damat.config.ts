@@ -1,12 +1,9 @@
 import "reflect-metadata";
-import { defineConfig } from "@damatjs/utils";
+import { defineConfig, loadEnv } from "@damatjs/utils";
 
-// Service modules
+loadEnv(process.env.NODE_ENV || "development", process.cwd());
+
 import userModule from "./src/modules/user";
-
-// =============================================================================
-// APP CONFIGURATION
-// =============================================================================
 
 const appConfig = defineConfig({
   projectConfig: {
