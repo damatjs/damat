@@ -37,7 +37,7 @@
         "typescript": "5.9.2"
     },
     "scripts": {
-        "build": "rm -rf dist && tsc",
+        "build": "rm -rf dist tsconfig.tsbuildinfo && tsc",
         "watch": "tsc --watch",
         "test": "exit 0"
     }

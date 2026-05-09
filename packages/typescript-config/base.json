@@ -40,7 +40,7 @@
         "./packages/service/src"
       ],
       "@damatjs/types": [
-        "./packages/types/src"
+        "./packages/core/types/src"
       ],
       "@damatjs/utils": [
         "./packages/utils/src"

@@ -203,7 +203,7 @@
         "typescript": "^5.9.3",
       },
     },
-    "packages/serverhandler": {
+    "packages/server-handler": {
       "name": "@damatjs/server-handler",
       "version": "0.0.1",
       "dependencies": {
@@ -331,7 +331,7 @@
 
     "@damatjs/orm-processor": ["@damatjs/orm-processor@workspace:packages/orm/processor"],
 
-    "@damatjs/server-handler": ["@damatjs/server-handler@workspace:packages/serverhandler"],
+    "@damatjs/server-handler": ["@damatjs/server-handler@workspace:packages/server-handler"],
 
     "@damatjs/services": ["@damatjs/services@workspace:packages/service"],
 
