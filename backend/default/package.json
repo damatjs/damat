@@ -28,6 +28,7 @@
     "@damatjs/services": "*",
     "@damatjs/types": "*",
     "@damatjs/utils": "*",
+    "@damatjs/server-handler": "*",
     "@damatjs/workflow-engine": "*",
     "@damatjs/orm-migration": "*",
     "@damatjs/orm-connector": "*",

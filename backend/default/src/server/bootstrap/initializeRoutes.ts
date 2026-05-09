@@ -7,12 +7,12 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
 import { getAuth } from "@/utils/auth";
-import { createFileRouter, type FileRouter } from "@damatjs/utils/router";
+import { createFileRouter, type FileRouter } from "../../../../../packages/server-handler/dist/router";
+import { createRootRoute, createApiRoutesRoute, createHealthRoute } from "../../../../../packages/server-handler/dist/handlers";
 import { notFoundHandler } from "@/api/middleware";
 import { logger, getLogger } from "@/lib/logger";
-
-import { createRootRoute, createApiRoutesRoute } from "../routes";
 import { getProjectConfig } from '@damatjs/utils';
+import { getRedis } from "@/lib/redis";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,36 +20,42 @@ const __dirname = dirname(__filename);
 export async function initializeRoutes(app: Hono): Promise<FileRouter> {
   const projectConfig = getProjectConfig();
 
-  // Create file-based router for API v1 routes
   const fileRouter = await createFileRouter({
-    routesDir: join(__dirname, "..", "api", "routes"),
+    routesDir: join(__dirname, "..", "..", "api", "routes"),
     debug: projectConfig.nodeEnv === "development",
     logger: getLogger(),
   });
 
-  // Mount the file-based router
   app.route("/api", fileRouter.router);
 
-  // Log registered routes in development
   if (projectConfig.nodeEnv === "development") {
     logger.info(fileRouter.getRouteList());
   }
 
-  // Mount root route (API info)
   const rootRouter = createRootRoute(fileRouter);
   app.route("", rootRouter);
 
-  // Mount API routes listing
   const apiRoutesRouter = createApiRoutesRoute(fileRouter);
   app.route("", apiRoutesRouter);
 
-  // Better Auth handler (handles /api/auth/* routes)
+  const healthRouter = createHealthRoute({
+    version: "2.0.0",
+    checks: {
+      redis: async () => {
+        const redis = getRedis();
+        const start = Date.now();
+        await redis.ping();
+        return { status: "healthy", latency: Date.now() - start };
+      },
+    },
+  });
+  app.route("", healthRouter);
+
   const auth = getAuth();
   app.on(["POST", "GET"], "/api/auth/*", (c) => {
     return auth.handler(c.req.raw);
   });
 
-  // 404 handler
   app.notFound(notFoundHandler);
 
   return fileRouter;

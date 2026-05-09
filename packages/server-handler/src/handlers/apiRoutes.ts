@@ -1,21 +1,9 @@
-/**
- * API Routes Listing
- * Provides endpoint for listing all registered API routes
- */
-
 import { Hono } from "@damatjs/deps/hono";
-import type { FileRouter } from "@damatjs/utils/router";
+import type { FileRouter } from "../router";
 
-/**
- * Create API routes listing endpoint
- */
 export function createApiRoutesRoute(fileRouter: FileRouter): Hono {
   const apiRoutesRouter = new Hono();
 
-  /**
-   * GET /api/routes
-   * List all registered API routes (useful for debugging and documentation)
-   */
   apiRoutesRouter.get("/api/routes", (c) => {
     return c.json({
       success: true,

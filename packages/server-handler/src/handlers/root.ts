@@ -1,33 +1,17 @@
-/**
- * Root Route
- * Provides API information and documentation at the root endpoint
- */
-
 import { Hono } from "@damatjs/deps/hono";
-import type { FileRouter } from "@damatjs/utils/router";
-// import { PLAN_CONFIGS } from "../../lib/config";
+import type { FileRouter } from "../router";
 
-/**
- * Create root route handler with API documentation
- */
 export function createRootRoute(fileRouter: FileRouter): Hono {
   const rootRouter = new Hono();
 
-  /**
-   * GET /
-   * API information and available endpoints (dynamically generated from file router)
-   */
   rootRouter.get("/", (c) => {
-    // Group routes by base path for documentation
     const routesByPath: Record<string, string[]> = {};
     for (const route of fileRouter.routes) {
       if (!routesByPath[route.path]) {
         routesByPath[route.path] = [];
       }
-      // routesByPath[route.path].push(route.method);
     }
 
-    // Generate endpoints documentation
     const endpoints: Record<string, string> = {
       "GET /": "API information",
       "GET /health": "Health check",
@@ -59,11 +43,6 @@ export function createRootRoute(fileRouter: FileRouter): Hono {
           example: "Authorization: Bearer ag_xxx or X-API-Key: ag_xxx",
         },
       },
-      // plans: Object.entries(PLAN_CONFIGS).map(([name, planConfig]) => ({
-      //   name,
-      //   credits: planConfig.credits === -1 ? "unlimited" : planConfig.credits,
-      //   rateLimit: planConfig.rateLimit,
-      // })),
     });
   });
 
