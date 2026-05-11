@@ -1,21 +1,10 @@
 import { Hono } from "@damatjs/deps/hono";
-
-export interface HealthCheckFn {
-  (): Promise<{ status: string; latency?: number }>;
-}
-
-export interface HealthCheckOptions {
-  checks?: {
-    database?: HealthCheckFn;
-    redis?: HealthCheckFn;
-  };
-  version?: string;
-}
+import { HealthCheckOptions } from './type';
 
 export function createHealthRoute(options?: HealthCheckOptions): Hono {
   const healthRouter = new Hono();
 
-  healthRouter.get("/health", async (c) => {
+  healthRouter.get(process.env.HEALTH_CHECK_URL || "/health", async (c) => {
     const checks: Record<string, { status: string; latency?: number }> = {};
 
     if (options?.checks?.database) {

@@ -1,4 +1,4 @@
-import type { Context, MiddlewareHandler } from "@damatjs/deps/hono";
+import type { Context, Hono, MiddlewareHandler } from "@damatjs/deps/hono";
 
 export type RouteHandler = (c: Context) => Promise<Response> | Response;
 
@@ -47,4 +47,16 @@ export interface Logger {
   error: (message: string, error?: Error) => void;
   warn: (message: string, data?: Record<string, unknown>) => void;
   debug: (message: string, data?: Record<string, unknown>) => void;
+}
+
+
+export interface FileRouter {
+  router: Hono;
+  routes: RegisteredRoute[];
+  getRouteList(): string;
+  getRoutesJson(): Array<{ method: string; path: string }>;
+}
+
+export interface CreateFileRouterOptions extends FileRouterOptions {
+  logger: Logger;
 }

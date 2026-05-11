@@ -1,3 +1,4 @@
-export { createApiRoutesRoute } from "./apiRoutes";
-export { createRootRoute } from "./root";
-export { createHealthRoute, type HealthCheckOptions, type HealthCheckFn } from "./health";
+export * from "./apiRoutes";
+export * from "./root";
+export * from "./health";
+export * from "./type";

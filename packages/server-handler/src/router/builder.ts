@@ -2,19 +2,8 @@ import { Hono } from "@damatjs/deps/hono";
 import type { MiddlewareHandler } from "@damatjs/deps/hono";
 import { relative } from "path";
 import { pathToFileURL } from "url";
-import type { FileRouterOptions, RegisteredRoute, RouteModule, Logger } from "./types";
+import type { RegisteredRoute, RouteModule, CreateFileRouterOptions, FileRouter } from "./types";
 import { scanDirectory, sortRoutes } from "./scanner";
-
-export interface FileRouter {
-  router: Hono;
-  routes: RegisteredRoute[];
-  getRouteList(): string;
-  getRoutesJson(): Array<{ method: string; path: string }>;
-}
-
-export interface CreateFileRouterOptions extends FileRouterOptions {
-  logger: Logger;
-}
 
 export async function createFileRouter(
   options: CreateFileRouterOptions,
