@@ -95,6 +95,7 @@
     "build": "rm -rf dist tsconfig.tsbuildinfo && tsc --build"
   },
   "dependencies": {
+    "@hono/node-server": "^1.13.7",
     "@langchain/openai": "^1.2.9",
     "@mikro-orm/cli": "6.6.7",
     "@mikro-orm/core": "6.6.7",

@@ -11,7 +11,7 @@ import {
   getProjectConfig,
 } from "@damatjs/utils";
 import { Pool } from "@damatjs/deps/pg";
-import { getRedis } from '@/lib';
+import { getRedis } from '@/lib/redis';
 
 const BETTER_AUTH_KEY_PREFIX = "better-auth:";
 

@@ -25,7 +25,6 @@
         "@damatjs/types": "*",
         "@damatjs/utils": "*",
         "@damatjs/workflow-engine": "*",
-        "@hono/node-server": "^1.13.7",
         "bcryptjs": "^2.4.3",
         "jose": "^5.2.0",
         "reflect-metadata": "^0.2.2",
@@ -97,6 +96,7 @@
       "name": "@damatjs/deps",
       "version": "0.0.1",
       "dependencies": {
+        "@hono/node-server": "^1.13.7",
         "@langchain/openai": "^1.2.9",
         "@mikro-orm/cli": "6.6.7",
         "@mikro-orm/core": "6.6.7",
@@ -229,6 +229,7 @@
         "@damatjs/deps": "*",
         "@damatjs/types": "*",
         "@damatjs/utils": "*",
+        "@hono/node-server": "^1.13.7",
       },
       "devDependencies": {
         "@damatjs/typescript-config": "*",
