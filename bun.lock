@@ -183,7 +183,6 @@
       "dependencies": {
         "@damatjs/deps": "*",
         "@damatjs/types": "*",
-        "pg": "^8.20.0",
       },
       "devDependencies": {
         "@damatjs/typescript-config": "*",

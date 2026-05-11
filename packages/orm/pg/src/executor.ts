@@ -5,6 +5,7 @@ import type {
   InsertDescriptor,
   UpdateDescriptor,
   DeleteDescriptor,
+  UpsertDescriptor,
 } from "@damatjs/orm-model";
 import type {
   PgSelectResult,
@@ -103,7 +104,7 @@ export async function pgInsert<
 >(
   conn: Pool | PoolClient,
   query: BuiltQuery,
-  descriptor: InsertDescriptor,
+  descriptor: InsertDescriptor | UpsertDescriptor,
 ): Promise<PgInsertResult<T>> {
   const { rows, rowCount } = await pgExecuteRaw<T>(conn, query);
   return { rows, rowCount, descriptor };

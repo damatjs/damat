@@ -4,6 +4,7 @@ import type {
   InsertDescriptor,
   UpdateDescriptor,
   DeleteDescriptor,
+  UpsertDescriptor,
 } from "@damatjs/orm-model";
 
 // ─── PgQueryResult ────────────────────────────────────────────────────────────
@@ -69,7 +70,7 @@ export interface PgInsertResult<
   /** Number of rows inserted. */
   rowCount: number;
   /** The structured descriptor that was used to build the SQL. */
-  descriptor: InsertDescriptor;
+  descriptor: InsertDescriptor | UpsertDescriptor;
 }
 
 /**

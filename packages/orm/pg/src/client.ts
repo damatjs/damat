@@ -6,11 +6,13 @@ import {
   type CreateManyOptions,
   type UpdateOptions,
   type DeleteOptions,
+  type UpsertOptions,
   type SelectDescriptor,
   type InsertDescriptor,
   type UpdateDescriptor,
   type DeleteDescriptor,
   ModelDefinition,
+  UpsertDescriptor,
 } from "@damatjs/orm-model";
 import {
   pgSelect,
@@ -262,6 +264,13 @@ export class PgModelClient<
   async delete(options: DeleteOptions<Cols>): Promise<PgDeleteResult<T>> {
     const { sql, json } = this.accessor.delete(options);
     return pgDelete<T>(this._conn, sql, json as DeleteDescriptor);
+  }
+
+  // ─── upsert ───────────────────────────────────────────────────────────
+
+  async upsert(options: UpsertOptions<Cols>): Promise<PgInsertResult<T>> {
+    const { sql, json } = this.accessor.upsert(options);
+    return pgInsert<T>(this._conn, sql, json as UpsertDescriptor);
   }
 
   // ─── transaction ──────────────────────────────────────────────────────────

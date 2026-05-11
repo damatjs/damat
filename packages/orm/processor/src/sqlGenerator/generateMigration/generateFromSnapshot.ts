@@ -32,6 +32,10 @@ export function generateFromSnapshot(
   snapshot: ModuleSchema,
   options: MigrationGeneratorOptions = {},
 ): GeneratedMigration {
+  // Use module schema if provided, else default to "public"
+  if (!options.schema && snapshot.schema) {
+    options = { ...options, schema: snapshot.schema };
+  }
   const opts = resolveOptions(options);
   const upStatements: string[] = [];
   const warnings: string[] = [];
