@@ -83,6 +83,15 @@
         "typescript": "5.9.2",
       },
     },
+    "packages/core/logger": {
+      "name": "@damatjs/logger",
+      "version": "0.0.1",
+      "devDependencies": {
+        "@damatjs/typescript-config": "*",
+        "@types/bun": "1.3.9",
+        "typescript": "5.9.2",
+      },
+    },
     "packages/core/types": {
       "name": "@damatjs/types",
       "version": "0.0.1",
@@ -340,6 +349,8 @@
     "@damatjs/deps": ["@damatjs/deps@workspace:packages/deps"],
 
     "@damatjs/framework": ["@damatjs/framework@workspace:packages/core/framework"],
+
+    "@damatjs/logger": ["@damatjs/logger@workspace:packages/core/logger"],
 
     "@damatjs/orm": ["@damatjs/orm@workspace:packages/orm/main"],
 
