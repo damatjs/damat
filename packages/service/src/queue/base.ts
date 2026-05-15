@@ -6,16 +6,16 @@
  */
 
 import { nanoid } from "@damatjs/deps/nanoid";
+import { RedisQueue } from "@damatjs/utils";
 import type {
   Job,
   QueueConfig,
   ResolvedQueueConfig,
   EnqueueOptions,
-  QueueStats,
+  ServiceQueueStats,
 } from "./types";
 import { DEFAULT_QUEUE_CONFIG } from "./defaults";
 import { MemoryQueue } from "./memory";
-import { RedisQueue } from "./redis";
 import { ILogger } from '@damatjs/logger';
 
 /**
@@ -306,7 +306,7 @@ export abstract class BaseQueueService<TData = unknown> {
   /**
    * Get queue statistics
    */
-  async getStats(): Promise<QueueStats> {
+  async getStats(): Promise<ServiceQueueStats> {
     if (this.config.useRedis && this.redisQueue) {
       const stats = await this.redisQueue.getStats();
       return {

@@ -1,17 +1,43 @@
 /**
- * Queue Service - Redis Queue Operations
+ * Redis Module - Job Queue
  *
- * Operations for managing jobs in a Redis-backed queue (production).
+ * Redis-backed job queue for production use.
  */
 
-import { getRedis, type Redis } from "@damatjs/utils";
-import type { Job } from "./types";
-import { PRIORITY_SCORES } from "./defaults";
+import { getRedis } from "./client";
+import { Redis } from "@damatjs/deps/ioredis";
 
-/**
- * Redis queue operations
- */
-export class RedisQueue<TData> {
+const PRIORITY_SCORES: Record<string, number> = {
+  critical: 4,
+  high: 3,
+  normal: 2,
+  low: 1,
+};
+
+export interface QueueJob<TData = unknown> {
+  id: string;
+  queue: string;
+  data: TData;
+  status: "pending" | "processing" | "completed" | "failed" | "retrying";
+  priority: "low" | "normal" | "high" | "critical";
+  attempts: number;
+  maxAttempts: number;
+  createdAt: Date;
+  startedAt?: Date;
+  completedAt?: Date;
+  error?: string;
+  delay?: number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface QueueStats {
+  pending: number;
+  processing: number;
+  completed: number;
+  failed: number;
+}
+
+export class RedisQueue<TData = unknown> {
   private readonly keyPrefix: string;
   private readonly redis: Redis;
 
@@ -20,12 +46,9 @@ export class RedisQueue<TData> {
     this.redis = redis ?? getRedis();
   }
 
-  /**
-   * Add a job to the queue
-   */
-  async enqueue(job: Job<TData>): Promise<void> {
-    const score =
-      Date.now() + (job.delay ?? 0) - PRIORITY_SCORES[job.priority] * 1000;
+  async enqueue(job: QueueJob<TData>): Promise<void> {
+    const priorityScore = PRIORITY_SCORES[job.priority] ?? 2;
+    const score = Date.now() + (job.delay ?? 0) - priorityScore * 1000;
 
     await this.redis
       .pipeline()
@@ -34,10 +57,7 @@ export class RedisQueue<TData> {
       .exec();
   }
 
-  /**
-   * Remove and return jobs ready for processing
-   */
-  async dequeue(count: number): Promise<Job<TData>[]> {
+  async dequeue(count: number): Promise<QueueJob<TData>[]> {
     const now = Date.now();
 
     const jobIds = await this.redis.zrangebyscore(
@@ -65,13 +85,10 @@ export class RedisQueue<TData> {
 
     return jobDataArray
       .filter((data): data is string => data !== null)
-      .map((data) => JSON.parse(data) as Job<TData>);
+      .map((data: string) => JSON.parse(data) as QueueJob<TData>);
   }
 
-  /**
-   * Update a job's status
-   */
-  async updateStatus(job: Job<TData>): Promise<void> {
+  async updateStatus(job: QueueJob<TData>): Promise<void> {
     const statusSet =
       job.status === "completed"
         ? "completed"
@@ -87,17 +104,11 @@ export class RedisQueue<TData> {
       .exec();
   }
 
-  /**
-   * Get a job by ID
-   */
-  async getJob(jobId: string): Promise<Job<TData> | null> {
+  async getJob(jobId: string): Promise<QueueJob<TData> | null> {
     const data = await this.redis.hget(`${this.keyPrefix}:jobs`, jobId);
-    return data ? (JSON.parse(data) as Job<TData>) : null;
+    return data ? (JSON.parse(data) as QueueJob<TData>) : null;
   }
 
-  /**
-   * Cancel a pending job
-   */
   async cancelJob(jobId: string): Promise<boolean> {
     const removed = await this.redis.zrem(`${this.keyPrefix}:pending`, jobId);
     if (removed > 0) {
@@ -107,15 +118,7 @@ export class RedisQueue<TData> {
     return false;
   }
 
-  /**
-   * Get queue statistics
-   */
-  async getStats(): Promise<{
-    pending: number;
-    processing: number;
-    completed: number;
-    failed: number;
-  }> {
+  async getStats(): Promise<QueueStats> {
     const [pending, processing, completed, failed] = await Promise.all([
       this.redis.zcard(`${this.keyPrefix}:pending`),
       this.redis.zcard(`${this.keyPrefix}:processing`),
@@ -125,9 +128,6 @@ export class RedisQueue<TData> {
     return { pending, processing, completed, failed };
   }
 
-  /**
-   * Clear all jobs from the queue
-   */
   async clear(): Promise<void> {
     await this.redis
       .pipeline()

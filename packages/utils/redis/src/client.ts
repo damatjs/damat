@@ -1,4 +1,5 @@
 import { Redis } from "@damatjs/deps/ioredis";
+export { Redis };
 import type { RedisConfig } from "./types";
 
 let globalRedis: Redis | null = null;

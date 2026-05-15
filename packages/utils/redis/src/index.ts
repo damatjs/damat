@@ -21,3 +21,6 @@ export * from "./lock";
 
 // Counters
 export * from "./counter";
+
+// Job Queue
+export * from "./queue";

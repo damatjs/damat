@@ -4,14 +4,10 @@
 
 import type { ILogger } from "@damatjs/logger";
 import type { Redis } from "@damatjs/deps/ioredis";
+import type { QueueStats as BaseQueueStats } from "@damatjs/utils";
 
-// =============================================================================
-// JOB TYPES
-// =============================================================================
+export type { QueueJob, QueueStats } from "@damatjs/utils";
 
-/**
- * Job status
- */
 export type JobStatus =
   | "pending"
   | "processing"
@@ -19,42 +15,9 @@ export type JobStatus =
   | "failed"
   | "retrying";
 
-/**
- * Job priority levels
- */
 export type JobPriority = "low" | "normal" | "high" | "critical";
 
-/**
- * Job data structure
- */
-export interface Job<TData = unknown> {
-  /** Unique job ID */
-  id: string;
-  /** Queue name */
-  queue: string;
-  /** Job payload */
-  data: TData;
-  /** Current status */
-  status: JobStatus;
-  /** Job priority */
-  priority: JobPriority;
-  /** Number of attempts made */
-  attempts: number;
-  /** Maximum attempts allowed */
-  maxAttempts: number;
-  /** When job was created */
-  createdAt: Date;
-  /** When job started processing */
-  startedAt?: Date;
-  /** When job completed */
-  completedAt?: Date;
-  /** Error message if failed */
-  error?: string;
-  /** Delay before processing (ms) */
-  delay?: number;
-  /** Custom metadata */
-  metadata?: Record<string, unknown>;
-}
+export type Job<TData = unknown> = import("@damatjs/utils").QueueJob<TData>;
 
 // =============================================================================
 // ENQUEUE OPTIONS
@@ -113,17 +76,6 @@ export interface ResolvedQueueConfig extends Required<
   redisClient: Redis | null;
 }
 
-// =============================================================================
-// QUEUE STATISTICS
-// =============================================================================
-
-/**
- * Queue statistics
- */
-export interface QueueStats {
-  pending: number;
-  processing: number;
-  completed: number;
-  failed: number;
+export interface ServiceQueueStats extends BaseQueueStats {
   total: number;
 }
