@@ -26,10 +26,12 @@ export class Logger implements ILogger {
     return LOG_LEVELS[level] >= this.minLevel;
   }
 
-  private log(level: LogLevel, message: string, context?: LogContext, error?: Error): void {
+  private log(level: LogLevel, message: string, context?: LogContext, error?: unknown): void {
     if (!this.shouldLog(level)) return;
     const timestamp = this.timestampEnabled ? this.formatter.getTimestamp() : "";
-    const errorInfo = error ? { name: error.name, message: error.message, stack: error.stack } : undefined;
+    const errorInfo = error instanceof Error 
+      ? { name: error.name, message: error.message, stack: error.stack } 
+      : undefined;
 
     if (this.fileTransport) {
       this.fileTransport.log({ timestamp, level, message, context, error: errorInfo } as LogEntry);
@@ -45,8 +47,8 @@ export class Logger implements ILogger {
   debug(message: string, context?: LogContext): void { this.log("debug", message, context); }
   info(message: string, context?: LogContext): void { this.log("info", message, context); }
   warn(message: string, context?: LogContext): void { this.log("warn", message, context); }
-  error(message: string, error?: Error, context?: LogContext): void { this.log("error", message, context, error); }
-  fatal(message: string, error?: Error, context?: LogContext): void { this.log("fatal", message, context, error); }
+  error(message: string, error?: unknown, context?: LogContext): void { this.log("error", message, context, error); }
+  fatal(message: string, error?: unknown, context?: LogContext): void { this.log("fatal", message, context, error); }
   child(context: LogContext): ILogger { return new ChildLogger(this, context, this.prefix); }
   withPrefix(prefix: string): ILogger { return new ChildLogger(this, {}, this.prefix ? `${this.prefix}:${prefix}` : prefix); }
   static create(config?: LoggerConfig): Logger { return new Logger(config); }

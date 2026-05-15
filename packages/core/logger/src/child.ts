@@ -6,7 +6,7 @@ export class ChildLogger implements ILogger {
     private parent: Logger,
     private context: LogContext,
     private prefix?: string,
-  ) {}
+  ) { }
 
   private merge(additional?: LogContext): LogContext {
     return { ...this.context, ...additional };
@@ -24,11 +24,11 @@ export class ChildLogger implements ILogger {
     this.parent.warn(message, this.merge(context));
   }
 
-  error(message: string, error?: Error, context?: LogContext): void {
+  error(message: string, error?: unknown, context?: LogContext): void {
     this.parent.error(message, error, this.merge(context));
   }
 
-  fatal(message: string, error?: Error, context?: LogContext): void {
+  fatal(message: string, error?: unknown, context?: LogContext): void {
     this.parent.fatal(message, error, this.merge(context));
   }
 

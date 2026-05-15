@@ -1,5 +1,6 @@
 import { Logger } from "./logger";
-import type { LogContext } from "./types";
+import { NOOP_LOGGER } from "./noop";
+import type { LogContext, ILogger } from "./types";
 
 let globalLogger: Logger | null = null;
 
@@ -16,11 +17,26 @@ export function getLogger(): Logger {
   return globalLogger;
 }
 
+export function clearGlobalLogger(): void {
+  globalLogger = null;
+}
+
 export function closeLogger(): void {
   if (globalLogger) {
     globalLogger.close();
     globalLogger = null;
   }
+}
+
+export function isLoggerConfigured(): boolean {
+  return globalLogger !== null;
+}
+
+export function createContextLogger(context: LogContext): ILogger {
+  if (globalLogger) {
+    return globalLogger.child(context);
+  }
+  return NOOP_LOGGER.child(context);
 }
 
 export function debug(message: string, context?: LogContext): void {
@@ -35,10 +51,10 @@ export function warn(message: string, context?: LogContext): void {
   getLogger().warn(message, context);
 }
 
-export function error(message: string, error?: Error, context?: LogContext): void {
-  getLogger().error(message, error, context);
+export function error(message: string, err?: unknown, context?: LogContext): void {
+  getLogger().error(message, err, context);
 }
 
-export function fatal(message: string, error?: Error, context?: LogContext): void {
-  getLogger().fatal(message, error, context);
+export function fatal(message: string, err?: unknown, context?: LogContext): void {
+  getLogger().fatal(message, err, context);
 }
