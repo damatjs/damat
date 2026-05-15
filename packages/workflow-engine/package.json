@@ -11,6 +11,7 @@
     }
   },
   "dependencies": {
+    "@damatjs/logger": "*",
     "@damatjs/utils": "*",
     "effect": "^3.12.0",
     "nanoid": "^5.1.6"

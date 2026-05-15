@@ -4,9 +4,9 @@ import type { Context, Next } from "@damatjs/deps/hono";
 import { nanoid } from "@damatjs/deps/nanoid";
 import { ZodError } from "@damatjs/deps/zod";
 import { AppError } from "@damatjs/types";
-import type { Logger } from "../types";
+import type { Logger, ILogger } from "../types";
 
-export function setupMiddleware(app: Hono, corsOrigin: string, logger: Logger): void {
+export function setupMiddleware(app: Hono, corsOrigin: string, logger: Logger | ILogger): void {
   app.use("*", secureHeaders());
   app.use("*", timing());
   app.use("*", requestSetup);
@@ -33,7 +33,7 @@ async function requestSetup(c: Context, next: Next): Promise<Response | void> {
   c.header("X-Response-Time", `${Date.now() - c.get("startTime")}ms`);
 }
 
-function errorHandler(logger: Logger) {
+function errorHandler(logger: Logger | ILogger) {
   return async (c: Context, next: Next): Promise<Response | void> => {
     try {
       await next();
@@ -43,7 +43,7 @@ function errorHandler(logger: Logger) {
   };
 }
 
-function handleError(c: Context, error: unknown, logger: Logger): Response {
+function handleError(c: Context, error: unknown, logger: Logger | ILogger): Response {
   const requestId = c.get("requestId") || "unknown";
   const isDev = process.env.NODE_ENV === "development";
   const parsed = parseError(error, logger, requestId, isDev);
@@ -59,7 +59,7 @@ function handleError(c: Context, error: unknown, logger: Logger): Response {
   }, parsed.statusCode as any);
 }
 
-function parseError(error: unknown, logger: Logger, requestId: string, isDev: boolean) {
+function parseError(error: unknown, logger: Logger | ILogger, requestId: string, isDev: boolean) {
   let statusCode = 500, code = "INTERNAL_ERROR", message = "An unexpected error occurred", details: unknown;
 
   if (error instanceof AppError) {

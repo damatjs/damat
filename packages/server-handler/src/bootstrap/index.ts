@@ -3,11 +3,11 @@ import { createFileRouter } from "../router";
 import { setupMiddleware, notFoundHandler } from "../middleware";
 import { createRootRoute, createApiRoutesRoute, createHealthRoute } from "../handlers";
 import type { BootstrapOptions, BootstrapResult } from "../types";
-import { createLogger } from "@damatjs/utils";
+import { Logger } from "@damatjs/logger";
 
 export async function bootstrap(options: BootstrapOptions): Promise<BootstrapResult> {
   const { routesDir, projectConfig, healthCheck, customRoutes } = options;
-  const logger = createLogger({ logLevel: projectConfig.logLevel || "info", logFormat: projectConfig.logFormat || "pretty" });
+  const logger = new Logger({ level: projectConfig.logLevel || "info", format: projectConfig.logFormat || "pretty" });
 
   logger.info("Starting server...", { port: projectConfig.http.port });
 

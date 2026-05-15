@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { defineConfig, loadEnv, waitForInit, createLogger, closeConnection } from "@damatjs/utils";
+import { defineConfig, loadEnv } from "@damatjs/utils";
 
 loadEnv(process.env.NODE_ENV || "development", process.cwd());
 

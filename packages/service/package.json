@@ -27,7 +27,8 @@
     "@damatjs/orm-migration": "*",
     "@damatjs/orm-model": "*",
     "@damatjs/orm-connector": "*",
-    "@damatjs/types": "*"
+    "@damatjs/types": "*",
+    "@damatjs/logger": "*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "*",

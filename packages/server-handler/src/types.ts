@@ -1,6 +1,6 @@
-import type { LogLevel, LogFormat, Logger } from "@damatjs/utils";
+import { LogFormat, Logger, LogLevel } from '@damatjs/logger';
 
-export type { Logger } from "@damatjs/utils";
+export type { Logger, ILogger } from "@damatjs/logger";
 
 export interface ServerConfig {
   port: number;

@@ -44,3 +44,12 @@ export {
 
 // ─── PgModelClient — ergonomic bound client ───────────────────────────────────
 export { PgModelClient } from "./client";
+
+// ─── Query Logger ─────────────────────────────────────────────────────────────
+export {
+  QueryLogger,
+  getQueryLogger,
+  setQueryLogger,
+  configureQueryLogger,
+  type QueryLoggerOptions,
+} from "./logger";

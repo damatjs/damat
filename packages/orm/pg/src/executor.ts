@@ -13,6 +13,7 @@ import type {
   PgUpdateResult,
   PgDeleteResult,
 } from "./types";
+import { getQueryLogger, type QueryLogger } from "./logger";
 
 // ─── Low-level execute helpers ────────────────────────────────────────────────
 //
@@ -41,12 +42,25 @@ export async function pgExecuteRaw<
 >(
   conn: Pool | PoolClient,
   query: BuiltQuery,
+  logger?: QueryLogger,
 ): Promise<{ rows: T[]; rowCount: number }> {
-  const result = await conn.query<T>(query.sql, query.params as unknown[]);
-  return {
-    rows: result.rows,
-    rowCount: result.rowCount ?? result.rows.length,
-  };
+  const loggerInstance = logger ?? getQueryLogger();
+  const startTime = Date.now();
+  
+  try {
+    loggerInstance.logQuery(query.sql, query.params);
+    const result = await conn.query<T>(query.sql, query.params as unknown[]);
+    const duration = Date.now() - startTime;
+    loggerInstance.logSlowQuery(query.sql, duration, query.params);
+    return {
+      rows: result.rows,
+      rowCount: result.rowCount ?? result.rows.length,
+    };
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    loggerInstance.logQueryError(err, query.sql, query.params);
+    throw error;
+  }
 }
 
 // ─── SELECT ───────────────────────────────────────────────────────────────────
@@ -76,8 +90,9 @@ export async function pgSelect<
   conn: Pool | PoolClient,
   query: BuiltQuery,
   descriptor: SelectDescriptor,
+  logger?: QueryLogger,
 ): Promise<PgSelectResult<T>> {
-  const { rows, rowCount } = await pgExecuteRaw<T>(conn, query);
+  const { rows, rowCount } = await pgExecuteRaw<T>(conn, query, logger);
   return { rows, rowCount, descriptor };
 }
 
@@ -105,8 +120,9 @@ export async function pgInsert<
   conn: Pool | PoolClient,
   query: BuiltQuery,
   descriptor: InsertDescriptor | UpsertDescriptor,
+  logger?: QueryLogger,
 ): Promise<PgInsertResult<T>> {
-  const { rows, rowCount } = await pgExecuteRaw<T>(conn, query);
+  const { rows, rowCount } = await pgExecuteRaw<T>(conn, query, logger);
   return { rows, rowCount, descriptor };
 }
 
@@ -135,8 +151,9 @@ export async function pgUpdate<
   conn: Pool | PoolClient,
   query: BuiltQuery,
   descriptor: UpdateDescriptor,
+  logger?: QueryLogger,
 ): Promise<PgUpdateResult<T>> {
-  const { rows, rowCount } = await pgExecuteRaw<T>(conn, query);
+  const { rows, rowCount } = await pgExecuteRaw<T>(conn, query, logger);
   return { rows, rowCount, descriptor };
 }
 
@@ -164,8 +181,9 @@ export async function pgDelete<
   conn: Pool | PoolClient,
   query: BuiltQuery,
   descriptor: DeleteDescriptor,
+  logger?: QueryLogger,
 ): Promise<PgDeleteResult<T>> {
-  const { rows, rowCount } = await pgExecuteRaw<T>(conn, query);
+  const { rows, rowCount } = await pgExecuteRaw<T>(conn, query, logger);
   return { rows, rowCount, descriptor };
 }
 
@@ -188,15 +206,20 @@ export async function pgDelete<
 export async function pgTransaction<R>(
   pool: Pool,
   callback: (client: PoolClient) => Promise<R>,
+  logger?: QueryLogger,
 ): Promise<R> {
+  const loggerInstance = logger ?? getQueryLogger();
   const client = await pool.connect();
   try {
+    loggerInstance.logTransaction("begin");
     await client.query("BEGIN");
     const result = await callback(client);
     await client.query("COMMIT");
+    loggerInstance.logTransaction("commit");
     return result;
   } catch (err) {
     await client.query("ROLLBACK");
+    loggerInstance.logTransaction("rollback");
     throw err;
   } finally {
     client.release();

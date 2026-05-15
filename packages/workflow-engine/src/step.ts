@@ -17,7 +17,7 @@ import {
   CompensationError,
 } from "./errors";
 import { DEFAULT_STEP_CONFIG, DEFAULT_RETRY_POLICY } from "./config";
-import { createContextLogger } from "./logger";
+import { createContextLogger } from '@damatjs/logger';
 
 // =============================================================================
 // STEP CREATION

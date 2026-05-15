@@ -16,7 +16,7 @@ import type {
 } from "./types";
 import { WorkflowError, WorkflowLockError } from "./errors";
 import { DEFAULT_WORKFLOW_CONFIG, DEFAULT_STEP_CONFIG } from "./config";
-import { createContextLogger } from "./logger";
+import { createContextLogger } from "@damatjs/logger";
 import { acquireWorkflowLock, releaseWorkflowLock } from "./lock";
 
 // =============================================================================
@@ -89,12 +89,12 @@ async function executeWorkflowInternal<I, O>(
       rawError instanceof WorkflowError
         ? rawError
         : new WorkflowError(
-            "WORKFLOW_FAILED",
-            rawError instanceof Error ? rawError.message : String(rawError),
-            name,
-            undefined,
-            rawError,
-          );
+          "WORKFLOW_FAILED",
+          rawError instanceof Error ? rawError.message : String(rawError),
+          name,
+          undefined,
+          rawError,
+        );
 
     workflowLogger.error(`Workflow failed`, error, {
       executionId,

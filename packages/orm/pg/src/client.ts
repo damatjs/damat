@@ -27,6 +27,7 @@ import type {
   PgUpdateResult,
   PgDeleteResult,
 } from "./types";
+import type { QueryLogger } from "./logger";
 
 // ─── PgModelClient ────────────────────────────────────────────────────────────
 
@@ -151,11 +152,18 @@ export class PgModelClient<
 
   private readonly _pool: Pool;
   private readonly _conn: Pool | PoolClient;
+  private readonly _logger: QueryLogger | undefined;
 
-  constructor(model: ModelDefinition, pool: Pool, conn?: PoolClient) {
+  constructor(
+    model: ModelDefinition,
+    pool: Pool,
+    conn?: PoolClient,
+    logger?: QueryLogger,
+  ) {
     this.accessor = new ModelAccessor<Cols>(model);
     this._pool = pool;
     this._conn = conn ?? pool;
+    this._logger = logger ?? undefined;
   }
 
   // ─── findMany ─────────────────────────────────────────────────────────────
@@ -174,7 +182,7 @@ export class PgModelClient<
    */
   async findMany(options: FindOptions<Cols> = {}): Promise<PgSelectResult<T>> {
     const { sql, json } = this.accessor.findMany(options);
-    return pgSelect<T>(this._conn, sql, json as SelectDescriptor);
+    return pgSelect<T>(this._conn, sql, json as SelectDescriptor, this._logger);
   }
 
   // ─── findOne ──────────────────────────────────────────────────────────────
@@ -191,7 +199,7 @@ export class PgModelClient<
     options: Omit<FindOptions<Cols>, "limit" | "offset"> = {},
   ): Promise<PgSelectResult<T>> {
     const { sql, json } = this.accessor.findOne(options);
-    return pgSelect<T>(this._conn, sql, json as SelectDescriptor);
+    return pgSelect<T>(this._conn, sql, json as SelectDescriptor, this._logger);
   }
 
   // ─── create ───────────────────────────────────────────────────────────────
@@ -209,7 +217,7 @@ export class PgModelClient<
    */
   async create(options: CreateOptions<Cols>): Promise<PgInsertResult<T>> {
     const { sql, json } = this.accessor.create(options);
-    return pgInsert<T>(this._conn, sql, json as InsertDescriptor);
+    return pgInsert<T>(this._conn, sql, json as InsertDescriptor, this._logger);
   }
 
   // ─── createMany ───────────────────────────────────────────────────────────
@@ -230,7 +238,7 @@ export class PgModelClient<
     options: CreateManyOptions<Cols>,
   ): Promise<PgInsertResult<T>> {
     const { sql, json } = this.accessor.createMany(options);
-    return pgInsert<T>(this._conn, sql, json as InsertDescriptor);
+    return pgInsert<T>(this._conn, sql, json as InsertDescriptor, this._logger);
   }
 
   // ─── update ───────────────────────────────────────────────────────────────
@@ -249,7 +257,7 @@ export class PgModelClient<
    */
   async update(options: UpdateOptions<Cols>): Promise<PgUpdateResult<T>> {
     const { sql, json } = this.accessor.update(options);
-    return pgUpdate<T>(this._conn, sql, json as UpdateDescriptor);
+    return pgUpdate<T>(this._conn, sql, json as UpdateDescriptor, this._logger);
   }
 
   // ─── delete ───────────────────────────────────────────────────────────────
@@ -263,14 +271,14 @@ export class PgModelClient<
    */
   async delete(options: DeleteOptions<Cols>): Promise<PgDeleteResult<T>> {
     const { sql, json } = this.accessor.delete(options);
-    return pgDelete<T>(this._conn, sql, json as DeleteDescriptor);
+    return pgDelete<T>(this._conn, sql, json as DeleteDescriptor, this._logger);
   }
 
   // ─── upsert ───────────────────────────────────────────────────────────
 
   async upsert(options: UpsertOptions<Cols>): Promise<PgInsertResult<T>> {
     const { sql, json } = this.accessor.upsert(options);
-    return pgInsert<T>(this._conn, sql, json as UpsertDescriptor);
+    return pgInsert<T>(this._conn, sql, json as UpsertDescriptor, this._logger);
   }
 
   // ─── transaction ──────────────────────────────────────────────────────────
@@ -295,7 +303,7 @@ export class PgModelClient<
     return pgTransaction(this._pool, async (client) => {
       const tx = this.withClient(client);
       return callback(tx);
-    });
+    }, this._logger);
   }
 
   // ─── withClient ───────────────────────────────────────────────────────────
@@ -316,11 +324,10 @@ export class PgModelClient<
    */
   withClient(client: PoolClient): PgModelClient<T, Cols> {
     return new PgModelClient<T, Cols>(
-      // ModelAccessor holds the model reference — extract it via a builder
-      // (all builders share the same model passed to the accessor constructor)
       (this.accessor as unknown as { _model: ModelDefinition })._model,
       this._pool,
       client,
+      this._logger,
     );
   }
 }

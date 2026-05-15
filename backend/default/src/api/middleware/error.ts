@@ -6,8 +6,10 @@ import { Context, Next } from "@damatjs/deps/hono";
 import { HTTPException } from '@damatjs/deps/hono';
 import { ZodError } from '@damatjs/deps/zod';
 import { AppError, ValidationError, RateLimitError } from "@damatjs/types";
-import { logger } from "@/lib/logger";
+import { getLogger } from "@damatjs/logger";
 import { getProjectConfig } from '@damatjs/utils';
+
+const logger = getLogger();
 
 interface ErrorResponse {
   success: false;

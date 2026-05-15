@@ -9,7 +9,7 @@ import type { Redis } from "@damatjs/utils";
 import { acquireLock, releaseLock } from "@damatjs/utils";
 import { nanoid } from "nanoid";
 import type { WorkflowLockConfig, WorkflowLockResult } from "./types";
-import { createContextLogger } from "./logger";
+import { createContextLogger } from '@damatjs/logger';
 
 // =============================================================================
 // DEFAULTS

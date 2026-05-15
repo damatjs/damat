@@ -1,23 +1,19 @@
-/**
- * Query Logger
- */
+import { Logger, type ILogger, type LogContext } from "@damatjs/logger";
 
-export interface LoggerOptions {
-  enabled: boolean;
+export interface QueryLoggerOptions {
+  enabled?: boolean;
   logQueries?: boolean;
   logErrors?: boolean;
   logSlowQueries?: boolean;
-  slowQueryThreshold?: number; // ms
+  slowQueryThreshold?: number;
   logTransaction?: boolean;
 }
 
-export type LogMethod = (level: 'query' | 'error' | 'info', message: string, data?: Record<string, unknown>) => void;
-
 export class QueryLogger {
-  private options: Required<LoggerOptions>;
-  private logMethod: LogMethod;
+  private options: Required<QueryLoggerOptions>;
+  private logger: ILogger;
 
-  constructor(options: Partial<LoggerOptions> = {}, logMethod?: LogMethod) {
+  constructor(options: QueryLoggerOptions = {}, logger?: ILogger) {
     this.options = {
       enabled: options.enabled ?? true,
       logQueries: options.logQueries ?? true,
@@ -27,95 +23,70 @@ export class QueryLogger {
       logTransaction: options.logTransaction ?? true,
     };
 
-    this.logMethod = logMethod ?? this.defaultLogMethod;
+    this.logger = logger ?? new Logger({ prefix: "ORM", timestamp: true });
   }
 
-  private defaultLogMethod = (
-    level: 'query' | 'error' | 'info',
-    message: string,
-    data?: Record<string, unknown>
-  ) => {
-    const timestamp = new Date().toISOString();
-    const prefix = `[ORM][${timestamp}]`;
-    
-    switch (level) {
-      case 'error':
-        console.error(`${prefix} ❌ ${message}`, data || '');
-        break;
-      case 'query':
-        console.log(`${prefix} 🔍 ${message}`, data || '');
-        break;
-      case 'info':
-        console.log(`${prefix} ℹ️  ${message}`, data || '');
-        break;
-    }
-  };
-
-  logQuery(sql: string, params?: unknown[]) {
+  logQuery(sql: string, params?: unknown[]): void {
     if (!this.options.enabled || !this.options.logQueries) return;
-    
-    this.logMethod('query', 'Query executed', {
-      sql,
-      params: params?.length ? params : undefined,
-    });
+
+    const context: LogContext = { sql };
+    if (params?.length) context.params = params;
+    this.logger.debug("Query executed", context);
   }
 
-  logQueryError(error: Error, sql: string, params?: unknown[]) {
+  logQueryError(error: Error, sql: string, params?: unknown[]): void {
     if (!this.options.enabled || !this.options.logErrors) return;
-    
-    this.logMethod('error', 'Query error', {
-      error: error.message,
-      sql,
-      params: params?.length ? params : undefined,
-    });
+
+    const context: LogContext = { sql };
+    if (params?.length) context.params = params;
+    this.logger.error("Query error", error, context);
   }
 
-  logSlowQuery(sql: string, duration: number, params?: unknown[]) {
+  logSlowQuery(sql: string, duration: number, params?: unknown[]): void {
     if (!this.options.enabled || !this.options.logSlowQueries) return;
-    
+
     if (duration > this.options.slowQueryThreshold) {
-      this.logMethod('info', `Slow query (${duration}ms)`, {
-        sql,
-        params: params?.length ? params : undefined,
-        threshold: this.options.slowQueryThreshold,
-      });
+      const context: LogContext = { sql, duration, threshold: this.options.slowQueryThreshold };
+      if (params?.length) context.params = params;
+      this.logger.warn(`Slow query (${duration}ms)`, context);
     }
   }
 
-  logTransaction(action: 'begin' | 'commit' | 'rollback') {
+  logTransaction(action: "begin" | "commit" | "rollback"): void {
     if (!this.options.enabled || !this.options.logTransaction) return;
-    
-    this.logMethod('info', `Transaction: ${action}`);
+    this.logger.debug(`Transaction: ${action}`);
   }
 
-  setOptions(options: Partial<LoggerOptions>) {
+  setOptions(options: Partial<QueryLoggerOptions>): void {
     this.options = { ...this.options, ...options };
   }
 
-  enable() {
+  enable(): void {
     this.options.enabled = true;
   }
 
-  disable() {
+  disable(): void {
     this.options.enabled = false;
   }
 }
 
-// Global logger instance
 let globalLogger: QueryLogger | null = null;
 
-export function getLogger(): QueryLogger {
+export function getQueryLogger(): QueryLogger {
   if (!globalLogger) {
     globalLogger = new QueryLogger();
   }
   return globalLogger;
 }
 
-export function setLogger(logger: QueryLogger) {
+export function setQueryLogger(logger: QueryLogger): void {
   globalLogger = logger;
 }
 
-export function configureLogger(options: Partial<LoggerOptions>, logMethod?: LogMethod) {
-  globalLogger = new QueryLogger(options, logMethod);
+export function configureQueryLogger(
+  options: QueryLoggerOptions,
+  logger?: ILogger,
+): QueryLogger {
+  globalLogger = new QueryLogger(options, logger);
   return globalLogger;
 }

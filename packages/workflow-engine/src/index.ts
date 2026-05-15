@@ -7,7 +7,7 @@
  * - Retry policies with exponential backoff
  * - Step and workflow timeouts
  * - Distributed locking to prevent concurrent execution
- * - Structured logging via @damatjs/utils
+ * - Structured logging via @damatjs/logger
  * - Workflow context propagation
  *
  * @packageDocumentation
@@ -69,11 +69,6 @@ export {
   type RetryPolicyPreset,
 } from "./config";
 
-// =============================================================================
-// LOGGER
-// =============================================================================
-
-export { getLogger, setLogger, clearLogger } from "./logger";
 
 // =============================================================================
 // LOCKING

@@ -15,6 +15,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@damatjs/deps": "*",
+        "@damatjs/logger": "*",
         "@damatjs/orm-connector": "*",
         "@damatjs/orm-migration": "*",
         "@damatjs/orm-model": "*",
@@ -173,6 +174,7 @@
       },
       "dependencies": {
         "@damatjs/deps": "*",
+        "@damatjs/logger": "*",
         "@damatjs/orm-model": "*",
         "@damatjs/orm-processor": "*",
         "@damatjs/types": "*",
@@ -205,6 +207,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@damatjs/deps": "*",
+        "@damatjs/logger": "*",
         "@damatjs/orm-model": "*",
         "@damatjs/types": "*",
       },
@@ -236,6 +239,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@damatjs/deps": "*",
+        "@damatjs/logger": "*",
         "@damatjs/types": "*",
         "@damatjs/utils": "*",
         "@hono/node-server": "^1.13.7",
@@ -251,6 +255,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@damatjs/deps": "*",
+        "@damatjs/logger": "*",
         "@damatjs/orm-connector": "*",
         "@damatjs/orm-migration": "*",
         "@damatjs/orm-model": "*",
@@ -272,6 +277,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@damatjs/deps": "*",
+        "@damatjs/logger": "*",
         "@damatjs/orm-connector": "*",
         "@damatjs/orm-migration": "*",
         "@damatjs/orm-model": "*",
@@ -290,6 +296,7 @@
       "name": "@damatjs/workflow-engine",
       "version": "0.1.0",
       "dependencies": {
+        "@damatjs/logger": "*",
         "@damatjs/utils": "*",
         "effect": "^3.12.0",
         "nanoid": "^5.1.6",

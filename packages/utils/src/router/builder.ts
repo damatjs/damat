@@ -4,7 +4,7 @@ import { relative } from "path";
 import { pathToFileURL } from "url";
 import type { FileRouterOptions, RegisteredRoute, RouteModule } from "./types";
 import { scanDirectory, sortRoutes } from "./scanner";
-import type { Logger } from "../logger";
+import { Logger } from '@damatjs/logger';
 
 export interface FileRouter {
   router: Hono;

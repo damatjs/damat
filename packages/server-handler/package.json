@@ -47,6 +47,7 @@
   ],
   "author": "Abel Lamesgen",
   "dependencies": {
+    "@damatjs/logger": "*",
     "@damatjs/deps": "*",
     "@damatjs/types": "*",
     "@damatjs/utils": "*",

@@ -5,7 +5,6 @@
  * Supports both in-memory (development) and Redis-backed (production) queues.
  */
 
-import type { ILogger } from "@damatjs/utils";
 import { nanoid } from "@damatjs/deps/nanoid";
 import type {
   Job,
@@ -17,6 +16,7 @@ import type {
 import { DEFAULT_QUEUE_CONFIG } from "./defaults";
 import { MemoryQueue } from "./memory";
 import { RedisQueue } from "./redis";
+import { ILogger } from '@damatjs/logger';
 
 /**
  * Abstract base class for queue-based services

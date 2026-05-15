@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@damatjs/deps": "*",
+    "@damatjs/logger": "*",
     "@damatjs/services": "*",
     "@damatjs/types": "*",
     "@damatjs/utils": "*",

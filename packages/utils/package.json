@@ -25,10 +25,6 @@
     "./config": {
       "types": "./dist/config/index.d.ts",
       "default": "./dist/config/index.js"
-    },
-    "./logger": {
-      "types": "./dist/logger/index.d.ts",
-      "default": "./dist/logger/index.js"
     }
   },
   "engines": {
@@ -44,6 +40,7 @@
   "author": "Abel Lamesgen",
   "dependencies": {
     "@damatjs/deps": "*",
+    "@damatjs/logger": "*",
     "@damatjs/types": "*",
     "@damatjs/orm-migration": "*",
     "@damatjs/orm-model": "*",

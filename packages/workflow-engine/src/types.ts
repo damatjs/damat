@@ -218,26 +218,6 @@ export interface WorkflowLockResult {
 }
 
 // =============================================================================
-// LOGGER INTERFACE
-// =============================================================================
-
-/**
- * Logger interface for workflow engine
- * Compatible with ILogger from @damatjs/utils
- */
-export interface WorkflowLogger {
-  debug(message: string, context?: Record<string, unknown>): void;
-  info(message: string, context?: Record<string, unknown>): void;
-  warn(message: string, context?: Record<string, unknown>): void;
-  error(
-    message: string,
-    error: unknown,
-    context?: Record<string, unknown>,
-  ): void;
-  child(context: Record<string, unknown>): WorkflowLogger;
-}
-
-// =============================================================================
 // RE-EXPORTS FROM EFFECT
 // =============================================================================
 

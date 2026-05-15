@@ -2,13 +2,13 @@ import { waitForInit } from "@damatjs/utils";
 import { bootstrap } from "./bootstrap";
 import { startServer } from "./server";
 import { setupShutdownHandlers, registerShutdown } from "./shutdown";
-import type { Logger, ShutdownHandler } from "./types";
+import type { Logger, ILogger, ShutdownHandler } from "./types";
 
 interface CreateServerOptions {
   config: any;
   services: { 
     setup: () => void; 
-    logger: Logger; 
+    logger: Logger | ILogger; 
     redisCheck?: () => Promise<{ status: string; latency?: number }>;
     shutdown?: ShutdownHandler[] 
   };
@@ -40,4 +40,4 @@ export async function createServer(options: CreateServerOptions): Promise<void> 
 export { bootstrap } from "./bootstrap";
 export { startServer } from "./server";
 export { setupShutdownHandlers, registerShutdown } from "./shutdown";
-export type { BootstrapOptions, BootstrapResult, ServerConfig, ShutdownHandler, HealthCheckConfig, Logger } from "./types";
+export type { BootstrapOptions, BootstrapResult, ServerConfig, ShutdownHandler, HealthCheckConfig, Logger, ILogger } from "./types";

@@ -10,7 +10,7 @@ packages/workflow-engine/src/
 ├── types.ts      # Type definitions (interfaces, context, results, locking)
 ├── errors.ts     # Error classes (WorkflowError, StepExecutionError, WorkflowLockError, etc.)
 ├── config.ts     # Default configurations and RetryPolicies presets
-├── logger.ts     # Logger integration with @damatjs/utils
+├── logger.ts     # Logger integration with @damatjs/logger
 ├── lock.ts       # Distributed locking using Redis
 ├── step.ts       # Step creation and execution (createStep, executeStep)
 ├── workflow.ts   # Workflow creation (createWorkflow)
@@ -25,7 +25,7 @@ packages/workflow-engine/src/
 - **Retry Policies**: Configurable exponential backoff with custom predicates
 - **Timeouts**: Per-step and per-workflow timeout configuration
 - **Distributed Locking**: Prevent concurrent execution using Redis locks
-- **Structured Logging**: Integration with `@damatjs/utils` ILogger
+- **Structured Logging**: Integration with `@damatjs/logger` ILogger
 - **Effect-TS**: Built on Effect for composable, type-safe effects
 
 ---
@@ -290,17 +290,17 @@ error.cause; // Original error
 
 ## Logging
 
-The workflow engine integrates with `@damatjs/utils` ILogger interface.
+The workflow engine integrates with `@damatjs/logger` ILogger interface.
 
 ### Setup Logger
 
 ```typescript
 import { setLogger } from "@damatjs/workflow-engine";
-import { createLogger } from "@damatjs/utils";
+import { createLogger } from "@damatjs/logger";
 
 const appLogger = createLogger({
-  logLevel: "info",
-  logFormat: "json",
+  level: "info",
+  format: "json",
 });
 
 // Inject the logger at application startup
@@ -327,14 +327,15 @@ Initialize the lock manager with a Redis client:
 
 ```typescript
 import { initWorkflowLock, setLogger } from "@damatjs/workflow-engine";
-import { createRedis, createLogger } from "@damatjs/utils";
+import { createRedis } from "@damatjs/utils";
+import { createLogger } from "@damatjs/logger";
 
 // Initialize Redis for locking
 const redis = createRedis({ url: process.env.REDIS_URL });
 initWorkflowLock(redis);
 
 // Optional: Set up logging
-const logger = createLogger({ logLevel: "info", logFormat: "json" });
+const logger = createLogger({ level: "info", format: "json" });
 setLogger(logger);
 ```
 
@@ -550,6 +551,7 @@ createStep("process-file", invoke, compensate, { timeoutMs: 120000 });
 
 ## Dependencies
 
-- `@damatjs/utils` - Logger (ILogger) and Redis utilities
+- `@damatjs/logger` - Structured logging (ILogger)
+- `@damatjs/utils` - Redis utilities
 - `effect` - Effect-TS for composable effects
 - `nanoid` - Unique execution ID generation

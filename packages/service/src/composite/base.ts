@@ -1,4 +1,4 @@
-import type { ChildLogger } from "@damatjs/utils";
+import type { ILogger } from "@damatjs/utils";
 import type {
   CompositeServiceConfig,
   HealthCheckResult,
@@ -42,7 +42,7 @@ import { MetricsTracker } from "./metrics";
  */
 export class BaseCompositeService {
   protected readonly serviceName: string;
-  protected readonly log: ChildLogger;
+  protected readonly log: ILogger;
   protected readonly metadata: ServiceMetadata;
   private readonly metrics: MetricsTracker;
 

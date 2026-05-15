@@ -14,9 +14,6 @@
  * ```
  */
 
-// Logger
-export * from "./logger";
-
 // Discovery
 export * from "./discovery";
 
@@ -31,3 +28,6 @@ export * from "./executor";
 
 // CLI
 export * from "./cli";
+
+// Re-export logger utilities for convenience
+export { log, separator, successBanner, errorBanner } from "./logger";
