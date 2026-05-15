@@ -2,7 +2,15 @@ import { existsSync, mkdirSync, appendFileSync, statSync, renameSync } from "fs"
 import { join } from "path";
 import type { LogEntry, FileTransportConfig } from "./types";
 
-const LEVEL_EMOJI = { debug: "🔍", info: "ℹ️", warn: "⚠️", error: "❌", fatal: "💀" } as const;
+const LEVEL_EMOJI = { 
+  debug: "🔍", 
+  info: "ℹ️", 
+  success: "✅", 
+  warn: "⚠️", 
+  error: "❌", 
+  fatal: "💀",
+  skip: "⏭️",
+} as const;
 
 export class FileTransport {
   private dir: string;

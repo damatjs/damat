@@ -46,6 +46,12 @@ export class Colorizer {
     if (level === "warn") {
       return this.colorize(message, COLORS.yellow);
     }
+    if (level === "success") {
+      return this.colorize(message, COLORS.green);
+    }
+    if (level === "skip") {
+      return this.colorize(message, COLORS.dim);
+    }
     return message;
   }
 

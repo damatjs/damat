@@ -20,15 +20,19 @@ export const COLORS = {
 export const LEVEL_STYLES = {
   debug: { color: COLORS.cyan, badge: "◯", label: "DEBUG" },
   info: { color: COLORS.blue, badge: "●", label: "INFO " },
+  success: { color: COLORS.green, badge: "✓", label: "OK   " },
   warn: { color: COLORS.yellow, badge: "▲", label: "WARN " },
   error: { color: COLORS.red, badge: "✗", label: "ERROR" },
   fatal: { color: COLORS.bgRed + COLORS.white, badge: "☠", label: "FATAL" },
+  skip: { color: COLORS.dim, badge: "→", label: "SKIP " },
 } as const;
 
 export const LOG_LEVELS = {
   debug: 0,
   info: 1,
-  warn: 2,
-  error: 3,
-  fatal: 4,
+  success: 2,
+  warn: 3,
+  error: 4,
+  fatal: 5,
+  skip: 6,
 } as const;

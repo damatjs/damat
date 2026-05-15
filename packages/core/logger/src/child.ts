@@ -1,4 +1,4 @@
-import type { ILogger, LogContext } from "./types";
+import type { ILogger, LogContext, RequestLogData } from "./types";
 import type { Logger } from "./logger";
 
 export class ChildLogger implements ILogger {
@@ -20,6 +20,10 @@ export class ChildLogger implements ILogger {
     this.parent.info(message, this.merge(context));
   }
 
+  success(message: string, context?: LogContext): void {
+    this.parent.success(message, this.merge(context));
+  }
+
   warn(message: string, context?: LogContext): void {
     this.parent.warn(message, this.merge(context));
   }
@@ -32,6 +36,10 @@ export class ChildLogger implements ILogger {
     this.parent.fatal(message, error, this.merge(context));
   }
 
+  skip(message: string, context?: LogContext): void {
+    this.parent.skip(message, this.merge(context));
+  }
+
   child(context: LogContext): ILogger {
     return new ChildLogger(this.parent, this.merge(context), this.prefix);
   }
@@ -39,5 +47,9 @@ export class ChildLogger implements ILogger {
   withPrefix(prefix: string): ILogger {
     const newPrefix = this.prefix ? `${this.prefix}:${prefix}` : prefix;
     return new ChildLogger(this.parent, this.context, newPrefix);
+  }
+
+  request(data: RequestLogData): void {
+    this.parent.request(data);
   }
 }
