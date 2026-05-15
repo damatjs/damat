@@ -18,19 +18,23 @@ export class FileTransport {
   private buffer: string[] = [];
   private mdBuffer: string[] = [];
   private flushInterval: ReturnType<typeof setInterval> | null = null;
+  private enabled: boolean;
 
   constructor(config: FileTransportConfig = {}) {
     this.dir = config.dir ?? "logs";
     this.maxSizeBytes = config.maxSizeBytes ?? 10 * 1024 * 1024;
-    if (!this.isEnabled()) return;
+    
+    this.enabled = config.enabled === true || 
+                   process.env.LOG_FILE === "true" || 
+                   process.env.LOG_FILE === "1" ||
+                   process.env.LOGGING_FILE_ON === "true" || 
+                   process.env.LOGGING_FILE_ON === "1";
+    
+    if (!this.enabled) return;
     this.ensureDir();
     if (config.bufferFlushMs !== 0) {
       this.flushInterval = setInterval(() => this.flush(), config.bufferFlushMs ?? 1000);
     }
-  }
-
-  private isEnabled(): boolean {
-    return process.env.LOGGING_FILE_ON === "true" || process.env.LOGGING_FILE_ON === "1";
   }
 
   private ensureDir(): void {
@@ -79,7 +83,7 @@ export class FileTransport {
   }
 
   log(entry: LogEntry): void {
-    if (!this.isEnabled()) return;
+    if (!this.enabled) return;
     this.buffer.push(this.formatLog(entry));
     this.mdBuffer.push(this.formatMd(entry));
   }
