@@ -14,6 +14,14 @@
         },
     },
     "include": [
-        "src"
+        "src",
+        "tests/cache.test.ts",
+        "tests/client.test.ts",
+        "tests/counter.test.ts",
+        "tests/lock.test.ts",
+        "tests/rateLimit.test.ts",
+        "tests/session.test.ts",
+        "tests/sessionManager.test.ts",
+        "tests/sessionManager.ts"
     ]
 }
