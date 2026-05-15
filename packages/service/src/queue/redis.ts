@@ -4,7 +4,7 @@
  * Operations for managing jobs in a Redis-backed queue (production).
  */
 
-import type { Redis } from "@damatjs/deps/ioredis";
+import { getRedis, type Redis } from "@damatjs/utils";
 import type { Job } from "./types";
 import { PRIORITY_SCORES } from "./defaults";
 
@@ -13,12 +13,11 @@ import { PRIORITY_SCORES } from "./defaults";
  */
 export class RedisQueue<TData> {
   private readonly keyPrefix: string;
+  private readonly redis: Redis;
 
-  constructor(
-    private readonly redis: Redis,
-    queueName: string,
-  ) {
+  constructor(queueName: string, redis?: Redis) {
     this.keyPrefix = `queue:${queueName}`;
+    this.redis = redis ?? getRedis();
   }
 
   /**
@@ -41,7 +40,6 @@ export class RedisQueue<TData> {
   async dequeue(count: number): Promise<Job<TData>[]> {
     const now = Date.now();
 
-    // Get jobs ready for processing (score <= now)
     const jobIds = await this.redis.zrangebyscore(
       `${this.keyPrefix}:pending`,
       0,
@@ -53,7 +51,6 @@ export class RedisQueue<TData> {
 
     if (jobIds.length === 0) return [];
 
-    // Move jobs to processing set atomically
     const pipeline = this.redis.pipeline();
     for (const id of jobIds) {
       pipeline.zrem(`${this.keyPrefix}:pending`, id);
@@ -61,7 +58,6 @@ export class RedisQueue<TData> {
     }
     await pipeline.exec();
 
-    // Fetch job data
     const jobDataArray = await this.redis.hmget(
       `${this.keyPrefix}:jobs`,
       ...jobIds,

@@ -5,11 +5,10 @@
  * of workflows with the same lock ID.
  */
 
-import type { Redis } from "@damatjs/utils";
-import { acquireLock, releaseLock } from "@damatjs/utils";
+import { acquireLock, releaseLock, getRedis } from "@damatjs/utils";
 import { nanoid } from "nanoid";
 import type { WorkflowLockConfig, WorkflowLockResult } from "./types";
-import { createContextLogger } from '@damatjs/logger';
+import { createContextLogger } from 'core/logger/dist';
 
 // =============================================================================
 // DEFAULTS
@@ -26,58 +25,6 @@ const DEFAULT_MAX_RETRIES = 0;
 
 /** Lock key prefix for workflow locks */
 const WORKFLOW_LOCK_PREFIX = "workflow-lock:";
-
-// =============================================================================
-// LOCK MANAGER
-// =============================================================================
-
-/**
- * Workflow lock manager instance.
- * Must be initialized with a Redis client before using locked workflows.
- */
-let redisClient: Redis | null = null;
-
-/**
- * Initialize the workflow lock manager with a Redis client.
- *
- * @param client - Redis client instance
- *
- * @example
- * ```typescript
- * import { initWorkflowLock } from '@damatjs/workflow-engine';
- * import { createRedis } from '@damatjs/utils';
- *
- * const redis = createRedis({ url: process.env.REDIS_URL });
- * initWorkflowLock(redis);
- * ```
- */
-export function initWorkflowLock(client: Redis): void {
-  redisClient = client;
-}
-
-/**
- * Get the current Redis client for locking.
- * Throws if not initialized.
- *
- * @internal
- */
-export function getRedisClient(): Redis {
-  if (!redisClient) {
-    throw new Error(
-      "Workflow lock not initialized. Call initWorkflowLock(redis) first.",
-    );
-  }
-  return redisClient;
-}
-
-/**
- * Clear the Redis client (for testing).
- *
- * @internal
- */
-export function clearWorkflowLock(): void {
-  redisClient = null;
-}
 
 // =============================================================================
 // LOCK OPERATIONS
@@ -125,7 +72,6 @@ export async function acquireWorkflowLock(
   workflowName: string,
   config: WorkflowLockConfig = {},
 ): Promise<WorkflowLockResult> {
-  const redis = getRedisClient();
   const logger = createContextLogger({ workflow: workflowName });
 
   const lockId = config.lockId ?? nanoid();
@@ -137,7 +83,7 @@ export async function acquireWorkflowLock(
   let attempt = 0;
 
   while (attempt <= maxRetries) {
-    const lockValue = await acquireLock(redis, lockKey, ttlMs);
+    const lockValue = await acquireLock(lockKey, ttlMs);
 
     if (lockValue) {
       logger.debug("Workflow lock acquired", { lockId, attempt });
@@ -182,11 +128,10 @@ export async function releaseWorkflowLock(
   lockId: string,
   lockValue: string,
 ): Promise<boolean> {
-  const redis = getRedisClient();
   const logger = createContextLogger({ workflow: workflowName });
 
   const lockKey = getLockKey(workflowName, lockId);
-  const released = await releaseLock(redis, lockKey, lockValue);
+  const released = await releaseLock(lockKey, lockValue);
 
   if (released) {
     logger.debug("Workflow lock released", { lockId });
@@ -215,12 +160,11 @@ export async function extendWorkflowLock(
   lockValue: string,
   ttlMs: number,
 ): Promise<boolean> {
-  const redis = getRedisClient();
+  const redis = getRedis();
   const logger = createContextLogger({ workflow: workflowName });
 
   const lockKey = getLockKey(workflowName, lockId);
 
-  // Use Lua script for atomic check-and-extend
   const script = `
     if redis.call("get", KEYS[1]) == ARGV[1] then
       return redis.call("pexpire", KEYS[1], ARGV[2])
@@ -261,7 +205,7 @@ export async function isWorkflowLocked(
   workflowName: string,
   lockId: string,
 ): Promise<boolean> {
-  const redis = getRedisClient();
+  const redis = getRedis();
   const lockKey = getLockKey(workflowName, lockId);
   const value = await redis.get(`lock:${lockKey}`);
   return value !== null;

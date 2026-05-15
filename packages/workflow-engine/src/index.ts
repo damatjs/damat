@@ -75,7 +75,6 @@ export {
 // =============================================================================
 
 export {
-  initWorkflowLock,
   acquireWorkflowLock,
   releaseWorkflowLock,
   extendWorkflowLock,

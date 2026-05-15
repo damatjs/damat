@@ -18,10 +18,6 @@
       "types": "./dist/redis/index.d.ts",
       "default": "./dist/redis/index.js"
     },
-    "./router": {
-      "types": "./dist/router/index.d.ts",
-      "default": "./dist/router/index.js"
-    },
     "./config": {
       "types": "./dist/config/index.d.ts",
       "default": "./dist/config/index.js"
@@ -41,8 +37,7 @@
   "dependencies": {
     "@damatjs/utils-config": "*",
     "@damatjs/utils-env": "*",
-    "@damatjs/utils-redis": "*",
-    "@damatjs/utils-router": "*"
+    "@damatjs/utils-redis": "*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "*",

@@ -31,12 +31,3 @@ export function getProjectConfig(): ProjectConfig {
   return projectConfigInstance;
 }
 
-
-
-/**
- * Reset the project config instance.
- */
-export function resetProjectConfig(): void {
-  projectConfigInstance = undefined;
-}
-

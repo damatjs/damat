@@ -12,15 +12,8 @@ import type {
 import {
   initConnectionFromOptions,
   getEm as dalGetEm,
-  closeConnection,
   createOrmConfig,
-  type DatabaseModule,
 } from "@damatjs/orm-connector";
-
-// Database config
-let ormConfig: Options | null = null;
-let dbModules: DatabaseModule[] = [];
-
 
 /**
  * Extract entities from a module's service.
@@ -49,16 +42,15 @@ export async function initDatabase<TModules extends readonly any[]>(
   }
 ): Promise<MikroORM> {
 
-
   // Build database modules from service modules
-  dbModules = modules.map((mod) => ({
+  const dbModules = modules.map((mod) => ({
     name: mod.name,
     entities: extractEntities(mod),
     migrationsPath: mod.migrationsPath,
   }));
 
   // Create ORM config
-  ormConfig = createOrmConfig({
+  const ormConfig = createOrmConfig({
     database: { url: databaseUrl },
     modules: dbModules,
     options: options ?? {
@@ -77,30 +69,3 @@ export async function initDatabase<TModules extends readonly any[]>(
   return connection.orm;
 }
 
-/**
- * Close the database connection.
- */
-export async function disconnectDatabase(): Promise<void> {
-  await closeConnection();
-}
-
-/**
- * Get the database modules.
- */
-export function getDbModules(): DatabaseModule[] {
-  return dbModules;
-}
-
-/**
- * Get the ORM config.
- */
-export function getOrmConfig(): Options | null {
-  return ormConfig;
-}
-
-/**
- * Get all entities from all modules.
- */
-export function getAllEntities(): any[] {
-  return dbModules.flatMap((m) => m.entities);
-}

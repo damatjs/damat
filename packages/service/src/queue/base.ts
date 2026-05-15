@@ -53,8 +53,8 @@ export abstract class BaseQueueService<TData = unknown> {
     // Initialize Redis queue if configured
     if (this.config.useRedis && this.config.redisClient) {
       this.redisQueue = new RedisQueue<TData>(
-        this.config.redisClient,
         config.queueName,
+        this.config.redisClient,
       );
     } else {
       this.redisQueue = null;
