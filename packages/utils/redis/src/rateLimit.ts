@@ -1,15 +1,5 @@
-/**
- * Redis Module - Rate Limiting
- *
- * Sliding window rate limiting using Redis sorted sets.
- */
-
-import type {
-  Redis,
-  RateLimitResult,
-  RateLimitWindow,
-  MultiRateLimitResult,
-} from "./types";
+import type { Redis, RateLimitResult, MultiRateLimitResult } from "./types";
+import { getRedis } from "./client";
 
 const RATE_LIMIT_PREFIX = "ratelimit:";
 
@@ -31,33 +21,23 @@ const RATE_LIMIT_PREFIX = "ratelimit:";
  * ```
  */
 export async function checkRateLimit(
-  client: Redis,
   identifier: string,
   windowMs: number,
   maxRequests: number,
+  client?: Redis,
 ): Promise<RateLimitResult> {
+  const redis = client || getRedis();
   const key = RATE_LIMIT_PREFIX + identifier;
   const now = Date.now();
   const windowStart = now - windowMs;
 
-  // Use a transaction for atomic operations
-  const pipeline = client.pipeline();
-
-  // Remove old entries outside the window
+  const pipeline = redis.pipeline();
   pipeline.zremrangebyscore(key, 0, windowStart);
-
-  // Count current requests in window
   pipeline.zcard(key);
-
-  // Add current request
   pipeline.zadd(key, now, `${now}:${Math.random()}`);
-
-  // Set expiry on the key
   pipeline.pexpire(key, windowMs);
 
   const results = await pipeline.exec();
-
-  // Get the count before adding (results[1] is the zcard result)
   const currentCount = (results?.[1]?.[1] as number) || 0;
 
   const allowed = currentCount < maxRequests;
@@ -65,11 +45,9 @@ export async function checkRateLimit(
   const resetAt = now + windowMs;
 
   if (!allowed) {
-    // Calculate when the oldest request will expire
-    const oldest = await client.zrange(key, 0, 0, "WITHSCORES");
+    const oldest = await redis.zrange(key, 0, 0, "WITHSCORES");
     const oldestTimestamp = oldest[1] ? parseInt(oldest[1], 10) : now;
     const retryAfter = Math.ceil((oldestTimestamp + windowMs - now) / 1000);
-
     return { allowed: false, remaining: 0, resetAt, retryAfter };
   }
 
@@ -96,23 +74,24 @@ export async function checkRateLimit(
  * ```
  */
 export async function checkMultiRateLimit(
-  client: Redis,
   identifier: string,
-  limits: RateLimitWindow[],
+  windows: Array<{ windowMs: number; maxRequests: number }>,
+  client?: Redis,
 ): Promise<MultiRateLimitResult> {
-  for (const limit of limits) {
+  const redis = client || getRedis();
+  for (const window of windows) {
     const windowName =
-      limit.windowMs >= 86400000
+      window.windowMs >= 86400000
         ? "day"
-        : limit.windowMs >= 3600000
+        : window.windowMs >= 3600000
           ? "hour"
           : "minute";
 
     const result = await checkRateLimit(
-      client,
       `${identifier}:${windowName}`,
-      limit.windowMs,
-      limit.maxRequests,
+      window.windowMs,
+      window.maxRequests,
+      redis,
     );
 
     if (!result.allowed) {

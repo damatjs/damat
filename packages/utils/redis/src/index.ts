@@ -1,7 +1,7 @@
 // Types
 export * from "./types";
 
-// Client
+// Client & Singleton
 export * from "./client";
 
 // Cache
@@ -13,6 +13,8 @@ export * from "./rateLimit";
 // Session
 export * from "./session";
 
+// Session Manager (auto-keep-alive)
+export * from "./sessionManager";
 
 // Distributed Locks
 export * from "./lock";

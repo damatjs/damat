@@ -1,15 +1,8 @@
-/**
- * Redis Module - Client Factory
- *
- * Creates and manages Redis client instances.
- */
-
 import { Redis } from "@damatjs/deps/ioredis";
 import type { RedisConfig } from "./types";
 
-/**
- * Default retry strategy with exponential backoff
- */
+let globalRedis: Redis | null = null;
+
 function defaultRetryStrategy(times: number): number {
   const delay = Math.min(times * 50, 2000);
   return delay;
@@ -48,9 +41,33 @@ export function createRedis(config: RedisConfig): Redis {
   return client;
 }
 
-/**
- * Disconnect a specific Redis client.
- */
+export function initRedis(config: RedisConfig): Redis {
+  if (globalRedis) {
+    console.warn("Redis already initialized, closing existing connection");
+    globalRedis.quit().catch(() => { });
+  }
+  globalRedis = createRedis(config);
+  return globalRedis;
+}
+
+export function getRedis(): Redis {
+  if (!globalRedis) {
+    throw new Error("Redis not initialized. Call initRedis() first.");
+  }
+  return globalRedis;
+}
+
+export function hasRedis(): boolean {
+  return globalRedis !== null;
+}
+
+export async function disconnectRedis(): Promise<void> {
+  if (globalRedis) {
+    await globalRedis.quit();
+    globalRedis = null;
+  }
+}
+
 export async function disconnect(client: Redis): Promise<void> {
   await client.quit();
 }

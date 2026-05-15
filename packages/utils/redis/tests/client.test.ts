@@ -1,7 +1,13 @@
-import { describe, it, expect } from "bun:test";
-import { createRedis, disconnect } from "../src/index";
+import { describe, it, expect, afterAll } from "bun:test";
+import { createRedis, disconnect, initRedis, getRedis, hasRedis, disconnectRedis } from "../src/index";
 
 describe("Redis Client", () => {
+  afterAll(async () => {
+    if (hasRedis()) {
+      await disconnectRedis();
+    }
+  });
+
   describe("createRedis", () => {
     it("creates a Redis client", async () => {
       const redis = createRedis({
@@ -49,6 +55,22 @@ describe("Redis Client", () => {
       await new Promise((r) => setTimeout(r, 50));
 
       expect(["end", "close"]).toContain(redis.status);
+    });
+  });
+
+  describe("singleton", () => {
+    it("initRedis initializes global redis", async () => {
+      initRedis({
+        url: process.env.REDIS_URL || "redis://localhost:6379",
+      });
+
+      expect(hasRedis()).toBe(true);
+      const redis = getRedis();
+      const pong = await redis.ping();
+      expect(pong).toBe("PONG");
+
+      await disconnectRedis();
+      expect(hasRedis()).toBe(false);
     });
   });
 });

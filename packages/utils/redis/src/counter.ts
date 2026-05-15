@@ -1,10 +1,5 @@
-/**
- * Redis Module - Atomic Counters
- *
- * Functions for managing atomic counters in Redis.
- */
-
 import type { Redis } from "./types";
+import { getRedis } from "./client";
 
 /**
  * Increment a counter atomically.
@@ -22,14 +17,15 @@ import type { Redis } from "./types";
  * ```
  */
 export async function incrementCounter(
-  client: Redis,
   key: string,
   amount: number = 1,
   ttlSeconds?: number,
+  client?: Redis,
 ): Promise<number> {
-  const newValue = await client.incrby(key, amount);
+  const redis = client || getRedis();
+  const newValue = await redis.incrby(key, amount);
   if (ttlSeconds) {
-    await client.expire(key, ttlSeconds);
+    await redis.expire(key, ttlSeconds);
   }
   return newValue;
 }
@@ -43,22 +39,17 @@ export async function incrementCounter(
  * @returns New counter value
  */
 export async function decrementCounter(
-  client: Redis,
   key: string,
   amount: number = 1,
+  client?: Redis,
 ): Promise<number> {
-  return client.decrby(key, amount);
+  const redis = client || getRedis();
+  return redis.decrby(key, amount);
 }
 
-/**
- * Get current counter value.
- *
- * @param client - Redis client instance
- * @param key - Counter key
- * @returns Current counter value (0 if key doesn't exist)
- */
-export async function getCounter(client: Redis, key: string): Promise<number> {
-  const value = await client.get(key);
+export async function getCounter(key: string, client?: Redis): Promise<number> {
+  const redis = client || getRedis();
+  const value = await redis.get(key);
   return value ? parseInt(value, 10) : 0;
 }
 
@@ -68,8 +59,9 @@ export async function getCounter(client: Redis, key: string): Promise<number> {
  * @param client - Redis client instance
  * @param key - Counter key
  */
-export async function resetCounter(client: Redis, key: string): Promise<void> {
-  await client.del(key);
+export async function resetCounter(key: string, client?: Redis): Promise<void> {
+  const redis = client || getRedis();
+  await redis.del(key);
 }
 
 /**
@@ -81,14 +73,15 @@ export async function resetCounter(client: Redis, key: string): Promise<void> {
  * @param ttlSeconds - Optional TTL in seconds
  */
 export async function setCounter(
-  client: Redis,
   key: string,
   value: number,
   ttlSeconds?: number,
+  client?: Redis,
 ): Promise<void> {
+  const redis = client || getRedis();
   if (ttlSeconds) {
-    await client.setex(key, ttlSeconds, value.toString());
+    await redis.setex(key, ttlSeconds, value.toString());
   } else {
-    await client.set(key, value.toString());
+    await redis.set(key, value.toString());
   }
 }

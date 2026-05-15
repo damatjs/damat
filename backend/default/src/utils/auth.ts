@@ -1,13 +1,9 @@
 import { betterAuth } from "@damatjs/deps/better-auth";
-import { cacheGetRaw, cacheSetRaw, cacheDelete, getProjectConfig } from "@damatjs/utils";
+import { getProjectConfig } from "@damatjs/utils";
+import { cacheGetRaw, cacheSetRaw, cacheDelete } from "@damatjs/utils";
 import { Pool } from "@damatjs/deps/pg";
 
 const KEY_PREFIX = "better-auth:";
-let redis: any;
-
-export function setAuthRedis(redisInstance: any) {
-  redis = redisInstance;
-}
 
 export function createAuth() {
   const config = getProjectConfig();
@@ -22,9 +18,9 @@ export function createAuth() {
       cookieCache: { enabled: true, maxAge: 5 * 60 },
     },
     secondaryStorage: {
-      get: async (key) => cacheGetRaw(redis, KEY_PREFIX + key),
-      set: async (key, value, ttl) => cacheSetRaw(redis, KEY_PREFIX + key, value, ttl),
-      delete: async (key) => cacheDelete(redis, KEY_PREFIX + key),
+      get: async (key) => cacheGetRaw(KEY_PREFIX + key),
+      set: async (key, value, ttl) => cacheSetRaw(KEY_PREFIX + key, value, ttl),
+      delete: async (key) => cacheDelete(KEY_PREFIX + key),
     },
     emailAndPassword: { enabled: true, minPasswordLength: 8, maxPasswordLength: 16 },
     user: { additionalFields: { emailVerified: { type: "boolean", defaultValue: false } } },

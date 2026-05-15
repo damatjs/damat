@@ -1,10 +1,5 @@
-/**
- * Redis Module - Cache Utilities
- *
- * Functions for caching data in Redis with automatic serialization.
- */
-
 import type { Redis } from "./types";
+import { getRedis } from "./client";
 
 const CACHE_PREFIX = "cache:";
 
@@ -15,17 +10,15 @@ const CACHE_PREFIX = "cache:";
  * @param key - Cache key (automatically prefixed with "cache:")
  * @returns Parsed value or null if not found
  */
-export async function cacheGet<T>(
-  client: Redis,
-  key: string,
-): Promise<T | null> {
-  const value = await client.get(CACHE_PREFIX + key);
-  if (!value) return null;
-  try {
-    return JSON.parse(value) as T;
-  } catch {
-    return null;
-  }
+export async function cacheGet<T>(key: string, client?: Redis): Promise<T | null> {
+    const redis = client || getRedis();
+    const value = await redis.get(CACHE_PREFIX + key);
+    if (!value) return null;
+    try {
+        return JSON.parse(value) as T;
+    } catch {
+        return null;
+    }
 }
 
 /**
@@ -37,12 +30,13 @@ export async function cacheGet<T>(
  * @param ttlSeconds - Time to live in seconds (default: 300)
  */
 export async function cacheSet<T>(
-  client: Redis,
-  key: string,
-  value: T,
-  ttlSeconds: number = 300,
+    key: string,
+    value: T,
+    ttlSeconds: number = 300,
+    client?: Redis,
 ): Promise<void> {
-  await client.setex(CACHE_PREFIX + key, ttlSeconds, JSON.stringify(value));
+    const redis = client || getRedis();
+    await redis.setex(CACHE_PREFIX + key, ttlSeconds, JSON.stringify(value));
 }
 
 /**
@@ -51,8 +45,9 @@ export async function cacheSet<T>(
  * @param client - Redis client instance
  * @param key - Cache key (automatically prefixed with "cache:")
  */
-export async function cacheDelete(client: Redis, key: string): Promise<void> {
-  await client.del(CACHE_PREFIX + key);
+export async function cacheDelete(key: string, client?: Redis): Promise<void> {
+    const redis = client || getRedis();
+    await redis.del(CACHE_PREFIX + key);
 }
 
 /**
@@ -61,15 +56,14 @@ export async function cacheDelete(client: Redis, key: string): Promise<void> {
  * @param client - Redis client instance
  * @param pattern - Pattern to match (e.g., "user:*")
  */
-export async function cacheDeletePattern(
-  client: Redis,
-  pattern: string,
-): Promise<void> {
-  const keys = await client.keys(CACHE_PREFIX + pattern);
-  if (keys.length > 0) {
-    await client.del(...keys);
-  }
+export async function cacheDeletePattern(pattern: string, client?: Redis): Promise<void> {
+    const redis = client || getRedis();
+    const keys = await redis.keys(CACHE_PREFIX + pattern);
+    if (keys.length > 0) {
+        await redis.del(...keys);
+    }
 }
+
 
 // =============================================================================
 // RAW STRING CACHE (no JSON serialization)
@@ -83,14 +77,11 @@ export async function cacheDeletePattern(
  * @param key - Cache key (automatically prefixed with "cache:")
  * @returns Raw string value or null if not found
  */
-export async function cacheGetRaw(
-  client: Redis,
-  key: string,
-): Promise<string | null> {
-  const value = await client.get(CACHE_PREFIX + key);
-  return value || null;
+export async function cacheGetRaw(key: string, client?: Redis): Promise<string | null> {
+    const redis = client || getRedis();
+    const value = await redis.get(CACHE_PREFIX + key);
+    return value || null;
 }
-
 /**
  * Set a raw string value with optional TTL (no JSON serialization).
  * Useful for storing pre-serialized data or plain strings.
@@ -101,14 +92,15 @@ export async function cacheGetRaw(
  * @param ttlSeconds - Time to live in seconds (optional, no expiry if not provided)
  */
 export async function cacheSetRaw(
-  client: Redis,
-  key: string,
-  value: string,
-  ttlSeconds?: number,
+    key: string,
+    value: string,
+    ttlSeconds?: number,
+    client?: Redis,
 ): Promise<void> {
-  if (ttlSeconds) {
-    await client.setex(CACHE_PREFIX + key, ttlSeconds, value);
-  } else {
-    await client.set(CACHE_PREFIX + key, value);
-  }
+    const redis = client || getRedis();
+    if (ttlSeconds) {
+        await redis.setex(CACHE_PREFIX + key, ttlSeconds, value);
+    } else {
+        await redis.set(CACHE_PREFIX + key, value);
+    }
 }

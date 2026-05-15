@@ -1,27 +1,28 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
 import { Redis } from "@damatjs/deps/ioredis";
-import { createRedis, disconnect } from "../src/index";
-import { SessionManager, createSessionManager } from "./sessionManager";
+import { initRedis, getRedis, disconnectRedis } from "../src/index";
+import { SessionManager, createSessionManager } from "../src/sessionManager";
 
 describe("SessionManager", () => {
   let redis: Redis;
   let manager: SessionManager<{ userId: string; role: string }>;
 
   beforeAll(async () => {
-    redis = createRedis({
+    initRedis({
       url: process.env.REDIS_URL || "redis://localhost:6379",
     });
+    redis = getRedis();
     await redis.ping();
   });
 
   afterAll(async () => {
-    await disconnect(redis);
+    await disconnectRedis();
   });
 
   beforeEach(async () => {
     await redis.del("session:active-user");
     await redis.del("session:expiring-soon");
-    manager = createSessionManager<{ userId: string; role: string }>(redis, {
+    manager = createSessionManager<{ userId: string; role: string }>({
       defaultTtlSeconds: 3600,
       extendOnAccess: true,
       autoExtendThreshold: 0.5,
@@ -103,7 +104,7 @@ describe("SessionManager", () => {
 
   describe("disabled auto-extend", () => {
     it("does not extend TTL when extendOnAccess is false", async () => {
-      const noExtendManager = createSessionManager<{ userId: string }>(redis, {
+      const noExtendManager = createSessionManager<{ userId: string }>({
         defaultTtlSeconds: 3600,
         extendOnAccess: false,
       });

@@ -1,9 +1,6 @@
 import { createLogger, setGlobalLogger, getLogger } from "@damatjs/logger";
-import { createRedis } from "@damatjs/utils/redis";
+import { initRedis, getRedis, disconnectRedis } from "@damatjs/utils";
 import { initWorkflowLock } from "@damatjs/workflow-engine";
-import { setAuthRedis } from "../utils/auth";
-
-let redis: any;
 
 export const initServices = {
   logger: createLogger({
@@ -22,10 +19,9 @@ export const initServices = {
   }),
 
   setup() {
-    redis = createRedis({ url: process.env.REDIS_URL || "redis://localhost:6379" });
-    setAuthRedis(redis);
+    initRedis({ url: process.env.REDIS_URL || "redis://localhost:6379" });
     setGlobalLogger(this.logger);
-    initWorkflowLock(redis);
+    initWorkflowLock(getRedis());
     this.logger.info("Services initialized", {
       redis: process.env.REDIS_URL || "redis://localhost:6379",
       env: process.env.NODE_ENV || "development",
@@ -34,6 +30,7 @@ export const initServices = {
 
   async redisCheck() {
     const start = Date.now();
+    const redis = getRedis();
     await redis.ping();
     const latency = Date.now() - start;
     this.logger.debug("Redis health check", { latency, status: "healthy" });
@@ -50,6 +47,6 @@ export const initServices = {
       },
     },
     { name: "db", handler: async () => { } },
-    { name: "redis", handler: async () => { if (redis) await redis.quit(); } },
+    { name: "redis", handler: async () => { await disconnectRedis(); } },
   ],
 };

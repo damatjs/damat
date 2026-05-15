@@ -1,10 +1,5 @@
-/**
- * Redis Module - Distributed Locks
- *
- * Functions for acquiring and releasing distributed locks using Redis.
- */
-
 import type { Redis } from "./types";
+import { getRedis } from "./client";
 
 const LOCK_PREFIX = "lock:";
 
@@ -30,12 +25,13 @@ const LOCK_PREFIX = "lock:";
  * ```
  */
 export async function acquireLock(
-  client: Redis,
   key: string,
   ttlMs: number = 10000,
+  client?: Redis,
 ): Promise<string | null> {
+  const redis = client || getRedis();
   const lockValue = `${Date.now()}:${Math.random()}`;
-  const result = await client.set(
+  const result = await redis.set(
     LOCK_PREFIX + key,
     lockValue,
     "PX",
@@ -54,11 +50,11 @@ export async function acquireLock(
  * @returns true if lock was released, false if lock was not held or expired
  */
 export async function releaseLock(
-  client: Redis,
   key: string,
   lockValue: string,
+  client?: Redis,
 ): Promise<boolean> {
-  // Use Lua script for atomic check-and-delete
+  const redis = client || getRedis();
   const script = `
     if redis.call("get", KEYS[1]) == ARGV[1] then
       return redis.call("del", KEYS[1])
@@ -66,7 +62,7 @@ export async function releaseLock(
       return 0
     end
   `;
-  const result = await client.eval(script, 1, LOCK_PREFIX + key, lockValue);
+  const result = await redis.eval(script, 1, LOCK_PREFIX + key, lockValue);
   return result === 1;
 }
 
@@ -87,14 +83,14 @@ export async function releaseLock(
  *   return processOrder(123);
  * });
  * ```
- */
-export async function withLock<T>(
-  client: Redis,
+ */export async function withLock<T>(
   key: string,
   fn: () => Promise<T>,
   ttlMs: number = 10000,
+  client?: Redis,
 ): Promise<T> {
-  const lockValue = await acquireLock(client, key, ttlMs);
+  const redis = client || getRedis();
+  const lockValue = await acquireLock(key, ttlMs, redis);
   if (!lockValue) {
     throw new Error(`Could not acquire lock: ${key}`);
   }
@@ -102,6 +98,6 @@ export async function withLock<T>(
   try {
     return await fn();
   } finally {
-    await releaseLock(client, key, lockValue);
+    await releaseLock(key, lockValue, redis);
   }
 }
