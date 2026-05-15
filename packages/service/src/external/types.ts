@@ -2,7 +2,7 @@
  * External API Service - Type Definitions
  */
 
-import type { ILogger } from "@damatjs/utils";
+import type { ILogger } from "@damatjs/logger";
 
 // =============================================================================
 // RETRY POLICY

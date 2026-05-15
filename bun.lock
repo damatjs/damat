@@ -272,19 +272,61 @@
       "name": "@damatjs/typescript-config",
       "version": "0.0.0",
     },
-    "packages/utils": {
+    "packages/utils/config": {
+      "name": "@damatjs/utils-config",
+      "version": "0.0.1",
+      "dependencies": {
+        "@damatjs/deps": "*",
+        "@damatjs/orm-connector": "*",
+      },
+      "devDependencies": {
+        "@damatjs/typescript-config": "*",
+        "@types/bun": "1.3.9",
+        "typescript": "^5.9.3",
+      },
+    },
+    "packages/utils/env": {
+      "name": "@damatjs/utils-env",
+      "version": "0.0.1",
+      "devDependencies": {
+        "@damatjs/typescript-config": "*",
+        "@types/bun": "1.3.9",
+        "typescript": "^5.9.3",
+      },
+    },
+    "packages/utils/main": {
       "name": "@damatjs/utils",
+      "version": "0.0.1",
+      "dependencies": {
+        "@damatjs/utils-config": "*",
+        "@damatjs/utils-env": "*",
+        "@damatjs/utils-redis": "*",
+        "@damatjs/utils-router": "*",
+      },
+      "devDependencies": {
+        "@damatjs/typescript-config": "*",
+        "@types/bun": "1.3.9",
+        "typescript": "^5.9.3",
+      },
+    },
+    "packages/utils/redis": {
+      "name": "@damatjs/utils-redis",
+      "version": "0.0.1",
+      "dependencies": {
+        "@damatjs/deps": "*",
+      },
+      "devDependencies": {
+        "@damatjs/typescript-config": "*",
+        "@types/bun": "1.3.9",
+        "typescript": "^5.9.3",
+      },
+    },
+    "packages/utils/router": {
+      "name": "@damatjs/utils-router",
       "version": "0.0.1",
       "dependencies": {
         "@damatjs/deps": "*",
         "@damatjs/logger": "*",
-        "@damatjs/orm-connector": "*",
-        "@damatjs/orm-migration": "*",
-        "@damatjs/orm-model": "*",
-        "@damatjs/types": "*",
-        "dotenv": "^17.3.1",
-        "reflect-metadata": "^0.2.2",
-        "ulid": "^3.0.2",
       },
       "devDependencies": {
         "@damatjs/typescript-config": "*",
@@ -379,7 +421,15 @@
 
     "@damatjs/typescript-config": ["@damatjs/typescript-config@workspace:packages/typescript-config"],
 
-    "@damatjs/utils": ["@damatjs/utils@workspace:packages/utils"],
+    "@damatjs/utils": ["@damatjs/utils@workspace:packages/utils/main"],
+
+    "@damatjs/utils-config": ["@damatjs/utils-config@workspace:packages/utils/config"],
+
+    "@damatjs/utils-env": ["@damatjs/utils-env@workspace:packages/utils/env"],
+
+    "@damatjs/utils-redis": ["@damatjs/utils-redis@workspace:packages/utils/redis"],
+
+    "@damatjs/utils-router": ["@damatjs/utils-router@workspace:packages/utils/router"],
 
     "@damatjs/workflow-engine": ["@damatjs/workflow-engine@workspace:packages/workflow-engine"],
 
@@ -1540,6 +1590,14 @@
     "@damatjs/services/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@damatjs/utils/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "@damatjs/utils-config/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "@damatjs/utils-env/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "@damatjs/utils-redis/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "@damatjs/utils-router/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@damatjs/workflow-engine/nanoid": ["nanoid@5.1.6", "", { "bin": { "nanoid": "bin/nanoid.js" } }, "sha512-c7+7RQ+dMB5dPwwCp4ee1/iV/q2P6aK1mTZcfr1BTuVlyW9hJYiMPybJCcnBlQtuSmTIWNeazm/zqNoZSSElBg=="],
 

@@ -5,7 +5,7 @@
  * circuit breaker pattern, and error handling.
  */
 
-import type { ILogger } from "@damatjs/utils";
+import type { ILogger } from "@damatjs/logger";
 import type {
   ApiRetryPolicy,
   CircuitBreakerConfig,

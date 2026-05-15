@@ -23,6 +23,7 @@
     "packages/*",
     "packages/cli/*",
     "packages/core/*",
+    "packages/utils/*",
     "packages/orm/*"
   ]
 }

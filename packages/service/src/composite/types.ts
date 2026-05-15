@@ -1,4 +1,4 @@
-import type { Logger } from "@damatjs/utils";
+import type { Logger } from "@damatjs/logger";
 
 /**
  * Service health status

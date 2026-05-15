@@ -1,4 +1,4 @@
-import type { ILogger } from "@damatjs/utils";
+import type { ILogger } from "@damatjs/logger";
 import type {
   CompositeServiceConfig,
   HealthCheckResult,
