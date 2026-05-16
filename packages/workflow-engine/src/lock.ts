@@ -8,8 +8,7 @@
 import { acquireLock, releaseLock, getRedis } from "@damatjs/utils";
 import { nanoid } from "nanoid";
 import type { WorkflowLockConfig, WorkflowLockResult } from "./types";
-import { createContextLogger } from 'core/logger/dist';
-
+import { createContextLogger } from "@damatjs/logger"
 // =============================================================================
 // DEFAULTS
 // =============================================================================

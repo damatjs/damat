@@ -138,15 +138,17 @@
       "version": "0.0.1",
       "dependencies": {
         "@damatjs/deps": "*",
+        "@damatjs/orm-type": "*",
         "@damatjs/types": "*",
-        "dotenv": "^17.3.1",
-        "reflect-metadata": "^0.2.2",
-        "ulid": "^3.0.2",
       },
       "devDependencies": {
+        "@damatjs/logger": "*",
         "@damatjs/typescript-config": "*",
         "@types/bun": "1.3.9",
         "typescript": "^5.9.3",
+      },
+      "peerDependencies": {
+        "@damatjs/logger": "*",
       },
     },
     "packages/orm/main": {
@@ -232,6 +234,18 @@
         "@damatjs/typescript-config": "*",
         "@types/bun": "1.3.9",
         "typescript": "^5.9.3",
+      },
+    },
+    "packages/orm/type": {
+      "name": "@damatjs/orm-type",
+      "version": "0.0.1",
+      "dependencies": {
+        "@damatjs/deps": "*",
+      },
+      "devDependencies": {
+        "@damatjs/typescript-config": "*",
+        "@types/bun": "1.3.9",
+        "typescript": "5.9.2",
       },
     },
     "packages/server-handler": {
@@ -398,6 +412,8 @@
     "@damatjs/orm-pg": ["@damatjs/orm-pg@workspace:packages/orm/pg"],
 
     "@damatjs/orm-processor": ["@damatjs/orm-processor@workspace:packages/orm/processor"],
+
+    "@damatjs/orm-type": ["@damatjs/orm-type@workspace:packages/orm/type"],
 
     "@damatjs/server-handler": ["@damatjs/server-handler@workspace:packages/server-handler"],
 
