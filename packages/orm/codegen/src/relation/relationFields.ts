@@ -1,0 +1,40 @@
+import { RelationSchema } from "@damatjs/orm-type";
+import { toPascalCase, toCamelCase } from "@damatjs/orm-model";
+
+/**
+ * For a given table's `RelationSchema[]`, produce the optional loaded-relation
+ * fields to append to the row interface.
+ *
+ * - `belongsTo`  → `target?: TargetType`    (singular loaded entity)
+ * - `hasMany`    → `targets?: TargetType[]`  (loaded collection, pluralised)
+ * - `hasOne`     → `target?: TargetType`     (singular loaded entity)
+ *
+ * Field name derivation (since `from` in RelationSchema is the source table
+ * name, not the property name):
+ *   - `belongsTo` — strip `_id` from the first `linkedBy` FK column, e.g.
+ *                   `category_id` → `category`.
+ *   - `hasMany`   — camelCase of the target table name, pluralised with an
+ *                   `s` suffix, e.g. `order` → `orders`.
+ *   - `hasOne`    — camelCase of the target table name, e.g. `profile`.
+ */
+export const relationFields = (relations: RelationSchema[]): string[] => {
+  return relations.map((rel) => {
+    const targetType = toPascalCase(rel.to);
+
+    let fieldName: string;
+    if (rel.type === "belongsTo") {
+      const fkCol = rel.linkedBy?.[0];
+      fieldName = fkCol ? fkCol.replace(/_id$/, "") : toCamelCase(rel.to);
+    } else if (rel.type === "hasMany") {
+      // Pluralise: append 's' unless the name already ends in 's'
+      const base = toCamelCase(rel.to);
+      fieldName = base.endsWith("s") ? base : `${base}s`;
+    } else {
+      fieldName = toCamelCase(rel.to);
+    }
+
+    const tsType = rel.type === "hasMany" ? `${targetType}[]` : targetType;
+
+    return `  ${fieldName}?: ${tsType};`;
+  });
+}

@@ -87,7 +87,7 @@ export interface ColumnSchema {
   /** Data type */
   type: ColumnType;
   /** Is this a primary key */
-  primaryKey: boolean;
+  primaryKey?: boolean;
   /** Length for character varying / character, precision for numeric, dimensions for embedding */
   length?: number;
   /** Scale for numeric (digits after decimal point) */
@@ -95,9 +95,9 @@ export interface ColumnSchema {
   /** Whether column allows NULL */
   nullable: boolean;
   /** Default value expression */
-  default?: string;
+  default?: any;
   /** Is this column unique */
-  unique: boolean;
+  unique?: boolean;
   /** Enum type name (references a named EnumBuilder) */
   enum?: string;
   /** Whether the column is an array type */

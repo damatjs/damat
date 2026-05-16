@@ -11,7 +11,7 @@ export interface ModuleSchema {
   /** Tables in the module */
   tables: Omit<TableSchema, "relations">[];
   /** Enum types defined in the module */
-  enums: EnumSchema[];
+  enums?: EnumSchema[];
   /** Relation Schema for the module — all relations collected from every table */
-  relationships: RelationSchema[];
+  relationships?: RelationSchema[];
 }

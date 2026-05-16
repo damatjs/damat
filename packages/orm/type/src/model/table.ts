@@ -18,11 +18,11 @@ export interface TableSchema {
   /** Column definitions */
   columns: ColumnSchema[];
   /** Index definitions */
-  indexes: IndexSchema[];
+  indexes?: IndexSchema[];
   /** Foreign key definitions */
-  foreignKeys: ForeignKeySchema[];
+  foreignKeys?: ForeignKeySchema[];
   /** Constraint definitions */
-  constraints: ConstraintSchema[];
+  constraints?: ConstraintSchema[];
   /** Relation map (all relation types — no DB artifact, ORM metadata) */
-  relations: RelationSchema[];
+  relations?: RelationSchema[];
 }

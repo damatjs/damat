@@ -14,3 +14,6 @@ export * from "./query";
 
 // Export snapshot management
 export * from "./snapshot";
+
+// Export snapshot management
+export * from "./utils";
