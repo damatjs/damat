@@ -29,10 +29,10 @@ import { VectorColumnBuilder } from "./column/vector";
 import { EnumBuilder } from "./enum/base";
 import {
   RelationOptions
-} from "@/types/relation";
+} from "@damatjs/orm-type";
 import { IndexBuilder } from "./indexes";
 import { ConstraintBuilder } from "./constraints";
-import { ModelTarget } from '@/utils/target';
+import { ModelTarget } from '@/utils';
 
 // Column and relation builders
 export const columns = {

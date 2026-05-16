@@ -1,4 +1,4 @@
-import { RelationSchema } from "@/types/relation";
+import { RelationSchema } from "@/types";
 import { RelationViolation } from "./types";
 
 /**

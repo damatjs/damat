@@ -195,7 +195,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@damatjs/deps": "*",
-        "@damatjs/types": "*",
+        "@damatjs/orm-type": "*",
       },
       "devDependencies": {
         "@damatjs/typescript-config": "*",

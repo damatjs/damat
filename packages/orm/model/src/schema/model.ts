@@ -6,7 +6,7 @@ import {
   ForeignKeySchema,
   RelationSchema,
 } from "@/types";
-import { IndexSchema } from "@/types/indexType";
+import { IndexSchema } from "@/types";
 import { ColumnBuilder } from "@/properties/column/base";
 import { BelongsToBuilder } from "@/properties/relation/belongsToBuilder";
 import { HasManyBuilder } from "@/properties/relation/hasManyBuilder";

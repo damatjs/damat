@@ -10,7 +10,7 @@ import type {
   ConstraintOptions,
   RelationSchema,
   RelationOptions,
-} from "@/types/relation";
+} from "@/types";
 import {
   ColumnBuilder,
   TextColumnBuilder,

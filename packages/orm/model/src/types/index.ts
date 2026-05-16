@@ -1,9 +1,3 @@
-export * from "./column";
-export * from "./enum";
-export * from "./foreignKey";
-export * from "./indexType";
+export * from "@damatjs/orm-type";
+
 export * from "./schema";
-export * from "./module";
-export * from "./table";
-export * from "./relation";
-export * from "./constrain";

@@ -2,8 +2,8 @@ import {
   ConstraintType,
   ExcludeConstraint,
   ConstraintSchema,
-} from "@/types/constrain";
-import { IndexType } from "@/types/indexType";
+} from "@/types";
+import { IndexType } from "@/types";
 
 /**
  * Constraint builder for fluent API.

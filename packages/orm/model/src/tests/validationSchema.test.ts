@@ -4,7 +4,7 @@ import {
   assertValidRelationSchemas,
   RelationValidationError,
 } from "@/properties/relation/validate/index";
-import { RelationSchema } from "@/types/relation";
+import { RelationSchema } from "@/types";
 // import { ModuleSchema } from '@/types';
 
 // ─────────────────────────────────────────────────────────────────────────────

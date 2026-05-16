@@ -29,7 +29,7 @@
   "author": "Abel Lamesgen",
   "dependencies": {
     "@damatjs/deps": "*",
-    "@damatjs/types": "*"
+    "@damatjs/orm-type": "*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "*",

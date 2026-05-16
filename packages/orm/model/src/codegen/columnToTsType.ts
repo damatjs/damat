@@ -1,4 +1,4 @@
-import { ColumnSchema, ColumnType } from "@/types/column";
+import { ColumnSchema, ColumnType } from "@/types";
 import { pgTypeToTsBase } from "@/utils/pgTypeToTsBase";
 import { toEnumTypeName } from "@/utils/stringConvertor";
 
