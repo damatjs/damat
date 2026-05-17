@@ -16,8 +16,8 @@
       "dependencies": {
         "@damatjs/deps": "*",
         "@damatjs/logger": "*",
+        "@damatjs/orm-cli": "*",
         "@damatjs/orm-connector": "*",
-        "@damatjs/orm-migration": "*",
         "@damatjs/orm-model": "*",
         "@damatjs/orm-pg": "*",
         "@damatjs/orm-processor": "*",
@@ -209,9 +209,6 @@
     "packages/orm/migration": {
       "name": "@damatjs/orm-migration",
       "version": "0.0.1",
-      "bin": {
-        "damat-migrate": "./dist/cli/bin.js",
-      },
       "dependencies": {
         "@damatjs/deps": "*",
         "@damatjs/logger": "*",

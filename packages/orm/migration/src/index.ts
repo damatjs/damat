@@ -8,8 +8,8 @@
  * ```typescript
  * import {
  *   runMigrations,
- *   createMigration,
- *   runCli,
+ *   createInitialMigration,
+ *   createDiffMigration,
  * } from '@damatjs/orm-migration';
  * ```
  */
@@ -25,9 +25,6 @@ export * from "./tracker";
 
 // Executor
 export * from "./executor";
-
-// CLI
-export * from "./cli";
 
 // Re-export logger utilities for convenience
 export { log, separator, successBanner, errorBanner } from "./logger";
