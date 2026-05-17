@@ -133,6 +133,27 @@
         "typescript": "^5.9.3",
       },
     },
+    "packages/orm/cli": {
+      "name": "@damatjs/orm-cli",
+      "version": "0.0.1",
+      "bin": {
+        "damat-orm": "./dist/bin.js",
+      },
+      "dependencies": {
+        "@damatjs/deps": "*",
+        "@damatjs/logger": "*",
+        "@damatjs/orm-codegen": "*",
+        "@damatjs/orm-migration": "*",
+        "@damatjs/orm-model": "*",
+        "@damatjs/orm-type": "*",
+        "dotenv": "^17.3.1",
+      },
+      "devDependencies": {
+        "@damatjs/typescript-config": "*",
+        "@types/bun": "1.3.9",
+        "typescript": "^5.9.3",
+      },
+    },
     "packages/orm/codegen": {
       "name": "@damatjs/orm-codegen",
       "version": "0.0.1",
@@ -419,6 +440,8 @@
     "@damatjs/logger": ["@damatjs/logger@workspace:packages/core/logger"],
 
     "@damatjs/orm": ["@damatjs/orm@workspace:packages/orm/main"],
+
+    "@damatjs/orm-cli": ["@damatjs/orm-cli@workspace:packages/orm/cli"],
 
     "@damatjs/orm-codegen": ["@damatjs/orm-codegen@workspace:packages/orm/codegen"],
 
@@ -1593,6 +1616,8 @@
     "@damatjs/deps/nanoid": ["nanoid@5.1.6", "", { "bin": { "nanoid": "bin/nanoid.js" } }, "sha512-c7+7RQ+dMB5dPwwCp4ee1/iV/q2P6aK1mTZcfr1BTuVlyW9hJYiMPybJCcnBlQtuSmTIWNeazm/zqNoZSSElBg=="],
 
     "@damatjs/deps/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "@damatjs/orm-cli/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@damatjs/orm-codegen/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
