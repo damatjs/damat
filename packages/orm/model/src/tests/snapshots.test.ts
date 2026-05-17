@@ -47,18 +47,18 @@ describe("module snapshots", () => {
   });
 
   it("snapshot contains both enum types", () => {
-    const enumNames = snapshot.enums.map((e) => e.name);
+    const enumNames = snapshot.enums?.map((e) => e.name);
     expect(enumNames).toContain("product_status");
     expect(enumNames).toContain("orders");
   });
 
   it("product_status enum has correct values", () => {
-    const e = snapshot.enums.find((e) => e.name === "product_status")!;
+    const e = snapshot.enums?.find((e) => e.name === "product_status")!;
     expect(e.values).toEqual(["draft", "active", "archived"]);
   });
 
   it("orders enum has correct values", () => {
-    const e = snapshot.enums.find((e) => e.name === "orders")!;
+    const e = snapshot.enums?.find((e) => e.name === "orders")!;
     expect(e.values).toEqual([
       "pending",
       "confirmed",

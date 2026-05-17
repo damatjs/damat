@@ -32,7 +32,8 @@ export function toModuleSchema(
     const tableSchema = m.toTableSchema();
     // Hoist per-table relations into the module-level collection
     const { relations, ...rest } = tableSchema;
-    relationships.push(...relations)
+    if (relations)
+      relationships.push(...relations)
     return rest;
   });
 

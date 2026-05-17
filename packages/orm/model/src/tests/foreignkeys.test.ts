@@ -28,7 +28,7 @@ describe("transform › belongsTo / foreign keys", () => {
   });
 
   it("Product FK constraint references categories table", () => {
-    const fk = ProductSchema.toTableSchema().foreignKeys.find((f) =>
+    const fk = ProductSchema.toTableSchema().foreignKeys?.find((f) =>
       f.columns.map((c) => c.name).includes("category_id"),
     )!;
     expect(fk.referencedTable).toBe("category");
@@ -36,14 +36,14 @@ describe("transform › belongsTo / foreign keys", () => {
   });
 
   it("nullable FK sets onDelete to SET NULL", () => {
-    const fk = ProductSchema.toTableSchema().foreignKeys.find((f) =>
+    const fk = ProductSchema.toTableSchema().foreignKeys?.find((f) =>
       f.columns.map((c) => c.name).includes("category_id"),
     )!;
     expect(fk.onDelete).toBe("SET NULL");
   });
 
   it("non-nullable FK has no onDelete", () => {
-    const fk = OrderItemSchema.toTableSchema().foreignKeys.find((f) =>
+    const fk = OrderItemSchema.toTableSchema().foreignKeys?.find((f) =>
       f.columns.map((c) => c.name).includes("order_id"),
     )!;
     expect(fk.onDelete).toBeUndefined();

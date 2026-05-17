@@ -6,9 +6,6 @@ export * from "./schema";
 
 export * from "./types";
 
-// Export type code generator
-export * from "./codegen";
-
 // Export query builders (SELECT / INSERT / UPDATE / DELETE)
 export * from "./query";
 
