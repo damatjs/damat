@@ -330,6 +330,7 @@
       "dependencies": {
         "@damatjs/deps": "*",
         "@damatjs/orm-connector": "*",
+        "@damatjs/orm-type": "*",
       },
       "devDependencies": {
         "@damatjs/typescript-config": "*",

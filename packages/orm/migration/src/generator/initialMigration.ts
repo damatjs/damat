@@ -10,8 +10,8 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { log } from "../logger";
-import { generateMigration } from "@damatjs/orm-processor";
-import { saveSnapshot, toModuleSchema } from "@damatjs/orm-model";
+import { generateMigration, saveSnapshot } from "@damatjs/orm-processor";
+import { toModuleSchema } from "@damatjs/orm-model";
 import { getMigrationTemplateWithSQL } from "../utils/template";
 import { generateTimestamp } from "../utils/timestamp";
 import { discoverModels } from "../discovery";

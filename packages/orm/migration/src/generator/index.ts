@@ -9,10 +9,11 @@
  */
 
 import path from "node:path";
-import { snapshotExist } from "@damatjs/orm-model";
-import type {
-  CreateDiffMigrationOptions,
-  DiffMigrationResult,
+
+import {
+  snapshotExist,
+  type CreateDiffMigrationOptions,
+  type DiffMigrationResult,
 } from "@damatjs/orm-processor";
 import { createInitialMigration } from "./initialMigration";
 import { createDiffMigration } from "./diffMigration";
