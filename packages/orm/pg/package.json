@@ -1,6 +1,6 @@
 {
   "name": "@damatjs/orm-pg",
-  "description": "pg execution layer for @damatjs/orm-model — run typed queries against a PostgreSQL pool",
+  "description": "PostgreSQL ORM core for @damatjs - EntityManager, Repository pattern, and query execution",
   "version": "0.0.1",
   "type": "module",
   "main": "dist/index.js",
@@ -37,6 +37,7 @@
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
     "dev": "bun run build --watch",
     "watch": "tsc --watch",
-    "test": "exit 0"
+    "test": "exit 0",
+    "typecheck": "tsc --noEmit"
   }
 }

@@ -1,30 +1,12 @@
 /**
- * Connection Pool Configuration
+ * PostgreSQL Connection Pool Configuration
  */
 
-export interface PoolConfig {
-  // Connection
-  host?: string;
-  port?: number;
-  user?: string;
-  password?: string;
-  database?: string;
-  connectionString?: string;
+import type { DbPoolConfig } from "@damatjs/orm-type";
 
-  // Pool size
-  min?: number; // Minimum connections
-  max?: number; // Maximum connections (default: 10)
-  
-  // Timeouts (ms)
-  connectionTimeoutMillis?: number; // Acquire connection timeout (default: 0 = no timeout)
-  idleTimeoutMillis?: number; // Close idle connections (default: 10000)
-  
-  // SSL
-  ssl?: boolean | object;
-  
-  // Logging
+export type PoolConfig = DbPoolConfig & {
   allowExitOnIdle?: boolean;
-}
+};
 
 export interface PoolStats {
   totalCount: number;
@@ -47,7 +29,7 @@ export interface PoolClient {
 }
 
 /**
- * Create a configured connection pool
+ * Create a configured connection pool config
  */
 export function createPoolConfig(config: PoolConfig | string): PoolConfig {
   if (typeof config === 'string') {
@@ -59,7 +41,7 @@ export function createPoolConfig(config: PoolConfig | string): PoolConfig {
 /**
  * Pool configuration for production
  */
-export function productionPoolConfig(overrides?: Partial<PoolConfig>): PoolConfig {
+export function productionPoolConfig(overrides: Partial<PoolConfig> = {}): PoolConfig {
   return {
     min: 2,
     max: 20,
@@ -73,7 +55,7 @@ export function productionPoolConfig(overrides?: Partial<PoolConfig>): PoolConfi
 /**
  * Pool configuration for development
  */
-export function developmentPoolConfig(overrides?: Partial<PoolConfig>): PoolConfig {
+export function developmentPoolConfig(overrides: Partial<PoolConfig> = {}): PoolConfig {
   return {
     min: 1,
     max: 5,
@@ -86,7 +68,7 @@ export function developmentPoolConfig(overrides?: Partial<PoolConfig>): PoolConf
 /**
  * Pool configuration for testing
  */
-export function testPoolConfig(overrides?: Partial<PoolConfig>): PoolConfig {
+export function testPoolConfig(overrides: Partial<PoolConfig> = {}): PoolConfig {
   return {
     min: 0,
     max: 2,
@@ -94,4 +76,29 @@ export function testPoolConfig(overrides?: Partial<PoolConfig>): PoolConfig {
     idleTimeoutMillis: 1000,
     ...overrides,
   };
+}
+
+/**
+ * Parse database URL into pool config
+ */
+export function parseDatabaseUrl(url: string): PoolConfig {
+  try {
+    const parsed = new URL(url);
+    const config: PoolConfig = {
+      host: parsed.hostname,
+      port: parsed.port ? parseInt(parsed.port, 10) : 5432,
+      user: parsed.username,
+      password: parsed.password,
+      database: parsed.pathname.slice(1),
+    };
+    
+    const sslMode = parsed.searchParams.get('sslmode');
+    if (sslMode === 'require') {
+      config.ssl = { rejectUnauthorized: false };
+    }
+    
+    return config;
+  } catch {
+    return { connectionString: url };
+  }
 }
