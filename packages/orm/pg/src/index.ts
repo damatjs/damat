@@ -3,69 +3,42 @@
 // PostgreSQL ORM core for @damatjs.
 //
 // Provides:
-//   - EntityManager for connection management, model registry, and lifecycle
-//   - Repository pattern for type-safe CRUD operations
+//   - PgEntityManager (aliased to EntityManager) as the modern client builder and pool manager
+//   - PgRepository for ergonomic model access via db.modelName
 //   - Transaction management with savepoint support
-//   - Low-level query executors for direct SQL execution
+//   - PgModelClient for low-level or standalone model clients
 //
-// Usage:
-//
-//   import { EntityManager } from "@damatjs/orm-pg";
-//   import { UserSchema, OrderSchema } from "./schemas";
-//
-//   const em = await EntityManager.create({
-//     connection: process.env.DATABASE_URL!,
-//     models: { User: UserSchema, Order: OrderSchema },
-//   });
-//
-//   // Short API
-//   const users = await em.repo<User>("User").findMany({ where: { verified: true } });
-//   await em.tx(async (tx) => { await tx.repo<User>("User").create({ ... }); });
-//   const result = await em.execute<User>("SELECT * FROM users");
-//   await em.close();
-//
-//   // Or long API
-//   const userRepo = em.getRepository<User>("User");
-//   await em.transaction(async (tx) => { ... });
-//   await em.shutdown();
 
-// ─── Core EntityManager ──────────────────────────────────────────────────────
+// ─── Core EntityManager & Transaction Manager ───────────────────────────────
 export {
   PgEntityManager,
   TransactionalEntityManager,
   EntityManagerError,
   QueryExecutionError,
-  type PgEntityManagerConfig,
-  type LoggerInterface,
-  type ConnectionStatus,
-  type PoolStats,
-  type TransactionOptions,
-  type TransactionIsolationLevel,
-  type QueryContext,
-} from "./core";
+} from "./manager";
 
 // ─── EntityManager alias (preferred name) ─────────────────────────────────────
-import { PgEntityManager } from "./core";
+import { PgEntityManager } from "./manager";
 export const EntityManager = PgEntityManager;
 
 // ─── Connection Management ───────────────────────────────────────────────────
 export {
   ConnectionManager,
   ConnectionError,
-} from "./core";
+} from "./connection";
 
 // ─── Model Registry ──────────────────────────────────────────────────────────
 export {
   ModelRegistry,
   ModelRegistryError,
-  type ModelRegistryEntry,
-} from "./core";
+} from "./registry";
 
 // ─── Transaction Management ──────────────────────────────────────────────────
 export {
   TransactionManager,
   TransactionContext,
   TransactionError,
+  TransactionContextError,
 } from "./transaction";
 
 // ─── Repository Pattern ──────────────────────────────────────────────────────
@@ -74,15 +47,6 @@ export {
   createRepository,
   type PgRepositoryConfig,
 } from "./repository";
-
-// ─── Result types ────────────────────────────────────────────────────────────
-export type {
-  PgSelectResult,
-  PgInsertResult,
-  PgUpdateResult,
-  PgDeleteResult,
-  PgQueryResult,
-} from "./types";
 
 // ─── Low-level executor functions ─────────────────────────────────────────────
 export {
@@ -106,21 +70,18 @@ export {
   type QueryLoggerOptions,
 } from "./logger";
 
-// ─── Short API Methods ────────────────────────────────────────────────────────
-import type { QueryResultRow } from "@damatjs/deps/pg";
-import type { PgRepository } from "./repository";
-import type { TransactionalEntityManager } from "./core";
-
-declare module "./core" {
-  interface PgEntityManager {
-    repo<T extends QueryResultRow>(name: string): PgRepository<T>;
-    tx<R>(cb: (tx: TransactionalEntityManager) => Promise<R>): Promise<R>;
-    execute<T extends QueryResultRow>(sql: string, params?: unknown[]): Promise<{ rows: T[]; rowCount: number }>;
-    close(): Promise<void>;
-  }
-}
-
-PgEntityManager.prototype.repo = function<T extends QueryResultRow>(name: string) { return this.getRepository<T>(name); };
-PgEntityManager.prototype.tx = function<R>(cb: (tx: TransactionalEntityManager) => Promise<R>) { return this.transaction<R>(cb); };
-PgEntityManager.prototype.execute = function<T extends QueryResultRow>(sql: string, params?: unknown[]) { return this.raw<T>(sql, params); };
-PgEntityManager.prototype.close = function() { return this.shutdown(); };
+// ─── Type exports ────────────────────────────────────────────────────────────
+export type {
+  PgSelectResult,
+  PgInsertResult,
+  PgUpdateResult,
+  PgDeleteResult,
+  PgQueryResult,
+  PgEntityManagerConfig,
+  LoggerInterface,
+  ConnectionStatus,
+  PoolStats,
+  TransactionOptions,
+  TransactionIsolationLevel,
+  QueryContext,
+} from "./types";

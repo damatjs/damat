@@ -1,7 +1,7 @@
 import {
   ValuesMap,
 } from "../../types";
-import { OnConflictClause } from "../../insert";
+import type { OnConflictClause } from "../../insert";
 
 /**
  * Options for `create`.

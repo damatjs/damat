@@ -1,2 +1,2 @@
-export * from "./modelAccessor"
-export * from "./type"
+export { ModelAccessor } from "./base";
+export * from "./type";

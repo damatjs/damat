@@ -1,7 +1,3 @@
-/**
- * PostgreSQL Connection Pool Configuration
- */
-
 import type { DbPoolConfig } from "@damatjs/orm-type";
 
 export type PoolConfig = DbPoolConfig & {
@@ -28,19 +24,10 @@ export interface PoolClient {
   release(): void;
 }
 
-/**
- * Create a configured connection pool config
- */
 export function createPoolConfig(config: PoolConfig | string): PoolConfig {
-  if (typeof config === 'string') {
-    return { connectionString: config };
-  }
-  return config;
+  return typeof config === 'string' ? { connectionString: config } : config;
 }
 
-/**
- * Pool configuration for production
- */
 export function productionPoolConfig(overrides: Partial<PoolConfig> = {}): PoolConfig {
   return {
     min: 2,
@@ -52,9 +39,6 @@ export function productionPoolConfig(overrides: Partial<PoolConfig> = {}): PoolC
   };
 }
 
-/**
- * Pool configuration for development
- */
 export function developmentPoolConfig(overrides: Partial<PoolConfig> = {}): PoolConfig {
   return {
     min: 1,
@@ -65,9 +49,6 @@ export function developmentPoolConfig(overrides: Partial<PoolConfig> = {}): Pool
   };
 }
 
-/**
- * Pool configuration for testing
- */
 export function testPoolConfig(overrides: Partial<PoolConfig> = {}): PoolConfig {
   return {
     min: 0,
@@ -78,9 +59,6 @@ export function testPoolConfig(overrides: Partial<PoolConfig> = {}): PoolConfig 
   };
 }
 
-/**
- * Parse database URL into pool config
- */
 export function parseDatabaseUrl(url: string): PoolConfig {
   try {
     const parsed = new URL(url);
@@ -92,11 +70,9 @@ export function parseDatabaseUrl(url: string): PoolConfig {
       database: parsed.pathname.slice(1),
     };
     
-    const sslMode = parsed.searchParams.get('sslmode');
-    if (sslMode === 'require') {
+    if (parsed.searchParams.get('sslmode') === 'require') {
       config.ssl = { rejectUnauthorized: false };
     }
-    
     return config;
   } catch {
     return { connectionString: url };
