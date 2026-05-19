@@ -76,16 +76,17 @@ describe("requireDatabaseUrl", () => {
 describe("DamatConfig interface", () => {
   it("accepts valid config object", () => {
     const config: DamatConfig = {
-      modulesDir: "./src/modules",
-      migrationsDir: "./migrations",
-      typesDir: "./types",
-      modelsDir: "./models",
+      user: {
+        resolve: "./src/modules/user",
+        id: "user-module",
+      },
+      product: {
+        resolve: "./src/modules/product",
+      },
     };
 
-    expect(config.modulesDir).toBe("./src/modules");
-    expect(config.migrationsDir).toBe("./migrations");
-    expect(config.typesDir).toBe("./types");
-    expect(config.modelsDir).toBe("./models");
+    expect(config.user?.resolve).toBe("./src/modules/user");
+    expect(config.product?.resolve).toBe("./src/modules/product");
   });
 
   it("accepts empty config object", () => {
@@ -93,12 +94,15 @@ describe("DamatConfig interface", () => {
     expect(Object.keys(config).length).toBe(0);
   });
 
-  it("accepts partial config", () => {
+  it("accepts config with options", () => {
     const config: DamatConfig = {
-      modulesDir: "./src/modules",
+      auth: {
+        resolve: "./src/modules/auth",
+        options: { tableName: "users" },
+      },
     };
 
-    expect(config.modulesDir).toBe("./src/modules");
-    expect(config.migrationsDir).toBeUndefined();
+    expect(config.auth?.resolve).toBe("./src/modules/auth");
+    expect(config.auth?.options?.tableName).toBe("users");
   });
 });

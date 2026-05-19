@@ -12,14 +12,29 @@ const generateTypesCommand: Command = {
   examples: ["generate:types user", "generate:types user --output ./custom/path"],
   handler: async (ctx: CommandContext): Promise<CommandResult> => {
     const moduleName = ctx.args[0];
-    const { config, typesDir, modelsDir } = ctx.options;
+    const { config } = ctx.options;
+
 
     if (!moduleName) {
       printUsage(ctx);
       return { exitCode: 1 };
     }
 
-    const resolvedModelsDir = resolveModelsPath({ cliModelsDir: modelsDir }, config ?? {}, moduleName);
+
+    if (!config) {
+      ctx.logger.error("config is required to be setup");
+      console.log("");
+      console.log("Usage: damat-orm migrate:create <module>");
+      return { exitCode: 1 };
+    }
+
+    const module = config[moduleName];
+    if (!module) {
+      ctx.logger.error(`Module '${moduleName}' not found in config`);
+      return { exitCode: 1 };
+    }
+
+    const resolvedModelsDir = resolveModelsPath(config, module.resolve);
 
     if (!fs.existsSync(resolvedModelsDir)) {
       ctx.logger.error(`Models directory not found: ${resolvedModelsDir}`);
@@ -29,11 +44,11 @@ const generateTypesCommand: Command = {
     try {
       ctx.logger.info(`Generating types for module '${moduleName}'...`);
 
-      const schema = await loadSchema(resolvedModelsDir, moduleName, ctx);
+      const schema = await loadSchema(module.resolve, ctx);
       if (!schema) return { exitCode: 1 };
 
       const typesContent = generateTypes(schema);
-      const outputPath = resolveTypesPath({ cliTypesDir: typesDir }, config ?? {}, moduleName);
+      const outputPath = resolveTypesPath(module.resolve);
 
       writeTypesFile(outputPath, typesContent);
 
@@ -49,11 +64,10 @@ const generateTypesCommand: Command = {
 };
 
 async function loadSchema(
-  modelsDir: string,
-  moduleName: string,
+  moduleResolver: string,
   ctx: CommandContext
 ): Promise<ModuleSchema | null> {
-  const schemaPath = path.join(path.dirname(modelsDir), "schema.json");
+  const schemaPath = path.join(moduleResolver, "schema.json");
 
   if (!fs.existsSync(schemaPath)) {
     ctx.logger.error(`Schema file not found: ${schemaPath}`);

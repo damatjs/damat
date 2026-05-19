@@ -9,7 +9,7 @@ export interface MigrationInfo {
   /** Migration filename without extension */
   name: string;
   /** Module the migration belongs to */
-  module: string;
+  resolver: string;
   /** Full path to migration file */
   path: string;
   /** Timestamp extracted from filename */
@@ -24,8 +24,6 @@ export interface MigrationInfo {
 export interface ModuleMigrationResult {
   /** Whether all migrations succeeded */
   success: boolean;
-  /** Module name */
-  module: string;
   /** List of applied migration names */
   applied: string[];
   /** List of pending migration names */

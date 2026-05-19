@@ -21,8 +21,6 @@ import type {
   DiffMigrationResult,
 } from "@damatjs/orm-processor";
 
-const DEFAULT_MODULES_DIR = "src/modules";
-
 /**
  * Create a migration based on the difference between the current model
  * definitions and the previous schema snapshot.
@@ -48,22 +46,22 @@ const DEFAULT_MODULES_DIR = "src/modules";
  */
 export async function createDiffMigration(
   moduleName: string,
-  modulesDir: string = DEFAULT_MODULES_DIR,
+  moduleResolver: string,
   options: CreateDiffMigrationOptions = {},
 ): Promise<DiffMigrationResult> {
-  const moduleDir = path.join(modulesDir, moduleName);
-  const migrationsDir = path.join(moduleDir, "migrations");
 
-  if (!fs.existsSync(moduleDir)) {
-    throw new Error(`Module '${moduleName}' not found at ${moduleDir}`);
+  if (!fs.existsSync(moduleResolver)) {
+    throw new Error(`Module '${moduleName}' not found at ${moduleResolver}`);
   }
+
+  const migrationsDir = path.join(moduleResolver, "migrations");
 
   if (!fs.existsSync(migrationsDir)) {
     fs.mkdirSync(migrationsDir, { recursive: true });
   }
 
   // Auto-discover model definitions from {modulesDir}/{moduleName}/models/
-  const models = await discoverModels(modulesDir, moduleName);
+  const models = await discoverModels(moduleResolver);
 
   // Load previous snapshot from disk
   const previousSnapshot = loadSnapshot(migrationsDir, moduleName);

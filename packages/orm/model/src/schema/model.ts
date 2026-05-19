@@ -183,6 +183,8 @@ export class ModelDefinition {
     return schema;
   }
 
+
+  // If we have the codegen why do we need this might need to be removed
   // ─── toTsType ───────────────────────────────────────────────────────────────
   /**
    * Generate a TypeScript interface string that represents the row shape of

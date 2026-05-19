@@ -2,14 +2,18 @@ import { Pool } from "@damatjs/deps/pg";
 import type { Command, CommandContext, CommandResult } from "../../types";
 import { runMigrations } from "@damatjs/orm-migration";
 import { requireDatabaseUrl } from "../../config";
-import { resolvePaths } from "../../utils/paths";
 
 const migrateUp: Command = {
   name: "migrate:up",
   description: "Run all pending migrations",
   handler: async (ctx: CommandContext): Promise<CommandResult> => {
-    const { modulesDir, config } = ctx.options;
-    const paths = resolvePaths(modulesDir, config ?? {});
+    const { config } = ctx.options;
+    if (!config) {
+      ctx.logger.error("config is required to be setup");
+      console.log("");
+      console.log("Usage: damat-orm migrate:create <module>");
+      return { exitCode: 1 };
+    }
 
     console.log("");
     ctx.logger.info("Running module migrations...");
@@ -17,7 +21,7 @@ const migrateUp: Command = {
 
     const pool = new Pool({ connectionString: requireDatabaseUrl(ctx.logger) });
     try {
-      const results = await runMigrations(pool, paths.modulesDir, ctx.options.activeModules);
+      const results = await runMigrations(pool, Object.values(config).map(m => m.resolve));
       const hasFailures = results.some((r) => !r.success);
       console.log("");
 

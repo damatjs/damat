@@ -145,6 +145,7 @@
         "@damatjs/orm-codegen": "*",
         "@damatjs/orm-migration": "*",
         "@damatjs/orm-model": "*",
+        "@damatjs/orm-processor": "*",
         "@damatjs/orm-type": "*",
         "dotenv": "^17.3.1",
       },
@@ -260,6 +261,7 @@
       "dependencies": {
         "@damatjs/deps": "*",
         "@damatjs/orm-model": "*",
+        "@damatjs/orm-type": "*",
         "@damatjs/types": "*",
         "dotenv": "^17.3.1",
         "reflect-metadata": "^0.2.2",

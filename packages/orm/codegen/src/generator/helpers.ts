@@ -1,4 +1,4 @@
-import { toPascalCase } from "@damatjs/orm-model";
+import { toPascalCase } from '@/utils/stringConvertor';
 
 export function tableToFileName(tableName: string): string {
   return tableName.replace(/_/g, "-");

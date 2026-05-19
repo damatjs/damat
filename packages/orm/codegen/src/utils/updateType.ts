@@ -1,6 +1,5 @@
 import { ModuleSchema } from "@damatjs/orm-type";
-import { toPascalCase } from "@damatjs/orm-model";
-
+import { toPascalCase } from './stringConvertor';
 
 /**
  * Emit the `Update*` partial update type — all non-PK columns optional.

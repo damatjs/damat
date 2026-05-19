@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import type { Command, CommandContext, CommandResult } from "../../types";
 import { createInitialMigration, createDiffMigration } from "@damatjs/orm-migration";
-import { snapshotExist } from "@damatjs/orm-model";
+import { snapshotExist } from "@damatjs/orm-processor";
 import { resolveMigrationsPath, resolveModelsPath } from "../../utils/paths";
 
 const migrateCreate: Command = {
@@ -9,7 +9,7 @@ const migrateCreate: Command = {
   description: "Create a new migration for a module",
   handler: async (ctx: CommandContext): Promise<CommandResult> => {
     const [moduleName] = ctx.args;
-    const { config, migrationsDir, modelsDir } = ctx.options;
+    const { config } = ctx.options;
 
     if (!moduleName) {
       ctx.logger.error("Module name is required");
@@ -17,18 +17,31 @@ const migrateCreate: Command = {
       console.log("Usage: damat-orm migrate:create <module>");
       return { exitCode: 1 };
     }
+    if (!config) {
+      ctx.logger.error("config is required to be setup");
+      console.log("");
+      console.log("Usage: damat-orm migrate:create <module>");
+      return { exitCode: 1 };
+    }
 
-    const resolvedModelsDir = resolveModelsPath({ cliModelsDir: modelsDir }, config ?? {}, moduleName);
-    const resolvedMigrationsDir = resolveMigrationsPath(
-      { cliMigrationsDir: migrationsDir },
-      config ?? {},
-      moduleName
-    );
+    const module = config[moduleName];
+    if (!module) {
+      ctx.logger.error(`Module '${moduleName}' not found in config`);
+      return { exitCode: 1 };
+    }
+
+    const resolvedModelsDir = resolveModelsPath(config ?? {}, module.resolve);
 
     if (!fs.existsSync(resolvedModelsDir)) {
       ctx.logger.error(`Models directory not found: ${resolvedModelsDir}`);
       return { exitCode: 1 };
     }
+
+
+    const resolvedMigrationsDir = resolveMigrationsPath(
+      module.resolve
+    );
+
 
     try {
       const isInitial = !snapshotExist(resolvedMigrationsDir);

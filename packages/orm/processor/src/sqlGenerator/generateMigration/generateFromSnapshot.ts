@@ -2,7 +2,7 @@ import type {
   GeneratedMigration,
   MigrationGeneratorOptions,
 } from "../../types";
-import type { ModuleSchema } from "@damatjs/orm-model";
+import type { ModuleSchema } from "@damatjs/orm-type";
 import { generateTableSql } from "../tables";
 import { generateCreateEnum } from "../enums";
 
@@ -41,11 +41,12 @@ export function generateFromSnapshot(
   const warnings: string[] = [];
 
   // 1. Native enum types first (tables may reference them)
-  for (const enumDef of snapshot.enums) {
-    upStatements.push(
-      generateCreateEnum({ type: "create_enum", enumDef, priority: 0 }, opts),
-    );
-  }
+  if (snapshot.enums)
+    for (const enumDef of snapshot.enums) {
+      upStatements.push(
+        generateCreateEnum({ type: "create_enum", enumDef, priority: 0 }, opts),
+      );
+    }
 
   // 2. Tables (columns + inline PKs), then their indexes and FKs
   for (const table of snapshot.tables) {

@@ -1,4 +1,4 @@
-import type { ColumnSchema } from "@damatjs/orm-model";
+import type { ColumnSchema } from "@damatjs/orm-type";
 
 /**
  * Wrap a SQL identifier in double-quotes, escaping any embedded quotes.

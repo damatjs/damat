@@ -17,8 +17,6 @@ import { generateTimestamp } from "../utils/timestamp";
 import { discoverModels } from "../discovery";
 import type { MigrationGeneratorOptions } from "@damatjs/orm-processor";
 
-const DEFAULT_MODULES_DIR = "src/modules";
-
 /**
  * Create an initial migration that creates all tables for a module.
  *
@@ -37,22 +35,22 @@ const DEFAULT_MODULES_DIR = "src/modules";
  */
 export async function createInitialMigration(
   moduleName: string,
-  modulesDir: string = DEFAULT_MODULES_DIR,
+  moduleResolver: string,
   options: MigrationGeneratorOptions = {},
 ): Promise<string> {
-  const moduleDir = path.join(modulesDir, moduleName);
-  const migrationsDir = path.join(moduleDir, "migrations");
 
-  if (!fs.existsSync(moduleDir)) {
-    throw new Error(`Module '${moduleName}' not found at ${moduleDir}`);
+  if (!fs.existsSync(moduleResolver)) {
+    throw new Error(`Module '${moduleName}' not found at ${moduleResolver}`);
   }
+
+  const migrationsDir = path.join(moduleResolver, "migrations");
 
   if (!fs.existsSync(migrationsDir)) {
     fs.mkdirSync(migrationsDir, { recursive: true });
   }
 
   // Auto-discover model definitions from {modulesDir}/{moduleName}/models/
-  const models = await discoverModels(modulesDir, moduleName);
+  const models = await discoverModels(moduleResolver);
 
   // Build snapshot from models then persist it
   const snapshot = toModuleSchema(moduleName, models);

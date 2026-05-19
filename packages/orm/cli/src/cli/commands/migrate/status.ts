@@ -2,15 +2,33 @@ import { Pool } from "@damatjs/deps/pg";
 import type { Command, CommandContext, CommandResult } from "../../types";
 import { getMigrationStatus, getModuleMigrationStatus } from "@damatjs/orm-migration";
 import { requireDatabaseUrl } from "../../config";
-import { resolvePaths } from "../../utils/paths";
 
 const migrateStatus: Command = {
   name: "migrate:status",
   description: "Show migration status",
   handler: async (ctx: CommandContext): Promise<CommandResult> => {
     const [moduleName] = ctx.args;
-    const { modulesDir, config } = ctx.options;
-    const paths = resolvePaths(modulesDir, config ?? {}, moduleName);
+    const { config } = ctx.options;
+
+
+    if (!moduleName) {
+      ctx.logger.error("Module name is required");
+      console.log("");
+      console.log("Usage: damat-orm migrate:create <module>");
+      return { exitCode: 1 };
+    }
+    if (!config) {
+      ctx.logger.error("config is required to be setup");
+      console.log("");
+      console.log("Usage: damat-orm migrate:create <module>");
+      return { exitCode: 1 };
+    }
+    const module = config[moduleName];
+    if (!module) {
+      ctx.logger.error(`Module '${moduleName}' not found in config`);
+      return { exitCode: 1 };
+    }
+
 
     console.log("");
     if (moduleName) {
@@ -23,9 +41,9 @@ const migrateStatus: Command = {
     const pool = new Pool({ connectionString: requireDatabaseUrl(ctx.logger) });
     try {
       if (moduleName) {
-        await showModuleStatus(ctx, pool, paths.modulesDir, moduleName);
+        await showModuleStatus(ctx, pool, module.resolve);
       } else {
-        await showAllStatus(ctx, pool, paths.modulesDir, ctx.options.activeModules);
+        await showAllStatus(ctx, pool, Object.values(config).map(m => m.resolve));
       }
 
       console.log("");
@@ -39,10 +57,9 @@ const migrateStatus: Command = {
 async function showModuleStatus(
   ctx: CommandContext,
   pool: Pool,
-  modulesDir: string,
-  moduleName: string
+  moduleResolver: string,
 ): Promise<void> {
-  const status = await getModuleMigrationStatus(pool, modulesDir, moduleName);
+  const status = await getModuleMigrationStatus(pool, moduleResolver);
   const mod = status.module;
 
   ctx.logger[mod.pending > 0 ? "warn" : "success"](
@@ -57,10 +74,9 @@ async function showModuleStatus(
 async function showAllStatus(
   ctx: CommandContext,
   pool: Pool,
-  modulesDir: string,
-  activeModules?: string[]
+  moduleResolvers: string[]
 ): Promise<void> {
-  const status = await getMigrationStatus(pool, modulesDir, activeModules);
+  const status = await getMigrationStatus(pool, moduleResolvers);
 
   if (status.modules.length === 0) {
     ctx.logger.skip("No modules with migrations found.");

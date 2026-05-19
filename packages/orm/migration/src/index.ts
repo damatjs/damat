@@ -17,6 +17,9 @@
 // Discovery
 export * from "./discovery";
 
+// Executor
+export * from "./executor";
+
 // Generator
 export * from "./generator";
 

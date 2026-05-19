@@ -1,4 +1,4 @@
-import type { TableSchema } from "@damatjs/orm-model";
+import type { TableSchema } from "@damatjs/orm-type";
 import type {
   CreateTableChange,
   DropTableChange,
@@ -51,22 +51,24 @@ export function generateCreateTable(
 
   // Indexes (skip any that duplicate the primary key)
   const pkColsSet = new Set(pkColumns);
-  for (const index of table.indexes) {
-    const isRedundantPk =
-      index.columns.length === pkColsSet.size &&
-      index.columns.every((c) => {
-        const name = typeof c === "string" ? c : c.name;
-        return pkColsSet.has(name);
-      });
-    if (!isRedundantPk) {
-      statements.push(generateCreateIndex(index, table.name, schema, options));
+  if (table.indexes)
+    for (const index of table.indexes) {
+      const isRedundantPk =
+        index.columns.length === pkColsSet.size &&
+        index.columns.every((c) => {
+          const name = typeof c === "string" ? c : c.name;
+          return pkColsSet.has(name);
+        });
+      if (!isRedundantPk) {
+        statements.push(generateCreateIndex(index, table.name, schema, options));
+      }
     }
-  }
 
   // Foreign keys
-  for (const fk of table.foreignKeys) {
-    statements.push(generateAddForeignKey(fk, table.name, schema));
-  }
+  if (table.foreignKeys)
+    for (const fk of table.foreignKeys) {
+      statements.push(generateAddForeignKey(fk, table.name, schema));
+    }
 
   return statements;
 }

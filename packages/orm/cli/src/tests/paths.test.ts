@@ -4,113 +4,63 @@ import { resolvePaths, resolveModelsPath, resolveMigrationsPath, resolveTypesPat
 import { getModulesDir, DEFAULT_MODULES_DIR } from "../cli/utils/paths/base";
 
 describe("resolvePaths", () => {
-  const cwd = "/test/project";
+  const moduleResolver = "/test/project/src/modules/user";
 
-  it("resolves default paths when no options provided", () => {
-    const result = resolvePaths(undefined, {}, undefined, cwd);
+  it("resolves paths from moduleResolver", () => {
+    const result = resolvePaths(moduleResolver);
 
-    expect(result.modulesDir).toBe(path.join(cwd, DEFAULT_MODULES_DIR));
-    expect(result.modelsDir).toBe(path.join(cwd, DEFAULT_MODULES_DIR));
-    expect(result.migrationsDir).toBe(path.join(cwd, DEFAULT_MODULES_DIR));
-    expect(result.typesDir).toBe(path.join(cwd, DEFAULT_MODULES_DIR));
+    expect(result.modulesDir).toBe(moduleResolver);
+    expect(result.modelsDir).toBe(path.join(moduleResolver, "models"));
+    expect(result.migrationsDir).toBe(path.join(moduleResolver, "migrations"));
+    expect(result.typesDir).toBe(path.join(moduleResolver, "types", "common"));
   });
 
-  it("resolves paths with module name", () => {
-    const result = resolvePaths(undefined, {}, "user", cwd);
+  it("handles different module resolvers", () => {
+    const customResolver = "/another/path/my-module";
+    const result = resolvePaths(customResolver);
 
-    expect(result.modelsDir).toBe(path.join(cwd, DEFAULT_MODULES_DIR, "user", "models"));
-    expect(result.migrationsDir).toBe(path.join(cwd, DEFAULT_MODULES_DIR, "user", "migrations"));
-    expect(result.typesDir).toBe(path.join(cwd, DEFAULT_MODULES_DIR, "user", "types", "common"));
-  });
-
-  it("uses cli modulesDir over config", () => {
-    const result = resolvePaths("./cli-modules", { modulesDir: "./config-modules" }, undefined, cwd);
-
-    expect(result.modulesDir).toBe(path.join(cwd, "cli-modules"));
-  });
-
-  it("uses config modulesDir when cli not provided", () => {
-    const result = resolvePaths(undefined, { modulesDir: "./config-modules" }, undefined, cwd);
-
-    expect(result.modulesDir).toBe(path.join(cwd, "config-modules"));
-  });
-
-  it("handles absolute paths", () => {
-    const result = resolvePaths("/absolute/path", {}, undefined, cwd);
-
-    expect(result.modulesDir).toBe("/absolute/path");
+    expect(result.modulesDir).toBe(customResolver);
+    expect(result.modelsDir).toBe(path.join(customResolver, "models"));
+    expect(result.migrationsDir).toBe(path.join(customResolver, "migrations"));
+    expect(result.typesDir).toBe(path.join(customResolver, "types", "common"));
   });
 });
 
 describe("resolveModelsPath", () => {
+  const moduleResolver = "/test/project/src/modules/user";
   const cwd = "/test/project";
 
-  it("uses cliModelsDir when provided", () => {
-    const result = resolveModelsPath({ cliModelsDir: "./custom-models" }, {}, "user", cwd);
+  it("uses cliModelsDir when provided (relative)", () => {
+    const result = resolveModelsPath({ cliModelsDir: "./custom-models" }, moduleResolver, cwd);
     expect(result).toBe(path.join(cwd, "custom-models"));
   });
 
   it("uses absolute cliModelsDir directly", () => {
-    const result = resolveModelsPath({ cliModelsDir: "/abs/models" }, {}, "user", cwd);
+    const result = resolveModelsPath({ cliModelsDir: "/abs/models" }, moduleResolver, cwd);
     expect(result).toBe("/abs/models");
   });
 
-  it("uses config modelsDir with module name", () => {
-    const result = resolveModelsPath({}, { modelsDir: "./config-models" }, "user", cwd);
-    expect(result).toBe(path.join(cwd, "config-models", "user"));
-  });
-
-  it("falls back to modules dir structure", () => {
-    const result = resolveModelsPath({}, {}, "user", cwd);
-    expect(result).toBe(path.join(cwd, DEFAULT_MODULES_DIR, "user", "models"));
+  it("falls back to moduleResolver when no cliModelsDir", () => {
+    const result = resolveModelsPath({}, moduleResolver, cwd);
+    expect(result).toBe(path.join(moduleResolver, "models"));
   });
 });
 
 describe("resolveMigrationsPath", () => {
-  const cwd = "/test/project";
+  const moduleResolver = "/test/project/src/modules/user";
 
-  it("uses cliMigrationsDir when provided", () => {
-    const result = resolveMigrationsPath({ cliMigrationsDir: "./custom-migrations" }, {}, "user", cwd);
-    expect(result).toBe(path.join(cwd, "custom-migrations"));
-  });
-
-  it("uses absolute cliMigrationsDir directly", () => {
-    const result = resolveMigrationsPath({ cliMigrationsDir: "/abs/migrations" }, {}, "user", cwd);
-    expect(result).toBe("/abs/migrations");
-  });
-
-  it("uses config migrationsDir with module name", () => {
-    const result = resolveMigrationsPath({}, { migrationsDir: "./config-migrations" }, "user", cwd);
-    expect(result).toBe(path.join(cwd, "config-migrations", "user"));
-  });
-
-  it("falls back to modules dir structure", () => {
-    const result = resolveMigrationsPath({}, {}, "user", cwd);
-    expect(result).toBe(path.join(cwd, DEFAULT_MODULES_DIR, "user", "migrations"));
+  it("resolves migrations path from moduleResolver", () => {
+    const result = resolveMigrationsPath(moduleResolver);
+    expect(result).toBe(path.join(moduleResolver, "migrations"));
   });
 });
 
 describe("resolveTypesPath", () => {
-  const cwd = "/test/project";
+  const moduleResolver = "/test/project/src/modules/user";
 
-  it("uses cliTypesDir when provided", () => {
-    const result = resolveTypesPath({ cliTypesDir: "./custom-types" }, {}, "user", cwd);
-    expect(result).toBe(path.join(cwd, "custom-types"));
-  });
-
-  it("uses absolute cliTypesDir directly", () => {
-    const result = resolveTypesPath({ cliTypesDir: "/abs/types" }, {}, "user", cwd);
-    expect(result).toBe("/abs/types");
-  });
-
-  it("uses config typesDir with module name", () => {
-    const result = resolveTypesPath({}, { typesDir: "./config-types" }, "user", cwd);
-    expect(result).toBe(path.join(cwd, "config-types", "user", "common"));
-  });
-
-  it("falls back to modules dir structure", () => {
-    const result = resolveTypesPath({}, {}, "user", cwd);
-    expect(result).toBe(path.join(cwd, DEFAULT_MODULES_DIR, "user", "types", "common"));
+  it("resolves types path from moduleResolver", () => {
+    const result = resolveTypesPath(moduleResolver);
+    expect(result).toBe(path.join(moduleResolver, "types", "common"));
   });
 });
 

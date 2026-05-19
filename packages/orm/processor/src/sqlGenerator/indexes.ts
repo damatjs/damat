@@ -1,4 +1,4 @@
-import type { IndexSchema } from "@damatjs/orm-model";
+import type { IndexSchema } from "@damatjs/orm-type";
 import type {
   AddIndexChange,
   DropIndexChange,

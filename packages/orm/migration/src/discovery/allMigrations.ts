@@ -1,51 +1,33 @@
-/**
- * All-Modules Migration Discovery
- *
- * Aggregates `.sql` migration files across every active module and returns them
- * sorted by timestamp so the executor can apply them in the correct global order.
- */
-
-import fs from "node:fs";
 import type { MigrationInfo } from "../types";
 import { discoverModuleMigrations } from "./moduleMigrations";
-import { resolveModules } from "./discoverModulesFromDir";
 
 /**
- * Discover all migrations across every active module, sorted by timestamp.
+ * Discover and collect migrations from the provided module resolvers,
+ * then return them sorted by timestamp (oldest first).
  *
- * Resolution rules (delegated to `resolveModules`):
- * - `activeModules` not provided or empty → all discovered modules
- * - `activeModules` has entries → intersection with discovered modules
- *
- * @param modulesDir    - Root modules directory (e.g. `"src/modules"`)
- * @param activeModules - Optional allowlist of module names
+ * @param modulesResolver - Array of module resolver paths or identifiers
+ *                          used to discover module migrations
  * @returns All migration info objects sorted oldest-first
  *
  * @example
  * ```typescript
- * discoverAllMigrations('src/modules');
- * // all modules auto-discovered
+ * discoverAllMigrations([
+ *   'src/modules/user',
+ *   'src/modules/billing'
+ * ]);
  *
- * discoverAllMigrations('src/modules', ['user', 'billing']);
- * // only user + billing
- *
- * discoverAllMigrations('src/modules', []);
- * // empty = all discovered
+ * // returns migrations from both modules,
+ * // sorted by timestamp ascending
  * ```
  */
 export function discoverAllMigrations(
-  modulesDir: string,
-  activeModules?: string[],
+  modulesResolver: string[],
 ): MigrationInfo[] {
-  if (!fs.existsSync(modulesDir)) {
-    return [];
-  }
 
-  const modules = resolveModules(modulesDir, activeModules);
   const migrations: MigrationInfo[] = [];
 
-  for (const moduleName of modules) {
-    migrations.push(...discoverModuleMigrations(modulesDir, moduleName));
+  for (const moduleResolver of modulesResolver) {
+    migrations.push(...discoverModuleMigrations(moduleResolver));
   }
 
   return migrations.sort((a, b) => a.timestamp - b.timestamp);

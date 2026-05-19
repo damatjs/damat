@@ -1,5 +1,5 @@
+import { toPascalCase, toCamelCase } from '@/utils/stringConvertor';
 import { RelationSchema } from "@damatjs/orm-type";
-import { toPascalCase, toCamelCase } from "@damatjs/orm-model";
 
 /**
  * For a given table's `RelationSchema[]`, produce the optional loaded-relation

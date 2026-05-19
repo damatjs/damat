@@ -27,12 +27,8 @@ export interface CommandRegistry {
 }
 
 export interface CliOptions {
-  modulesDir?: string | undefined;
-  activeModules?: string[] | undefined;
-  modelsDir?: string | undefined;
-  migrationsDir?: string | undefined;
-  typesDir?: string | undefined;
-  config?: DamatConfig | undefined;
+  activeModules?: string[];
+  config?: DamatConfig;
   verbose?: boolean;
 }
 

@@ -1,6 +1,6 @@
+import { ModuleSchema } from '@damatjs/orm-type';
 import fs from "node:fs";
 import path from "node:path";
-import type { ModuleSchema } from "../types";
 
 /**
  * Load a ModuleSchema from disk.

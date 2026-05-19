@@ -1,5 +1,5 @@
 import { ModuleSchema, RelationSchema } from "@damatjs/orm-type";
-import { toPascalCase } from "@damatjs/orm-model";
+import { toPascalCase } from './stringConvertor';
 import { columnToTsType } from '../columnToTsType';
 import { relationFields } from '../relation';
 

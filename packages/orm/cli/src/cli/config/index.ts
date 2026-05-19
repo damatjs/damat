@@ -3,15 +3,18 @@ import fs from "node:fs";
 import type { Logger } from "../types";
 
 export interface DamatConfig {
-  modulesDir?: string;
-  migrationsDir?: string;
-  typesDir?: string;
-  modelsDir?: string;
+  [name: string]: DamatConfigData
+}
+
+export interface DamatConfigData {
+  resolve: string;
+  id?: string;
+  options?: Record<string, unknown>
 }
 
 const CONFIG_FILE = "damat.config.ts";
 
-let cachedConfig: DamatConfig | undefined;
+let cachedConfig: DamatConfig;
 
 function setCache(config: DamatConfig): DamatConfig {
   cachedConfig = config;
@@ -31,7 +34,18 @@ export async function loadConfig(cwd: string = process.cwd()): Promise<DamatConf
 
   try {
     const configModule = await import(configPath);
-    const loaded = configModule.default ?? configModule;
+    const configData = configModule();
+    //TODO: update the CONFIG on the main one
+    const loaded = configData.modules.map(async (m: any) => {
+      if (m.resolve) {
+        const data = await import(m.resolve);
+        const module: DamatConfig = {}
+        module[data._schemaName] = m;
+        return module;
+      } else {
+        return null
+      }
+    });
     const config = typeof loaded === "object" ? loaded : {};
     return setCache(config);
   } catch {
@@ -40,7 +54,7 @@ export async function loadConfig(cwd: string = process.cwd()): Promise<DamatConf
 }
 
 export function clearConfigCache(): void {
-  cachedConfig = undefined;
+  cachedConfig = {};
 }
 
 export function requireDatabaseUrl(logger: Logger): string {
@@ -50,7 +64,7 @@ export function requireDatabaseUrl(logger: Logger): string {
     logger.error("DATABASE_URL is not set.");
     console.log("");
     console.log("Make sure you have a .env file with:");
-    console.log("  DATABASE_URL=postgresql://user:password@localhost:5432/mydb");
+    console.log("DATABASE_URL=postgresql://user:password@localhost:5432/DB");
     console.log("");
     process.exit(1);
   }

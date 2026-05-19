@@ -1,5 +1,5 @@
 import { ModuleSchema } from "@damatjs/orm-type";
-import { toEnumTypeName } from "@damatjs/orm-model";
+import { toEnumTypeName } from "@/utils/stringConvertor";
 import { getTableEnums, generateRowInterface, generateNewType, generateUpdateType, } from "@/utils";
 import { getRelationImports } from "./helpers";
 import { getLogger } from "@damatjs/logger";

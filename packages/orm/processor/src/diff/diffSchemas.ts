@@ -1,4 +1,4 @@
-import type { ModuleSchema } from "@damatjs/orm-model";
+import type { ModuleSchema } from "@damatjs/orm-type";
 import type { SchemaDiff, SchemaChange } from "../types/diff";
 import { createNameMap } from "./utils";
 import { diffTable } from "./tables";
@@ -23,8 +23,8 @@ export function diffSchemas(
 
   // Diff native enum types
   const { changes: enumChanges, warnings: enumWarnings } = diffEnums(
-    previous.enums,
-    current.enums,
+    previous.enums ?? [],
+    current.enums ?? [],
   );
   allChanges.push(...enumChanges);
   allWarnings.push(...enumWarnings);

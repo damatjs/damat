@@ -43,12 +43,8 @@ export async function runCli(options: CliOptions = {}): Promise<void> {
 
 function buildOptions(options: CliOptions, config: DamatConfig): CliOptions {
   return {
-    modulesDir: options.modulesDir,
-    activeModules: options.activeModules,
-    modelsDir: options.modelsDir,
-    migrationsDir: options.migrationsDir,
-    typesDir: options.typesDir,
-    config: options.config ?? config,
+    activeModules: Object.keys(config),
+    config: config,
     verbose: options.verbose ?? false,
   };
 }

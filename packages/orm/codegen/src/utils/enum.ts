@@ -1,5 +1,5 @@
 import { EnumSchema, ModuleSchema } from "@damatjs/orm-type";
-import { toEnumTypeName } from "@damatjs/orm-model";
+import { toEnumTypeName } from './stringConvertor';
 
 /**
  * Emit all enum type aliases for the module, e.g.:

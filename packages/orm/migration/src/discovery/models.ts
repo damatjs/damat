@@ -1,14 +1,3 @@
-/**
- * Model Discovery
- *
- * Scans `{modulesDir}/{moduleName}/models/` and dynamically imports every
- * `.ts` / `.js` file, collecting any exported value that is a `ModelDefinition`
- * (identified by the presence of `toTableSchema` and `_tableName`).
- *
- * This is the bridge between the on-disk module structure and the snapshot /
- * migration generator — no model list ever needs to be passed manually.
- */
-
 import fs from "node:fs";
 import path from "node:path";
 import type { ModelDefinition } from "@damatjs/orm-model";
@@ -37,20 +26,19 @@ import type { ModelDefinition } from "@damatjs/orm-model";
  * ```
  */
 export async function discoverModels(
-  modulesDir: string,
-  moduleName: string,
+  moduleResolver: string,
 ): Promise<ModelDefinition[]> {
-  const modelsDir = path.join(modulesDir, moduleName, "models");
+  const modelDir = path.join(moduleResolver, "models");
 
-  if (!fs.existsSync(modelsDir)) {
+  if (!fs.existsSync(modelDir)) {
     throw new Error(
-      `Models directory not found: ${modelsDir}\n` +
-        `Expected convention: {modulesDir}/{moduleName}/models/`,
+      `Models directory not found: ${modelDir}\n` +
+      `Expected convention: {modulesDir}/{moduleName}/models/`,
     );
   }
 
   const files = fs
-    .readdirSync(modelsDir)
+    .readdirSync(modelDir)
     .filter(
       (f) =>
         /\.(ts|js)$/.test(f) &&
@@ -59,12 +47,12 @@ export async function discoverModels(
         f !== "index.js",
     )
     .sort()
-    .map((f) => path.resolve(modelsDir, f));
+    .map((f) => path.resolve(modelDir, f));
 
   if (files.length === 0) {
     throw new Error(
-      `No model files found in ${modelsDir}.\n` +
-        `Create at least one .ts file that exports a createModelDefinition() value.`,
+      `No model files found in ${modelDir}.\n` +
+      `Create at least one .ts file that exports a createModelDefinition() value.`,
     );
   }
 
@@ -81,8 +69,8 @@ export async function discoverModels(
 
   if (models.length === 0) {
     throw new Error(
-      `No ModelDefinition exports found in ${modelsDir}.\n` +
-        `Make sure each model file exports a value created with createModelDefinition().`,
+      `No ModelDefinition exports found in ${modelDir}.\n` +
+      `Make sure each model file exports a value created with createModelDefinition().`,
     );
   }
 
