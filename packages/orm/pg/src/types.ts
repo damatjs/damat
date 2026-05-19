@@ -1,11 +1,12 @@
 import type { QueryResultRow } from "@damatjs/deps/pg";
-import type {
-  SelectDescriptor,
-  InsertDescriptor,
-  UpdateDescriptor,
+import {
   DeleteDescriptor,
+  InsertDescriptor,
+  SelectDescriptor,
+  UpdateDescriptor,
   UpsertDescriptor,
-} from "@damatjs/orm-model";
+} from "./query";
+
 
 // ─── PgQueryResult ────────────────────────────────────────────────────────────
 //

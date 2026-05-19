@@ -1,4 +1,4 @@
-import { ModelDefinition } from "@/schema/model";
+import { ModelDefinition } from "@damatjs/orm-model";
 import { BuiltQuery, DeleteDescriptor } from "./types";
 import { assembleQuery } from "./helpers";
 import { QueryBase } from "./base";
@@ -66,7 +66,7 @@ export class DeleteBuilder<
     if (!hasWhere && !this._allowFullTable) {
       throw new Error(
         "[query:delete] No WHERE clause — this would delete every row. " +
-          "Add .where() or call .allowFullTable() to opt-in.",
+        "Add .where() or call .allowFullTable() to opt-in.",
       );
     }
 

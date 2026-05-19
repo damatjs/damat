@@ -1,7 +1,7 @@
-import { ModelDefinition } from "@/schema/model";
 import { BuiltQuery, InsertDescriptor, ValuesMap } from "./types";
 import { assembleQuery, quoteIdent } from "./helpers";
 import { QueryBase } from "./base";
+import { ModelDefinition } from '@damatjs/orm-model';
 
 // ─── ON CONFLICT types ────────────────────────────────────────────────────────
 
@@ -9,7 +9,7 @@ export type OnConflictAction = "nothing" | "update";
 
 /**
  * Configuration for `ON CONFLICT` handling.
- *
+ *  
  * ```ts
  * // Silently skip duplicate rows
  * .onConflict({ action: "nothing" })

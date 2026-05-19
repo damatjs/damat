@@ -1,7 +1,3 @@
-import { ColumnSchema } from "@/types";
-import { ColumnBuilder } from "@/properties/column/base";
-import { BelongsToBuilder } from "@/properties/relation/belongsToBuilder";
-
 // ─── Extract column schemas from a ModelDefinition ───────────────────────────
 //
 // The goal: given a ModelDefinition, derive compile-time types for column
@@ -27,6 +23,9 @@ import { BelongsToBuilder } from "@/properties/relation/belongsToBuilder";
 //   - With codegen, `new SelectBuilder<keyof UserRow>(UserSchema)` is fully
 //     typed — wrong column names are compile errors
 //   - Without codegen, runtime validation still catches bad names
+
+import { BelongsToBuilder, ColumnBuilder } from '@damatjs/orm-model';
+import { ColumnSchema } from '@damatjs/orm-type';
 
 // ─── Column name union helpers ────────────────────────────────────────────────
 
@@ -73,18 +72,18 @@ export type ColumnBaseType<C extends ColumnSchema> = C["type"] extends
   | "money"
   ? number
   : C["type"] extends "boolean"
-    ? boolean
-    : C["type"] extends "json" | "jsonb"
-      ? unknown
-      : C["type"] extends
-            | "date"
-            | "timestamp without time zone"
-            | "timestamp with time zone"
-            | "time without time zone"
-            | "time with time zone"
-            | "interval"
-        ? Date | string
-        : string;
+  ? boolean
+  : C["type"] extends "json" | "jsonb"
+  ? unknown
+  : C["type"] extends
+  | "date"
+  | "timestamp without time zone"
+  | "timestamp with time zone"
+  | "time without time zone"
+  | "time with time zone"
+  | "interval"
+  ? Date | string
+  : string;
 
 // ─── ValuesMap — typed INSERT / UPDATE payload ────────────────────────────────
 

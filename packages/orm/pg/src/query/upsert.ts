@@ -1,4 +1,4 @@
-import { ModelDefinition } from "@/schema/model";
+import { ModelDefinition } from "@damatjs/orm-model";
 import { BuiltQuery, UpsertDescriptor, ValuesMap } from "./types";
 import { assembleQuery, quoteIdent } from "./helpers";
 import { QueryBase } from "./base";

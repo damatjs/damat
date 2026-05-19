@@ -1,4 +1,4 @@
-import { ModelDefinition } from "@/schema/model";
+import { ModelDefinition } from "@damatjs/orm-model";
 import {
   BuiltQuery,
   RelationDescriptor,
@@ -422,15 +422,15 @@ export class SelectBuilder<
     const orderByClause =
       opts.orderBy && opts.orderBy.length > 0
         ? buildOrderByClause(
-            opts.orderBy.map((o) => {
-              const clause: import("./types").OrderByClause = {
-                column: o.column as string,
-              };
-              if (o.direction !== undefined) clause.direction = o.direction;
-              if (o.nulls !== undefined) clause.nulls = o.nulls;
-              return clause;
-            }),
-          )
+          opts.orderBy.map((o) => {
+            const clause: import("./types").OrderByClause = {
+              column: o.column as string,
+            };
+            if (o.direction !== undefined) clause.direction = o.direction;
+            if (o.nulls !== undefined) clause.nulls = o.nulls;
+            return clause;
+          }),
+        )
         : "";
 
     // ── LIMIT / OFFSET ────────────────────────────────────────────────────

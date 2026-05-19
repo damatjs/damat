@@ -1,4 +1,4 @@
-import { ColumnSchema } from "@/types";
+import { ColumnSchema } from '@damatjs/orm-type';
 import {
   BuiltQuery,
   OrderByClause,
@@ -60,7 +60,7 @@ export function assertKnownColumns(
     if (!known.has(key)) {
       throw new Error(
         `[query:${context}] Unknown column "${key}". ` +
-          `Known columns: ${[...known].join(", ")}`,
+        `Known columns: ${[...known].join(", ")}`,
       );
     }
   }
@@ -76,7 +76,7 @@ export function assertKnownColumnList(
     if (!known.has(name)) {
       throw new Error(
         `[query:${context}] Unknown column "${name}". ` +
-          `Known columns: ${[...known].join(", ")}`,
+        `Known columns: ${[...known].join(", ")}`,
       );
     }
   }

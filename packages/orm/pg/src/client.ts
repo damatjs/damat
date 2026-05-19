@@ -11,9 +11,8 @@ import {
   type InsertDescriptor,
   type UpdateDescriptor,
   type DeleteDescriptor,
-  ModelDefinition,
   UpsertDescriptor,
-} from "@damatjs/orm-model";
+} from "./query";
 import {
   pgSelect,
   pgInsert,
@@ -28,6 +27,7 @@ import type {
   PgDeleteResult,
 } from "./types";
 import type { QueryLogger } from "./logger";
+import { ModelDefinition } from '@damatjs/orm-model';
 
 // ─── PgModelClient ────────────────────────────────────────────────────────────
 

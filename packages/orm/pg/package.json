@@ -25,6 +25,7 @@
     "@damatjs/deps": "*",
     "@damatjs/logger": "*",
     "@damatjs/orm-model": "*",
+    "@damatjs/orm-type": "*",
     "@damatjs/types": "*"
   },
   "devDependencies": {

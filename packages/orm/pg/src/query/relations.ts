@@ -1,8 +1,6 @@
-import { ModelDefinition } from "@/schema/model";
-import { BelongsToBuilder } from "@/properties/relation/belongsToBuilder";
-import { HasManyBuilder } from "@/properties/relation/hasManyBuilder";
-import { HasOneBuilder } from "@/properties/relation/hasOneBuilder";
+
 import { OrderDirection, WhereClause, RawWhereClause } from "./types";
+import { BelongsToBuilder, HasManyBuilder, HasOneBuilder, ModelDefinition } from '@damatjs/orm-model';
 
 // ─── Relation Query Types ─────────────────────────────────────────────────────
 //
@@ -190,7 +188,7 @@ export class RelationGuardError extends Error {
         : "(none defined)";
     super(
       `[query:with] Unknown relation "${unknownRelation}" on model "${modelName}".\n` +
-        `  Available relations: ${list}`,
+      `  Available relations: ${list}`,
     );
     this.name = "RelationGuardError";
     this.modelName = modelName;

@@ -1,5 +1,4 @@
-import { ColumnSchema } from "@/types";
-import { ModelDefinition } from "@/schema/model";
+import { ColumnSchema, ModelDefinition } from "@damatjs/orm-model";
 import {
   BuiltQuery,
   OrderByClause,

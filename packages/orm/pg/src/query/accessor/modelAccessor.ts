@@ -1,4 +1,4 @@
-import { ModelDefinition } from "@/schema/model";
+import { ModelDefinition } from "@damatjs/orm-model";
 import {
   DeleteDescriptor,
   InsertDescriptor,

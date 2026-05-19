@@ -6,7 +6,7 @@ import type {
   UpdateDescriptor,
   DeleteDescriptor,
   UpsertDescriptor,
-} from "@damatjs/orm-model";
+} from "./query";
 import type {
   PgSelectResult,
   PgInsertResult,
@@ -46,7 +46,7 @@ export async function pgExecuteRaw<
 ): Promise<{ rows: T[]; rowCount: number }> {
   const loggerInstance = logger ?? getQueryLogger();
   const startTime = Date.now();
-  
+
   try {
     loggerInstance.logQuery(query.sql, query.params);
     const result = await conn.query<T>(query.sql, query.params as unknown[]);

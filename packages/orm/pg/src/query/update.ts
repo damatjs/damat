@@ -1,4 +1,4 @@
-import { ModelDefinition } from "@/schema/model";
+import { ModelDefinition } from "@damatjs/orm-model";
 import { BuiltQuery, UpdateDescriptor, ValuesMap } from "./types";
 import { assembleQuery, quoteIdent } from "./helpers";
 import { QueryBase } from "./base";
@@ -98,7 +98,7 @@ export class UpdateBuilder<
     if (!hasWhere && !this._allowFullTable) {
       throw new Error(
         "[query:update] No WHERE clause — this would update every row. " +
-          "Add .where() or call .allowFullTable() to opt-in.",
+        "Add .where() or call .allowFullTable() to opt-in.",
       );
     }
 
