@@ -22,17 +22,14 @@
     "!dist/**/__snapshots__"
   ],
   "author": "Abel Lamesgen",
-  "peerDependencies": {
-    "@damatjs/logger": "*"
-  },
   "dependencies": {
     "@damatjs/deps": "*",
     "@damatjs/orm-type": "*",
-    "@damatjs/types": "*"
+    "@damatjs/types": "*",
+    "@damatjs/logger": "*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "*",
-    "@damatjs/logger": "*",
     "@types/bun": "1.3.9",
     "typescript": "^5.9.3"
   },

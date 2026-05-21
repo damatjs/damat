@@ -17,7 +17,6 @@
         "@damatjs/deps": "*",
         "@damatjs/logger": "*",
         "@damatjs/orm-cli": "*",
-        "@damatjs/orm-connector": "*",
         "@damatjs/orm-model": "*",
         "@damatjs/orm-pg": "*",
         "@damatjs/orm-processor": "*",
@@ -28,7 +27,6 @@
         "@damatjs/workflow-engine": "*",
         "bcryptjs": "^2.4.3",
         "jose": "^5.2.0",
-        "reflect-metadata": "^0.2.2",
         "sharp": "^0.34.5",
         "stripe": "^14.14.0",
       },
@@ -309,11 +307,9 @@
       "dependencies": {
         "@damatjs/deps": "*",
         "@damatjs/logger": "*",
-        "@damatjs/orm-connector": "*",
-        "@damatjs/orm-migration": "*",
         "@damatjs/orm-model": "*",
+        "@damatjs/orm-pg": "*",
         "@damatjs/types": "*",
-        "@damatjs/utils": "*",
       },
       "devDependencies": {
         "@damatjs/typescript-config": "*",
@@ -330,8 +326,8 @@
       "version": "0.0.1",
       "dependencies": {
         "@damatjs/deps": "*",
-        "@damatjs/orm-connector": "*",
-        "@damatjs/orm-type": "*",
+        "@damatjs/orm-pg": "*",
+        "@damatjs/services": "*",
       },
       "devDependencies": {
         "@damatjs/typescript-config": "*",
