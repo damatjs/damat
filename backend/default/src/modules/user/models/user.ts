@@ -1,43 +1,12 @@
-/**
- * User Model
- *
- * Core user identity for authentication (Better Auth compatible)
- * Uses MikroORM decorators for entity definition.
- */
+import { model, columns } from "@damatjs/orm-model";
 
-import { Entity, PrimaryKey, Property, OneToMany, Collection } from "@damatjs/deps/mikro-orm/core";
-import { Account } from "./account";
-import { Session } from "./session";
-
-@Entity({ tableName: "users" })
-export class User {
-  @PrimaryKey()
-  id!: string;
-
-  @Property({ unique: true })
-  email!: string;
-
-  @Property({ default: false })
-  emailVerified: boolean = false;
-
-  @Property({ nullable: true })
-  name?: string;
-
-  @Property({ nullable: true })
-  image?: string;
-
-  @OneToMany(() => Account, (account) => account.user)
-  accounts = new Collection<Account>(this);
-
-  @OneToMany(() => Session, (session) => session.user)
-  sessions = new Collection<Session>(this);
-
-  @Property({ defaultRaw: "now()" })
-  createdAt: Date = new Date();
-
-  @Property({ defaultRaw: "now()", onUpdate: () => new Date() })
-  updatedAt: Date = new Date();
-
-  @Property({ nullable: true })
-  deletedAt?: Date;
-}
+export const UserModel = model("users", {
+  id: columns.id({ prefix: "usr" }).primaryKey(),
+  email: columns.text().unique(),
+  emailVerified: columns.boolean().default(false),
+  name: columns.text().nullable(),
+  image: columns.text().nullable(),
+  deletedAt: columns.timestamp().nullable(),
+}).indexes([
+  columns.indexes().columns(["email"]).unique(),
+]);

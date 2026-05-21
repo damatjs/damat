@@ -32,13 +32,11 @@
     "@damatjs/server-handler": "*",
     "@damatjs/workflow-engine": "*",
     "@damatjs/orm-cli": "*",
-    "@damatjs/orm-connector": "*",
     "@damatjs/orm-model": "*",
     "@damatjs/orm-processor": "*",
     "@damatjs/orm-pg": "*",
     "bcryptjs": "^2.4.3",
     "jose": "^5.2.0",
-    "reflect-metadata": "^0.2.2",
     "sharp": "^0.34.5",
     "stripe": "^14.14.0"
   },
