@@ -9,7 +9,7 @@ describe("transform › constraints", () => {
   it("Order has a check constraint on total", () => {
     const constraints = OrderSchema.toTableSchema().constraints;
     expect(constraints).toHaveLength(1);
-    const check = constraints[0]!;
+    const check = constraints?.[0]!;
     expect(check.type).toBe("check");
     if (check.type === "check") {
       expect(check.condition).toBe("total > 0");

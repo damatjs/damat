@@ -1,5 +1,5 @@
 import { ModelDefinition } from "@/schema/model";
-import { RelationSchema } from "@/types/relation";
+import { RelationSchema } from "@/types";
 import { checkBelongsTo } from "./checkBelongsTo";
 import { checkBelongsToSchema } from "./checkBelongsToSchema";
 import { checkInverse } from "./checkInverse";

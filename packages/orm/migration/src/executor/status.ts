@@ -6,7 +6,7 @@
 
 import type { Pool } from "@damatjs/deps/pg";
 import type { MigrationStatus, ModuleMigrationStatus } from "../types";
-import { discoverModuleMigrations, resolveModules } from "../discovery";
+import { discoverModuleMigrations } from "../discovery";
 import { MigrationTracker } from "../tracker";
 
 /**
@@ -14,18 +14,16 @@ import { MigrationTracker } from "../tracker";
  */
 export async function getMigrationStatus(
   pool: Pool,
-  modulesDir: string,
-  activeModules?: string[],
+  modulesResolvers: string[]
 ): Promise<MigrationStatus> {
   const tracker = new MigrationTracker(pool);
   await tracker.ensureTable();
 
-  const modules = resolveModules(modulesDir, activeModules);
   const result: ModuleMigrationStatus[] = [];
 
-  for (const moduleName of modules) {
-    const migrations = discoverModuleMigrations(modulesDir, moduleName);
-    const applied = await tracker.getApplied(moduleName);
+  for (const modulesResolver of modulesResolvers) {
+    const migrations = discoverModuleMigrations(modulesResolver);
+    const applied = await tracker.getApplied(modulesResolver);
     const appliedNames = new Set(applied.map((a) => a.name));
 
     for (const m of migrations) {
@@ -33,7 +31,7 @@ export async function getMigrationStatus(
     }
 
     result.push({
-      name: moduleName,
+      name: modulesResolver,
       applied: migrations.filter((m) => m.applied).length,
       pending: migrations.filter((m) => !m.applied).length,
       migrations,
@@ -48,21 +46,20 @@ export async function getMigrationStatus(
  */
 export async function getModuleMigrationStatus(
   pool: Pool,
-  modulesDir: string,
-  moduleName: string,
+  modulesResolver: string,
 ): Promise<{ module: ModuleMigrationStatus }> {
   const tracker = new MigrationTracker(pool);
   await tracker.ensureTable();
 
-  const migrations = discoverModuleMigrations(modulesDir, moduleName);
+  const migrations = discoverModuleMigrations(modulesResolver);
 
   if (migrations.length === 0) {
     throw new Error(
-      `Module '${moduleName}' not found or has no migrations at ${modulesDir}`,
+      `Module '${modulesResolver}' not found or has no migrations`,
     );
   }
 
-  const applied = await tracker.getApplied(moduleName);
+  const applied = await tracker.getApplied(modulesResolver);
   const appliedNames = new Set(applied.map((a) => a.name));
 
   for (const m of migrations) {
@@ -71,7 +68,7 @@ export async function getModuleMigrationStatus(
 
   return {
     module: {
-      name: moduleName,
+      name: modulesResolver,
       applied: migrations.filter((m) => m.applied).length,
       pending: migrations.filter((m) => !m.applied).length,
       migrations,

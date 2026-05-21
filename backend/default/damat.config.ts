@@ -1,11 +1,8 @@
-import "reflect-metadata";
 import { defineConfig, loadEnv } from "@damatjs/utils";
 
 loadEnv(process.env.NODE_ENV || "development", process.cwd());
 
-import userModule from "./src/modules/user";
-
-const appConfig = defineConfig({
+export default defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL ?? "",
     redisUrl: process.env.REDIS_URL,
@@ -17,7 +14,10 @@ const appConfig = defineConfig({
       corsOrigin: process.env.FRONTEND_CORS ?? "",
     },
   },
-  modules: [userModule],
+  modules: [
+    {
+      resolve: "./src/modules/user",
+      id: "user",
+    },
+  ],
 });
-
-export default appConfig;

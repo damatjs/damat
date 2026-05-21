@@ -3,7 +3,7 @@ import type {
   ForeignKeySchema,
   IndexSchema,
   EnumSchema,
-} from "@damatjs/orm-model";
+} from "@damatjs/orm-type";
 
 /**
  * Build a lookup map keyed by `name` from any array of named items.
@@ -69,6 +69,6 @@ export function nativeEnumsEqual(a: EnumSchema, b: EnumSchema): boolean {
   return (
     a.schema === b.schema &&
     JSON.stringify(a.values.slice().sort()) ===
-      JSON.stringify(b.values.slice().sort())
+    JSON.stringify(b.values.slice().sort())
   );
 }

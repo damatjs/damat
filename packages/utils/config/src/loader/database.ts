@@ -1,71 +1,36 @@
-/**
- * Config Module - Config Loader
- *
- * Configuration loader with database and module initialization.
- */
+import { ConnectionManager } from "@damatjs/orm-pg";
+import { ModuleServiceBase } from "@damatjs/services";
+import type { Pool } from "@damatjs/deps/pg";
+import type { ModuleConfig } from "../types";
 
-import { Migrator } from "@damatjs/deps/mikro-orm/migrations";
-import type {
-  MikroORM,
-  Options,
-} from "@damatjs/deps/mikro-orm/postgresql";
-import {
-  initConnectionFromOptions,
-  getEm as dalGetEm,
-  createOrmConfig,
-} from "@damatjs/orm-connector";
+let connectionManager: ConnectionManager | null = null;
 
-/**
- * Extract entities from a module's service.
- * The service.entities is a Record<string, EntityClass>.
- */
-function extractEntities(mod: any): any[] {
-  const extraction = new mod.moduleService();
-  if (extraction.entities) {
-    return Object.values(extraction.entities);
-  }
-  return [];
+export async function initDatabase(dbUrl: string): Promise<Pool> {
+  connectionManager = new ConnectionManager(dbUrl);
+  const pool = await connectionManager.connect();
+  ModuleServiceBase.init(pool);
+  return pool;
 }
 
-/**
- * Initialize the database and all service modules.
- * Call this during app startup.
- *
- * @param options - Additional MikroORM options (like extensions)
- * @returns MikroORM instance
- */
-export async function initDatabase<TModules extends readonly any[]>(
-  { databaseUrl, modules, options }: {
-    options?: Partial<Options>,
-    databaseUrl: string,
-    modules: TModules
-  }
-): Promise<MikroORM> {
-
-  // Build database modules from service modules
-  const dbModules = modules.map((mod) => ({
-    name: mod.name,
-    entities: extractEntities(mod),
-    migrationsPath: mod.migrationsPath,
-  }));
-
-  // Create ORM config
-  const ormConfig = createOrmConfig({
-    database: { url: databaseUrl },
-    modules: dbModules,
-    options: options ?? {
-      extensions: [Migrator],
-    }
-  });
-
-  // Initialize connection
-  const connection = await initConnectionFromOptions(ormConfig);
-
-  // Initialize all service modules with em factory
+// TODO: not seeing the aim or usefulness of this Will need to remove or update
+export async function loadModules(modules: ModuleConfig[]): Promise<void> {
   for (const mod of modules) {
-    mod.init(() => dalGetEm());
+    const moduleExports = await import(mod.resolve);
+    if (moduleExports.default && typeof moduleExports.default === "function") {
+      const ServiceClass = moduleExports.default;
+      new ServiceClass();
+    }
   }
-
-  return connection.orm;
 }
 
+// TODO: we are moving away from the orm-pg base pool setup so this and the close need a redo
+export function getConnectionManager(): ConnectionManager | null {
+  return connectionManager;
+}
+
+export async function closeDatabase(): Promise<void> {
+  if (connectionManager) {
+    await connectionManager.disconnect();
+    connectionManager = null;
+  }
+}

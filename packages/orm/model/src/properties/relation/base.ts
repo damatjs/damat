@@ -1,5 +1,5 @@
 import { ModelDefinition } from '@/schema';
-import type { RelationType, RelationSchema } from "@/types/relation";
+import type { RelationType, RelationSchema } from "@/types";
 import { ModelTarget, resolveModuleTarget } from '@/utils/target';
 
 

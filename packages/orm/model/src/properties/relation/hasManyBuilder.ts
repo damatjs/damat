@@ -1,4 +1,4 @@
-import type { RelationOptions, RelationSchema } from "@/types/relation";
+import type { RelationOptions, RelationSchema } from "@/types";
 import { Relation } from "./base";
 import { ModelTarget } from '@/utils/target';
 

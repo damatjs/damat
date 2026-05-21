@@ -24,7 +24,8 @@
   "author": "Abel Lamesgen",
   "dependencies": {
     "@damatjs/deps": "*",
-    "@damatjs/orm-connector": "*"
+    "@damatjs/orm-pg": "*",
+    "@damatjs/services": "*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "*",

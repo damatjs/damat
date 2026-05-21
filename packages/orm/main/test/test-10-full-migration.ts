@@ -1,6 +1,7 @@
 // Full Test Suite for @damatjs/orm-migration
 import { Pool } from "@damatjs/deps/pg";
 import { model, columns, toModuleSchema } from "@damatjs/orm-model";
+import { bootstrapDatabase } from "@damatjs/orm-migration";
 import { writeFileSync, mkdirSync, rmSync, existsSync, readdirSync, readFileSync } from "fs";
 import { join } from "path";
 
@@ -8,46 +9,7 @@ const DB_URL = "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable"
 const TEST_DIR = "/tmp/orm-full-migration-test";
 
 // Import bootstrap directly
-const GENERATE_ID_SQL = `
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE OR REPLACE FUNCTION generate_id(prefix TEXT)
-RETURNS TEXT
-LANGUAGE plpgsql
-AS $$
-DECLARE
-  ts_ms  BIGINT;
-  rand   BYTEA;
-  chars  TEXT := '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-  result TEXT := '';
-  i      INT;
-  val    BIGINT;
-BEGIN
-  ts_ms := (EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::BIGINT;
-  val := ts_ms;
-  FOR i IN REVERSE 9..0 LOOP
-    result := substr(chars, (val % 32)::INT + 1, 1) || result;
-    val := val / 32;
-  END LOOP;
-  rand := gen_random_bytes(10);
-  FOR i IN 0..9 LOOP
-    val := get_byte(rand, i);
-    result := result || substr(chars, (val % 32)::INT + 1, 1)
-                     || substr(chars, ((val / 32) % 32)::INT + 1, 1);
-  END LOOP;
-  RETURN prefix || '_' || result;
-END;
-$$;
-`.trim();
-
-async function bootstrapDatabase(pool: Pool) {
-  const client = await pool.connect();
-  try {
-    await client.query(GENERATE_ID_SQL);
-  } finally {
-    client.release();
-  }
-}
 
 async function testFullMigrationSuite() {
   console.log("=".repeat(80));

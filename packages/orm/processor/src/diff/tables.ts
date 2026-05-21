@@ -1,4 +1,4 @@
-import type { TableSchema } from "@damatjs/orm-model";
+import type { TableSchema } from "@damatjs/orm-type";
 import type {
   CreateTableChange,
   DropTableChange,
@@ -50,13 +50,13 @@ export function diffTable(
       ...diffColumns(newTable.name, oldTable.columns, newTable.columns),
     );
     changes.push(
-      ...diffIndexes(newTable.name, oldTable.indexes, newTable.indexes),
+      ...diffIndexes(newTable.name, oldTable.indexes ?? [], newTable.indexes ?? []),
     );
     changes.push(
       ...diffForeignKeys(
         newTable.name,
-        oldTable.foreignKeys,
-        newTable.foreignKeys,
+        oldTable.foreignKeys ?? [],
+        newTable.foreignKeys ?? [],
       ),
     );
   }

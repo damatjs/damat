@@ -18,7 +18,7 @@ import {
 describe("transform › relations (module level)", () => {
   it("hasMany relation: from = source table, to = target table", () => {
     const module = toModuleSchema("test", [UserSchema, OrderSchema]);
-    const rel = module.relationships.find(
+    const rel = module.relationships?.find(
       (r) => r.type === "hasMany" && r.from === "user",
     );
     expect(rel).toBeDefined();
@@ -29,7 +29,7 @@ describe("transform › relations (module level)", () => {
 
   it("belongsTo relation: from = source table, to = target table", () => {
     const module = toModuleSchema("test", [CategorySchema, ProductSchema]);
-    const rel = module.relationships.find(
+    const rel = module.relationships?.find(
       (r) => r.type === "belongsTo" && r.from === "product",
     );
     expect(rel).toBeDefined();
@@ -51,11 +51,11 @@ describe("transform › relations (module level)", () => {
       ProductSchema,
       OrderItemSchema,
     ]);
-    const fromOrderItem = module.relationships.filter(
+    const fromOrderItem = module.relationships?.filter(
       (r) => r.from === "order_item",
     );
     expect(fromOrderItem).toHaveLength(2);
-    expect(fromOrderItem.map((r) => r.to).sort()).toEqual(
+    expect(fromOrderItem?.map((r) => r.to).sort()).toEqual(
       ["order", "product"].sort(),
     );
   });
@@ -67,7 +67,7 @@ describe("transform › relations (module level)", () => {
       children: columns.hasMany(() => Child),
     });
     const module = toModuleSchema("test", [Child, Parent]);
-    const rel = module.relationships.find((r) => r.from === "parent");
+    const rel = module.relationships?.find((r) => r.from === "parent");
     expect(rel).toBeDefined();
     expect(rel!.mappedBy).toBeUndefined();
   });
@@ -79,7 +79,7 @@ describe("transform › relations (module level)", () => {
       profile: columns.hasOne(Profile).mappedBy("account"),
     });
     const module = toModuleSchema("test", [Profile, Account]);
-    const rel = module.relationships.find((r) => r.type === "hasOne");
+    const rel = module.relationships?.find((r) => r.type === "hasOne");
     expect(rel).toBeDefined();
     expect(rel!.from).toBe("account");
     expect(rel!.to).toBe("profile");

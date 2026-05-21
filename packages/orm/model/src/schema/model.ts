@@ -6,7 +6,7 @@ import {
   ForeignKeySchema,
   RelationSchema,
 } from "@/types";
-import { IndexSchema } from "@/types/indexType";
+import { IndexSchema } from "@/types";
 import { ColumnBuilder } from "@/properties/column/base";
 import { BelongsToBuilder } from "@/properties/relation/belongsToBuilder";
 import { HasManyBuilder } from "@/properties/relation/hasManyBuilder";
@@ -183,6 +183,8 @@ export class ModelDefinition {
     return schema;
   }
 
+
+  // If we have the codegen why do we need this might need to be removed
   // ─── toTsType ───────────────────────────────────────────────────────────────
   /**
    * Generate a TypeScript interface string that represents the row shape of

@@ -23,10 +23,8 @@
   "author": "Abel Lamesgen",
   "dependencies": {
     "@damatjs/deps": "*",
-    "@damatjs/utils": "*",
-    "@damatjs/orm-migration": "*",
+    "@damatjs/orm-pg": "*",
     "@damatjs/orm-model": "*",
-    "@damatjs/orm-connector": "*",
     "@damatjs/types": "*",
     "@damatjs/logger": "*"
   },

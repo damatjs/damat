@@ -1,53 +1,22 @@
-/**
- * Account Model
- *
- * OAuth/Auth provider accounts linked to users (Better Auth compatible)
- */
+import { model, columns } from "@damatjs/orm-model";
+import { UserModel } from "./user";
 
-import { Entity, PrimaryKey, Property, ManyToOne, Index } from "@damatjs/deps/mikro-orm/core";
-import { User } from "./user";
-
-@Entity({ tableName: "accounts" })
-@Index({ properties: ["accountId"] })
-@Index({ properties: ["providerId"] })
-@Index({ properties: ["providerId", "accountId"] })
-export class Account {
-  @PrimaryKey()
-  id!: string;
-
-  @ManyToOne(() => User)
-  user!: User;
-
-  @Property()
-  accountId!: string;
-
-  @Property()
-  providerId!: string;
-
-  @Property({ nullable: true })
-  accessToken?: string;
-
-  @Property({ nullable: true })
-  refreshToken?: string;
-
-  @Property({ nullable: true })
-  accessTokenExpiresAt?: Date;
-
-  @Property({ nullable: true })
-  refreshTokenExpiresAt?: Date;
-
-  @Property({ nullable: true })
-  scope?: string;
-
-  @Property({ nullable: true })
-  idToken?: string;
-
-  @Property({ nullable: true })
-  password?: string;
-
-  @Property({ defaultRaw: "now()" })
-  createdAt: Date = new Date();
-
-  @Property({ defaultRaw: "now()", onUpdate: () => new Date() })
-  updatedAt: Date = new Date();
-}
+export const AccountModel = model("accounts", {
+  id: columns.id({ prefix: "acc" }).primaryKey(),
+  userId: columns.belongsTo(() => UserModel,)
+    .link({ foreignKey: "user_id" })
+    .indexed(),
+  accountId: columns.text(),
+  providerId: columns.text(),
+  accessToken: columns.text().nullable(),
+  refreshToken: columns.text().nullable(),
+  accessTokenExpiresAt: columns.timestamp().nullable(),
+  refreshTokenExpiresAt: columns.timestamp().nullable(),
+  scope: columns.text().nullable(),
+  idToken: columns.text().nullable(),
+  password: columns.text().nullable(),
+}).indexes([
+  columns.indexes().columns(["accountId"]),
+  columns.indexes().columns(["providerId"]),
+  columns.indexes().columns(["providerId", "accountId"]),
+]);

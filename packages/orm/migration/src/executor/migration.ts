@@ -25,7 +25,7 @@ export async function executeMigration(
     // Read the raw SQL from the migration file
     const sql = fs.readFileSync(migration.path, "utf-8");
 
-    // Execute the SQL inside a transaction
+    // Execute the SQL inside a transaction 
     const client = await pool.connect();
     try {
       await client.query("BEGIN");

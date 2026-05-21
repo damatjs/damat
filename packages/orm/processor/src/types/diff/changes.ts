@@ -5,7 +5,7 @@ import type {
   IndexSchema,
   TableSchema,
   EnumSchema,
-} from "@damatjs/orm-model";
+} from "@damatjs/orm-type";
 
 // ─── tables ──────────────────────────────────────────────────────────────────
 

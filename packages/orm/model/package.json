@@ -9,10 +9,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./types": {
-      "types": "./dist/types/index.d.ts",
-      "default": "./dist/types/index.js"
     }
   },
   "engines": {
@@ -29,7 +25,7 @@
   "author": "Abel Lamesgen",
   "dependencies": {
     "@damatjs/deps": "*",
-    "@damatjs/types": "*"
+    "@damatjs/orm-type": "*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "*",

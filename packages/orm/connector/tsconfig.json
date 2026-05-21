@@ -5,15 +5,9 @@
             "bun"
         ],
         "rootDir": "src",
-        "outDir": "dist",
-        "baseUrl": ".",
-        "paths": {
-            "@/*": [
-                "src/*"
-            ]
-        },
+        "outDir": "dist"
     },
     "include": [
-        "src"
+        "src",
     ]
 }

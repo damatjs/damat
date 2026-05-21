@@ -1,33 +1,32 @@
-/**
- * Config Module - Define Config
- *
- * Function to define application configuration with type safety.
- */
-
 import type { AppConfig } from "./types";
-import { initDatabase } from './loader/database';
+import { initDatabase, loadModules } from './loader/database';
 import { initProjectConfig } from './instance/project';
 
-export function defineConfig<TModules extends readonly any[] = readonly any[]>(
-  config: AppConfig<TModules>,
-): AppConfig<TModules> & { _initPromise?: Promise<void> } {
+export function defineConfig(config: AppConfig): AppConfig & { _initPromise?: Promise<void> } {
 
   if (!config.projectConfig.databaseUrl) {
     throw new Error("DATABASE_URL is not defined");
   }
 
-  const initPromise = initDatabase<TModules>({
-    databaseUrl: config.projectConfig.databaseUrl,
-    modules: config.modules,
-  }).then(() => {
-    initProjectConfig(config.projectConfig);
-  });
+  // TODO: Revaluation this setup should the data connection be here
+  const initPromise = initDatabase(config.projectConfig.databaseUrl)
+    .then(async () => {
+      initProjectConfig(config.projectConfig);
+      if (config.modules && config.modules.length > 0) {
+        await loadModules(config.modules);
+      }
+    });
 
-  return {
+  const result: AppConfig & { _initPromise?: Promise<void> } = {
     projectConfig: config.projectConfig,
-    modules: config.modules as TModules,
-    _initPromise: initPromise,
   };
+
+  if (config.modules) {
+    result.modules = config.modules;
+  }
+
+  result._initPromise = initPromise;
+  return result;
 }
 
 export async function waitForInit(config: { _initPromise?: Promise<void> }): Promise<void> {

@@ -30,10 +30,9 @@ import type { MigrationInfo } from "../types";
  * ```
  */
 export function discoverModuleMigrations(
-  modulesDir: string,
-  moduleName: string,
+  moduleResolver: string,
 ): MigrationInfo[] {
-  const migrationsDir = path.join(modulesDir, moduleName, "migrations");
+  const migrationsDir = path.join(moduleResolver, "migrations");
 
   if (!fs.existsSync(migrationsDir)) {
     return [];
@@ -50,7 +49,7 @@ export function discoverModuleMigrations(
 
       return {
         name: file.replace(".sql", ""),
-        module: moduleName,
+        resolver: moduleResolver,
         path: path.resolve(migrationsDir, file),
         timestamp,
         applied: false, // updated when cross-referenced with the DB tracker

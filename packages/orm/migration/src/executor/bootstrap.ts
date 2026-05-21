@@ -16,41 +16,14 @@ import type { Pool } from "@damatjs/deps/pg";
  *
  * Example:  generate_id('usr')  →  'usr_01HX...'
  */
-const GENERATE_ID_SQL = `
+export const GENERATE_ID_SQL = `
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE OR REPLACE FUNCTION generate_id(prefix TEXT)
 RETURNS TEXT
-LANGUAGE plpgsql
+LANGUAGE sql
 AS $$
-DECLARE
-  -- 10-byte random payload (80 bits) encoded as 16 uppercase base-32 chars
-  ts_ms  BIGINT;
-  rand   BYTEA;
-  chars  TEXT := '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-  result TEXT := '';
-  i      INT;
-  val    BIGINT;
-BEGIN
-  ts_ms := (EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::BIGINT;
-
-  -- Encode 48-bit timestamp (10 chars)
-  val := ts_ms;
-  FOR i IN REVERSE 9..0 LOOP
-    result := substr(chars, (val % 32)::INT + 1, 1) || result;
-    val := val / 32;
-  END LOOP;
-
-  -- Encode 80 bits of randomness (16 chars) using gen_random_bytes
-  rand := gen_random_bytes(10);
-  FOR i IN 0..9 LOOP
-    val := get_byte(rand, i);
-    result := result || substr(chars, (val % 32)::INT + 1, 1)
-                     || substr(chars, ((val / 32) % 32)::INT + 1, 1);
-  END LOOP;
-
-  RETURN prefix || '_' || result;
-END;
+  SELECT prefix || '_' || gen_random_uuid()::TEXT;
 $$;
 `.trim();
 

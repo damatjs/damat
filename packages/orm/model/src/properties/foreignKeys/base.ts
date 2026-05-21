@@ -4,7 +4,7 @@
 //   ForeignKeySchema,
 //   ForeignKeySchemaMatch,
 // } from "@/types/foreignKey";
-// import { ConstraintOptions } from "@/types/relation";
+// import { ConstraintOptions } from "@/types";
 
 // /**
 //  * Configuration for creating a ForeignKeyBuilder
