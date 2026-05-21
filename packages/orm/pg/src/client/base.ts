@@ -1,5 +1,5 @@
 import type { Pool, PoolClient, QueryResultRow } from "@damatjs/deps/pg";
-import type { ModelDefinition } from '@damatjs/orm-model';
+import type { ModelDefinition } from "@damatjs/orm-model";
 import { ModelAccessor } from "../query";
 import type { QueryLogger } from "../logger";
 import { executeFindMany, executeFindOne } from "./ops/find";
@@ -12,7 +12,9 @@ import type {
   UpdateOptions,
   DeleteOptions,
   UpsertOptions,
-} from "../query";
+  FindOneOptions,
+  PgModelClientLike,
+} from "./types";
 import type {
   PgSelectResult,
   PgInsertResult,
@@ -23,7 +25,7 @@ import type {
 export class PgModelClient<
   T extends QueryResultRow = Record<string, unknown>,
   Cols extends string = string,
-> {
+> implements PgModelClientLike<T, Cols> {
   readonly accessor: ModelAccessor<Cols>;
   readonly _pool: Pool;
   readonly _conn: Pool | PoolClient;
@@ -42,35 +44,35 @@ export class PgModelClient<
   }
 
   async findMany(options: FindOptions<Cols> = {}): Promise<PgSelectResult<T>> {
-    return executeFindMany(this as any, options);
+    return executeFindMany<T, Cols>(this, options);
   }
 
-  async findOne(options: Omit<FindOptions<Cols>, "limit" | "offset"> = {}): Promise<PgSelectResult<T>> {
-    return executeFindOne(this as any, options);
+  async findOne(options: FindOneOptions<Cols> = {}): Promise<PgSelectResult<T>> {
+    return executeFindOne<T, Cols>(this, options);
   }
 
   async create(options: CreateOptions<Cols>): Promise<PgInsertResult<T>> {
-    return executeCreate(this as any, options);
+    return executeCreate<T, Cols>(this, options);
   }
 
   async createMany(options: CreateManyOptions<Cols>): Promise<PgInsertResult<T>> {
-    return executeCreateMany(this as any, options);
+    return executeCreateMany<T, Cols>(this, options);
   }
 
   async update(options: UpdateOptions<Cols>): Promise<PgUpdateResult<T>> {
-    return executeUpdate(this as any, options);
+    return executeUpdate<T, Cols>(this, options);
   }
 
   async delete(options: DeleteOptions<Cols>): Promise<PgDeleteResult<T>> {
-    return executeDelete(this as any, options);
+    return executeDelete<T, Cols>(this, options);
   }
 
   async upsert(options: UpsertOptions<Cols>): Promise<PgInsertResult<T>> {
-    return executeUpsert(this as any, options);
+    return executeUpsert<T, Cols>(this, options);
   }
 
   async transaction<R>(callback: (tx: PgModelClient<T, Cols>) => Promise<R>): Promise<R> {
-    return executeTransaction(this as any, callback);
+    return executeTransaction<T, Cols, R>(this, callback as (tx: PgModelClientLike<T, Cols>) => Promise<R>);
   }
 
   withClient(client: PoolClient): PgModelClient<T, Cols> {

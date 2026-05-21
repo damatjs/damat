@@ -49,14 +49,7 @@ export {
 } from "./repository";
 
 // ─── Low-level executor functions ─────────────────────────────────────────────
-export {
-  pgExecuteRaw,
-  pgSelect,
-  pgInsert,
-  pgUpdate,
-  pgDelete,
-  pgTransaction,
-} from "./executor";
+export { pgExecuteRaw, pgTransaction } from "./executor";
 
 // ─── PgModelClient — ergonomic bound client ───────────────────────────────────
 export { PgModelClient } from "./client";

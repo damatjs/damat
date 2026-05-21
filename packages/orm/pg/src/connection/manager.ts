@@ -4,6 +4,7 @@ import type { ConnectionStatus, PoolStats, LoggerInterface, DbPoolConfigWithExtr
 import { ConnectionError } from "./error";
 import { setupPoolListeners } from "./listeners";
 import { performHealthCheck, fetchPoolStats } from "./status";
+import { DefaultLogger } from "../manager/logger";
 
 export class ConnectionManager {
   private pool: Pool | null = null;
@@ -13,9 +14,9 @@ export class ConnectionManager {
   private connectionPromise: Promise<Pool> | null = null;
   private isExternalPool: boolean = false;
 
-  constructor(config: string | Pool | DbPoolConfigWithExtras, logger: LoggerInterface) {
+  constructor(config: string | Pool | DbPoolConfigWithExtras, logger?: LoggerInterface) {
     this.config = config;
-    this.logger = logger;
+    this.logger = logger ?? new DefaultLogger();
   }
 
   async connect(): Promise<Pool> {

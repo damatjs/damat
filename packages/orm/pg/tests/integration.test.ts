@@ -235,17 +235,13 @@ describe("ORM PostgreSQL Integration Tests", () => {
     let db: any;
 
     beforeAll(async () => {
-      db = await PgEntityManager.create({
-        connection: DATABASE_URL,
+      db = new PgEntityManager({
+        pool,
         models: {
           user: UserSchema,
           post: PostSchema,
         },
       });
-    });
-
-    afterAll(async () => {
-      await db.close();
     });
 
     test("3.1 Dynamic model repository access (db.user)", async () => {
@@ -306,19 +302,15 @@ describe("ORM PostgreSQL Integration Tests", () => {
   describe("4. Relations & Constraints", () => {
     let db: any;
 
-    beforeAll(async () => {
-      db = await PgEntityManager.create({
-        connection: DATABASE_URL,
+    beforeAll(() => {
+      db = new PgEntityManager({
+        pool,
         models: {
           user: UserSchema,
           post: PostSchema,
           comment: CommentSchema,
         },
       });
-    });
-
-    afterAll(async () => {
-      await db.close();
     });
 
     test("4.1 Create relation records and test manual JOIN query", async () => {

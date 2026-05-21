@@ -9,10 +9,9 @@ export type DbPoolConfigWithExtras = DbPoolConfig & {
 };
 
 export interface PgEntityManagerConfig<TModels extends Record<string, ModelDefinition> = Record<string, ModelDefinition>> {
-  connection: string | Pool | DbPoolConfigWithExtras;
+  pool: Pool;
   models: TModels;
   logger?: LoggerInterface;
-  defaultSchema?: string;
 }
 
 export interface LoggerInterface {
