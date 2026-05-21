@@ -1,13 +1,9 @@
-/**
- * Module Definition - Type Definitions
- *
- * Types for defining self-contained modules following Medusa.js patterns.
- */
+// TODO: THIS WILL NEED A WHOLE NEW REBUILD, AS THE MOUDLES SYSTEM IS GOING TO BE REBUILD
 
 import type {
   EntityManager,
 } from "@damatjs/deps/mikro-orm/core";
-import type { BaseModuleService } from "@/microOrm";
+// import type { BaseModuleService } from "@/orm";
 import { z } from '@damatjs/deps/zod';
 
 // =============================================================================
@@ -26,7 +22,8 @@ export interface ModuleCredentials<TSchema extends z.ZodObject<z.ZodRawShape> = 
  * Module definition interface
  */
 export interface ModuleDefinition<
-  TService extends BaseModuleService<any> = BaseModuleService<any>,
+  TService,
+  //  extends BaseModuleService<any> = BaseModuleService<any>,
   TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>,
 > {
   /** Module's main service class */
@@ -44,7 +41,9 @@ export interface ModuleDefinition<
   // onInit?: (service: TService) => Promise<void>;
 }
 
-export interface ModuleInstance<TService extends BaseModuleService<any>, TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>> {
+export interface ModuleInstance<TService
+  // extends BaseModuleService<any>
+  , TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>> {
   /** Unique module name */
   name: string;
   /** Path to migrations directory */

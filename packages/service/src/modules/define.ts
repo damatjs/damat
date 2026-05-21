@@ -1,10 +1,6 @@
-/**
- * Module Definition - Helper Functions
- *
- * Utilities for defining modules and creating exports.
- */
+// TODO: THIS WILL NEED A WHOLE NEW REBUILD, AS THE MOUDLES SYSTEM IS GOING TO BE REBUILD
 
-import type { BaseModuleService } from "@/microOrm";
+// import type { BaseModuleService } from "@/orm";
 import type { ModuleDefinition, ModuleInstance } from "./types";
 import { z } from "@damatjs/deps/zod";
 import { EntityManager } from '@damatjs/deps/mikro-orm/core';
@@ -18,7 +14,9 @@ import { EntityManager } from '@damatjs/deps/mikro-orm/core';
  */
 export function defineModule
   <
-    TService extends BaseModuleService<any>,
+    TService
+    //  extends BaseModuleService<any>
+    ,
     TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>
   >
   (
@@ -28,14 +26,16 @@ export function defineModule
   let getEm: (() => EntityManager) | null = null;
   let credentials: z.infer<TSchema> = {} as z.infer<TSchema>;
 
-  const serviceProxy = new Proxy({} as TService, {
-    get(_, prop) {
-      if (!getEm) throw new Error(`Module ${name} not initialized. Call init() first.`);
+  const serviceProxy = new Proxy({}
+    // as TService
+    , {
+      get(_, prop) {
+        if (!getEm) throw new Error(`Module ${name} not initialized. Call init() first.`);
 
-      const service = new definition.service(getEm(), credentials);
-      return (service as any)[prop];
-    }
-  });
+        const service = new definition.service(getEm(), credentials);
+        return (service as any)[prop];
+      }
+    });
 
   return {
     name,
