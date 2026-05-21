@@ -1,6 +1,6 @@
 import type { Pool, QueryResultRow } from "@damatjs/deps/pg";
-import type { ModelDefinition } from "@damatjs/orm-model";
-import type { PgEntityManagerConfig, LoggerInterface, TransactionOptions, QueryContext } from "../types";
+import type { ModelDefinition, QueryContext, TransactionOptions } from "@damatjs/orm-model";
+import type { PgEntityManagerConfig, LoggerInterface, } from "../types";
 import { ModelRegistry, ModelRegistryError } from "../registry";
 import { TransactionManager } from "../transaction";
 import { PgRepository, createRepository } from "../repository";
@@ -59,7 +59,7 @@ export class PgEntityManager<TModels extends Record<string, ModelDefinition> = R
 
   getPool(): Pool { return this.pool; }
   getModelRegistry(): ModelRegistry { return this.modelRegistry; }
-  
+
   registerModel(name: string, model: ModelDefinition): void {
     this.modelRegistry.register(name, model);
     this.repositories.set(name, createRepository(model, this.pool, this.logger));
@@ -67,13 +67,13 @@ export class PgEntityManager<TModels extends Record<string, ModelDefinition> = R
 
   getRegisteredModels(): string[] { return this.modelRegistry.getModelNames(); }
   repo<T extends QueryResultRow = QueryResultRow>(name: string): PgRepository<T> { return this.getRepository<T>(name); }
-  
-  async tx<R>(cb: (tx: TransactionalEntityManager<TModels> & { readonly [K in keyof TModels]: PgRepository<any> }) => Promise<R>, opt?: TransactionOptions): Promise<R> { 
-    return this.transaction<R>(cb, opt); 
+
+  async tx<R>(cb: (tx: TransactionalEntityManager<TModels> & { readonly [K in keyof TModels]: PgRepository<any> }) => Promise<R>, opt?: TransactionOptions): Promise<R> {
+    return this.transaction<R>(cb, opt);
   }
-  
-  async execute<T extends QueryResultRow = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<{ rows: T[]; rowCount: number }> { 
-    return this.raw<T>(sql, params); 
+
+  async execute<T extends QueryResultRow = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<{ rows: T[]; rowCount: number }> {
+    return this.raw<T>(sql, params);
   }
 
   private _initializeRepositories(): void {

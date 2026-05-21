@@ -21,12 +21,6 @@ export {
 import { PgEntityManager } from "./manager";
 export const EntityManager = PgEntityManager;
 
-// ─── Connection Management ───────────────────────────────────────────────────
-export {
-  ConnectionManager,
-  ConnectionError,
-} from "./connection";
-
 // ─── Model Registry ──────────────────────────────────────────────────────────
 export {
   ModelRegistry,
@@ -72,9 +66,4 @@ export type {
   PgQueryResult,
   PgEntityManagerConfig,
   LoggerInterface,
-  ConnectionStatus,
-  PoolStats,
-  TransactionOptions,
-  TransactionIsolationLevel,
-  QueryContext,
 } from "./types";

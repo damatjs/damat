@@ -1,6 +1,7 @@
 import type { Pool, PoolClient } from "@damatjs/deps/pg";
-import type { TransactionOptions, LoggerInterface } from "../types";
+import type { LoggerInterface } from "../types";
 import { TransactionContext } from "./context";
+import { TransactionOptions } from "@damatjs/orm-type";
 
 export class TransactionManager {
   private pool: Pool;
@@ -14,7 +15,7 @@ export class TransactionManager {
 
   async begin(options: TransactionOptions = {}): Promise<TransactionContext> {
     const client = await this.pool.connect();
-    
+
     try {
       await this._beginTransaction(client, options);
       const context = new TransactionContext(client, this.logger);
@@ -31,7 +32,7 @@ export class TransactionManager {
     options: TransactionOptions = {}
   ): Promise<R> {
     const ctx = await this.begin(options);
-    
+
     try {
       const result = await callback(ctx);
       await ctx.commit();
@@ -63,7 +64,7 @@ export class TransactionManager {
     }
 
     await client.query("BEGIN");
-    
+
     for (const stmt of statements) {
       await client.query(stmt);
     }

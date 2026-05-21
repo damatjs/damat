@@ -1,4 +1,4 @@
-import { ConnectionManager } from "@damatjs/orm-pg";
+import { ConnectionManager } from "@damatjs/orm-connector";
 import { ModuleServiceBase } from "@damatjs/services";
 import type { Pool } from "@damatjs/deps/pg";
 import type { ModuleConfig } from "../types";
@@ -6,7 +6,9 @@ import type { ModuleConfig } from "../types";
 let connectionManager: ConnectionManager | null = null;
 
 export async function initDatabase(dbUrl: string): Promise<Pool> {
-  connectionManager = new ConnectionManager(dbUrl);
+  connectionManager = new ConnectionManager({
+    database: dbUrl
+  });
   const pool = await connectionManager.connect();
   ModuleServiceBase.init(pool);
   return pool;
