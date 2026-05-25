@@ -1,25 +1,26 @@
-import type { Pool, QueryResultRow } from "@damatjs/deps/pg";
-import type { ModelDefinition, QueryContext, TransactionOptions } from "@damatjs/orm-model";
-import type { PgEntityManagerConfig, LoggerInterface, } from "../types";
-import { ModelRegistry, ModelRegistryError } from "../registry";
+import type { Pool, QueryResultRow } from "@damatjs/orm-type";
+import type { ILogger } from "@damatjs/logger";
+import type { ModelDefinition } from "@damatjs/orm-model";
+import { ModelRegistry, ModelRegistryError } from "@damatjs/orm-core";
+import type { PgEntityManagerConfig } from "../types";
 import { TransactionManager } from "../transaction";
 import { PgRepository, createRepository } from "../repository";
 import { TransactionalEntityManager } from "./transactionalEntityManager";
 import { QueryExecutionError } from "./error";
-import { DefaultLogger } from "./logger";
+import { Logger } from "@damatjs/logger";
 
 export class PgEntityManager<TModels extends Record<string, ModelDefinition> = Record<string, ModelDefinition>> {
   [key: string]: any;
   private pool: Pool;
   private modelRegistry: ModelRegistry;
   private transactionManager: TransactionManager;
-  private logger: LoggerInterface;
+  private logger: ILogger;
   private repositories = new Map<string, PgRepository<QueryResultRow>>();
   private modelsConfig: TModels;
 
   constructor(config: PgEntityManagerConfig<TModels>) {
     this.pool = config.pool;
-    this.logger = config.logger ?? new DefaultLogger();
+    this.logger = config.logger ?? new Logger({ prefix: "ORM", timestamp: true });
     this.modelRegistry = new ModelRegistry(this.logger);
     this.modelRegistry.registerMany(config.models);
     this.modelsConfig = config.models;
@@ -41,14 +42,14 @@ export class PgEntityManager<TModels extends Record<string, ModelDefinition> = R
     return repo;
   }
 
-  async transaction<R>(cb: (tx: TransactionalEntityManager<TModels> & { readonly [K in keyof TModels]: PgRepository<any> }) => Promise<R>, options?: TransactionOptions): Promise<R> {
+  async transaction<R>(cb: (tx: TransactionalEntityManager<TModels> & { readonly [K in keyof TModels]: PgRepository<any> }) => Promise<R>, options?: import("@damatjs/orm-type").TransactionOptions): Promise<R> {
     return this.transactionManager.run(async (ctx) => {
       const txManager = new TransactionalEntityManager<TModels>(this.modelRegistry, ctx, this.logger, this.modelsConfig);
       return cb(txManager as any);
     }, options);
   }
 
-  async raw<T extends QueryResultRow = QueryResultRow>(sql: string, params?: unknown[], _ctx?: QueryContext): Promise<{ rows: T[]; rowCount: number }> {
+  async raw<T extends QueryResultRow = QueryResultRow>(sql: string, params?: unknown[], _ctx?: import("@damatjs/orm-model").QueryContext): Promise<{ rows: T[]; rowCount: number }> {
     try {
       const result = await this.pool.query<T>(sql, params || []);
       return { rows: result.rows, rowCount: result.rowCount ?? 0 };
@@ -68,7 +69,7 @@ export class PgEntityManager<TModels extends Record<string, ModelDefinition> = R
   getRegisteredModels(): string[] { return this.modelRegistry.getModelNames(); }
   repo<T extends QueryResultRow = QueryResultRow>(name: string): PgRepository<T> { return this.getRepository<T>(name); }
 
-  async tx<R>(cb: (tx: TransactionalEntityManager<TModels> & { readonly [K in keyof TModels]: PgRepository<any> }) => Promise<R>, opt?: TransactionOptions): Promise<R> {
+  async tx<R>(cb: (tx: TransactionalEntityManager<TModels> & { readonly [K in keyof TModels]: PgRepository<any> }) => Promise<R>, opt?: import("@damatjs/orm-type").TransactionOptions): Promise<R> {
     return this.transaction<R>(cb, opt);
   }
 

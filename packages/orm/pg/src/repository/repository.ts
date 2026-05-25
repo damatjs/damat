@@ -1,19 +1,19 @@
-import type { Pool, PoolClient, QueryResultRow } from "@damatjs/deps/pg";
+import type { Pool, PoolClient, QueryResultRow } from "@damatjs/orm-type";
+import type { ILogger } from "@damatjs/logger";
 import type { ModelDefinition } from "@damatjs/orm-model";
-import type { LoggerInterface } from "../types";
 import { PgModelClient } from "../client";
 import type { FindOptions, CreateOptions, CreateManyOptions, UpdateOptions, DeleteOptions, UpsertOptions } from "../query";
 
 export interface PgRepositoryConfig {
   model: ModelDefinition;
   connection: Pool | PoolClient;
-  logger: LoggerInterface;
+  logger: ILogger;
   isInTransaction?: boolean;
 }
 
 export class PgRepository<T extends QueryResultRow = QueryResultRow, Cols extends string = string> {
   protected connection: Pool | PoolClient;
-  protected logger: LoggerInterface;
+  protected logger: ILogger;
   protected isInTransaction: boolean;
   public readonly client: PgModelClient<T, Cols>;
 

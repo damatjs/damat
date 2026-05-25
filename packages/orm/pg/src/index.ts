@@ -21,11 +21,8 @@ export {
 import { PgEntityManager } from "./manager";
 export const EntityManager = PgEntityManager;
 
-// ─── Model Registry ──────────────────────────────────────────────────────────
-export {
-  ModelRegistry,
-  ModelRegistryError,
-} from "./registry";
+// ─── Model Registry (re-exported from @damatjs/orm-core) ──────────────────────
+export { ModelRegistry, ModelRegistryError } from "@damatjs/orm-core";
 
 // ─── Transaction Management ──────────────────────────────────────────────────
 export {
@@ -48,14 +45,14 @@ export { pgExecuteRaw, pgTransaction } from "./executor";
 // ─── PgModelClient — ergonomic bound client ───────────────────────────────────
 export { PgModelClient } from "./client";
 
-// ─── Query Logger ─────────────────────────────────────────────────────────────
+// ─── Query Logger (re-exported from @damatjs/orm-core) ────────────────────────
 export {
   QueryLogger,
   getQueryLogger,
   setQueryLogger,
   configureQueryLogger,
   type QueryLoggerOptions,
-} from "./logger";
+} from "@damatjs/orm-core";
 
 // ─── Type exports ────────────────────────────────────────────────────────────
 export type {
@@ -65,5 +62,7 @@ export type {
   PgDeleteResult,
   PgQueryResult,
   PgEntityManagerConfig,
-  LoggerInterface,
 } from "./types";
+
+// ─── Re-export ILogger from @damatjs/logger for convenience ───────────────────
+export type { ILogger } from "@damatjs/logger";

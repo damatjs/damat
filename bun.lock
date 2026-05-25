@@ -175,17 +175,28 @@
       "version": "0.0.1",
       "dependencies": {
         "@damatjs/deps": "*",
+        "@damatjs/logger": "*",
         "@damatjs/orm-type": "*",
         "@damatjs/types": "*",
       },
       "devDependencies": {
-        "@damatjs/logger": "*",
         "@damatjs/typescript-config": "*",
         "@types/bun": "1.3.9",
         "typescript": "^5.9.3",
       },
-      "peerDependencies": {
+    },
+    "packages/orm/core": {
+      "name": "@damatjs/orm-core",
+      "version": "0.0.1",
+      "dependencies": {
         "@damatjs/logger": "*",
+        "@damatjs/orm-model": "*",
+        "@damatjs/orm-type": "*",
+      },
+      "devDependencies": {
+        "@damatjs/typescript-config": "*",
+        "@types/bun": "1.3.9",
+        "typescript": "5.9.2",
       },
     },
     "packages/orm/main": {
@@ -242,8 +253,8 @@
       "name": "@damatjs/orm-pg",
       "version": "0.0.1",
       "dependencies": {
-        "@damatjs/deps": "*",
         "@damatjs/logger": "*",
+        "@damatjs/orm-core": "*",
         "@damatjs/orm-model": "*",
         "@damatjs/orm-type": "*",
         "@damatjs/types": "*",
@@ -444,6 +455,8 @@
     "@damatjs/orm-codegen": ["@damatjs/orm-codegen@workspace:packages/orm/codegen"],
 
     "@damatjs/orm-connector": ["@damatjs/orm-connector@workspace:packages/orm/connector"],
+
+    "@damatjs/orm-core": ["@damatjs/orm-core@workspace:packages/orm/core"],
 
     "@damatjs/orm-migration": ["@damatjs/orm-migration@workspace:packages/orm/migration"],
 

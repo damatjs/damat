@@ -1,7 +1,7 @@
-import type { Pool, PoolClient, QueryResultRow } from "@damatjs/deps/pg";
+import type { Pool, PoolClient, QueryResultRow } from "@damatjs/orm-type";
 import type { ModelDefinition } from "@damatjs/orm-model";
+import type { QueryLogger } from "@damatjs/orm-core";
 import { ModelAccessor } from "../query";
-import type { QueryLogger } from "../logger";
 import { executeFindMany, executeFindOne } from "./ops/find";
 import { executeCreate, executeCreateMany, executeUpdate, executeDelete, executeUpsert } from "./ops/mutate";
 import { executeTransaction } from "./ops/transaction";

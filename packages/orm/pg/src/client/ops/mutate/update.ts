@@ -1,8 +1,7 @@
 import { pgExecuteRaw } from "../../../executor";
-import type { UpdateDescriptor } from "../../../query";
+import type { UpdateDescriptor, QueryResultRow } from "@damatjs/orm-type";
 import type { PgUpdateResult } from "../../../types";
 import type { PgModelClientLike, UpdateOptions } from "../../types";
-import type { QueryResultRow } from "@damatjs/deps/pg";
 
 export async function executeUpdate<
   T extends QueryResultRow = Record<string, unknown>,

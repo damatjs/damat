@@ -1,8 +1,7 @@
 import { pgExecuteRaw } from "../../../executor";
-import type { UpsertDescriptor } from "../../../query";
+import type { UpsertDescriptor, QueryResultRow } from "@damatjs/orm-type";
 import type { PgInsertResult } from "../../../types";
 import type { PgModelClientLike, UpsertOptions } from "../../types";
-import type { QueryResultRow } from "@damatjs/deps/pg";
 
 export async function executeUpsert<
   T extends QueryResultRow = Record<string, unknown>,

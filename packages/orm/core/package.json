@@ -1,6 +1,6 @@
 {
-  "name": "@damatjs/orm-pg",
-  "description": "PostgreSQL ORM core for @damatjs - EntityManager, Repository pattern, and query execution",
+  "name": "@damatjs/orm-core",
+  "description": "Damat ORM core - database-agnostic registry, logging, and types",
   "version": "0.0.1",
   "type": "module",
   "main": "dist/index.js",
@@ -14,6 +14,9 @@
   "engines": {
     "bun": ">=1.1.0"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "dist",
     "!dist/**/__tests__",
@@ -21,24 +24,20 @@
     "!dist/**/__mocks__"
   ],
   "author": "Abel Lamesgen",
+  "license": "MIT",
   "dependencies": {
     "@damatjs/logger": "*",
-    "@damatjs/orm-core": "*",
     "@damatjs/orm-model": "*",
-    "@damatjs/orm-type": "*",
-    "@damatjs/types": "*"
+    "@damatjs/orm-type": "*"
   },
   "devDependencies": {
-    "@damatjs/orm-processor": "*",
     "@damatjs/typescript-config": "*",
     "@types/bun": "1.3.9",
-    "typescript": "^5.9.3"
+    "typescript": "5.9.2"
   },
   "scripts": {
-    "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
-    "dev": "bun run build --watch",
+    "build": "rm -rf dist tsconfig.tsbuildinfo && tsc",
     "watch": "tsc --watch",
-    "test": "exit 0",
-    "typecheck": "tsc --noEmit"
+    "test": "exit 0"
   }
 }

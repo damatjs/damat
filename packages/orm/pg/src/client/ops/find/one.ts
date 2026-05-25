@@ -1,6 +1,5 @@
-import type { QueryResultRow } from "@damatjs/deps/pg";
+import type { QueryResultRow, SelectDescriptor } from "@damatjs/orm-type";
 import { pgExecuteRaw } from "../../../executor";
-import type { SelectDescriptor } from "../../../query";
 import type { PgSelectResult } from "../../../types";
 import type { PgModelClientLike, FindOneOptions } from "../../types";
 

@@ -1,12 +1,13 @@
+import type { ILogger } from "@damatjs/logger";
 import type { ModelDefinition } from "@damatjs/orm-model";
-import type { ModelRegistryEntry, LoggerInterface } from "./types";
+import type { ModelRegistryEntry } from "./types";
 
 export class ModelRegistry {
   private models: Map<string, ModelRegistryEntry> = new Map();
   private tableNameIndex: Map<string, string> = new Map();
-  private logger: LoggerInterface;
+  private logger: ILogger;
 
-  constructor(logger: LoggerInterface) {
+  constructor(logger: ILogger) {
     this.logger = logger;
   }
 

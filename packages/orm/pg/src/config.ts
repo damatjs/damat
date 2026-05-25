@@ -1,4 +1,4 @@
-import type { DbPoolConfig } from "@damatjs/orm-type";
+import type { DbPoolConfig, PoolClient as PgPoolClient } from "@damatjs/orm-type";
 
 export type PoolConfig = DbPoolConfig & {
   allowExitOnIdle?: boolean;
@@ -12,7 +12,7 @@ export interface PoolStats {
 
 export interface ConnectionPool {
   query(sql: string, params?: unknown[]): Promise<{ rows: unknown[]; rowCount: number }>;
-  connect(): Promise<PoolClient>;
+  connect(): Promise<PgPoolClient>;
   end(): Promise<void>;
   totalCount?: number;
   idleCount?: number;

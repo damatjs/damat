@@ -1,5 +1,5 @@
-import type { Pool, PoolClient } from "@damatjs/deps/pg";
-import { getQueryLogger, type QueryLogger } from "../logger";
+import type { Pool, PoolClient } from "@damatjs/orm-type";
+import { getQueryLogger, type QueryLogger } from "@damatjs/orm-core";
 
 export async function pgTransaction<R>(
   pool: Pool,

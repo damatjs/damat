@@ -1,14 +1,14 @@
-import type { Pool, PoolClient } from "@damatjs/deps/pg";
-import type { LoggerInterface } from "../types";
+import type { Pool, PoolClient } from "@damatjs/orm-type";
+import type { ILogger } from "@damatjs/logger";
+import type { TransactionOptions } from "@damatjs/orm-type";
 import { TransactionContext } from "./context";
-import { TransactionOptions } from "@damatjs/orm-type";
 
 export class TransactionManager {
   private pool: Pool;
-  private logger: LoggerInterface;
+  private logger?: ILogger | undefined;
   private activeTransactions: WeakMap<PoolClient, TransactionContext> = new WeakMap();
 
-  constructor(pool: Pool, logger: LoggerInterface) {
+  constructor(pool: Pool, logger?: ILogger) {
     this.pool = pool;
     this.logger = logger;
   }

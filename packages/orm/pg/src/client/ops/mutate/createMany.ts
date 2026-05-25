@@ -1,8 +1,7 @@
 import { pgExecuteRaw } from "../../../executor";
-import type { InsertDescriptor } from "../../../query";
+import type { InsertDescriptor, QueryResultRow } from "@damatjs/orm-type";
 import type { PgInsertResult } from "../../../types";
 import type { PgModelClientLike, CreateManyOptions } from "../../types";
-import type { QueryResultRow } from "@damatjs/deps/pg";
 
 export async function executeCreateMany<
   T extends QueryResultRow = Record<string, unknown>,

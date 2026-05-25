@@ -1,6 +1,6 @@
-import type { Pool, PoolClient, QueryResultRow } from "@damatjs/deps/pg";
+import type { Pool, PoolClient, QueryResultRow } from "@damatjs/orm-type";
+import type { QueryLogger } from "@damatjs/orm-core";
 import type { ModelAccessor } from "../query";
-import type { QueryLogger } from "../logger";
 import type {
   FindOptions,
   CreateOptions,

@@ -1,8 +1,7 @@
 import { pgExecuteRaw } from "../../../executor";
-import type { DeleteDescriptor } from "../../../query";
+import type { DeleteDescriptor, QueryResultRow } from "@damatjs/orm-type";
 import type { PgDeleteResult } from "../../../types";
 import type { PgModelClientLike, DeleteOptions } from "../../types";
-import type { QueryResultRow } from "@damatjs/deps/pg";
 
 export async function executeDelete<
   T extends QueryResultRow = Record<string, unknown>,

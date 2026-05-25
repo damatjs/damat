@@ -1,4 +1,4 @@
-import { SelectDescriptor, RelationDescriptor, WhereConditionJson, OrderByJson } from "../types";
+import { SelectDescriptor, RelationDescriptor, WhereConditionJson, OrderByJson } from "@damatjs/orm-type";
 import { assertValidRelationMap, resolveModelRelations, ResolvedRelation, RelationIncludeOptions } from "../relations";
 
 export function buildSelectJson(builder: any): SelectDescriptor {

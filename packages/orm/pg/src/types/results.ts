@@ -1,11 +1,11 @@
-import type { QueryResultRow } from "@damatjs/deps/pg";
+import type { QueryResultRow } from "@damatjs/orm-type";
 import type {
   DeleteDescriptor,
   InsertDescriptor,
   SelectDescriptor,
   UpdateDescriptor,
   UpsertDescriptor,
-} from "../query/types";
+} from "@damatjs/orm-type";
 
 export interface PgSelectResult<
   T extends QueryResultRow = Record<string, unknown>,

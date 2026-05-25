@@ -1,7 +1,7 @@
-import type { QueryResultRow } from "@damatjs/deps/pg";
+import type { QueryResultRow } from "@damatjs/orm-type";
+import type { ILogger } from "@damatjs/logger";
 import type { ModelDefinition } from "@damatjs/orm-model";
-import type { LoggerInterface } from "../types";
-import { ModelRegistry, ModelRegistryError } from "../registry";
+import { ModelRegistry, ModelRegistryError } from "@damatjs/orm-core";
 import { PgRepository, createRepository } from "../repository";
 
 export class TransactionalEntityManager<
@@ -10,13 +10,13 @@ export class TransactionalEntityManager<
   [key: string]: any;
   private modelRegistry: ModelRegistry;
   private transactionContext: any;
-  private logger: LoggerInterface;
+  private logger: ILogger;
   private repositories: Map<string, PgRepository<QueryResultRow>> = new Map();
 
   constructor(
     modelRegistry: ModelRegistry,
     transactionContext: any,
-    logger: LoggerInterface,
+    logger: ILogger,
     modelsConfig: TModels
   ) {
     this.modelRegistry = modelRegistry;

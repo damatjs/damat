@@ -1,6 +1,6 @@
 import { pgTransaction } from "../../executor";
 import type { PgModelClientLike } from "../types";
-import type { PoolClient, QueryResultRow } from "@damatjs/deps/pg";
+import type { PoolClient, QueryResultRow } from "@damatjs/orm-type";
 
 export async function executeTransaction<
   T extends QueryResultRow = Record<string, unknown>,

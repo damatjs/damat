@@ -1,6 +1,6 @@
-import type { Pool, PoolClient, QueryResultRow } from "@damatjs/deps/pg";
-import type { BuiltQuery } from "../query";
-import { getQueryLogger, type QueryLogger } from "../logger";
+import type { Pool, PoolClient, QueryResultRow } from "@damatjs/orm-type";
+import type { BuiltQuery } from "@damatjs/orm-type";
+import { getQueryLogger, type QueryLogger } from "@damatjs/orm-core";
 
 export async function pgExecuteRaw<
   T extends QueryResultRow = Record<string, unknown>,
@@ -27,4 +27,3 @@ export async function pgExecuteRaw<
     throw error;
   }
 }
-
