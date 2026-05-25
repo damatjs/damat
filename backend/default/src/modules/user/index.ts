@@ -1,14 +1,13 @@
-
 import { defineModule } from "@damatjs/services";
-import UserModuleService from "./service";
+import { UserModuleService, models } from "./service";
 import credentials from "./config";
 
 export const USER_MODULE = "user";
 
-const definition = defineModule(USER_MODULE, {
-    service: UserModuleService,
-    credentials,
+export { UserModuleService, models };
+
+export default defineModule(USER_MODULE, {
+  service: UserModuleService,
+  credentials,
+  migrationsPath: "./migrations",
 });
-
-
-export default definition;

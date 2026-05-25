@@ -42,21 +42,45 @@ import { toPascalCase } from "@/utils/stringConvertor";
  */
 export class ModelDefinition {
   readonly _tableName: string;
+  readonly _name: string;
   _schemaName?: string;
   readonly _properties: Record<string, PropertyValue>;
   _indexes: IndexSchema[] = [];
   _constraints: ConstraintSchema[] = [];
+  _timestamps: boolean = true;
+  _softDelete: boolean = false;
+  _deletedAtField: string = "deleted_at";
 
   constructor(
     tableName: string,
     properties: Record<string, PropertyValue>,
-    options?: { schema?: string },
+    options?: { schema?: string; name?: string },
   ) {
     this._tableName = tableName;
+    this._name = options?.name ?? tableName;
     this._properties = properties;
     if (options?.schema) {
       this._schemaName = options.schema;
     }
+  }
+
+  get name(): string {
+    return this._name;
+  }
+
+  get tableName(): string {
+    return this._tableName;
+  }
+
+  timestamps(enabled: boolean = true): this {
+    this._timestamps = enabled;
+    return this;
+  }
+
+  softDelete(enabled: boolean = true, fieldName: string = "deleted_at"): this {
+    this._softDelete = enabled;
+    this._deletedAtField = fieldName;
+    return this;
   }
 
   /**
@@ -147,24 +171,38 @@ export class ModelDefinition {
       }
     }
 
-    if (!columns.some(c => c.name === "created_at" || c.name === "createdAt")) {
-      columns.push({
-        name: "created_at",
-        type: "date",
-        nullable: false,
-        default: "now()",
-        primaryKey: false,
-        unique: false,
-      });
+    if (this._timestamps) {
+      if (!columns.some(c => c.name === "created_at" || c.name === "createdAt")) {
+        columns.push({
+          name: "created_at",
+          type: "date",
+          nullable: false,
+          default: "now()",
+          primaryKey: false,
+          unique: false,
+        });
+      }
+      if (!columns.some(c => c.name === "updated_at" || c.name === "updatedAt")) {
+        columns.push({
+          name: "updated_at",
+          type: "date",
+          nullable: true,
+          primaryKey: false,
+          unique: false,
+        });
+      }
     }
-    if (!columns.some(c => c.name === "updated_at" || c.name === "updatedAt")) {
-      columns.push({
-        name: "updated_at",
-        type: "date",
-        nullable: true,
-        primaryKey: false,
-        unique: false,
-      });
+
+    if (this._softDelete) {
+      if (!columns.some(c => c.name === this._deletedAtField)) {
+        columns.push({
+          name: this._deletedAtField,
+          type: "date",
+          nullable: true,
+          primaryKey: false,
+          unique: false,
+        });
+      }
     }
 
     const schema: TableSchema & { schema?: string } = {
@@ -255,7 +293,7 @@ export class ModelDefinition {
 export function model(
   tableName: string,
   properties: Record<string, PropertyValue>,
-  options?: { schema?: string },
+  options?: { schema?: string; name?: string },
 ): ModelDefinition {
   return new ModelDefinition(tableName, properties, options);
 }

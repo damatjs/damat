@@ -320,6 +320,7 @@
         "@damatjs/logger": "*",
         "@damatjs/orm-model": "*",
         "@damatjs/orm-pg": "*",
+        "@damatjs/orm-type": "*",
         "@damatjs/types": "*",
       },
       "devDependencies": {

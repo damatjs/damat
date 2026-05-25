@@ -16,20 +16,19 @@ export class PgEntityManager<TModels extends Record<string, ModelDefinition> = R
   private transactionManager: TransactionManager;
   private logger: ILogger;
   private repositories = new Map<string, PgRepository<QueryResultRow>>();
-  private modelsConfig: TModels;
 
-  constructor(config: PgEntityManagerConfig<TModels>) {
+  constructor(config: PgEntityManagerConfig) {
     this.pool = config.pool;
     this.logger = config.logger ?? new Logger({ prefix: "ORM", timestamp: true });
     this.modelRegistry = new ModelRegistry(this.logger);
-    this.modelRegistry.registerMany(config.models);
-    this.modelsConfig = config.models;
+    // this.modelRegistry.registerMany(config.models);
+    // this.modelsConfig = config.models;
     this.transactionManager = new TransactionManager(this.pool, this.logger);
     this._initializeRepositories();
 
-    for (const key of Object.keys(config.models)) {
-      Object.defineProperty(this, key, { get: () => this.getRepository(key), enumerable: true, configurable: true });
-    }
+    // for (const key of Object.keys(config.models)) {
+    //   Object.defineProperty(this, key, { get: () => this.getRepository(key), enumerable: true, configurable: true });
+    // }
   }
 
   getRepository<T extends QueryResultRow = QueryResultRow>(modelName: string): PgRepository<T> {

@@ -25,6 +25,7 @@
     "@damatjs/deps": "*",
     "@damatjs/orm-pg": "*",
     "@damatjs/orm-model": "*",
+    "@damatjs/orm-type": "*",
     "@damatjs/types": "*",
     "@damatjs/logger": "*"
   },

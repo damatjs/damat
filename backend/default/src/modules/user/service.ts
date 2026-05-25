@@ -1,14 +1,18 @@
 import { ModuleService } from "@damatjs/services";
 import { UserModel, AccountModel, SessionModel, VerificationModel } from "./models";
-import { schema } from "./config/schema";
+import type { schemaType } from "./config/schema";
 
-class UserModuleService extends ModuleService({
+const models = {
   user: UserModel,
   account: AccountModel,
   session: SessionModel,
   verification: VerificationModel,
-}, schema) {
+} as const;
 
+export class UserModuleService extends ModuleService<typeof models, schemaType>(models) {
+  async findByEmail(email: string) {
+    return this.user.findOne({ where: { email } as any });
+  }
 }
 
-export default UserModuleService;
+export type { models };
