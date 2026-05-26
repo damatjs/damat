@@ -9,5 +9,4 @@ export { UserModuleService, models };
 export default defineModule(USER_MODULE, {
   service: UserModuleService,
   credentials,
-  migrationsPath: "./migrations",
 });

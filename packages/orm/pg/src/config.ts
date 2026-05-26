@@ -66,9 +66,12 @@ export function parseDatabaseUrl(url: string): PoolConfig {
       host: parsed.hostname,
       port: parsed.port ? parseInt(parsed.port, 10) : 5432,
       user: parsed.username,
-      password: parsed.password,
       database: parsed.pathname.slice(1),
     };
+    
+    if (parsed.password) {
+      config.password = parsed.password;
+    }
     
     if (parsed.searchParams.get('sslmode') === 'require') {
       config.ssl = { rejectUnauthorized: false };

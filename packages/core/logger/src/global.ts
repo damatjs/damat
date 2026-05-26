@@ -1,11 +1,13 @@
 import { Logger } from "./logger";
 import { NOOP_LOGGER } from "./noop";
-import type { LogContext, ILogger } from "./types";
+import type { LogContext, ILogger, LoggerConfig } from "./types";
 
 let globalLogger: Logger | null = null;
 
-export function createLogger(config?: import("./types").LoggerConfig): Logger {
-  return new Logger(config);
+export function createLogger(config?: LoggerConfig): Logger {
+  const logger = new Logger(config);
+  globalLogger = logger;
+  return logger;
 }
 
 export function setGlobalLogger(logger: Logger): void {

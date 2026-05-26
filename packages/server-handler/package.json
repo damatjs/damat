@@ -10,6 +10,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./entry": {
+      "types": "./dist/entry.d.ts",
+      "default": "./dist/entry.js"
+    },
     "./router": {
       "types": "./dist/router/index.d.ts",
       "default": "./dist/router/index.js"
@@ -33,6 +37,14 @@
     "./middleware": {
       "types": "./dist/middleware/index.d.ts",
       "default": "./dist/middleware/index.js"
+    },
+    "./services": {
+      "types": "./dist/services/index.d.ts",
+      "default": "./dist/services/index.js"
+    },
+    "./config": {
+      "types": "./dist/config/index.d.ts",
+      "default": "./dist/config/index.js"
     }
   },
   "engines": {
@@ -51,6 +63,11 @@
     "@damatjs/deps": "*",
     "@damatjs/types": "*",
     "@damatjs/utils": "*",
+    "@damatjs/utils-config": "*",
+    "@damatjs/services": "*",
+    "@damatjs/orm-connector": "*",
+    "@damatjs/orm-type": "*",
+    "@damatjs/workflow-engine": "*",
     "@hono/node-server": "^1.13.7"
   },
   "devDependencies": {
@@ -62,6 +79,6 @@
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
     "dev": "bun run build --watch",
     "watch": "tsc --watch",
-    "test": "exit 0"
+    "test": "bun test"
   }
 }

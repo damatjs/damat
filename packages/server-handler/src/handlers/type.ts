@@ -6,6 +6,6 @@ export interface HealthCheckOptions {
     checks?: {
         database?: HealthCheckFn;
         redis?: HealthCheckFn;
-    };
-    version?: string;
+    } | undefined;
+    version?: string | undefined;
 }

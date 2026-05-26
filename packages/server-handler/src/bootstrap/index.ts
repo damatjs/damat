@@ -6,8 +6,11 @@ import type { BootstrapOptions, BootstrapResult } from "../types";
 import { Logger } from "@damatjs/logger";
 
 export async function bootstrap(options: BootstrapOptions): Promise<BootstrapResult> {
-  const { routesDir, projectConfig, healthCheck, customRoutes } = options;
-  const logger = new Logger({ level: projectConfig.logLevel || "info", format: projectConfig.logFormat || "pretty" });
+  const { routesDir, projectConfig, healthCheck } = options;
+
+  const logLevel = projectConfig.loggerConfig?.level;
+  const logFormat = projectConfig.loggerConfig?.format;
+  const logger = new Logger({ level: logLevel || "info", format: logFormat || "pretty" });
 
   logger.info("Starting server...", { port: projectConfig.http.port });
 
@@ -22,7 +25,6 @@ export async function bootstrap(options: BootstrapOptions): Promise<BootstrapRes
   app.route("", createRootRoute(fileRouter));
   app.route("", createApiRoutesRoute(fileRouter));
   if (healthCheck) app.route("", createHealthRoute(healthCheck));
-  if (customRoutes) customRoutes(app, fileRouter);
   app.notFound(notFoundHandler);
 
   return { app, config: { port: projectConfig.http.port, host: projectConfig.http.host, nodeEnv: projectConfig.nodeEnv } };

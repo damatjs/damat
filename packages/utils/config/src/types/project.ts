@@ -1,8 +1,4 @@
-/**
- * Project Configuration Types
- *
- * Types for project-level configuration (database, server, etc.)
- */
+import { LoggerConfig } from '@damatjs/logger';
 
 /**
  * HTTP server configuration
@@ -22,13 +18,11 @@ export interface HttpConfig {
  */
 export interface ProjectConfig {
   /** Database connection URL */
-  databaseUrl: string;
+  databaseUrl?: string;
   /** Redis connection URL */
   redisUrl?: string | undefined;
-  /** Log level */
-  logLevel?: "debug" | "info" | "warn" | "error" | undefined;
-  /** Log format */
-  logFormat?: "pretty" | "json" | undefined;
+  /** Logger */
+  loggerConfig?: LoggerConfig;
   /** Node environment */
   nodeEnv?: "development" | "production" | "test" | undefined;
   /** HTTP server configuration */

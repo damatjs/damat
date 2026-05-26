@@ -1,4 +1,4 @@
-import { LogFormat, Logger, LogLevel } from '@damatjs/logger';
+import type { ProjectConfig } from "@damatjs/utils-config";
 
 export type { Logger, ILogger } from "@damatjs/logger";
 
@@ -8,27 +8,22 @@ export interface ServerConfig {
   nodeEnv?: string | undefined;
 }
 
+export interface HealthCheckFn {
+  (): Promise<{ status: string; latency?: number }>;
+}
+
 export interface HealthCheckConfig {
-  version?: string;
-  checks?: Record<string, () => Promise<{ status: string; latency?: number }>>;
+  version?: string | undefined;
+  checks?: {
+    database?: HealthCheckFn;
+    redis?: HealthCheckFn;
+  } | undefined;
 }
 
 export interface BootstrapOptions {
   routesDir: string;
-  projectConfig: {
-    databaseUrl: string;
-    redisUrl?: string;
-    http: {
-      port: number;
-      host?: string;
-      corsOrigin: string;
-    };
-    nodeEnv?: string;
-    logLevel?: LogLevel;
-    logFormat?: LogFormat;
-  };
+  projectConfig: ProjectConfig;
   healthCheck?: HealthCheckConfig | undefined;
-  customRoutes?: (app: any, fileRouter: any) => void | undefined;
 }
 
 export interface BootstrapResult {
@@ -39,11 +34,4 @@ export interface BootstrapResult {
 export interface ShutdownHandler {
   name: string;
   handler: () => Promise<void> | void;
-}
-
-export interface ServicesConfig {
-  setup: () => void;
-  logger: Logger;
-  redisCheck?: () => Promise<{ status: string; latency?: number }>;
-  shutdown?: ShutdownHandler[];
 }

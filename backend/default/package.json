@@ -4,9 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsup src/index.ts --format esm --clean",
-    "start": "bun dist/index.js",
+    "dev": "damat dev",
+    "build": "damat build",
+    "start": "damat start",
     "db:migrate": "damat-orm migrate:up",
     "db:status": "damat-orm migrate:status",
     "db:create": "damat-orm migrate:create",
@@ -16,15 +16,13 @@
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist",
-    "docker:build": "docker build -t @damatjs/api .",
-    "docker:run": "docker run -p 3000:3000 --env-file .env @damatjs/api"
+    "clean": "rm -rf dist"
   },
   "engines": {
     "bun": ">=1.1.0"
   },
   "dependencies": {
-    "@damatjs/deps": "*",
+    "damat": "*",
     "@damatjs/logger": "*",
     "@damatjs/services": "*",
     "@damatjs/types": "*",
