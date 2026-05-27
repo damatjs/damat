@@ -3,7 +3,7 @@ import { initializeServices, getLogger } from "./services";
 import { bootstrap } from "./bootstrap";
 import { startServer } from "./server";
 import { setupShutdownHandlers, registerShutdown } from "./shutdown";
-import { loadConfigAsync } from './config/loader';
+import { loadConfigAsync } from './config';
 
 export async function start(cwd: string = process.cwd()): Promise<void> {
   const config = await loadConfigAsync(cwd);
@@ -13,8 +13,12 @@ export async function start(cwd: string = process.cwd()): Promise<void> {
     ? { version: "2.0.0", checks: services.healthChecks }
     : undefined;
 
+
+  const routesDirPath = config.projectConfig.http.api?.entryRouterPath ?? `/src/api/routes`;
+  const routesDir = `${cwd}/${routesDirPath}`;
+
   const { app, config: serverConfig } = await bootstrap({
-    routesDir: `${cwd}/src/api/routes`,
+    routesDir,
     projectConfig: config.projectConfig,
     healthCheck,
   });

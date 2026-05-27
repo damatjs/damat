@@ -1,7 +1,7 @@
 
 import type { ServiceInstances } from "./types";
 import { initLogger, closeLogger } from "./logger";
-import { initDatabase, closeDatabase } from "./database";
+import { initDatabase, closeDatabase, getConnectionManager } from "./database";
 import { initRedis, disconnectRedis, getRedis } from "./redis";
 import { AppConfig } from '../config';
 
@@ -9,11 +9,23 @@ export async function initializeServices(config: AppConfig): Promise<ServiceInst
   const logger = initLogger(config.projectConfig.loggerConfig);
 
   const instances: ServiceInstances = {
+    healthChecks: {
+      database: async () => {
+        return {
+          status: "Ideal",
+          data: {}
+        }
+      },
+      redis: async () => {
+        return {
+          status: "Ideal",
+          data: {}
+        }
+      },
+    },
     shutdownHandlers: [],
   };
-
   if (config.projectConfig.databaseUrl) {
-
     await initDatabase(
       config.services?.database ?? {
         connectionString: config.projectConfig.databaseUrl
@@ -21,6 +33,17 @@ export async function initializeServices(config: AppConfig): Promise<ServiceInst
       logger
     );
 
+    instances.healthChecks!.database = async () => {
+      {
+        const start = Date.now();
+        try {
+          const data = await getConnectionManager()?.healthCheck();
+          return { status: "healthy", latency: Date.now() - start, data };
+        } catch (e) {
+          return { status: "unhealthy", latency: Date.now() - start, data: e };
+        }
+      }
+    };
 
     instances.shutdownHandlers.push({
       name: "database",
@@ -29,11 +52,18 @@ export async function initializeServices(config: AppConfig): Promise<ServiceInst
         logger.info("Database connection closed");
       },
     });
+  } else {
+    instances.healthChecks!.database = async () => {
+      {
+        return { status: "not configured", data: {} }
+      }
+    };
   }
 
   const redisConfig = config.services?.redis;
-  if (redisConfig && config.projectConfig.redisUrl) {
-    await initRedis({ url: redisConfig?.url }, logger);
+  if (config.projectConfig.redisUrl) {
+    const url = redisConfig?.url ?? config.projectConfig.redisUrl;
+    await initRedis({ url }, logger);
 
     instances.shutdownHandlers.push({
       name: "redis",
@@ -52,13 +82,23 @@ export async function initializeServices(config: AppConfig): Promise<ServiceInst
     },
   });
 
-  if (process.env.REDIS_URL) {
-    instances.healthChecks = {
-      redis: async () => {
+  if (config.projectConfig.redisUrl) {
+    instances.healthChecks!.redis = async () => {
+      {
         const start = Date.now();
-        await getRedis().ping();
-        return { status: "healthy", latency: Date.now() - start };
-      },
+        try {
+          await getRedis().ping();
+          return { status: "healthy", latency: Date.now() - start };
+        } catch (e) {
+          return { status: "unhealthy", latency: Date.now() - start, data: e };
+        }
+      }
+    };
+  } else {
+    instances.healthChecks!.redis = async () => {
+      {
+        return { status: "not configured", data: {} }
+      }
     };
   }
 

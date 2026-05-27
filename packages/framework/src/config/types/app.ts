@@ -1,19 +1,6 @@
-import type { DbPoolConfig } from '@damatjs/orm-type';
-import type { RedisConfig } from '@damatjs/utils';
+import { ModuleConfig } from './module';
 import type { ProjectConfig } from "./project";
-
-export interface ModuleConfig {
-  resolve: string;
-  id?: string;
-  options?: Record<string, unknown>;
-}
-
-export interface ServicesConfig {
-  redis?: RedisConfig;
-  database?: DbPoolConfig
-  workflowLock?: boolean;
-}
-
+import { ServicesConfig } from './services';
 
 export interface AppConfig {
   projectConfig: ProjectConfig;

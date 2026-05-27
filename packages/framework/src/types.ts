@@ -9,7 +9,7 @@ export interface ServerConfig {
 }
 
 export interface HealthCheckFn {
-  (): Promise<{ status: string; latency?: number }>;
+  (): Promise<{ status: string; latency?: number, data?: any }>;
 }
 
 export interface HealthCheckConfig {

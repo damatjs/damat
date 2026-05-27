@@ -1,10 +1,10 @@
 import { Hono } from "@damatjs/deps/hono";
 import { HealthCheckOptions } from './type';
 
-export function createHealthRoute(options?: HealthCheckOptions): Hono {
+export function createHealthRoute(options?: HealthCheckOptions, entryPathUrl?: string): Hono {
   const healthRouter = new Hono();
 
-  healthRouter.get(process.env.HEALTH_CHECK_URL || "/health", async (c) => {
+  healthRouter.get(entryPathUrl || "/health", async (c) => {
     const checks: Record<string, { status: string; latency?: number }> = {};
 
     if (options?.checks?.database) {

@@ -22,6 +22,7 @@ export function scanDirectory(
     if (stat.isDirectory()) {
       const newBasePath = basePath ? `${basePath}/${entry}` : entry;
       routes.push(...scanDirectory(fullPath, newBasePath));
+      // TODO: GOING TO REPLACE THIS WITH ANOTHER SYSTEM WHERE WE INTAKE THE GET, POST, DELETE,PATCH
     } else if (entry === "route.ts" || entry === "route.js") {
       const urlPath = folderToUrlPath(basePath) || "/";
       routes.push({
