@@ -2,9 +2,19 @@ import { Hono } from "@damatjs/deps/hono";
 import type { MiddlewareHandler } from "@damatjs/deps/hono";
 import { relative } from "path";
 import { pathToFileURL } from "url";
-import type { RegisteredRoute, RouteModule, CreateFileRouterOptions, FileRouter, HttpMethod } from "./types";
+import type {
+  RegisteredRoute,
+  RouteModule,
+  CreateFileRouterOptions,
+  FileRouter,
+  HttpMethod,
+} from "./types";
 import { scanDirectory, sortRoutes } from "./scanner";
 import { createValidatorMiddleware } from "../middleware/validator";
+import { createRateLimitMiddleware } from "../middleware/rateLimit";
+import { createAuthMiddleware } from "../middleware/auth";
+import { resolveMethodConfig } from './resolveMethodConfig';
+
 
 export async function createFileRouter(
   options: CreateFileRouterOptions,
@@ -15,6 +25,8 @@ export async function createFileRouter(
     globalMiddleware = [],
     debug = false,
     logger,
+    rateLimit: globalRateLimit,
+    auth: globalAuth,
   } = options;
 
   const router = new Hono();
@@ -53,14 +65,38 @@ export async function createFileRouter(
       for (const method of methods) {
         const handler = module[method];
         if (handler) {
-          const validator = module.validators?.find(v => v.method === method);
+          const resolvedConfig = resolveMethodConfig(
+            method,
+            module.config,
+            module.configs,
+            globalRateLimit,
+            globalAuth
+          );
 
           let hasMethodMiddleware = false;
 
+          if (resolvedConfig.rateLimit) {
+            router.on(
+              method,
+              fullPath,
+              createRateLimitMiddleware(resolvedConfig.rateLimit, resolvedConfig.globalRateLimit)
+            );
+            hasMethodMiddleware = true;
+          }
+
+          if (resolvedConfig.auth) {
+            router.on(
+              method,
+              fullPath,
+              createAuthMiddleware(resolvedConfig.auth.type)
+            );
+            hasMethodMiddleware = true;
+          }
+
+          const validator = module.validators?.find(v => v.method === method);
           if (validator) {
-            const middlewareValidator = createValidatorMiddleware(validator);
-            router.on(method, fullPath, middlewareValidator);
-            hasMethodMiddleware = true
+            router.on(method, fullPath, createValidatorMiddleware(validator));
+            hasMethodMiddleware = true;
           }
           router.on(method, fullPath, handler);
 
@@ -71,12 +107,16 @@ export async function createFileRouter(
             filePath: relPath,
             hasMiddleware: routeMiddleware.length > 0 || hasMethodMiddleware,
             hasValidator: !!validator,
+            hasRateLimit: !!resolvedConfig.rateLimit,
+            hasAuth: !!resolvedConfig.auth,
           });
 
           if (debug) {
             logger.info(`Registered route: ${method} ${fullPath}`, {
               file: relPath,
               hasValidator: !!validator,
+              hasRateLimit: !!resolvedConfig.rateLimit,
+              hasAuth: !!resolvedConfig.auth,
             });
           }
         }
@@ -110,7 +150,7 @@ export async function createFileRouter(
         lines.push(`  ${methods.join(", ").padEnd(25)} ${path}`);
       }
 
-      return lines.join("\n");
+      return lines.join("\\n");
     },
 
     getRoutesJson() {

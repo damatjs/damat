@@ -24,7 +24,13 @@ export async function bootstrap(options: BootstrapOptions): Promise<BootstrapRes
     corsConfig: projectConfig.http.corsConfig
   });
 
-  const fileRouter = await createFileRouter({ routesDir, debug: projectConfig.nodeEnv === "development", logger });
+  const fileRouter = await createFileRouter({
+    routesDir,
+    debug: projectConfig.nodeEnv === "development",
+    logger,
+    rateLimit: projectConfig.http.rateLimit,
+    auth: projectConfig.http.auth,
+  });
 
   const entryPathUrl = projectConfig.http.api?.entryRouter ?? "/api";
   app.route(entryPathUrl, fileRouter.router);
