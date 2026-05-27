@@ -1,6 +1,17 @@
 import type { Context, Hono, MiddlewareHandler } from "@damatjs/deps/hono";
+import type { z } from "@damatjs/deps/zod";
 
 export type RouteHandler = (c: Context) => Promise<Response> | Response;
+
+export type ZodSchema = z.ZodType<any, any>;
+
+export interface RouteValidator {
+  method: HttpMethod;
+  body?: ZodSchema;
+  query?: ZodSchema;
+  params?: ZodSchema;
+  json?: ZodSchema;
+}
 
 export interface RouteModule {
   GET?: RouteHandler;
@@ -9,6 +20,7 @@ export interface RouteModule {
   PATCH?: RouteHandler;
   DELETE?: RouteHandler;
   middleware?: MiddlewareHandler[];
+  validators?: RouteValidator[];
   config?: RouteConfig;
 }
 
@@ -25,6 +37,7 @@ export interface RegisteredRoute {
   path: string;
   filePath: string;
   hasMiddleware: boolean;
+  hasValidator: boolean;
 }
 
 export interface FileRouterOptions {

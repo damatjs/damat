@@ -2,8 +2,9 @@ import { Hono } from "@damatjs/deps/hono";
 import type { MiddlewareHandler } from "@damatjs/deps/hono";
 import { relative } from "path";
 import { pathToFileURL } from "url";
-import type { RegisteredRoute, RouteModule, CreateFileRouterOptions, FileRouter } from "./types";
+import type { RegisteredRoute, RouteModule, CreateFileRouterOptions, FileRouter, HttpMethod } from "./types";
 import { scanDirectory, sortRoutes } from "./scanner";
+import { createValidatorMiddleware } from "../middleware/validator";
 
 export async function createFileRouter(
   options: CreateFileRouterOptions,
@@ -47,11 +48,20 @@ export async function createFileRouter(
         }
       }
 
-      const methods = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
+      const methods: HttpMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 
       for (const method of methods) {
         const handler = module[method];
         if (handler) {
+          const validator = module.validators?.find(v => v.method === method);
+
+          let hasMethodMiddleware = false;
+
+          if (validator) {
+            const middlewareValidator = createValidatorMiddleware(validator);
+            router.on(method, fullPath, middlewareValidator);
+            hasMethodMiddleware = true
+          }
           router.on(method, fullPath, handler);
 
           const relPath = relative(routesDir, filePath);
@@ -59,12 +69,14 @@ export async function createFileRouter(
             method,
             path: fullPath,
             filePath: relPath,
-            hasMiddleware: routeMiddleware.length > 0,
+            hasMiddleware: routeMiddleware.length > 0 || hasMethodMiddleware,
+            hasValidator: !!validator,
           });
 
           if (debug) {
             logger.info(`Registered route: ${method} ${fullPath}`, {
               file: relPath,
+              hasValidator: !!validator,
             });
           }
         }
