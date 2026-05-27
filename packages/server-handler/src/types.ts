@@ -1,4 +1,4 @@
-import type { ProjectConfig } from "@damatjs/utils-config";
+import { ProjectConfig } from './config';
 
 export type { Logger, ILogger } from "@damatjs/logger";
 

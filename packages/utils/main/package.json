@@ -17,10 +17,6 @@
     "./redis": {
       "types": "./dist/redis/index.d.ts",
       "default": "./dist/redis/index.js"
-    },
-    "./config": {
-      "types": "./dist/config/index.d.ts",
-      "default": "./dist/config/index.js"
     }
   },
   "engines": {
