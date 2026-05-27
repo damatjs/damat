@@ -30,7 +30,8 @@ export async function initializeServices(config: AppConfig): Promise<ServiceInst
       config.services?.database ?? {
         connectionString: config.projectConfig.databaseUrl
       },
-      logger
+      logger,
+      config.projectConfig.nodeEnv ?? "development"
     );
 
     instances.healthChecks!.database = async () => {

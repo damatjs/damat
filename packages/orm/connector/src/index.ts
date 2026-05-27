@@ -70,3 +70,6 @@ export class ConnectionManager {
 
     isInitialized(): boolean { return this.pool !== null && this.isConnectedFlag; }
 }
+
+
+export * from "./tools/config"

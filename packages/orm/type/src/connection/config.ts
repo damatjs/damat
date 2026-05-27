@@ -16,12 +16,6 @@ export interface DbConnectionConfig {
   database: string | DbPoolConfig;
 }
 
-export interface DbPoolStats {
-  totalCount: number;
-  idleCount: number;
-  waitingCount: number;
-}
-
 export type DbPoolConfigWithExtras = DbPoolConfig & {
   allowExitOnIdle?: boolean;
 };
