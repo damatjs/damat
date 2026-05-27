@@ -1,12 +1,14 @@
 import { ConnectionManager } from "@damatjs/orm-connector";
 import { PoolManager } from "@damatjs/services";
-import type { Pool } from "@damatjs/orm-type";
+import type { DbPoolConfigWithExtras, Pool } from "@damatjs/orm-type";
 import type { ILogger } from "@damatjs/logger";
 
 let connectionManager: ConnectionManager | null = null;
 
-export async function initDatabase(dbUrl: string, logger: ILogger): Promise<Pool> {
-  connectionManager = new ConnectionManager({ connectionString: dbUrl });
+export async function initDatabase(dbConfig: DbPoolConfigWithExtras, logger: ILogger): Promise<Pool> {
+  if (!connectionManager) {
+    connectionManager = new ConnectionManager(dbConfig, logger);
+  }
   const pool = await connectionManager.connect();
 
   PoolManager.setup({

@@ -1,8 +1,9 @@
-import { loadConfigAsync } from "./config";
+
 import { initializeServices, getLogger } from "./services";
 import { bootstrap } from "./bootstrap";
 import { startServer } from "./server";
 import { setupShutdownHandlers, registerShutdown } from "./shutdown";
+import { loadConfigAsync } from './config/loader';
 
 export async function start(cwd: string = process.cwd()): Promise<void> {
   const config = await loadConfigAsync(cwd);
@@ -18,7 +19,8 @@ export async function start(cwd: string = process.cwd()): Promise<void> {
     healthCheck,
   });
 
-  setupShutdownHandlers(services.logger);
+  const logger = getLogger();
+  setupShutdownHandlers(logger);
 
   for (const handler of services.shutdownHandlers) {
     registerShutdown(handler);

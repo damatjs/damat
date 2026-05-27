@@ -1,4 +1,5 @@
-import { defineConfig, loadEnv } from "@damatjs/utils";
+import { defineConfig, } from "@damatjs/server-handler";
+import { loadEnv } from '@damatjs/utils';
 
 loadEnv(process.env.NODE_ENV || "development", process.cwd());
 

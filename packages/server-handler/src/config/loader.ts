@@ -1,6 +1,6 @@
 import path from "node:path";
 import fs from "node:fs";
-import type { AppConfig } from "@damatjs/utils-config";
+import { AppConfig } from './types';
 
 const CONFIG_FILE = "damat.config.ts";
 let cachedConfig: AppConfig | null = null;

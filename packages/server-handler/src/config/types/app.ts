@@ -1,4 +1,5 @@
-import { DbPoolConfig } from '@damatjs/orm-type/';
+import type { DbPoolConfig } from '@damatjs/orm-type';
+import type { RedisConfig } from '@damatjs/utils';
 import type { ProjectConfig } from "./project";
 
 export interface ModuleConfig {
@@ -8,13 +9,11 @@ export interface ModuleConfig {
 }
 
 export interface ServicesConfig {
-  redis?: {
-    enabled?: boolean;
-    url?: string;
-  };
+  redis?: RedisConfig;
   database?: DbPoolConfig
   workflowLock?: boolean;
 }
+
 
 export interface AppConfig {
   projectConfig: ProjectConfig;

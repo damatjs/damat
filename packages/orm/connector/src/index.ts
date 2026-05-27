@@ -1,16 +1,16 @@
 import { Pool } from "@damatjs/deps/pg";
 import type { PoolClient, DbPoolConfigWithExtras, ConnectionStatus, PoolStats } from "@damatjs/orm-type";
 import { setupPoolListeners, ConnectionError, performHealthCheck, fetchPoolStats } from "./tools";
-import { Logger } from "@damatjs/logger";
+import { ILogger } from "@damatjs/logger";
 
 export class ConnectionManager {
     private pool: Pool | null = null;
     private config: DbPoolConfigWithExtras;
-    private logger?: Logger | undefined;
+    private logger?: ILogger | undefined;
     private isConnectedFlag: boolean = false;
     private connectionPromise: Promise<Pool> | null = null;
 
-    constructor(config: DbPoolConfigWithExtras, logger?: Logger) {
+    constructor(config: DbPoolConfigWithExtras, logger?: ILogger) {
         this.config = config;
         this.logger = logger;
     }

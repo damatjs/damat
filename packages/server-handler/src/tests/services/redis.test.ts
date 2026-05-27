@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from "bun:test";
-import { initRedisService } from "../../services/redis";
-import type { RedisConfig } from "../../services/redis";
+import { initRedis } from "../../services/redis";
+import { RedisConfig } from '@damatjs/utils';
 
 const createMockLogger = () => ({
-  info: () => {},
-  error: () => {},
-  warn: () => {},
-  debug: () => {},
+  info: () => { },
+  error: () => { },
+  warn: () => { },
+  debug: () => { },
 });
 
 describe("Redis Service", () => {
@@ -16,9 +16,9 @@ describe("Redis Service", () => {
     process.env = { ...originalEnv };
   });
 
-  describe("initRedisService", () => {
+  describe("initRedis", () => {
     it("skips initialization when not enabled", async () => {
-      await initRedisService({ enabled: false }, createMockLogger() as any);
+      await initRedis(undefined, createMockLogger() as any);
     });
 
     it("logs warning when no URL is configured", async () => {
@@ -32,7 +32,7 @@ describe("Redis Service", () => {
         },
       };
 
-      await initRedisService({ enabled: true }, logger as any);
+      await initRedis({ url: process.env.REDIS_URL ?? "" }, logger as any);
       expect(warningCalled).toBe(true);
     });
   });
@@ -40,17 +40,16 @@ describe("Redis Service", () => {
   describe("RedisConfig interface", () => {
     it("accepts valid config", () => {
       const config: RedisConfig = {
-        enabled: true,
         url: "redis://localhost:6379",
       };
-      expect(config.enabled).toBe(true);
+      expect(config.url).toBe("redis://localhost:6379");
     });
 
     it("accepts partial config", () => {
       const config: RedisConfig = {
-        enabled: false,
+        url: "",
       };
-      expect(config.url).toBeUndefined();
+      expect(config.url).toBe("");
     });
   });
 });

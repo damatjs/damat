@@ -1,30 +1,43 @@
-import { initRedis, disconnectRedis, getRedis } from "@damatjs/utils";
-import type { ILogger } from "@damatjs/logger";
+import { Redis, createRedis, RedisConfig } from "@damatjs/utils";
+import { ILogger } from '../types';
+import { getLogger } from './logger';
 
-export interface RedisConfig {
-  enabled?: boolean;
-  url?: string | undefined;
-}
+let globalRedis: Redis | null = null;
 
-export async function initRedisService(config: RedisConfig, logger: ILogger): Promise<void> {
-  if (!config.enabled) {
-    return;
+export function initRedis(config?: RedisConfig, logger?: ILogger): Redis | null {
+  if (!config) {
+    return null;
   }
 
-  const url = config.url || process.env.REDIS_URL;
-  if (!url) {
-    logger.warn("Redis enabled but no URL configured, skipping");
-    return;
+  if (globalRedis) {
+    logger?.warn("Redis already initialized, closing existing connection");
+    globalRedis.quit().catch(() => { });
   }
-
-  initRedis({ url });
-  logger.info("Redis connected", { url });
+  globalRedis = createRedis(config);
+  return globalRedis;
 }
 
-export async function closeRedis(): Promise<void> {
-  await disconnectRedis();
+
+export function getRedis(): Redis {
+  if (!globalRedis) {
+    const logger = getLogger();
+    logger.error("Redis not initialized. Call initRedis() first.")
+    throw new Error("Redis not initialized. Call initRedis() first.");
+  }
+  return globalRedis;
 }
 
-export function getRedisClient() {
-  return getRedis();
+export function hasRedis(): boolean {
+  return globalRedis !== null;
+}
+
+export async function disconnectRedis(): Promise<void> {
+  if (globalRedis) {
+    await globalRedis.quit();
+    globalRedis = null;
+  }
+}
+
+export async function disconnect(client: Redis): Promise<void> {
+  await client.quit();
 }

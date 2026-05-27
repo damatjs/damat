@@ -1,8 +1,8 @@
-import { createLogger, type ILogger, type LoggerConfig } from "@damatjs/logger";
+import { createLogger, ILogger, LogContext, NOOP_LOGGER, type Logger, type LoggerConfig } from "@damatjs/logger";
 
-let globalLogger: ILogger | null = null;
+let globalLogger: Logger | null = null;
 
-export function initLogger(config?: LoggerConfig): ILogger {
+export function initLogger(config?: LoggerConfig): Logger {
   if (globalLogger) {
     return globalLogger;
   }
@@ -17,13 +17,33 @@ export function initLogger(config?: LoggerConfig): ILogger {
   return globalLogger;
 }
 
-export function getLogger(): ILogger {
-  if (!globalLogger) {
-    throw new Error("Logger not initialized. Call initLogger() first.");
-  }
+export function getLogger(): Logger {
+  if (!globalLogger) globalLogger = initLogger();
   return globalLogger;
 }
 
-export function setGlobalLoggerInstance(logger: ILogger): void {
+export function setGlobalLoggerInstance(logger: Logger): void {
   globalLogger = logger;
+}
+
+export function clearGlobalLogger(): void {
+  globalLogger = null;
+}
+
+export function closeLogger(): void {
+  if (globalLogger) {
+    globalLogger.close();
+    globalLogger = null;
+  }
+}
+
+export function isLoggerConfigured(): boolean {
+  return globalLogger !== null;
+}
+
+export function createContextLogger(context: LogContext): ILogger {
+  if (globalLogger) {
+    return globalLogger.child(context);
+  }
+  return NOOP_LOGGER.child(context);
 }

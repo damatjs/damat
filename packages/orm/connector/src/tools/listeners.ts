@@ -1,7 +1,7 @@
 import type { Pool } from "@damatjs/orm-type";
-import type { Logger } from "@damatjs/logger";
+import type { ILogger } from "@damatjs/logger";
 
-export function setupPoolListeners(pool: Pool, logger: Logger): void {
+export function setupPoolListeners(pool: Pool, logger: ILogger): void {
   pool.on("error", (err) => {
     logger.error("PostgreSQL pool error", { error: err.message });
   });
