@@ -32,12 +32,12 @@ Commands:
 }
 
 function getEntryPath() {
-    return join(__dirname, "../../../server-handler/dist/entry.js");
+  return join(__dirname, "../../../framework/dist/entry.js");
 }
 
 async function runDev() {
   const entryPath = getEntryPath();
-  
+
   const result = spawn({
     cmd: ["bun", "run", "--watch", entryPath],
     cwd,
@@ -52,12 +52,12 @@ async function runDev() {
 
 async function runStart() {
   const distPath = join(cwd, "dist", "entry.js");
-  
+
   if (!existsSync(distPath)) {
     console.error("Build not found. Run `damat build` first.");
     process.exit(1);
   }
-  
+
   const result = spawn({
     cmd: ["bun", "run", distPath],
     cwd,

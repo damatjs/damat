@@ -1,1 +1,1 @@
-export { runEntry, start } from "@damatjs/server-handler/entry";
+export { runEntry, start } from "@damatjs/framework/entry";

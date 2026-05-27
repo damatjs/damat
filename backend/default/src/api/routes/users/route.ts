@@ -1,4 +1,4 @@
-import type { RouteHandler } from "../../../../../../packages/server-handler/dist/router";
+import { RouteHandler } from "@damatjs/framework/router";
 
 export const GET: RouteHandler = async (c) => {
   return c.json({

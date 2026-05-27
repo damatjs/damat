@@ -1,6 +1,6 @@
 {
-  "name": "@damatjs/server-handler",
-  "description": "Damatjs server handler with Next.js-style file-based routing",
+  "name": "@damatjs/framework",
+  "description": "Damatjs framework for handling everything",
   "version": "0.0.1",
   "type": "module",
   "main": "dist/index.js",
@@ -63,7 +63,6 @@
     "@damatjs/deps": "*",
     "@damatjs/types": "*",
     "@damatjs/utils": "*",
-    "@damatjs/utils-config": "*",
     "@damatjs/services": "*",
     "@damatjs/orm-connector": "*",
     "@damatjs/orm-type": "*",

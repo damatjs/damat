@@ -1,4 +1,4 @@
-import { defineRoute } from "../../../../../../../packages/server-handler/dist/router";
+import { defineRoute } from "@damatjs/framework/router";
 
 export const GET = defineRoute<{ userId: string }>(async (c, params) => {
   return c.json({

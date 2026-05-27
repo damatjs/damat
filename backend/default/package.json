@@ -27,7 +27,7 @@
     "@damatjs/services": "*",
     "@damatjs/types": "*",
     "@damatjs/utils": "*",
-    "@damatjs/server-handler": "*",
+    "@damatjs/framework": "*",
     "@damatjs/workflow-engine": "*",
     "@damatjs/orm-cli": "*",
     "@damatjs/orm-model": "*",

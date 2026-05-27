@@ -31,7 +31,6 @@
   ],
   "author": "Abel Lamesgen",
   "dependencies": {
-    "@damatjs/utils-config": "*",
     "@damatjs/utils-env": "*",
     "@damatjs/utils-redis": "*"
   },

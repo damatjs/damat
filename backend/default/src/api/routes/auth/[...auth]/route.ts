@@ -1,4 +1,4 @@
-import type { RouteHandler } from "@damatjs/server-handler/router";
+import type { RouteHandler } from "@damatjs/framework/router";
 import { getAuth } from "../../../../utils/auth";
 
 export const POST: RouteHandler = async (c) => {
