@@ -3,7 +3,7 @@ import type { ServiceInstances } from "./types";
 import { initLogger, closeLogger } from "./logger";
 import { initDatabase, closeDatabase, getConnectionManager } from "./database";
 import { AppConfig } from '../config';
-import { disconnectRedis, getRedis, initRedis } from './redis';
+import { disconnectRedis, getRedis, initRedis, connectRedis } from './redis';
 
 export async function initializeServices(config: AppConfig): Promise<ServiceInstances> {
   const logger = initLogger(config.projectConfig.loggerConfig);
@@ -68,6 +68,8 @@ export async function initializeServices(config: AppConfig): Promise<ServiceInst
       url,
       logger
     });
+
+    await connectRedis();
 
     instances.shutdownHandlers.push({
       name: "redis",

@@ -14,8 +14,20 @@ export function initRedis(config?: RedisClientConfig, logger?: ILogger): RedisCl
     config.logger?.warn("Redis already initialized, closing existing connection");
     globalClient.disconnect().catch(() => { });
   }
-  globalClient = new RedisClient(config,);
+  globalClient = new RedisClient(config);
   return globalClient;
+}
+
+export async function connectRedis(): Promise<Redis> {
+  if (!globalClient) {
+    throw new RedisNotInitializedError();
+  }
+
+  if (!globalClient.client)
+    await globalClient.connect();
+
+  await globalClient.client.ping()
+  return globalClient.client;
 }
 
 export function getRedis(): Redis {
