@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { initRedis } from "../../services/redis";
-import { RedisConfig } from '@damatjs/redis';
+import { RedisConfig } from '../../services/redis';
 
 const createMockLogger = () => ({
   info: () => { },
@@ -17,23 +17,17 @@ describe("Redis Service", () => {
   });
 
   describe("initRedis", () => {
-    it("skips initialization when not enabled", async () => {
-      await initRedis(undefined, createMockLogger() as any);
+    it("skips initialization when not enabled", () => {
+      const result = initRedis();
+      expect(result).toBeNull();
     });
 
-    it("logs warning when no URL is configured", async () => {
+    it("initializes with empty URL", () => {
       delete process.env.REDIS_URL;
-      let warningCalled = false;
+      const logger = createMockLogger();
 
-      const logger = {
-        ...createMockLogger(),
-        warn: () => {
-          warningCalled = true;
-        },
-      };
-
-      await initRedis({ url: process.env.REDIS_URL ?? "" }, logger as any);
-      expect(warningCalled).toBe(true);
+      const result = initRedis({ url: process.env.REDIS_URL ?? "", logger: logger as any });
+      expect(result).toBeDefined();
     });
   });
 

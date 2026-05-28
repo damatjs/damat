@@ -64,7 +64,10 @@ export async function initializeServices(config: AppConfig): Promise<ServiceInst
   const redisConfig = config.services?.redis;
   if (config.projectConfig.redisUrl) {
     const url = redisConfig?.url ?? config.projectConfig.redisUrl;
-    await initRedis({ url }, logger);
+    await initRedis({
+      url,
+      logger
+    });
 
     instances.shutdownHandlers.push({
       name: "redis",

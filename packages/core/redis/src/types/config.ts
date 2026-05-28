@@ -1,5 +1,5 @@
 import type { RedisOptions } from "@damatjs/deps/ioredis";
-import { ILogger } from "@damatjs/logger"
+import type { ILogger } from "@damatjs/logger";
 // =============================================================================
 // REDIS CONFIGURATION
 // =============================================================================

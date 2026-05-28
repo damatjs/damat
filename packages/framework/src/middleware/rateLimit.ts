@@ -1,7 +1,6 @@
 import type { MiddlewareHandler } from "@damatjs/deps/hono";
-import { hasRedis, getRedis } from "../services/redis";
+import { hasRedis, getRedis, checkRateLimit } from "../services/redis";
 import { getLogger } from "../services/logger";
-import { checkRateLimit } from "@damatjs/redis";
 import { parseWindowToMs } from "../utils/windowParser";
 import { HttpRateLimitConfig } from '../config';
 
