@@ -1,46 +1,4 @@
-/**
- * Workflow Engine - Configuration
- *
- * Default configurations and retry policy presets.
- */
-
-import type {
-  RetryPolicy,
-  RequiredStepConfig,
-  RequiredWorkflowConfig,
-} from "./types";
-
-// =============================================================================
-// DEFAULT CONFIGURATIONS
-// =============================================================================
-
-/**
- * Default retry policy - no retries
- */
-export const DEFAULT_RETRY_POLICY: RetryPolicy = {
-  maxAttempts: 0,
-  initialDelayMs: 100,
-  maxDelayMs: 5000,
-  backoffMultiplier: 2,
-};
-
-/**
- * Default step configuration
- */
-export const DEFAULT_STEP_CONFIG: RequiredStepConfig = {
-  timeoutMs: 30_000, // 30 seconds
-  retry: DEFAULT_RETRY_POLICY,
-  idempotent: false,
-  description: "",
-};
-
-/**
- * Default workflow configuration
- */
-export const DEFAULT_WORKFLOW_CONFIG: RequiredWorkflowConfig = {
-  timeoutMs: 300_000, // 5 minutes
-  defaultStepConfig: DEFAULT_STEP_CONFIG,
-};
+import type { RetryPolicy } from "../../types";
 
 // =============================================================================
 // RETRY POLICY PRESETS

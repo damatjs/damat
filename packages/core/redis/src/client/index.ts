@@ -11,3 +11,5 @@ export function createRedis(config: RedisConfig): Redis {
 export async function disconnect(client: Redis): Promise<void> {
   await client.quit();
 }
+
+export * from "./factory"
