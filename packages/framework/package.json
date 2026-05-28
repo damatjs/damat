@@ -62,11 +62,12 @@
     "@damatjs/logger": "*",
     "@damatjs/deps": "*",
     "@damatjs/types": "*",
-    "@damatjs/utils": "*",
     "@damatjs/services": "*",
     "@damatjs/orm-connector": "*",
     "@damatjs/orm-type": "*",
     "@damatjs/workflow-engine": "*",
+    "@damatjs/utils": "*",
+    "@damatjs/redis": "*",
     "@hono/node-server": "^1.13.7"
   },
   "devDependencies": {

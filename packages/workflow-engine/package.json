@@ -13,6 +13,7 @@
   "dependencies": {
     "@damatjs/logger": "*",
     "@damatjs/utils": "*",
+    "@damatjs/redis": "*",
     "effect": "^3.12.0",
     "nanoid": "^5.1.6"
   },

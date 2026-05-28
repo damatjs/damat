@@ -1,4 +1,4 @@
-import { Redis, createRedis, RedisConfig } from "@damatjs/utils";
+import { Redis, createRedis, RedisConfig } from "@damatjs/redis";
 import { ILogger } from '../types';
 import { getLogger } from './logger';
 

@@ -1,6 +1,6 @@
 {
-  "name": "@damatjs/utils-redis",
-  "description": "Damatjs utils  redis",
+  "name": "@damatjs/redis",
+  "description": "Damatjs redis",
   "version": "0.0.1",
   "type": "module",
   "main": "dist/index.js",

@@ -5,7 +5,7 @@
  * of workflows with the same lock ID.
  */
 
-import { acquireLock, releaseLock, getRedis } from "@damatjs/utils";
+import { acquireLock, releaseLock, getRedis } from "@damatjs/redis";
 import { nanoid } from "nanoid";
 import type { WorkflowLockConfig, WorkflowLockResult } from "./types";
 import { createContextLogger } from "@damatjs/logger"

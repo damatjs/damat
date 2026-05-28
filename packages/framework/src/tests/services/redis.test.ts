@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { initRedis } from "../../services/redis";
-import { RedisConfig } from '@damatjs/utils';
+import { RedisConfig } from '@damatjs/redis';
 
 const createMockLogger = () => ({
   info: () => { },

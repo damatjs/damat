@@ -98,6 +98,18 @@
         "typescript": "5.9.2",
       },
     },
+    "packages/core/redis": {
+      "name": "@damatjs/redis",
+      "version": "0.0.1",
+      "dependencies": {
+        "@damatjs/deps": "*",
+      },
+      "devDependencies": {
+        "@damatjs/typescript-config": "*",
+        "@types/bun": "1.3.9",
+        "typescript": "^5.9.3",
+      },
+    },
     "packages/core/types": {
       "name": "@damatjs/types",
       "version": "0.0.1",
@@ -145,8 +157,8 @@
         "@damatjs/deps": "*",
         "@damatjs/logger": "*",
         "@damatjs/orm-connector": "*",
-        "@damatjs/orm-pg": "*",
         "@damatjs/orm-type": "*",
+        "@damatjs/redis": "*",
         "@damatjs/services": "*",
         "@damatjs/types": "*",
         "@damatjs/utils": "*",
@@ -359,19 +371,6 @@
       "version": "0.0.1",
       "dependencies": {
         "@damatjs/utils-env": "*",
-        "@damatjs/utils-redis": "*",
-      },
-      "devDependencies": {
-        "@damatjs/typescript-config": "*",
-        "@types/bun": "1.3.9",
-        "typescript": "^5.9.3",
-      },
-    },
-    "packages/utils/redis": {
-      "name": "@damatjs/utils-redis",
-      "version": "0.0.1",
-      "dependencies": {
-        "@damatjs/deps": "*",
       },
       "devDependencies": {
         "@damatjs/typescript-config": "*",
@@ -384,6 +383,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@damatjs/logger": "*",
+        "@damatjs/redis": "*",
         "@damatjs/utils": "*",
         "effect": "^3.12.0",
         "nanoid": "^5.1.6",
@@ -466,6 +466,8 @@
 
     "@damatjs/orm-type": ["@damatjs/orm-type@workspace:packages/orm/type"],
 
+    "@damatjs/redis": ["@damatjs/redis@workspace:packages/core/redis"],
+
     "@damatjs/services": ["@damatjs/services@workspace:packages/service"],
 
     "@damatjs/types": ["@damatjs/types@workspace:packages/core/types"],
@@ -475,8 +477,6 @@
     "@damatjs/utils": ["@damatjs/utils@workspace:packages/utils/main"],
 
     "@damatjs/utils-env": ["@damatjs/utils-env@workspace:packages/utils/env"],
-
-    "@damatjs/utils-redis": ["@damatjs/utils-redis@workspace:packages/utils/redis"],
 
     "@damatjs/workflow-engine": ["@damatjs/workflow-engine@workspace:packages/workflow-engine"],
 
@@ -1614,13 +1614,13 @@
 
     "@damatjs/orm-processor/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
+    "@damatjs/redis/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
     "@damatjs/services/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@damatjs/utils/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@damatjs/utils-env/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
-
-    "@damatjs/utils-redis/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@damatjs/workflow-engine/nanoid": ["nanoid@5.1.11", "", { "bin": { "nanoid": "bin/nanoid.js" } }, "sha512-v+KEsUv2ps74PaSKv0gHTxTCgMXOIfBEbaqa6w6ISIGC7ZsvHN4N9oJ8d4cmf0n5oTzQz2SLmThbQWhjd/8eKg=="],
 
