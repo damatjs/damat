@@ -1,9 +1,7 @@
 export type LogLevel = "debug" | "info" | "success" | "warn" | "error" | "fatal" | "skip";
 export type LogFormat = "json" | "pretty" | "simple";
 
-export interface LogContext {
-  [key: string]: unknown;
-}
+export type LogContext = Record<string, unknown>;
 
 export interface RequestLogData {
   requestId: string;

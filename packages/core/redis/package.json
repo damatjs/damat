@@ -23,7 +23,8 @@
   ],
   "author": "Abel Lamesgen",
   "dependencies": {
-    "@damatjs/deps": "*"
+    "@damatjs/deps": "*",
+    "@damatjs/logger": "*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "*",

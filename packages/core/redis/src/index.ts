@@ -1,7 +1,16 @@
 // Types
 export * from "./types";
 
-// Client & Singleton
+// Errors
+export * from "./errors";
+
+// Redis Client Class
+export * from "./RedisClient";
+
+// Singleton Management
+export * from "./singleton";
+
+// Legacy Client Creation (for backward compatibility)
 export * from "./client";
 
 // Cache
@@ -14,7 +23,7 @@ export * from "./rateLimit";
 export * from "./session";
 
 // Session Manager (auto-keep-alive)
-export * from "./sessionManager";
+export * from "./session/manager";
 
 // Distributed Locks
 export * from "./lock";

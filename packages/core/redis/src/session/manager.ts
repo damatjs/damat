@@ -1,6 +1,6 @@
-import { getRedis } from "./client";
-import { getSession, setSession, deleteSession, extendSession } from "./session";
-import type { Redis } from "./types";
+import { getRedis } from "../singleton";
+import { getSession, setSession, deleteSession, extendSession } from ".";
+import type { Redis } from "../types";
 
 export interface SessionManagerOptions {
   defaultTtlSeconds: number;

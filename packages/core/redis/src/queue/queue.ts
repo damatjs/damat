@@ -1,41 +1,7 @@
-/**
- * Redis Module - Job Queue
- *
- * Redis-backed job queue for production use.
- */
-
-import { getRedis } from "./client";
+import { getRedis } from "../singleton";
 import { Redis } from "@damatjs/deps/ioredis";
-
-const PRIORITY_SCORES: Record<string, number> = {
-  critical: 4,
-  high: 3,
-  normal: 2,
-  low: 1,
-};
-
-export interface QueueJob<TData = unknown> {
-  id: string;
-  queue: string;
-  data: TData;
-  status: "pending" | "processing" | "completed" | "failed" | "retrying";
-  priority: "low" | "normal" | "high" | "critical";
-  attempts: number;
-  maxAttempts: number;
-  createdAt: Date;
-  startedAt?: Date;
-  completedAt?: Date;
-  error?: string;
-  delay?: number;
-  metadata?: Record<string, unknown>;
-}
-
-export interface QueueStats {
-  pending: number;
-  processing: number;
-  completed: number;
-  failed: number;
-}
+import { PRIORITY_SCORES } from "./constant";
+import { QueueJob, QueueStats } from "./types";
 
 export class RedisQueue<TData = unknown> {
   private readonly keyPrefix: string;

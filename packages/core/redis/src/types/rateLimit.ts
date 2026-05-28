@@ -1,27 +1,3 @@
-/**
- * Redis Module - Type Definitions
- */
-
-import type { RedisOptions } from "@damatjs/deps/ioredis";
-
-// =============================================================================
-// REDIS CONFIGURATION
-// =============================================================================
-
-/**
- * Configuration for creating a Redis client
- */
-export interface RedisConfig {
-  /** Redis connection URL (e.g., redis://localhost:6379) */
-  url: string;
-  /** Maximum retries per request (default: 3) */
-  maxRetriesPerRequest?: number;
-  /** Whether to use lazy connect (default: true) */
-  lazyConnect?: boolean;
-  /** Additional Redis options */
-  options?: Partial<RedisOptions>;
-}
-
 // =============================================================================
 // RATE LIMITING
 // =============================================================================
@@ -57,9 +33,3 @@ export interface MultiRateLimitResult extends RateLimitResult {
   /** Which window triggered the limit (minute, hour, day) */
   limitedBy?: string;
 }
-
-// =============================================================================
-// RE-EXPORT REDIS TYPE
-// =============================================================================
-
-export type { Redis } from "@damatjs/deps/ioredis";

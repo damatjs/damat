@@ -2,8 +2,8 @@
 import type { ServiceInstances } from "./types";
 import { initLogger, closeLogger } from "./logger";
 import { initDatabase, closeDatabase, getConnectionManager } from "./database";
-import { initRedis, disconnectRedis, getRedis } from "./redis";
 import { AppConfig } from '../config';
+import { disconnectRedis, getRedis, initRedis } from './redis';
 
 export async function initializeServices(config: AppConfig): Promise<ServiceInstances> {
   const logger = initLogger(config.projectConfig.loggerConfig);

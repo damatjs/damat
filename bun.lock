@@ -103,6 +103,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@damatjs/deps": "*",
+        "@damatjs/logger": "*",
       },
       "devDependencies": {
         "@damatjs/typescript-config": "*",
