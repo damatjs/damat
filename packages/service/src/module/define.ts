@@ -1,33 +1,15 @@
-import { z } from "@damatjs/deps/zod";
 import { ModuleDefinition, ModuleInstance } from "./type";
 
-
-export function defineModule<
-  TService extends object,
-  TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>
->(
+export function defineModule<TService extends object>(
   name: string,
-  definition: ModuleDefinition<TService, TSchema>
-): ModuleInstance<TService, TSchema> {
+  definition: ModuleDefinition<TService>
+): ModuleInstance<TService> {
   let instance: TService | null = null;
 
-  const parseCredentials = (): z.infer<TSchema> => {
-    const raw = definition.credentials.load(process.env);
-    const result = definition.credentials.schema.safeParse(raw);
-    if (!result.success) {
-      const errors = result.error.issues
-        .map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`)
-        .join("\n");
-      throw new Error(`Module "${name}" credentials validation failed:\n${errors}`);
-    }
-    return result.data;
-  };
-
-  let parsedCreds: z.infer<TSchema> = parseCredentials();
+  const parseCredentials = definition.credentials(process.env);
 
   const init = () => {
-    parsedCreds = parseCredentials();
-    instance = new definition.service(parsedCreds);
+    instance = new definition.service(parseCredentials);
   };
 
   const getService = (): TService => {
@@ -52,7 +34,7 @@ export function defineModule<
   return {
     name,
     service: proxy,
-    credentials: parsedCreds,
+    credentials: parseCredentials,
     init,
   };
 }

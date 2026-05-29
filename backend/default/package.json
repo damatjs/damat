@@ -34,6 +34,7 @@
     "@damatjs/orm-processor": "*",
     "@damatjs/orm-pg": "*",
     "bcryptjs": "^2.4.3",
+    "effect": "^3.0.0",
     "jose": "^5.2.0",
     "sharp": "^0.34.5",
     "stripe": "^14.14.0"

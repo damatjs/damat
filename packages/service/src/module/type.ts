@@ -7,20 +7,14 @@ export interface ModuleCredentials<
     load: (env: NodeJS.ProcessEnv) => z.infer<TSchema>;
 }
 
-export interface ModuleDefinition<
-    TService,
-    TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>
-> {
-    service: new (credentials: z.infer<TSchema>) => TService;
-    credentials: ModuleCredentials<TSchema>;
+export interface ModuleDefinition<TService> {
+    service: new (credentials: any) => TService;
+    credentials: (env: NodeJS.ProcessEnv) => any
 }
 
-export interface ModuleInstance<
-    TService,
-    TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>
-> {
+export interface ModuleInstance<TService> {
     readonly name: string;
     readonly service: TService;
-    readonly credentials: z.infer<TSchema>;
+    readonly credentials: unknown;
     init(): void;
 }

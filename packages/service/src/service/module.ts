@@ -8,19 +8,24 @@ import { toCamelCase } from "@/util/string";
 
 export function ModuleService<
   TModels extends ModelsMap,
-  TSchema extends z.ZodObject<z.ZodRawShape> | undefined = undefined,
->(config: ModuleServiceConfig<TModels, TSchema>) {
+  TCredentialsSchema extends z.ZodObject<z.ZodRawShape> | undefined = undefined,
+>(config: ModuleServiceConfig<TModels, TCredentialsSchema>) {
   const { models } = config;
 
   const modelMethodsMap = new Map<string, ModelMethods<any>>();
 
   abstract class GeneratedModuleService {
-    credentials: TSchema extends z.ZodObject<z.ZodRawShape> ? z.infer<TSchema> : undefined;
+    credentials?: TCredentialsSchema extends z.ZodTypeAny
+      ? z.infer<TCredentialsSchema>
+      : undefined;
     inTransaction: boolean = false;
     models: ModelDefinition[] = [];
 
-    constructor(credentials?: TSchema extends z.ZodObject<z.ZodRawShape> ? z.infer<TSchema> : undefined) {
-      this.credentials = credentials as any;
+    constructor(passedCredentials?: unknown) {
+      if (config.credentialsSchema) {
+        const result = config.credentialsSchema.parse(passedCredentials);
+        this.credentials = result as any;
+      }
 
       this.models = Object.values(models);
 
@@ -107,6 +112,6 @@ export function ModuleService<
   }
 
   return GeneratedModuleService as abstract new (
-    credentials?: TSchema extends z.ZodObject<z.ZodRawShape> ? z.infer<TSchema> : undefined
+    credentials?: TCredentialsSchema extends z.ZodObject<z.ZodRawShape> ? z.infer<TCredentialsSchema> : undefined
   ) => GeneratedModuleService & ModelAccessors;
 }

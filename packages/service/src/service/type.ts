@@ -48,10 +48,10 @@ export interface ExistsOptions {
 
 export interface ModuleServiceConfig<
     TModels extends ModelsMap = ModelsMap,
-    TSchema extends z.ZodObject<z.ZodRawShape> | undefined = undefined,
+    TCredentialsSchema extends z.ZodObject<z.ZodRawShape> | undefined = undefined,
 > {
     models: TModels;
-    credentialsSchema?: TSchema;
+    credentialsSchema?: TCredentialsSchema;
 }
 
 export type ToCamelCase<S extends string> = S extends `${infer First}${infer Rest}`

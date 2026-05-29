@@ -1,4 +1,4 @@
-import { defineModule } from "@damatjs/services";
+import { defineModule } from "@damatjs/framework";
 import { UserModuleService, models } from "./service";
 import credentials from "./config";
 
@@ -8,5 +8,5 @@ export { UserModuleService, models };
 
 export default defineModule(USER_MODULE, {
   service: UserModuleService,
-  credentials,
+  credentials: credentials.load
 });

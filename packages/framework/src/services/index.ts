@@ -115,3 +115,4 @@ export type { ServiceInstances } from "./types";
 export * from "./logger";
 export * from "./database";
 export * from "./redis";
+export * from "./moduleService";
