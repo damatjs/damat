@@ -1,4 +1,5 @@
 import type { HealthCheckFn } from "../types";
+import type { ModuleInstance } from "@damatjs/services";
 
 export interface ServiceInstances {
   healthChecks?: {
@@ -6,4 +7,5 @@ export interface ServiceInstances {
     redis?: HealthCheckFn;
   } | undefined;
   shutdownHandlers: Array<{ name: string; handler: () => Promise<void> }>;
+  modules?: Map<string, ModuleInstance<any>>;
 }

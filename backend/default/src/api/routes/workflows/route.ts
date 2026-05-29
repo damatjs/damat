@@ -1,6 +1,6 @@
 import { RouteHandler, RouteValidator } from "@damatjs/framework/router";
-import { userOnboardingWorkflow } from "../../../workflows";
-import { UserOnboardingInputSchema } from "../../../workflows/user-onboarding/types";
+import { userOnboardingWorkflow } from "@/workflows";
+import { UserOnboardingInputSchema } from "@/modules/user/types/user";
 
 export const POST: RouteHandler = async (c) => {
   try {

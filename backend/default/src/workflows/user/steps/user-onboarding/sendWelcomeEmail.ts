@@ -1,5 +1,5 @@
 import { createStep } from "@damatjs/workflow-engine";
-import type { UserProfile, WelcomeEmailResult } from "../types";
+import type { UserProfile, WelcomeEmailResult } from "@/modules/user/types/user";
 
 export const sendWelcomeEmailStep = createStep<UserProfile, WelcomeEmailResult>(
   "send-welcome-email",

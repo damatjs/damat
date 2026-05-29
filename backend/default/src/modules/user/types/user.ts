@@ -13,7 +13,7 @@ export interface UserProfile {
   id: string;
   email: string;
   name: string;
-  createdAt: Date;
+  created_at: Date;
 }
 
 export interface WelcomeEmailResult {

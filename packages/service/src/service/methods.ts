@@ -1,6 +1,5 @@
-import { PoolManager } from "@/manager/pool";
 import { ModelDefinition } from "@damatjs/orm-model";
-import { TransactionalEntityManager, PgRepository } from "@damatjs/orm-pg";
+import { TransactionalEntityManager, PgRepository, PgEntityManager } from "@damatjs/orm-pg";
 import { QueryResultRow } from "@damatjs/orm-type";
 import { CountOptions, CreateManyOptions, CreateOptions, DeleteOptions, ExistsOptions, FindOptions, SoftDeleteOptions, UpdateOptions } from "./type";
 
@@ -8,20 +7,22 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
     private model: ModelDefinition;
     private modelName: string;
     private transactionalEm: TransactionalEntityManager | null = null;
+    private entityManager?: PgEntityManager<Record<string, ModelDefinition>>
 
-    constructor(model: ModelDefinition, modelName: string) {
+    constructor(model: ModelDefinition, modelName: string, em: PgEntityManager<Record<string, ModelDefinition>>) {
         this.model = model;
         this.modelName = modelName;
+        this.entityManager = em
     }
 
     private getRepository(): PgRepository<T> {
-        const em = PoolManager.getPgEntityManager();
+        if (!this.entityManager) throw new Error("")
 
         if (this.transactionalEm) {
             return this.transactionalEm.getRepository<T>(this.modelName);
         }
 
-        return em.getRepository<T>(this.modelName);
+        return this.entityManager.getRepository<T>(this.modelName);
     }
 
     setTransactionalEm(txEm: TransactionalEntityManager | null): void {

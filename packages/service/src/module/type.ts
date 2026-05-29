@@ -18,3 +18,7 @@ export interface ModuleInstance<TService> {
     readonly credentials: unknown;
     init(): void;
 }
+
+export interface ModuleRegistry {
+    // Projects extend this interface via declaration merging
+}

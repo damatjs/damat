@@ -1,5 +1,5 @@
 import { createStep } from "@damatjs/workflow-engine";
-import type { UserProfile, UserSettings } from "../types";
+import type { UserProfile, UserSettings } from "@/modules/user/types/user";
 
 export const setupDefaultsStep = createStep<
   { user: UserProfile; emailSent: boolean },

@@ -4,12 +4,16 @@ export function defineModule<TService extends object>(
   name: string,
   definition: ModuleDefinition<TService>
 ): ModuleInstance<TService> {
+
   let instance: TService | null = null;
 
   const parseCredentials = definition.credentials(process.env);
 
   const init = () => {
     instance = new definition.service(parseCredentials);
+    console.log("instance setup", name)
+
+    return instance;
   };
 
   const getService = (): TService => {

@@ -33,11 +33,12 @@ export function ModuleService<
         throw new Error("PoolManager not initialized. Call PoolManager.setup(pool) before creating service instances.");
       }
 
-      const em = PoolManager.getPgEntityManager();
+
+      const entityManager = PoolManager.getPgEntityManager();
 
       for (const [modelName, model] of Object.entries(models)) {
-        em.registerModel(modelName, model as ModelDefinition);
-        const methods = new ModelMethods(model as ModelDefinition, modelName);
+        entityManager.registerModel(modelName, model as ModelDefinition);
+        const methods = new ModelMethods(model as ModelDefinition, modelName, entityManager);
         modelMethodsMap.set(modelName, methods);
       }
     }
@@ -102,8 +103,11 @@ export function ModuleService<
         if (existingMethods) {
           return existingMethods;
         }
-        const newMethods = new ModelMethods(model, modelName);
+
+        const entityManager = PoolManager.getPgEntityManager();
+        const newMethods = new ModelMethods(model, modelName, entityManager);
         modelMethodsMap.set(modelName, newMethods);
+
         return newMethods;
       },
       enumerable: true,

@@ -4,8 +4,9 @@ import { initLogger, closeLogger } from "./logger";
 import { initDatabase, closeDatabase, getConnectionManager } from "./database";
 import { AppConfig } from '../config';
 import { disconnectRedis, getRedis, initRedis, connectRedis } from './redis';
+import { initModules, getAllModules } from "./moduleService";
 
-export async function initializeServices(config: AppConfig): Promise<ServiceInstances> {
+export async function initializeServices(config: AppConfig, cwd: string = process.cwd()): Promise<ServiceInstances> {
   const logger = initLogger(config.projectConfig.loggerConfig);
 
   const instances: ServiceInstances = {
@@ -78,6 +79,11 @@ export async function initializeServices(config: AppConfig): Promise<ServiceInst
         logger.info("Redis connection closed");
       },
     });
+  }
+
+  if (config.modules?.length) {
+    await initModules(config.modules, cwd);
+    instances.modules = getAllModules();
   }
 
   instances.shutdownHandlers.push({
