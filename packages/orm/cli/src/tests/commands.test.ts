@@ -1,38 +1,5 @@
-import { describe, it, expect, beforeEach } from "bun:test";
-import { registerAllCommands, generateCommand, migrateCommand } from "../cli/commands/index";
-import { getCommand, getAllCommands, getRegistry } from "../cli/registry";
-
-describe("registerAllCommands", () => {
-  beforeEach(() => {
-    const registry = getRegistry();
-    for (const cmd of registry.getAll()) {
-      try {
-        (registry as any).commands.delete(cmd.name);
-      } catch {}
-    }
-  });
-
-  it("registers all commands", () => {
-    registerAllCommands();
-
-    const allCommands = getAllCommands();
-    expect(allCommands.length).toBeGreaterThanOrEqual(2);
-  });
-
-  it("registers generate command", () => {
-    registerAllCommands();
-    const cmd = getCommand("generate");
-    expect(cmd).toBeDefined();
-    expect(cmd?.name).toBe("generate");
-  });
-
-  it("registers migrate command", () => {
-    registerAllCommands();
-    const cmd = getCommand("migrate");
-    expect(cmd).toBeDefined();
-    expect(cmd?.name).toBe("migrate");
-  });
-});
+import { describe, it, expect } from "bun:test";
+import { generateCommand, migrateCommand } from "../cli/commands/index";
 
 describe("command exports", () => {
   it("generateCommand has correct structure", () => {

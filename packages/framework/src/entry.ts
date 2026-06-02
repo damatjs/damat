@@ -41,5 +41,3 @@ export async function runEntry(): Promise<void> {
     process.exit(1);
   }
 }
-
-runEntry();

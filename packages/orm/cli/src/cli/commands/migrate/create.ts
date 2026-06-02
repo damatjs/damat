@@ -1,26 +1,23 @@
-import fs from "node:fs";
-import type { Command, CommandContext, CommandResult } from "../../types";
-import { createInitialMigration, createDiffMigration } from "@damatjs/orm-migration";
-import { snapshotExist } from "@damatjs/orm-processor";
-import { resolveMigrationsPath, resolveModelsPath } from "../../utils/paths";
+import type { Command } from "@damatjs/cli";
 
 const migrateCreate: Command = {
   name: "migrate:create",
   description: "Create a new migration for a module",
-  handler: async (ctx: CommandContext): Promise<CommandResult> => {
-    const [moduleName] = ctx.args;
-    const { config } = ctx.options;
+  handler: async (ctx) => {
+    const fs = await import("node:fs");
+    const { createInitialMigration, createDiffMigration } = await import("@damatjs/orm-migration");
+    const { snapshotExist } = await import("@damatjs/orm-processor");
+    const { resolveMigrationsPath, resolveModelsPath } = await import("../../utils/paths/index.js");
+
+    const moduleName = ctx.args[0];
+    const config = ctx.options.config as Record<string, { resolve: string }> | undefined;
 
     if (!moduleName) {
       ctx.logger.error("Module name is required");
-      console.log("");
-      console.log("Usage: damat-orm migrate:create <module>");
       return { exitCode: 1 };
     }
-    if (!config) {
-      ctx.logger.error("config is required to be setup");
-      console.log("");
-      console.log("Usage: damat-orm migrate:create <module>");
+    if (!config || Object.keys(config).length === 0) {
+      ctx.logger.error("Config is required. Make sure damat.config.ts exists.");
       return { exitCode: 1 };
     }
 
@@ -30,42 +27,38 @@ const migrateCreate: Command = {
       return { exitCode: 1 };
     }
 
-    const resolvedModelsDir = resolveModelsPath(config ?? {}, module.resolve);
-
+    const resolvedModelsDir = resolveModelsPath(config, module.resolve);
     if (!fs.existsSync(resolvedModelsDir)) {
       ctx.logger.error(`Models directory not found: ${resolvedModelsDir}`);
       return { exitCode: 1 };
     }
 
-
-    const resolvedMigrationsDir = resolveMigrationsPath(
-      module.resolve
-    );
-
+    const resolvedMigrationsDir = resolveMigrationsPath(module.resolve);
 
     try {
       const isInitial = !snapshotExist(resolvedMigrationsDir);
 
       if (isInitial) {
-        console.log("");
         ctx.logger.info(`Creating initial migration for module '${moduleName}'...`);
-        console.log("");
         const filePath = await createInitialMigration(moduleName, resolvedModelsDir);
-        printSuccess(ctx, filePath);
+        ctx.logger.success("Migration created");
+        console.log(`  File: ${filePath}`);
       } else {
-        console.log("");
         ctx.logger.info(`Creating diff migration for module '${moduleName}'...`);
-        console.log("");
         const result = await createDiffMigration(moduleName, resolvedModelsDir);
 
         if (!result.hasChanges) {
           ctx.logger.skip("No changes detected.");
-          console.log("The current models match the schema snapshot. No migration created.");
-          console.log("");
           return { exitCode: 0 };
         }
 
-        printSuccess(ctx, result.filePath ?? "unknown", result.warnings);
+        ctx.logger.success("Migration created");
+        console.log(`  File: ${result.filePath}`);
+        if (result.warnings) {
+          for (const w of result.warnings) {
+            ctx.logger.warn(w);
+          }
+        }
       }
 
       return { exitCode: 0 };
@@ -75,21 +68,5 @@ const migrateCreate: Command = {
     }
   },
 };
-
-function printSuccess(ctx: CommandContext, filePath: string, warnings: string[] = []): void {
-  ctx.logger.success("Migration created");
-  console.log("");
-  console.log("Next steps:");
-  console.log(`  1. Review the migration file: ${filePath}`);
-  console.log("  2. Run migrations: damat-orm migrate:up");
-  console.log("");
-
-  if (warnings.length > 0) {
-    for (const warning of warnings) {
-      ctx.logger.warn(warning);
-    }
-    console.log("");
-  }
-}
 
 export default migrateCreate;

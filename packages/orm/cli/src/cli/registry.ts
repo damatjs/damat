@@ -1,6 +1,6 @@
-import type { Command, CommandRegistry as ICommandRegistry } from "./types";
+import type { Command, CommandRegistry } from "@damatjs/cli";
 
-class CommandRegistryImpl implements ICommandRegistry {
+class CommandRegistryImpl implements CommandRegistry {
   private commands: Map<string, Command> = new Map();
 
   register(command: Command): void {
@@ -25,7 +25,7 @@ class CommandRegistryImpl implements ICommandRegistry {
 
 let registryInstance: CommandRegistryImpl | null = null;
 
-export function getRegistry(): ICommandRegistry {
+export function getRegistry(): CommandRegistry {
   if (!registryInstance) {
     registryInstance = new CommandRegistryImpl();
   }

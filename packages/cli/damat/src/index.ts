@@ -1,1 +1,1 @@
-export { runEntry, start } from "@damatjs/framework/entry";
+export { runCli, type Command, type CommandContext, type CommandResult, type CommandOption } from "@damatjs/cli";

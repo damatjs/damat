@@ -1,90 +1,126 @@
 #!/usr/bin/env bun
 import { spawn } from "bun";
-import { join, dirname } from "node:path";
-import { existsSync, mkdirSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { existsSync, mkdirSync, writeFileSync, unlinkSync } from "node:fs";
+import { runCli, type Command } from "@damatjs/cli";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const devCommand: Command = {
+  name: "dev",
+  description: "Start development server with hot reload",
+  aliases: ["d"],
+  options: [
+    {
+      name: "port",
+      alias: "p",
+      type: "number",
+      description: "Port to run the server on",
+      default: 3000,
+    },
+  ],
+  handler: async (ctx) => {
+    const port = ctx.options.port as number;
 
-const cmd = process.argv[2];
-const cwd = process.cwd();
+    const result = spawn({
+      cmd: ["bun", "run", "--watch", "-e", `import('@damatjs/framework/entry').then(m => m.runEntry())`],
+      cwd: ctx.cwd,
+      stdout: "inherit",
+      stderr: "inherit",
+      env: { ...process.env, NODE_ENV: "development", PORT: String(port) },
+    });
 
-switch (cmd) {
-  case "dev":
-    runDev();
-    break;
-  case "start":
-    runStart();
-    break;
-  case "build":
-    runBuild();
-    break;
-  default:
-    console.log(`Usage: damat <command>
+    const exitCode = await result.exited;
+    return { exitCode };
+  },
+};
 
-Commands:
-  dev     Start development server with hot reload
-  start   Start production server
-  build   Build for production
-`);
-    process.exit(1);
-}
+const startCommand: Command = {
+  name: "start",
+  description: "Start production server",
+  aliases: ["s"],
+  handler: async (ctx) => {
+    const distPath = join(ctx.cwd, "dist", "entry.js");
 
-function getEntryPath() {
-  return join(__dirname, "../../../framework/dist/entry.js");
-}
+    if (!existsSync(distPath)) {
+      ctx.logger.error("Build not found. Run `damat build` first.");
+      return { exitCode: 1 };
+    }
 
-async function runDev() {
-  const entryPath = getEntryPath();
+    const result = spawn({
+      cmd: ["bun", "run", distPath],
+      cwd: ctx.cwd,
+      stdout: "inherit",
+      stderr: "inherit",
+      env: { ...process.env, NODE_ENV: "production" },
+    });
 
-  const result = spawn({
-    cmd: ["bun", "run", "--watch", entryPath],
-    cwd,
-    stdout: "inherit",
-    stderr: "inherit",
-    env: { ...process.env, NODE_ENV: "development" },
-  });
+    const exitCode = await result.exited;
+    return { exitCode };
+  },
+};
 
-  const exitCode = await result.exited;
-  process.exit(exitCode);
-}
+const buildCommand: Command = {
+  name: "build",
+  description: "Build for production",
+  aliases: ["b"],
+  options: [
+    {
+      name: "output",
+      alias: "o",
+      type: "string",
+      description: "Output directory",
+      default: "dist",
+    },
+    {
+      name: "target",
+      alias: "t",
+      type: "string",
+      description: "Build target (bun or node)",
+      default: "bun",
+    },
+  ],
+  handler: async (ctx) => {
+    const outputDir = join(ctx.cwd, ctx.options.output as string);
+    const target = ctx.options.target as string;
+    const tempEntryPath = join(ctx.cwd, ".damat-entry.tmp.ts");
+    const entryJsPath = join(outputDir, "entry.js");
 
-async function runStart() {
-  const distPath = join(cwd, "dist", "entry.js");
+    if (!existsSync(outputDir)) {
+      mkdirSync(outputDir, { recursive: true });
+    }
 
-  if (!existsSync(distPath)) {
-    console.error("Build not found. Run `damat build` first.");
-    process.exit(1);
-  }
+    const entryContent = `import { runEntry } from "@damatjs/framework/entry";\nrunEntry();\n`;
+    writeFileSync(tempEntryPath, entryContent);
 
-  const result = spawn({
-    cmd: ["bun", "run", distPath],
-    cwd,
-    stdout: "inherit",
-    stderr: "inherit",
-    env: { ...process.env, NODE_ENV: "production" },
-  });
+    const result = spawn({
+      cmd: [
+        "bun", "build", tempEntryPath,
+        "--outfile", entryJsPath,
+        "--target", target,
+        "--packages", "external",
+      ],
+      cwd: ctx.cwd,
+      stdout: "inherit",
+      stderr: "inherit",
+    });
 
-  const exitCode = await result.exited;
-  process.exit(exitCode);
-}
+    const exitCode = await result.exited;
+    
+    try {
+      unlinkSync(tempEntryPath);
+    } catch {}
+    
+    return { exitCode };
+  },
+};
 
-async function runBuild() {
-  const entryPath = getEntryPath();
-  const distDir = join(cwd, "dist");
-
-  if (!existsSync(distDir)) {
-    mkdirSync(distDir, { recursive: true });
-  }
-
-  const result = spawn({
-    cmd: ["bun", "build", entryPath, "--outdir", distDir, "--target", "bun"],
-    cwd,
-    stdout: "inherit",
-    stderr: "inherit",
-  });
-
-  const exitCode = await result.exited;
-  process.exit(exitCode);
-}
+runCli({
+  name: "damat",
+  version: "0.0.1",
+  description: "Damat CLI - Development and build tool for Damat.js",
+  commands: [devCommand, startCommand, buildCommand],
+  banner: {
+    title: "Damat CLI",
+    subtitle: "Development and build tool for Damat.js",
+    style: "boxed",
+  },
+});

@@ -1,17 +1,16 @@
-import type { Command, CommandContext, CommandResult } from "../../types";
-import { discoverAllMigrations } from "@damatjs/orm-migration";
+import type { Command } from "@damatjs/cli";
 
 const migrateList: Command = {
   name: "migrate:list",
   description: "List all modules with migrations",
-  handler: async (ctx: CommandContext): Promise<CommandResult> => {
-    const { config } = ctx.options;
+  handler: async (ctx) => {
+    const { discoverAllMigrations } = await import("@damatjs/orm-migration");
 
-    console.log("");
+    const config = ctx.options.config as Record<string, { resolve: string }> | undefined;
+
     ctx.logger.info("Modules with migrations:");
-    console.log("");
 
-    const allMigrations = discoverAllMigrations(Object.values(config ?? {}).map(m => m.resolve));
+    const allMigrations = discoverAllMigrations(Object.values(config ?? {}).map((m) => m.resolve));
     const moduleMap = new Map<string, number>();
 
     for (const m of allMigrations) {
@@ -26,7 +25,6 @@ const migrateList: Command = {
       }
     }
 
-    console.log("");
     return { exitCode: 0 };
   },
 };

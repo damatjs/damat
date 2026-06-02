@@ -1,19 +1,20 @@
-import type { Command } from "../types";
-import generateCommand, { generateTypesCommand } from "./generate";
+import type { Command } from "@damatjs/cli";
+import generateCommand, { generateTypes } from "./generate";
 import migrateCommand, { migrateUp, migrateStatus, migrateList, migrateCreate } from "./migrate";
 
-const allCommands: Command[] = [generateCommand, migrateCommand];
-
-export function registerAllCommands(): void {
-  const { registerCommand } = require("../registry");
-  for (const cmd of allCommands) {
-    registerCommand(cmd);
-  }
-}
+const allCommands: Command[] = [
+  generateCommand,
+  generateTypes,
+  migrateCommand,
+  migrateUp,
+  migrateStatus,
+  migrateList,
+  migrateCreate,
+];
 
 export {
   generateCommand,
-  generateTypesCommand,
+  generateTypes,
   migrateCommand,
   migrateUp,
   migrateStatus,

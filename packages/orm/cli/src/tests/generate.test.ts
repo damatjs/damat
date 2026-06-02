@@ -1,7 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import generateCommand from "../cli/commands/generate/index";
 import generateTypesCmd from "../cli/commands/generate/types";
-import type { CommandContext } from "../cli/types";
+import type { CommandContext } from "@damatjs/cli";
 
 function createMockLogger() {
   return {
@@ -15,6 +15,7 @@ function createMockLogger() {
 
 function createMockContext(args: string[] = [], options: any = {}): CommandContext {
   return {
+    command: "generate",
     args,
     options: {
       config: {},
@@ -22,6 +23,7 @@ function createMockContext(args: string[] = [], options: any = {}): CommandConte
       ...options,
     },
     logger: createMockLogger() as any,
+    cwd: process.cwd(),
   };
 }
 
@@ -31,28 +33,10 @@ describe("generate composite command", () => {
     expect(generateCommand.description).toBe("Code generation commands");
   });
 
-  it("returns exitCode 0 for help subcommand", async () => {
-    const ctx = createMockContext(["help"]);
-    const result = await generateCommand.handler(ctx);
-    expect(result.exitCode).toBe(0);
-  });
-
-  it("returns exitCode 0 for --help flag", async () => {
-    const ctx = createMockContext(["--help"]);
-    const result = await generateCommand.handler(ctx);
-    expect(result.exitCode).toBe(0);
-  });
-
-  it("returns exitCode 0 when no args provided", async () => {
+  it("returns exitCode 0 when called", async () => {
     const ctx = createMockContext([]);
     const result = await generateCommand.handler(ctx);
     expect(result.exitCode).toBe(0);
-  });
-
-  it("returns exitCode 1 for unknown subcommand", async () => {
-    const ctx = createMockContext(["unknown"]);
-    const result = await generateCommand.handler(ctx);
-    expect(result.exitCode).toBe(1);
   });
 });
 
@@ -72,11 +56,5 @@ describe("generate:types command", () => {
     const ctx = createMockContext(["nonexistent_module"]);
     const result = await generateTypesCmd.handler(ctx);
     expect(result.exitCode).toBe(1);
-  });
-
-  it("has usage and examples defined", () => {
-    expect(generateTypesCmd.usage).toBeDefined();
-    expect(generateTypesCmd.examples).toBeDefined();
-    expect(generateTypesCmd.examples?.length).toBeGreaterThan(0);
   });
 });

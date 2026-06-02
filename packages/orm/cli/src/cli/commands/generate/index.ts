@@ -1,50 +1,17 @@
-import type { Command, CommandContext, CommandResult } from "../../types";
-import generateTypesCommand from "./types";
+import type { Command } from "@damatjs/cli";
+import generateTypes from "./types";
 
-const commands = [generateTypesCommand];
-
-const generateComposite: Command = {
-  name: "generate",
-  description: "Code generation commands",
-  usage: "generate <subcommand> [args...]",
-  handler: async (ctx: CommandContext): Promise<CommandResult> => {
-    const [subcommandName, ...subArgs] = ctx.args;
-
-    if (!subcommandName || subcommandName === "help" || subcommandName === "--help") {
-      printHelp(ctx);
-      return { exitCode: 0 };
-    }
-
-    const subcommand = commands.find(
-      (cmd) => cmd.name === `generate:${subcommandName}` || cmd.name === subcommandName
-    );
-
-    if (!subcommand) {
-      ctx.logger.error(`Unknown generate command: ${subcommandName}`);
-      console.log("");
-      printHelp(ctx);
-      return { exitCode: 1 };
-    }
-
-    return subcommand.handler({ ...ctx, args: subArgs });
-  },
-};
-
-function printHelp(ctx: CommandContext): void {
-  console.log("");
-  ctx.logger.info("generate commands:");
-  console.log("");
-  for (const cmd of commands) {
-    console.log(`  ${cmd.name.replace("generate:", "").padEnd(15)} ${cmd.description}`);
-  }
-  console.log("");
-}
+const commands = [generateTypes];
 
 const generateCommand: Command = {
   name: "generate",
   description: "Code generation commands",
-  handler: generateComposite.handler,
+  subcommands: commands,
+  handler: async (ctx) => {
+    ctx.logger.info("Available generate subcommands: types");
+    return { exitCode: 0 };
+  },
 };
 
 export default generateCommand;
-export { generateTypesCommand };
+export { generateTypes };

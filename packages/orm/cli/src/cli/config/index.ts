@@ -1,6 +1,6 @@
 import path from "node:path";
 import fs from "node:fs";
-import type { Logger } from "../types";
+import type { ILogger } from "@damatjs/logger";
 
 export interface DamatConfig {
   [name: string]: DamatConfigData
@@ -57,7 +57,7 @@ export function clearConfigCache(): void {
   cachedConfig = {};
 }
 
-export function requireDatabaseUrl(logger: Logger): string {
+export function requireDatabaseUrl(logger: ILogger): string {
   const url = process.env.DATABASE_URL;
   if (!url) {
     console.log("");

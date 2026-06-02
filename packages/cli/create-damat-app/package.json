@@ -23,9 +23,9 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.9.1",
+    "@damatjs/cli": "*",
     "@damatjs/deps": "*",
     "boxen": "^8.0.1",
-    "cac": "^6.7.14",
     "configstore": "^8.0.0",
     "nanoid": "^4.0.2",
     "node-emoji": "^2.0.2",

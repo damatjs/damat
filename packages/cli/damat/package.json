@@ -9,7 +9,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/dist/index.js"
+      "default": "./dist/index.js"
     }
   },
   "engines": {
@@ -21,6 +21,7 @@
   ],
   "author": "Abel Lamesgen",
   "dependencies": {
+    "@damatjs/cli": "*",
     "@damatjs/logger": "*",
     "@damatjs/framework": "*"
   },

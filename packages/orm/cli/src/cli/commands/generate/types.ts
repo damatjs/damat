@@ -1,30 +1,23 @@
-import fs from "node:fs";
-import path from "node:path";
-import type { Command, CommandContext, CommandResult } from "../../types";
-import { generateTypes } from "@damatjs/orm-codegen";
-import { ModuleSchema } from "@damatjs/orm-type";
-import { resolveTypesPath, resolveModelsPath } from "../../utils/paths";
+import type { Command } from "@damatjs/cli";
 
-const generateTypesCommand: Command = {
+const generateTypes: Command = {
   name: "generate:types",
   description: "Generate TypeScript types for a module",
-  usage: "generate:types <module> [--output <path>]",
-  examples: ["generate:types user", "generate:types user --output ./custom/path"],
-  handler: async (ctx: CommandContext): Promise<CommandResult> => {
-    const moduleName = ctx.args[0];
-    const { config } = ctx.options;
+  handler: async (ctx) => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const { generateTypes } = await import("@damatjs/orm-codegen");
+    const { resolveTypesPath, resolveModelsPath } = await import("../../utils/paths/index.js");
 
+    const moduleName = ctx.args[0];
+    const config = ctx.options.config as Record<string, { resolve: string }> | undefined;
 
     if (!moduleName) {
-      printUsage(ctx);
+      ctx.logger.error("Module name is required");
       return { exitCode: 1 };
     }
-
-
-    if (!config) {
-      ctx.logger.error("config is required to be setup");
-      console.log("");
-      console.log("Usage: damat-orm migrate:create <module>");
+    if (!config || Object.keys(config).length === 0) {
+      ctx.logger.error("Config is required. Make sure damat.config.ts exists.");
       return { exitCode: 1 };
     }
 
@@ -35,7 +28,6 @@ const generateTypesCommand: Command = {
     }
 
     const resolvedModelsDir = resolveModelsPath(config, module.resolve);
-
     if (!fs.existsSync(resolvedModelsDir)) {
       ctx.logger.error(`Models directory not found: ${resolvedModelsDir}`);
       return { exitCode: 1 };
@@ -44,15 +36,24 @@ const generateTypesCommand: Command = {
     try {
       ctx.logger.info(`Generating types for module '${moduleName}'...`);
 
-      const schema = await loadSchema(module.resolve, ctx);
-      if (!schema) return { exitCode: 1 };
+      const schemaPath = path.join(module.resolve, "schema.json");
+      if (!fs.existsSync(schemaPath)) {
+        ctx.logger.error(`Schema file not found: ${schemaPath}`);
+        return { exitCode: 1 };
+      }
 
+      const schemaContent = fs.readFileSync(schemaPath, "utf-8");
+      const schema = JSON.parse(schemaContent);
       const typesContent = generateTypes(schema);
       const outputPath = resolveTypesPath(module.resolve);
 
-      writeTypesFile(outputPath, typesContent);
+      const outputDir = path.dirname(outputPath);
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+      }
+      fs.writeFileSync(outputPath, typesContent, "utf-8");
 
-      ctx.logger.success(`Types generated successfully`);
+      ctx.logger.success("Types generated successfully");
       console.log(`  Output: ${outputPath}`);
 
       return { exitCode: 0 };
@@ -63,39 +64,4 @@ const generateTypesCommand: Command = {
   },
 };
 
-async function loadSchema(
-  moduleResolver: string,
-  ctx: CommandContext
-): Promise<ModuleSchema | null> {
-  const schemaPath = path.join(moduleResolver, "schema.json");
-
-  if (!fs.existsSync(schemaPath)) {
-    ctx.logger.error(`Schema file not found: ${schemaPath}`);
-    console.log("");
-    console.log("Make sure you have a schema.json file in your module directory.");
-    return null;
-  }
-
-  const schemaContent = fs.readFileSync(schemaPath, "utf-8");
-  return JSON.parse(schemaContent);
-}
-
-function writeTypesFile(outputPath: string, content: string): void {
-  const outputDir = path.dirname(outputPath);
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
-  fs.writeFileSync(outputPath, content, "utf-8");
-}
-
-function printUsage(ctx: CommandContext): void {
-  ctx.logger.error("Module name is required");
-  console.log("");
-  console.log("Usage: damat-orm generate:types <module> [--output <path>]");
-  console.log("");
-  console.log("Examples:");
-  console.log("  damat-orm generate:types user");
-  console.log("  damat-orm generate:types user --output ./custom/path");
-}
-
-export default generateTypesCommand;
+export default generateTypes;

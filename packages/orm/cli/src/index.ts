@@ -1,4 +1,3 @@
-export { runCli, getRegistry, registerCommand, getCommand, getAllCommands } from "./cli/index";
-export { registerAllCommands } from "./cli/commands/index";
-export { loadConfig, type DamatConfig } from "./cli/config";
-export type { Command, CommandContext, CommandResult, CommandRegistry, CliOptions, Logger } from "./cli/types";
+export { runCli } from "@damatjs/cli";
+export type { Command, CommandContext, CommandResult, CommandOption } from "@damatjs/cli";
+export { loadConfig, type DamatConfig, type DamatConfigData } from "./cli/config/index.js";
