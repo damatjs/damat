@@ -25,10 +25,7 @@
     "@damatjs/deps": "*",
     "@damatjs/orm-model": "*",
     "@damatjs/orm-type": "*",
-    "@damatjs/types": "*",
-    "dotenv": "^17.3.1",
-    "reflect-metadata": "^0.2.2",
-    "ulid": "^3.0.2"
+    "@damatjs/types": "*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "*",

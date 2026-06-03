@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { cac } from "cac";
 import { Logger } from "@damatjs/logger";
 import type { CliConfig } from "../types";

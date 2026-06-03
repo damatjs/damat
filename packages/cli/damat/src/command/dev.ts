@@ -2,6 +2,8 @@ import { spawn } from "bun";
 import { join } from "node:path";
 import { writeFileSync, unlinkSync, existsSync, mkdirSync } from "node:fs";
 import type { Command } from "@damatjs/cli";
+import { loadEnv } from '@damatjs/load-env';
+
 
 export const devCommand: Command = {
   name: "dev",
@@ -38,12 +40,14 @@ export const devCommand: Command = {
 
     clear && console.clear();
 
+    loadEnv(process.env.NODE_ENV || "development", process.cwd());
+
     const result = spawn({
       cmd: ["bun", "--watch", "--no-clear-screen", tempFile],
       cwd: ctx.cwd,
       stdout: "inherit",
       stderr: "inherit",
-      env: { ...process.env, NODE_ENV: "development", PORT: String(port) },
+      env: { ...process.env, PORT: process.env.PORT ?? String(port) },
     });
 
     const exitCode = await result.exited;

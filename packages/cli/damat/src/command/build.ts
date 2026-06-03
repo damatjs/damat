@@ -1,19 +1,19 @@
 import { spawn } from "bun";
 import { join } from "node:path";
-import { existsSync, mkdirSync, writeFileSync, unlinkSync, readdirSync, statSync, copyFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync, unlinkSync, readdirSync, statSync, copyFileSync, rmSync } from "node:fs";
 import { type Command } from "@damatjs/cli";
 
 function copyDir(src: string, dest: string) {
   if (!existsSync(dest)) {
     mkdirSync(dest, { recursive: true });
   }
-  
+
   const entries = readdirSync(src);
-  
+
   for (const entry of entries) {
     const srcPath = join(src, entry);
     const destPath = join(dest, entry);
-    
+
     if (statSync(srcPath).isDirectory()) {
       copyDir(srcPath, destPath);
     } else {
@@ -54,15 +54,18 @@ export const buildCommand: Command = {
     const target = ctx.options.target as string;
     const minify = ctx.options.minify as boolean;
     const damatDir = join(ctx.cwd, ".damat");
-    
+
     if (!existsSync(damatDir)) {
       mkdirSync(damatDir, { recursive: true });
     }
-    
-    if (!existsSync(outputDir)) {
-      mkdirSync(outputDir, { recursive: true });
+
+    if (existsSync(outputDir)) {
+      ctx.logger.info("Cleaning old build...");
+      rmSync(outputDir, { recursive: true, force: true });
     }
     
+    mkdirSync(outputDir, { recursive: true });
+
     const tempEntryPath = join(damatDir, "build-entry.ts");
     const entryJsPath = join(outputDir, "entry.js");
     const srcDir = join(ctx.cwd, "src");
@@ -76,7 +79,7 @@ export const buildCommand: Command = {
       "--target", target,
       "--packages", "external",
     ];
-    
+
     if (minify) {
       buildArgs.push("--minify");
     }
@@ -92,18 +95,28 @@ export const buildCommand: Command = {
 
     try {
       if (existsSync(tempEntryPath)) unlinkSync(tempEntryPath);
-    } catch {}
+    } catch { }
 
     if (exitCode === 0 && existsSync(srcDir)) {
       ctx.logger.info("Copying source files to output directory...");
       const srcDest = join(outputDir, "src");
       copyDir(srcDir, srcDest);
-      
+
       const configPath = join(ctx.cwd, "damat.config.ts");
       if (existsSync(configPath)) {
-        copyFileSync(configPath, join(outputDir, "damat.config.ts"));
+        ctx.logger.info("Building config file...");
+        const configJsPath = join(outputDir, "damat.config.js");
+
+        const configResult = spawn({
+          cmd: ["bun", "build", configPath, "--outfile", configJsPath, "--target", target],
+          cwd: ctx.cwd,
+          stdout: "inherit",
+          stderr: "inherit",
+        });
+
+        await configResult.exited;
       }
-      
+
       ctx.logger.success("Build complete!");
     }
 

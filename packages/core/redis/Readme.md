@@ -136,7 +136,7 @@ import {
   acquireLock,
   releaseLock,
   withLock,
-} from "@damatjs/utils";
+} from "@damatjs/redis";
 
 const redis = createRedis({ url: "redis://localhost:6379" });
 

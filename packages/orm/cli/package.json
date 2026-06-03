@@ -34,8 +34,7 @@
     "@damatjs/orm-migration": "*",
     "@damatjs/orm-processor": "*",
     "@damatjs/orm-model": "*",
-    "@damatjs/orm-type": "*",
-    "dotenv": "^17.3.1"
+    "@damatjs/orm-type": "*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "*",

@@ -1204,8 +1204,8 @@ export { relationToTsType } from "./relation";
 **Description:** Umbrella utility package.
 
 ```typescript
-export * from "@damatjs/utils-env";
-export * from "@damatjs/utils-redis";
+export * from "@damatjs/load-env";
+export * from "@damatjs/redis";
 ```
 
 ---

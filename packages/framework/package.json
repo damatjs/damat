@@ -66,7 +66,6 @@
     "@damatjs/orm-connector": "*",
     "@damatjs/orm-type": "*",
     "@damatjs/workflow-engine": "*",
-    "@damatjs/utils": "*",
     "@damatjs/redis": "*",
     "@hono/node-server": "^1.13.7"
   },

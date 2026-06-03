@@ -42,11 +42,11 @@
       "@damatjs/types": [
         "./packages/core/types/src"
       ],
-      "@damatjs/utils": [
-        "./packages/utils/src"
+      "@damatjs/cli/*": [
+        "./packages/cli/*"
       ],
-      "@damatjs/utils/*": [
-        "./packages/utils/src/*"
+      "@damatjs/core/*": [
+        "./packages/core/*"
       ],
       "@damatjs/workflow-engine": [
         "./packages/workflow-engine/src"

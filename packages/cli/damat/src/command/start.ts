@@ -2,6 +2,7 @@ import { spawn } from "bun";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
 import type { Command } from "@damatjs/cli";
+import { loadEnv } from '@damatjs/load-env';
 
 export const startCommand: Command = {
   name: "start",
@@ -24,13 +25,14 @@ export const startCommand: Command = {
       ctx.logger.error("Build not found. Run `damat build` first.");
       return { exitCode: 1 };
     }
+    loadEnv(process.env.NODE_ENV || "production", process.cwd());
 
     const result = spawn({
       cmd: ["bun", "run", distPath],
       cwd: ctx.cwd,
       stdout: "inherit",
       stderr: "inherit",
-      env: { ...process.env, NODE_ENV: "production" },
+      env: { ...process.env },
     });
 
     const exitCode = await result.exited;

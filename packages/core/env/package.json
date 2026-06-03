@@ -1,6 +1,6 @@
 {
-  "name": "@damatjs/utils-env",
-  "description": "Damatjs utils  env",
+  "name": "@damatjs/load-env",
+  "description": "Damatjs load env",
   "version": "0.0.1",
   "type": "module",
   "main": "dist/index.js",

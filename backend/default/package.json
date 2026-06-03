@@ -26,7 +26,7 @@
     "@damatjs/logger": "*",
     "@damatjs/services": "*",
     "@damatjs/types": "*",
-    "@damatjs/utils": "*",
+    "@damatjs/deps": "*",
     "@damatjs/framework": "*",
     "@damatjs/workflow-engine": "*",
     "@damatjs/orm-cli": "*",

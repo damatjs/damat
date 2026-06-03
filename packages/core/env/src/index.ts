@@ -22,7 +22,7 @@ import { parseEnvFile } from './parseEnvFile';
  *
  * @example
  * ```typescript
- * import { loadEnv } from '@damatjs/utils';
+ * import { loadEnv } from '@damatjs/load-env';
  *
  * // Load environment variables before defining config
  * loadEnv(process.env.NODE_ENV || 'development', process.cwd());

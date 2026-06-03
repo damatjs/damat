@@ -24,34 +24,6 @@
       "types": "./dist/effect.d.ts",
       "default": "./dist/effect.js"
     },
-    "./mikro-orm/cli": {
-      "types": "./dist/mikro-orm-cli.d.ts",
-      "default": "./dist/mikro-orm-cli.js"
-    },
-    "./mikro-orm/core": {
-      "types": "./dist/mikro-orm-core.d.ts",
-      "default": "./dist/mikro-orm-core.js"
-    },
-    "./mikro-orm/knex": {
-      "types": "./dist/mikro-orm-knex.d.ts",
-      "default": "./dist/mikro-orm-knex.js"
-    },
-    "./mikro-orm/migrations": {
-      "types": "./dist/mikro-orm-migrations.d.ts",
-      "default": "./dist/mikro-orm-migrations.js"
-    },
-    "./mikro-orm/postgresql": {
-      "types": "./dist/mikro-orm-postgresql.d.ts",
-      "default": "./dist/mikro-orm-postgresql.js"
-    },
-    "./mikro-orm/reflection": {
-      "types": "./dist/mikro-orm-reflection.d.ts",
-      "default": "./dist/mikro-orm-reflection.js"
-    },
-    "./awilix": {
-      "types": "./dist/awilix.d.ts",
-      "default": "./dist/awilix.js"
-    },
     "./pg": {
       "types": "./dist/pg.d.ts",
       "default": "./dist/pg.js"
@@ -60,21 +32,9 @@
       "types": "./dist/hono.d.ts",
       "default": "./dist/hono.js"
     },
-    "./dotenv": {
-      "types": "./dist/dotenv.d.ts",
-      "default": "./dist/dotenv.js"
-    },
-    "./dotenv-expand": {
-      "types": "./dist/dotenv-expand.d.ts",
-      "default": "./dist/dotenv-expand.js"
-    },
     "./uuid": {
       "types": "./dist/uuid.d.ts",
       "default": "./dist/uuid.js"
-    },
-    "./langchain/openai": {
-      "types": "./dist/langchain-openai.d.ts",
-      "default": "./dist/langchain-openai.js"
     },
     "./zod": {
       "types": "./dist/zod.d.ts",
@@ -96,17 +56,6 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",
-    "@langchain/openai": "^1.2.9",
-    "@mikro-orm/cli": "6.6.7",
-    "@mikro-orm/core": "6.6.7",
-    "@mikro-orm/knex": "6.6.7",
-    "@mikro-orm/migrations": "6.6.7",
-    "@mikro-orm/postgresql": "6.6.7",
-    "@mikro-orm/reflection": "^6.6.7",
-    "awilix": "^13.0.0",
-    "better-auth": "^1.4.18",
-    "dotenv": "^17.3.1",
-    "dotenv-expand": "^12.0.3",
     "effect": "^3.19.18",
     "hono": "^4.12.0",
     "ioredis": "^5.9.3",

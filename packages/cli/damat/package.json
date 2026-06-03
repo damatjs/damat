@@ -23,6 +23,7 @@
   "dependencies": {
     "@damatjs/cli": "*",
     "@damatjs/logger": "*",
+    "@damatjs/load-env": "*",
     "@damatjs/framework": "*"
   },
   "devDependencies": {

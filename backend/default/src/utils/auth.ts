@@ -1,5 +1,5 @@
 // import { betterAuth } from "@damatjs/deps/better-auth";
-// import { cacheGetRaw, cacheSetRaw, cacheDelete } from "@damatjs/utils";
+// import { cacheGetRaw, cacheSetRaw, cacheDelete } from "@damatjs/redis";
 // import { Pool } from "@damatjs/deps/pg";
 
 // const KEY_PREFIX = "better-auth:";
