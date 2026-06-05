@@ -48,7 +48,7 @@ export class ModelDefinition {
   _indexes: IndexSchema[] = [];
   _constraints: ConstraintSchema[] = [];
   _timestamps: boolean = true;
-  _softDelete: boolean = false;
+  _softDelete: boolean = true;
   _deletedAtField: string = "deleted_at";
 
   constructor(

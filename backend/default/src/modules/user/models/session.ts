@@ -3,7 +3,7 @@ import { UserModel } from "./user";
 
 export const SessionModel = model("sessions", {
   id: columns.id({ prefix: "ses" }).primaryKey(),
-  userId: columns.belongsTo(() => UserModel)
+  user: columns.belongsTo(() => UserModel)
     .link({ foreignKey: "user_id" })
     .indexed(),
   token: columns.text().unique(),
@@ -13,3 +13,6 @@ export const SessionModel = model("sessions", {
 }).indexes([
   columns.indexes().columns(["token"]),
 ]);
+
+
+export default SessionModel;

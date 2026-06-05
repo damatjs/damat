@@ -12,14 +12,11 @@ export interface ResolvedPaths {
   modulesDir: string;
 }
 
-export function resolvePaths(
-  moduleResolver: string
-): ResolvedPaths {
-
+export function resolvePaths(moduleResolver: string): ResolvedPaths {
   return {
     modulesDir: moduleResolver,
     modelsDir: path.join(moduleResolver, "models"),
     migrationsDir: path.join(moduleResolver, "migrations"),
-    typesDir: path.join(moduleResolver, "types", "common"),
+    typesDir: path.join(moduleResolver, "types"),
   };
 }

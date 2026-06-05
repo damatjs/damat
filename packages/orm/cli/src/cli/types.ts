@@ -1,11 +1,18 @@
 import type { ILogger } from "@damatjs/logger";
-import type { DamatConfig } from "./config";
 
-export type { Command, CommandContext, CommandResult, CommandOption } from "@damatjs/cli";
+export type {
+  Command,
+  CommandContext,
+  CommandResult,
+  CommandOption,
+} from "@damatjs/cli";
+
+/** Map returned by loadModules — keyed by module id. */
+export type ModulesMap = Record<string, { resolve: string }>;
 
 export interface OrmCliOptions {
   activeModules?: string[];
-  config?: DamatConfig;
+  config?: ModulesMap;
   verbose?: boolean;
 }
 

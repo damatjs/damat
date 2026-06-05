@@ -6,15 +6,18 @@ import type { CommandContext } from "@damatjs/cli";
 
 function createMockLogger() {
   return {
-    error: (...args: any[]) => { },
-    info: (...args: any[]) => { },
-    success: (...args: any[]) => { },
-    warn: (...args: any[]) => { },
-    skip: (...args: any[]) => { },
+    error: (...args: any[]) => {},
+    info: (...args: any[]) => {},
+    success: (...args: any[]) => {},
+    warn: (...args: any[]) => {},
+    skip: (...args: any[]) => {},
   };
 }
 
-function createMockContext(args: string[] = [], options: any = {}): CommandContext {
+function createMockContext(
+  args: string[] = [],
+  options: any = {},
+): CommandContext {
   return {
     command: "migrate",
     args,
@@ -47,10 +50,12 @@ describe("migrate:list command", () => {
     expect(migrateList.description).toContain("List");
   });
 
-  it("returns exitCode 0 on success", async () => {
+  it("returns exitCode 1 when no damat.config.ts is present", async () => {
+    // The CLI always loads damat.config.ts from ctx.cwd; the test runner's
+    // cwd has no config file, so the command should exit with 1.
     const ctx = createMockContext([]);
     const result = await migrateList.handler(ctx);
-    expect(result.exitCode).toBe(0);
+    expect(result.exitCode).toBe(1);
   });
 });
 

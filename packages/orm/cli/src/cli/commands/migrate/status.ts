@@ -1,4 +1,5 @@
 import type { Command } from "@damatjs/cli";
+import { loadModules } from "@/cli/utils/load";
 
 const migrateStatus: Command = {
   name: "migrate:status",
@@ -13,39 +14,56 @@ const migrateStatus: Command = {
   ],
   handler: async (ctx) => {
     const { Pool } = await import("@damatjs/deps/pg");
-    const { getMigrationStatus, getModuleMigrationStatus } = await import("@damatjs/orm-migration");
+    const { getMigrationStatus, getModuleMigrationStatus } =
+      await import("@damatjs/orm-migration");
     const { requireDatabaseUrl } = await import("../../config/index.js");
 
-    const config = ctx.options.config as Record<string, { resolve: string }> | undefined;
-    const moduleName = (ctx.options.module as string) || ctx.args[0];
-
-    if (!config || Object.keys(config).length === 0) {
-      ctx.logger.error("Config is required. Make sure damat.config.ts exists.");
+    // Load modules from damat.config.ts
+    let modules: Record<string, { resolve: string }>;
+    try {
+      modules = await loadModules("damat.config.ts", ctx.cwd);
+    } catch (error) {
+      ctx.logger.error(
+        `Failed to load config: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return { exitCode: 1 };
     }
+
+    if (!modules || Object.keys(modules).length === 0) {
+      ctx.logger.error("No modules found in 'damat.config.ts'");
+      return { exitCode: 1 };
+    }
+
+    const moduleName = (ctx.options.module as string) || ctx.args[0];
 
     ctx.logger.info("Checking migration status...");
 
     const pool = new Pool({ connectionString: requireDatabaseUrl(ctx.logger) });
     try {
       if (moduleName) {
-        const module = config[moduleName];
-        if (!module) {
+        const moduleConfig = modules[moduleName];
+        if (!moduleConfig) {
           ctx.logger.error(`Module '${moduleName}' not found in config`);
           return { exitCode: 1 };
         }
-        const status = await getModuleMigrationStatus(pool, module.resolve);
+        const status = await getModuleMigrationStatus(
+          pool,
+          moduleConfig.resolve,
+        );
         ctx.logger[status.module.pending > 0 ? "warn" : "success"](
-          `${status.module.name}: ${status.module.applied} applied, ${status.module.pending} pending`
+          `${status.module.name}: ${status.module.applied} applied, ${status.module.pending} pending`,
         );
         for (const m of status.module.migrations) {
           ctx.logger[m.applied ? "success" : "warn"](`  ${m.name}`);
         }
       } else {
-        const status = await getMigrationStatus(pool, Object.values(config).map((m) => m.resolve));
+        const status = await getMigrationStatus(
+          pool,
+          Object.values(modules).map((m) => m.resolve),
+        );
         for (const mod of status.modules) {
           ctx.logger[mod.pending > 0 ? "warn" : "success"](
-            `${mod.name}: ${mod.applied} applied, ${mod.pending} pending`
+            `${mod.name}: ${mod.applied} applied, ${mod.pending} pending`,
           );
           for (const m of mod.migrations) {
             ctx.logger[m.applied ? "success" : "warn"](`  ${m.name}`);

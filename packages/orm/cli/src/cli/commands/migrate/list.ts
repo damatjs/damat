@@ -1,4 +1,5 @@
 import type { Command } from "@damatjs/cli";
+import { loadModules } from "@/cli/utils/load";
 
 const migrateList: Command = {
   name: "migrate:list",
@@ -6,11 +7,27 @@ const migrateList: Command = {
   handler: async (ctx) => {
     const { discoverAllMigrations } = await import("@damatjs/orm-migration");
 
-    const config = ctx.options.config as Record<string, { resolve: string }> | undefined;
+    // Load modules from damat.config.ts
+    let modules: Record<string, { resolve: string }>;
+    try {
+      modules = await loadModules("damat.config.ts", ctx.cwd);
+    } catch (error) {
+      ctx.logger.error(
+        `Failed to load config: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return { exitCode: 1 };
+    }
+
+    if (!modules || Object.keys(modules).length === 0) {
+      ctx.logger.error("No modules found in 'damat.config.ts'");
+      return { exitCode: 1 };
+    }
 
     ctx.logger.info("Modules with migrations:");
 
-    const allMigrations = discoverAllMigrations(Object.values(config ?? {}).map((m) => m.resolve));
+    const allMigrations = discoverAllMigrations(
+      Object.values(modules).map((m) => m.resolve),
+    );
     const moduleMap = new Map<string, number>();
 
     for (const m of allMigrations) {

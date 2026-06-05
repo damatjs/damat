@@ -1,4 +1,7 @@
-import type { Command } from "@damatjs/cli";
+import { resolveModelsPath, resolveTypesPath } from "@/cli/utils";
+import { loadModules } from "@/cli/utils/load";
+import { type Command } from "@damatjs/cli";
+import { ModelDefinition } from "@damatjs/orm-model";
 
 const generateTypes: Command = {
   name: "generate:types",
@@ -6,28 +9,40 @@ const generateTypes: Command = {
   handler: async (ctx) => {
     const fs = await import("node:fs");
     const path = await import("node:path");
-    const { generateTypes } = await import("@damatjs/orm-codegen");
-    const { resolveTypesPath, resolveModelsPath } = await import("../../utils/paths/index.js");
+    const { generateFilesMap } = await import("@damatjs/orm-codegen");
+    const { toModuleSchema } = await import("@damatjs/orm-model");
 
     const moduleName = ctx.args[0];
-    const config = ctx.options.config as Record<string, { resolve: string }> | undefined;
 
     if (!moduleName) {
       ctx.logger.error("Module name is required");
       return { exitCode: 1 };
     }
-    if (!config || Object.keys(config).length === 0) {
-      ctx.logger.error("Config is required. Make sure damat.config.ts exists.");
+
+    // Load modules from damat.config.ts
+    let modules: Record<string, { resolve: string }>;
+    try {
+      modules = await loadModules("damat.config.ts", ctx.cwd);
+    } catch (error) {
+      ctx.logger.error(
+        `Failed to load config: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return { exitCode: 1 };
     }
 
-    const module = config[moduleName];
-    if (!module) {
+    if (!modules || Object.keys(modules).length === 0) {
+      ctx.logger.error("No modules found in 'damat.config.ts'");
+      return { exitCode: 1 };
+    }
+
+    const moduleConfig = modules[moduleName];
+    if (!moduleConfig) {
       ctx.logger.error(`Module '${moduleName}' not found in config`);
       return { exitCode: 1 };
     }
 
-    const resolvedModelsDir = resolveModelsPath(config, module.resolve);
+    // Verify models directory exists
+    const resolvedModelsDir = resolveModelsPath(moduleConfig.resolve);
     if (!fs.existsSync(resolvedModelsDir)) {
       ctx.logger.error(`Models directory not found: ${resolvedModelsDir}`);
       return { exitCode: 1 };
@@ -36,29 +51,38 @@ const generateTypes: Command = {
     try {
       ctx.logger.info(`Generating types for module '${moduleName}'...`);
 
-      const schemaPath = path.join(module.resolve, "schema.json");
-      if (!fs.existsSync(schemaPath)) {
-        ctx.logger.error(`Schema file not found: ${schemaPath}`);
-        return { exitCode: 1 };
-      }
+      const moduleData = await import(moduleConfig.resolve);
+      const models = moduleData.models as { [key: string]: ModelDefinition };
+      ctx.logger.info(
+        `Discovered ${models.length} model(s) from services directory`,
+      );
 
-      const schemaContent = fs.readFileSync(schemaPath, "utf-8");
-      const schema = JSON.parse(schemaContent);
-      const typesContent = generateTypes(schema);
-      const outputPath = resolveTypesPath(module.resolve);
+      // Build the ModuleSchema from model definitions
+      const schema = toModuleSchema(moduleName, Object.values(models));
 
-      const outputDir = path.dirname(outputPath);
+      // Generate a file-per-table map  (includes index.ts + per-table files)
+      const filesMap = generateFilesMap(schema, {}, ctx.logger);
+
+      // Write every generated file to {moduleResolver}/types/
+      const outputDir = resolveTypesPath(moduleConfig.resolve);
       if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
       }
-      fs.writeFileSync(outputPath, typesContent, "utf-8");
 
+      for (const [fileName, content] of filesMap) {
+        const outputPath = path.join(outputDir, fileName);
+        fs.writeFileSync(outputPath, content, "utf-8");
+      }
+
+      ctx.logger.info(`Output: ${outputDir}`);
+      ctx.logger.info(`Files: ${Array.from(filesMap.keys()).join(", ")}`);
       ctx.logger.success("Types generated successfully");
-      console.log(`  Output: ${outputPath}`);
 
       return { exitCode: 0 };
     } catch (error) {
-      ctx.logger.error(`Failed to generate types: ${error instanceof Error ? error.message : error}`);
+      ctx.logger.error(
+        `Failed to generate types: ${error instanceof Error ? error.message : error}`,
+      );
       return { exitCode: 1 };
     }
   },

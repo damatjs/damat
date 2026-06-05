@@ -1,21 +1,26 @@
 import { ModuleSchema } from "@damatjs/orm-type";
-import { GenerateTypesOptions, GeneratedFilesMap, generateEnumsFile } from "@/utils";
+import {
+  GenerateTypesOptions,
+  GeneratedFilesMap,
+  generateEnumsFile,
+} from "@/utils";
 import { DEFAULT_AUTO_FIELDS } from "@/defaults";
 import { generateTableFile } from "./generateTableFile";
 import { tableToFileName } from "./helpers";
-import { getLogger } from "@damatjs/logger";
-
-const logger = getLogger();
+import { getLogger, ILogger } from "@damatjs/logger";
 
 export function generateFilesMap(
   schema: ModuleSchema,
   options: GenerateTypesOptions = {},
+  loggerData?: ILogger,
 ): GeneratedFilesMap {
+  const logger = loggerData ?? getLogger();
+
   logger.info("generateFilesMap started", {
     moduleName: schema.moduleName,
     tableCount: schema.tables.length,
     enumCount: (schema.enums ?? []).length,
-    relationshipCount: (schema.relationships ?? []).length
+    relationshipCount: (schema.relationships ?? []).length,
   });
 
   const autoFields = new Set([
@@ -62,7 +67,7 @@ export function generateFilesMap(
   logger.info("generateFilesMap completed", {
     moduleName: schema.moduleName,
     fileCount: result.size,
-    files: Array.from(result.keys())
+    files: Array.from(result.keys()),
   });
 
   return result;

@@ -1,4 +1,5 @@
 import type { Command } from "@damatjs/cli";
+import { loadModules } from "@/cli/utils/load";
 
 const migrateUp: Command = {
   name: "migrate:up",
@@ -8,9 +9,19 @@ const migrateUp: Command = {
     const { runMigrations } = await import("@damatjs/orm-migration");
     const { requireDatabaseUrl } = await import("../../config/index.js");
 
-    const config = ctx.options.config as Record<string, { resolve: string }> | undefined;
-    if (!config || Object.keys(config).length === 0) {
-      ctx.logger.error("Config is required. Make sure damat.config.ts exists.");
+    // Load modules from damat.config.ts
+    let modules: Record<string, { resolve: string }>;
+    try {
+      modules = await loadModules("damat.config.ts", ctx.cwd);
+    } catch (error) {
+      ctx.logger.error(
+        `Failed to load config: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return { exitCode: 1 };
+    }
+
+    if (!modules || Object.keys(modules).length === 0) {
+      ctx.logger.error("No modules found in 'damat.config.ts'");
       return { exitCode: 1 };
     }
 
@@ -18,7 +29,10 @@ const migrateUp: Command = {
 
     const pool = new Pool({ connectionString: requireDatabaseUrl(ctx.logger) });
     try {
-      const results = await runMigrations(pool, Object.values(config).map((m) => m.resolve));
+      const results = await runMigrations(
+        pool,
+        Object.values(modules).map((m) => m.resolve),
+      );
       const hasFailures = results.some((r) => !r.success);
 
       if (hasFailures) {
