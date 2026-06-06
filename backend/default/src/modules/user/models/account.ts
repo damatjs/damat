@@ -1,9 +1,10 @@
 import { model, columns } from "@damatjs/orm-model";
-import { UserModel } from "./user";
+import UserModel from "./user";
 
 export const AccountModel = model("accounts", {
   id: columns.id({ prefix: "acc" }).primaryKey(),
-  user: columns.belongsTo(() => UserModel,)
+  user: columns
+    .belongsTo(() => UserModel)
     .link({ foreignKey: "user_id" })
     .indexed(),
   accountId: columns.text(),

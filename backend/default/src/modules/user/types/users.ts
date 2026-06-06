@@ -1,6 +1,9 @@
 // This file is auto-generated. Do not edit it manually.
 // Re-generate by running: bun run codegen
 
+import type { Accounts } from "./accounts";
+import type { Sessions } from "./sessions";
+
 export interface Users {
   id: string;
   email: string;
@@ -10,6 +13,9 @@ export interface Users {
   created_at: Date;
   updated_at: Date | null;
   deleted_at: Date | null;
+  // loaded relations
+  accounts?: Accounts[];
+  sessions?: Sessions[];
 }
 
 export type NewUsers = {

@@ -1,8 +1,8 @@
 import { ModuleService } from "@damatjs/framework";
 import {
-  UserModel,
   AccountModel,
   SessionModel,
+  UserModel,
   VerificationModel,
 } from "./models";
 import { schema } from "./config/schema";
