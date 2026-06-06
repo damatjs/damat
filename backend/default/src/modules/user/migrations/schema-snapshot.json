@@ -3,7 +3,7 @@
   "schema": "public",
   "tables": [
     {
-      "name": "accounts",
+      "name": "users",
       "columns": [
         {
           "name": "id",
@@ -13,37 +13,29 @@
           "unique": false,
           "array": false,
           "autoincrement": false,
-          "default": "generate_id('acc')"
+          "default": "generate_id('usr')"
         },
         {
-          "name": "user_id",
+          "name": "email",
           "type": "text",
+          "primaryKey": false,
+          "nullable": false,
+          "unique": true,
+          "array": false,
+          "autoincrement": false
+        },
+        {
+          "name": "emailVerified",
+          "type": "boolean",
           "primaryKey": false,
           "nullable": false,
           "unique": false,
           "array": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "false"
         },
         {
-          "name": "accountId",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "providerId",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "accessToken",
+          "name": "name",
           "type": "text",
           "primaryKey": false,
           "nullable": true,
@@ -52,52 +44,7 @@
           "autoincrement": false
         },
         {
-          "name": "refreshToken",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": true,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "accessTokenExpiresAt",
-          "type": "timestamp without time zone",
-          "primaryKey": false,
-          "nullable": true,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "refreshTokenExpiresAt",
-          "type": "timestamp without time zone",
-          "primaryKey": false,
-          "nullable": true,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "scope",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": true,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "idToken",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": true,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "password",
+          "name": "image",
           "type": "text",
           "primaryKey": false,
           "nullable": true,
@@ -130,60 +77,17 @@
       ],
       "indexes": [
         {
-          "name": "accounts_accountId",
+          "name": "users_email",
           "columns": [
             {
-              "name": "accountId"
+              "name": "email"
             }
           ],
-          "unique": false,
+          "unique": true,
           "type": "btree"
-        },
-        {
-          "name": "accounts_providerId",
-          "columns": [
-            {
-              "name": "providerId"
-            }
-          ],
-          "unique": false,
-          "type": "btree"
-        },
-        {
-          "name": "accounts_providerId_accountId",
-          "columns": [
-            {
-              "name": "providerId"
-            },
-            {
-              "name": "accountId"
-            }
-          ],
-          "unique": false,
-          "type": "btree"
-        },
-        {
-          "columns": [
-            "user_id"
-          ]
         }
       ],
-      "foreignKeys": [
-        {
-          "name": "users_user_id_fk",
-          "columns": [
-            {
-              "name": "user_id",
-              "type": "text"
-            }
-          ],
-          "referencedTable": "users",
-          "referencedColumns": [
-            "id"
-          ],
-          "indexed": true
-        }
-      ],
+      "foreignKeys": [],
       "constraints": []
     },
     {
@@ -485,377 +389,6 @@
           "indexed": true
         }
       ],
-      "constraints": []
-    },
-    {
-      "name": "sessions",
-      "columns": [
-        {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "default": "generate_id('ses')"
-        },
-        {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "token",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": true,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "expiresAt",
-          "type": "timestamp without time zone",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "ipAddress",
-          "type": "character varying",
-          "primaryKey": false,
-          "nullable": true,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "length": 45
-        },
-        {
-          "name": "userAgent",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": true,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "created_at",
-          "type": "date",
-          "nullable": false,
-          "default": "now()",
-          "primaryKey": false,
-          "unique": false
-        },
-        {
-          "name": "updated_at",
-          "type": "date",
-          "nullable": true,
-          "primaryKey": false,
-          "unique": false
-        },
-        {
-          "name": "deleted_at",
-          "type": "date",
-          "nullable": true,
-          "primaryKey": false,
-          "unique": false
-        }
-      ],
-      "indexes": [
-        {
-          "name": "sessions_token",
-          "columns": [
-            {
-              "name": "token"
-            }
-          ],
-          "unique": false,
-          "type": "btree"
-        },
-        {
-          "columns": [
-            "user_id"
-          ]
-        }
-      ],
-      "foreignKeys": [
-        {
-          "name": "users_user_id_fk",
-          "columns": [
-            {
-              "name": "user_id",
-              "type": "text"
-            }
-          ],
-          "referencedTable": "users",
-          "referencedColumns": [
-            "id"
-          ],
-          "indexed": true
-        }
-      ],
-      "constraints": []
-    },
-    {
-      "name": "users",
-      "columns": [
-        {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "default": "generate_id('usr')"
-        },
-        {
-          "name": "email",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": true,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "emailVerified",
-          "type": "boolean",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "default": "false"
-        },
-        {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": true,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "image",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": true,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "created_at",
-          "type": "date",
-          "nullable": false,
-          "default": "now()",
-          "primaryKey": false,
-          "unique": false
-        },
-        {
-          "name": "updated_at",
-          "type": "date",
-          "nullable": true,
-          "primaryKey": false,
-          "unique": false
-        },
-        {
-          "name": "deleted_at",
-          "type": "date",
-          "nullable": true,
-          "primaryKey": false,
-          "unique": false
-        }
-      ],
-      "indexes": [
-        {
-          "name": "users_email",
-          "columns": [
-            {
-              "name": "email"
-            }
-          ],
-          "unique": true,
-          "type": "btree"
-        }
-      ],
-      "foreignKeys": [],
-      "constraints": []
-    },
-    {
-      "name": "users",
-      "columns": [
-        {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "default": "generate_id('usr')"
-        },
-        {
-          "name": "email",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": true,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "emailVerified",
-          "type": "boolean",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "default": "false"
-        },
-        {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": true,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "image",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": true,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "created_at",
-          "type": "date",
-          "nullable": false,
-          "default": "now()",
-          "primaryKey": false,
-          "unique": false
-        },
-        {
-          "name": "updated_at",
-          "type": "date",
-          "nullable": true,
-          "primaryKey": false,
-          "unique": false
-        },
-        {
-          "name": "deleted_at",
-          "type": "date",
-          "nullable": true,
-          "primaryKey": false,
-          "unique": false
-        }
-      ],
-      "indexes": [
-        {
-          "name": "users_email",
-          "columns": [
-            {
-              "name": "email"
-            }
-          ],
-          "unique": true,
-          "type": "btree"
-        }
-      ],
-      "foreignKeys": [],
-      "constraints": []
-    },
-    {
-      "name": "verifications",
-      "columns": [
-        {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "default": "generate_id('vrf')"
-        },
-        {
-          "name": "identifier",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "value",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "expiresAt",
-          "type": "timestamp without time zone",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "created_at",
-          "type": "date",
-          "nullable": false,
-          "default": "now()",
-          "primaryKey": false,
-          "unique": false
-        },
-        {
-          "name": "updated_at",
-          "type": "date",
-          "nullable": true,
-          "primaryKey": false,
-          "unique": false
-        },
-        {
-          "name": "deleted_at",
-          "type": "date",
-          "nullable": true,
-          "primaryKey": false,
-          "unique": false
-        }
-      ],
-      "indexes": [
-        {
-          "name": "verifications_identifier",
-          "columns": [
-            {
-              "name": "identifier"
-            }
-          ],
-          "unique": false,
-          "type": "btree"
-        }
-      ],
-      "foreignKeys": [],
       "constraints": []
     },
     {
@@ -941,28 +474,6 @@
   "relationships": [
     {
       "from": "accounts",
-      "to": "users",
-      "type": "belongsTo",
-      "mappedBy": [
-        "user"
-      ],
-      "linkedBy": [
-        "user_id"
-      ]
-    },
-    {
-      "from": "accounts",
-      "to": "users",
-      "type": "belongsTo",
-      "mappedBy": [
-        "user"
-      ],
-      "linkedBy": [
-        "user_id"
-      ]
-    },
-    {
-      "from": "sessions",
       "to": "users",
       "type": "belongsTo",
       "mappedBy": [

@@ -11,6 +11,9 @@ export class NoopLogger implements ILogger {
 
   debug(_message: string, _context?: LogContext): void { }
   info(_message: string, _context?: LogContext): void { }
+  progress(_message: string, _context?: LogContext): void { }
+  cached(_message: string, _context?: LogContext): void { }
+  waiting(_message: string, _context?: LogContext): void { }
   success(_message: string, _context?: LogContext): void { }
   warn(_message: string, _context?: LogContext): void { }
   error(_message: string, _error?: unknown, _context?: LogContext): void { }

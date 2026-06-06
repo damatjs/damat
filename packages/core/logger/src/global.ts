@@ -49,6 +49,18 @@ export function info(message: string, context?: LogContext): void {
   getLogger().info(message, context);
 }
 
+export function progress(message: string, context?: LogContext): void {
+  getLogger().progress(message, context);
+}
+
+export function cached(message: string, context?: LogContext): void {
+  getLogger().cached(message, context);
+}
+
+export function waiting(message: string, context?: LogContext): void {
+  getLogger().waiting(message, context);
+}
+
 export function warn(message: string, context?: LogContext): void {
   getLogger().warn(message, context);
 }

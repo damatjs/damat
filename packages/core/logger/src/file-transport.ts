@@ -2,12 +2,15 @@ import { existsSync, mkdirSync, appendFileSync, statSync, renameSync } from "fs"
 import { join } from "path";
 import type { LogEntry, FileTransportConfig } from "./types";
 
-const LEVEL_EMOJI = { 
-  debug: "🔍", 
-  info: "ℹ️", 
-  success: "✅", 
-  warn: "⚠️", 
-  error: "❌", 
+const LEVEL_EMOJI = {
+  debug: "🔍",
+  info: "ℹ️",
+  progress: "⏳",
+  waiting: "░",
+  cached: "⚡",
+  success: "✅",
+  warn: "⚠️",
+  error: "❌",
   fatal: "💀",
   skip: "⏭️",
 } as const;
@@ -23,13 +26,13 @@ export class FileTransport {
   constructor(config: FileTransportConfig = {}) {
     this.dir = config.dir ?? "logs";
     this.maxSizeBytes = config.maxSizeBytes ?? 10 * 1024 * 1024;
-    
-    this.enabled = config.enabled === true || 
-                   process.env.LOG_FILE === "true" || 
-                   process.env.LOG_FILE === "1" ||
-                   process.env.LOGGING_FILE_ON === "true" || 
-                   process.env.LOGGING_FILE_ON === "1";
-    
+
+    this.enabled = config.enabled === true ||
+      process.env.LOG_FILE === "true" ||
+      process.env.LOG_FILE === "1" ||
+      process.env.LOGGING_FILE_ON === "true" ||
+      process.env.LOGGING_FILE_ON === "1";
+
     if (!this.enabled) return;
     this.ensureDir();
     if (config.bufferFlushMs !== 0) {

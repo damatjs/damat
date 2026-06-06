@@ -20,6 +20,18 @@ export class ChildLogger implements ILogger {
     this.parent.info(message, this.merge(context));
   }
 
+  progress(message: string, context?: LogContext): void {
+    this.parent.progress(message, this.merge(context));
+  }
+
+  cached(message: string, context?: LogContext): void {
+    this.parent.cached(message, this.merge(context));
+  }
+
+  waiting(message: string, context?: LogContext): void {
+    this.parent.waiting(message, this.merge(context));
+  }
+
   success(message: string, context?: LogContext): void {
     this.parent.success(message, this.merge(context));
   }

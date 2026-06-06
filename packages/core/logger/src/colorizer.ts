@@ -52,6 +52,9 @@ export class Colorizer {
     if (level === "skip") {
       return this.colorize(message, COLORS.dim);
     }
+    if (level === "cached") {
+      return this.colorize(message, COLORS.cyan);
+    }
     return message;
   }
 
