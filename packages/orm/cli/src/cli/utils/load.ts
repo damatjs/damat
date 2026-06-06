@@ -1,5 +1,46 @@
 import path from "node:path";
 import fs from "node:fs";
+import { OrmModuleContainer } from "../types";
+
+export interface DatabaseConfig {
+  databaseUrl: string;
+}
+
+/**
+ * Builds a PostgreSQL connection URL from individual database config fields.
+ */
+function buildConnectionString(dbConfig: {
+  host?: string;
+  port?: number;
+  user?: string;
+  password?: string;
+  database?: string;
+  ssl?: boolean | object;
+}): string {
+  const {
+    host = "localhost",
+    port = 5432,
+    user = "postgres",
+    password = "",
+    database = "postgres",
+    ssl,
+  } = dbConfig;
+
+  const encodedPassword = encodeURIComponent(password);
+  const encodedDatabase = encodeURIComponent(database);
+
+  let connectionString = `postgres://${user}:${encodedPassword}@${host}:${port}/${encodedDatabase}`;
+
+  if (ssl) {
+    const sslParam =
+      typeof ssl === "boolean"
+        ? "true"
+        : encodeURIComponent(JSON.stringify(ssl));
+    connectionString += `?ssl=${sslParam}`;
+  }
+
+  return connectionString;
+}
 
 /**
  * Load module configs from a damat.config.ts file.
@@ -36,15 +77,21 @@ export async function loadModules<T = Record<string, { resolve: string }>>(
     const mod = await import(fileUrl);
     const config = mod.default ?? mod;
 
-    const modules: Record<string, { resolve: string }> = {};
+    const modules: OrmModuleContainer = {};
 
-    for (const module of config.modules ?? []) {
-      const id: string = module.id ?? path.basename(module.resolve);
+    for (const moduleName of Object.keys(config.modules)) {
+      const module = config.modules[moduleName];
+      const id: string = module.id ?? moduleName;
       const resolvedPath = path.isAbsolute(module.resolve)
         ? module.resolve
         : path.resolve(configDir, module.resolve);
 
-      modules[id] = { resolve: resolvedPath };
+      modules[id] = {
+        id,
+        resolve: resolvedPath,
+        path: module.resolve,
+        name: moduleName,
+      };
     }
 
     return modules as T;
@@ -58,6 +105,76 @@ export async function loadModules<T = Record<string, { resolve: string }>>(
     }
     throw new Error(
       `Failed to load config from '${filePath}': ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+}
+
+/**
+ * Load database URL from a damat.config.ts file.
+ *
+ * Reads `projectConfig.databaseUrl` first. If not found, falls back to
+ * `services.database` config which can be either:
+ * - A `connectionString` directly, or
+ * - Individual fields (host, port, user, password, database, ssl) that
+ *   will be used to build a connection string.
+ *
+ * @param configPath - Absolute path to the config file, OR a filename/relative
+ *                     path that will be joined with `cwd`.
+ * @param cwd        - Working directory used when `configPath` is relative.
+ *                     Defaults to `process.cwd()`.
+ */
+export async function loadDatabaseUrl(
+  configPath: string,
+  cwd: string = process.cwd(),
+): Promise<DatabaseConfig> {
+  const filePath = path.isAbsolute(configPath)
+    ? configPath
+    : path.join(cwd, configPath);
+
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Config file not found: ${filePath}`);
+  }
+
+  try {
+    // Bust the module cache on every load so the CLI always reads the latest
+    // version of the config file.
+    const fileUrl = `file://${filePath}?t=${Date.now()}`;
+    const mod = await import(fileUrl);
+    const config = mod.default ?? mod;
+
+    // Try projectConfig.databaseUrl first
+    if (config.projectConfig?.databaseUrl) {
+      return { databaseUrl: config.projectConfig.databaseUrl };
+    }
+
+    // Try services.database config
+    const dbConfig = config.services?.database;
+    if (dbConfig) {
+      // If connectionString is provided directly, use it
+      if (dbConfig.connectionString) {
+        return { databaseUrl: dbConfig.connectionString };
+      }
+
+      // Otherwise, build connection string from individual fields
+      if (dbConfig.host || dbConfig.database) {
+        const databaseUrl = buildConnectionString(dbConfig);
+        return { databaseUrl };
+      }
+    }
+
+    return { databaseUrl: "" };
+  } catch (error) {
+    // Re-throw our own "not found" errors untouched.
+    if (
+      error instanceof Error &&
+      error.message.startsWith("Config file not found")
+    ) {
+      throw error;
+    }
+    throw new Error(
+      `Failed to load database URL from '${filePath}': ${
         error instanceof Error ? error.message : String(error)
       }`,
     );

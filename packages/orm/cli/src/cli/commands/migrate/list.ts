@@ -1,5 +1,6 @@
 import type { Command } from "@damatjs/cli";
 import { loadModules } from "@/cli/utils/load";
+import { OrmModuleContainer } from "@/cli/types";
 
 const migrateList: Command = {
   name: "migrate:list",
@@ -8,7 +9,7 @@ const migrateList: Command = {
     const { discoverAllMigrations } = await import("@damatjs/orm-migration");
 
     // Load modules from damat.config.ts
-    let modules: Record<string, { resolve: string }>;
+    let modules: OrmModuleContainer;
     try {
       modules = await loadModules("damat.config.ts", ctx.cwd);
     } catch (error) {
@@ -38,7 +39,7 @@ const migrateList: Command = {
       ctx.logger.skip("No modules with migrations found.");
     } else {
       for (const [mod, count] of [...moduleMap.entries()].sort()) {
-        console.log(`  - ${mod} (${count} migration${count > 1 ? "s" : ""})`);
+        ctx.logger.info(`${mod} (${count} migration${count > 1 ? "s" : ""})`);
       }
     }
 

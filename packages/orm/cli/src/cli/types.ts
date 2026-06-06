@@ -1,4 +1,5 @@
 import type { ILogger } from "@damatjs/logger";
+import type { OrmModuleContainer, OrmModule } from "@damatjs/orm-type";
 
 export type {
   Command,
@@ -17,3 +18,5 @@ export interface OrmCliOptions {
 }
 
 export type Logger = ILogger;
+
+export type { OrmModuleContainer, OrmModule };

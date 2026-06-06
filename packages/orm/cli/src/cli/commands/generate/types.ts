@@ -1,7 +1,7 @@
+import { OrmModuleContainer } from "@/cli/types";
 import { resolveModelsPath, resolveTypesPath } from "@/cli/utils";
 import { loadModules } from "@/cli/utils/load";
 import { type Command } from "@damatjs/cli";
-import { ModelDefinition } from "@damatjs/orm-model";
 
 const generateTypes: Command = {
   name: "generate:types",
@@ -11,7 +11,7 @@ const generateTypes: Command = {
     const path = await import("node:path");
     const { generateFilesMap } = await import("@damatjs/orm-codegen");
     const { toModuleSchema } = await import("@damatjs/orm-model");
-
+    const { discoverModels } = await import("@damatjs/orm-migration");
     const moduleName = ctx.args[0];
 
     if (!moduleName) {
@@ -20,7 +20,7 @@ const generateTypes: Command = {
     }
 
     // Load modules from damat.config.ts
-    let modules: Record<string, { resolve: string }>;
+    let modules: OrmModuleContainer;
     try {
       modules = await loadModules("damat.config.ts", ctx.cwd);
     } catch (error) {
@@ -51,14 +51,10 @@ const generateTypes: Command = {
     try {
       ctx.logger.info(`Generating types for module '${moduleName}'...`);
 
-      const moduleData = await import(moduleConfig.resolve);
-      const models = moduleData.models as { [key: string]: ModelDefinition };
-      ctx.logger.info(
-        `Discovered ${models.length} model(s) from services directory`,
-      );
+      const models = await discoverModels(moduleConfig.resolve);
 
       // Build the ModuleSchema from model definitions
-      const schema = toModuleSchema(moduleName, Object.values(models));
+      const schema = toModuleSchema(moduleName, models);
 
       // Generate a file-per-table map  (includes index.ts + per-table files)
       const filesMap = generateFilesMap(schema, {}, ctx.logger);

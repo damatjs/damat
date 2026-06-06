@@ -1,12 +1,14 @@
-
 import type { ServiceInstances } from "./types";
 import { initLogger, closeLogger } from "./logger";
 import { initDatabase, closeDatabase, getConnectionManager } from "./database";
-import { AppConfig } from '../config';
-import { disconnectRedis, getRedis, initRedis, connectRedis } from './redis';
+import { AppConfig } from "../config";
+import { disconnectRedis, getRedis, initRedis, connectRedis } from "./redis";
 import { initModules, getAllModules } from "./moduleService";
 
-export async function initializeServices(config: AppConfig, cwd: string = process.cwd()): Promise<ServiceInstances> {
+export async function initializeServices(
+  config: AppConfig,
+  cwd: string = process.cwd(),
+): Promise<ServiceInstances> {
   const logger = initLogger(config.projectConfig.loggerConfig);
 
   const instances: ServiceInstances = {
@@ -14,14 +16,14 @@ export async function initializeServices(config: AppConfig, cwd: string = proces
       database: async () => {
         return {
           status: "Ideal",
-          data: {}
-        }
+          data: {},
+        };
       },
       redis: async () => {
         return {
           status: "Ideal",
-          data: {}
-        }
+          data: {},
+        };
       },
     },
     shutdownHandlers: [],
@@ -29,10 +31,10 @@ export async function initializeServices(config: AppConfig, cwd: string = proces
   if (config.projectConfig.databaseUrl) {
     await initDatabase(
       config.services?.database ?? {
-        connectionString: config.projectConfig.databaseUrl
+        connectionString: config.projectConfig.databaseUrl,
       },
       logger,
-      config.projectConfig.nodeEnv ?? "development"
+      config.projectConfig.nodeEnv ?? "development",
     );
 
     instances.healthChecks!.database = async () => {
@@ -57,7 +59,7 @@ export async function initializeServices(config: AppConfig, cwd: string = proces
   } else {
     instances.healthChecks!.database = async () => {
       {
-        return { status: "not configured", data: {} }
+        return { status: "not configured", data: {} };
       }
     };
   }
@@ -67,7 +69,7 @@ export async function initializeServices(config: AppConfig, cwd: string = proces
     const url = redisConfig?.url ?? config.projectConfig.redisUrl;
     await initRedis({
       url,
-      logger
+      logger,
     });
 
     await connectRedis();
@@ -81,8 +83,8 @@ export async function initializeServices(config: AppConfig, cwd: string = proces
     });
   }
 
-  if (config.modules?.length) {
-    await initModules(config.modules, cwd);
+  if (config.modules && Object.values(config.modules)?.length) {
+    await initModules(Object.values(config.modules), cwd);
     instances.modules = getAllModules();
   }
 
@@ -109,7 +111,7 @@ export async function initializeServices(config: AppConfig, cwd: string = proces
   } else {
     instances.healthChecks!.redis = async () => {
       {
-        return { status: "not configured", data: {} }
+        return { status: "not configured", data: {} };
       }
     };
   }

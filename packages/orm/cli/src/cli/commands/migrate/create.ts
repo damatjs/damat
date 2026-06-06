@@ -1,5 +1,6 @@
 import type { Command } from "@damatjs/cli";
 import { loadModules } from "@/cli/utils/load";
+import { OrmModuleContainer } from "@/cli/types";
 
 const migrateCreate: Command = {
   name: "migrate:create",
@@ -18,7 +19,7 @@ const migrateCreate: Command = {
     }
 
     // Load modules from damat.config.ts
-    let modules: Record<string, { resolve: string }>;
+    let modules: OrmModuleContainer;
     try {
       modules = await loadModules("damat.config.ts", ctx.cwd);
     } catch (error) {
@@ -53,7 +54,7 @@ const migrateCreate: Command = {
           moduleConfig.resolve,
         );
         ctx.logger.success("Migration created");
-        console.log(`  File: ${filePath}`);
+        ctx.logger.info(`File: ${filePath}`);
       } else {
         ctx.logger.info(
           `Creating diff migration for module '${moduleName}'...`,
@@ -69,7 +70,7 @@ const migrateCreate: Command = {
         }
 
         ctx.logger.success("Migration created");
-        console.log(`  File: ${result.filePath}`);
+        ctx.logger.info(`File: ${result.filePath}`);
         if (result.warnings) {
           for (const w of result.warnings) {
             ctx.logger.warn(w);

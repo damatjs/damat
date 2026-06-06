@@ -1,5 +1,6 @@
 import type { Command } from "@damatjs/cli";
-import { loadModules } from "@/cli/utils/load";
+import { loadModules, loadDatabaseUrl } from "@/cli/utils/load";
+import { OrmModuleContainer } from "@/cli/types";
 
 const migrateUp: Command = {
   name: "migrate:up",
@@ -7,10 +8,9 @@ const migrateUp: Command = {
   handler: async (ctx) => {
     const { Pool } = await import("@damatjs/deps/pg");
     const { runMigrations } = await import("@damatjs/orm-migration");
-    const { requireDatabaseUrl } = await import("../../config/index.js");
 
     // Load modules from damat.config.ts
-    let modules: Record<string, { resolve: string }>;
+    let modules: OrmModuleContainer;
     try {
       modules = await loadModules("damat.config.ts", ctx.cwd);
     } catch (error) {
@@ -25,14 +25,29 @@ const migrateUp: Command = {
       return { exitCode: 1 };
     }
 
+    // Load database URL from damat.config.ts
+    let databaseUrl: string;
+    try {
+      const config = await loadDatabaseUrl("damat.config.ts", ctx.cwd);
+      databaseUrl = config.databaseUrl;
+    } catch (error) {
+      ctx.logger.error(
+        `Failed to load database config: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return { exitCode: 1 };
+    }
+
+    if (!databaseUrl) {
+      ctx.logger.error("No databaseUrl found in 'damat.config.ts'");
+      return { exitCode: 1 };
+    }
+
     ctx.logger.info("Running module migrations...");
 
-    const pool = new Pool({ connectionString: requireDatabaseUrl(ctx.logger) });
+    const pool = new Pool({ connectionString: databaseUrl });
+
     try {
-      const results = await runMigrations(
-        pool,
-        Object.values(modules).map((m) => m.resolve),
-      );
+      const results = await runMigrations(pool, modules);
       const hasFailures = results.some((r) => !r.success);
 
       if (hasFailures) {

@@ -1,5 +1,10 @@
+export interface ModuleConfigObject {
+  [x: string]: ModuleConfig;
+}
+
+
 export interface ModuleConfig {
-  resolve: string;
   id?: string;
+  resolve: string;
   options?: Record<string, unknown>;
 }
