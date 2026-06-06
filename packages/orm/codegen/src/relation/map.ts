@@ -1,17 +1,17 @@
 import { RelationSchema } from "@damatjs/orm-type";
 
 /**
- * Build a map of  tableName → RelationSchema[]  for quick look-up.
- * Only relations that originate from a given table are grouped together.
+ * Build a map of tableName → RelationSchema[] for quick look-up.
+ * Groups relations by the table they originate from.
  */
 export const buildRelationMap = (
   relationships: RelationSchema[],
 ): Map<string, RelationSchema[]> => {
   const map = new Map<string, RelationSchema[]>();
   for (const rel of relationships) {
-    const list = map.get(rel.from) ?? [];
+    const list = map.get(rel.fromTable) ?? [];
     list.push(rel);
-    map.set(rel.from, list);
+    map.set(rel.fromTable, list);
   }
   return map;
-}
+};

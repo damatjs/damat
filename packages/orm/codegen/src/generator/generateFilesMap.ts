@@ -6,6 +6,7 @@ import {
 } from "@/utils";
 import { DEFAULT_AUTO_FIELDS } from "@/defaults";
 import { generateTableFile } from "./generateTableFile";
+import { generateZodFile } from "./generateZodFile";
 import { tableToFileName } from "./helpers";
 import { getLogger, ILogger } from "@damatjs/logger";
 
@@ -33,7 +34,7 @@ export function generateFilesMap(
       ? null
       : (options.banner ??
         "// This file is auto-generated. Do not edit it manually.\n" +
-        "// Re-generate by running: bun run codegen\n");
+          "// Re-generate by running: bun run codegen\n");
 
   const result: GeneratedFilesMap = new Map();
 
@@ -47,6 +48,11 @@ export function generateFilesMap(
     const fileName = `${tableToFileName(table.name)}.ts`;
     logger.debug("Generating table file", { tableName: table.name, fileName });
     result.set(fileName, generateTableFile(table, schema, autoFields, banner));
+
+    // Generate Zod schema file
+    const zodFileName = `${tableToFileName(table.name)}.zod.ts`;
+    logger.debug("Generating zod file", { tableName: table.name, zodFileName });
+    result.set(zodFileName, generateZodFile(table, schema, banner));
   }
 
   const exportLines: string[] = [];
@@ -56,6 +62,7 @@ export function generateFilesMap(
   }
   for (const table of schema.tables) {
     exportLines.push(`export * from "./${tableToFileName(table.name)}";`);
+    exportLines.push(`export * from "./${tableToFileName(table.name)}.zod";`);
   }
 
   const indexBody = exportLines.join("\n");
