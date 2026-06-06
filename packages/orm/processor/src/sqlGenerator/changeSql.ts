@@ -31,8 +31,11 @@ export function generateChangeSQL(
   options: MigrationGeneratorOptions,
 ): string[] {
   switch (change.type) {
-    case "create_table":
-      return generateCreateTable(change, options);
+    case "create_table": {
+      const result = generateCreateTable(change, options);
+      // Indexes and FKs are emitted as separate changes, so we only return table statements
+      return result.tableStatements;
+    }
     case "drop_table":
       return [generateDropTable(change, options)];
     case "rename_table":

@@ -339,10 +339,12 @@ export class BelongsTo extends Relation {
    * `linkedBy` = FK column name(s) (lives on this table).
    * `mappedBy` = inverse property name on the target model.
    *
+   * @param fromTable The table name this relation is defined on.
    * @param fromProp  Property name this relation is registered under.
    */
-  toRelationSchema(fromProp: string): RelationSchema {
+  toRelationSchema(fromTable: string, fromProp: string): RelationSchema {
     const schema: RelationSchema = {
+      fromTable,
       from: fromProp,
       to: this.getModuleTarget()._tableName,
       type: "belongsTo",

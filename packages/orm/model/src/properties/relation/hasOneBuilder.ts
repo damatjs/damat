@@ -1,6 +1,7 @@
 import type { RelationOptions, RelationSchema } from "@/types";
 import { Relation } from "./base";
-import { ModelTarget } from '@/utils/target';
+import { ModelTarget } from "@/utils/target";
+import { toPascalCase } from "@/utils/stringConvertor";
 
 // ─── HasOne ───────────────────────────────────────────────────────────────────
 
@@ -63,12 +64,19 @@ export class HasOne extends Relation {
   /**
    * Produce the `RelationSchema` for the module-level relationship map.
    *
+   * @param fromTable The table name this relation is defined on.
    * @param fromProp  Property name this relation is registered under.
    */
-  toRelationSchema(fromProp: string): RelationSchema {
+  toRelationSchema(fromTable: string, fromProp: string): RelationSchema {
+    const targetTable =
+      typeof this.target === "string"
+        ? this.target
+        : this.getModuleTarget()._tableName;
+
     const schema: RelationSchema = {
+      fromTable,
       from: fromProp,
-      to: this.getModuleTarget()._tableName,
+      to: targetTable,
       type: "hasOne",
     };
 
@@ -81,9 +89,11 @@ export class HasOne extends Relation {
   }
 
   toTsType(): any {
+    if (typeof this.target === "string") {
+      return toPascalCase(this.target);
+    }
     return `${this.getModuleTarget().toTsType()}`;
   }
-
 }
 
 // ─── Factory function ─────────────────────────────────────────────────────────

@@ -46,6 +46,9 @@ export class Logger implements ILogger {
 
   debug(message: string, context?: LogContext): void { this.log("debug", message, context); }
   info(message: string, context?: LogContext): void { this.log("info", message, context); }
+  progress(message: string, context?: LogContext): void { this.log("progress", message, context); }
+  cached(message: string, context?: LogContext): void { this.log("cached", message, context); }
+  waiting(message: string, context?: LogContext): void { this.log("waiting", message, context); }
   success(message: string, context?: LogContext): void { this.log("success", message, context); }
   warn(message: string, context?: LogContext): void { this.log("warn", message, context); }
   error(message: string, error?: unknown, context?: LogContext): void { this.log("error", message, context, error); }

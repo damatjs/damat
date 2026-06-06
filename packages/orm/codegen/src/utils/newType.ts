@@ -28,7 +28,8 @@ export const generateNewType = (
     // Column is optional in New type if it has a default OR is nullable
     // (the DB / app layer will fill it in when omitted).
     const optional = col.default !== undefined || col.nullable;
-    lines.push(`  ${col.name}${optional ? "?" : ""}: ${tsType};`);
+    if (col.name != 'deleted_at' && col.name != 'created_at' && col.name != 'updated_at')
+      lines.push(`  ${col.name}${optional ? "?" : ""}: ${tsType};`);
   }
 
   return [`export type New${name} = {`, ...lines, `};`];

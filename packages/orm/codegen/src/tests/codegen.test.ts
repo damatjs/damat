@@ -1,10 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import { ModuleSchema } from "@damatjs/orm-type";
-import {
-  generateTypes,
-  generateTableFile,
-  generateFilesMap,
-} from "../index";
+import { generateTypes, generateTableFile, generateFilesMap } from "../index";
 import { DEFAULT_AUTO_FIELDS } from "../defaults";
 
 describe("generateTypes", () => {
@@ -30,18 +26,28 @@ describe("generateTypes", () => {
     ],
     enums: [{ name: "status", values: ["pending", "shipped", "delivered"] }],
     relationships: [
-      { from: "order", to: "product", type: "belongsTo", linkedBy: ["product_id"] },
+      {
+        fromTable: "order",
+        from: "product",
+        to: "product",
+        type: "belongsTo",
+        linkedBy: ["product_id"],
+      },
     ],
   };
 
   it("generates complete type file", () => {
     const content = generateTypes(schema);
 
-    expect(content).toContain("export type StatusEnum = 'pending' | 'shipped' | 'delivered';");
+    expect(content).toContain(
+      "export type StatusEnum = 'pending' | 'shipped' | 'delivered';",
+    );
     expect(content).toContain("export interface Product {");
     expect(content).toContain("export interface Order {");
     expect(content).toContain("export type NewProduct = {");
-    expect(content).toContain("export type UpdateProduct = Partial<Omit<Product, 'id'>>;");
+    expect(content).toContain(
+      "export type UpdateProduct = Partial<Omit<Product, 'id'>>;",
+    );
     expect(content).toContain("product?: Product;");
   });
 
@@ -70,17 +76,30 @@ describe("generateTableFile", () => {
         columns: [
           { name: "id", type: "uuid", nullable: false, primaryKey: true },
           { name: "name", type: "text", nullable: false },
-          { name: "status", type: "enum", enum: "product_status", nullable: false },
+          {
+            name: "status",
+            type: "enum",
+            enum: "product_status",
+            nullable: false,
+          },
         ],
       },
       {
         name: "category",
-        columns: [{ name: "id", type: "uuid", nullable: false, primaryKey: true }],
+        columns: [
+          { name: "id", type: "uuid", nullable: false, primaryKey: true },
+        ],
       },
     ],
     enums: [{ name: "product_status", values: ["draft", "active"] }],
     relationships: [
-      { from: "product", to: "category", type: "belongsTo", linkedBy: ["category_id"] },
+      {
+        fromTable: "product",
+        from: "category",
+        to: "category",
+        type: "belongsTo",
+        linkedBy: ["category_id"],
+      },
     ],
   };
 
@@ -89,11 +108,13 @@ describe("generateTableFile", () => {
       schema.tables[0]!,
       schema,
       DEFAULT_AUTO_FIELDS,
-      null
+      null,
     );
 
-    expect(content).toContain("import type { ProductStatusEnum } from \"./enums\";");
-    expect(content).toContain("import type { Category } from \"./category\";");
+    expect(content).toContain(
+      'import type { ProductStatusEnum } from "./enums";',
+    );
+    expect(content).toContain('import type { Category } from "./category";');
     expect(content).toContain("export interface Product {");
   });
 });
@@ -104,11 +125,15 @@ describe("generateFilesMap", () => {
     tables: [
       {
         name: "product",
-        columns: [{ name: "id", type: "uuid", nullable: false, primaryKey: true }],
+        columns: [
+          { name: "id", type: "uuid", nullable: false, primaryKey: true },
+        ],
       },
       {
         name: "order_item",
-        columns: [{ name: "id", type: "uuid", nullable: false, primaryKey: true }],
+        columns: [
+          { name: "id", type: "uuid", nullable: false, primaryKey: true },
+        ],
       },
     ],
     enums: [{ name: "status", values: ["active", "inactive"] }],
@@ -128,21 +153,28 @@ describe("generateFilesMap", () => {
     const files = generateFilesMap(schema);
     const indexContent = files.get("index.ts")!;
 
-    expect(indexContent).toContain("export * from \"./enums\";");
-    expect(indexContent).toContain("export * from \"./product\";");
-    expect(indexContent).toContain("export * from \"./order-item\";");
+    expect(indexContent).toContain('export * from "./enums";');
+    expect(indexContent).toContain('export * from "./product";');
+    expect(indexContent).toContain('export * from "./order-item";');
   });
 
   it("does not generate enums.ts when no enums", () => {
     const noEnumSchema: ModuleSchema = {
       moduleName: "test",
-      tables: [{ name: "item", columns: [{ name: "id", type: "uuid", nullable: false, primaryKey: true }] }],
+      tables: [
+        {
+          name: "item",
+          columns: [
+            { name: "id", type: "uuid", nullable: false, primaryKey: true },
+          ],
+        },
+      ],
     };
     const files = generateFilesMap(noEnumSchema);
 
     expect(files.has("enums.ts")).toBe(false);
     const indexContent = files.get("index.ts")!;
-    expect(indexContent).not.toContain("export * from \"./enums\";");
+    expect(indexContent).not.toContain('export * from "./enums";');
   });
 
   it("includes banner in all files", () => {

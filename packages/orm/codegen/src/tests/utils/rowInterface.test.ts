@@ -28,7 +28,13 @@ describe("generateRowInterface", () => {
     };
 
     const relations = [
-      { from: "product", to: "category", type: "belongsTo" as const, linkedBy: ["category_id"] },
+      {
+        fromTable: "product",
+        from: "category",
+        to: "category",
+        type: "belongsTo" as const,
+        linkedBy: ["category_id"],
+      },
     ];
 
     const lines = generateRowInterface(table, relations);
@@ -64,8 +70,20 @@ describe("generateRowInterface", () => {
     };
 
     const relations = [
-      { from: "post", to: "user", type: "belongsTo" as const, linkedBy: ["user_id"] },
-      { from: "post", to: "comment", type: "hasMany" as const, linkedBy: [] },
+      {
+        fromTable: "post",
+        from: "author",
+        to: "user",
+        type: "belongsTo" as const,
+        linkedBy: ["user_id"],
+      },
+      {
+        fromTable: "post",
+        from: "comments",
+        to: "comment",
+        type: "hasMany" as const,
+        linkedBy: [],
+      },
     ];
 
     const lines = generateRowInterface(table, relations);

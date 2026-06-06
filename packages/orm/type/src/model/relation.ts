@@ -79,7 +79,11 @@ export interface ConstraintOptions {
  *
  * Produced by every relation class via `.toRelationSchema(fromProp)`.
  */
+//TODO: update this repetitive setup
 export interface RelationSchema {
+  /** The source table name where this relation is defined. */
+  fromTable: string;
+
   /** The property name on **this** model (e.g. `"orders"`, `"author"`). */
   from: string;
 

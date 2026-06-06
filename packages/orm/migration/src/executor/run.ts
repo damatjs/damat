@@ -11,6 +11,7 @@ import { discoverModuleMigrations } from "../discovery";
 import { MigrationTracker } from "../tracker";
 import { executeMigration } from "./migration";
 import { bootstrapDatabase } from "./bootstrap";
+import { OrmModuleContainer, OrmModule } from "@damatjs/orm-type";
 
 /**
  * Run pending migrations for all or specific modules.
@@ -22,15 +23,14 @@ import { bootstrapDatabase } from "./bootstrap";
  */
 export async function runMigrations(
   pool: Pool,
-  moduleResolvers: string[],
+  moduleResolvers: OrmModuleContainer,
 ): Promise<ModuleMigrationResult[]> {
   const tracker = new MigrationTracker(pool);
   await tracker.ensureTable();
   await bootstrapDatabase(pool);
 
-
   const results: ModuleMigrationResult[] = [];
-  for (const moduleResolver of moduleResolvers) {
+  for (const moduleResolver of Object.values(moduleResolvers)) {
     results.push(await runModuleMigrations(pool, moduleResolver, tracker));
   }
 
@@ -42,7 +42,7 @@ export async function runMigrations(
  */
 async function runModuleMigrations(
   pool: Pool,
-  moduleResolver: string,
+  moduleResolver: OrmModule,
   tracker: MigrationTracker,
 ): Promise<ModuleMigrationResult> {
   const result: ModuleMigrationResult = {
@@ -51,25 +51,28 @@ async function runModuleMigrations(
     pending: [],
   };
   try {
-    const migrations = discoverModuleMigrations(moduleResolver);
-    const applied = await tracker.getApplied(moduleResolver);
+    const migrations = discoverModuleMigrations(moduleResolver.resolve);
+    const applied = await tracker.getApplied(moduleResolver.name);
     const appliedNames = new Set(applied.map((a) => a.name));
 
     const pending = migrations.filter((m) => !appliedNames.has(m.name));
     result.pending = pending.map((m) => m.name);
 
     if (pending.length === 0) {
-      log("skip", `${moduleResolver}: No pending migrations`);
+      log("skip", `${moduleResolver.name}: No pending migrations`);
       return result;
     }
 
-    log("info", `${moduleResolver}: Running ${pending.length} migration(s)...`);
+    log(
+      "info",
+      `${moduleResolver.name}: Running ${pending.length} migration(s)...`,
+    );
 
     for (const migration of pending) {
       const migrationResult = await executeMigration(
         pool,
         migration,
-        moduleResolver,
+        moduleResolver.name,
         tracker,
       );
 
@@ -86,7 +89,11 @@ async function runModuleMigrations(
   } catch (error) {
     result.success = false;
     result.error = error instanceof Error ? error : new Error(String(error));
-    log("error", `${moduleResolver}: Migration failed`, result.error.message);
+    log(
+      "error",
+      `${moduleResolver.name}: Migration failed`,
+      result.error.message,
+    );
   }
 
   return result;

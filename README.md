@@ -1407,7 +1407,7 @@ bun run db:create migration_name
 bun run db:revert
 ```
 
-Migrations are tracked per-module in the `_module_migrations` table.
+Migrations are tracked per-module in the `_damat_migration_logs` table.
 
 ---
 

@@ -8,3 +8,6 @@ export const VerificationModel = model("verifications", {
 }).indexes([
   columns.indexes().columns(["identifier"]),
 ]);
+
+
+export default VerificationModel;

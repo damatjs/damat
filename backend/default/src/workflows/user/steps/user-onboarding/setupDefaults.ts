@@ -1,23 +1,23 @@
 import { createStep } from "@damatjs/workflow-engine";
-import type { UserProfile, UserSettings } from "@/modules/user/types/user";
+import type { Verifications, Users } from "@/modules/user/types";
 
 export const setupDefaultsStep = createStep<
-  { user: UserProfile; emailSent: boolean },
-  UserSettings
+  { user: Users; emailSent: boolean },
+  Verifications
 >(
   "setup-defaults",
   async (input, _ctx) => {
     return {
-      userId: input.user.id,
-      theme: "system",
-      notifications: true,
-      language: "en",
+      created_at: new Date(),
+      id: "sda",
+      identifier: input.user.email,
+      value: "",
+      expiresAt: new Date(),
     };
   },
-  async (_input, _output, _ctx) => {
-  },
+  async (_input, _output, _ctx) => {},
   {
     timeoutMs: 5_000,
     description: "Setup default user settings",
-  }
+  },
 );

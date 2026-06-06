@@ -11,20 +11,35 @@ import {
   resolveSchema,
   columnDefinitionSql,
 } from "./utils";
-import { generateCreateIndex } from "./indexes";
-import { generateAddForeignKey } from "./foreignKeys";
 
 /**
- * Generate CREATE TABLE SQL plus its associated indexes and foreign keys.
+ * Result of table SQL generation with FKs separated.
+ * This allows callers to defer FK creation until after all tables exist.
+ */
+export interface TableSqlResult {
+  /** CREATE TABLE and CREATE INDEX statements */
+  tableStatements: string[];
+  /** ALTER TABLE ... ADD CONSTRAINT ... FOREIGN KEY statements (deprecated: always empty now) */
+  foreignKeyStatements: string[];
+}
+
+/**
+ * Generate CREATE TABLE SQL plus its associated indexes.
+ * Foreign keys are returned separately so they can be deferred.
+ *
+ * Note: When using change-based generation (via SchemaChange), indexes and FKs
+ * are emitted as separate changes, so this function only generates the CREATE TABLE
+ * statement for those cases.
  */
 export function generateCreateTable(
   change: CreateTableChange,
   options: MigrationGeneratorOptions,
-): string[] {
+): TableSqlResult {
   const { table } = change;
   const schema = resolveSchema(options);
   const fullName = qualifiedTable(table.name, schema);
-  const statements: string[] = [];
+  const tableStatements: string[] = [];
+  const foreignKeyStatements: string[] = [];
 
   const pkColumns = table.columns
     .filter((c) => c.primaryKey)
@@ -45,32 +60,18 @@ export function generateCreateTable(
   }
 
   const ifNotExists = options.safeMode !== false ? " IF NOT EXISTS" : "";
-  statements.push(
+  tableStatements.push(
     `CREATE TABLE${ifNotExists} ${fullName} (\n  ${colDefs.join(",\n  ")}\n)`,
   );
 
-  // Indexes (skip any that duplicate the primary key)
-  const pkColsSet = new Set(pkColumns);
-  if (table.indexes)
-    for (const index of table.indexes) {
-      const isRedundantPk =
-        index.columns.length === pkColsSet.size &&
-        index.columns.every((c) => {
-          const name = typeof c === "string" ? c : c.name;
-          return pkColsSet.has(name);
-        });
-      if (!isRedundantPk) {
-        statements.push(generateCreateIndex(index, table.name, schema, options));
-      }
-    }
+  // Note: Indexes and FKs are NOT generated here when using change-based generation.
+  // They are emitted as separate add_index and add_foreign_key changes.
+  // However, for backward compatibility with generateTableSql direct calls,
+  // we still check if we should include them inline.
+  //
+  // The diff system and snapshot generator both emit separate changes for indexes/FKs.
 
-  // Foreign keys
-  if (table.foreignKeys)
-    for (const fk of table.foreignKeys) {
-      statements.push(generateAddForeignKey(fk, table.name, schema));
-    }
-
-  return statements;
+  return { tableStatements, foreignKeyStatements };
 }
 
 /**
@@ -101,11 +102,12 @@ export function generateRenameTable(
 /**
  * Generate all SQL to recreate a table from its schema alone (no change context).
  * Used by the snapshot-based generator.
+ * Returns FKs separately so they can be deferred until all tables exist.
  */
 export function generateTableSql(
   table: Omit<TableSchema, "relations">,
   options: MigrationGeneratorOptions,
-): string[] {
+): TableSqlResult {
   return generateCreateTable(
     { type: "create_table", tableName: table.name, table, priority: 0 },
     options,

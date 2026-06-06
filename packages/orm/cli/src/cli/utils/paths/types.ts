@@ -1,8 +1,12 @@
 import path from "node:path";
 
-
-export function resolveTypesPath(
-  moduleResolver: string,
-): string {
-  return path.join(moduleResolver, "types", "common");
+/**
+ * Resolve the output directory for auto-generated TypeScript types.
+ *
+ * Convention: `{moduleResolver}/types/`
+ *
+ * @param moduleResolver - Absolute path to the module root directory.
+ */
+export function resolveTypesPath(moduleResolver: string): string {
+  return path.join(moduleResolver, "types");
 }

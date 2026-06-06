@@ -3,6 +3,201 @@
   "schema": "public",
   "tables": [
     {
+      "name": "verifications",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "nullable": false,
+          "unique": false,
+          "array": false,
+          "autoincrement": false,
+          "default": "generate_id('vrf')"
+        },
+        {
+          "name": "identifier",
+          "type": "text",
+          "primaryKey": false,
+          "nullable": false,
+          "unique": false,
+          "array": false,
+          "autoincrement": false
+        },
+        {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "nullable": false,
+          "unique": false,
+          "array": false,
+          "autoincrement": false
+        },
+        {
+          "name": "expiresAt",
+          "type": "timestamp without time zone",
+          "primaryKey": false,
+          "nullable": false,
+          "unique": false,
+          "array": false,
+          "autoincrement": false
+        },
+        {
+          "name": "created_at",
+          "type": "date",
+          "nullable": false,
+          "default": "now()",
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "name": "updated_at",
+          "type": "date",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "name": "deleted_at",
+          "type": "date",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "verifications_identifier",
+          "columns": [
+            {
+              "name": "identifier"
+            }
+          ],
+          "unique": false,
+          "type": "btree"
+        }
+      ],
+      "foreignKeys": [],
+      "constraints": []
+    },
+    {
+      "name": "sessions",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "nullable": false,
+          "unique": false,
+          "array": false,
+          "autoincrement": false,
+          "default": "generate_id('ses')"
+        },
+        {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "nullable": false,
+          "unique": false,
+          "array": false,
+          "autoincrement": false
+        },
+        {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "nullable": false,
+          "unique": true,
+          "array": false,
+          "autoincrement": false
+        },
+        {
+          "name": "expiresAt",
+          "type": "timestamp without time zone",
+          "primaryKey": false,
+          "nullable": false,
+          "unique": false,
+          "array": false,
+          "autoincrement": false
+        },
+        {
+          "name": "ipAddress",
+          "type": "character varying",
+          "primaryKey": false,
+          "nullable": true,
+          "unique": false,
+          "array": false,
+          "autoincrement": false,
+          "length": 45
+        },
+        {
+          "name": "userAgent",
+          "type": "text",
+          "primaryKey": false,
+          "nullable": true,
+          "unique": false,
+          "array": false,
+          "autoincrement": false
+        },
+        {
+          "name": "created_at",
+          "type": "date",
+          "nullable": false,
+          "default": "now()",
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "name": "updated_at",
+          "type": "date",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "name": "deleted_at",
+          "type": "date",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "sessions_token",
+          "columns": [
+            {
+              "name": "token"
+            }
+          ],
+          "unique": false,
+          "type": "btree"
+        },
+        {
+          "columns": [
+            "user_id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "users_user_id_fk",
+          "columns": [
+            {
+              "name": "user_id",
+              "type": "text"
+            }
+          ],
+          "referencedTable": "users",
+          "referencedColumns": [
+            "id"
+          ],
+          "indexed": true
+        }
+      ],
+      "constraints": []
+    },
+    {
       "name": "accounts",
       "columns": [
         {
@@ -62,7 +257,7 @@
         },
         {
           "name": "accessTokenExpiresAt",
-          "type": "timestamp with time zone",
+          "type": "timestamp without time zone",
           "primaryKey": false,
           "nullable": true,
           "unique": false,
@@ -71,7 +266,7 @@
         },
         {
           "name": "refreshTokenExpiresAt",
-          "type": "timestamp with time zone",
+          "type": "timestamp without time zone",
           "primaryKey": false,
           "nullable": true,
           "unique": false,
@@ -106,24 +301,26 @@
           "autoincrement": false
         },
         {
-          "name": "createdAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
+          "name": "created_at",
+          "type": "date",
           "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "default": "now()"
+          "default": "now()",
+          "primaryKey": false,
+          "unique": false
         },
         {
-          "name": "updatedAt",
-          "type": "timestamp with time zone",
+          "name": "updated_at",
+          "type": "date",
+          "nullable": true,
           "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "default": "now()"
+          "unique": false
+        },
+        {
+          "name": "deleted_at",
+          "type": "date",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
         }
       ],
       "indexes": [
@@ -157,8 +354,13 @@
               "name": "accountId"
             }
           ],
-          "unique": true,
+          "unique": false,
           "type": "btree"
+        },
+        {
+          "columns": [
+            "user_id"
+          ]
         }
       ],
       "foreignKeys": [
@@ -174,127 +376,7 @@
           "referencedColumns": [
             "id"
           ],
-          "onDelete": "CASCADE"
-        }
-      ],
-      "constraints": []
-    },
-    {
-      "name": "sessions",
-      "columns": [
-        {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "default": "generate_id('ses')"
-        },
-        {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "token",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "expiresAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "ipAddress",
-          "type": "character varying",
-          "primaryKey": false,
-          "nullable": true,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "length": 45
-        },
-        {
-          "name": "userAgent",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": true,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "createdAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "default": "now()"
-        },
-        {
-          "name": "updatedAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "default": "now()"
-        }
-      ],
-      "indexes": [
-        {
-          "name": "idx_sessions_user_id",
-          "columns": [
-            {
-              "name": "user_id"
-            }
-          ],
-          "unique": false,
-          "type": "btree"
-        },
-        {
-          "name": "uniq_sessions_token",
-          "columns": [
-            {
-              "name": "token"
-            }
-          ],
-          "unique": true,
-          "type": "btree"
-        }
-      ],
-      "foreignKeys": [
-        {
-          "name": "users_user_id_fk",
-          "columns": [
-            {
-              "name": "user_id",
-              "type": "text"
-            }
-          ],
-          "referencedTable": "users",
-          "referencedColumns": [
-            "id"
-          ],
-          "onDelete": "CASCADE"
+          "indexed": true
         }
       ],
       "constraints": []
@@ -350,109 +432,37 @@
           "autoincrement": false
         },
         {
-          "name": "createdAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
+          "name": "created_at",
+          "type": "date",
           "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "default": "now()"
+          "default": "now()",
+          "primaryKey": false,
+          "unique": false
         },
         {
-          "name": "updatedAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "default": "now()"
-        },
-        {
-          "name": "deletedAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
+          "name": "updated_at",
+          "type": "date",
           "nullable": true,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        }
-      ],
-      "indexes": [],
-      "foreignKeys": [],
-      "constraints": []
-    },
-    {
-      "name": "verifications",
-      "columns": [
-        {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "default": "generate_id('ver')"
+          "primaryKey": false,
+          "unique": false
         },
         {
-          "name": "identifier",
-          "type": "text",
+          "name": "deleted_at",
+          "type": "date",
+          "nullable": true,
           "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "value",
-          "type": "text",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "expiresAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false
-        },
-        {
-          "name": "createdAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "default": "now()"
-        },
-        {
-          "name": "updatedAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "nullable": false,
-          "unique": false,
-          "array": false,
-          "autoincrement": false,
-          "default": "now()"
+          "unique": false
         }
       ],
       "indexes": [
         {
-          "name": "idx_verifications_identifier",
+          "name": "users_email",
           "columns": [
             {
-              "name": "identifier"
+              "name": "email"
             }
           ],
-          "unique": false,
+          "unique": true,
           "type": "btree"
         }
       ],
@@ -463,48 +473,40 @@
   "enums": [],
   "relationships": [
     {
+      "fromTable": "sessions",
+      "from": "user",
+      "to": "users",
+      "type": "belongsTo",
+      "mappedBy": [
+        "user"
+      ],
+      "linkedBy": [
+        "user_id"
+      ]
+    },
+    {
+      "fromTable": "accounts",
+      "from": "user",
+      "to": "users",
+      "type": "belongsTo",
+      "mappedBy": [
+        "user"
+      ],
+      "linkedBy": [
+        "user_id"
+      ]
+    },
+    {
+      "fromTable": "users",
       "from": "accounts",
-      "to": "users",
-      "type": "belongsTo",
-      "mappedBy": [
-        "user"
-      ],
-      "linkedBy": [
-        "user_id"
-      ],
-      "rule": {
-        "onDelete": "CASCADE"
-      }
-    },
-    {
-      "from": "sessions",
-      "to": "users",
-      "type": "belongsTo",
-      "mappedBy": [
-        "user"
-      ],
-      "linkedBy": [
-        "user_id"
-      ],
-      "rule": {
-        "onDelete": "CASCADE"
-      }
-    },
-    {
-      "from": "users",
       "to": "accounts",
-      "type": "hasMany",
-      "mappedBy": [
-        "user"
-      ]
+      "type": "hasMany"
     },
     {
-      "from": "users",
+      "fromTable": "users",
+      "from": "sessions",
       "to": "sessions",
-      "type": "hasMany",
-      "mappedBy": [
-        "user"
-      ]
+      "type": "hasMany"
     }
   ]
 }

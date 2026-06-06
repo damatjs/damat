@@ -25,10 +25,10 @@ export default defineConfig({
       corsConfig: process.env.FRONTEND_CORS,
     },
   },
-  modules: [
-    {
+  modules: {
+    user: {
       resolve: "./src/modules/user",
       id: "user",
     },
-  ],
+  },
 });

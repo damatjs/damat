@@ -1,4 +1,4 @@
-export type LogLevel = "debug" | "info" | "success" | "warn" | "error" | "fatal" | "skip";
+export type LogLevel = "debug" | "info" | "progress" | "waiting" | "cached" | "success" | "warn" | "error" | "fatal" | "skip";
 export type LogFormat = "json" | "pretty" | "simple";
 
 export type LogContext = Record<string, unknown>;
@@ -46,6 +46,9 @@ export interface LogEntry {
 export interface ILogger {
   debug(message: string, context?: LogContext): void;
   info(message: string, context?: LogContext): void;
+  waiting(message: string, context?: LogContext): void;
+  progress(message: string, context?: LogContext): void;
+  cached(message: string, context?: LogContext): void;
   success(message: string, context?: LogContext): void;
   warn(message: string, context?: LogContext): void;
   error(message: string, error?: unknown, context?: LogContext): void;

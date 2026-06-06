@@ -1,6 +1,7 @@
 import type { RelationOptions, RelationSchema } from "@/types";
 import { Relation } from "./base";
-import { ModelTarget } from '@/utils/target';
+import { ModelTarget } from "@/utils/target";
+import { toPascalCase } from "@/utils/stringConvertor";
 
 // ─── HasMany ──────────────────────────────────────────────────────────────────
 
@@ -63,12 +64,19 @@ export class HasMany extends Relation {
   /**
    * Produce the `RelationSchema` for the module-level relationship map.
    *
+   * @param fromTable The table name this relation is defined on.
    * @param fromProp  Property name this relation is registered under.
    */
-  toRelationSchema(fromProp: string): RelationSchema {
+  toRelationSchema(fromTable: string, fromProp: string): RelationSchema {
+    const targetTable =
+      typeof this.target === "string"
+        ? this.target
+        : this.getModuleTarget()._tableName;
+
     const schema: RelationSchema = {
+      fromTable,
       from: fromProp,
-      to: this.getModuleTarget()._tableName,
+      to: targetTable,
       type: "hasMany",
     };
 
@@ -79,7 +87,11 @@ export class HasMany extends Relation {
 
     return schema;
   }
+
   toTsType(): any {
+    if (typeof this.target === "string") {
+      return `Array<${toPascalCase(this.target)}>`;
+    }
     return `Array<${this.getModuleTarget().toTsType()}>`;
   }
 }
@@ -95,7 +107,10 @@ export class HasMany extends Relation {
  * posts: hasMany(PostSchema).mappedBy("author")
  * ```
  */
-export function hasMany(target: ModelTarget, options?: RelationOptions): HasMany {
+export function hasMany(
+  target: ModelTarget,
+  options?: RelationOptions,
+): HasMany {
   return new HasMany(target, options);
 }
 

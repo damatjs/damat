@@ -22,6 +22,7 @@ function belongsTo(
   linkedBy?: string[],
 ): RelationSchema {
   return {
+    fromTable,
     from: fromTable,
     to: toTable,
     type: "belongsTo",
@@ -36,6 +37,7 @@ function hasMany(
   mappedBy?: string[],
 ): RelationSchema {
   return {
+    fromTable,
     from: fromTable,
     to: toTable,
     type: "hasMany",
@@ -49,6 +51,7 @@ function hasOne(
   mappedBy?: string[],
 ): RelationSchema {
   return {
+    fromTable,
     from: fromTable,
     to: toTable,
     type: "hasOne",

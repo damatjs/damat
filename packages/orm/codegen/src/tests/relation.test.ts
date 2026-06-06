@@ -6,16 +6,34 @@ import { relationFields } from "../relation/relationFields";
 describe("buildRelationMap", () => {
   it("groups relations by source table", () => {
     const relationships: RelationSchema[] = [
-      { from: "post", to: "user", type: "belongsTo", linkedBy: ["user_id"] },
-      { from: "post", to: "comment", type: "hasMany", linkedBy: [] },
-      { from: "comment", to: "user", type: "belongsTo", linkedBy: ["user_id"] },
+      {
+        fromTable: "posts",
+        from: "user",
+        to: "users",
+        type: "belongsTo",
+        linkedBy: ["user_id"],
+      },
+      {
+        fromTable: "posts",
+        from: "comments",
+        to: "comments",
+        type: "hasMany",
+        linkedBy: [],
+      },
+      {
+        fromTable: "comments",
+        from: "user",
+        to: "users",
+        type: "belongsTo",
+        linkedBy: ["user_id"],
+      },
     ];
 
     const map = buildRelationMap(relationships);
 
-    expect(map.get("post")?.length).toBe(2);
-    expect(map.get("comment")?.length).toBe(1);
-    expect(map.has("user")).toBe(false);
+    expect(map.get("posts")?.length).toBe(2);
+    expect(map.get("comments")?.length).toBe(1);
+    expect(map.has("users")).toBe(false);
   });
 
   it("returns empty map for no relationships", () => {
@@ -25,13 +43,31 @@ describe("buildRelationMap", () => {
 
   it("handles multiple relations from same table", () => {
     const relationships: RelationSchema[] = [
-      { from: "order", to: "user", type: "belongsTo", linkedBy: ["user_id"] },
-      { from: "order", to: "product", type: "belongsTo", linkedBy: ["product_id"] },
-      { from: "order", to: "payment", type: "hasOne", linkedBy: [] },
+      {
+        fromTable: "orders",
+        from: "user",
+        to: "users",
+        type: "belongsTo",
+        linkedBy: ["user_id"],
+      },
+      {
+        fromTable: "orders",
+        from: "product",
+        to: "products",
+        type: "belongsTo",
+        linkedBy: ["product_id"],
+      },
+      {
+        fromTable: "orders",
+        from: "payment",
+        to: "payments",
+        type: "hasOne",
+        linkedBy: [],
+      },
     ];
 
     const map = buildRelationMap(relationships);
-    const orderRels = map.get("order");
+    const orderRels = map.get("orders");
 
     expect(orderRels?.length).toBe(3);
   });
@@ -40,42 +76,78 @@ describe("buildRelationMap", () => {
 describe("relationFields", () => {
   it("generates belongsTo relation field", () => {
     const fields = relationFields([
-      { from: "post", to: "user", type: "belongsTo", linkedBy: ["user_id"] },
+      {
+        fromTable: "posts",
+        from: "author",
+        to: "users",
+        type: "belongsTo",
+        linkedBy: ["user_id"],
+      },
     ]);
     expect(fields).toEqual(["  user?: User;"]);
   });
 
   it("generates hasMany relation field with plural name", () => {
     const fields = relationFields([
-      { from: "user", to: "post", type: "hasMany", linkedBy: [] },
+      {
+        fromTable: "users",
+        from: "posts",
+        to: "posts",
+        type: "hasMany",
+        linkedBy: [],
+      },
     ]);
     expect(fields).toEqual(["  posts?: Post[];"]);
   });
 
   it("generates hasOne relation field", () => {
     const fields = relationFields([
-      { from: "user", to: "profile", type: "hasOne", linkedBy: [] },
+      {
+        fromTable: "users",
+        from: "profile",
+        to: "profiles",
+        type: "hasOne",
+        linkedBy: [],
+      },
     ]);
     expect(fields).toEqual(["  profile?: Profile;"]);
   });
 
   it("handles singular table name in hasMany", () => {
     const fields = relationFields([
-      { from: "category", to: "product", type: "hasMany", linkedBy: [] },
+      {
+        fromTable: "categories",
+        from: "products",
+        to: "products",
+        type: "hasMany",
+        linkedBy: [],
+      },
     ]);
     expect(fields).toEqual(["  products?: Product[];"]);
   });
 
   it("handles table name already ending with 's' in hasMany", () => {
     const fields = relationFields([
-      { from: "school", to: "class", type: "hasMany", linkedBy: [] },
+      {
+        fromTable: "schools",
+        from: "classes",
+        to: "classes",
+        type: "hasMany",
+        linkedBy: [],
+      },
     ]);
-    expect(fields).toEqual(["  class?: Class[];"]);
+    expect(fields).toEqual(["  classes?: Class[];"]);
   });
 
   it("uses camelCase derived field name when no linkedBy", () => {
     const fields = relationFields([
-      { from: "item", to: "order_item", type: "belongsTo", linkedBy: [] },
+      {
+        fromTable: "items",
+        from: "orderItem",
+        to: "order_items",
+        type: "belongsTo",
+        linkedBy: [],
+      },
     ]);
     expect(fields).toEqual(["  orderItem?: OrderItem;"]);
   });
@@ -86,9 +158,27 @@ describe("relationFields", () => {
 
   it("handles multiple relations", () => {
     const fields = relationFields([
-      { from: "post", to: "user", type: "belongsTo", linkedBy: ["user_id"] },
-      { from: "post", to: "comment", type: "hasMany", linkedBy: [] },
-      { from: "post", to: "metadata", type: "hasOne", linkedBy: [] },
+      {
+        fromTable: "posts",
+        from: "author",
+        to: "users",
+        type: "belongsTo",
+        linkedBy: ["user_id"],
+      },
+      {
+        fromTable: "posts",
+        from: "comments",
+        to: "comments",
+        type: "hasMany",
+        linkedBy: [],
+      },
+      {
+        fromTable: "posts",
+        from: "metadata",
+        to: "metadata",
+        type: "hasOne",
+        linkedBy: [],
+      },
     ]);
 
     expect(fields).toEqual([

@@ -4,9 +4,16 @@ import {
   sendWelcomeEmailStep,
   setupDefaultsStep,
 } from "../steps/user-onboarding";
-import { UserOnboardingInput, UserOnboardingResult } from '@/modules/user/types';
+import { NewUsers, Users, Verifications } from "@/modules/user/types";
 
-export const userOnboardingWorkflow = createWorkflow<UserOnboardingInput, UserOnboardingResult>(
+export const userOnboardingWorkflow = createWorkflow<
+  NewUsers,
+  {
+    user: Users;
+    emailSent: boolean;
+    settings: Verifications;
+  }
+>(
   "user-onboarding",
   (input, ctx) =>
     Effect.gen(function* () {
@@ -17,7 +24,7 @@ export const userOnboardingWorkflow = createWorkflow<UserOnboardingInput, UserOn
       const settings = yield* executeStep(
         setupDefaultsStep,
         { user, emailSent: emailResult.sent },
-        ctx
+        ctx,
       );
 
       return {
@@ -28,7 +35,7 @@ export const userOnboardingWorkflow = createWorkflow<UserOnboardingInput, UserOn
     }),
   {
     timeoutMs: 60_000,
-  }
+  },
 );
 
 export { userOnboardingWorkflow as default };

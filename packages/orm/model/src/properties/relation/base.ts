@@ -1,7 +1,6 @@
-import { ModelDefinition } from '@/schema';
+import { ModelDefinition } from "@/schema";
 import type { RelationType, RelationSchema } from "@/types";
-import { ModelTarget, resolveModuleTarget } from '@/utils/target';
-
+import { ModelTarget, resolveModuleTarget } from "@/utils/target";
 
 // ─── Abstract Relation base ───────────────────────────────────────────────────
 
@@ -59,7 +58,11 @@ export abstract class Relation {
   /**
    * Produce a `RelationSchema` for the module-level relationship map.
    *
+   * @param fromTable The table name this relation is defined on.
    * @param fromProp  The property name this relation is registered under.
    */
-  abstract toRelationSchema(fromProp: string): RelationSchema;
+  abstract toRelationSchema(
+    fromTable: string,
+    fromProp: string,
+  ): RelationSchema;
 }

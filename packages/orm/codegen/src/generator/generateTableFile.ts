@@ -1,6 +1,11 @@
 import { ModuleSchema } from "@damatjs/orm-type";
 import { toEnumTypeName } from "@/utils/stringConvertor";
-import { getTableEnums, generateRowInterface, generateNewType, generateUpdateType, } from "@/utils";
+import {
+  getTableEnums,
+  generateRowInterface,
+  generateNewType,
+  generateUpdateType,
+} from "@/utils";
 import { getRelationImports } from "./helpers";
 import { getLogger } from "@damatjs/logger";
 
@@ -14,12 +19,12 @@ export function generateTableFile(
 ): string {
   logger.debug("generateTableFile started", {
     tableName: table.name,
-    columnCount: table.columns.length
+    columnCount: table.columns.length,
   });
 
   const allEnums = schema.enums ?? [];
   const rels = (schema.relationships ?? []).filter(
-    (r) => r.from === table.name,
+    (r) => r.fromTable === table.name,
   );
 
   const tableEnums = getTableEnums(table, allEnums);
@@ -60,7 +65,7 @@ export function generateTableFile(
   logger.debug("generateTableFile completed", {
     tableName: table.name,
     hasEnumImports: tableEnums.length > 0,
-    relationCount: uniqueRelImports.length
+    relationCount: uniqueRelImports.length,
   });
 
   return banner ? `${banner}\n${body}\n` : `${body}\n`;

@@ -1,6 +1,6 @@
 import { RouteHandler, RouteValidator } from "@damatjs/framework/router";
 import { userOnboardingWorkflow } from "@/workflows";
-import { UserOnboardingInputSchema } from "@/modules/user/types/user";
+import { newUsersSchema } from "@/modules/user/types";
 
 export const POST: RouteHandler = async (c) => {
   try {
@@ -10,10 +10,11 @@ export const POST: RouteHandler = async (c) => {
     const useLock = c.req.query("lock") === "true";
 
     const result = useLock
-      ? await userOnboardingWorkflow.executeWithLock(input, { lockId: input.email, ttlMs: 60_000 })
+      ? await userOnboardingWorkflow.executeWithLock(input, {
+          lockId: input.email,
+          ttlMs: 60_000,
+        })
       : await userOnboardingWorkflow.execute(input);
-
-
 
     if (result.success) {
       return c.json(
@@ -23,7 +24,7 @@ export const POST: RouteHandler = async (c) => {
           executionId: result.executionId,
           durationMs: result.durationMs,
         },
-        201
+        201,
       );
     } else {
       return c.json(
@@ -35,7 +36,7 @@ export const POST: RouteHandler = async (c) => {
           compensated: result.compensated,
           durationMs: result.durationMs,
         },
-        500
+        500,
       );
     }
   } catch (error) {
@@ -44,15 +45,14 @@ export const POST: RouteHandler = async (c) => {
         success: false,
         error: error instanceof Error ? error.message : "Internal server error",
       },
-      500
+      500,
     );
   }
 };
 
-
 export const validators: RouteValidator[] = [
   {
     method: "POST",
-    body: UserOnboardingInputSchema,
-  }
-]
+    body: newUsersSchema,
+  },
+];

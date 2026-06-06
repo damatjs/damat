@@ -6,7 +6,8 @@ export const UserModel = model("users", {
   emailVerified: columns.boolean().default(false),
   name: columns.text().nullable(),
   image: columns.text().nullable(),
-  deletedAt: columns.timestamp().nullable(),
-}).indexes([
-  columns.indexes().columns(["email"]).unique(),
-]);
+  accounts: columns.hasMany("accounts"),
+  sessions: columns.hasMany("sessions"),
+}).indexes([columns.indexes().columns(["email"]).unique()]);
+
+export default UserModel;
