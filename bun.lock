@@ -278,6 +278,7 @@
         "@damatjs/logger": "*",
         "@damatjs/orm-model": "*",
         "@damatjs/orm-processor": "*",
+        "@damatjs/orm-type": "*",
         "@damatjs/types": "*",
       },
       "devDependencies": {

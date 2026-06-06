@@ -1,5 +1,10 @@
 import { ModuleService } from "@damatjs/framework";
-import { UserModel, AccountModel, SessionModel, VerificationModel } from "./models";
+import {
+  UserModel,
+  AccountModel,
+  SessionModel,
+  VerificationModel,
+} from "./models";
 import { schema } from "./config/schema";
 
 export const models = {
@@ -12,4 +17,4 @@ export const models = {
 export class UserModuleService extends ModuleService({
   models,
   credentialsSchema: schema,
-}) { }
+}) {}
