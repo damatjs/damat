@@ -1,10 +1,11 @@
 import type {
   GeneratedMigration,
   MigrationGeneratorOptions,
+  SchemaChange,
 } from "../../types";
 import type { ModuleSchema } from "@damatjs/orm-type";
-import { generateTableSql } from "../tables";
-import { generateCreateEnum } from "../enums";
+import { generateChangeSQL } from "../changeSql";
+import { PRIORITY } from "../../diff/priority";
 
 // ─── shared defaults ──────────────────────────────────────────────────────────
 
@@ -40,17 +41,61 @@ export function generateFromSnapshot(
   const upStatements: string[] = [];
   const warnings: string[] = [];
 
-  // 1. Native enum types first (tables may reference them)
-  if (snapshot.enums)
+  // 1. Convert snapshot to SchemaChange[] with priorities
+  const changes: SchemaChange[] = [];
+
+  // Enums first (tables may reference them)
+  if (snapshot.enums) {
     for (const enumDef of snapshot.enums) {
-      upStatements.push(
-        generateCreateEnum({ type: "create_enum", enumDef, priority: 0 }, opts),
-      );
+      changes.push({
+        type: "create_enum",
+        enumDef,
+        priority: PRIORITY.CREATE_ENUM,
+      });
+    }
+  }
+
+  // Tables, indexes, and FKs
+  for (const table of snapshot.tables) {
+    // Create table (includes columns and inline PK)
+    changes.push({
+      type: "create_table",
+      tableName: table.name,
+      table: table as any,
+      priority: PRIORITY.CREATE_TABLE,
+    });
+
+    // Indexes
+    if (table.indexes) {
+      for (const index of table.indexes) {
+        changes.push({
+          type: "add_index",
+          tableName: table.name,
+          index,
+          priority: PRIORITY.ADD_INDEX,
+        });
+      }
     }
 
-  // 2. Tables (columns + inline PKs), then their indexes and FKs
-  for (const table of snapshot.tables) {
-    upStatements.push(...generateTableSql(table as any, opts));
+    // Foreign keys
+    if (table.foreignKeys) {
+      for (const fk of table.foreignKeys) {
+        changes.push({
+          type: "add_foreign_key",
+          tableName: table.name,
+          foreignKey: fk,
+          priority: PRIORITY.ADD_FOREIGN_KEY,
+        });
+      }
+    }
+  }
+
+  // 2. Sort by priority (lower = first)
+  changes.sort((a, b) => a.priority - b.priority);
+
+  // 3. Generate SQL from sorted changes
+  for (const change of changes) {
+    upStatements.push(...generateChangeSQL(change, opts));
   }
 
   return {

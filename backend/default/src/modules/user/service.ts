@@ -8,10 +8,10 @@ import {
 import { schema } from "./config/schema";
 
 export const models = {
-  user: UserModel,
-  account: AccountModel,
-  session: SessionModel,
   verification: VerificationModel,
+  session: SessionModel,
+  account: AccountModel,
+  user: UserModel,
 };
 
 export class UserModuleService extends ModuleService({
