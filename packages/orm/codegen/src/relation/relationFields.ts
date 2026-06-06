@@ -1,4 +1,4 @@
-import { toPascalCase, toCamelCase } from '@/utils/stringConvertor';
+import { toPascalCase } from "@/utils/stringConvertor";
 import { RelationSchema } from "@damatjs/orm-type";
 
 /**
@@ -9,13 +9,10 @@ import { RelationSchema } from "@damatjs/orm-type";
  * - `hasMany`    → `targets?: TargetType[]`  (loaded collection, pluralised)
  * - `hasOne`     → `target?: TargetType`     (singular loaded entity)
  *
- * Field name derivation (since `from` in RelationSchema is the source table
- * name, not the property name):
- *   - `belongsTo` — strip `_id` from the first `linkedBy` FK column, e.g.
- *                   `category_id` → `category`.
- *   - `hasMany`   — camelCase of the target table name, pluralised with an
- *                   `s` suffix, e.g. `order` → `orders`.
- *   - `hasOne`    — camelCase of the target table name, e.g. `profile`.
+ * Field name derivation:
+ *   - Uses `rel.from` (the property name in the model definition).
+ *   - `belongsTo` — strip `_id` from the first `linkedBy` FK column if available.
+ *   - `hasMany` / `hasOne` — directly uses `rel.from`.
  */
 export const relationFields = (relations: RelationSchema[]): string[] => {
   return relations.map((rel) => {
@@ -23,18 +20,17 @@ export const relationFields = (relations: RelationSchema[]): string[] => {
 
     let fieldName: string;
     if (rel.type === "belongsTo") {
+      // For belongsTo, prefer stripping _id from FK column for backward compat
+      // Fall back to the "from" property name
       const fkCol = rel.linkedBy?.[0];
-      fieldName = fkCol ? fkCol.replace(/_id$/, "") : toCamelCase(rel.to);
-    } else if (rel.type === "hasMany") {
-      // Pluralise: append 's' unless the name already ends in 's'
-      const base = toCamelCase(rel.to);
-      fieldName = base.endsWith("s") ? base : `${base}s`;
+      fieldName = fkCol ? fkCol.replace(/_id$/, "") : rel.from;
     } else {
-      fieldName = toCamelCase(rel.to);
+      // For hasMany / hasOne, use the "from" property name directly
+      fieldName = rel.from;
     }
 
     const tsType = rel.type === "hasMany" ? `${targetType}[]` : targetType;
 
     return `  ${fieldName}?: ${tsType};`;
   });
-}
+};

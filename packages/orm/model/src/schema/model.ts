@@ -153,8 +153,8 @@ export class ModelDefinition {
         // Create the FK constraint
         foreignKeys.push(propValue.toForeignKeySchema());
 
-        // Module-level relation metadata — from = this table name
-        relations.push(propValue.toRelationSchema(this._tableName));
+        // Module-level relation metadata — from = property name where this relation is defined
+        relations.push(propValue.toRelationSchema(propName));
 
         // If the relation is flagged as indexed, add an index entry per FK col
         if (propValue.isIndexed()) {
@@ -166,13 +166,15 @@ export class ModelDefinition {
         propValue instanceof HasManyBuilder ||
         propValue instanceof HasOneBuilder
       ) {
-        // from = this table name, not the property name
-        relations.push(propValue.toRelationSchema(this._tableName));
+        // from = property name where this relation is defined
+        relations.push(propValue.toRelationSchema(propName));
       }
     }
 
     if (this._timestamps) {
-      if (!columns.some(c => c.name === "created_at" || c.name === "createdAt")) {
+      if (
+        !columns.some((c) => c.name === "created_at" || c.name === "createdAt")
+      ) {
         columns.push({
           name: "created_at",
           type: "date",
@@ -182,7 +184,9 @@ export class ModelDefinition {
           unique: false,
         });
       }
-      if (!columns.some(c => c.name === "updated_at" || c.name === "updatedAt")) {
+      if (
+        !columns.some((c) => c.name === "updated_at" || c.name === "updatedAt")
+      ) {
         columns.push({
           name: "updated_at",
           type: "date",
@@ -194,7 +198,7 @@ export class ModelDefinition {
     }
 
     if (this._softDelete) {
-      if (!columns.some(c => c.name === this._deletedAtField)) {
+      if (!columns.some((c) => c.name === this._deletedAtField)) {
         columns.push({
           name: this._deletedAtField,
           type: "date",
@@ -220,7 +224,6 @@ export class ModelDefinition {
 
     return schema;
   }
-
 
   // If we have the codegen why do we need this might need to be removed
   // ─── toTsType ───────────────────────────────────────────────────────────────
@@ -295,7 +298,9 @@ export function model(
   properties: Record<string, PropertyValue>,
   options?: { schema?: string; name?: string },
 ): ModelDefinition {
-  return new ModelDefinition(tableName, properties, options);
+  const modelData: ModelDefinition = new ModelDefinition(tableName, properties, options);
+
+  return modelData;
 }
 
 export default model;
