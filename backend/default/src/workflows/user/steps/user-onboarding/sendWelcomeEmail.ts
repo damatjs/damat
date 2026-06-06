@@ -1,7 +1,10 @@
 import { createStep } from "@damatjs/workflow-engine";
-import type { UserProfile, WelcomeEmailResult } from "@/modules/user/types/user";
+import type { Users } from "@/modules/user/types";
 
-export const sendWelcomeEmailStep = createStep<UserProfile, WelcomeEmailResult>(
+export const sendWelcomeEmailStep = createStep<
+  Users,
+  { sent: boolean; emailId: string }
+>(
   "send-welcome-email",
   async (user, _ctx) => {
     return {
@@ -13,5 +16,5 @@ export const sendWelcomeEmailStep = createStep<UserProfile, WelcomeEmailResult>(
   {
     timeoutMs: 5_000,
     description: "Send welcome email to new user",
-  }
+  },
 );

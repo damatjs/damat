@@ -6,9 +6,9 @@ export interface Verifications {
   identifier: string;
   value: string;
   expiresAt: Date;
-  created_at: Date;
-  updated_at: Date | null;
-  deleted_at: Date | null;
+  created_at?: Date;
+  updated_at?: Date | null;
+  deleted_at?: Date | null;
 }
 
 export type NewVerifications = {
@@ -17,4 +17,4 @@ export type NewVerifications = {
   expiresAt: Date;
 };
 
-export type UpdateVerifications = Partial<Omit<Verifications, 'id'>>;
+export type UpdateVerifications = Partial<Omit<Verifications, "id">>;
