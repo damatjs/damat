@@ -14,6 +14,7 @@ import { HasOneBuilder } from "@/properties/relation/hasOneBuilder";
 import { IndexBuilder } from "@/properties/indexes/base";
 import { ConstraintBuilder } from "@/properties/constraints/base";
 import { toPascalCase } from "@/utils/stringConvertor";
+import { registerModel } from "@/utils/registry";
 
 // ─── ModelDefinition class ────────────────────────────────────────────────────
 
@@ -62,6 +63,8 @@ export class ModelDefinition {
     if (options?.schema) {
       this._schemaName = options.schema;
     }
+    // Auto-register in the global model registry for string-based relation resolution
+    registerModel(this._tableName, this);
   }
 
   get name(): string {
@@ -154,7 +157,7 @@ export class ModelDefinition {
         foreignKeys.push(propValue.toForeignKeySchema());
 
         // Module-level relation metadata — from = property name where this relation is defined
-        relations.push(propValue.toRelationSchema(propName));
+        relations.push(propValue.toRelationSchema(this._tableName, propName));
 
         // If the relation is flagged as indexed, add an index entry per FK col
         if (propValue.isIndexed()) {
@@ -167,7 +170,7 @@ export class ModelDefinition {
         propValue instanceof HasOneBuilder
       ) {
         // from = property name where this relation is defined
-        relations.push(propValue.toRelationSchema(propName));
+        relations.push(propValue.toRelationSchema(this._tableName, propName));
       }
     }
 
@@ -293,14 +296,12 @@ export class ModelDefinition {
  *   ]);
  * ```
  */
-export function model(
+export function model<T extends Record<string, PropertyValue>>(
   tableName: string,
-  properties: Record<string, PropertyValue>,
+  properties: T,
   options?: { schema?: string; name?: string },
 ): ModelDefinition {
-  const modelData: ModelDefinition = new ModelDefinition(tableName, properties, options);
-
-  return modelData;
+  return new ModelDefinition(tableName, properties, options);
 }
 
 export default model;

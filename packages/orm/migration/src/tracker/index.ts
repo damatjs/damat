@@ -7,7 +7,7 @@
 import type { Pool } from "@damatjs/deps/pg";
 
 /** Name of the migration tracking table */
-const TABLE_NAME = "_module_migrations";
+const TABLE_NAME = "_damat_migration_logs";
 
 /**
  * Record of an applied migration from the database.
@@ -21,7 +21,7 @@ export interface AppliedMigration {
 /**
  * Migration tracking table operations.
  *
- * Manages a `_module_migrations` table to track which migrations
+ * Manages a `_damat_migration_logs` table to track which migrations
  * have been applied and reverted for each module.
  *
  * @example

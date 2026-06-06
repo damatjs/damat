@@ -6,8 +6,8 @@ import { RelationViolation } from "./types";
  *
  * For every `belongsTo` entry in the `RelationSchema[]` array that declares a
  * `mappedBy`, a matching `hasMany` or `hasOne` entry must exist in the same
- * array with its `from` pointing at the `belongsTo`'s `to` table and its `to`
- * pointing back at the `belongsTo`'s `from` table.
+ * array with its `fromTable` pointing at the `belongsTo`'s `to` table and its `to`
+ * pointing back at the `belongsTo`'s `fromTable` table.
  *
  * Violations collected:
  *   - `missing_inverse`   — no `hasMany`/`hasOne` entry exists that links back
@@ -17,11 +17,9 @@ import { RelationViolation } from "./types";
  *                           inconsistently (one side claims an inverse, the
  *                           other is silent).
  *
- * Note: `from` in `RelationSchema` is the source **table name** (not the
- * property name).  The `mappedBy` value records the property name on the
- * target that was declared — but because `from` carries only a table name,
- * exact property-level agreement cannot be verified here.  That check belongs
- * to `checkBelongsTo` (model-level validator).
+ * Note: `from` in `RelationSchema` is the property name on the source table.
+ * `fromTable` is the source table name. The `mappedBy` value records the
+ * property name on the target that was declared.
  */
 export function checkBelongsToSchema(
   relationships: RelationSchema[],
@@ -38,15 +36,15 @@ export function checkBelongsToSchema(
     const inverse = relationships.find(
       (r) =>
         (r.type === "hasMany" || r.type === "hasOne") &&
-        r.from === rel.to &&
-        r.to === rel.from,
+        r.fromTable === rel.to &&
+        r.to === rel.fromTable,
     );
 
     // ── missing_inverse ──────────────────────────────────────────────────────
     if (!inverse) {
       violations.push({
         kind: "missing_inverse",
-        sourceTable: rel.from,
+        sourceTable: rel.fromTable,
         sourceProp: rel.from,
         sourceType: "belongsTo",
         targetTable: rel.to,

@@ -244,7 +244,7 @@ const filePath = createMigration("./src/modules", "user", "AddPhoneColumn");
 
 #### Migration Tracker
 
-The `MigrationTracker` class manages the `_module_migrations` table:
+The `MigrationTracker` class manages the `_damat_migration_logs` table:
 
 ```typescript
 import { MigrationTracker } from "@damatjs/utils";
@@ -401,7 +401,7 @@ export class Migration20260211_AddPhoneColumn extends Migration {
 
 ## Migration Tracking Table
 
-The system creates a `_module_migrations` table to track applied migrations:
+The system creates a `_damat_migration_logs` table to track applied migrations:
 
 | Column            | Type        | Description                     |
 | ----------------- | ----------- | ------------------------------- |

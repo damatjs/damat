@@ -2,14 +2,21 @@
 import { Pool } from "@damatjs/deps/pg";
 import { model, columns, toModuleSchema } from "@damatjs/orm-model";
 import { bootstrapDatabase } from "@damatjs/orm-migration";
-import { writeFileSync, mkdirSync, rmSync, existsSync, readdirSync, readFileSync } from "fs";
+import {
+  writeFileSync,
+  mkdirSync,
+  rmSync,
+  existsSync,
+  readdirSync,
+  readFileSync,
+} from "fs";
 import { join } from "path";
 
-const DB_URL = "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable";
+const DB_URL =
+  "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable";
 const TEST_DIR = "/tmp/orm-full-migration-test";
 
 // Import bootstrap directly
-
 
 async function testFullMigrationSuite() {
   console.log("=".repeat(80));
@@ -19,8 +26,14 @@ async function testFullMigrationSuite() {
   const pool = new Pool({ connectionString: DB_URL });
   const results: string[] = [];
 
-  const passed = (msg: string) => { results.push(`✅ ${msg}`); console.log(`  ✅ ${msg}`); };
-  const failed = (msg: string, err: Error) => { results.push(`❌ ${msg}`); console.log(`  ❌ ${msg}: ${err.message}`); };
+  const passed = (msg: string) => {
+    results.push(`✅ ${msg}`);
+    console.log(`  ✅ ${msg}`);
+  };
+  const failed = (msg: string, err: Error) => {
+    results.push(`❌ ${msg}`);
+    console.log(`  ❌ ${msg}: ${err.message}`);
+  };
 
   try {
     // Clean up test directory
@@ -40,7 +53,8 @@ async function testFullMigrationSuite() {
         SELECT proname FROM pg_proc WHERE proname = 'generate_id'
       `);
 
-      if (funcCheck.rows.length === 0) throw new Error("generate_id function not created");
+      if (funcCheck.rows.length === 0)
+        throw new Error("generate_id function not created");
 
       passed("bootstrapDatabase() creates generate_id function");
 
@@ -49,17 +63,17 @@ async function testFullMigrationSuite() {
         SELECT extname FROM pg_extension WHERE extname = 'pgcrypto'
       `);
 
-      if (extCheck.rows.length === 0) throw new Error("pgcrypto extension not installed");
+      if (extCheck.rows.length === 0)
+        throw new Error("pgcrypto extension not installed");
 
       passed("pgcrypto extension installed");
 
       // Test function
       const testFn = await pool.query("SELECT generate_id('test') as id");
-      if (!testFn.rows[0].id.startsWith('test_')) {
+      if (!testFn.rows[0].id.startsWith("test_")) {
         throw new Error("generate_id not working");
       }
       passed(`generate_id() produces: ${testFn.rows[0].id}`);
-
     } catch (error: any) {
       failed("bootstrapDatabase()", error);
     }
@@ -87,7 +101,6 @@ export const UserSchema = model("user", {
       }
       passed("Module structure created");
       passed("Model file saved to disk");
-
     } catch (error: any) {
       failed("Model discovery", error);
     }
@@ -109,23 +122,24 @@ export const UserSchema = model("user", {
       // Save as JSON directly
       writeFileSync(snapshotPath, JSON.stringify(schema, null, 2));
 
-      if (!existsSync(snapshotPath)) throw new Error("Snapshot file not created");
+      if (!existsSync(snapshotPath))
+        throw new Error("Snapshot file not created");
       passed("Snapshot saved to disk");
 
       // Read snapshot file directly
-      const snapshotData = JSON.parse(readFileSync(snapshotPath, 'utf-8'));
+      const snapshotData = JSON.parse(readFileSync(snapshotPath, "utf-8"));
 
-      if (snapshotData.moduleName !== schema.moduleName) throw new Error("Snapshot moduleName mismatch");
-      if (snapshotData.tables.length !== schema.tables.length) throw new Error("Snapshot tables count mismatch");
+      if (snapshotData.moduleName !== schema.moduleName)
+        throw new Error("Snapshot moduleName mismatch");
+      if (snapshotData.tables.length !== schema.tables.length)
+        throw new Error("Snapshot tables count mismatch");
 
       passed("Snapshot data integrity verified");
-
     } catch (error: any) {
       failed("Snapshot persistence", error);
     }
 
     passed("Snapshot data integrity verified");
-
   } catch (error: any) {
     failed("Snapshot persistence", error);
   }
@@ -136,12 +150,13 @@ export const UserSchema = model("user", {
   console.log("\n4. TEST: Migration File Naming");
   try {
     const now = new Date();
-    const timestamp = now.getFullYear().toString() +
-      (now.getMonth() + 1).toString().padStart(2, '0') +
-      now.getDate().toString().padStart(2, '0') +
-      now.getHours().toString().padStart(2, '0') +
-      now.getMinutes().toString().padStart(2, '0') +
-      now.getSeconds().toString().padStart(2, '0');
+    const timestamp =
+      now.getFullYear().toString() +
+      (now.getMonth() + 1).toString().padStart(2, "0") +
+      now.getDate().toString().padStart(2, "0") +
+      now.getHours().toString().padStart(2, "0") +
+      now.getMinutes().toString().padStart(2, "0") +
+      now.getSeconds().toString().padStart(2, "0");
     const migrationFileName = `Migration${timestamp}_Initial.sql`;
 
     if (!migrationFileName.match(/^Migration\d+_.*\.sql$/)) {
@@ -153,9 +168,9 @@ export const UserSchema = model("user", {
     const migrationPath = join(TEST_DIR, "migrations", migrationFileName);
     writeFileSync(migrationPath, "-- Initial migration");
 
-    if (!existsSync(migrationPath)) throw new Error("Migration file not created");
+    if (!existsSync(migrationPath))
+      throw new Error("Migration file not created");
     passed("Migration file saved");
-
   } catch (error: any) {
     failed("Migration file naming", error);
   }
@@ -166,7 +181,7 @@ export const UserSchema = model("user", {
   console.log("\n5. TEST: Migration Tracking Table");
   try {
     await pool.query(`
-        CREATE TABLE IF NOT EXISTS _module_migrations (
+        CREATE TABLE IF NOT EXISTS _damat_migration_logs (
           id TEXT PRIMARY KEY,
           module TEXT NOT NULL,
           name TEXT NOT NULL,
@@ -181,7 +196,7 @@ export const UserSchema = model("user", {
     passed("Tracking table created");
 
     await pool.query(`
-        INSERT INTO _module_migrations (id, module, name, status)
+        INSERT INTO _damat_migration_logs (id, module, name, status)
         VALUES ('test_001', 'user', 'Migration20260510120000_Initial', 'applied')
         ON CONFLICT (id) DO NOTHING
       `);
@@ -189,12 +204,12 @@ export const UserSchema = model("user", {
     passed("Tracking record inserted");
 
     const statusResult = await pool.query(`
-        SELECT module, name, status FROM _module_migrations WHERE module = 'user'
+        SELECT module, name, status FROM _damat_migration_logs WHERE module = 'user'
       `);
 
-    if (statusResult.rows.length === 0) throw new Error("Tracking query returned no results");
+    if (statusResult.rows.length === 0)
+      throw new Error("Tracking query returned no results");
     passed("Tracking status query works");
-
   } catch (error: any) {
     failed("Migration tracking", error);
   }
@@ -209,24 +224,29 @@ export const UserSchema = model("user", {
     for (const mod of modules) {
       const modDir = join(TEST_DIR, mod);
       mkdirSync(join(modDir, "migrations"), { recursive: true });
-      writeFileSync(join(modDir, "migrations", `Migration${Date.now()}_${mod}.sql`), "-- migration");
+      writeFileSync(
+        join(modDir, "migrations", `Migration${Date.now()}_${mod}.sql`),
+        "-- migration",
+      );
     }
 
     const discoveredModules = readdirSync(TEST_DIR, { withFileTypes: true })
-      .filter(d => d.isDirectory())
-      .map(d => d.name);
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name);
 
-    if (discoveredModules.length < modules.length) throw new Error("Not all modules discovered");
-    passed(`Discovered ${discoveredModules.length} modules: ${discoveredModules.join(", ")}`);
+    if (discoveredModules.length < modules.length)
+      throw new Error("Not all modules discovered");
+    passed(
+      `Discovered ${discoveredModules.length} modules: ${discoveredModules.join(", ")}`,
+    );
 
     for (const mod of discoveredModules) {
       const migDir = join(TEST_DIR, mod, "migrations");
       if (existsSync(migDir)) {
-        const files = readdirSync(migDir).filter(f => f.endsWith('.sql'));
+        const files = readdirSync(migDir).filter((f) => f.endsWith(".sql"));
         passed(`Module '${mod}' has ${files.length} migration(s)`);
       }
     }
-
   } catch (error: any) {
     failed("Module discovery", error);
   }
@@ -238,18 +258,17 @@ export const UserSchema = model("user", {
   try {
     const statusAll = await pool.query(`
         SELECT module, name, status, applied_at
-        FROM _module_migrations
+        FROM _damat_migration_logs
         ORDER BY module, applied_at
       `);
 
     passed(`Found ${statusAll.rows.length} tracked migration(s)`);
 
     const statusUser = await pool.query(`
-        SELECT name, status FROM _module_migrations WHERE module = 'user'
+        SELECT name, status FROM _damat_migration_logs WHERE module = 'user'
       `);
 
     passed(`Module 'user' has ${statusUser.rows.length} tracked migration(s)`);
-
   } catch (error: any) {
     failed("Migration status", error);
   }
@@ -284,7 +303,7 @@ export const UserSchema = model("user", {
     passed("Table created successfully");
 
     await pool.query(`
-        INSERT INTO mig_test.users (id, email, name) 
+        INSERT INTO mig_test.users (id, email, name)
         VALUES (DEFAULT, 'auto@test.com', 'Auto Generated')
         RETURNING id
       `);
@@ -293,9 +312,9 @@ export const UserSchema = model("user", {
         SELECT id FROM mig_test.users WHERE email = 'auto@test.com'
       `);
 
-    if (!inserted.rows[0].id.startsWith('usr_')) throw new Error("generate_id not working");
+    if (!inserted.rows[0].id.startsWith("usr_"))
+      throw new Error("generate_id not working");
     passed(`generate_id() works: ${inserted.rows[0].id}`);
-
   } catch (error: any) {
     failed("Migration execution", error);
   }
@@ -312,7 +331,10 @@ export const UserSchema = model("user", {
     const migrations = [
       { name: `Migration${timestamp1}_Initial.sql`, content: "-- Initial" },
       { name: `Migration${timestamp2}_AddIndex.sql`, content: "-- Add index" },
-      { name: `Migration${timestamp3}_AddColumn.sql`, content: "-- Add column" },
+      {
+        name: `Migration${timestamp3}_AddColumn.sql`,
+        content: "-- Add column",
+      },
     ];
 
     for (const mig of migrations) {
@@ -322,15 +344,18 @@ export const UserSchema = model("user", {
     passed(`Created ${migrations.length} migration files`);
 
     const files = readdirSync(join(TEST_DIR, "migrations"))
-      .filter(f => f.endsWith('.sql') && f.startsWith('Migration'))
+      .filter((f) => f.endsWith(".sql") && f.startsWith("Migration"))
       .sort();
 
-    if (files.length < migrations.length) throw new Error(`Expected >= ${migrations.length} migrations, got ${files.length}`);
+    if (files.length < migrations.length)
+      throw new Error(
+        `Expected >= ${migrations.length} migrations, got ${files.length}`,
+      );
     passed(`Migration files sorted: ${files.length} files`);
 
-    if (files[0] !== migrations[0].name) throw new Error("Migration order incorrect");
+    if (files[0] !== migrations[0].name)
+      throw new Error("Migration order incorrect");
     passed("Migration order verified");
-
   } catch (error: any) {
     failed("Multiple migrations", error);
   }
@@ -352,7 +377,7 @@ export const UserSchema = model("user", {
   // =========================================================================
   console.log("\n11. CLEANUP");
   await pool.query("DROP SCHEMA IF EXISTS mig_test CASCADE");
-  await pool.query("DROP TABLE IF EXISTS _module_migrations");
+  await pool.query("DROP TABLE IF EXISTS _damat_migration_logs");
   rmSync(TEST_DIR, { recursive: true, force: true });
   passed("Test artifacts cleaned up");
 
@@ -363,8 +388,8 @@ export const UserSchema = model("user", {
   console.log("TEST RESULTS");
   console.log("=".repeat(80));
 
-  const passCount = results.filter(r => r.startsWith("✅")).length;
-  const failCount = results.filter(r => r.startsWith("❌")).length;
+  const passCount = results.filter((r) => r.startsWith("✅")).length;
+  const failCount = results.filter((r) => r.startsWith("❌")).length;
 
   console.log(`\n✅ Passed: ${passCount}`);
   console.log(`❌ Failed: ${failCount}`);
@@ -376,10 +401,10 @@ export const UserSchema = model("user", {
     console.log("=".repeat(80));
   } else {
     console.log("\n❌ SOME TESTS FAILED:\n");
-    results.filter(r => r.startsWith("❌")).forEach(r => console.log(`  ${r}`));
+    results
+      .filter((r) => r.startsWith("❌"))
+      .forEach((r) => console.log(`  ${r}`));
   }
-
 }
-
 
 testFullMigrationSuite();

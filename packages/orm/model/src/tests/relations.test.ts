@@ -11,29 +11,31 @@ import {
 } from "./__fixtures__/models";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Relations — tested at the module level because `from` (source table name)
+// Relations — tested at the module level because `fromTable` (source table name)
 // is only meaningful once all models are assembled into a ModuleSchema.
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("transform › relations (module level)", () => {
-  it("hasMany relation: from = source table, to = target table", () => {
+  it("hasMany relation: fromTable = source table, to = target table", () => {
     const module = toModuleSchema("test", [UserSchema, OrderSchema]);
     const rel = module.relationships?.find(
-      (r) => r.type === "hasMany" && r.from === "user",
+      (r) => r.type === "hasMany" && r.fromTable === "user",
     );
     expect(rel).toBeDefined();
-    expect(rel!.from).toBe("user");
+    expect(rel!.fromTable).toBe("user");
+    expect(rel!.from).toBe("orders");
     expect(rel!.to).toBe("order");
     expect(rel!.mappedBy).toEqual(["user"]);
   });
 
-  it("belongsTo relation: from = source table, to = target table", () => {
+  it("belongsTo relation: fromTable = source table, to = target table", () => {
     const module = toModuleSchema("test", [CategorySchema, ProductSchema]);
     const rel = module.relationships?.find(
-      (r) => r.type === "belongsTo" && r.from === "product",
+      (r) => r.type === "belongsTo" && r.fromTable === "product",
     );
     expect(rel).toBeDefined();
-    expect(rel!.from).toBe("product");
+    expect(rel!.fromTable).toBe("product");
+    expect(rel!.from).toBe("category");
     expect(rel!.to).toBe("category");
     expect(rel!.linkedBy).toEqual(["category_id"]);
   });
@@ -52,7 +54,7 @@ describe("transform › relations (module level)", () => {
       OrderItemSchema,
     ]);
     const fromOrderItem = module.relationships?.filter(
-      (r) => r.from === "order_item",
+      (r) => r.fromTable === "order_item",
     );
     expect(fromOrderItem).toHaveLength(2);
     expect(fromOrderItem?.map((r) => r.to).sort()).toEqual(
@@ -67,12 +69,12 @@ describe("transform › relations (module level)", () => {
       children: columns.hasMany(() => Child),
     });
     const module = toModuleSchema("test", [Child, Parent]);
-    const rel = module.relationships?.find((r) => r.from === "parent");
+    const rel = module.relationships?.find((r) => r.fromTable === "parent");
     expect(rel).toBeDefined();
     expect(rel!.mappedBy).toBeUndefined();
   });
 
-  it("hasOne relation: from = source table, to = target table", () => {
+  it("hasOne relation: fromTable = source table, to = target table", () => {
     const Profile = model("profile", { id: columns.id().primaryKey() });
     const Account = model("account", {
       id: columns.id().primaryKey(),
@@ -81,7 +83,8 @@ describe("transform › relations (module level)", () => {
     const module = toModuleSchema("test", [Profile, Account]);
     const rel = module.relationships?.find((r) => r.type === "hasOne");
     expect(rel).toBeDefined();
-    expect(rel!.from).toBe("account");
+    expect(rel!.fromTable).toBe("account");
+    expect(rel!.from).toBe("profile");
     expect(rel!.to).toBe("profile");
     expect(rel!.mappedBy).toEqual(["account"]);
   });
