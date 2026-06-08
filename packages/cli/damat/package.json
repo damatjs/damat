@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/damat-cli",
   "description": "Damat CLI - Development and build tool for Damat.js",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "type": "module",
   "bin": {
     "damat": "./dist/cli.js"
@@ -37,6 +37,7 @@
   "scripts": {
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc && chmod +x dist/cli.js",
     "dev": "bun run build --watch",
-    "postinstall": "chmod +x dist/cli.js || true"
+    "postinstall": "chmod +x dist/cli.js || true",
+    "prepublishOnly": "test -f dist/cli.js || (echo 'Error: dist/cli.js not found. Run bun run build first.' && exit 1)"
   }
 }

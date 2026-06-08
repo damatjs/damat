@@ -9,3 +9,8 @@ enableScripts = false
 
 # Require explicit approval for packages that need build scripts
 optional = false
+
+[install.scopes]
+
+[resolve]
+"pg-cloudflare" = "./empty.ts"

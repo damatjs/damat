@@ -33,25 +33,13 @@
     "@damatjs/orm-cli": "*",
     "@damatjs/orm-model": "*",
     "@damatjs/orm-processor": "*",
-    "@damatjs/orm-pg": "*",
-    "bcryptjs": "^2.4.3",
-    "effect": "^3.0.0",
-    "jose": "^5.2.0",
-    "sharp": "^0.34.5",
-    "stripe": "^14.14.0"
+    "@damatjs/orm-pg": "*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "*",
-    "@types/bcryptjs": "^2.4.6",
     "@types/bun": "1.3.9",
     "@types/node": "^22.10.2",
-    "@types/pg": "^8.16.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
-    "@vitest/coverage-v8": "^1.3.0",
     "bun-types": "^1.3.9",
-    "eslint": "^8.57.0",
-    "tsup": "^8.5.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }
