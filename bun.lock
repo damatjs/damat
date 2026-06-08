@@ -353,6 +353,7 @@
       "dependencies": {
         "@damatjs/deps": "*",
         "@damatjs/logger": "*",
+        "@damatjs/orm-connector": "*",
         "@damatjs/orm-model": "*",
         "@damatjs/orm-pg": "*",
         "@damatjs/orm-type": "*",
