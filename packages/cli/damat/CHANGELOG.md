@@ -1,5 +1,16 @@
 # @damatjs/damat-cli
 
+## 0.0.3
+
+### Patch Changes
+
+- no major change, fixed some of the build issue
+- Updated dependencies
+  - @damatjs/cli@0.0.3
+  - @damatjs/load-env@0.0.3
+  - @damatjs/logger@0.0.3
+  - @damatjs/framework@0.0.3
+
 ## 0.0.2
 
 ### Patch Changes

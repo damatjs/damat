@@ -1,5 +1,20 @@
 # @damatjs/orm-cli
 
+## 0.0.3
+
+### Patch Changes
+
+- no major change, fixed some of the build issue
+- Updated dependencies
+  - @damatjs/cli@0.0.3
+  - @damatjs/logger@0.0.3
+  - @damatjs/deps@0.0.3
+  - @damatjs/orm-codegen@0.0.3
+  - @damatjs/orm-migration@0.0.3
+  - @damatjs/orm-model@0.0.3
+  - @damatjs/orm-processor@0.0.3
+  - @damatjs/orm-type@0.0.3
+
 ## 0.0.2
 
 ### Patch Changes

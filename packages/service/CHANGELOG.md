@@ -1,5 +1,19 @@
 # @damatjs/services
 
+## 0.0.3
+
+### Patch Changes
+
+- no major change, fixed some of the build issue
+- Updated dependencies
+  - @damatjs/logger@0.0.3
+  - @damatjs/types@0.0.3
+  - @damatjs/deps@0.0.3
+  - @damatjs/orm-connector@0.0.3
+  - @damatjs/orm-model@0.0.3
+  - @damatjs/orm-pg@0.0.3
+  - @damatjs/orm-type@0.0.3
+
 ## 0.0.2
 
 ### Patch Changes

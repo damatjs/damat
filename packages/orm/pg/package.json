@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/orm-pg",
   "description": "PostgreSQL ORM core for @damatjs - EntityManager, Repository pattern, and query execution",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
