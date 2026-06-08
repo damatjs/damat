@@ -1,5 +1,13 @@
 # @damatjs/orm-type
 
+## 0.0.7
+
+### Patch Changes
+
+- Build error fix ad syncing all to 0.0.7
+- Updated dependencies
+  - @damatjs/deps@0.0.7
+
 ## 0.0.6
 
 ### Patch Changes

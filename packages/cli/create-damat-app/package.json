@@ -1,6 +1,6 @@
 {
   "name": "@damatjs/create-damat-app",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Create a damat project using a single command.",
   "type": "module",
   "exports": {

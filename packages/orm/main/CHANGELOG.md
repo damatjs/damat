@@ -1,5 +1,18 @@
 # @damatjs/orm
 
+## 0.0.7
+
+### Patch Changes
+
+- Build error fix ad syncing all to 0.0.7
+- Updated dependencies
+  - @damatjs/deps@0.0.7
+  - @damatjs/orm-connector@0.0.7
+  - @damatjs/orm-migration@0.0.7
+  - @damatjs/orm-model@0.0.7
+  - @damatjs/orm-pg@0.0.7
+  - @damatjs/orm-processor@0.0.7
+
 ## 0.0.6
 
 ### Patch Changes

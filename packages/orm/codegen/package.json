@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/orm-codegen",
   "description": "Damatjs orm codegen",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
