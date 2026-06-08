@@ -1,5 +1,13 @@
 # @damatjs/orm-type
 
+## 0.0.8
+
+### Patch Changes
+
+- Fix: Update CI workflow to build nested packages and keep prepublishOnly check
+- Updated dependencies
+  - @damatjs/deps@0.0.8
+
 ## 0.0.7
 
 ### Patch Changes

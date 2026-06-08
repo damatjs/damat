@@ -1,5 +1,14 @@
 # @damatjs/workflow-engine
 
+## 0.0.8
+
+### Patch Changes
+
+- Fix: Update CI workflow to build nested packages and keep prepublishOnly check
+- Updated dependencies
+  - @damatjs/logger@0.0.8
+  - @damatjs/redis@0.0.8
+
 ## 0.0.7
 
 ### Patch Changes

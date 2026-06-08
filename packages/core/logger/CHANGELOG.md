@@ -1,5 +1,11 @@
 # @damatjs/logger
 
+## 0.0.8
+
+### Patch Changes
+
+- Fix: Update CI workflow to build nested packages and keep prepublishOnly check
+
 ## 0.0.7
 
 ### Patch Changes

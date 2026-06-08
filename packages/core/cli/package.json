@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/cli",
   "description": "General CLI framework for DamatJS",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
