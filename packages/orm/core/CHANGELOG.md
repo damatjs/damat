@@ -1,5 +1,15 @@
 # @damatjs/orm-core
 
+## 0.0.10
+
+### Patch Changes
+
+- fix: add tsc-alias to packages using @/ path aliases to ensure correct module resolution in published builds, and make inherited package configuration optional
+- Updated dependencies
+  - @damatjs/logger@0.0.10
+  - @damatjs/orm-model@0.0.10
+  - @damatjs/orm-type@0.0.10
+
 ## 0.0.9
 
 ### Patch Changes

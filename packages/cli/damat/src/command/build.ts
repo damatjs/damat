@@ -108,7 +108,7 @@ export const buildCommand: Command = {
         const configJsPath = join(outputDir, "damat.config.js");
 
         const configResult = spawn({
-          cmd: ["bun", "build", configPath, "--outfile", configJsPath, "--target", target],
+          cmd: ["bun", "build", configPath, "--outfile", configJsPath, "--target", target, "--external", "pg-cloudflare"],
           cwd: ctx.cwd,
           stdout: "inherit",
           stderr: "inherit",

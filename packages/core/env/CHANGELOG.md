@@ -1,5 +1,11 @@
 # @damatjs/load-env
 
+## 0.0.10
+
+### Patch Changes
+
+- fix: add tsc-alias to packages using @/ path aliases to ensure correct module resolution in published builds, and make inherited package configuration optional
+
 ## 0.0.9
 
 ### Patch Changes

@@ -8,9 +8,8 @@ minimumReleaseAge = 172800
 enableScripts = false
 
 # Require explicit approval for packages that need build scripts
-optional = false
+optional = true
 
 [install.scopes]
 
-[resolve]
-"pg-cloudflare" = "./empty.ts"
+

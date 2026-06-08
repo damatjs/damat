@@ -1,6 +1,6 @@
 {
   "name": "@damatjs/deps",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Dependencies for damatjs",
   "type": "module",
   "main": "dist/index.js",
@@ -63,12 +63,9 @@
     "hono": "^4.12.0",
     "ioredis": "^5.9.3",
     "nanoid": "^5.1.6",
-    "pg": "^8.18.0",
+    "pg": "^8.21.0",
     "uuid": "^13.0.0",
     "zod": "4.3.6"
-  },
-  "optionalDependencies": {
-    "pg-cloudflare": "^1.4.0"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "*",
