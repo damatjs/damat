@@ -7,7 +7,7 @@ import { isAbortError } from "../commands/createAbortController";
 import { displayFactBox } from "../commands/facts";
 import logMessage from "../logger/message";
 import prepareProject from "../actions/prepareProject";
-import startdamat from "../commands/startdamat";
+import startDamat from "../commands/startDamat";
 import {
     BaseProjectCreator,
     ProjectCreator,
@@ -89,7 +89,7 @@ export class damatProjectCreator
             message: "Starting damat...",
         });
 
-        startdamat({
+        startDamat({
             directory: this.projectPath,
             abortController: this.abortController,
             packageManager: this.packageManager,
