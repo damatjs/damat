@@ -41,6 +41,7 @@
     "@damatjs/typescript-config": "*",
     "@damatjs/logger": "*",
     "@types/bun": "1.3.9",
+    "tsc-alias": "^1.8.16",
     "typescript": "^5.9.3"
   },
   "scripts": {
