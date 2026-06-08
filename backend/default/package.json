@@ -23,11 +23,11 @@
     "bun": ">=1.1.0"
   },
   "dependencies": {
-    "damat": "*",
     "@damatjs/logger": "*",
     "@damatjs/services": "*",
     "@damatjs/types": "*",
     "@damatjs/deps": "*",
+    "@damatjs/damat-cli": "*",
     "@damatjs/framework": "*",
     "@damatjs/workflow-engine": "*",
     "@damatjs/orm-cli": "*",

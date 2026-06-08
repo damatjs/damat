@@ -1,12 +1,15 @@
 {
   "name": "@damatjs/deps",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Dependencies for damatjs",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "engines": {
     "bun": ">=1.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "files": [
     "dist"

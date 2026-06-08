@@ -1,16 +1,9 @@
 # @damatjs/cli
 
-## 0.0.1
+## 0.0.2
 
-Initial release.
+### Patch Changes
 
-### Features
-
-- Built-in argument parsing with `cac`
-- Command registry pattern
-- Subcommand support (nested and free-form)
-- Optional config file loading
-- Customizable help and banner
-- Global `--verbose` option with logger integration
-- TypeScript-first with strong typing
-- Integrated with `damatjs/logger`
+- This is the first stable pre-alpha release of the project. All core features are implemented and working as expected, and the package is now functional end-to-end. However, it is not intended for production use at this stage. As a pre-alpha release, stability is not guaranteed, and users may encounter bugs, breaking changes, or unexpected behavior as the project continues to evolve. This version is primarily meant for early testing, feedback, and iterative improvement as the foundation for future stable releases.
+- Updated dependencies
+  - @damatjs/logger@0.0.2

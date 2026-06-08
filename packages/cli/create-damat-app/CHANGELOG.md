@@ -1,14 +1,10 @@
-## 0.0.1 (2026-02-17)
+# @damatjs/create-damat-app
 
-### Features
+## 0.0.2
 
-- Finalize setup and verify full functionality of the CLI
-- Migrate project to Bun
-- Refactor project structure and removed Next.js starter, DB seeding and other inherited files from damat 
-- Rename all damat references to damat
+### Patch Changes
 
-## 0.0.0 (2026-02-15)
-
-### Chore
-
-- Setup the create damat app
+- This is the first stable pre-alpha release of the project. All core features are implemented and working as expected, and the package is now functional end-to-end. However, it is not intended for production use at this stage. As a pre-alpha release, stability is not guaranteed, and users may encounter bugs, breaking changes, or unexpected behavior as the project continues to evolve. This version is primarily meant for early testing, feedback, and iterative improvement as the foundation for future stable releases.
+- Updated dependencies
+  - @damatjs/cli@0.0.2
+  - @damatjs/deps@0.0.2
