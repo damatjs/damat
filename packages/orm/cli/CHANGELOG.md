@@ -1,5 +1,20 @@
 # @damatjs/orm-cli
 
+## 0.0.9
+
+### Patch Changes
+
+- Fix: Add tsc-alias to all packages using @/ path aliases to ensure proper module resolution in published packages
+- Updated dependencies
+  - @damatjs/orm-migration@0.0.9
+  - @damatjs/orm-processor@0.0.9
+  - @damatjs/cli@0.0.9
+  - @damatjs/logger@0.0.9
+  - @damatjs/deps@0.0.9
+  - @damatjs/orm-codegen@0.0.9
+  - @damatjs/orm-model@0.0.9
+  - @damatjs/orm-type@0.0.9
+
 ## 0.0.8
 
 ### Patch Changes

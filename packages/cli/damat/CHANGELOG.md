@@ -1,5 +1,16 @@
 # @damatjs/damat-cli
 
+## 0.0.9
+
+### Patch Changes
+
+- Fix: Add tsc-alias to all packages using @/ path aliases to ensure proper module resolution in published packages
+- Updated dependencies
+  - @damatjs/load-env@0.0.9
+  - @damatjs/cli@0.0.9
+  - @damatjs/logger@0.0.9
+  - @damatjs/framework@0.0.9
+
 ## 0.0.8
 
 ### Patch Changes

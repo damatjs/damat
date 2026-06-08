@@ -1,5 +1,14 @@
 # @damatjs/create-damat-app
 
+## 0.0.9
+
+### Patch Changes
+
+- Fix: Add tsc-alias to all packages using @/ path aliases to ensure proper module resolution in published packages
+- Updated dependencies
+  - @damatjs/cli@0.0.9
+  - @damatjs/deps@0.0.9
+
 ## 0.0.8
 
 ### Patch Changes
