@@ -1,5 +1,20 @@
 # @damatjs/framework
 
+## 0.0.6
+
+### Patch Changes
+
+- Fix: Include dist folder in published package - add prepublishOnly check to prevent publishing without built files
+- Updated dependencies
+  - @damatjs/logger@0.0.6
+  - @damatjs/redis@0.0.6
+  - @damatjs/types@0.0.6
+  - @damatjs/deps@0.0.6
+  - @damatjs/orm-connector@0.0.6
+  - @damatjs/orm-type@0.0.6
+  - @damatjs/services@0.0.6
+  - @damatjs/workflow-engine@0.0.6
+
 ## 0.0.5
 
 ### Patch Changes

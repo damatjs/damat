@@ -1,5 +1,18 @@
 # @damatjs/orm
 
+## 0.0.6
+
+### Patch Changes
+
+- Fix: Include dist folder in published package - add prepublishOnly check to prevent publishing without built files
+- Updated dependencies
+  - @damatjs/deps@0.0.6
+  - @damatjs/orm-connector@0.0.6
+  - @damatjs/orm-migration@0.0.6
+  - @damatjs/orm-model@0.0.6
+  - @damatjs/orm-pg@0.0.6
+  - @damatjs/orm-processor@0.0.6
+
 ## 0.0.5
 
 ### Patch Changes

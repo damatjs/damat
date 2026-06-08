@@ -1,5 +1,15 @@
 # @damatjs/orm-codegen
 
+## 0.0.6
+
+### Patch Changes
+
+- Fix: Include dist folder in published package - add prepublishOnly check to prevent publishing without built files
+- Updated dependencies
+  - @damatjs/logger@0.0.6
+  - @damatjs/orm-model@0.0.6
+  - @damatjs/orm-type@0.0.6
+
 ## 0.0.5
 
 ### Patch Changes
