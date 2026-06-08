@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/orm-cli",
   "description": "Damatjs ORM CLI - unified command line interface for codegen and migrations",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

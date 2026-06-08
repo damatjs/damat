@@ -1,6 +1,6 @@
 {
   "name": "@damatjs/deps",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "description": "Dependencies for damatjs",
   "type": "module",
   "main": "dist/index.js",

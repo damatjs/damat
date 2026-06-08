@@ -1,5 +1,35 @@
 # @damatjs/framework
 
+## 0.0.5
+
+### Patch Changes
+
+- no major change, fixed some of the build issue
+- Updated dependencies
+  - @damatjs/logger@0.0.5
+  - @damatjs/redis@0.0.5
+  - @damatjs/types@0.0.5
+  - @damatjs/deps@0.0.5
+  - @damatjs/orm-connector@0.0.5
+  - @damatjs/orm-type@0.0.5
+  - @damatjs/services@0.0.5
+  - @damatjs/workflow-engine@0.0.5
+
+## 0.0.4
+
+### Patch Changes
+
+- no major change, fixed some of the build issue
+- Updated dependencies
+  - @damatjs/logger@0.0.4
+  - @damatjs/redis@0.0.4
+  - @damatjs/types@0.0.4
+  - @damatjs/deps@0.0.4
+  - @damatjs/orm-connector@0.0.4
+  - @damatjs/orm-type@0.0.4
+  - @damatjs/services@0.0.4
+  - @damatjs/workflow-engine@0.0.4
+
 ## 0.0.3
 
 ### Patch Changes

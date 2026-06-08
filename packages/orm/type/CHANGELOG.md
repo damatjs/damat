@@ -1,5 +1,21 @@
 # @damatjs/orm-type
 
+## 0.0.5
+
+### Patch Changes
+
+- no major change, fixed some of the build issue
+- Updated dependencies
+  - @damatjs/deps@0.0.5
+
+## 0.0.4
+
+### Patch Changes
+
+- no major change, fixed some of the build issue
+- Updated dependencies
+  - @damatjs/deps@0.0.4
+
 ## 0.0.3
 
 ### Patch Changes

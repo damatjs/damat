@@ -1,5 +1,17 @@
 # @damatjs/types
 
+## 0.0.5
+
+### Patch Changes
+
+- no major change, fixed some of the build issue
+
+## 0.0.4
+
+### Patch Changes
+
+- no major change, fixed some of the build issue
+
 ## 0.0.3
 
 ### Patch Changes
