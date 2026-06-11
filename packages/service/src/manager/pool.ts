@@ -15,10 +15,44 @@ export interface ConnectionManagerLike {
   getPoolStats(): PoolStats;
 }
 
+interface PoolManagerState {
+  pool: Pool | null;
+  entityManager: PgEntityManager | null;
+  connectionManager: ConnectionManager | null;
+}
+
+// State lives on globalThis so that two copies of @damatjs/services in the
+// same process (e.g. a linked dev package next to an installed one) still
+// share a single pool/entity manager — class statics are per-copy.
+const STATE_KEY = Symbol.for("damatjs.services.poolManager");
+
+function getState(): PoolManagerState {
+  const holder = globalThis as Record<symbol, PoolManagerState | undefined>;
+  if (!holder[STATE_KEY]) {
+    holder[STATE_KEY] = { pool: null, entityManager: null, connectionManager: null };
+  }
+  return holder[STATE_KEY];
+}
+
 export class PoolManager {
-  private static pool: Pool | null = null;
-  private static entityManager: PgEntityManager | null = null;
-  private static connectionManager: ConnectionManager | null = null;
+  private static get pool(): Pool | null {
+    return getState().pool;
+  }
+  private static set pool(value: Pool | null) {
+    getState().pool = value;
+  }
+  private static get entityManager(): PgEntityManager | null {
+    return getState().entityManager;
+  }
+  private static set entityManager(value: PgEntityManager | null) {
+    getState().entityManager = value;
+  }
+  private static get connectionManager(): ConnectionManager | null {
+    return getState().connectionManager;
+  }
+  private static set connectionManager(value: ConnectionManager | null) {
+    getState().connectionManager = value;
+  }
 
   private constructor() { }
 

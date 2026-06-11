@@ -1,4 +1,4 @@
-import { getRedis } from "@damatjs/redis";
+import { extendLock } from "@damatjs/redis";
 import { createContextLogger } from "@damatjs/logger";
 import { getLockKey } from "./utils";
 
@@ -18,28 +18,10 @@ export async function extendWorkflowLock(
   lockValue: string,
   ttlMs: number,
 ): Promise<boolean> {
-  const redis = getRedis();
   const logger = createContextLogger({ workflow: workflowName });
 
   const lockKey = getLockKey(workflowName, lockId);
-
-  const script = `
-    if redis.call("get", KEYS[1]) == ARGV[1] then
-      return redis.call("pexpire", KEYS[1], ARGV[2])
-    else
-      return 0
-    end
-  `;
-
-  const result = await redis.eval(
-    script,
-    1,
-    `lock:${lockKey}`,
-    lockValue,
-    ttlMs.toString(),
-  );
-
-  const extended = result === 1;
+  const extended = await extendLock(lockKey, lockValue, ttlMs);
 
   if (extended) {
     logger.debug("Workflow lock extended", { lockId, ttlMs });

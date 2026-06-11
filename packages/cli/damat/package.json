@@ -27,7 +27,8 @@
     "@damatjs/cli": "*",
     "@damatjs/logger": "*",
     "@damatjs/load-env": "*",
-    "@damatjs/framework": "*"
+    "@damatjs/framework": "*",
+    "@damatjs/module": "*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "*",

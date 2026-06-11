@@ -6,26 +6,25 @@ A saga-style workflow orchestration engine built on Effect-TS with typed error h
 
 ```
 packages/workflow-engine/src/
-├── index.ts      # Main entry point - exports all public APIs
-├── types.ts      # Type definitions (interfaces, context, results, locking)
-├── errors.ts     # Error classes (WorkflowError, StepExecutionError, WorkflowLockError, etc.)
-├── config.ts     # Default configurations and RetryPolicies presets
-├── logger.ts     # Logger integration with @damatjs/logger
-├── lock.ts       # Distributed locking using Redis
-├── step.ts       # Step creation and execution (createStep, executeStep)
-├── workflow.ts   # Workflow creation (createWorkflow)
-├── utils.ts      # Utility functions (runStep, parallel, when, ifElse)
-└── workflow-engine.md  # This documentation
+├── index.ts        # Main entry point - exports all public APIs
+├── types/          # Type definitions (step, workflow, context, result, retry, lock)
+├── errors/         # Error classes (WorkflowError, StepExecutionError, ...)
+├── config/         # Default configurations and RetryPolicies presets
+├── lock/           # Distributed locking built on @damatjs/redis
+├── step/           # Step creation and execution (createStep, executeStep)
+├── workflow/       # Workflow creation and execution (createWorkflow)
+└── utils/          # Utility functions (runStep, skipStep, parallel, when, ifElse)
 ```
 
 ## Key Features
 
-- **Saga Pattern**: Automatic rollback (compensation) on failure
+- **Saga Pattern**: Automatic rollback (compensation) on failure, in reverse order
 - **Type Safety**: Full TypeScript support with typed inputs/outputs
-- **Retry Policies**: Configurable exponential backoff with custom predicates
-- **Timeouts**: Per-step and per-workflow timeout configuration
-- **Distributed Locking**: Prevent concurrent execution using Redis locks
-- **Structured Logging**: Integration with `@damatjs/logger` ILogger
+- **Retry Policies**: Exponential backoff capped at `maxDelayMs`, custom predicates
+- **Timeouts**: Per-attempt step timeouts and per-workflow timeout
+- **Cancellation**: Steps receive an `AbortSignal` that fires on timeout/interruption
+- **Distributed Locking**: Prevent concurrent execution using Redis locks, with optional auto-extend
+- **Structured Logging**: Integration with `@damatjs/logger`
 - **Effect-TS**: Built on Effect for composable, type-safe effects
 
 ---
@@ -47,7 +46,6 @@ import {
 const validateOrderStep = createStep(
   'validate-order',
   async (input: { items: Item[] }, ctx) => {
-    // Validation logic
     if (input.items.length === 0) {
       throw new Error('Order must have at least one item');
     }
@@ -57,8 +55,9 @@ const validateOrderStep = createStep(
 
 const createOrderStep = createStep(
   'create-order',
-  async (input: { items: Item[] }, ctx) => {
-    const order = await orderService.create(input);
+  async (input: { items: Item[] }, ctx, signal) => {
+    // Pass the signal so a timed-out step actually stops working
+    const order = await orderService.create(input, { signal });
     return order;
   },
   // Compensation function - runs on workflow failure
@@ -72,7 +71,7 @@ const createOrderStep = createStep(
 const orderWorkflow = createWorkflow(
   'process-order',
   (input: OrderInput, ctx) =>
-    Effect.gen(function* (_) {
+    Effect.gen(function* () {
       const validated = yield* executeStep(validateOrderStep, input, ctx);
       const order = yield* executeStep(createOrderStep, validated, ctx);
       return order;
@@ -87,7 +86,8 @@ if (result.success) {
   console.log('Order created:', result.result.id);
 } else {
   console.error('Failed:', result.error.message);
-  // Compensation was automatically run
+  // result.compensated — true if at least one compensation ran
+  // result.compensationsFailed — number of compensations that threw
 }
 ```
 
@@ -104,8 +104,9 @@ Creates a workflow step with typed input/output.
 ```typescript
 const myStep = createStep<Input, Output>(
   "step-name",
-  async (input, ctx) => {
-    // Main execution
+  async (input, ctx, signal) => {
+    // ctx.attempt is 1 on the first try and increments on each retry.
+    // signal aborts on step timeout — forward it to fetch/db calls.
     return output;
   },
   async (input, output, ctx) => {
@@ -125,7 +126,7 @@ const myStep = createStep<Input, Output>(
 Executes a step within a workflow Effect generator.
 
 ```typescript
-const result = yield * executeStep(myStep, input, ctx);
+const result = yield* executeStep(myStep, input, ctx);
 ```
 
 ### Workflows
@@ -138,11 +139,15 @@ Creates a workflow with typed input/output.
 const workflow = createWorkflow<Input, Output>(
   "workflow-name",
   (input, ctx) =>
-    Effect.gen(function* (_) {
+    Effect.gen(function* () {
       // Workflow implementation using executeStep
       return output;
     }),
-  { timeoutMs: 300000 },
+  {
+    timeoutMs: 300000,
+    // Applies to every step that doesn't set its own value
+    defaultStepConfig: { retry: RetryPolicies.standard },
+  },
 );
 ```
 
@@ -157,7 +162,8 @@ if (result.success) {
   // result.durationMs - execution time
 } else {
   // result.error - WorkflowError instance
-  // result.compensated - whether rollback ran
+  // result.compensated - true if at least one compensation ran
+  // result.compensationsFailed - number of compensations that threw
 }
 ```
 
@@ -168,7 +174,7 @@ if (result.success) {
 Alias for `executeStep` with cleaner syntax.
 
 ```typescript
-const result = yield * runStep(myStep, input, ctx);
+const result = yield* runStep(myStep, input, ctx);
 ```
 
 #### `skipStep(value)`
@@ -177,8 +183,8 @@ Returns a value without executing anything. For conditional workflows.
 
 ```typescript
 const result = condition
-  ? yield * runStep(myStep, input, ctx)
-  : yield * skipStep(defaultValue);
+  ? yield* runStep(myStep, input, ctx)
+  : yield* skipStep(defaultValue);
 ```
 
 #### `parallel(...effects)`
@@ -186,13 +192,11 @@ const result = condition
 Runs multiple steps in parallel.
 
 ```typescript
-const [user, products, inventory] =
-  yield *
-  parallel(
-    runStep(fetchUserStep, { userId }, ctx),
-    runStep(fetchProductsStep, { ids }, ctx),
-    runStep(checkInventoryStep, { ids }, ctx),
-  );
+const [user, products, inventory] = yield* parallel(
+  runStep(fetchUserStep, { userId }, ctx),
+  runStep(fetchProductsStep, { ids }, ctx),
+  runStep(checkInventoryStep, { ids }, ctx),
+);
 ```
 
 #### `when(condition, step, input, ctx, defaultValue)`
@@ -201,8 +205,7 @@ Conditionally execute a step.
 
 ```typescript
 const result =
-  yield *
-  when(input.needsVerification, verifyStep, input, ctx, { verified: false });
+  yield* when(input.needsVerification, verifyStep, input, ctx, { verified: false });
 ```
 
 #### `ifElse(condition, ifTrue, ifFalse, input, ctx)`
@@ -211,8 +214,7 @@ Execute one of two steps based on condition.
 
 ```typescript
 const result =
-  yield *
-  ifElse(input.isPremium, premiumProcessStep, standardProcessStep, input, ctx);
+  yield* ifElse(input.isPremium, premiumProcessStep, standardProcessStep, input, ctx);
 ```
 
 ---
@@ -235,17 +237,26 @@ RetryPolicies.patient; // 3 retries with very long delays (rate limiting)
 const customRetry = {
   maxAttempts: 4,
   initialDelayMs: 200,
-  maxDelayMs: 10000,
+  maxDelayMs: 10000, // each delay is capped here
   backoffMultiplier: 2,
-  isRetryable: (error) => error.code !== "VALIDATION_ERROR",
+  // Receives the ORIGINAL error your step threw (not an engine wrapper).
+  // Timeouts arrive as StepTimeoutError and are retryable by default.
+  isRetryable: (error) => !(error instanceof MyValidationError),
 };
 ```
+
+Retry semantics:
+
+- `maxAttempts: N` means 1 initial attempt + up to N retries.
+- `timeoutMs` applies **per attempt**; a timed-out attempt counts as a retryable failure.
+- When all retries are exhausted, the step fails with `MaxRetriesExceededError`
+  whose `cause` holds the last error.
 
 ### Step Configuration
 
 ```typescript
 interface StepConfig {
-  timeoutMs?: number; // Default: 30000 (30s)
+  timeoutMs?: number; // Per-attempt timeout. Default: 30000 (30s)
   retry?: Partial<RetryPolicy>;
   idempotent?: boolean; // Safe to retry
   description?: string; // For logging
@@ -257,6 +268,8 @@ interface StepConfig {
 ```typescript
 interface WorkflowConfig {
   timeoutMs?: number; // Default: 300000 (5 min)
+  // Layered under each step's own config:
+  // engine defaults < defaultStepConfig < step config
   defaultStepConfig?: StepConfig;
 }
 ```
@@ -271,7 +284,7 @@ interface WorkflowConfig {
 | ------------------------- | ----------------------- | ---------------------------------- |
 | `WorkflowError`           | Various                 | Base error class                   |
 | `StepExecutionError`      | `STEP_EXECUTION_FAILED` | Step threw an error                |
-| `StepTimeoutError`        | `STEP_TIMEOUT`          | Step exceeded timeout              |
+| `StepTimeoutError`        | `STEP_TIMEOUT`          | Step attempt exceeded timeout      |
 | `MaxRetriesExceededError` | `MAX_RETRIES_EXCEEDED`  | All retries failed                 |
 | `CompensationError`       | `COMPENSATION_FAILED`   | Rollback failed                    |
 | `WorkflowLockError`       | `WORKFLOW_LOCKED`       | Could not acquire distributed lock |
@@ -290,26 +303,20 @@ error.cause; // Original error
 
 ## Logging
 
-The workflow engine integrates with `@damatjs/logger` ILogger interface.
-
-### Setup Logger
+The workflow engine logs through `@damatjs/logger`'s global logger. Configure it
+once at application startup:
 
 ```typescript
-import { setLogger } from "@damatjs/workflow-engine";
-import { createLogger } from "@damatjs/logger";
+import { createLogger, setGlobalLogger } from "@damatjs/logger";
 
-const appLogger = createLogger({
-  level: "info",
-  format: "json",
-});
-
-// Inject the logger at application startup
-setLogger(appLogger);
+const logger = createLogger({ level: "info", format: "json" });
+setGlobalLogger(logger);
 ```
 
-### No-op Logger
+If no global logger is configured, the engine is silent (no-op logger).
 
-If no logger is set, the engine operates silently (no-op logger).
+Workflow inputs are only logged at `debug` level — they may contain credentials
+or PII, so production log levels (`info` and above) never include them.
 
 ---
 
@@ -323,20 +330,14 @@ The workflow engine supports distributed locking to prevent concurrent execution
 
 ### Setup
 
-Initialize the lock manager with a Redis client:
+Locking uses the global Redis client from `@damatjs/redis`. Initialize it at startup
+(the framework does this automatically when `redisUrl` is configured):
 
 ```typescript
-import { initWorkflowLock, setLogger } from "@damatjs/workflow-engine";
-import { createRedis } from "@damatjs/utils";
-import { createLogger } from "@damatjs/logger";
+import { initRedis, connectRedis } from "@damatjs/redis";
 
-// Initialize Redis for locking
-const redis = createRedis({ url: process.env.REDIS_URL });
-initWorkflowLock(redis);
-
-// Optional: Set up logging
-const logger = createLogger({ level: "info", format: "json" });
-setLogger(logger);
+initRedis({ url: process.env.REDIS_URL });
+await connectRedis();
 ```
 
 ### Execute with Lock
@@ -354,6 +355,7 @@ const result = await orderWorkflow.executeWithLock(
     ttlMs: 120000,          // Lock TTL (2 minutes)
     maxRetries: 3,          // Retry lock acquisition 3 times
     retryDelayMs: 100,      // Wait 100ms between retries
+    autoExtend: true,       // Re-extend TTL every ttlMs/2 while running
   },
   { userId: "123" }         // Optional metadata
 );
@@ -375,6 +377,8 @@ interface WorkflowLockConfig {
   maxRetries?: number;
   /** Delay between retries in ms (default: 100) */
   retryDelayMs?: number;
+  /** Keep the lock alive while the workflow runs (default: false) */
+  autoExtend?: boolean;
 }
 ```
 
@@ -430,7 +434,7 @@ interface WorkflowContext {
   executionId: string; // Unique execution ID
   workflowName: string; // Workflow name
   startedAt: Date; // Start timestamp
-  attempt: number; // Current retry attempt
+  attempt: number; // Current retry attempt (1-based, increments on retry)
   metadata: Record<string, unknown>; // Custom metadata
 }
 ```
@@ -443,6 +447,9 @@ const result = await workflow.execute(input, {
   correlationId: "abc",
 });
 ```
+
+When executing with a lock, `metadata.lockId` is set automatically and the
+`executionId` stays unique per run (it is NOT the lock ID).
 
 ---
 
@@ -472,7 +479,7 @@ const step2 = createStep(
 );
 
 const workflow = createWorkflow("saga", (input, ctx) =>
-  Effect.gen(function* (_) {
+  Effect.gen(function* () {
     const a = yield* executeStep(step1, input, ctx);
     const b = yield* executeStep(step2, { aId: a.id }, ctx);
     // If step2 fails, step1's compensation runs automatically
@@ -480,6 +487,9 @@ const workflow = createWorkflow("saga", (input, ctx) =>
   }),
 );
 ```
+
+Compensation failures are logged and counted in `result.compensationsFailed`,
+but never mask the original workflow error.
 
 ---
 
@@ -496,7 +506,7 @@ const createUserStep = createStep(
     if (existing) return existing;
     return userService.create(input);
   },
-  null,
+  undefined,
   { idempotent: true },
 );
 ```
@@ -535,7 +545,7 @@ async (input, output, ctx) => {
 
 ```typescript
 // Quick validation - short timeout
-createStep("validate", invoke, null, { timeoutMs: 5000 });
+createStep("validate", invoke, undefined, { timeoutMs: 5000 });
 
 // External API call - medium timeout with retry
 createStep("call-api", invoke, compensate, {
@@ -547,11 +557,22 @@ createStep("call-api", invoke, compensate, {
 createStep("process-file", invoke, compensate, { timeoutMs: 120000 });
 ```
 
+### 5. Forward the AbortSignal
+
+A JavaScript promise can't be force-cancelled. When a step times out, the engine
+stops waiting, but your code keeps running unless you forward the signal:
+
+```typescript
+createStep("call-api", async (input, ctx, signal) => {
+  return fetch(url, { signal }); // stops the request on timeout
+});
+```
+
 ---
 
 ## Dependencies
 
-- `@damatjs/logger` - Structured logging (ILogger)
-- `@damatjs/utils` - Redis utilities
-- `effect` - Effect-TS for composable effects
+- `@damatjs/logger` - Structured logging
+- `@damatjs/redis` - Redis client + distributed lock primitives
+- `effect` - Effect-TS for composable, type-safe effects
 - `nanoid` - Unique execution ID generation

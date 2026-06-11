@@ -9,10 +9,11 @@ export function defineModule<TService extends object>(
 
   const parseCredentials = definition.credentials(process.env);
 
+  // Always constructs: the service binds to the CURRENT pool/entity manager,
+  // so re-initializing after a PoolManager reset (tests, harness re-boots)
+  // yields a working service instead of one holding stale connections.
   const init = () => {
     instance = new definition.service(parseCredentials);
-    console.log("instance setup", name)
-
     return instance;
   };
 

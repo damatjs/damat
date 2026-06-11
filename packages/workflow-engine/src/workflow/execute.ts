@@ -2,6 +2,7 @@ import { Effect, Scope, Exit, Cause, Duration } from "effect";
 import type {
   RequiredWorkflowConfig,
   WorkflowContext,
+  WorkflowEngineState,
   WorkflowResult,
 } from "../types";
 import { WorkflowError } from "../errors";
@@ -25,15 +26,24 @@ export async function executeWorkflowInternal<I, O>(
   const startedAt = new Date();
   const startTime = Date.now();
 
+  const engineState: WorkflowEngineState = {
+    compensationsRun: 0,
+    compensationsFailed: 0,
+    defaultStepConfig: mergedConfig.defaultStepConfig,
+  };
+
   const ctx: WorkflowContext = {
     executionId,
     workflowName: name,
     startedAt,
     attempt: 1,
     metadata,
+    engineState,
   };
 
-  workflowLogger.info(`Starting workflow execution`, {
+  workflowLogger.info(`Starting workflow execution`, { executionId });
+  // Inputs may carry credentials/PII — only surface them at debug level.
+  workflowLogger.debug(`Workflow input`, {
     executionId,
     input: JSON.stringify(input),
   });
@@ -84,6 +94,8 @@ export async function executeWorkflowInternal<I, O>(
       executionId,
       durationMs,
       errorCode: error.code,
+      compensationsRun: engineState.compensationsRun,
+      compensationsFailed: engineState.compensationsFailed,
     });
 
     return {
@@ -91,7 +103,8 @@ export async function executeWorkflowInternal<I, O>(
       error,
       executionId,
       durationMs,
-      compensated: true, // Effect's scoped finalizers handle compensation
+      compensated: engineState.compensationsRun > 0,
+      compensationsFailed: engineState.compensationsFailed,
     };
   }
 }

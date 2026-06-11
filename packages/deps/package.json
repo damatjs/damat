@@ -19,10 +19,6 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./better-auth": {
-      "types": "./dist/better-auth.d.ts",
-      "default": "./dist/better-auth.js"
-    },
     "./effect": {
       "types": "./dist/effect.d.ts",
       "default": "./dist/effect.js"

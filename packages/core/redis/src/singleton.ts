@@ -11,7 +11,7 @@ export function initRedis(config?: RedisClientConfig, logger?: ILogger): RedisCl
   }
 
   if (globalClient) {
-    config.logger?.warn("Redis already initialized, closing existing connection");
+    (logger ?? config.logger)?.warn("Redis already initialized, closing existing connection");
     globalClient.disconnect().catch(() => { });
   }
   globalClient = new RedisClient(config);

@@ -7,7 +7,7 @@ import { printBanner } from "../utils/banner";
 import { handleHelpCommand } from "./helpCommand";
 import { registerSingleCommand } from "./registerCommand";
 import { resolveCommandName } from "./resolveCommand";
-import { buildCommandContext } from "./buildCommand";
+import { buildCommandContext, parseCommandArgs } from "./buildCommand";
 
 export async function runCli(config: CliConfig): Promise<void> {
   if (!config.name) {
@@ -71,10 +71,14 @@ export async function runCli(config: CliConfig): Promise<void> {
         const subcmd = getRegistry().get(fullName) || getRegistry().get(subcommandName);
 
         if (subcmd && subcmd !== cmd) {
-          const ctx = buildCommandContext(fullName, {}, logger, config);
+          const { options, positional } = parseCommandArgs(
+            args.slice(2),
+            subcmd.options,
+          );
+          const ctx = buildCommandContext(fullName, options, logger, config);
           const result = await subcmd.handler({
             ...ctx,
-            args: args.slice(2),
+            args: positional,
           });
           process.exit(result.exitCode);
         }

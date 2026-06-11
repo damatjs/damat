@@ -32,8 +32,8 @@
     "@damatjs/types": "*"
   },
   "devDependencies": {
+    "@damatjs/deps": "*",
     "@damatjs/orm-processor": "*",
-    "@damatjs/typescript-config": "*",
     "@types/bun": "1.3.9",
     "tsc-alias": "^1.8.16",
     "typescript": "^5.9.3"

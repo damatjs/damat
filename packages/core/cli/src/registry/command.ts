@@ -4,30 +4,36 @@ import { CommandRegistrationError } from "../errors";
 export class CommandRegistryImpl implements CommandRegistry {
   private commands: Map<string, Command> = new Map();
 
-  register(command: Command): void {
-    if (this.commands.has(command.name)) {
-      throw new CommandRegistrationError(
-        command.name,
-        "command already registered"
-      );
+  register(command: Command, prefix = ""): void {
+    // Subcommands are namespaced under their parent ("module:dev") so they
+    // can't collide with top-level commands ("dev"). Names that already
+    // carry the parent prefix ("migrate:up" under "migrate") are kept as-is.
+    const name =
+      prefix && !command.name.startsWith(`${prefix}:`)
+        ? `${prefix}:${command.name}`
+        : command.name;
+
+    if (this.commands.has(name)) {
+      throw new CommandRegistrationError(name, "command already registered");
     }
-    this.commands.set(command.name, command);
+    this.commands.set(name, command);
 
     if (command.aliases) {
       for (const alias of command.aliases) {
-        if (this.commands.has(alias)) {
+        const aliasName = prefix ? `${prefix}:${alias}` : alias;
+        if (this.commands.has(aliasName)) {
           throw new CommandRegistrationError(
-            command.name,
-            `alias '${alias}' already registered`
+            name,
+            `alias '${aliasName}' already registered`
           );
         }
-        this.commands.set(alias, command);
+        this.commands.set(aliasName, command);
       }
     }
 
     if (command.subcommands) {
       for (const sub of command.subcommands) {
-        this.register(sub);
+        this.register(sub, name);
       }
     }
   }

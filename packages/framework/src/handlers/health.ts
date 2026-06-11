@@ -23,8 +23,9 @@ export function createHealthRoute(options?: HealthCheckOptions, entryPathUrl?: s
       }
     }
 
+    // A service that was never configured must not fail the health check
     const allHealthy = Object.values(checks).every(
-      (check) => check.status === "healthy",
+      (check) => check.status === "healthy" || check.status === "not configured",
     );
 
     return c.json(

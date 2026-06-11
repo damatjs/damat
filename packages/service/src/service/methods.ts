@@ -190,7 +190,12 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
   async update(options: UpdateOptions): Promise<T[]> {
     this._validateData(options.data, true);
     const repo = this.getRepository();
-    return repo.update(options as any);
+    // The repository's update contract is { set, where, returning }
+    return repo.update({
+      set: options.data,
+      where: options.where,
+      returning: options.returning,
+    } as any);
   }
 
   async delete(options: DeleteOptions): Promise<number> {

@@ -18,7 +18,10 @@ export interface WorkflowFailure {
   error: WorkflowError;
   executionId: string;
   durationMs: number;
+  /** True if at least one compensation function ran successfully */
   compensated: boolean;
+  /** Number of compensation functions that threw (errors are logged, not raised) */
+  compensationsFailed: number;
 }
 
 /**

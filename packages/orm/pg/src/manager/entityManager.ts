@@ -10,7 +10,6 @@ import { QueryExecutionError } from "./error";
 import { Logger } from "@damatjs/logger";
 
 export class PgEntityManager<TModels extends Record<string, ModelDefinition> = Record<string, ModelDefinition>> {
-  [key: string]: any;
   private pool: Pool;
   private modelRegistry: ModelRegistry;
   private transactionManager: TransactionManager;
@@ -37,7 +36,9 @@ export class PgEntityManager<TModels extends Record<string, ModelDefinition> = R
 
   async transaction<R>(cb: (tx: TransactionalEntityManager<TModels> & { readonly [K in keyof TModels]: PgRepository<any> }) => Promise<R>, options?: import("@damatjs/orm-type").TransactionOptions): Promise<R> {
     return this.transactionManager.run(async (ctx) => {
-      const txManager = new TransactionalEntityManager<TModels>(this.modelRegistry, ctx, this.logger, this.modelsConfig);
+      // Model accessors are derived from the registry — there is no
+      // per-instance models config on the entity manager.
+      const txManager = new TransactionalEntityManager<TModels>(this.modelRegistry, ctx, this.logger);
       return cb(txManager as any);
     }, options);
   }

@@ -13,6 +13,15 @@
   "publishConfig": {
     "access": "public"
   },
+  "license": "MIT",
+  "author": "Abel Lamesgen",
+  "description": "Damatjs saga-style workflow engine built on Effect-TS",
+  "files": [
+    "dist",
+    "!dist/**/__tests__",
+    "!dist/**/__fixtures__",
+    "!dist/**/__mocks__"
+  ],
   "dependencies": {
     "@damatjs/logger": "*",
     "@damatjs/redis": "*",
@@ -26,6 +35,8 @@
   },
   "scripts": {
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "test": "bun test",
+    "prepublishOnly": "test -f dist/index.js || (echo 'dist/index.js missing — run build before publishing' && exit 1)"
   }
 }
