@@ -1,41 +1,35 @@
 # @damatjs/cli
 
-A general-purpose CLI framework for building command-line tools in the DamatJS ecosystem. Provides built-in argument parsing, command registry, config loading, and customizable help/banner output.
+> The general CLI framework powering Damat's command-line tools: declarative command/subcommand registry, argument & option parsing, validation, help, and banners.
 
-## Table of Contents
+`@damatjs/cli` turns a single declarative config object into a runnable CLI. You describe commands, options, and handlers; it parses `process.argv` (via [cac](https://github.com/cacjs/cac)), validates and coerces options, dispatches to your handler with a typed `CommandContext`, loads optional project config, and renders help and a banner. It is the `core` framework that the user-facing `damat` CLI and `@damatjs/orm`'s migration CLI are built on.
 
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Core Concepts](#core-concepts)
-  - [Commands](#commands)
-  - [Options](#options)
-  - [Subcommands](#subcommands)
-- [Configuration](#configuration)
-  - [CLI Configuration](#cli-configuration)
-  - [Config File Loading](#config-file-loading)
-- [Customization](#customization)
-  - [Banner](#banner)
-  - [Help Output](#help-output)
-  - [Error Handling](#error-handling)
-- [API Reference](#api-reference)
-- [Examples](#examples)
-- [License](#license)
+Part of the [Damat](../../../README.md) monorepo · [Full guide](../../../docs/GUIDE.md) · [Internals](./docs/README.md)
 
----
-
-## Installation
+## Install
 
 ```bash
 bun add @damatjs/cli
 ```
 
----
+Inside this monorepo it is a workspace dependency — reference it as `"@damatjs/cli": "*"` in the consuming package's `package.json`.
 
-## Quick Start
+## When to use
 
-Create a simple CLI with one command:
+Use it to build a CLI when you want:
 
-```typescript
+- A **declarative** command tree (commands, aliases, subcommands) instead of hand-wiring a parser.
+- Typed **option parsing** with `string`/`number`/`boolean` coercion, defaults, and required-option validation.
+- Auto-generated **help** (default + per-command) and an optional **banner**.
+- Optional **project config loading** (`*.config.ts`/`.json`/custom) injected into your handler.
+- Consistent logging via `@damatjs/logger`.
+
+It is **not** the place for non-CLI argument parsing inside a library, and it deliberately omits middleware/hooks, interactive prompts, and shell-completion generation. It also **calls `process.exit`** itself after a command runs — it owns the process lifecycle, so don't embed it inside a long-lived server.
+
+## Quick start
+
+```ts
+#!/usr/bin/env bun
 // bin.ts
 import { runCli } from "@damatjs/cli";
 
@@ -48,657 +42,115 @@ runCli({
       name: "hello",
       description: "Say hello to someone",
       options: [
-        {
-          name: "name",
-          alias: "n",
-          type: "string",
-          description: "Name to greet",
-          default: "World"
-        },
-        {
-          name: "loud",
-          type: "boolean",
-          description: "Shout the greeting",
-          default: false
-        }
+        { name: "name", alias: "n", type: "string", description: "Name to greet", default: "World" },
+        { name: "loud", type: "boolean", description: "Shout the greeting", default: false },
       ],
       handler: async (ctx) => {
         const name = ctx.options.name as string;
         const loud = ctx.options.loud as boolean;
-        
-        const message = loud 
-          ? `HELLO, ${name.toUpperCase()}!` 
-          : `Hello, ${name}!`;
-        
-        ctx.logger.info(message);
+        ctx.logger.info(loud ? `HELLO, ${name.toUpperCase()}!` : `Hello, ${name}!`);
         return { exitCode: 0 };
-      }
-    }
-  ]
+      },
+    },
+  ],
 });
 ```
-
-Run it:
 
 ```bash
 bun bin.ts hello --name Alice
-bun bin.ts hello -n Bob
-bun bin.ts hello --loud
+bun bin.ts hello -n Bob --loud
 bun bin.ts hello --help
 ```
 
----
+The real `damat` CLI uses the same shape — see `packages/cli/damat/src/cli.ts`.
 
-## Core Concepts
+## API
 
-### Commands
+All exports come from the single entry point `@damatjs/cli` (no subpath exports).
 
-Commands are the core of your CLI. Each command has:
+### Entry point
 
-```typescript
-interface Command {
-  name: string;              // Command name (required)
-  description: string;       // Short description (required)
-  aliases?: string[];        // Alternative names
-  usage?: string;           // Custom usage string
-  examples?: string[];      // Example commands
-  options?: CommandOption[]; // Command options
-  subcommands?: Command[];  // Nested commands
-  handler: (ctx) => Promise<CommandResult>; // Handler function
-}
-```
+| Export | Kind | Summary |
+| --- | --- | --- |
+| `runCli(config: CliConfig)` | function | Build, parse, and dispatch the CLI. Calls `process.exit`. |
 
-Example:
+### Registry
 
-```typescript
-const buildCommand: Command = {
-  name: "build",
-  description: "Build the project for production",
-  aliases: ["b", "bld"],
-  usage: "build [options]",
-  examples: [
-    "my-cli build",
-    "my-cli build --output=dist",
-    "my-cli build --minify"
-  ],
-  options: [...],
-  handler: async (ctx) => {
-    // Your build logic
-    return { exitCode: 0 };
-  }
-};
-```
+| Export | Kind | Summary |
+| --- | --- | --- |
+| `getRegistry()` | function | Get the singleton `CommandRegistry`. |
+| `registerCommand(cmd)` | function | Register a command (and its subcommands/aliases). |
+| `getCommand(name)` | function | Look up a command by name/alias. |
+| `getAllCommands()` | function | All registered commands (deduped). |
+| `clearRegistry()` | function | Reset the registry (called at the start of `runCli`). |
 
-### Options
+### Config loading
 
-Options are flags and parameters for commands:
+| Export | Kind | Summary |
+| --- | --- | --- |
+| `loadConfig<T>(loader?, cwd?)` | function | Load + cache a project config file. |
+| `clearConfigCache()` | function | Drop the cached config. |
+| `withConfig<T>(loader)` | function | `{ get, clear }` helper around `loadConfig`. |
 
-```typescript
-interface CommandOption {
-  name: string;              // Option name (required)
-  alias?: string;            // Short flag (e.g., 'o' for -o)
-  description: string;       // Help text (required)
-  type?: "string" | "boolean" | "number"; // Value type
-  default?: unknown;         // Default value
-  required?: boolean;        // Make option required
-}
-```
+### Help & output
 
-Examples:
+| Export | Kind | Summary |
+| --- | --- | --- |
+| `printDefaultHelp(config, commands)` | function | Render the top-level help. |
+| `printCommandSpecificHelp(config, cmd)` | function | Render help for one command. |
+| `formatCommandLine(cmd)`, `formatOptionLine(opt)`, `formatCommandHelp(...)` | functions | Help-line formatters. |
+| `printBanner(config, banner?)` | function | Render boxed/minimal/none banner. |
+| `printError`, `printSuccess`, `printInfo`, `printSection` | functions | Logger-backed console output helpers. |
 
-```typescript
-// String option
-{ name: "output", alias: "o", type: "string", description: "Output directory", default: "dist" }
+### Validation (also run automatically by `runCli`)
 
-// Number option
-{ name: "port", alias: "p", type: "number", description: "Port number", default: 3000 }
+| Export | Kind | Summary |
+| --- | --- | --- |
+| `validateOptions(options, defs, cmdName)` | function | Throw `MissingRequiredOptionError` for unmet required options. |
+| `applyDefaults(options, defs)` | function | Fill in option defaults. |
+| `coerceOptions(options, defs)`, `coerceOptionValue(value, type)` | functions | Coerce values to `string`/`number`/`boolean`. |
 
-// Boolean flag
-{ name: "minify", type: "boolean", description: "Minify output", default: false }
+### Key types
 
-// Required option
-{ name: "input", type: "string", description: "Input file", required: true }
-```
+| Export | Kind | Summary |
+| --- | --- | --- |
+| `CliConfig` | interface | Top-level config (`name`, `version`, `commands`, `banner`, `verbose`, `configLoader`, `onError`, ...). |
+| `Command` | interface | `name`, `description`, `aliases?`, `usage?`, `examples?`, `options?`, `subcommands?`, `handler`. |
+| `CommandOption` | interface | `name`, `alias?`, `description`, `type?`, `default?`, `required?`. |
+| `CommandContext` | interface | `command`, `args`, `options`, `logger`, `cwd` — passed to every handler. |
+| `CommandResult` | interface | `{ exitCode: number }` returned by handlers. |
+| `CommandRegistry` | interface | `register`/`get`/`getAll`/`has`. |
+| `BannerConfig`, `VerboseConfig`, `ConfigLoader`, `HelpTemplateFn`, `ErrorHandlerFn` | types | Config sub-shapes. |
 
-### Subcommands
+### Errors
 
-Two approaches for subcommands:
+| Export | Kind | Summary |
+| --- | --- | --- |
+| `CliError` | class | Base error with `exitCode` (default `1`). |
+| `CommandNotFoundError` | class | Unknown command. |
+| `MissingRequiredOptionError` | class | Required option absent. |
+| `ConfigLoadError` | class | Config file failed to load. |
+| `CommandRegistrationError` | class | Duplicate command/alias on registration. |
 
-#### Approach 1: Nested Definition
+## How it fits
 
-Best for grouping related commands:
+**Depends on**
 
-```typescript
-{
-  name: "migrate",
-  description: "Database migration commands",
-  subcommands: [
-    {
-      name: "migrate:up",
-      description: "Run all pending migrations",
-      handler: async (ctx) => {
-        // Run migrations up
-        return { exitCode: 0 };
-      }
-    },
-    {
-      name: "migrate:down",
-      description: "Rollback last migration",
-      handler: async (ctx) => {
-        // Rollback
-        return { exitCode: 0 };
-      }
-    },
-    {
-      name: "migrate:status",
-      description: "Show migration status",
-      handler: async (ctx) => {
-        // Show status
-        return { exitCode: 0 };
-      }
-    }
-  ],
-  handler: async (ctx) => {
-    // Default behavior when no subcommand
-    return { exitCode: 0 };
-  }
-}
-```
+- `cac` — underlying argv parser.
+- `dotenv` — declared dependency for env loading by consumers.
+- `@damatjs/logger` — `Logger`/`ILogger` for handler logging and output helpers.
 
-Usage:
+**Depended on by (in repo)**
 
-```bash
-my-cli migrate up
-my-cli migrate down
-my-cli migrate status
-```
+- `@damatjs/damat` (`packages/cli/damat`) — the user-facing `damat` CLI; re-exports this package and defines `dev`/`build`/`start`/`module` commands.
+- `@damatjs/orm`'s CLI (`packages/orm/cli`) — migration/generate commands.
+- `create-damat-app` (`packages/cli/create-damat-app`).
 
-#### Approach 2: Free-form Naming
+## Documentation
 
-Commands with colons in the name:
-
-```typescript
-[
-  { name: "migrate:up", description: "Run migrations", handler: ... },
-  { name: "migrate:down", description: "Rollback", handler: ... },
-  { name: "migrate:status", description: "Status", handler: ... }
-]
-```
-
-Both approaches work. The handler receives clean, typed data regardless of the approach.
-
----
-
-## Configuration
-
-### CLI Configuration
-
-The main `CliConfig` object:
-
-```typescript
-interface CliConfig {
-  name: string;              // CLI name (required)
-  version: string;           // CLI version (required)
-  description?: string;      // Short description
-  commands: Command[];       // Array of commands (required)
-  banner?: BannerConfig | false; // Banner config
-  helpTemplate?: Function;   // Custom help template
-  verbose?: VerboseConfig;   // Verbose mode config
-  configLoader?: ConfigLoader; // Config file loader
-  onError?: Function;        // Error handler
-}
-```
-
-Complete example:
-
-```typescript
-runCli({
-  name: "my-cli",
-  version: "2.0.0",
-  description: "A production-ready CLI tool",
-  commands: [...],
-  banner: {
-    title: "My CLI",
-    subtitle: "v2.0.0",
-    style: "boxed"
-  },
-  verbose: {
-    enabled: true,
-    handler: "auto"
-  },
-  configLoader: {
-    file: ["my.config.ts", ".myrc.json"]
-  },
-  onError: (error, ctx) => {
-    console.error(`Error: ${error.message}`);
-  }
-});
-```
-
-### Config File Loading
-
-Load configuration from files:
-
-```typescript
-runCli({
-  name: "my-cli",
-  version: "1.0.0",
-  configLoader: {
-    file: "my.config.ts"  // Single file
-  },
-  commands: [...]
-});
-
-// Or multiple files (tries in order):
-runCli({
-  configLoader: {
-    file: ["my.config.ts", ".myrc", "my.config.json"]
-  },
-  ...
-});
-```
-
-Example `my.config.ts`:
-
-```typescript
-export default {
-  apiUrl: "https://api.example.com",
-  timeout: 5000,
-  retries: 3
-};
-```
-
-Access in handler:
-
-```typescript
-handler: async (ctx) => {
-  const config = ctx.options.config as {
-    apiUrl: string;
-    timeout: number;
-    retries: number;
-  };
-  
-  console.log(config.apiUrl);
-  return { exitCode: 0 };
-}
-```
-
-Custom loader:
-
-```typescript
-configLoader: {
-  file: "custom.config",
-  load: async (filePath) => {
-    const content = await fs.readFile(filePath, "utf-8");
-    return JSON.parse(content);
-  }
-}
-```
-
----
-
-## Customization
-
-### Banner
-
-Three styles: `boxed`, `minimal`, `none`.
-
-#### Boxed (default)
-
-```typescript
-runCli({
-  banner: {
-    style: "boxed"
-  }
-});
-```
-
-Output:
-
-```
-┌────────────────────────────────────────────────────────────┐
-│  my-cli                                                    │
-├────────────────────────────────────────────────────────────┤
-│  A production-ready CLI tool                               │
-└────────────────────────────────────────────────────────────┘
-```
-
-#### Minimal
-
-```typescript
-runCli({
-  banner: {
-    style: "minimal"
-  }
-});
-```
-
-Output:
-
-```
-my-cli
-
-A production-ready CLI tool
-```
-
-#### None
-
-```typescript
-runCli({
-  banner: false
-});
-```
-
-No banner output.
-
-#### Custom Title/Subtitle
-
-```typescript
-runCli({
-  name: "my-cli",
-  banner: {
-    title: "My Awesome CLI",
-    subtitle: "Build amazing things faster",
-    style: "boxed"
-  }
-});
-```
-
-### Help Output
-
-Default help is automatically generated. Override with custom template:
-
-```typescript
-runCli({
-  helpTemplate: (config, commands) => {
-    let output = `\n${config.name} v${config.version}\n\n`;
-    output += `Usage: ${config.name} <command>\n\n`;
-    output += `Commands:\n`;
-    
-    for (const cmd of commands) {
-      output += `  ${cmd.name.padEnd(15)} ${cmd.description}\n`;
-    }
-    
-    return output;
-  }
-});
-```
-
-### Error Handling
-
-Custom error handler:
-
-```typescript
-runCli({
-  onError: (error, ctx) => {
-    if (error instanceof MissingRequiredOptionError) {
-      console.error(`Missing required option: ${error.message}`);
-    } else {
-      console.error(`Unexpected error: ${error.message}`);
-      if (ctx.options.verbose) {
-        console.error(error.stack);
-      }
-    }
-  }
-});
-```
-
----
-
-## API Reference
-
-### Main Functions
-
-```typescript
-// Start the CLI
-runCli(config: CliConfig): Promise<void>
-
-// Registry functions
-getRegistry(): CommandRegistry
-registerCommand(command: Command): void
-getCommand(name: string): Command | undefined
-getAllCommands(): Command[]
-
-// Config loading
-loadConfig<T>(loader?: ConfigLoader, cwd?: string): Promise<T | null>
-clearConfigCache(): void
-
-// Help printing
-printDefaultHelp(config: CliConfig, commands: Command[]): void
-printCommandSpecificHelp(config: CliConfig, command: Command): void
-
-// Banner printing
-printBanner(config: CliConfig, banner?: BannerConfig): void
-```
-
-### Types
-
-```typescript
-// Main types
-CliConfig
-Command
-CommandContext
-CommandResult
-CommandOption
-CommandRegistry
-
-// Configuration types
-ConfigLoader
-BannerConfig
-VerboseConfig
-
-// Error types
-CliError
-CommandNotFoundError
-MissingRequiredOptionError
-ConfigLoadError
-CommandRegistrationError
-```
-
-### CommandContext
-
-Received by every handler:
-
-```typescript
-interface CommandContext {
-  command: string;              // Resolved command name
-  args: string[];               // Positional arguments
-  options: Record<string, unknown>; // Parsed options
-  logger: ILogger;              // Logger instance
-  cwd: string;                  // Current working directory
-}
-```
-
-Usage:
-
-```typescript
-handler: async (ctx) => {
-  const commandName = ctx.command;        // "build"
-  const args = ctx.args;                   // ["src", "dist"]
-  const options = ctx.options;            // { output: "dist", minify: true }
-  const logger = ctx.logger;              // ILogger instance
-  const cwd = ctx.cwd;                    // "/path/to/project"
-  
-  // If config loaded
-  const config = ctx.options.config;      // Loaded config object
-  
-  return { exitCode: 0 };
-}
-```
-
----
-
-## Examples
-
-### Example 1: Build Tool CLI
-
-```typescript
-import { runCli } from "@damatjs/cli";
-
-runCli({
-  name: "builder",
-  version: "1.0.0",
-  description: "A modern build tool",
-  commands: [
-    {
-      name: "build",
-      description: "Build for production",
-      aliases: ["b"],
-      options: [
-        { name: "output", alias: "o", type: "string", default: "dist" },
-        { name: "minify", type: "boolean", default: true },
-        { name: "sourcemap", type: "boolean", default: false }
-      ],
-      handler: async (ctx) => {
-        const output = ctx.options.output as string;
-        ctx.logger.info(`Building to ${output}...`);
-        // Build logic
-        return { exitCode: 0 };
-      }
-    },
-    {
-      name: "dev",
-      description: "Start development server",
-      aliases: ["serve", "s"],
-      options: [
-        { name: "port", alias: "p", type: "number", default: 3000 },
-        { name: "open", type: "boolean", default: false }
-      ],
-      handler: async (ctx) => {
-        const port = ctx.options.port as number;
-        ctx.logger.info(`Starting dev server on port ${port}...`);
-        // Start server
-        return { exitCode: 0 };
-      }
-    }
-  ]
-});
-```
-
-### Example 2: Database CLI with Subcommands
-
-```typescript
-import { runCli, type Command } from "@damatjs/cli";
-
-const migrateUp: Command = {
-  name: "migrate:up",
-  description: "Run pending migrations",
-  handler: async (ctx) => {
-    ctx.logger.info("Running migrations...");
-    return { exitCode: 0 };
-  }
-};
-
-const migrateDown: Command = {
-  name: "migrate:down",
-  description: "Rollback migrations",
-  options: [
-    { name: "steps", type: "number", default: 1, description: "Steps to rollback" }
-  ],
-  handler: async (ctx) => {
-    const steps = ctx.options.steps as number;
-    ctx.logger.info(`Rolling back ${steps} migration(s)...`);
-    return { exitCode: 0 };
-  }
-};
-
-runCli({
-  name: "db-tool",
-  version: "1.0.0",
-  description: "Database management CLI",
-  configLoader: {
-    file: "db.config.ts"
-  },
-  commands: [
-    {
-      name: "migrate",
-      description: "Migration commands",
-      subcommands: [migrateUp, migrateDown]
-    },
-    {
-      name: "seed",
-      description: "Seed the database",
-      handler: async (ctx) => {
-        ctx.logger.info("Seeding database...");
-        return { exitCode: 0 };
-      }
-    }
-  ]
-});
-```
-
-### Example 3: Project Generator CLI
-
-```typescript
-import { runCli } from "@damatjs/cli";
-import { prompts } from "@clack/prompts";
-
-runCli({
-  name: "create-app",
-  version: "1.0.0",
-  description: "Create a new project from templates",
-  commands: [
-    {
-      name: "create",
-      description: "Create a new project",
-      aliases: ["init", "new"],
-      options: [
-        { name: "template", alias: "t", type: "string", description: "Template name" },
-        { name: "name", type: "string", description: "Project name", required: true },
-        { name: "install", type: "boolean", default: true, description: "Install dependencies" }
-      ],
-      handler: async (ctx) => {
-        const projectName = ctx.options.name as string;
-        const template = ctx.options.template as string | undefined;
-        const install = ctx.options.install as boolean;
-        
-        ctx.logger.info(`Creating project: ${projectName}`);
-        
-        if (template) {
-          ctx.logger.info(`Using template: ${template}`);
-        }
-        
-        // Project creation logic
-        
-        if (install) {
-          ctx.logger.info("Installing dependencies...");
-        }
-        
-        ctx.logger.success("Project created successfully!");
-        return { exitCode: 0 };
-      }
-    }
-  ],
-  banner: {
-    title: "Create App",
-    subtitle: "Scaffold new projects instantly",
-    style: "boxed"
-  }
-});
-```
-
----
-
-## Global Options
-
-Every CLI built with `@damatjs/cli` includes these options by default:
-
-- `--help, -h` - Show help
-- `--version, -v` - Show version
-- `--verbose` - Enable verbose output (if not disabled)
-
-Verbose mode automatically logs at debug level using the `@damatjs/logger` integration.
-
-Example:
-
-```bash
-my-cli --help
-my-cli --version
-my-cli build --verbose
-```
-
----
+- [Internals (maintainers)](./docs/README.md)
+- [Full guide](../../../docs/GUIDE.md)
 
 ## License
 
-MIT © Abel Lamesgen
+MIT

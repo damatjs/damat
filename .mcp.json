@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "damat-modules": {
+      "command": "bun",
+      "args": ["run", "packages/mcp/bin/damat-mcp.ts"],
+      "env": {
+        "DAMAT_MODULE_REGISTRY": "packages/mcp/registry.example.json",
+        "DAMAT_APP_DIR": ".",
+        "DAMAT_CLI": "damat"
+      }
+    }
+  }
+}
