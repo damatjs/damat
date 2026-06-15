@@ -30,12 +30,28 @@ describe("validateModuleManifest", () => {
       name: "billing-stripe",
       version: "1.2.0",
       description: "Stripe billing",
+      author: { name: "damatjs", url: "https://github.com/damatjs" },
       env: [{ name: "STRIPE_KEY", required: true }],
       packages: { stripe: "^14.0.0" },
       modules: ["user"],
       registry: { namespace: "damatjs", license: "MIT", keywords: ["billing"] },
     });
     expect(manifest.registry?.namespace).toBe("damatjs");
+  });
+
+  test("accepts author as a string or an object, rejects other shapes", () => {
+    expect(validateModuleManifest({ name: "x", author: "Jane <j@x.co>" }).author).toBe(
+      "Jane <j@x.co>",
+    );
+    expect(
+      validateModuleManifest({ name: "x", author: { name: "Jane" } }).author,
+    ).toEqual({ name: "Jane" });
+    expect(() => validateModuleManifest({ name: "x", author: 42 })).toThrow(
+      '"author" must be a string or an object with a "name"',
+    );
+    expect(() => validateModuleManifest({ name: "x", author: {} })).toThrow(
+      '"author"',
+    );
   });
 
   test("rejects missing or malformed names", () => {
@@ -86,6 +102,7 @@ describe("validateModuleDir (registry readiness)", () => {
         name: "user",
         version: "0.0.1",
         description: "Users",
+        author: { name: "damatjs" },
         registry: { namespace: "damatjs", license: "MIT" },
       },
       ["index.ts", "models/user.ts", "migrations/Migration1_Init.sql"],
@@ -117,6 +134,7 @@ describe("validateModuleDir (registry readiness)", () => {
       const report = validateModuleDir(dir);
       expect(report.valid).toBe(true);
       expect(report.warnings.join("\n")).toContain('"version"');
+      expect(report.warnings.join("\n")).toContain('"author"');
       expect(report.warnings.join("\n")).toContain("registry.license");
       expect(report.warnings.join("\n")).toContain("registry.namespace");
     } finally {

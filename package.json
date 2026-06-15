@@ -24,6 +24,7 @@
   "workspaces": [
     "apps/*",
     "backend/*",
+    "modules/*",
     "packages/*",
     "packages/cli/*",
     "packages/core/*",

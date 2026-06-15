@@ -19,6 +19,18 @@ export interface ModuleEnvVar {
   example?: string;
 }
 
+/**
+ * Module author identity. May be a string ("Name <email> (url)") or an object;
+ * the registry mirrors it for search/display, and `damat module add` records it
+ * as install provenance. The author declares this — it is not the verifiable
+ * owner (that is assigned by the registry backend; see ModuleRegistryMeta).
+ */
+export interface ModuleAuthor {
+  name: string;
+  email?: string;
+  url?: string;
+}
+
 export interface ModuleManifestPaths {
   /** Module entry that default-exports defineModule(...). Default: "./index.ts" */
   entry?: string;
@@ -55,6 +67,8 @@ export interface ModuleManifest {
   name: string;
   version?: string;
   description?: string;
+  /** Author identity — string or object. The registry mirrors it; not the owner. */
+  author?: ModuleAuthor | string;
   /** Env vars the module's credentials loader reads */
   env?: ModuleEnvVar[];
   /** npm packages the host app must install, name -> semver range */

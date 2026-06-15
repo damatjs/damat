@@ -69,6 +69,9 @@ export function validateModuleDir(moduleDir: string): ModuleValidationReport {
   // Registry-readiness — the registry indexes these fields
   if (!manifest.version) warnings.push('Missing "version" — required for registry publishing');
   if (!manifest.description) warnings.push('Missing "description" — shown in registry search');
+  if (!manifest.author) {
+    warnings.push('Missing "author" — shown in the registry and recorded as install provenance');
+  }
   if (!manifest.registry?.license) {
     warnings.push('Missing "registry.license" — required for registry publishing');
   }

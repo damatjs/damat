@@ -5,16 +5,17 @@ import { spawnSync } from "node:child_process";
 import {
   parseModuleRef,
   formatModuleRef,
-  resolveRegistryRef,
+  resolveRegistryEntry,
 } from "@damatjs/module";
 import type { ResolvedModuleSource } from "./types";
 
 /**
- * Resolve a module source to a local directory.
+ * Resolve a module source to a local directory, along with its provenance.
  *
  * Supported forms:
  * - registry ref:          user, user@0.2.0, damatjs/user@latest
- *                          (resolved through DAMAT_MODULE_REGISTRY)
+ *                          (resolved through DAMAT_MODULE_REGISTRY; carries the
+ *                          verifiable owner + verification the registry recorded)
  * - local path:            ./path/to/module  or  /abs/path
  * - github shorthand:      user/repo  or  user/repo/sub/dir
  * - git url:               https://github.com/user/repo.git (optional #ref)
@@ -26,15 +27,33 @@ export async function resolveModuleSource(
   // Local path
   const localPath = isAbsolute(source) ? source : resolve(cwd, source);
   if (existsSync(localPath)) {
-    return { dir: localPath, cleanup: () => {} };
+    return {
+      dir: localPath,
+      cleanup: () => {},
+      origin: { type: "path", ref: source, url: localPath },
+    };
   }
 
-  // Registry reference — resolve to the indexed source and recurse
+  // Registry reference — resolve to the indexed record, fetch its source, but
+  // keep the registry as the recorded origin (owner + verification).
   const moduleRef = parseModuleRef(source);
   if (moduleRef) {
-    const registrySource = await resolveRegistryRef(moduleRef);
-    if (registrySource) {
-      return resolveModuleSource(registrySource, cwd);
+    const record = await resolveRegistryEntry(moduleRef);
+    if (record) {
+      const inner = await resolveModuleSource(record.source, cwd);
+      return {
+        ...inner,
+        registry: record,
+        origin: {
+          type: "registry",
+          ref: formatModuleRef(moduleRef),
+          url: record.source,
+          version: record.version,
+          owner: record.owner?.namespace,
+          verification: record.verification.status,
+          integrity: record.integrity,
+        },
+      };
     }
     // A bare name is unambiguously a registry ref; "a/b" could still be
     // a github shorthand, so only fail early for bare names.
@@ -93,5 +112,6 @@ export async function resolveModuleSource(
   return {
     dir: moduleDir,
     cleanup: () => rmSync(tempDir, { recursive: true, force: true }),
+    origin: { type: "git", ref: source, url: repoUrl },
   };
 }

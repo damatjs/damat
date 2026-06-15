@@ -1,15 +1,20 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import type { ModuleSource } from "@damatjs/framework";
 
 /**
  * Register the module in damat.config.ts by inserting an entry into the
  * `modules: { ... }` block. Conservative by design: when the block can't be
  * located unambiguously, returns false so the caller can print manual steps
  * instead of corrupting the config.
+ *
+ * When `source` is given, its provenance is written alongside `resolve`/`id`
+ * so every installed module is traceable to where it came from.
  */
 export function registerModuleInConfig(
   configPath: string,
   name: string,
   resolvePath: string,
+  source?: ModuleSource,
 ): boolean {
   if (!existsSync(configPath)) return false;
   const content = readFileSync(configPath, "utf-8");
@@ -19,7 +24,8 @@ export function registerModuleInConfig(
     return true; // already registered
   }
 
-  const entry = `\n    ${key}: {\n      resolve: "${resolvePath}",\n      id: "${name}",\n    },`;
+  const sourceBlock = source ? `\n${serializeSource(source, "      ")}` : "";
+  const entry = `\n    ${key}: {\n      resolve: "${resolvePath}",\n      id: "${name}",${sourceBlock}\n    },`;
 
   const modulesMatch = content.match(/modules\s*:\s*\{/);
   if (modulesMatch && modulesMatch.index !== undefined) {
@@ -48,4 +54,23 @@ export function registerModuleInConfig(
 
 function toCamel(name: string): string {
   return name.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase());
+}
+
+/** Serialize module provenance as an indented `source: { ... }` literal. */
+function serializeSource(source: ModuleSource, indent: string): string {
+  // Fixed order keeps the written config stable and readable.
+  const order: (keyof ModuleSource)[] = [
+    "type",
+    "ref",
+    "url",
+    "version",
+    "owner",
+    "verification",
+    "integrity",
+    "installedAt",
+  ];
+  const lines = order
+    .filter((field) => source[field] !== undefined)
+    .map((field) => `${indent}  ${field}: ${JSON.stringify(source[field])},`);
+  return `${indent}source: {\n${lines.join("\n")}\n${indent}},`;
 }

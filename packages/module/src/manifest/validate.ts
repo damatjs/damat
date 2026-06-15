@@ -1,4 +1,4 @@
-import type { ModuleEnvVar, ModuleManifest } from "./types";
+import type { ModuleAuthor, ModuleEnvVar, ModuleManifest } from "./types";
 
 const MODULE_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
 
@@ -19,6 +19,19 @@ export function validateModuleManifest(raw: unknown): ModuleManifest {
     throw new Error(
       `module name "${manifest.name}" must be kebab-case (lowercase letters, digits, dashes)`,
     );
+  }
+  if (manifest.author !== undefined) {
+    const author = manifest.author;
+    const isString = typeof author === "string";
+    const isObjectWithName =
+      author !== null &&
+      typeof author === "object" &&
+      typeof (author as ModuleAuthor).name === "string";
+    if (!isString && !isObjectWithName) {
+      throw new Error(
+        'module.json "author" must be a string or an object with a "name"',
+      );
+    }
   }
   if (manifest.env !== undefined) {
     if (!Array.isArray(manifest.env)) {

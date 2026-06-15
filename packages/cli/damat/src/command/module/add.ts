@@ -1,7 +1,8 @@
 import { join, relative } from "node:path";
 import { existsSync, rmSync } from "node:fs";
 import type { Command } from "@damatjs/cli";
-import { readModuleManifest, locateModuleDir } from "@damatjs/module";
+import { readModuleManifest, locateModuleDir, evaluateVerification } from "@damatjs/module";
+import type { ModuleSource } from "@damatjs/framework";
 import {
   resolveModuleSource,
   copyModule,
@@ -72,6 +73,29 @@ export const moduleAddCommand: Command = {
         description: manifest.description,
       });
 
+      // Provenance + verification gate. Registry installs carry a verifiable
+      // owner and a verification status the registry stamped; path/git sources
+      // are trusted as-is (the user pointed at them directly).
+      if (resolved.registry) {
+        const decision = evaluateVerification(resolved.registry.verification);
+        ctx.logger.info("Source", {
+          from: "registry",
+          ref: resolved.origin.ref,
+          owner: resolved.registry.owner?.namespace ?? "(unknown)",
+          verification: decision.status,
+        });
+        if (!decision.allowed) {
+          ctx.logger.error(`Refusing to install "${moduleId}": ${decision.message}`);
+          return { exitCode: 1 };
+        }
+        if (decision.message) ctx.logger.warn(decision.message);
+      } else {
+        ctx.logger.info("Source", {
+          from: resolved.origin.type,
+          ref: resolved.origin.ref,
+        });
+      }
+
       // Unmet module dependencies are a warning, not a blocker
       for (const dep of manifest.modules ?? []) {
         const depDir = join(ctx.cwd, modulesDir, dep);
@@ -97,12 +121,17 @@ export const moduleAddCommand: Command = {
       copyModule(sourceModuleDir, targetDir);
       ctx.logger.success(`Copied module to ${relative(ctx.cwd, targetDir)}`);
 
-      // Register in damat.config.ts
+      // Register in damat.config.ts, recording where the module came from
       const configPath = join(ctx.cwd, "damat.config.ts");
+      const origin: ModuleSource = {
+        ...resolved.origin,
+        installedAt: new Date().toISOString(),
+      };
       const registered = registerModuleInConfig(
         configPath,
         moduleId,
         relativeTarget,
+        origin,
       );
       if (registered) {
         ctx.logger.success(`Registered "${moduleId}" in damat.config.ts`);
