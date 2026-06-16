@@ -90,4 +90,45 @@ describe("generateRowInterface", () => {
     expect(lines).toContain("  user?: User;");
     expect(lines).toContain("  comments?: Comment[];");
   });
+
+  it("emits every column type (nullable, array, enum) verbatim", () => {
+    const table: ModuleSchema["tables"][number] = {
+      name: "widget",
+      columns: [
+        { name: "id", type: "uuid", nullable: false, primaryKey: true },
+        { name: "title", type: "text", nullable: true },
+        { name: "labels", type: "text", nullable: false, array: true },
+        { name: "scores", type: "integer", nullable: true, array: true },
+        { name: "kind", type: "enum", enum: "widget_kind", nullable: false },
+        { name: "created_at", type: "timestamp with time zone", nullable: false },
+      ],
+    };
+    const lines = generateRowInterface(table, []);
+    expect(lines).toContain("  id: string;");
+    expect(lines).toContain("  title: string | null;");
+    expect(lines).toContain("  labels: Array<string>;");
+    expect(lines).toContain("  scores: Array<number> | null;");
+    expect(lines).toContain("  kind: WidgetKindEnum;");
+    // row interface keeps timestamp columns (unlike New*)
+    expect(lines).toContain("  created_at: Date;");
+  });
+
+  it("does not add the relation comment when there are no relations", () => {
+    const table: ModuleSchema["tables"][number] = {
+      name: "plain",
+      columns: [{ name: "id", type: "uuid", nullable: false }],
+    };
+    const lines = generateRowInterface(table, []);
+    expect(lines).not.toContain("  // loaded relations");
+  });
+
+  it("opens and closes the interface block in order", () => {
+    const table: ModuleSchema["tables"][number] = {
+      name: "thing",
+      columns: [{ name: "id", type: "uuid", nullable: false }],
+    };
+    const lines = generateRowInterface(table, []);
+    expect(lines[0]).toBe("export interface Thing {");
+    expect(lines[lines.length - 1]).toBe("}");
+  });
 });

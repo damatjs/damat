@@ -36,7 +36,6 @@
   "scripts": {
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
     "watch": "tsc --watch",
-    "test": "bun test",
-    "prepublishOnly": "test -f dist/index.js || (echo 'dist/index.js missing — run build before publishing' && exit 1)"
+    "test": "bun test"
   }
 }

@@ -66,6 +66,6 @@
     "scripts": {
         "build": "rm -rf dist tsconfig.tsbuildinfo && tsc",
         "watch": "tsc --watch",
-        "test": "exit 0"
+        "test": "bun test ./src"
     }
 }

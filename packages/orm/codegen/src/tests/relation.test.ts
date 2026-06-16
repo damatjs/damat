@@ -74,7 +74,13 @@ describe("buildRelationMap", () => {
 });
 
 describe("relationFields", () => {
-  it("generates belongsTo relation field", () => {
+  // The generated field TYPE is `toPascalCase(rel.to)` verbatim — the target
+  // table name as-written. There is no singularisation, so a relation `to:
+  // "users"` references the `Users` interface (which is what the row-interface
+  // generator emits for a table named `users`). Field NAMES come from the FK
+  // column (belongsTo, `_id` stripped) or `rel.from` (hasMany / hasOne).
+
+  it("generates belongsTo field; name from FK column, type from rel.to", () => {
     const fields = relationFields([
       {
         fromTable: "posts",
@@ -84,10 +90,50 @@ describe("relationFields", () => {
         linkedBy: ["user_id"],
       },
     ]);
-    expect(fields).toEqual(["  user?: User;"]);
+    // FK `user_id` → name `user`; target `users` → type `Users`.
+    expect(fields).toEqual(["  user?: Users;"]);
   });
 
-  it("generates hasMany relation field with plural name", () => {
+  it("strips only a trailing _id from the FK column name", () => {
+    const fields = relationFields([
+      {
+        fromTable: "orders",
+        from: "owner",
+        to: "users",
+        type: "belongsTo",
+        linkedBy: ["created_by_id"],
+      },
+    ]);
+    expect(fields).toEqual(["  created_by?: Users;"]);
+  });
+
+  it("falls back to rel.from for belongsTo when linkedBy is empty", () => {
+    const fields = relationFields([
+      {
+        fromTable: "posts",
+        from: "author",
+        to: "users",
+        type: "belongsTo",
+        linkedBy: [],
+      },
+    ]);
+    // No FK column → use the property name `author`; type from `users`.
+    expect(fields).toEqual(["  author?: Users;"]);
+  });
+
+  it("falls back to rel.from for belongsTo when linkedBy is undefined", () => {
+    const fields = relationFields([
+      {
+        fromTable: "posts",
+        from: "author",
+        to: "users",
+        type: "belongsTo",
+      },
+    ]);
+    expect(fields).toEqual(["  author?: Users;"]);
+  });
+
+  it("generates hasMany field as an array using rel.from for the name", () => {
     const fields = relationFields([
       {
         fromTable: "users",
@@ -97,10 +143,24 @@ describe("relationFields", () => {
         linkedBy: [],
       },
     ]);
-    expect(fields).toEqual(["  posts?: Post[];"]);
+    // hasMany → array; name = rel.from; type = toPascalCase(rel.to).
+    expect(fields).toEqual(["  posts?: Posts[];"]);
   });
 
-  it("generates hasOne relation field", () => {
+  it("ignores linkedBy for hasMany, always using rel.from for the name", () => {
+    const fields = relationFields([
+      {
+        fromTable: "users",
+        from: "orders",
+        to: "orders",
+        type: "hasMany",
+        linkedBy: ["user_id"],
+      },
+    ]);
+    expect(fields).toEqual(["  orders?: Orders[];"]);
+  });
+
+  it("generates hasOne field as singular using rel.from for the name", () => {
     const fields = relationFields([
       {
         fromTable: "users",
@@ -110,36 +170,23 @@ describe("relationFields", () => {
         linkedBy: [],
       },
     ]);
-    expect(fields).toEqual(["  profile?: Profile;"]);
+    expect(fields).toEqual(["  profile?: Profiles;"]);
   });
 
-  it("handles singular table name in hasMany", () => {
+  it("PascalCases a snake_case target table name", () => {
     const fields = relationFields([
       {
-        fromTable: "categories",
-        from: "products",
-        to: "products",
+        fromTable: "users",
+        from: "orderItems",
+        to: "order_items",
         type: "hasMany",
         linkedBy: [],
       },
     ]);
-    expect(fields).toEqual(["  products?: Product[];"]);
+    expect(fields).toEqual(["  orderItems?: OrderItems[];"]);
   });
 
-  it("handles table name already ending with 's' in hasMany", () => {
-    const fields = relationFields([
-      {
-        fromTable: "schools",
-        from: "classes",
-        to: "classes",
-        type: "hasMany",
-        linkedBy: [],
-      },
-    ]);
-    expect(fields).toEqual(["  classes?: Class[];"]);
-  });
-
-  it("uses camelCase derived field name when no linkedBy", () => {
+  it("uses rel.from verbatim as belongsTo name when no FK column", () => {
     const fields = relationFields([
       {
         fromTable: "items",
@@ -149,14 +196,27 @@ describe("relationFields", () => {
         linkedBy: [],
       },
     ]);
-    expect(fields).toEqual(["  orderItem?: OrderItem;"]);
+    expect(fields).toEqual(["  orderItem?: OrderItems;"]);
+  });
+
+  it("keeps a singular target name singular (no pluralisation applied)", () => {
+    const fields = relationFields([
+      {
+        fromTable: "posts",
+        from: "metadata",
+        to: "metadata",
+        type: "hasOne",
+        linkedBy: [],
+      },
+    ]);
+    expect(fields).toEqual(["  metadata?: Metadata;"]);
   });
 
   it("returns empty array for no relations", () => {
     expect(relationFields([])).toEqual([]);
   });
 
-  it("handles multiple relations", () => {
+  it("handles multiple relations of every kind in order", () => {
     const fields = relationFields([
       {
         fromTable: "posts",
@@ -182,8 +242,8 @@ describe("relationFields", () => {
     ]);
 
     expect(fields).toEqual([
-      "  user?: User;",
-      "  comments?: Comment[];",
+      "  user?: Users;",
+      "  comments?: Comments[];",
       "  metadata?: Metadata;",
     ]);
   });

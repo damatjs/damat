@@ -1,12 +1,21 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
-import { Pool } from "@damatjs/deps/pg";
+// NOTE: `@damatjs/deps/pg` is imported lazily inside `beforeAll` (below) so that
+// merely loading this file does not require the optional pg dependency. The
+// suite is skipped unless DATABASE_URL is set, so the lazy import only runs when
+// these integration tests are actually enabled.
+type Pool = any;
 import { model, columns, toModuleSchema } from "@damatjs/orm-model";
 import { generateMigration } from "@damatjs/orm-processor";
 import { PgModelClient, PgEntityManager } from "../src";
 
-const DATABASE_URL = "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable";
+// Live-database integration tests. These require a reachable Postgres and are
+// SKIPPED by default so `bun test` is green without a DB. Provide a connection
+// string via DATABASE_URL to enable them.
+const DATABASE_URL =
+  process.env.DATABASE_URL ??
+  "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable";
 
-describe("ORM PostgreSQL Integration Tests", () => {
+describe.skipIf(!process.env.DATABASE_URL)("ORM PostgreSQL Integration Tests", () => {
   let pool: Pool;
 
   // Schema Definitions
@@ -60,8 +69,9 @@ describe("ORM PostgreSQL Integration Tests", () => {
   });
 
   beforeAll(async () => {
+    const { Pool } = await import("@damatjs/deps/pg");
     pool = new Pool({ connectionString: DATABASE_URL });
-    
+
     // Set up test schema
     await pool.query("DROP SCHEMA IF EXISTS blog_test CASCADE");
     await pool.query("CREATE SCHEMA blog_test");
