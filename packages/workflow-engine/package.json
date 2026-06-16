@@ -26,6 +26,7 @@
   },
   "scripts": {
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "test": "bun test"
   }
 }

@@ -38,4 +38,18 @@ describe("ConnectionError", () => {
             expect((e as Error).message).toBe("Throw test");
         }
     });
+
+    it("should distinguish itself from a plain Error via instanceof", () => {
+        const plain = new Error("plain");
+        const conn = new ConnectionError("conn");
+        expect(plain instanceof ConnectionError).toBe(false);
+        expect(conn instanceof ConnectionError).toBe(true);
+    });
+
+    it("should retain access to the underlying cause for inspection", () => {
+        const root = new Error("root cause");
+        const wrapped = new ConnectionError("wrapper", root);
+        expect(wrapped.cause).toBe(root);
+        expect(wrapped.cause?.message).toBe("root cause");
+    });
 });

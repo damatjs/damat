@@ -40,6 +40,6 @@
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc -p tsconfig.json",
     "dev": "bun run build --watch",
     "watch": "tsc --watch",
-    "test": "bun test ./src/**/*.test.ts"
+    "test": "bun test ./src"
   }
 }

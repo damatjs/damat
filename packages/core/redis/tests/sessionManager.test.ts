@@ -1,31 +1,28 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
-import { Redis } from "@damatjs/deps/ioredis";
-import { initRedis, getRedis, disconnectRedis } from "../src/index";
-import { SessionManager, createSessionManager } from "../src/sessionManager";
+import { describe, it, expect, beforeEach } from "bun:test";
+import { SessionManager, createSessionManager } from "../src/index";
+import { createFakeRedis, type FakeRedis } from "./helpers/fakeRedis";
+
+type SessionData = { userId: string; role: string };
 
 describe("SessionManager", () => {
-  let redis: Redis;
-  let manager: SessionManager<{ userId: string; role: string }>;
+  let redis: FakeRedis;
+  let manager: SessionManager<SessionData>;
 
-  beforeAll(async () => {
-    initRedis({
-      url: process.env.REDIS_URL || "redis://localhost:6379",
-    });
-    redis = getRedis();
-    await redis.ping();
+  beforeEach(() => {
+    redis = createFakeRedis();
+    manager = createSessionManager<SessionData>(
+      {
+        defaultTtlSeconds: 3600,
+        extendOnAccess: true,
+        extendThreshold: 0.5,
+      },
+      redis,
+    );
   });
 
-  afterAll(async () => {
-    await disconnectRedis();
-  });
-
-  beforeEach(async () => {
-    await redis.del("session:active-user");
-    await redis.del("session:expiring-soon");
-    manager = createSessionManager<{ userId: string; role: string }>({
-      defaultTtlSeconds: 3600,
-      extendOnAccess: true,
-      autoExtendThreshold: 0.5,
+  describe("construction", () => {
+    it("createSessionManager returns a SessionManager instance", () => {
+      expect(manager).toBeInstanceOf(SessionManager);
     });
   });
 
@@ -38,20 +35,34 @@ describe("SessionManager", () => {
     });
 
     it("returns null for non-existent session", async () => {
-      const session = await manager.get("nonexistent");
-      expect(session).toBeNull();
+      expect(await manager.get("nonexistent")).toBeNull();
+    });
+
+    it("uses defaultTtlSeconds when no ttl is given to set", async () => {
+      await manager.set("active-user", { userId: "1", role: "user" });
+      const ttl = await redis.ttl("session:active-user");
+      expect(ttl).toBeGreaterThan(3590);
+      expect(ttl).toBeLessThanOrEqual(3600);
+    });
+
+    it("honors an explicit ttl on set", async () => {
+      await manager.set("active-user", { userId: "1", role: "user" }, 120);
+      const ttl = await redis.ttl("session:active-user");
+      expect(ttl).toBeGreaterThan(110);
+      expect(ttl).toBeLessThanOrEqual(120);
     });
   });
 
   describe("auto-extend on access", () => {
-    it("extends TTL when below threshold", async () => {
+    it("extends TTL when remaining TTL is below threshold", async () => {
       await manager.set("expiring-soon", { userId: "123", role: "user" }, 3600);
+      // Force TTL below minTtl = floor(3600 * 0.5) = 1800.
       await redis.expire("session:expiring-soon", 100);
 
       await manager.get("expiring-soon");
 
       const ttl = await redis.ttl("session:expiring-soon");
-      expect(ttl).toBeGreaterThan(3500);
+      expect(ttl).toBeGreaterThan(3590);
     });
 
     it("does not extend TTL when above threshold", async () => {
@@ -63,20 +74,25 @@ describe("SessionManager", () => {
 
       expect(Math.abs(ttlBefore - ttlAfter)).toBeLessThan(2);
     });
+
+    it("does not extend a missing session on get", async () => {
+      const session = await manager.get("missing");
+      expect(session).toBeNull();
+      // Nothing should have been created.
+      expect(await redis.ttl("session:missing")).toBe(-2);
+    });
   });
 
   describe("delete", () => {
-    it("deletes session", async () => {
+    it("deletes a session", async () => {
       await manager.set("active-user", { userId: "123", role: "admin" });
       await manager.delete("active-user");
-
-      const session = await manager.get("active-user");
-      expect(session).toBeNull();
+      expect(await manager.get("active-user")).toBeNull();
     });
   });
 
   describe("touch", () => {
-    it("manually extends session TTL", async () => {
+    it("manually extends session TTL and returns true", async () => {
       await manager.set("active-user", { userId: "123", role: "admin" }, 100);
 
       const extended = await manager.touch("active-user", 7200);
@@ -86,9 +102,16 @@ describe("SessionManager", () => {
       expect(ttl).toBeGreaterThan(7100);
     });
 
+    it("falls back to defaultTtlSeconds when no ttl is given", async () => {
+      await manager.set("active-user", { userId: "1", role: "user" }, 100);
+      const extended = await manager.touch("active-user");
+      expect(extended).toBe(true);
+      const ttl = await redis.ttl("session:active-user");
+      expect(ttl).toBeGreaterThan(3590);
+    });
+
     it("returns false for non-existent session", async () => {
-      const result = await manager.touch("nonexistent", 3600);
-      expect(result).toBe(false);
+      expect(await manager.touch("nonexistent", 3600)).toBe(false);
     });
   });
 
@@ -99,24 +122,36 @@ describe("SessionManager", () => {
 
       const session = await manager.get("active-user");
       expect(session?.role).toBe("admin");
+
+      const ttl = await redis.ttl("session:active-user");
+      expect(ttl).toBeGreaterThan(3590);
     });
   });
 
   describe("disabled auto-extend", () => {
     it("does not extend TTL when extendOnAccess is false", async () => {
-      const noExtendManager = createSessionManager<{ userId: string }>({
-        defaultTtlSeconds: 3600,
-        extendOnAccess: false,
-      });
+      const noExtendManager = createSessionManager<SessionData>(
+        {
+          defaultTtlSeconds: 3600,
+          extendOnAccess: false,
+        },
+        redis,
+      );
 
-      await noExtendManager.set("active-user", { userId: "123" }, 100);
+      await noExtendManager.set(
+        "active-user",
+        { userId: "123", role: "user" },
+        100,
+      );
 
       const ttlBefore = await redis.ttl("session:active-user");
       await noExtendManager.get("active-user");
       const ttlAfter = await redis.ttl("session:active-user");
 
-      expect(ttlBefore).toBe(100);
-      expect(ttlAfter).toBe(100);
+      // TTL should be effectively unchanged (still ~100s).
+      expect(ttlBefore).toBeGreaterThan(98);
+      expect(ttlBefore).toBeLessThanOrEqual(100);
+      expect(Math.abs(ttlBefore - ttlAfter)).toBeLessThan(2);
     });
   });
 });

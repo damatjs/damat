@@ -36,6 +36,7 @@
   },
   "scripts": {
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc && chmod +x dist/cli.js",
+    "test": "bun test",
     "dev": "bun run build --watch",
     "postinstall": "chmod +x dist/cli.js || true",
     "prepublishOnly": "test -f dist/cli.js || (echo 'Error: dist/cli.js not found. Run bun run build first.' && exit 1)"

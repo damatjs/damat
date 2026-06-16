@@ -40,8 +40,8 @@
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc && tsc-alias",
     "dev": "bun run build --watch",
     "watch": "tsc --watch",
-    "snapshot": "bun run scripts/generate-snapshots",
-    "codegen": "bun run scripts/generate-types",
-    "test": "bun run snapshot && bun test ./src/tests/**.test.ts"
+    "snapshot:update": "bun run scripts/generate-snapshots",
+    "codegen:update": "bun run scripts/generate-types",
+    "test": "bun test ./src/tests/**.test.ts"
   }
 }

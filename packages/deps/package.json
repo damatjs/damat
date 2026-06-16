@@ -55,7 +55,8 @@
   },
   "author": "Abel Lamesgen",
   "scripts": {
-    "build": "rm -rf dist tsconfig.tsbuildinfo && tsc --build"
+    "build": "rm -rf dist tsconfig.tsbuildinfo && tsc --build",
+    "test": "bun test"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",

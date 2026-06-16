@@ -36,6 +36,6 @@
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc && tsc-alias",
     "dev": "bun run build --watch",
     "watch": "tsc --watch",
-    "test": "exit 0"
+    "test": "bun test"
   }
 }
