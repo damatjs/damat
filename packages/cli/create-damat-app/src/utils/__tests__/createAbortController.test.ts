@@ -146,10 +146,24 @@ describe("createAbortController", () => {
   });
 
   describe("getAbortError", () => {
-    it("should return an object with ABORT_ERR code", () => {
+    it("should return the full abort error shape", () => {
       const error = getAbortError();
 
-      expect(error).toEqual({ code: "ABORT_ERR" });
+      expect(error).toEqual({
+        code: "ABORT_ERR",
+        message: "Operation cancelled by user",
+        signal: "SIGINT",
+        status: 130,
+      });
+    });
+
+    it("should set the SIGINT-related metadata fields", () => {
+      const error = getAbortError();
+
+      expect(error.code).toBe("ABORT_ERR");
+      expect(error.message).toBe("Operation cancelled by user");
+      expect(error.signal).toBe("SIGINT");
+      expect(error.status).toBe(130);
     });
 
     it("should return an object that passes isAbortError check", () => {
