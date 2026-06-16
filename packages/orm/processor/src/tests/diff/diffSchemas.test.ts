@@ -328,9 +328,12 @@ describe("diffSchemas › indexes", () => {
     });
     const diff = diffSchemas(prev, next);
     const types = diff.changes.map((c) => c.type);
-    expect(types).toContain("drop_index");
-    expect(types).toContain("add_index");
     expect(diff.changes).toHaveLength(2);
+    // The drop MUST precede the re-add after priority-sorting, otherwise the
+    // SQL tries to CREATE an index that still exists. READD_INDEX (115) sorts
+    // just after DROP_INDEX (110) to guarantee this.
+    expect(types).toEqual(["drop_index", "add_index"]);
+    expect(diff.changes[0]!.priority).toBeLessThan(diff.changes[1]!.priority);
   });
 
   it("derives an index name from columns when none is provided", () => {
@@ -439,13 +442,12 @@ describe("diffSchemas › foreign keys", () => {
     });
     const diff = diffSchemas(prev, next);
     const types = diff.changes.map((c) => c.type);
-    // NOTE: a changed FK produces both a drop and an add. After diffSchemas
-    // priority-sorts (ADD_FOREIGN_KEY=50 < DROP_FOREIGN_KEY=100) the add is
-    // emitted BEFORE the drop. This is the current behavior; see the
-    // diffForeignKeys isolation test for the unsorted drop-then-add order.
-    expect(types.sort()).toEqual(["add_foreign_key", "drop_foreign_key"]);
-    expect(types).toContain("drop_foreign_key");
-    expect(types).toContain("add_foreign_key");
+    // A changed FK produces both a drop and an add. After diffSchemas
+    // priority-sorts, the drop MUST come before the re-add — otherwise the SQL
+    // tries to ADD a constraint that still exists. READD_FOREIGN_KEY (105) sorts
+    // just after DROP_FOREIGN_KEY (100) to guarantee this.
+    expect(types).toEqual(["drop_foreign_key", "add_foreign_key"]);
+    expect(diff.changes[0]!.priority).toBeLessThan(diff.changes[1]!.priority);
   });
 });
 

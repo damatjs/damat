@@ -94,17 +94,44 @@ describe("PgEntityManager.raw / execute — error mapping", () => {
   });
 });
 
-describe("PgEntityManager.transaction — known source defect", () => {
-  // The constructor never assigns `modelsConfig`, so `transaction()` passes
-  // `undefined` to `TransactionalEntityManager`, whose constructor does
-  // `Object.keys(modelsConfig)`. This throws a TypeError. Captured here to
-  // document current behavior (tests reflect, not fix, source bugs).
-  it("throws because modelsConfig is undefined on the manager", async () => {
-    const { em } = makeEm();
+describe("PgEntityManager.transaction", () => {
+  // `transaction()` builds per-transaction repositories from the manager's real
+  // source of models — the ModelRegistry — mirroring the non-transactional path
+  // (getRepository). The callback runs inside BEGIN/COMMIT and the tx manager
+  // exposes working, registry-backed repositories.
+  it("runs the callback inside a tx and exposes registry-backed repositories", async () => {
+    const { em, pool } = makeEm({ rows: [{ id: "u1" }] });
+    em.registerModel("user", UserModel);
+
+    const row = await em.transaction(async (tx) => {
+      expect(tx).toBeInstanceOf(TransactionalEntityManager);
+      // the registered model is reachable as a dynamic getter…
+      const viaGetter = await (tx as any).user.findById("u1");
+      // …and via getRepository(), bound to the transaction client.
+      const viaRepo = await tx.getRepository("user").findById("u1");
+      expect(viaGetter).toEqual({ id: "u1" });
+      expect(viaRepo).toEqual({ id: "u1" });
+      return "ok";
+    });
+
+    expect(row).toBe("ok");
+    // The work ran against the pooled client between BEGIN and COMMIT.
+    expect(pool.client.sqlLog[0]).toBe("BEGIN");
+    expect(pool.client.sqlLog.at(-1)).toBe("COMMIT");
+    expect(pool.client.sqlLog).toContain(
+      'SELECT * FROM "app"."user" WHERE "id" = $1 LIMIT 1',
+    );
+  });
+
+  it("rolls back and rethrows when the callback throws", async () => {
+    const { em, pool } = makeEm();
     em.registerModel("user", UserModel);
     await expect(
-      em.transaction(async () => "never"),
-    ).rejects.toThrow(/Object\.keys|undefined is not an object/);
+      em.transaction(async () => {
+        throw new Error("work failed");
+      }),
+    ).rejects.toThrow("work failed");
+    expect(pool.client.sqlLog).toEqual(["BEGIN", "ROLLBACK"]);
   });
 });
 

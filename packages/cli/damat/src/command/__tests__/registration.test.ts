@@ -1,3 +1,11 @@
+// IMPORTANT: import the shared setup FIRST — before the command sources below.
+// These tests import `../build`, `../dev`, `../start` directly with no fakes of
+// their own, so if registration runs before any command-handler test file, it
+// would be the thing that snapshots the REAL Bun.spawn and a partial node:fs
+// (→ ENOENT / "Export named 'renameSync' not found"). Loading setup first
+// installs the stable spawn dispatcher + the full node:fs mock so the sources
+// snapshot those instead. See setup.ts for the full rationale.
+import "./setup";
 import { describe, it, expect } from "bun:test";
 import type { Command, CommandOption } from "@damatjs/cli";
 import { buildCommand } from "../build";

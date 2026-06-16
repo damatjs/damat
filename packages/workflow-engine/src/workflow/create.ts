@@ -149,7 +149,8 @@ export function createWorkflow<I, O>(
       }
 
       // The lockId is a business ID and repeats across runs — executionId
-      // must stay unique per execution for tracing.
+      // must stay unique per execution for tracing. The lockId is correlated
+      // separately via workflow metadata.
       const executionId = nanoid();
 
       // Optionally keep the lock alive while the workflow runs, so executions

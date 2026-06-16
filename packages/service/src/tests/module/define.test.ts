@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, spyOn } from "bun:test";
+import { getLogger } from "@damatjs/logger";
 import { defineModule } from "../../module/define";
 
 /**
@@ -14,8 +15,9 @@ describe("defineModule", () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv };
-    // `defineModule.init` logs "instance setup <name>"; silence + assert it.
-    logSpy = spyOn(console, "log").mockImplementation(() => {});
+    // `defineModule.init` logs "instance setup" via the global logger at debug
+    // level; silence + assert it.
+    logSpy = spyOn(getLogger(), "debug").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -213,7 +215,7 @@ describe("defineModule", () => {
         },
       });
       mod.init();
-      expect(logSpy).toHaveBeenCalledWith("instance setup", "loggable");
+      expect(logSpy).toHaveBeenCalledWith("instance setup", { module: "loggable" });
     });
   });
 

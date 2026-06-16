@@ -1,3 +1,4 @@
+import { getLogger } from "@damatjs/logger";
 import { ModuleDefinition, ModuleInstance } from "./type";
 
 export function defineModule<TService extends object>(
@@ -13,6 +14,7 @@ export function defineModule<TService extends object>(
   // so re-initializing after a PoolManager reset (tests, harness re-boots)
   // yields a working service instead of one holding stale connections.
   const init = () => {
+    getLogger().debug("instance setup", { module: name });
     instance = new definition.service(parseCredentials);
     return instance;
   };

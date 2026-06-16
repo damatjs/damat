@@ -34,6 +34,7 @@ export function createValidatorMiddleware(handler: RouteValidator): MiddlewareHa
                 const body = await c.req.json();
                 data = {
                     body,
+                    json: body,
                     query: c.req.query(),
                     params: c.req.param(),
                 };
@@ -79,7 +80,8 @@ export function createValidatorMiddleware(handler: RouteValidator): MiddlewareHa
                         message: "Json is required",
                         path: ["json"],
                     }]);
-                handler.json.parse(data.json);
+                const parsed = handler.json.parse(data.json);
+                c.req.addValidatedData('json', parsed as object);
             }
         } catch (error) {
             if (error instanceof ZodError) {

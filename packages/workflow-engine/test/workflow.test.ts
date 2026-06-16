@@ -126,7 +126,7 @@ describe("workflow/execute: success", () => {
 // =============================================================================
 
 describe("workflow/execute: failure & compensation", () => {
-  it("returns failure with the WorkflowError and compensated:true", async () => {
+  it("returns failure with the WorkflowError and compensated:false when nothing was compensated", async () => {
     const wf = createWorkflow<number, number>("boom", () =>
       Effect.fail(new StepExecutionError("s", "step blew up", undefined, "boom")),
     );
@@ -136,7 +136,9 @@ describe("workflow/execute: failure & compensation", () => {
     if (!res.success) {
       expect(res.error).toBeInstanceOf(WorkflowError);
       expect(res.error.message).toBe("step blew up");
-      expect(res.compensated).toBe(true);
+      // No step ran, so no compensation executed — compensated reflects reality.
+      expect(res.compensated).toBe(false);
+      expect(res.compensationsFailed).toBe(0);
     }
   });
 
@@ -238,8 +240,11 @@ describe("workflow/executeWithLock", () => {
     if (res.success) expect(res.result).toBe(11);
     expect(acquireLock).toHaveBeenCalledTimes(1);
     expect(releaseLock).toHaveBeenCalledTimes(1);
-    // executionId is the lockId for traceability
-    expect(res.executionId).toBe("order-1");
+    // executionId stays unique per execution (NOT the repeatable lockId); the
+    // lockId is correlated separately via metadata (see test below).
+    expect(typeof res.executionId).toBe("string");
+    expect(res.executionId.length).toBeGreaterThan(0);
+    expect(res.executionId).not.toBe("order-1");
   });
 
   it("releases the lock even when the workflow fails", async () => {

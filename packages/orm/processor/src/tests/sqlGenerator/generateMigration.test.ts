@@ -85,6 +85,101 @@ describe("generateFromDiff", () => {
     expect(fkIdx).toBeGreaterThan(idxIdx); // index (40) before FK (50)
   });
 
+  it("emits DROP CONSTRAINT before ADD CONSTRAINT for a changed FK", () => {
+    // A changed FK is a drop + re-add; the drop must precede the add or the
+    // ADD CONSTRAINT fails because the old constraint still exists.
+    const fk = (onDelete: "CASCADE" | "SET NULL") => ({
+      name: "post_user_fk",
+      columns: [{ name: "user_id", type: "text" as const }],
+      referencedTable: "user",
+      referencedColumns: ["id"],
+      onDelete,
+    });
+    const prev = moduleSchema({
+      tables: [table("post", [idColumn, col("user_id")], { foreignKeys: [fk("CASCADE")] })],
+    });
+    const next = moduleSchema({
+      tables: [table("post", [idColumn, col("user_id")], { foreignKeys: [fk("SET NULL")] })],
+    });
+    const result = generateFromDiff(diffSchemas(prev, next));
+    const dropIdx = result.upStatements.findIndex((s) => s.includes("DROP CONSTRAINT"));
+    const addIdx = result.upStatements.findIndex((s) => s.includes("ADD CONSTRAINT"));
+    expect(dropIdx).toBeGreaterThanOrEqual(0);
+    expect(addIdx).toBeGreaterThanOrEqual(0);
+    expect(dropIdx).toBeLessThan(addIdx);
+  });
+
+  it("emits DROP INDEX before CREATE INDEX for a changed index", () => {
+    // A changed index is a drop + re-add; the drop must precede the create or
+    // CREATE INDEX fails because the old index still exists.
+    const prev = moduleSchema({
+      tables: [
+        table("t", [idColumn], {
+          indexes: [{ name: "t_idx", columns: ["id"], unique: false }],
+        }),
+      ],
+    });
+    const next = moduleSchema({
+      tables: [
+        table("t", [idColumn], {
+          indexes: [{ name: "t_idx", columns: ["id"], unique: true }],
+        }),
+      ],
+    });
+    const result = generateFromDiff(diffSchemas(prev, next));
+    const dropIdx = result.upStatements.findIndex((s) => s.includes("DROP INDEX"));
+    const createIdx = result.upStatements.findIndex((s) => s.includes("CREATE") && s.includes("INDEX") && !s.includes("DROP"));
+    expect(dropIdx).toBeGreaterThanOrEqual(0);
+    expect(createIdx).toBeGreaterThanOrEqual(0);
+    expect(dropIdx).toBeLessThan(createIdx);
+  });
+
+  it("keeps each DROP before its re-ADD when an FK and an index change together", () => {
+    // Both a changed FK and a changed index in one diff. After priority-sorting
+    // the global statement list, every DROP must still precede its own re-ADD,
+    // or PostgreSQL rejects the ADD/CREATE because the old object still exists.
+    const fk = (onDelete: "CASCADE" | "SET NULL") => ({
+      name: "post_user_fk",
+      columns: [{ name: "user_id", type: "text" as const }],
+      referencedTable: "user",
+      referencedColumns: ["id"],
+      onDelete,
+    });
+    const prev = moduleSchema({
+      tables: [
+        table("post", [idColumn, col("user_id")], {
+          foreignKeys: [fk("CASCADE")],
+          indexes: [{ name: "post_user_idx", columns: ["user_id"], unique: false }],
+        }),
+      ],
+    });
+    const next = moduleSchema({
+      tables: [
+        table("post", [idColumn, col("user_id")], {
+          foreignKeys: [fk("SET NULL")],
+          indexes: [{ name: "post_user_idx", columns: ["user_id"], unique: true }],
+        }),
+      ],
+    });
+    const stmts = generateFromDiff(diffSchemas(prev, next)).upStatements;
+
+    const dropFkIdx = stmts.findIndex((s) => s.includes("DROP CONSTRAINT"));
+    const addFkIdx = stmts.findIndex((s) => s.includes("ADD CONSTRAINT"));
+    const dropIdxIdx = stmts.findIndex((s) => s.includes("DROP INDEX"));
+    const createIdxIdx = stmts.findIndex(
+      (s) => s.includes("CREATE") && s.includes("INDEX") && !s.includes("DROP"),
+    );
+
+    expect(dropFkIdx).toBeGreaterThanOrEqual(0);
+    expect(addFkIdx).toBeGreaterThanOrEqual(0);
+    expect(dropIdxIdx).toBeGreaterThanOrEqual(0);
+    expect(createIdxIdx).toBeGreaterThanOrEqual(0);
+    // DROP precedes ADD for the FK …
+    expect(dropFkIdx).toBeLessThan(addFkIdx);
+    // … and DROP precedes CREATE for the index.
+    expect(dropIdxIdx).toBeLessThan(createIdxIdx);
+  });
+
   it("honors safeMode:false and a custom schema option", () => {
     const next = moduleSchema({ tables: [table("t", [idColumn])] });
     const result = generateFromDiff(diffSchemas(moduleSchema(), next), {

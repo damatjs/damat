@@ -42,7 +42,7 @@ export function diffForeignKeys(
         type: "add_foreign_key",
         tableName,
         foreignKey: newFK,
-        priority: PRIORITY.ADD_FOREIGN_KEY,
+        priority: PRIORITY.READD_FOREIGN_KEY,
       } as AddForeignKeyChange);
     }
   }

@@ -27,6 +27,10 @@ export class Logger implements ILogger {
   }
 
   private log(level: LogLevel, message: string, context?: LogContext, error?: unknown): void {
+    this.logWithPrefix(level, message, this.prefix, context, error);
+  }
+
+  logWithPrefix(level: LogLevel, message: string, prefix: string | undefined, context?: LogContext, error?: unknown): void {
     if (!this.shouldLog(level)) return;
     const timestamp = this.timestampEnabled ? this.formatter.getTimestamp() : "";
     const errorInfo = error instanceof Error
@@ -37,7 +41,7 @@ export class Logger implements ILogger {
       this.fileTransport.log({ timestamp, level, message, context, error: errorInfo } as LogEntry);
     }
 
-    const formatted = this.formatter.formatEntry({ timestamp, level, message, context, error: errorInfo, prefix: this.prefix });
+    const formatted = this.formatter.formatEntry({ timestamp, level, message, context, error: errorInfo, prefix });
 
     if (level === "fatal" || level === "error") console.error(formatted);
     else if (level === "warn") console.warn(formatted);

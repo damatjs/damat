@@ -1,65 +1,28 @@
+// IMPORTANT: import the shared setup FIRST. Its module body installs the stable
+// Bun.spawn dispatcher + the node:fs / load-env mocks BEFORE any command source
+// is evaluated, so `../start` snapshots the dispatcher/mock (not the real ones).
+// See setup.ts for the full rationale.
 import {
-  describe,
-  it,
-  expect,
-  mock,
-  beforeEach,
-  afterEach,
-  afterAll,
-} from "bun:test";
-import { createContext, fakeSpawnResult } from "./helpers";
+  state,
+  spawnCalls,
+  loadEnvCalls,
+  mockExistsSync,
+  resetMocks,
+} from "./setup";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { createContext } from "./helpers";
 import type { Command } from "@damatjs/cli";
 
 /**
  * start.handler verifies the built entry exists, loads env and spawns
- * `bun run <entry>`. We replace `Bun.spawn` with a recording fake before
- * importing the source (see build.test.ts for the rationale) and mock node:fs
- * + @damatjs/load-env via mock.module. Both the missing-build error path and
- * the happy path are asserted.
+ * `bun run <entry>`. The global fakes (recording Bun.spawn dispatcher + node:fs
+ * + @damatjs/load-env mocks) live in ./setup; per-test behaviour is driven by
+ * mutating the shared `state` and reading the shared recording arrays. Both the
+ * missing-build error path and the happy path are asserted.
  */
 
-// --- Bun.spawn fake (installed before importing the source) -----------------
-type SpawnCall = {
-  cmd: string[];
-  cwd?: string;
-  env?: Record<string, string>;
-  [k: string]: unknown;
-};
-const spawnCalls: SpawnCall[] = [];
-let spawnExitCode = 0;
-const originalSpawn = Bun.spawn;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-(Bun as any).spawn = (opts: SpawnCall) => {
-  spawnCalls.push(opts);
-  return fakeSpawnResult(spawnExitCode);
-};
-
-// --- node:fs mock ----------------------------------------------------------
-let existsMap: Record<string, boolean> = {};
-let existsDefault = false;
-const mockExistsSync = mock((p: string) => existsMap[p] ?? existsDefault);
-// NOTE: mock.module is global across the test process and the last registration
-// for a module path wins. Other source files import additional fs names at
-// module-eval time, so we expose the full surface to avoid link errors when
-// files run together.
-mock.module("node:fs", () => ({
-  existsSync: mockExistsSync,
-  mkdirSync: mock(() => {}),
-  writeFileSync: mock(() => {}),
-  unlinkSync: mock(() => {}),
-  rmSync: mock(() => {}),
-  readdirSync: mock(() => [] as string[]),
-  statSync: mock(() => ({ isDirectory: () => false })),
-  copyFileSync: mock(() => {}),
-}));
-
-// --- load-env mock ---------------------------------------------------------
-const loadEnvCalls: Array<[string, string]> = [];
-const mockLoadEnv = mock((env: string, cwd: string) => {
-  loadEnvCalls.push([env, cwd]);
-});
-mock.module("@damatjs/load-env", () => ({ loadEnv: mockLoadEnv }));
-
+// Import the source AFTER setup installed the fakes (setup is imported first
+// above). This binds `startCommand` for the assertions below.
 const { startCommand } = (await import("../start")) as {
   startCommand: Command;
 };
@@ -67,23 +30,12 @@ const { startCommand } = (await import("../start")) as {
 const CWD = "/project";
 const savedNodeEnv = process.env.NODE_ENV;
 
-afterAll(() => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (Bun as any).spawn = originalSpawn;
-});
-
-function resetMocks() {
-  spawnCalls.length = 0;
-  loadEnvCalls.length = 0;
-  spawnExitCode = 0;
-  existsMap = {};
-  existsDefault = false;
-  mockExistsSync.mockClear();
-  mockLoadEnv.mockClear();
+beforeEach(() => {
+  resetMocks();
+  // start.handler reads process.env.NODE_ENV; clear it so per-test sets below
+  // are the only influence.
   delete process.env.NODE_ENV;
-}
-
-beforeEach(resetMocks);
+});
 afterEach(() => {
   resetMocks();
   if (savedNodeEnv === undefined) delete process.env.NODE_ENV;
@@ -92,7 +44,7 @@ afterEach(() => {
 
 describe("startCommand.handler", () => {
   it("errors and returns exit code 1 when the build entry is missing", async () => {
-    existsDefault = false; // entry.js does not exist
+    state.existsDefault = false; // entry.js does not exist
     const { ctx, logger } = createContext(
       { output: ".damat/dist" },
       { cwd: CWD },
@@ -110,7 +62,7 @@ describe("startCommand.handler", () => {
   });
 
   it("checks for the entry at <cwd>/<output>/entry.js", async () => {
-    existsDefault = false;
+    state.existsDefault = false;
     const { ctx } = createContext({ output: ".damat/dist" }, { cwd: CWD });
 
     await startCommand.handler(ctx);
@@ -121,7 +73,7 @@ describe("startCommand.handler", () => {
   });
 
   it("spawns `bun run <entry>` from ctx.cwd when the build exists", async () => {
-    existsMap = { "/project/.damat/dist/entry.js": true };
+    state.existsMap = { "/project/.damat/dist/entry.js": true };
     const { ctx } = createContext({ output: ".damat/dist" }, { cwd: CWD });
 
     const result = await startCommand.handler(ctx);
@@ -135,7 +87,7 @@ describe("startCommand.handler", () => {
 
   it("loads env with 'production' default and process.cwd()", async () => {
     delete process.env.NODE_ENV;
-    existsMap = { "/project/.damat/dist/entry.js": true };
+    state.existsMap = { "/project/.damat/dist/entry.js": true };
     const { ctx } = createContext({ output: ".damat/dist" }, { cwd: CWD });
 
     await startCommand.handler(ctx);
@@ -147,7 +99,7 @@ describe("startCommand.handler", () => {
 
   it("loads env with the value of NODE_ENV when set", async () => {
     process.env.NODE_ENV = "production-eu";
-    existsMap = { "/project/.damat/dist/entry.js": true };
+    state.existsMap = { "/project/.damat/dist/entry.js": true };
     const { ctx } = createContext({ output: ".damat/dist" }, { cwd: CWD });
 
     await startCommand.handler(ctx);
@@ -156,7 +108,7 @@ describe("startCommand.handler", () => {
   });
 
   it("respects a custom output directory", async () => {
-    existsMap = { "/project/build/entry.js": true };
+    state.existsMap = { "/project/build/entry.js": true };
     const { ctx } = createContext({ output: "build" }, { cwd: CWD });
 
     await startCommand.handler(ctx);
@@ -166,8 +118,8 @@ describe("startCommand.handler", () => {
   });
 
   it("returns the subprocess exit code on the happy path", async () => {
-    spawnExitCode = 3;
-    existsMap = { "/project/.damat/dist/entry.js": true };
+    state.spawnExitCode = 3;
+    state.existsMap = { "/project/.damat/dist/entry.js": true };
     const { ctx } = createContext({ output: ".damat/dist" }, { cwd: CWD });
 
     const result = await startCommand.handler(ctx);

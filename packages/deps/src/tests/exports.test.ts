@@ -1,4 +1,6 @@
 import { describe, it, expect } from "bun:test";
+import { existsSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 
 /**
  * `@damatjs/deps` is a thin re-export layer that pins external dependencies
@@ -88,5 +90,41 @@ describe("@damatjs/deps/zod", () => {
   it("also re-exports zod builders at the top level", () => {
     expect(typeof zod.string).toBe("function");
     expect(zod.string().parse("ok")).toBe("ok");
+  });
+});
+
+describe("@damatjs/deps package.json exports", () => {
+  // tests/ lives at <pkg>/src/tests, so the package root is two levels up.
+  const pkgRoot = resolve(import.meta.dir, "..", "..");
+  const pkg = JSON.parse(
+    readFileSync(join(pkgRoot, "package.json"), "utf-8"),
+  ) as {
+    main: string;
+    types: string;
+    exports: Record<string, Record<string, string>>;
+  };
+
+  // Build the flat list of every file an export condition points at, so the
+  // assertion message tells us exactly which subpath/condition is dangling.
+  const targets = Object.entries(pkg.exports).flatMap(([subpath, conditions]) =>
+    Object.entries(conditions).map(([condition, file]) => ({
+      subpath,
+      condition,
+      file,
+    })),
+  );
+
+  it.each(targets)(
+    "$subpath [$condition] -> $file resolves to a built file",
+    ({ file }) => {
+      // Every export target must point at a file the build actually emits;
+      // a dangling target ships a package consumers cannot import.
+      expect(existsSync(join(pkgRoot, file))).toBe(true);
+    },
+  );
+
+  it("points `main` and `types` at built files", () => {
+    expect(existsSync(join(pkgRoot, pkg.main))).toBe(true);
+    expect(existsSync(join(pkgRoot, pkg.types))).toBe(true);
   });
 });

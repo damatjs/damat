@@ -27,7 +27,9 @@ export const PRIORITY = {
 
   // Drop operations (high priority = last in up, first in down)
   DROP_FOREIGN_KEY: 100,
+  READD_FOREIGN_KEY: 105,
   DROP_INDEX: 110,
+  READD_INDEX: 115,
   DROP_COLUMN: 120,
   DROP_TABLE: 130,
   DROP_ENUM: 140,

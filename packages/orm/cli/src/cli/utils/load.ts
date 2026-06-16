@@ -6,6 +6,31 @@ export interface DatabaseConfig {
   databaseUrl: string;
 }
 
+/** Monotonic, per-process counter giving every load a distinct module identity. */
+let sidecarCounter = 0;
+
+async function loadConfigModule(filePath: string): Promise<any> {
+  const contents = fs.readFileSync(filePath);
+  const ext = path.extname(filePath);
+  const sidecar = path.join(
+    path.dirname(filePath),
+    `.damat-config-${process.pid}-${sidecarCounter++}${ext}`,
+  );
+
+  try {
+    fs.writeFileSync(sidecar, contents);
+    return await import(`file://${sidecar}`);
+  } finally {
+    // The sidecar is a transient cache-busting artifact, not part of the
+    // project, so remove it once it has been imported.
+    try {
+      fs.rmSync(sidecar, { force: true });
+    } catch {
+      // best-effort cleanup
+    }
+  }
+}
+
 /**
  * Builds a PostgreSQL connection URL from individual database config fields.
  */
@@ -73,8 +98,7 @@ export async function loadModules<T = Record<string, { resolve: string }>>(
   try {
     // Bust the module cache on every load so the CLI always reads the latest
     // version of the config file.
-    const fileUrl = `file://${filePath}?t=${Date.now()}`;
-    const mod = await import(fileUrl);
+    const mod = await loadConfigModule(filePath);
     const config = mod.default ?? mod;
 
     const modules: OrmModuleContainer = {};
@@ -104,8 +128,7 @@ export async function loadModules<T = Record<string, { resolve: string }>>(
       throw error;
     }
     throw new Error(
-      `Failed to load config from '${filePath}': ${
-        error instanceof Error ? error.message : String(error)
+      `Failed to load config from '${filePath}': ${error instanceof Error ? error.message : String(error)
       }`,
     );
   }
@@ -140,8 +163,7 @@ export async function loadDatabaseUrl(
   try {
     // Bust the module cache on every load so the CLI always reads the latest
     // version of the config file.
-    const fileUrl = `file://${filePath}?t=${Date.now()}`;
-    const mod = await import(fileUrl);
+    const mod = await loadConfigModule(filePath);
     const config = mod.default ?? mod;
 
     // Try projectConfig.databaseUrl first
@@ -174,8 +196,7 @@ export async function loadDatabaseUrl(
       throw error;
     }
     throw new Error(
-      `Failed to load database URL from '${filePath}': ${
-        error instanceof Error ? error.message : String(error)
+      `Failed to load database URL from '${filePath}': ${error instanceof Error ? error.message : String(error)
       }`,
     );
   }

@@ -79,8 +79,11 @@ export async function executeWorkflowInternal<I, O>(
     };
   } else {
     const rawError = Cause.squash(exit.cause);
-    const error =
-      rawError instanceof WorkflowError
+    // A step exhausted its retries: surface MAX_RETRIES_EXCEEDED at the
+    // workflow boundary (the step itself failed with its last original error).
+    const error = engineState.retriesExceeded
+      ? engineState.retriesExceeded
+      : rawError instanceof WorkflowError
         ? rawError
         : new WorkflowError(
             "WORKFLOW_FAILED",

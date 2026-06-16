@@ -26,10 +26,10 @@ describe("createRepository", () => {
 });
 
 describe("PgRepository — read methods", () => {
-  it("findMany returns the full result object", async () => {
+  it("findMany returns the rows array directly", async () => {
     const { repo, conn } = makeRepo({ rows: [{ id: "u1" }] });
-    const res: any = await repo.findMany({ where: { verified: true } });
-    expect(res.rows).toEqual([{ id: "u1" }]);
+    const rows = await repo.findMany({ where: { verified: true } });
+    expect(rows).toEqual([{ id: "u1" }]);
     expect(conn.last.sql).toContain('WHERE "verified" = $1');
   });
 

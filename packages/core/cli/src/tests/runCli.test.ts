@@ -226,6 +226,38 @@ describe("runCli", () => {
     expect(calledWith!.args).toEqual(["extra-arg"]);
   });
 
+  test("forwards parsed options/flags to the dispatched subcommand handler", async () => {
+    let received: Record<string, unknown> | null = null;
+    const sub = makeCmd("db:migrate", {
+      options: [
+        { name: "name", type: "string", description: "migration name" },
+        { name: "force", alias: "f", type: "boolean", description: "force" },
+        { name: "count", type: "number", description: "count", default: 5 },
+      ],
+      handler: async (ctx) => {
+        received = ctx.options;
+        return { exitCode: 0 };
+      },
+    });
+    const parent = makeCmd("db", { subcommands: [sub] });
+    const config: CliConfig = {
+      name: "cli",
+      version: "1.0.0",
+      banner: false,
+      commands: [parent],
+    };
+
+    // --name=foo (= syntax), -f (boolean alias), and the unspecified --count
+    // should reach the subcommand handler — not be dropped during dispatch.
+    await run(config, ["db", "migrate", "--name=foo", "-f"]);
+
+    expect(received).not.toBeNull();
+    expect(received!.name).toBe("foo");
+    expect(received!.force).toBe(true);
+    // Defaults from the subcommand's own option defs are applied too.
+    expect(received!.count).toBe(5);
+  });
+
   test("does not dispatch a subcommand when only the parent is given", async () => {
     let subCalled = false;
     const sub = makeCmd("db:migrate", {

@@ -1,74 +1,30 @@
+// IMPORTANT: import the shared setup FIRST. Its module body installs the stable
+// Bun.spawn dispatcher + the node:fs / load-env mocks BEFORE any command source
+// is evaluated, so `../dev` snapshots the dispatcher/mock (not the real ones).
+// See setup.ts for the full rationale.
 import {
-  describe,
-  it,
-  expect,
-  mock,
-  spyOn,
-  beforeEach,
-  afterEach,
-  afterAll,
-} from "bun:test";
-import { createContext, fakeSpawnResult } from "./helpers";
+  state,
+  spawnCalls,
+  writeCalls,
+  unlinkCalls,
+  loadEnvCalls,
+  mockMkdirSync,
+  resetMocks,
+} from "./setup";
+import { describe, it, expect, spyOn, beforeEach, afterEach } from "bun:test";
+import { createContext } from "./helpers";
 import type { Command } from "@damatjs/cli";
 
 /**
  * dev.handler writes a temp entry file, optionally clears the console, loads
- * env vars and spawns `bun --watch`. We replace `Bun.spawn` with a recording
- * fake before importing the source (see build.test.ts for why mock.module on
- * "bun" does not work), and mock node:fs + @damatjs/load-env via mock.module.
+ * env vars and spawns `bun --watch`. The global fakes (recording Bun.spawn
+ * dispatcher + node:fs + @damatjs/load-env mocks) live in ./setup; per-test
+ * behaviour is driven by mutating the shared `state` and reading the shared
+ * recording arrays.
  */
 
-// --- Bun.spawn fake (installed before importing the source) -----------------
-type SpawnCall = {
-  cmd: string[];
-  cwd?: string;
-  env?: Record<string, string>;
-  [k: string]: unknown;
-};
-const spawnCalls: SpawnCall[] = [];
-let spawnExitCode = 0;
-const originalSpawn = Bun.spawn;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-(Bun as any).spawn = (opts: SpawnCall) => {
-  spawnCalls.push(opts);
-  return fakeSpawnResult(spawnExitCode);
-};
-
-// --- node:fs mock ----------------------------------------------------------
-let existsMap: Record<string, boolean> = {};
-let existsDefault = false;
-const mockExistsSync = mock((p: string) => existsMap[p] ?? existsDefault);
-const mockMkdirSync = mock((_p: string, _o?: unknown) => {});
-const writeCalls: Array<{ path: string; content: string }> = [];
-const mockWriteFileSync = mock((p: string, content: string) => {
-  writeCalls.push({ path: p, content });
-});
-const unlinkCalls: string[] = [];
-const mockUnlinkSync = mock((p: string) => {
-  unlinkCalls.push(p);
-});
-// NOTE: mock.module is global across the test process and the last registration
-// for a module path wins. Other source files (build.ts) import additional fs
-// names at module-eval time, so we expose the full surface to avoid
-// "Export named '...' not found" link errors when files run together.
-mock.module("node:fs", () => ({
-  existsSync: mockExistsSync,
-  mkdirSync: mockMkdirSync,
-  writeFileSync: mockWriteFileSync,
-  unlinkSync: mockUnlinkSync,
-  rmSync: mock(() => {}),
-  readdirSync: mock(() => [] as string[]),
-  statSync: mock(() => ({ isDirectory: () => false })),
-  copyFileSync: mock(() => {}),
-}));
-
-// --- load-env mock ---------------------------------------------------------
-const loadEnvCalls: Array<[string, string]> = [];
-const mockLoadEnv = mock((env: string, cwd: string) => {
-  loadEnvCalls.push([env, cwd]);
-});
-mock.module("@damatjs/load-env", () => ({ loadEnv: mockLoadEnv }));
-
+// Import the source AFTER setup installed the fakes (setup is imported first
+// above). This binds `devCommand` for the assertions below.
 const { devCommand } = (await import("../dev")) as { devCommand: Command };
 
 const CWD = "/project";
@@ -78,30 +34,12 @@ let clearSpy: ReturnType<typeof spyOn>;
 const savedNodeEnv = process.env.NODE_ENV;
 const savedPort = process.env.PORT;
 
-afterAll(() => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (Bun as any).spawn = originalSpawn;
-});
-
-function resetMocks() {
-  spawnCalls.length = 0;
-  writeCalls.length = 0;
-  unlinkCalls.length = 0;
-  loadEnvCalls.length = 0;
-  spawnExitCode = 0;
-  existsMap = {};
-  existsDefault = false;
-  mockExistsSync.mockClear();
-  mockMkdirSync.mockClear();
-  mockWriteFileSync.mockClear();
-  mockUnlinkSync.mockClear();
-  mockLoadEnv.mockClear();
-  delete process.env.PORT;
-  delete process.env.NODE_ENV;
-}
-
 beforeEach(() => {
   resetMocks();
+  // dev.handler reads process.env.PORT/NODE_ENV; start each test from a clean
+  // slate so per-test sets/deletes below are the only influence.
+  delete process.env.PORT;
+  delete process.env.NODE_ENV;
   clearSpy = spyOn(console, "clear").mockImplementation(() => {});
 });
 
@@ -115,7 +53,7 @@ afterEach(() => {
 
 describe("devCommand.handler", () => {
   it("writes the dev-entry temp file with framework runEntry content", async () => {
-    existsDefault = false;
+    state.existsDefault = false;
     const { ctx } = createContext({ port: 3000, clear: false }, { cwd: CWD });
 
     await devCommand.handler(ctx);
@@ -130,7 +68,7 @@ describe("devCommand.handler", () => {
   });
 
   it("creates the .damat dir when missing", async () => {
-    existsDefault = false;
+    state.existsDefault = false;
     const { ctx } = createContext({ port: 3000, clear: false }, { cwd: CWD });
 
     await devCommand.handler(ctx);
@@ -207,7 +145,7 @@ describe("devCommand.handler", () => {
   });
 
   it("removes the temp entry file after the process exits", async () => {
-    existsMap = { "/project/.damat/dev-entry.ts": true };
+    state.existsMap = { "/project/.damat/dev-entry.ts": true };
     const { ctx } = createContext({ port: 3000, clear: false }, { cwd: CWD });
 
     await devCommand.handler(ctx);
@@ -216,7 +154,7 @@ describe("devCommand.handler", () => {
   });
 
   it("returns the subprocess exit code", async () => {
-    spawnExitCode = 7;
+    state.spawnExitCode = 7;
     const { ctx } = createContext({ port: 3000, clear: false }, { cwd: CWD });
 
     const result = await devCommand.handler(ctx);

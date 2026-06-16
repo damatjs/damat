@@ -171,18 +171,35 @@ describe("loadEnv", () => {
       expect(process.env.WHICH).toBe("staging");
     });
 
-    it("only loads ONE file (does not merge keys from lower-priority files)", () => {
-      // CURRENT behavior: loadEnv returns after the first existing file, so
-      // keys that only appear in lower-priority files are NOT loaded.
+    it("merges keys from ALL files, with later files overriding earlier ones", () => {
+      // loadEnv loads every existing file in order; keys present only in a
+      // lower-priority file are still loaded, and a shared key takes the value
+      // from the higher-priority file.
       writeEnvFile(".env", "BASE_ONLY=from-base\nSHARED=base");
       writeEnvFile(".env.local", "LOCAL_ONLY=from-local\nSHARED=local");
 
       loadEnv("development", tmpDir);
 
-      // .env.local is selected first; .env is never read.
+      // .env.local overrides SHARED; both files' unique keys are present.
       expect(process.env.SHARED).toBe("local");
       expect(process.env.LOCAL_ONLY).toBe("from-local");
-      expect(process.env.BASE_ONLY).toBeUndefined();
+      expect(process.env.BASE_ONLY).toBe("from-base");
+    });
+
+    it("loads ALL provided files in order, later file overriding earlier key", () => {
+      // Regression: loadEnv previously returned after the first file. With two
+      // files, the second (higher-priority) file must override a shared key
+      // while keys unique to each file remain present.
+      writeEnvFile(".env", "OVERRIDE_ME=first\nFIRST_ONLY=one");
+      writeEnvFile(".env.local", "OVERRIDE_ME=second\nSECOND_ONLY=two");
+
+      loadEnv("development", tmpDir);
+
+      // Later file (.env.local) wins for the shared key.
+      expect(process.env.OVERRIDE_ME).toBe("second");
+      // Keys from BOTH files are present.
+      expect(process.env.FIRST_ONLY).toBe("one");
+      expect(process.env.SECOND_ONLY).toBe("two");
     });
   });
 

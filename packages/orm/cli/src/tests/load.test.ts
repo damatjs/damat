@@ -28,11 +28,12 @@ afterEach(() => {
   }
 });
 
-// NOTE: src/cli/utils/load.ts cache-busts dynamic imports with `?t=${Date.now()}`,
-// which has millisecond resolution. Reusing the SAME config filename across
-// tests that run sub-millisecond apart can return a stale cached module, so
-// every test here uses a UNIQUE config filename (or a unique directory). This
-// is a deliberate test-isolation measure around a real source robustness gap.
+// NOTE: src/cli/utils/load.ts now cache-busts dynamic imports by a content
+// hash (see `loadConfigModule`), so distinct configs never collide and an
+// edited config is always re-read — even within the same millisecond. Tests
+// here still use UNIQUE config filenames (or directories) purely for clarity
+// and isolation; it is no longer a workaround for a source defect. The
+// collision/reload behavior is locked in by tests in config.test.ts.
 describe("loadModules - success paths", () => {
   it("maps modules keyed by object key and resolves relative paths against the config dir", async () => {
     const configPath = writeConfig(

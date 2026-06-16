@@ -324,12 +324,16 @@ describe("ModelMethods", () => {
   });
 
   describe("update / delete", () => {
-    it("forwards update options to repo.update", async () => {
-      const repo = makeRepo({ update: mock(async (o: any) => [{ id: 1, ...o.data }]) });
+    it("maps update `data` onto the repository's `set` contract", async () => {
+      const repo = makeRepo({ update: mock(async (o: any) => [{ id: 1, ...o.set }]) });
       const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
       const res = await m.update({ where: { id: 1 }, data: { name: "new" } });
       expect(res).toEqual([{ id: 1, name: "new" }]);
-      expect(repo.update).toHaveBeenCalledWith({ where: { id: 1 }, data: { name: "new" } });
+      // service-level `data` is forwarded as the repository's `set` (the same
+      // shape softDelete/restore build by hand), never as a bare `data` key.
+      const arg = repo.update.mock.calls[0][0];
+      expect(arg.set).toEqual({ name: "new" });
+      expect(arg.where).toEqual({ id: 1 });
     });
 
     it("forwards delete options and returns the affected count", async () => {
@@ -375,6 +379,61 @@ describe("ModelMethods", () => {
       const arg = repo.update.mock.calls[0][0];
       expect(arg.set).toEqual({ archived_at: null });
       expect(arg.returning).toEqual(["id"]);
+    });
+  });
+
+  describe("data validation", () => {
+    // A model whose toTableSchema exposes real columns so _validateData has a
+    // schema to enforce. `name` is required; `age` is optional/nullable.
+    function makeValidatingModel() {
+      return {
+        _name: "user",
+        toTableSchema: () => ({
+          relations: [],
+          columns: [
+            { name: "id", type: "integer", nullable: false, primaryKey: true, autoincrement: true },
+            { name: "name", type: "text", nullable: false },
+            { name: "age", type: "integer", nullable: true },
+          ],
+        }),
+      } as any;
+    }
+
+    it("rejects create data that is missing a required column", async () => {
+      const repo = makeRepo();
+      const m = new ModelMethods(makeValidatingModel(), "user", makeEM({ primaryRepo: repo }));
+      expect(m.create({ data: { age: 30 } })).rejects.toThrow();
+      expect(repo.create).not.toHaveBeenCalled();
+    });
+
+    it("rejects create data whose column has the wrong type", async () => {
+      const repo = makeRepo();
+      const m = new ModelMethods(makeValidatingModel(), "user", makeEM({ primaryRepo: repo }));
+      expect(m.create({ data: { name: "Ada", age: "not-a-number" } })).rejects.toThrow();
+      expect(repo.create).not.toHaveBeenCalled();
+    });
+
+    it("accepts valid create data and forwards it to the repository", async () => {
+      const repo = makeRepo();
+      const m = new ModelMethods(makeValidatingModel(), "user", makeEM({ primaryRepo: repo }));
+      const res = await m.create({ data: { name: "Ada", age: 30 } });
+      expect(res).toEqual({ id: 1, name: "Ada", age: 30 });
+      expect(repo.create).toHaveBeenCalledTimes(1);
+    });
+
+    it("treats update validation as partial (required columns may be absent)", async () => {
+      const repo = makeRepo({ update: mock(async (o: any) => [{ id: 1, ...o.set }]) });
+      const m = new ModelMethods(makeValidatingModel(), "user", makeEM({ primaryRepo: repo }));
+      // `name` is required on create but partial updates omit it without error.
+      const res = await m.update({ where: { id: 1 }, data: { age: 31 } });
+      expect(res).toEqual([{ id: 1, age: 31 }]);
+    });
+
+    it("still rejects an update whose supplied column has the wrong type", async () => {
+      const repo = makeRepo();
+      const m = new ModelMethods(makeValidatingModel(), "user", makeEM({ primaryRepo: repo }));
+      expect(m.update({ where: { id: 1 }, data: { age: "oops" } })).rejects.toThrow();
+      expect(repo.update).not.toHaveBeenCalled();
     });
   });
 

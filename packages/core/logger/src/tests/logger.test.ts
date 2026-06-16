@@ -254,24 +254,21 @@ describe("Logger: prefix and child/withPrefix factory", () => {
     expect(plainLog(cap)[0]).toContain('"scope":"child"');
   });
 
-  // KNOWN BUG (current behavior asserted): Logger.withPrefix() builds a
-  // ChildLogger holding the composed prefix "base:sub", but ChildLogger never
-  // forwards its own prefix to the parent — the parent re-renders using its OWN
-  // prefix ("base"). So the composed ":sub" segment is silently dropped.
-  it("withPrefix() child uses the PARENT's prefix, not the composed one (bug)", () => {
+  // Regression: Logger.withPrefix() builds a ChildLogger holding the composed
+  // prefix "base:sub", and ChildLogger forwards its own prefix to the parent's
+  // logWithPrefix entry point — so the composed ":sub" segment reaches output.
+  it("withPrefix() child emits the composed prefix, not just the parent's", () => {
     const log = new Logger({ timestamp: false, level: "debug", prefix: "base" });
     const c = log.withPrefix("sub");
     c.info("hi");
-    expect(plainLog(cap)[0]).toContain("[base]");
-    expect(plainLog(cap)[0]).not.toContain("[base:sub]");
+    expect(plainLog(cap)[0]).toContain("[base:sub]");
   });
 
-  it("withPrefix() on a logger WITHOUT a prefix emits no prefix at all (bug)", () => {
+  it("withPrefix() on a logger WITHOUT a prefix emits the child's prefix", () => {
     const log = new Logger({ timestamp: false, level: "debug" });
     const c = log.withPrefix("only");
     c.info("hi");
-    // Parent has no prefix, child's "only" prefix is never applied.
-    expect(plainLog(cap)[0]).not.toContain("[only]");
+    expect(plainLog(cap)[0]).toContain("[only]");
   });
 });
 

@@ -50,8 +50,10 @@ function resolveStepConfig<I, O>(
  * - `timeoutMs` applies per attempt; timed-out attempts are retryable.
  * - `retry.isRetryable` receives the ORIGINAL error thrown by the step
  *   (or the StepTimeoutError for timeouts), not the engine wrapper.
- * - When all retries are exhausted, the step fails with
- *   MaxRetriesExceededError whose `cause` is the last error.
+ * - When all retries are exhausted, the step fails with the LAST
+ *   StepExecutionError/StepTimeoutError; the corresponding
+ *   MaxRetriesExceededError is recorded on the engine state so the workflow
+ *   result can surface it as MAX_RETRIES_EXCEEDED.
  *
  * @param step - Step definition to execute
  * @param input - Input data for the step
@@ -75,7 +77,7 @@ export function executeStep<I, O>(
   ctx: WorkflowContext,
 ): Effect.Effect<
   O,
-  StepExecutionError | StepTimeoutError | MaxRetriesExceededError,
+  StepExecutionError | StepTimeoutError,
   Scope.Scope
 > {
   const stepLogger = createContextLogger({
@@ -127,7 +129,7 @@ export function executeStep<I, O>(
 
     let executionEffect: Effect.Effect<
       O,
-      StepExecutionError | StepTimeoutError | MaxRetriesExceededError
+      StepExecutionError | StepTimeoutError
     > = attemptEffect;
 
     if (shouldRetry) {
@@ -168,21 +170,21 @@ export function executeStep<I, O>(
             error,
           ): Effect.Effect<
             never,
-            StepExecutionError | StepTimeoutError | MaxRetriesExceededError
+            StepExecutionError | StepTimeoutError
           > => {
             if (attemptCount > maxAttempts) {
               stepLogger.warn(`Step retries exhausted`, {
                 attempts: attemptCount,
                 maxRetries: maxAttempts,
               });
-              return Effect.fail(
-                new MaxRetriesExceededError(
+              if (ctx.engineState) {
+                ctx.engineState.retriesExceeded = new MaxRetriesExceededError(
                   step.name,
                   maxAttempts,
                   error,
                   ctx.workflowName,
-                ),
-              );
+                );
+              }
             }
             return Effect.fail(error);
           },

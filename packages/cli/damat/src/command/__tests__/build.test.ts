@@ -1,104 +1,37 @@
+// IMPORTANT: import the shared setup FIRST. Its module body installs the stable
+// Bun.spawn dispatcher + the node:fs / load-env mocks BEFORE any command source
+// is evaluated, so `../build` snapshots the dispatcher/mock (not the real ones).
+// See setup.ts for the full rationale.
 import {
-  describe,
-  it,
-  expect,
-  mock,
-  beforeEach,
-  afterEach,
-  afterAll,
-} from "bun:test";
-import { createContext, fakeSpawnResult } from "./helpers";
+  state,
+  spawnCalls,
+  writeCalls,
+  unlinkCalls,
+  rmCalls,
+  copyCalls,
+  mockMkdirSync,
+  resetMocks,
+} from "./setup";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { createContext } from "./helpers";
 import type { Command } from "@damatjs/cli";
 
 /**
  * build.handler spawns `bun build` subprocesses and touches the filesystem.
- * To assert the wiring without spawning anything we:
- *   - mock `node:fs` via mock.module (Bun intercepts node builtins reliably);
- *   - replace `Bun.spawn` with a recording fake BEFORE the source module is
- *     imported. Bun's `import { spawn } from "bun"` snapshots `Bun.spawn` at
- *     module-evaluation time, and `mock.module("bun", ...)` does NOT intercept
- *     the synthetic `bun` namespace in this Bun version, so reassigning
- *     `Bun.spawn` first (then dynamically importing the command) is the only
- *     way to capture the call without launching a real process.
+ * The global fakes (recording Bun.spawn dispatcher + node:fs mock) live in
+ * ./setup; per-test behaviour is driven by mutating the shared `state` and
+ * reading the shared recording arrays. `node:path`'s join is left real (pure)
+ * — assertions depend on real joining.
  *
- * `node:path`'s join is left real (pure) — assertions depend on real joining.
+ * copyDir: setup's mocked readdirSync returns ["app.ts"] and statSync reports a
+ * non-directory by default, so the source performs exactly one copy.
  */
 
-// --- Bun.spawn fake (installed before importing the source) -----------------
-type SpawnCall = { cmd: string[]; cwd?: string; [k: string]: unknown };
-const spawnCalls: SpawnCall[] = [];
-let spawnExitCode = 0;
-const originalSpawn = Bun.spawn;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-(Bun as any).spawn = (opts: SpawnCall) => {
-  spawnCalls.push(opts);
-  return fakeSpawnResult(spawnExitCode);
-};
-
-// --- node:fs mock ----------------------------------------------------------
-let existsMap: Record<string, boolean> = {};
-let existsDefault = false;
-const mockExistsSync = mock((p: string) => existsMap[p] ?? existsDefault);
-const mockMkdirSync = mock((_p: string, _o?: unknown) => {});
-const writeCalls: Array<{ path: string; content: string }> = [];
-const mockWriteFileSync = mock((p: string, content: string) => {
-  writeCalls.push({ path: p, content });
-});
-const unlinkCalls: string[] = [];
-const mockUnlinkSync = mock((p: string) => {
-  unlinkCalls.push(p);
-});
-const rmCalls: Array<{ path: string; opts?: unknown }> = [];
-const mockRmSync = mock((p: string, opts?: unknown) => {
-  rmCalls.push({ path: p, opts });
-});
-// copyDir: pretend src holds a single file so it performs exactly one copy.
-const mockReaddirSync = mock((_p: string) => ["app.ts"]);
-const mockStatSync = mock((_p: string) => ({ isDirectory: () => false }));
-const copyCalls: Array<{ src: string; dest: string }> = [];
-const mockCopyFileSync = mock((src: string, dest: string) => {
-  copyCalls.push({ src, dest });
-});
-
-mock.module("node:fs", () => ({
-  existsSync: mockExistsSync,
-  mkdirSync: mockMkdirSync,
-  writeFileSync: mockWriteFileSync,
-  unlinkSync: mockUnlinkSync,
-  rmSync: mockRmSync,
-  readdirSync: mockReaddirSync,
-  statSync: mockStatSync,
-  copyFileSync: mockCopyFileSync,
-}));
-
-// Import the source AFTER the fake spawn + fs mocks are installed.
+// Import the source AFTER setup installed the fakes (setup is imported first
+// above). This binds `buildCommand` for the assertions below.
 const { buildCommand } = (await import("../build")) as {
   buildCommand: Command;
 };
-
-afterAll(() => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (Bun as any).spawn = originalSpawn;
-});
-
-function resetMocks() {
-  spawnCalls.length = 0;
-  writeCalls.length = 0;
-  unlinkCalls.length = 0;
-  rmCalls.length = 0;
-  copyCalls.length = 0;
-  spawnExitCode = 0;
-  existsMap = {};
-  existsDefault = false;
-  mockExistsSync.mockClear();
-  mockMkdirSync.mockClear();
-  mockWriteFileSync.mockClear();
-  mockUnlinkSync.mockClear();
-  mockRmSync.mockClear();
-  mockReaddirSync.mockClear();
-  mockStatSync.mockClear();
-  mockCopyFileSync.mockClear();
-}
 
 beforeEach(resetMocks);
 afterEach(resetMocks);
@@ -107,7 +40,7 @@ const CWD = "/project";
 
 describe("buildCommand.handler", () => {
   it("writes the temp entry file with the framework runEntry content", async () => {
-    existsDefault = false; // src absent -> skip copy/config phase
+    state.existsDefault = false; // src absent -> skip copy/config phase
     const { ctx } = createContext(
       { output: ".damat/dist", target: "bun", minify: false },
       { cwd: CWD },
@@ -125,7 +58,7 @@ describe("buildCommand.handler", () => {
   });
 
   it("spawns `bun build` with the resolved entry/outfile/target args", async () => {
-    existsDefault = false;
+    state.existsDefault = false;
     const { ctx } = createContext(
       { output: ".damat/dist", target: "node", minify: false },
       { cwd: CWD },
@@ -151,7 +84,7 @@ describe("buildCommand.handler", () => {
   });
 
   it("appends --minify when the minify option is true", async () => {
-    existsDefault = false;
+    state.existsDefault = false;
     const { ctx } = createContext(
       { output: ".damat/dist", target: "bun", minify: true },
       { cwd: CWD },
@@ -164,7 +97,7 @@ describe("buildCommand.handler", () => {
   });
 
   it("cleans an existing output directory before building", async () => {
-    existsMap = {
+    state.existsMap = {
       "/project/.damat": true,
       "/project/.damat/dist": true,
     };
@@ -184,7 +117,7 @@ describe("buildCommand.handler", () => {
   });
 
   it("creates the .damat dir when it does not exist", async () => {
-    existsDefault = false;
+    state.existsDefault = false;
     const { ctx } = createContext(
       { output: ".damat/dist", target: "bun", minify: false },
       { cwd: CWD },
@@ -198,7 +131,7 @@ describe("buildCommand.handler", () => {
   });
 
   it("removes the temp entry file after building", async () => {
-    existsMap = { "/project/.damat/build-entry.ts": true };
+    state.existsMap = { "/project/.damat/build-entry.ts": true };
     const { ctx } = createContext(
       { output: ".damat/dist", target: "bun", minify: false },
       { cwd: CWD },
@@ -210,8 +143,8 @@ describe("buildCommand.handler", () => {
   });
 
   it("copies src and logs success when build succeeds and src exists", async () => {
-    spawnExitCode = 0;
-    existsMap = { "/project/src": true }; // config file absent
+    state.spawnExitCode = 0;
+    state.existsMap = { "/project/src": true }; // config file absent
     const { ctx, logger } = createContext(
       { output: ".damat/dist", target: "bun", minify: false },
       { cwd: CWD },
@@ -231,8 +164,8 @@ describe("buildCommand.handler", () => {
   });
 
   it("builds damat.config.ts with a second spawn when a config file exists", async () => {
-    spawnExitCode = 0;
-    existsMap = {
+    state.spawnExitCode = 0;
+    state.existsMap = {
       "/project/src": true,
       "/project/damat.config.ts": true,
     };
@@ -259,8 +192,8 @@ describe("buildCommand.handler", () => {
   });
 
   it("skips copy/config phase and success log when build fails", async () => {
-    spawnExitCode = 1;
-    existsMap = {
+    state.spawnExitCode = 1;
+    state.existsMap = {
       "/project/src": true,
       "/project/damat.config.ts": true,
     };
@@ -278,8 +211,8 @@ describe("buildCommand.handler", () => {
   });
 
   it("returns the build subprocess exit code", async () => {
-    spawnExitCode = 42;
-    existsDefault = false;
+    state.spawnExitCode = 42;
+    state.existsDefault = false;
     const { ctx } = createContext(
       { output: ".damat/dist", target: "bun", minify: false },
       { cwd: CWD },
@@ -290,7 +223,7 @@ describe("buildCommand.handler", () => {
   });
 
   it("resolves the output dir relative to ctx.cwd for a custom output", async () => {
-    existsDefault = false;
+    state.existsDefault = false;
     const { ctx } = createContext(
       { output: "custom-out", target: "bun", minify: false },
       { cwd: "/srv/app" },

@@ -234,7 +234,9 @@ describe("workflow › userOnboardingWorkflow.execute", () => {
     expect(res.success).toBe(false);
     if (!res.success) {
       expect(res.error.message).toContain("boom");
-      expect(res.compensated).toBe(true);
+      // The first step threw before completing, so no step succeeded and there
+      // was nothing to compensate — `compensated` reflects that reality.
+      expect(res.compensated).toBe(false);
     }
     // create threw before returning, so no user was persisted to roll back
     expect(fakeUserService.user.delete).not.toHaveBeenCalled();

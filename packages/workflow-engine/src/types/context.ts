@@ -1,4 +1,5 @@
 import type { StepConfig } from "./step";
+import type { MaxRetriesExceededError } from "../errors";
 
 /**
  * Engine-internal bookkeeping carried through the context.
@@ -11,6 +12,12 @@ export interface WorkflowEngineState {
   compensationsFailed: number;
   /** Workflow-level step defaults, layered under each step's own config */
   defaultStepConfig?: StepConfig;
+  /**
+   * Set by a step whose retries were exhausted. The step still fails with its
+   * last StepExecutionError/StepTimeoutError; the workflow surfaces this as the
+   * result error so callers see MAX_RETRIES_EXCEEDED. @internal
+   */
+  retriesExceeded?: MaxRetriesExceededError;
 }
 
 /**

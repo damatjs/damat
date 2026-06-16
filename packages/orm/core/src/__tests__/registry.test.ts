@@ -179,12 +179,10 @@ describe("ModelRegistry › resolveRelation", () => {
     expect(registry.resolveRelation("Post", "author")).toBeUndefined();
   });
 
-  it("resolves the target entry by table name when a relation key matches", () => {
-    // NOTE: resolveRelation uses `propertyName in r`, which tests whether the
-    // given name is a *key* of the RelationSchema object (e.g. "from", "to",
-    // "type"), NOT the value of the relation's `from` property. We register a
-    // target ("Author" -> table "authors") and look up using a relation KEY so
-    // the find() succeeds. This documents the current (buggy) lookup semantics.
+  it("resolves the target entry by table name when the relation's property name matches", () => {
+    // resolveRelation matches on the relation's `from` value (the property name
+    // on this model, e.g. "author"), then follows `to: "authors"` to look up the
+    // target entry by table name.
     registry.register("Author", makeModel({ tableName: "authors", columns: ["id"] }));
     registry.register(
       "Post",
@@ -194,9 +192,9 @@ describe("ModelRegistry › resolveRelation", () => {
       }),
     );
 
-    // "from" is a key present on the relation object, so the find matches and
+    // "author" is the relation's property name (`from`), so the find matches and
     // the relation's `to: "authors"` is used to look up the target.
-    const resolved = registry.resolveRelation("Post", "from");
+    const resolved = registry.resolveRelation("Post", "author");
     expect(resolved).toBeDefined();
     expect(resolved!.tableName).toBe("authors");
   });
@@ -209,15 +207,15 @@ describe("ModelRegistry › resolveRelation", () => {
         relations: [{ fromTable: "posts", from: "author", to: "authors", type: "belongsTo" }],
       }),
     );
-    // "to" is a key on the relation, so find() matches, but table "authors" is
+    // The property name "author" matches the relation, but table "authors" is
     // not registered, so getByTableName returns undefined.
-    expect(registry.resolveRelation("Post", "to")).toBeUndefined();
+    expect(registry.resolveRelation("Post", "author")).toBeUndefined();
   });
 
-  it("does NOT match on the relation's `from` *value* (the property name)", () => {
-    // Looking up by the actual relation property name "author" fails because
-    // "author" is not a key of the relation object. This pins the current
-    // behavior so a future fix would surface as a test change.
+  it("does NOT match on a RelationSchema key such as \"from\" or \"to\"", () => {
+    // The lookup is by the relation's property name (its `from` value), NOT by
+    // the keys of the RelationSchema object. Passing a key name like "from" or
+    // "to" must not match any relation.
     registry.register("Author", makeModel({ tableName: "authors", columns: ["id"] }));
     registry.register(
       "Post",
@@ -226,7 +224,8 @@ describe("ModelRegistry › resolveRelation", () => {
         relations: [{ fromTable: "posts", from: "author", to: "authors", type: "belongsTo" }],
       }),
     );
-    expect(registry.resolveRelation("Post", "author")).toBeUndefined();
+    expect(registry.resolveRelation("Post", "from")).toBeUndefined();
+    expect(registry.resolveRelation("Post", "to")).toBeUndefined();
   });
 });
 

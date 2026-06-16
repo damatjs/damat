@@ -16,12 +16,32 @@ export class PgEntityManager<TModels extends Record<string, ModelDefinition> = R
   private logger: ILogger;
   private repositories = new Map<string, PgRepository<QueryResultRow>>();
 
-  constructor(config: PgEntityManagerConfig) {
+  constructor(config: PgEntityManagerConfig<TModels>) {
     this.pool = config.pool;
     this.logger = config.logger ?? new Logger({ prefix: "ORM", timestamp: true });
     this.modelRegistry = new ModelRegistry(this.logger);
     this.transactionManager = new TransactionManager(this.pool, this.logger);
+    if (config.models) {
+      for (const [name, model] of Object.entries(config.models)) {
+        this.registerModel(name, model);
+      }
+    }
     this._initializeRepositories();
+  }
+
+  /**
+   * Expose `manager.<name>` as a lazy repository accessor, mirroring the
+   * `tx.<name>` accessors on the transactional manager. Never shadows a real
+   * method/field (e.g. a model named "transaction" or "pool" keeps the
+   * method; use getRepository(name) for it instead).
+   */
+  private _defineModelAccessor(name: string): void {
+    if (name in this) return;
+    Object.defineProperty(this, name, {
+      get: () => this.getRepository(name),
+      enumerable: true,
+      configurable: true,
+    });
   }
 
   getRepository<T extends QueryResultRow = QueryResultRow>(modelName: string): PgRepository<T> {
@@ -58,6 +78,7 @@ export class PgEntityManager<TModels extends Record<string, ModelDefinition> = R
   registerModel(name: string, model: ModelDefinition): void {
     this.modelRegistry.register(name, model);
     this.repositories.set(name, createRepository(model, this.pool, this.logger));
+    this._defineModelAccessor(name);
   }
 
   getRegisteredModels(): string[] { return this.modelRegistry.getModelNames(); }

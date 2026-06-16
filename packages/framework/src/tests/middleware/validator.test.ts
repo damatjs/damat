@@ -106,18 +106,58 @@ describe("createValidatorMiddleware", () => {
     expect(ok.status).toBe(200);
   });
 
-  it("ignores the (never-populated) json target so it does not block valid requests", async () => {
-    // The middleware never sets data.json, so a 'json' validator always reports
-    // "Json is required". This test documents that current behavior.
+  it("validates a JSON body via the 'json' target and exposes the parsed value to the handler", async () => {
     const app = new Hono();
-    app.get(
-      "/x",
+    app.post(
+      "/items",
+      createValidatorMiddleware({ json: z.object({ a: z.string() }) } as never),
+      // The handler reads the validated value the same way Hono validators expose it.
+      (c) => c.json({ value: c.req.valid("json" as never) }),
+    );
+
+    const res = await app.request("/items", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ a: "hello" }),
+    });
+    expect(res.status).toBe(200);
+    // The validated body is passed through to the handler.
+    expect((await res.json()).value).toEqual({ a: "hello" });
+  });
+
+  it("returns a 400 VALIDATION_ERROR for an invalid JSON body via the 'json' target", async () => {
+    const app = new Hono();
+    app.post(
+      "/items",
       createValidatorMiddleware({ json: z.object({ a: z.string() }) } as never),
       (c) => c.json({ ok: true }),
     );
-    const res = await app.request("/x");
+
+    const res = await app.request("/items", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ a: 123 }),
+    });
     const body = (await res.json()) as ErrBody;
     expect(res.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(body.error.details[0]!.path).toBe("a");
+  });
+
+  it("returns a 400 when a required json body is missing entirely", async () => {
+    const app = new Hono();
+    app.post(
+      "/items",
+      createValidatorMiddleware({ json: z.object({ a: z.string() }) } as never),
+      (c) => c.json({ ok: true }),
+    );
+
+    // No body sent -> c.req.json() throws -> data.json is undefined.
+    const res = await app.request("/items", { method: "POST" });
+    const body = (await res.json()) as ErrBody;
+    expect(res.status).toBe(400);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
     expect(body.error.details[0]!.message).toBe("Json is required");
   });
 });
