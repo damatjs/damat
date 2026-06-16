@@ -1,5 +1,22 @@
 # @damatjs/module
 
+## 0.1.1
+
+### Patch Changes
+
+- minor clean up on ci and test
+- Updated dependencies
+  - @damatjs/logger@0.1.1
+  - @damatjs/deps@0.1.1
+  - @damatjs/framework@0.1.1
+  - @damatjs/orm-codegen@1.0.1
+  - @damatjs/orm-connector@0.1.1
+  - @damatjs/orm-migration@0.1.1
+  - @damatjs/orm-model@0.1.1
+  - @damatjs/orm-type@0.1.1
+  - @damatjs/services@0.1.1
+  - @damatjs/workflow-engine@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes

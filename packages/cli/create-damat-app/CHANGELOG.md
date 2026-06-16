@@ -1,5 +1,14 @@
 # @damatjs/create-damat-app
 
+## 0.1.1
+
+### Patch Changes
+
+- minor clean up on ci and test
+- Updated dependencies
+  - @damatjs/cli@0.1.1
+  - @damatjs/deps@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes

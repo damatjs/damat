@@ -1,5 +1,13 @@
 # @damatjs/cli
 
+## 0.1.1
+
+### Patch Changes
+
+- minor clean up on ci and test
+- Updated dependencies
+  - @damatjs/logger@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes

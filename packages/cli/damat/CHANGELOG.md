@@ -1,5 +1,17 @@
 # @damatjs/damat-cli
 
+## 0.1.1
+
+### Patch Changes
+
+- minor clean up on ci and test
+- Updated dependencies
+  - @damatjs/cli@0.1.1
+  - @damatjs/load-env@0.1.1
+  - @damatjs/logger@0.1.1
+  - @damatjs/framework@0.1.1
+  - @damatjs/module@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes

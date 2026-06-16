@@ -1,5 +1,11 @@
 # @damatjs/load-env
 
+## 0.1.1
+
+### Patch Changes
+
+- minor clean up on ci and test
+
 ## 0.1.0
 
 ### Minor Changes
