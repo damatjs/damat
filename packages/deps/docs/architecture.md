@@ -19,8 +19,6 @@ The published contract is the `exports` field in `package.json`. Each subpath ma
 }
 ```
 
-> Note the discrepancy: a `"./uuid"` entry **is** present in the snapshot above as documented in some builds, but the live `package.json` exports map at the time of writing omits `"./uuid"`. Treat the root namespace (`import { uuid } from "@damatjs/deps"`) as the supported way to reach `uuid`, and see [Known gaps](#known-gaps).
-
 ## Subpath contents
 
 ### `@damatjs/deps` (root, `src/index.ts`)
@@ -93,13 +91,13 @@ export * from "nanoid";
 
 `nanoid`, `customAlphabet`, etc. (used by the framework for request IDs).
 
-### `uuid` (`src/uuid.ts`, root namespace only)
+### `@damatjs/deps/uuid` (`src/uuid.ts`)
 
 ```ts
 export * from "uuid";
 ```
 
-`v4`, `v7`, `validate`, etc. Reachable via `import { uuid } from "@damatjs/deps"`.
+`v4`, `v7`, `validate`, etc. Reachable via the `@damatjs/deps/uuid` subpath and via the root namespace (`import { uuid } from "@damatjs/deps"`).
 
 ## Pinned versions
 
@@ -127,11 +125,5 @@ From `package.json` `dependencies`:
 `tsconfig.json` extends `@damatjs/typescript-config/base.json` and sets `types: ["bun"]`, `rootDir: src`, `outDir: dist`. Because the base sets `composite: true`, the package is built with `tsc --build` and produces `.d.ts` + `.js` per `src/*.ts`.
 
 ## Known gaps
-
-- **`./uuid` not in `exports`.** Add the entry to make the deep import resolve:
-
-  ```jsonc
-  "./uuid": { "types": "./dist/uuid.d.ts", "default": "./dist/uuid.js" }
-  ```
 
 - **`zod` subpath has an extra `import` condition** alongside `default` (both point at `dist/zod.js`); the other subpaths only use `types` + `default`. This is harmless but inconsistent.

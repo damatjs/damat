@@ -113,7 +113,7 @@ harness and for the runtime when serving. In test suites gate DB tests with
 | `normalizeVersionEntry` | function | Coerce a registry version value (string or object) to `RegistryVersionEntry`. |
 | `MODULE_MANIFEST_FILENAME`, `DEFAULT_MODULE_PATHS`, `DEFAULT_MODULE_PORT`, `VERIFICATION_STATUSES` | const | Constants for the contract / runtime / registry. |
 
-Key types: `ModuleManifest` (+ `ModuleEnvVar`, `ModuleAuthor`, `ModuleManifestPaths`, `ModuleRegistryMeta`), `ModuleAppConfig`, `BootModuleOptions` / `BootedModule`, `StartModuleAppOptions` / `RunningModuleApp`, `ModuleRef`, `ModuleValidationReport`, `RegistryIndex` / `RegistryModuleEntry` / `RegistryVersionEntry` / `RegistryOwner` / `RegistryVerification`, `ResolvedRegistryModule`, `VerificationStatus` / `VerificationPolicy`.
+Key types: `ModuleManifest` (+ `ModuleEnvVar`, `ModuleAuthor`, `ModuleManifestPaths`, `ModuleRegistryMeta`), `ModuleAppConfig`, `BootModuleOptions` / `BootedModule`, `StartModuleAppOptions` / `RunningModuleApp`, `ModuleRef`, `ModuleValidationReport`, `RegistryIndex` / `RegistryModuleEntry` (back-compat alias `RegistryIndexEntry`) / `RegistryVersionEntry` / `RegistryOwner` / `RegistryAuthor` / `RegistryVerification`, `ResolvedRegistryModule`, `VerificationStatus` / `VerificationPolicy`.
 
 See the [`module.json` reference](../../MODULES.md) for the full manifest contract.
 

@@ -5,9 +5,10 @@ changing the server.
 
 ## What this is
 
-A single, dependency-free Bun script that implements an
-[MCP](https://modelcontextprotocol.io) **server** over the **stdio transport**.
-It bridges two things that already exist in Damat:
+A dependency-free [MCP](https://modelcontextprotocol.io) **server** that runs
+directly under Bun (no build step). Its code is split into small modules under
+`src/` (see the [module map](#module-map)). It bridges two things that already
+exist in Damat:
 
 1. the **module registry** (an index JSON described by
    [`@damatjs/module`](../../module/docs/registry.md)), and

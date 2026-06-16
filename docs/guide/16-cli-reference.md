@@ -24,7 +24,6 @@
 | `damat-orm migrate:up` | Apply pending migrations |
 | `damat-orm migrate:status` | Show applied vs pending |
 | `damat-orm migrate:create <name>` | Create a migration |
-| `damat-orm migrate:revert` | Revert the last migration |
 | `damat-orm migrate:list` | List modules with migrations |
 | `damat-orm generate:types` | Generate TypeScript types from models |
 

@@ -65,7 +65,7 @@ Each entry is a subpath export. Versions are pinned in this package's `package.j
 | `@damatjs/deps/pg` | re-export | node-postgres `pg` v8 (`Pool`, `Client`, ...). |
 | `@damatjs/deps/ioredis` | re-export | `ioredis` v5 (`Redis`, `RedisOptions`, ...). |
 | `@damatjs/deps/nanoid` | re-export | `nanoid` v5 (`nanoid`, `customAlphabet`, ...). |
-| `@damatjs/deps/uuid` | re-export (root-only) | `uuid` v13 (`v4`, `v7`, ...). Re-exported via the root namespace (`import { uuid } from "@damatjs/deps"`). See note below. |
+| `@damatjs/deps/uuid` | re-export | `uuid` v13 (`v4`, `v7`, ...). Also reachable via the root namespace (`import { uuid } from "@damatjs/deps"`). |
 
 ### Pinned versions (`package.json` `dependencies`)
 
@@ -79,8 +79,6 @@ Each entry is a subpath export. Versions are pinned in this package's `package.j
 | `ioredis` | `^5.9.3` |
 | `nanoid` | `^5.1.6` |
 | `uuid` | `^13.0.0` |
-
-> **`uuid` caveat:** `src/uuid.ts` exists and `uuid` is re-exported through the **root** namespace (`import { uuid } from "@damatjs/deps"`), but at the time of writing there is **no `./uuid` entry in the `package.json` `exports` map**. So `@damatjs/deps/uuid` as a deep import is not currently wired — use the root namespace, or add the subpath export. See [internals](./docs/architecture.md#known-gaps).
 
 ## How it fits
 

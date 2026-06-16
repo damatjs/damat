@@ -59,7 +59,7 @@ Everything is re-exported from `src/index.ts` via the concern barrels.
 | `registry/entry.ts` | `RegistryIndex`/`RegistryModuleEntry` schema + verification types + `normalizeVersionEntry`. |
 | `registry/verify.ts` | `verificationPolicy`, `evaluateVerification` — the trust gate. |
 | `registry/readiness.ts` | `validateModuleDir` — registry-readiness report. |
-| `registry/resolve.ts` | `resolveRegistryEntry`, `resolveRegistryRef`. |
+| `registry/resolve.ts` | `resolveRegistryEntry`, `resolveRegistryRef`, `ResolvedRegistryModule`. |
 
 ## Split docs
 

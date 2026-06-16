@@ -26,7 +26,7 @@ is `mkdir -p`'d).
 | File | Template fn | Purpose |
 |---|---|---|
 | `package.json` | `packageJsonTemplate(name)` | `@modules/<name>`, private, scripts wired to `damat module …` |
-| `tsconfig.json` | `tsconfigTemplate()` | strict ESNext/bundler, `noEmit`, includes src/tests/module.config |
+| `tsconfig.json` | `tsconfigTemplate()` | strict ES2023 (`module: ESNext`, `moduleResolution: bundler`), `types: ["bun"]`, `noEmit`, includes src/tests/module.config |
 | `module.config.ts` | `moduleConfigTemplate()` | `defineModuleConfig({ projectConfig: { … } })` |
 | `.env.example` | `envExampleTemplate()` | `DATABASE_URL=postgres://localhost:5432/postgres` |
 | `.gitignore` | `gitignoreTemplate()` | `node_modules`, `.damat`, `.env`, `*.tsbuildinfo` |
@@ -46,14 +46,16 @@ is `mkdir -p`'d).
 ```jsonc
 {
   "name": "@modules/<name>",
+  "version": "0.0.1",
+  "type": "module",
   "private": true,
   "scripts": {
     "dev": "damat module dev",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
     "migration:create": "damat module migration:create",
     "codegen": "damat module codegen",
-    "validate": "damat module validate",
-    "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "validate": "damat module validate"
   },
   "dependencies": { "@damatjs/module": "latest" },
   "devDependencies": { "@damatjs/damat-cli": "latest", "@types/bun": "latest", "typescript": "^5.7.2" }

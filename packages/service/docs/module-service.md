@@ -116,8 +116,8 @@ Source: `src/service/methods.ts`. Constructed with `(model, modelName, entityMan
 | `findMany` | `(options?: FindOptions) => Promise<(T & Record<string,any>)[]>` | `repo.findMany` (+ relation loading) |
 | `update` | `(options: UpdateOptions) => Promise<T[]>` | `repo.update({ set, where, returning })` |
 | `delete` | `(options: DeleteOptions) => Promise<number>` | `repo.delete` |
-| `softDelete` | `(options: SoftDeleteOptions) => Promise<T[]>` | `repo.update` setting `deleted_at = now()` |
-| `restore` | `({ where, returning? }) => Promise<T[]>` | `repo.update` setting `deleted_at = null` |
+| `softDelete` | `(options: SoftDeleteOptions) => Promise<T[]>` | `repo.update` setting the model's `_deletedAtField` (default `deleted_at`) to `new Date()` |
+| `restore` | `({ where, returning? }) => Promise<T[]>` | `repo.update` setting the model's `_deletedAtField` (default `deleted_at`) to `null` |
 | `count` | `(options?: CountOptions) => Promise<number>` | `repo.count(where)` |
 | `exists` | `(options: ExistsOptions) => Promise<boolean>` | `repo.exists(where)` |
 | `setTransactionalEm` | `(tx \| null) => void` | sets/clears the transactional EM (called by `transaction()`) |
@@ -157,7 +157,7 @@ interface ExistsOptions { where: Record<string, unknown>; }
 
 ### Relation loading (`methods.ts:136-188`)
 
-When `find`/`findMany` is given `include: [...]`, `loadRelations` looks up each name in the model's `RelationSchema[]` (cached from `model.toTableSchema().relations`) and calls `loadRelation`:
+When `find`/`findMany` is given `include: [...]`, `loadRelations` matches each name against the `from` field of the model's `RelationSchema[]` (cached from `model.toTableSchema().relations`) and calls `loadRelation`, which resolves the related repository via `relation.to`:
 
 - **`belongsTo`** — reads the FK column (`relation.linkedBy[0]`) off the record and fetches the related row by `id`.
 - **`hasMany`** — fetches related rows where `<relation.mappedBy[0] || model._name>_id == record.id`.

@@ -83,7 +83,7 @@ await svc.user.softDelete({ where: { id: user.id } });
 | `ModuleRegistry` | interface | Empty interface apps augment via declaration merging so `getModule("user")` (in the framework) is typed. |
 | `ModuleServiceConfig`, `ModelsMap`, `FindOptions`, `CreateOptions`, `CreateManyOptions`, `UpdateOptions`, `DeleteOptions`, `SoftDeleteOptions`, `CountOptions`, `ExistsOptions`, `ToCamelCase` | types | Configuration and per-method option types for the service layer. |
 | `PoolManagerStats`, `ConnectionManagerLike` | types | Pool statistics and the minimal connection-manager shape `PoolManager` accepts. |
-| `toCamelCase(name)` | util | Lowercases the first character only (`"UserService"` → `"userService"`); used to derive accessor names. |
+| `toCamelCase(name)` | internal util | Lowercases the first character only (`"UserService"` → `"userService"`); used internally to derive accessor names. Lives in `src/util/string.ts` and is **not** re-exported from `@damatjs/services`. |
 
 This package has a single root export (`@damatjs/services`); there are no subpath exports.
 

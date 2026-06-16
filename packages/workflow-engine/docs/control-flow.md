@@ -60,8 +60,8 @@ const [user, products, inventory] = yield* parallel(
 );
 ```
 
-The engine test asserts three 20ms steps finish in well under 60ms — confirming
-they run concurrently, not sequentially.
+The engine test asserts three 20ms steps finish in under 100ms — well below the
+60ms they would take run sequentially — confirming they run concurrently.
 
 > Concurrency is **unbounded** — every effect starts at once. For large fan-outs
 > against a rate-limited resource, batch them yourself or run sequentially.

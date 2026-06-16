@@ -43,7 +43,7 @@ export class UserModuleService extends ModuleService({
 ```
 
 Each registered model gets methods like `create`, `createMany`, `find`,
-`findMany`, `findById`, `update`, `delete`, `softDelete`, `restore`, `count`,
+`findMany`, `update`, `delete`, `softDelete`, `restore`, `count`,
 `exists`, plus `this.transaction(cb)`. Full list and options:
 [`@damatjs/services` → module-service internals](../../packages/service/docs/module-service.md).
 

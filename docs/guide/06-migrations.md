@@ -11,12 +11,11 @@ independently. The `damat-orm` CLI drives it.
 bun run db:create add_users        # generate a migration from model changes
 bun run db:migrate                 # apply all pending migrations
 bun run db:status                  # what's applied vs pending
-bun run db:revert                  # roll back the last migration
 ```
 
 Those scripts map to the [`damat-orm`](../../packages/orm/cli/README.md) commands
-(`migrate:create`, `migrate:up`, `migrate:status`, `migrate:revert`,
-`migrate:list`). Generation diffs your current models against a snapshot and
+(`migrate:create`, `migrate:up`, `migrate:status`, `migrate:list`). Generation
+diffs your current models against a snapshot and
 emits SQL via [`@damatjs/orm-processor`](../../packages/orm/processor/README.md).
 
 > Applied migrations are recorded in a tracking table so re-running `migrate:up`

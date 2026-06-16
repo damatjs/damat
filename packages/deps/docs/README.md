@@ -13,7 +13,7 @@ Maintainer notes for the dependency re-export package. It is intentionally tiny:
 | `src/pg.ts` | `export * from "pg"`. |
 | `src/ioredis.ts` | `export * from "ioredis"`. |
 | `src/nanoid.ts` | `export * from "nanoid"`. |
-| `src/uuid.ts` | `export * from "uuid"`. Re-exported via root namespace; not (yet) in the `exports` map as a deep subpath. |
+| `src/uuid.ts` | `export * from "uuid"`. Reachable via the `./uuid` subpath and the root namespace. |
 | `package.json` | The real contract: pinned dependency versions + the `exports` map mapping each subpath to its built `dist/*.js` / `*.d.ts`. |
 | `tsconfig.json` | Extends `@damatjs/typescript-config/base.json`, adds `types: ["bun"]`, `rootDir: src`, `outDir: dist`. |
 
@@ -44,17 +44,6 @@ Not applicable — this package contributes no runtime behaviour. Its "flow" is 
 - **Curated Hono surface.** `src/hono.ts` is the only non-trivial file: it pulls together the Hono sub-modules the framework actually uses (`cors`, `secureHeaders`, `timing`, `HTTPException`, HTTP-status types) plus `serve` from `@hono/node-server`, so the framework can `import { Hono, cors, serve, HTTPException } from "@damatjs/deps/hono"` from one place.
 - **`z` alias for ergonomics.** `src/zod.ts` adds `export { zod as z }` so existing v3-style `z.object(...)` code keeps working against zod v4.
 - **`exports` map must mirror `src/`.** When adding a new library, you must add both a `src/<lib>.ts` re-export **and** a `./<lib>` entry in `package.json` `exports`, otherwise the deep import will not resolve in published builds.
-
-## Known gaps
-
-- **`uuid` subpath is not exported.** `src/uuid.ts` exists and `uuid` is reachable through the root namespace (`import { uuid } from "@damatjs/deps"`), but there is no `"./uuid"` entry in the `exports` map. Adding the entry below makes `@damatjs/deps/uuid` work as a deep import:
-
-  ```jsonc
-  "./uuid": {
-    "types": "./dist/uuid.d.ts",
-    "default": "./dist/uuid.js"
-  }
-  ```
 
 ## Safe extension guidance
 

@@ -159,7 +159,7 @@ is documented in
 damat module add damatjs/user@0.2.0
 
 # from a local path
-damat module add ./packages/modules/user
+damat module add ./modules/user
 
 # from github shorthand or a git URL
 damat module add damatjs/modules/user
