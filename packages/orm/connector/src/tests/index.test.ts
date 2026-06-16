@@ -1,236 +1,309 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { ConnectionManager } from "../index";
-import { ConnectionError } from "../tools";
-import { Logger } from "@damatjs/logger";
+import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { FakePool, FakePoolClient, StubLogger, type FakePoolOptions } from "./helpers/fakePool";
 import type { DbPoolConfigWithExtras } from "@damatjs/orm-type";
 
-const getTestConfig = (): DbPoolConfigWithExtras => {
-    const dbUrl = process.env.DATABASE_URL || "postgres://postgres:Password@0.0.0.0:5432/damatjs";
-    const url = new URL(dbUrl);
-    return {
-        host: url.hostname,
-        port: parseInt(url.port) || 5432,
-        user: url.username,
-        password: url.password,
-        database: url.pathname.slice(1),
-    };
+/**
+ * Controls how the mocked `@damatjs/deps/pg` `Pool` constructor behaves.
+ * Each test can install its own factory (and inspect the created instances)
+ * so the whole ConnectionManager lifecycle runs with NO live database.
+ */
+let poolFactory: (config: DbPoolConfigWithExtras) => FakePool = () => new FakePool();
+let createdPools: FakePool[] = [];
+let lastConfig: DbPoolConfigWithExtras | undefined;
+
+function useFakePool(opts: FakePoolOptions = {}) {
+    poolFactory = () => new FakePool(opts);
+}
+
+class MockPool {
+    constructor(config: DbPoolConfigWithExtras) {
+        lastConfig = config;
+        const instance = poolFactory(config);
+        createdPools.push(instance);
+        return instance as unknown as MockPool;
+    }
+}
+
+// Replace the real pg Pool BEFORE ConnectionManager is imported.
+mock.module("@damatjs/deps/pg", () => ({ Pool: MockPool }));
+
+const { ConnectionManager } = await import("../index");
+const { ConnectionError } = await import("../tools");
+
+const config: DbPoolConfigWithExtras = {
+    host: "localhost",
+    port: 5432,
+    user: "u",
+    password: "p",
+    database: "d",
 };
 
 describe("ConnectionManager", () => {
-    let connectionManager: ConnectionManager;
-    let logger: Logger;
-    const config = getTestConfig();
+    let logger: StubLogger;
 
     beforeEach(() => {
-        logger = new Logger({ level: "debug" });
-    });
-
-    afterEach(async () => {
-        if (connectionManager) {
-            await connectionManager.disconnect();
-        }
-        connectionManager = new ConnectionManager(config);
+        logger = new StubLogger();
+        poolFactory = () => new FakePool();
+        createdPools = [];
+        lastConfig = undefined;
     });
 
     describe("constructor", () => {
-        it("should create instance with config", () => {
-            connectionManager = new ConnectionManager(config);
-            expect(connectionManager).toBeInstanceOf(ConnectionManager);
-            expect(connectionManager.isInitialized()).toBe(false);
+        it("should create an instance and start uninitialized", () => {
+            const cm = new ConnectionManager(config);
+            expect(cm).toBeInstanceOf(ConnectionManager);
+            expect(cm.isInitialized()).toBe(false);
         });
 
-        it("should create instance with real logger", () => {
-            connectionManager = new ConnectionManager(config, logger);
-            expect(connectionManager).toBeInstanceOf(ConnectionManager);
+        it("should accept an optional logger", () => {
+            const cm = new ConnectionManager(config, logger);
+            expect(cm).toBeInstanceOf(ConnectionManager);
+        });
+
+        it("should not create a pool until connect() is called", () => {
+            new ConnectionManager(config, logger);
+            expect(createdPools).toHaveLength(0);
         });
     });
 
     describe("connect", () => {
-        beforeEach(() => {
-            connectionManager = new ConnectionManager(config, logger);
-        });
-
-        it("should establish connection", async () => {
-            const pool = await connectionManager.connect();
+        it("should create a pool with the provided config and connect", async () => {
+            const cm = new ConnectionManager(config, logger);
+            const pool = await cm.connect();
             expect(pool).toBeDefined();
-            expect(connectionManager.isInitialized()).toBe(true);
+            expect(cm.isInitialized()).toBe(true);
+            expect(lastConfig).toEqual(config);
+            expect(createdPools).toHaveLength(1);
+            expect(createdPools[0]!.connectCalls).toBe(1);
         });
 
-        it("should return existing pool if already connected", async () => {
-            const pool1 = await connectionManager.connect();
-            const pool2 = await connectionManager.connect();
-            expect(pool1).toBe(pool2);
+        it("should register pool listeners when a logger is provided", async () => {
+            const cm = new ConnectionManager(config, logger);
+            await cm.connect();
+            const pool = createdPools[0]!;
+            expect(pool.listenerCount("error")).toBe(1);
+            expect(pool.listenerCount("connect")).toBe(1);
+            // Drive a listener to prove the logger is wired up.
+            pool.emit("connect");
+            expect(logger.messages("debug")).toContain("New client connected to pool");
         });
 
-        it("should be idempotent - multiple calls return same pool", async () => {
-            const results = await Promise.all([
-                connectionManager.connect(),
-                connectionManager.connect(),
-                connectionManager.connect(),
-            ]);
-            expect(results[0]).toBe(results[1]);
-            expect(results[1]).toBe(results[2]);
+        it("should NOT register listeners when no logger is provided", async () => {
+            const cm = new ConnectionManager(config);
+            await cm.connect();
+            const pool = createdPools[0]!;
+            expect(pool.listenerCount("connect")).toBe(0);
+        });
+
+        it("should release the probe client after a successful connect", async () => {
+            const client = new FakePoolClient();
+            poolFactory = () => new FakePool({ client });
+            const cm = new ConnectionManager(config, logger);
+            await cm.connect();
+            expect(client.released).toBe(true);
+        });
+
+        it("should log an info message on successful connect", async () => {
+            const cm = new ConnectionManager(config, logger);
+            await cm.connect();
+            expect(logger.messages("info")).toContain("PostgreSQL connection established successfully");
+        });
+
+        it("should return the existing pool if already connected", async () => {
+            const cm = new ConnectionManager(config, logger);
+            const p1 = await cm.connect();
+            const p2 = await cm.connect();
+            expect(p1).toBe(p2);
+            // Second connect short-circuits — no new pool created.
+            expect(createdPools).toHaveLength(1);
+        });
+
+        it("should be idempotent across concurrent calls (single in-flight promise)", async () => {
+            const cm = new ConnectionManager(config, logger);
+            const [a, b, c] = await Promise.all([cm.connect(), cm.connect(), cm.connect()]);
+            expect(a).toBe(b);
+            expect(b).toBe(c);
+            expect(createdPools).toHaveLength(1);
+        });
+
+        it("should wrap a connect failure in a ConnectionError", async () => {
+            useFakePool({ connectError: new Error("ECONNREFUSED") });
+            const cm = new ConnectionManager(config, logger);
+            await expect(cm.connect()).rejects.toThrow(ConnectionError);
+            await expect(cm.connect()).rejects.toThrow("Failed to connect to PostgreSQL: ECONNREFUSED");
+            expect(cm.isInitialized()).toBe(false);
+        });
+
+        it("should preserve the underlying error as the ConnectionError cause", async () => {
+            const original = new Error("auth failed");
+            useFakePool({ connectError: original });
+            const cm = new ConnectionManager(config, logger);
+            try {
+                await cm.connect();
+                throw new Error("expected connect to reject");
+            } catch (e) {
+                expect(e).toBeInstanceOf(ConnectionError);
+                expect((e as ConnectionError).cause).toBe(original);
+            }
+        });
+
+        it("should log an error on connect failure", async () => {
+            useFakePool({ connectError: new Error("boom") });
+            const cm = new ConnectionManager(config, logger);
+            await expect(cm.connect()).rejects.toThrow(ConnectionError);
+            expect(logger.calls.error).toHaveLength(1);
+            expect(logger.calls.error[0]!.message).toBe("Failed to establish PostgreSQL connection");
+            // `{ error: err.message }` is passed as the 2nd positional arg → ILogger.error's `error` slot.
+            expect(logger.calls.error[0]!.error).toEqual({ error: "boom" });
         });
     });
 
     describe("disconnect", () => {
-        beforeEach(() => {
-            connectionManager = new ConnectionManager(config, logger);
+        it("should close the pool and reset state", async () => {
+            const cm = new ConnectionManager(config, logger);
+            await cm.connect();
+            expect(cm.isInitialized()).toBe(true);
+            await cm.disconnect();
+            expect(cm.isInitialized()).toBe(false);
+            expect(createdPools[0]!.endCalls).toBe(1);
+            expect(logger.messages("info")).toContain("PostgreSQL connection closed");
         });
 
-        it("should close connection", async () => {
-            await connectionManager.connect();
-            expect(connectionManager.isInitialized()).toBe(true);
-            await connectionManager.disconnect();
-            expect(connectionManager.isInitialized()).toBe(false);
+        it("should be a no-op when never connected", async () => {
+            const cm = new ConnectionManager(config, logger);
+            await expect(cm.disconnect()).resolves.toBeUndefined();
+            expect(createdPools).toHaveLength(0);
         });
 
-        it("should be safe to call when not connected", async () => {
-            await expect(connectionManager.disconnect()).resolves.toBeUndefined();
+        it("should allow reconnecting after disconnect (fresh pool)", async () => {
+            const cm = new ConnectionManager(config, logger);
+            await cm.connect();
+            await cm.disconnect();
+            await cm.connect();
+            expect(cm.isInitialized()).toBe(true);
+            expect(createdPools).toHaveLength(2);
         });
 
-        it("should allow reconnection after disconnect", async () => {
-            await connectionManager.connect();
-            await connectionManager.disconnect();
-            await connectionManager.connect();
-            expect(connectionManager.isInitialized()).toBe(true);
+        it("should wrap an end() failure in a ConnectionError", async () => {
+            const original = new Error("end failed");
+            poolFactory = () => new FakePool({ endError: original });
+            const cm = new ConnectionManager(config, logger);
+            await cm.connect();
+            await expect(cm.disconnect()).rejects.toThrow(ConnectionError);
+            await expect(cm.disconnect()).rejects.toThrow("Failed to disconnect: end failed");
+        });
+
+        it("should log an error when end() fails", async () => {
+            poolFactory = () => new FakePool({ endError: new Error("nope") });
+            const cm = new ConnectionManager(config, logger);
+            await cm.connect();
+            await expect(cm.disconnect()).rejects.toThrow(ConnectionError);
+            expect(logger.calls.error.some((c) => c.message === "Error closing PostgreSQL connection")).toBe(true);
         });
     });
 
     describe("getPool", () => {
-        beforeEach(() => {
-            connectionManager = new ConnectionManager(config, logger);
-        });
-
         it("should throw ConnectionError when not connected", () => {
-            expect(() => connectionManager.getPool()).toThrow(ConnectionError);
-            expect(() => connectionManager.getPool()).toThrow("Not connected to database");
+            const cm = new ConnectionManager(config, logger);
+            expect(() => cm.getPool()).toThrow(ConnectionError);
+            expect(() => cm.getPool()).toThrow("Not connected to database");
         });
 
-        it("should return pool when connected", async () => {
-            await connectionManager.connect();
-            const pool = connectionManager.getPool();
-            expect(pool).toBeDefined();
+        it("should return the live pool after connect", async () => {
+            const cm = new ConnectionManager(config, logger);
+            const connected = await cm.connect();
+            expect(cm.getPool()).toBe(connected);
         });
     });
 
     describe("getPoolStats", () => {
-        beforeEach(() => {
-            connectionManager = new ConnectionManager(config, logger);
-        });
-
         it("should return zero stats when not connected", () => {
-            const stats = connectionManager.getPoolStats();
-            expect(stats).toEqual({
-                totalCount: 0,
-                idleCount: 0,
-                waitingCount: 0,
-            });
+            const cm = new ConnectionManager(config, logger);
+            expect(cm.getPoolStats()).toEqual({ totalCount: 0, idleCount: 0, waitingCount: 0 });
         });
 
-        it("should return pool stats when connected", async () => {
-            await connectionManager.connect();
-            const stats = connectionManager.getPoolStats();
-            expect(typeof stats.totalCount).toBe("number");
-            expect(typeof stats.idleCount).toBe("number");
-            expect(typeof stats.waitingCount).toBe("number");
+        it("should return live stats from the pool when connected", async () => {
+            poolFactory = () => new FakePool({ totalCount: 4, idleCount: 2, waitingCount: 1 });
+            const cm = new ConnectionManager(config, logger);
+            await cm.connect();
+            const stats = cm.getPoolStats();
+            // connect() probe incremented totalCount by 1 (4 -> 5).
+            expect(stats.totalCount).toBe(5);
+            expect(stats.idleCount).toBe(2);
+            expect(stats.waitingCount).toBe(1);
         });
     });
 
     describe("getClient", () => {
-        beforeEach(() => {
-            connectionManager = new ConnectionManager(config, logger);
-        });
-
         it("should throw ConnectionError when not connected", async () => {
-            await expect(connectionManager.getClient()).rejects.toThrow(ConnectionError);
+            const cm = new ConnectionManager(config, logger);
+            await expect(cm.getClient()).rejects.toThrow(ConnectionError);
         });
 
-        it("should return client when connected", async () => {
-            await connectionManager.connect();
-            const client = await connectionManager.getClient();
-            expect(client).toBeDefined();
-            expect(client.query).toBeDefined();
-            expect(client.release).toBeDefined();
-            client.release();
+        it("should return a client from the pool when connected", async () => {
+            const client = new FakePoolClient();
+            poolFactory = () => new FakePool({ client });
+            const cm = new ConnectionManager(config, logger);
+            await cm.connect();
+            const got = await cm.getClient();
+            expect(got).toBe(client);
+            expect(typeof got.query).toBe("function");
+            expect(typeof got.release).toBe("function");
         });
     });
 
     describe("healthCheck", () => {
-        beforeEach(() => {
-            connectionManager = new ConnectionManager(config, logger);
-        });
-
         it("should return disconnected status when not connected", async () => {
-            const status = await connectionManager.healthCheck();
+            const cm = new ConnectionManager(config, logger);
+            const status = await cm.healthCheck();
             expect(status.connected).toBe(false);
-            expect(status.poolStats).toEqual({
-                totalCount: 0,
-                idleCount: 0,
-                waitingCount: 0,
-            });
+            expect(status.poolStats).toEqual({ totalCount: 0, idleCount: 0, waitingCount: 0 });
             expect(status.lastChecked).toBeInstanceOf(Date);
         });
 
-        it("should return connected status when connected", async () => {
-            await connectionManager.connect();
-            const status = await connectionManager.healthCheck();
+        it("should return connected status when the probe succeeds", async () => {
+            const cm = new ConnectionManager(config, logger);
+            await cm.connect();
+            const status = await cm.healthCheck();
             expect(status.connected).toBe(true);
-            expect(typeof status.poolStats.totalCount).toBe("number");
             expect(status.lastChecked).toBeInstanceOf(Date);
+        });
+
+        it("should flip isInitialized to false if the health probe fails", async () => {
+            const client = new FakePoolClient({
+                queryImpl: async () => { throw new Error("dead"); },
+            });
+            poolFactory = () => new FakePool({ client });
+            const cm = new ConnectionManager(config, logger);
+            await cm.connect();
+            expect(cm.isInitialized()).toBe(true);
+            const status = await cm.healthCheck();
+            expect(status.connected).toBe(false);
+            expect(cm.isInitialized()).toBe(false);
         });
     });
 
     describe("isInitialized", () => {
-        beforeEach(() => {
-            connectionManager = new ConnectionManager(config, logger);
+        it("should be false before connect", () => {
+            const cm = new ConnectionManager(config, logger);
+            expect(cm.isInitialized()).toBe(false);
         });
 
-        it("should return false initially", () => {
-            expect(connectionManager.isInitialized()).toBe(false);
-        });
-
-        it("should return true after connect", async () => {
-            await connectionManager.connect();
-            expect(connectionManager.isInitialized()).toBe(true);
-        });
-
-        it("should return false after disconnect", async () => {
-            await connectionManager.connect();
-            await connectionManager.disconnect();
-            expect(connectionManager.isInitialized()).toBe(false);
+        it("should be true after connect and false after disconnect", async () => {
+            const cm = new ConnectionManager(config, logger);
+            await cm.connect();
+            expect(cm.isInitialized()).toBe(true);
+            await cm.disconnect();
+            expect(cm.isInitialized()).toBe(false);
         });
     });
 
-    describe("real database operations", () => {
-        beforeEach(() => {
-            connectionManager = new ConnectionManager(config, logger);
-        });
-
-        it("should execute queries through acquired client", async () => {
-            await connectionManager.connect();
-            const client = await connectionManager.getClient();
-            const result = await client.query("SELECT 1 as num");
-            expect(result.rows).toBeDefined();
-            expect(result.rows[0].num).toBe(1);
-            client.release();
-        });
-
-        it("should handle multiple clients from pool", async () => {
-            await connectionManager.connect();
-            const client1 = await connectionManager.getClient();
-            const client2 = await connectionManager.getClient();
-            
-            const [r1, r2] = await Promise.all([
-                client1.query("SELECT 1 as num"),
-                client2.query("SELECT 2 as num"),
-            ]);
-            
-            expect(r1.rows[0].num).toBe(1);
-            expect(r2.rows[0].num).toBe(2);
-            
-            client1.release();
-            client2.release();
+    describe("config exports", () => {
+        it("should re-export the pool config factories from the entry point", async () => {
+            const mod = await import("../index");
+            expect(typeof mod.productionPoolConfig).toBe("function");
+            expect(typeof mod.developmentPoolConfig).toBe("function");
+            expect(typeof mod.testPoolConfig).toBe("function");
         });
     });
 });

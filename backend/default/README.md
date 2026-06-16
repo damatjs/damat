@@ -1,6 +1,6 @@
 # Damatjs API - Backend Developer Guide
 
-A production-ready backend for the Damatjs design inspiration platform. Built with Hono, Prisma, PostgreSQL, Redis, and Stripe.
+A production-ready reference backend that wires the whole Damat framework together. Built with Hono, the Damat ORM, PostgreSQL, Redis, and Better Auth. For a guided tour of the framework, start with [the Damat Guide](../../docs/GUIDE.md).
 
 ## Table of Contents
 
@@ -646,21 +646,26 @@ curl http://localhost:3000/health
 
 ---
 
-## API Reference
+## Learn more
 
-See [API_FRONTEND.md](./docs/API_FRONTEND.md) for frontend integration guide.
-See [API_MCP.md](./docs/API_MCP.md) for MCP server integration.
-See [API_FIGMA.md](./docs/API_FIGMA.md) for Figma plugin integration.
+This app is the worked example for the framework. To go deeper:
+
+- [The Damat Guide](../../docs/GUIDE.md) — full, step-by-step usage walkthrough.
+- [Module manifest contract (MODULES.md)](../../MODULES.md) — authoring/installing modules.
+- Package references: [`@damatjs/framework`](../../packages/framework/README.md) ·
+  [`@damatjs/module`](../../packages/module/README.md) ·
+  [`@damatjs/orm-model`](../../packages/orm/model/README.md) ·
+  [`@damatjs/workflow-engine`](../../packages/workflow-engine/README.md) ·
+  [`@damatjs/redis`](../../packages/core/redis/README.md).
 
 ---
 
 ## Contributing
 
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/my-feature`
-3. Write tests for new functionality
-4. Ensure all tests pass: `npm test`
-5. Submit pull request
+1. Create a feature branch: `git checkout -b feature/my-feature`
+2. Write tests for new functionality
+3. Ensure all tests pass: `bun test`
+4. Submit a pull request
 
 ## License
 

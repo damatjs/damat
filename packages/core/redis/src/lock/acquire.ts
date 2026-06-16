@@ -1,7 +1,7 @@
 import type { Redis } from "../types";
 import { getRedis } from "../singleton";
-
-const LOCK_PREFIX = "lock:";
+import { LOCK_PREFIX } from "./constants";
+import { randomUUID } from "node:crypto";
 
 /**
  * Acquire a distributed lock.
@@ -30,7 +30,8 @@ export async function acquireLock(
   client?: Redis,
 ): Promise<string | null> {
   const redis = client || getRedis();
-  const lockValue = `${Date.now()}:${Math.random()}`;
+  // Must be unguessable so another process can't release a lock it doesn't own
+  const lockValue = randomUUID();
   const result = await redis.set(
     LOCK_PREFIX + key,
     lockValue,

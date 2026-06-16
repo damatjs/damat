@@ -1,0 +1,31 @@
+{
+  "name": "@damatjs/mcp",
+  "description": "Model Context Protocol (MCP) server for discovering and installing Damat modules with AI",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "damat-mcp": "./bin/damat-mcp.ts"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "author": "Abel Lamesgen",
+  "files": [
+    "bin",
+    "src",
+    "registry.example.json"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "@types/bun": "1.3.9"
+  },
+  "scripts": {
+    "build": "exit 0",
+    "start": "bun run bin/damat-mcp.ts",
+    "test": "exit 0"
+  }
+}

@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/orm-core",
   "description": "Damat ORM core - database-agnostic registry, logging, and types",
-  "version": "0.0.10",
+  "version": "0.1.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -38,6 +38,6 @@
   "scripts": {
     "build": "rm -rf dist tsconfig.tsbuildinfo && tsc",
     "watch": "tsc --watch",
-    "test": "exit 0"
+    "test": "bun test"
   }
 }

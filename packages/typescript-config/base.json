@@ -58,6 +58,15 @@
   ],
   "exclude": [
     "${configDir}/dist",
-    "${configDir}/node_modules"
+    "${configDir}/node_modules",
+    "${configDir}/**/*.test.ts",
+    "${configDir}/**/*.test.tsx",
+    "${configDir}/**/*.spec.ts",
+    "${configDir}/**/*.spec.tsx",
+    "${configDir}/**/tests/**",
+    "${configDir}/**/__tests__/**",
+    "${configDir}/**/__mocks__/**",
+    "${configDir}/**/__fixtures__/**",
+    "${configDir}/**/__snapshots__/**"
   ]
 }

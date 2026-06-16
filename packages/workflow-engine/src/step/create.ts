@@ -33,7 +33,7 @@ import { DEFAULT_STEP_CONFIG, DEFAULT_RETRY_POLICY } from "../config";
  */
 export function createStep<I, O>(
   name: string,
-  invoke: (input: I, ctx: WorkflowContext) => Promise<O>,
+  invoke: (input: I, ctx: WorkflowContext, signal?: AbortSignal) => Promise<O>,
   compensate?: (input: I, output: O, ctx: WorkflowContext) => Promise<void>,
   config: StepConfig = {},
 ): StepDefinition<I, O> {
@@ -46,6 +46,7 @@ export function createStep<I, O>(
   return {
     name,
     config: mergedConfig,
+    rawConfig: config,
     invoke,
     ...(compensate ? { compensate } : {}),
   };

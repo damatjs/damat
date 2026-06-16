@@ -27,6 +27,7 @@ export type {
   RequiredWorkflowConfig,
   // Context
   WorkflowContext,
+  WorkflowEngineState,
   // Results
   WorkflowSuccess,
   WorkflowFailure,

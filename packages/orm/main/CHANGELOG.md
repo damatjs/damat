@@ -1,5 +1,21 @@
 # @damatjs/orm
 
+## 0.1.0
+
+### Minor Changes
+
+- Stabilized core functionality, expanded testing, and resolved known issues. Ready for minor release.
+
+### Patch Changes
+
+- Updated dependencies
+  - @damatjs/orm-connector@0.1.0
+  - @damatjs/orm-migration@0.1.0
+  - @damatjs/orm-processor@0.1.0
+  - @damatjs/orm-model@0.1.0
+  - @damatjs/orm-pg@0.1.0
+  - @damatjs/deps@0.1.0
+
 ## 0.0.10
 
 ### Patch Changes

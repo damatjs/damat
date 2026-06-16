@@ -1,0 +1,573 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "Damat documentation",
+  "description": "Navigation map for the Damat docs site: the step-by-step guide plus every package's overview and internals.",
+  "generatedBy": "docs/build-guide-json.ts",
+  "home": "README.md",
+  "guideIndex": "docs/GUIDE.md",
+  "topLevel": [
+    {
+      "id": "readme",
+      "title": "Overview",
+      "path": "README.md",
+      "summary": "Top-level project overview and package index."
+    },
+    {
+      "id": "guide",
+      "title": "The Damat Guide",
+      "path": "docs/GUIDE.md",
+      "summary": "The step-by-step usage guide (this map indexes its chapters)."
+    },
+    {
+      "id": "modules",
+      "title": "Module manifest contract",
+      "path": "MODULES.md",
+      "summary": "The module.json contract, registry refs, and the trust model."
+    },
+    {
+      "id": "agents",
+      "title": "AI contributor guide",
+      "path": "AGENTS.md",
+      "summary": "Repo map, conventions, and common-task recipes for AI assistants."
+    }
+  ],
+  "skills": [
+    {
+      "id": "damat-modules",
+      "title": "Working with Damat modules",
+      "path": ".claude/skills/damat-modules/SKILL.md"
+    },
+    {
+      "id": "damat-backend",
+      "title": "Working in a Damat backend",
+      "path": ".claude/skills/damat-backend/SKILL.md"
+    }
+  ],
+  "guide": [
+    {
+      "id": "start-here",
+      "title": "Start here",
+      "chapters": [
+        {
+          "id": "introduction",
+          "order": 1,
+          "title": "Introduction",
+          "slug": "introduction",
+          "path": "docs/guide/01-introduction.md",
+          "summary": "What Damat is and the package map."
+        },
+        {
+          "id": "concepts",
+          "order": 2,
+          "title": "Concepts — modules & the framework",
+          "slug": "concepts",
+          "path": "docs/guide/02-concepts.md",
+          "summary": "The idea behind Damat: what a module is, why the backend is shaped this way, and how the framework wires modules together."
+        },
+        {
+          "id": "getting-started",
+          "order": 3,
+          "title": "Getting started",
+          "slug": "getting-started",
+          "path": "docs/guide/03-getting-started.md",
+          "summary": "Install, scaffold a new app or run the reference backend, and the project structure."
+        },
+        {
+          "id": "configuration",
+          "order": 4,
+          "title": "Configuration & environment",
+          "slug": "configuration",
+          "path": "docs/guide/04-configuration.md",
+          "summary": "damat.config.ts, projectConfig, and the .env cascade."
+        }
+      ]
+    },
+    {
+      "id": "build",
+      "title": "Build",
+      "chapters": [
+        {
+          "id": "models",
+          "order": 5,
+          "title": "Defining models (the ORM DSL)",
+          "slug": "models",
+          "path": "docs/guide/05-models.md",
+          "summary": "The fluent, type-safe model/columns DSL."
+        },
+        {
+          "id": "migrations",
+          "order": 6,
+          "title": "Migrations",
+          "slug": "migrations",
+          "path": "docs/guide/06-migrations.md",
+          "summary": "The module-aware migration system and the damat-orm CLI."
+        },
+        {
+          "id": "modules-and-services",
+          "order": 7,
+          "title": "Modules & services",
+          "slug": "modules-and-services",
+          "path": "docs/guide/07-modules-and-services.md",
+          "summary": "ModuleService auto-CRUD, credentials, and defineModule."
+        },
+        {
+          "id": "http-apis",
+          "order": 8,
+          "title": "Building HTTP APIs",
+          "slug": "http-apis",
+          "path": "docs/guide/08-http-apis.md",
+          "summary": "File-based routing with Hono."
+        },
+        {
+          "id": "workflows",
+          "order": 9,
+          "title": "Workflows (the saga engine)",
+          "slug": "workflows",
+          "path": "docs/guide/09-workflows.md",
+          "summary": "Steps with compensation and saga orchestration on Effect-TS."
+        },
+        {
+          "id": "redis",
+          "order": 10,
+          "title": "Redis: cache, queue, locks, rate limiting",
+          "slug": "redis",
+          "path": "docs/guide/10-redis.md",
+          "summary": "Batteries-included Redis helpers."
+        },
+        {
+          "id": "logging",
+          "order": 11,
+          "title": "Logging",
+          "slug": "logging",
+          "path": "docs/guide/11-logging.md",
+          "summary": "Structured logging with levels, formats, and file transport."
+        },
+        {
+          "id": "default-backend",
+          "order": 12,
+          "title": "The default backend, end to end",
+          "slug": "default-backend",
+          "path": "docs/guide/12-default-backend.md",
+          "summary": "The reference app as a worked example."
+        }
+      ]
+    },
+    {
+      "id": "modules-and-sharing",
+      "title": "Modules & sharing",
+      "chapters": [
+        {
+          "id": "authoring-modules",
+          "order": 13,
+          "title": "Authoring a module",
+          "slug": "authoring-modules",
+          "path": "docs/guide/13-authoring-modules.md",
+          "summary": "Build and test a standalone, portable module."
+        },
+        {
+          "id": "installing-modules",
+          "order": 14,
+          "title": "Installing existing modules",
+          "slug": "installing-modules",
+          "path": "docs/guide/14-installing-modules.md",
+          "summary": "damat module add from a registry ref, path, or git."
+        },
+        {
+          "id": "installing-modules-with-ai",
+          "order": 15,
+          "title": "Installing modules with AI (MCP)",
+          "slug": "installing-modules-with-ai",
+          "path": "docs/guide/15-installing-modules-with-ai.md",
+          "summary": "Discover and install modules through the MCP server."
+        }
+      ]
+    },
+    {
+      "id": "operate-and-reference",
+      "title": "Operate & reference",
+      "chapters": [
+        {
+          "id": "cli-reference",
+          "order": 16,
+          "title": "CLI reference",
+          "slug": "cli-reference",
+          "path": "docs/guide/16-cli-reference.md",
+          "summary": "damat, damat-orm, and create-damat-app."
+        },
+        {
+          "id": "deployment",
+          "order": 17,
+          "title": "Deployment",
+          "slug": "deployment",
+          "path": "docs/guide/17-deployment.md",
+          "summary": "Docker and production release flow."
+        },
+        {
+          "id": "package-reference",
+          "order": 18,
+          "title": "Package reference",
+          "slug": "package-reference",
+          "path": "docs/guide/18-package-reference.md",
+          "summary": "Links to every package's README and internals."
+        },
+        {
+          "id": "troubleshooting",
+          "order": 19,
+          "title": "Troubleshooting",
+          "slug": "troubleshooting",
+          "path": "docs/guide/19-troubleshooting.md",
+          "summary": "Common symptoms and fixes."
+        }
+      ]
+    }
+  ],
+  "packages": [
+    {
+      "group": "Framework & app",
+      "packages": [
+        {
+          "name": "@damatjs/framework",
+          "description": "Damatjs framework for handling everything",
+          "dir": "packages/framework",
+          "readme": "packages/framework/README.md",
+          "docsIndex": "packages/framework/docs/README.md",
+          "docs": [
+            "packages/framework/docs/README.md",
+            "packages/framework/docs/bootstrap.md",
+            "packages/framework/docs/config.md",
+            "packages/framework/docs/handlers.md",
+            "packages/framework/docs/middleware.md",
+            "packages/framework/docs/router.md",
+            "packages/framework/docs/server-and-shutdown.md",
+            "packages/framework/docs/services.md"
+          ]
+        },
+        {
+          "name": "@damatjs/services",
+          "description": "Damatjs services definition",
+          "dir": "packages/service",
+          "readme": "packages/service/README.md",
+          "docsIndex": "packages/service/docs/README.md",
+          "docs": [
+            "packages/service/docs/README.md",
+            "packages/service/docs/define-module.md",
+            "packages/service/docs/module-service.md",
+            "packages/service/docs/pool-manager.md"
+          ]
+        },
+        {
+          "name": "@damatjs/module",
+          "description": "Damatjs module system — manifest contract, standalone dev/test harness, and registry tooling for self-contained modules",
+          "dir": "packages/module",
+          "readme": "packages/module/README.md",
+          "docsIndex": "packages/module/docs/README.md",
+          "docs": [
+            "packages/module/docs/README.md",
+            "packages/module/docs/authoring.md",
+            "packages/module/docs/config.md",
+            "packages/module/docs/harness.md",
+            "packages/module/docs/manifest.md",
+            "packages/module/docs/registry.md",
+            "packages/module/docs/runtime.md",
+            "packages/module/docs/tooling.md"
+          ]
+        },
+        {
+          "name": "@damatjs/workflow-engine",
+          "description": "Damatjs saga-style workflow engine built on Effect-TS",
+          "dir": "packages/workflow-engine",
+          "readme": "packages/workflow-engine/README.md",
+          "docsIndex": "packages/workflow-engine/docs/README.md",
+          "docs": [
+            "packages/workflow-engine/docs/README.md",
+            "packages/workflow-engine/docs/control-flow.md",
+            "packages/workflow-engine/docs/errors.md",
+            "packages/workflow-engine/docs/locking.md",
+            "packages/workflow-engine/docs/retry.md",
+            "packages/workflow-engine/docs/steps.md",
+            "packages/workflow-engine/docs/workflows.md"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "ORM",
+      "packages": [
+        {
+          "name": "@damatjs/orm",
+          "description": "Damat ORM",
+          "dir": "packages/orm/main",
+          "readme": "packages/orm/main/README.md",
+          "docsIndex": "packages/orm/main/docs/README.md",
+          "docs": [
+            "packages/orm/main/docs/README.md",
+            "packages/orm/main/docs/architecture.md"
+          ]
+        },
+        {
+          "name": "@damatjs/orm-model",
+          "description": "Damatjs orm model definition",
+          "dir": "packages/orm/model",
+          "readme": "packages/orm/model/README.md",
+          "docsIndex": "packages/orm/model/docs/README.md",
+          "docs": [
+            "packages/orm/model/docs/README.md",
+            "packages/orm/model/docs/column-builders.md",
+            "packages/orm/model/docs/indexes-and-constraints.md",
+            "packages/orm/model/docs/relations.md",
+            "packages/orm/model/docs/schema-and-model.md",
+            "packages/orm/model/docs/type-inference.md"
+          ]
+        },
+        {
+          "name": "@damatjs/orm-pg",
+          "description": "PostgreSQL ORM core for @damatjs - EntityManager, Repository pattern, and query execution",
+          "dir": "packages/orm/pg",
+          "readme": "packages/orm/pg/README.md",
+          "docsIndex": "packages/orm/pg/docs/README.md",
+          "docs": [
+            "packages/orm/pg/docs/README.md",
+            "packages/orm/pg/docs/client.md",
+            "packages/orm/pg/docs/entity-manager.md",
+            "packages/orm/pg/docs/executor.md",
+            "packages/orm/pg/docs/query-builder.md",
+            "packages/orm/pg/docs/relations.md",
+            "packages/orm/pg/docs/repository.md",
+            "packages/orm/pg/docs/transactions.md",
+            "packages/orm/pg/docs/where.md"
+          ]
+        },
+        {
+          "name": "@damatjs/orm-connector",
+          "description": "Damatjs pg connection manager",
+          "dir": "packages/orm/connector",
+          "readme": "packages/orm/connector/README.md",
+          "docsIndex": "packages/orm/connector/docs/README.md",
+          "docs": [
+            "packages/orm/connector/docs/README.md",
+            "packages/orm/connector/docs/connection-lifecycle.md",
+            "packages/orm/connector/docs/pool-tools.md"
+          ]
+        },
+        {
+          "name": "@damatjs/orm-migration",
+          "description": "Damatjs orm utils definition",
+          "dir": "packages/orm/migration",
+          "readme": "packages/orm/migration/README.md",
+          "docsIndex": "packages/orm/migration/docs/README.md",
+          "docs": [
+            "packages/orm/migration/docs/README.md",
+            "packages/orm/migration/docs/discovery.md",
+            "packages/orm/migration/docs/executor.md",
+            "packages/orm/migration/docs/generator.md",
+            "packages/orm/migration/docs/tracker.md"
+          ]
+        },
+        {
+          "name": "@damatjs/orm-processor",
+          "description": "Damatjs orm processor definition",
+          "dir": "packages/orm/processor",
+          "readme": "packages/orm/processor/README.md",
+          "docsIndex": "packages/orm/processor/docs/README.md",
+          "docs": [
+            "packages/orm/processor/docs/README.md",
+            "packages/orm/processor/docs/diff.md",
+            "packages/orm/processor/docs/snapshot.md",
+            "packages/orm/processor/docs/sql-generator.md"
+          ]
+        },
+        {
+          "name": "@damatjs/orm-codegen",
+          "description": "Damatjs orm codegen",
+          "dir": "packages/orm/codegen",
+          "readme": "packages/orm/codegen/README.md",
+          "docsIndex": "packages/orm/codegen/docs/README.md",
+          "docs": [
+            "packages/orm/codegen/docs/README.md",
+            "packages/orm/codegen/docs/generators.md",
+            "packages/orm/codegen/docs/type-mapping.md"
+          ]
+        },
+        {
+          "name": "@damatjs/orm-core",
+          "description": "Damat ORM core - database-agnostic registry, logging, and types",
+          "dir": "packages/orm/core",
+          "readme": "packages/orm/core/README.md",
+          "docsIndex": "packages/orm/core/docs/README.md",
+          "docs": [
+            "packages/orm/core/docs/README.md",
+            "packages/orm/core/docs/query-logger.md",
+            "packages/orm/core/docs/registry.md"
+          ]
+        },
+        {
+          "name": "@damatjs/orm-type",
+          "description": "Damat ORM shared types",
+          "dir": "packages/orm/type",
+          "readme": "packages/orm/type/README.md",
+          "docsIndex": "packages/orm/type/docs/README.md",
+          "docs": [
+            "packages/orm/type/docs/README.md",
+            "packages/orm/type/docs/connection-and-query.md",
+            "packages/orm/type/docs/schema-types.md"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Core",
+      "packages": [
+        {
+          "name": "@damatjs/logger",
+          "description": "Damat logger",
+          "dir": "packages/core/logger",
+          "readme": "packages/core/logger/README.md",
+          "docsIndex": "packages/core/logger/docs/README.md",
+          "docs": [
+            "packages/core/logger/docs/README.md",
+            "packages/core/logger/docs/child-loggers.md",
+            "packages/core/logger/docs/formatting.md",
+            "packages/core/logger/docs/global.md",
+            "packages/core/logger/docs/transports.md"
+          ]
+        },
+        {
+          "name": "@damatjs/redis",
+          "description": "Damatjs redis",
+          "dir": "packages/core/redis",
+          "readme": "packages/core/redis/README.md",
+          "docsIndex": "packages/core/redis/docs/README.md",
+          "docs": [
+            "packages/core/redis/docs/README.md",
+            "packages/core/redis/docs/cache.md",
+            "packages/core/redis/docs/client.md",
+            "packages/core/redis/docs/counter.md",
+            "packages/core/redis/docs/lock.md",
+            "packages/core/redis/docs/queue.md",
+            "packages/core/redis/docs/rate-limit.md",
+            "packages/core/redis/docs/session.md"
+          ]
+        },
+        {
+          "name": "@damatjs/load-env",
+          "description": "Damatjs load env",
+          "dir": "packages/core/env",
+          "readme": "packages/core/env/README.md",
+          "docsIndex": "packages/core/env/docs/README.md",
+          "docs": [
+            "packages/core/env/docs/README.md",
+            "packages/core/env/docs/architecture.md"
+          ]
+        },
+        {
+          "name": "@damatjs/types",
+          "description": "Damat Types definition",
+          "dir": "packages/core/types",
+          "readme": "packages/core/types/README.md",
+          "docsIndex": "packages/core/types/docs/README.md",
+          "docs": [
+            "packages/core/types/docs/README.md",
+            "packages/core/types/docs/error-classes.md"
+          ]
+        },
+        {
+          "name": "@damatjs/cli",
+          "description": "General CLI framework for DamatJS",
+          "dir": "packages/core/cli",
+          "readme": "packages/core/cli/README.md",
+          "docsIndex": "packages/core/cli/docs/README.md",
+          "docs": [
+            "packages/core/cli/docs/README.md",
+            "packages/core/cli/docs/command-model.md",
+            "packages/core/cli/docs/help.md",
+            "packages/core/cli/docs/output-and-validation.md",
+            "packages/core/cli/docs/registry.md",
+            "packages/core/cli/docs/run.md"
+          ]
+        },
+        {
+          "name": "@damatjs/deps",
+          "description": "Dependencies for damatjs",
+          "dir": "packages/deps",
+          "readme": "packages/deps/README.md",
+          "docsIndex": "packages/deps/docs/README.md",
+          "docs": [
+            "packages/deps/docs/README.md",
+            "packages/deps/docs/architecture.md"
+          ]
+        },
+        {
+          "name": "@damatjs/typescript-config",
+          "description": "",
+          "dir": "packages/typescript-config",
+          "readme": "packages/typescript-config/README.md",
+          "docsIndex": "packages/typescript-config/docs/README.md",
+          "docs": [
+            "packages/typescript-config/docs/README.md",
+            "packages/typescript-config/docs/architecture.md"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "CLIs & AI",
+      "packages": [
+        {
+          "name": "@damatjs/damat-cli",
+          "description": "Damat CLI - Development and build tool for Damat.js",
+          "dir": "packages/cli/damat",
+          "readme": "packages/cli/damat/README.md",
+          "docsIndex": "packages/cli/damat/docs/README.md",
+          "docs": [
+            "packages/cli/damat/docs/README.md",
+            "packages/cli/damat/docs/commands.md",
+            "packages/cli/damat/docs/module-commands.md",
+            "packages/cli/damat/docs/scaffolding.md"
+          ]
+        },
+        {
+          "name": "@damatjs/orm-cli",
+          "description": "Damatjs ORM CLI - unified command line interface for codegen and migrations",
+          "dir": "packages/orm/cli",
+          "readme": "packages/orm/cli/README.md",
+          "docsIndex": "packages/orm/cli/docs/README.md",
+          "docs": [
+            "packages/orm/cli/docs/README.md",
+            "packages/orm/cli/docs/config-and-paths.md",
+            "packages/orm/cli/docs/generate-commands.md",
+            "packages/orm/cli/docs/migrate-commands.md"
+          ]
+        },
+        {
+          "name": "@damatjs/create-damat-app",
+          "description": "Create a damat project using a single command.",
+          "dir": "packages/cli/create-damat-app",
+          "readme": "packages/cli/create-damat-app/README.md",
+          "docsIndex": "packages/cli/create-damat-app/docs/README.md",
+          "docs": [
+            "packages/cli/create-damat-app/docs/README.md",
+            "packages/cli/create-damat-app/docs/database-setup.md",
+            "packages/cli/create-damat-app/docs/flow.md",
+            "packages/cli/create-damat-app/docs/package-managers.md",
+            "packages/cli/create-damat-app/docs/project-vs-module.md"
+          ]
+        },
+        {
+          "name": "@damatjs/mcp",
+          "description": "Model Context Protocol (MCP) server for discovering and installing Damat modules with AI",
+          "dir": "packages/mcp",
+          "readme": "packages/mcp/README.md",
+          "docsIndex": "packages/mcp/docs/README.md",
+          "docs": [
+            "packages/mcp/docs/README.md"
+          ]
+        }
+      ]
+    }
+  ],
+  "referenceApp": {
+    "name": "@damatjs/default",
+    "dir": "backend/default",
+    "readme": "backend/default/README.md"
+  }
+}

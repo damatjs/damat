@@ -1,0 +1,51 @@
+{
+  "name": "@damatjs/module",
+  "version": "0.1.0",
+  "description": "Damatjs module system — manifest contract, standalone dev/test harness, and registry tooling for self-contained modules",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "author": "Abel Lamesgen",
+  "files": [
+    "dist",
+    "!dist/**/__tests__",
+    "!dist/**/__fixtures__",
+    "!dist/**/__mocks__"
+  ],
+  "dependencies": {
+    "@damatjs/deps": "*",
+    "@damatjs/framework": "*",
+    "@damatjs/logger": "*",
+    "@damatjs/orm-codegen": "*",
+    "@damatjs/orm-connector": "*",
+    "@damatjs/orm-migration": "*",
+    "@damatjs/orm-model": "*",
+    "@damatjs/orm-type": "*",
+    "@damatjs/services": "*",
+    "@damatjs/workflow-engine": "*"
+  },
+  "devDependencies": {
+    "@damatjs/typescript-config": "*",
+    "@types/bun": "1.3.9",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
+    "watch": "tsc --watch",
+    "test": "bun test",
+    "prepublishOnly": "test -f dist/index.js || (echo 'dist/index.js missing — run build before publishing' && exit 1)"
+  }
+}

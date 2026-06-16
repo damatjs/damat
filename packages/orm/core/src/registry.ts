@@ -77,8 +77,8 @@ export class ModelRegistry {
     if (!entry) return undefined;
 
     const schema = entry.model.toTableSchema();
-    const relation = schema.relations?.find(r => propertyName in r);
-    
+    const relation = schema.relations?.find(r => r.from === propertyName);
+
     if (!relation) return undefined;
     return this.getByTableName(relation.to);
   }

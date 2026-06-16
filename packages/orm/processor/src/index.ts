@@ -8,7 +8,7 @@
  * It is primarily used by the CLI and migration tools to compute what changes
  * need to be applied to a database to match the current codebase.
  *
- * @see processor.md for detailed documentation
+ * @see ../docs/README.md for detailed documentation
  */
 
 // =============================================================================

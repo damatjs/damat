@@ -1,4 +1,4 @@
-import { getRedis } from "@damatjs/redis";
+import { isLocked } from "@damatjs/redis";
 import { getLockKey } from "./utils";
 
 /**
@@ -12,8 +12,6 @@ export async function isWorkflowLocked(
   workflowName: string,
   lockId: string,
 ): Promise<boolean> {
-  const redis = getRedis();
   const lockKey = getLockKey(workflowName, lockId);
-  const value = await redis.get(`lock:${lockKey}`);
-  return value !== null;
+  return isLocked(lockKey);
 }

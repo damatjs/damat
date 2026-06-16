@@ -1,122 +1,118 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "bun:test";
 import {
-  initRedis,
-  getRedis,
   incrementCounter,
   decrementCounter,
   getCounter,
   resetCounter,
   setCounter,
-  disconnectRedis,
 } from "../src/index";
+import { createFakeRedis, type FakeRedis } from "./helpers/fakeRedis";
 
 describe("Counters", () => {
-  beforeAll(async () => {
-    initRedis({
-      url: process.env.REDIS_URL || "redis://localhost:6379",
-    });
-    const redis = getRedis();
-    await redis.ping();
-  });
+  let redis: FakeRedis;
 
-  afterAll(async () => {
-    await disconnectRedis();
-  });
-
-  beforeEach(async () => {
-    const redis = getRedis();
-    await redis.del("test-counter");
-    await redis.del("test-counter-ttl");
+  beforeEach(() => {
+    redis = createFakeRedis();
   });
 
   describe("incrementCounter", () => {
     it("increments counter by 1 by default", async () => {
-      const result = await incrementCounter("test-counter");
-      expect(result).toBe(1);
-
-      const result2 = await incrementCounter("test-counter");
-      expect(result2).toBe(2);
+      expect(await incrementCounter("test-counter", undefined, undefined, redis)).toBe(1);
+      expect(await incrementCounter("test-counter", undefined, undefined, redis)).toBe(2);
     });
 
     it("increments by custom amount", async () => {
-      const result = await incrementCounter("test-counter", 5);
-      expect(result).toBe(5);
+      expect(await incrementCounter("test-counter", 5, undefined, redis)).toBe(5);
+      expect(await incrementCounter("test-counter", 5, undefined, redis)).toBe(10);
     });
 
-    it("sets TTL on first increment", async () => {
-      const redis = getRedis();
-      await incrementCounter("test-counter-ttl", 1, 300);
+    it("sets TTL when provided", async () => {
+      await incrementCounter("test-counter-ttl", 1, 300, redis);
 
       const ttl = await redis.ttl("test-counter-ttl");
-      expect(ttl).toBeGreaterThan(290);
+      expect(ttl).toBeGreaterThan(295);
       expect(ttl).toBeLessThanOrEqual(300);
+    });
+
+    it("does not set a TTL when ttlSeconds is omitted", async () => {
+      await incrementCounter("test-counter", 1, undefined, redis);
+      // -1 = key exists with no expiry.
+      expect(await redis.ttl("test-counter")).toBe(-1);
+    });
+
+    it("re-applies TTL on each increment (current behavior)", async () => {
+      await incrementCounter("test-counter-ttl", 1, 300, redis);
+      redis.advanceTime(100_000);
+      // Second increment with a TTL refreshes the expiry.
+      await incrementCounter("test-counter-ttl", 1, 300, redis);
+      const ttl = await redis.ttl("test-counter-ttl");
+      expect(ttl).toBeGreaterThan(295);
     });
   });
 
   describe("decrementCounter", () => {
     it("decrements counter by 1 by default", async () => {
-      await setCounter("test-counter", 10);
-      const result = await decrementCounter("test-counter");
-      expect(result).toBe(9);
+      await setCounter("test-counter", 10, undefined, redis);
+      expect(await decrementCounter("test-counter", undefined, redis)).toBe(9);
     });
 
     it("decrements by custom amount", async () => {
-      await setCounter("test-counter", 10);
-      const result = await decrementCounter("test-counter", 3);
-      expect(result).toBe(7);
+      await setCounter("test-counter", 10, undefined, redis);
+      expect(await decrementCounter("test-counter", 3, redis)).toBe(7);
     });
 
-    it("allows negative values", async () => {
-      await resetCounter("test-counter");
-      const result = await decrementCounter("test-counter");
-      expect(result).toBe(-1);
+    it("allows negative values from zero", async () => {
+      await resetCounter("test-counter", redis);
+      expect(await decrementCounter("test-counter", undefined, redis)).toBe(-1);
     });
   });
 
   describe("getCounter", () => {
     it("returns current counter value", async () => {
-      await setCounter("test-counter", 42);
-      const result = await getCounter("test-counter");
-      expect(result).toBe(42);
+      await setCounter("test-counter", 42, undefined, redis);
+      expect(await getCounter("test-counter", redis)).toBe(42);
     });
 
     it("returns 0 for non-existent counter", async () => {
-      const result = await getCounter("nonexistent-counter");
-      expect(result).toBe(0);
+      expect(await getCounter("nonexistent-counter", redis)).toBe(0);
+    });
+
+    it("parses stored string value as an integer", async () => {
+      await redis.set("manual", "57");
+      expect(await getCounter("manual", redis)).toBe(57);
     });
   });
 
   describe("resetCounter", () => {
-    it("resets counter to zero", async () => {
-      await setCounter("test-counter", 100);
-      await resetCounter("test-counter");
-
-      const result = await getCounter("test-counter");
-      expect(result).toBe(0);
+    it("resets counter to zero by deleting the key", async () => {
+      await setCounter("test-counter", 100, undefined, redis);
+      await resetCounter("test-counter", redis);
+      expect(await getCounter("test-counter", redis)).toBe(0);
+      expect(await redis.get("test-counter")).toBeNull();
     });
   });
 
   describe("setCounter", () => {
     it("sets counter to specific value", async () => {
-      await setCounter("test-counter", 123);
-      const result = await getCounter("test-counter");
-      expect(result).toBe(123);
+      await setCounter("test-counter", 123, undefined, redis);
+      expect(await getCounter("test-counter", redis)).toBe(123);
     });
 
     it("sets counter with TTL", async () => {
-      const redis = getRedis();
-      await setCounter("test-counter-ttl", 50, 300);
-
+      await setCounter("test-counter-ttl", 50, 300, redis);
       const ttl = await redis.ttl("test-counter-ttl");
-      expect(ttl).toBeGreaterThan(290);
+      expect(ttl).toBeGreaterThan(295);
+      expect(ttl).toBeLessThanOrEqual(300);
     });
 
     it("sets counter without TTL", async () => {
-      const redis = getRedis();
-      await setCounter("test-counter", 50);
+      await setCounter("test-counter", 50, undefined, redis);
+      expect(await redis.ttl("test-counter")).toBe(-1);
+    });
 
-      const ttl = await redis.ttl("test-counter");
-      expect(ttl).toBe(-1);
+    it("stores the value as a string so getCounter can parse it", async () => {
+      await setCounter("test-counter", 7, undefined, redis);
+      expect(await redis.get("test-counter")).toBe("7");
     });
   });
 });

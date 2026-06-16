@@ -1,10 +1,11 @@
+import { z } from "@damatjs/deps/zod";
 import { ModelDefinition } from "@damatjs/orm-model";
 import {
   TransactionalEntityManager,
   PgRepository,
   PgEntityManager,
 } from "@damatjs/orm-pg";
-import { QueryResultRow, RelationSchema } from "@damatjs/orm-type";
+import { ColumnSchema, QueryResultRow, RelationSchema } from "@damatjs/orm-type";
 import {
   CountOptions,
   CreateManyOptions,
@@ -22,6 +23,7 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
   private transactionalEm: TransactionalEntityManager | null = null;
   private entityManager?: PgEntityManager<Record<string, ModelDefinition>>;
   private _relations: RelationSchema[] | null = null;
+  private _validationSchema: z.ZodObject<z.ZodRawShape> | null = null;
 
   constructor(
     model: ModelDefinition,
@@ -190,7 +192,14 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
   async update(options: UpdateOptions): Promise<T[]> {
     this._validateData(options.data, true);
     const repo = this.getRepository();
-    return repo.update(options as any);
+    // The repository's update contract is { set, where, returning } — map the
+    // service-level `data` onto `set` so the payload reaches the SQL builder
+    // (the same shape softDelete/restore build by hand).
+    return repo.update({
+      set: options.data,
+      where: options.where,
+      returning: options.returning,
+    } as any);
   }
 
   async delete(options: DeleteOptions): Promise<number> {
@@ -231,8 +240,91 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
     return repo.exists(options.where);
   }
 
+  /**
+   * Build (and cache) a zod schema from the model's column definitions.
+   * Columns that are auto-generated (primary key, autoincrement) or carry a
+   * default are optional; nullable columns accept `null`; everything else is
+   * required on a full write.
+   */
+  private getValidationSchema(): z.ZodObject<z.ZodRawShape> {
+    if (!this._validationSchema) {
+      const columns = this.model.toTableSchema().columns ?? [];
+      // Built as a mutable record; zod's ZodRawShape index signature is
+      // readonly, so we accumulate here and hand the finished map to z.object.
+      const shape: Record<string, z.ZodTypeAny> = {};
+
+      for (const column of columns) {
+        let field = this.columnToZodType(column);
+
+        if (column.nullable) {
+          field = field.nullable();
+        }
+
+        if (
+          column.nullable ||
+          column.primaryKey ||
+          column.autoincrement ||
+          column.default !== undefined
+        ) {
+          field = field.optional();
+        }
+
+        shape[column.name] = field;
+      }
+
+      this._validationSchema = z.object(shape);
+    }
+
+    return this._validationSchema;
+  }
+
+  /** Map a column's SQL type onto a zod validator. */
+  private columnToZodType(column: ColumnSchema): z.ZodTypeAny {
+    switch (column.type) {
+      case "smallint":
+      case "integer":
+      case "bigint":
+      case "decimal":
+      case "numeric":
+      case "real":
+      case "double precision":
+      case "smallserial":
+      case "serial":
+      case "bigserial":
+        return z.number();
+      case "boolean":
+        return z.boolean();
+      case "timestamp without time zone":
+      case "timestamp with time zone":
+      case "date":
+      case "time without time zone":
+      case "time with time zone":
+        return z.union([z.string(), z.date()]);
+      case "text":
+      case "character":
+      case "character varying":
+      case "uuid":
+      case "enum":
+        return z.string();
+      // JSON columns hold arbitrary objects/arrays/scalars, and the many
+      // remaining SQL types (bytea, ranges, network, geometric, …) have no
+      // single JS representation. Accept anything rather than false-reject
+      // valid data — validation only meaningfully guards the typed cases above.
+      default:
+        return z.any();
+    }
+  }
+
+  /**
+   * Validate incoming write data against the model's column schema. In partial
+   * mode (updates) every column is optional, so only the supplied fields are
+   * type-checked. Throws if the data does not satisfy the schema.
+   */
   private _validateData(
-    _data: Record<string, unknown>,
-    _partial: boolean = false,
-  ): void {}
+    data: Record<string, unknown>,
+    partial: boolean = false,
+  ): void {
+    const schema = this.getValidationSchema();
+    (partial ? schema.partial() : schema).parse(data);
+  }
 }

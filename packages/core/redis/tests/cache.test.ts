@@ -1,123 +1,153 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "bun:test";
 import {
-  initRedis,
-  getRedis,
   cacheGet,
   cacheSet,
   cacheDelete,
   cacheDeletePattern,
   cacheGetRaw,
   cacheSetRaw,
-  disconnectRedis,
 } from "../src/index";
+import { createFakeRedis, type FakeRedis } from "./helpers/fakeRedis";
 
 describe("Cache", () => {
-  beforeAll(async () => {
-    initRedis({
-      url: process.env.REDIS_URL || "redis://localhost:6379",
-    });
-    const redis = getRedis();
-    await redis.ping();
-  });
+  let redis: FakeRedis;
 
-  afterAll(async () => {
-    await disconnectRedis();
-  });
-
-  beforeEach(async () => {
-    const redis = getRedis();
-    await redis.del("cache:test-key");
-    await redis.del("cache:user:1");
-    await redis.del("cache:user:2");
-    await redis.del("cache:raw-key");
+  beforeEach(() => {
+    redis = createFakeRedis();
   });
 
   describe("cacheSet / cacheGet", () => {
-    it("sets and gets cached value", async () => {
+    it("sets and gets cached value (JSON round-trip)", async () => {
       const data = { name: "John", email: "john@example.com" };
-      await cacheSet("test-key", data, 300);
+      await cacheSet("test-key", data, 300, redis);
 
-      const result = await cacheGet<{ name: string; email: string }>("test-key");
+      // Stored under the "cache:" prefix and JSON serialized.
+      expect(await redis.get("cache:test-key")).toBe(JSON.stringify(data));
+
+      const result = await cacheGet<typeof data>("test-key", redis);
       expect(result).toEqual(data);
     });
 
+    it("serializes non-object values", async () => {
+      await cacheSet("num", 42, 300, redis);
+      expect(await cacheGet<number>("num", redis)).toBe(42);
+
+      await cacheSet("bool", true, 300, redis);
+      expect(await cacheGet<boolean>("bool", redis)).toBe(true);
+
+      await cacheSet("arr", [1, 2, 3], 300, redis);
+      expect(await cacheGet<number[]>("arr", redis)).toEqual([1, 2, 3]);
+    });
+
     it("uses default TTL of 300 seconds", async () => {
-      const redis = getRedis();
-      await cacheSet("test-key", { value: 1 });
+      await cacheSet("test-key", { value: 1 }, undefined, redis);
 
       const ttl = await redis.ttl("cache:test-key");
-      expect(ttl).toBeGreaterThan(290);
+      expect(ttl).toBeGreaterThan(295);
       expect(ttl).toBeLessThanOrEqual(300);
     });
 
-    it("returns null for non-existent key", async () => {
-      const result = await cacheGet("nonexistent");
-      expect(result).toBeNull();
+    it("honors a custom TTL", async () => {
+      await cacheSet("test-key", { value: 1 }, 60, redis);
+      const ttl = await redis.ttl("cache:test-key");
+      expect(ttl).toBeGreaterThan(55);
+      expect(ttl).toBeLessThanOrEqual(60);
     });
 
-    it("returns null for invalid JSON", async () => {
-      const redis = getRedis();
+    it("expires the value after its TTL elapses", async () => {
+      await cacheSet("test-key", { value: 1 }, 10, redis);
+      expect(await cacheGet("test-key", redis)).toEqual({ value: 1 });
+
+      redis.advanceTime(11_000);
+      expect(await cacheGet("test-key", redis)).toBeNull();
+    });
+
+    it("returns null for non-existent key", async () => {
+      expect(await cacheGet("nonexistent", redis)).toBeNull();
+    });
+
+    it("returns null for invalid JSON instead of throwing", async () => {
       await redis.set("cache:invalid", "not json");
-      const result = await cacheGet("invalid");
-      expect(result).toBeNull();
-      await redis.del("cache:invalid");
+      expect(await cacheGet("invalid", redis)).toBeNull();
+    });
+
+    it("returns null when stored value is an empty string (falsy)", async () => {
+      await redis.set("cache:empty", "");
+      expect(await cacheGet("empty", redis)).toBeNull();
     });
   });
 
   describe("cacheDelete", () => {
     it("deletes cached value", async () => {
-      await cacheSet("test-key", { value: 1 }, 300);
-      await cacheDelete("test-key");
+      await cacheSet("test-key", { value: 1 }, 300, redis);
+      await cacheDelete("test-key", redis);
 
-      const result = await cacheGet("test-key");
-      expect(result).toBeNull();
+      expect(await cacheGet("test-key", redis)).toBeNull();
     });
 
     it("does not error on non-existent key", async () => {
-      await expect(cacheDelete("nonexistent")).resolves.toBeUndefined();
+      await expect(cacheDelete("nonexistent", redis)).resolves.toBeUndefined();
     });
   });
 
   describe("cacheDeletePattern", () => {
-    it("deletes all keys matching pattern", async () => {
-      await cacheSet("user:1", { id: 1 }, 300);
-      await cacheSet("user:2", { id: 2 }, 300);
-      await cacheSet("other", { id: 3 }, 300);
+    it("deletes all keys matching pattern but leaves others", async () => {
+      await cacheSet("user:1", { id: 1 }, 300, redis);
+      await cacheSet("user:2", { id: 2 }, 300, redis);
+      await cacheSet("other", { id: 3 }, 300, redis);
 
-      await cacheDeletePattern("user:*");
+      await cacheDeletePattern("user:*", redis);
 
-      expect(await cacheGet("user:1")).toBeNull();
-      expect(await cacheGet("user:2")).toBeNull();
-      expect(await cacheGet("other")).not.toBeNull();
-
-      const redis = getRedis();
-      await redis.del("cache:other");
+      expect(await cacheGet("user:1", redis)).toBeNull();
+      expect(await cacheGet("user:2", redis)).toBeNull();
+      expect(await cacheGet("other", redis)).not.toBeNull();
     });
 
     it("does not error when no keys match", async () => {
-      await expect(cacheDeletePattern("nonexistent:*")).resolves.toBeUndefined();
+      await expect(
+        cacheDeletePattern("nonexistent:*", redis),
+      ).resolves.toBeUndefined();
+    });
+
+    it("matches the pattern against the prefixed key", async () => {
+      // deletePattern prepends CACHE_PREFIX, so "cache:*" should NOT match
+      // because the actual key is "cache:cache:*".
+      await cacheSet("a", { v: 1 }, 300, redis);
+      await cacheDeletePattern("nope:*", redis);
+      expect(await cacheGet("a", redis)).not.toBeNull();
     });
   });
 
   describe("cacheSetRaw / cacheGetRaw", () => {
     it("sets and gets raw string without JSON parsing", async () => {
-      await cacheSetRaw("raw-key", "raw string value", 300);
+      await cacheSetRaw("raw-key", "raw string value", 300, redis);
 
-      const result = await cacheGetRaw("raw-key");
-      expect(result).toBe("raw string value");
+      expect(await cacheGetRaw("raw-key", redis)).toBe("raw string value");
+      // Stored verbatim, not JSON-encoded.
+      expect(await redis.get("cache:raw-key")).toBe("raw string value");
+    });
+
+    it("applies TTL via setex when provided", async () => {
+      await cacheSetRaw("raw-key", "with ttl", 120, redis);
+      const ttl = await redis.ttl("cache:raw-key");
+      expect(ttl).toBeGreaterThan(115);
+      expect(ttl).toBeLessThanOrEqual(120);
     });
 
     it("sets without TTL when not provided", async () => {
-      const redis = getRedis();
-      await cacheSetRaw("raw-key", "no expiry");
+      await cacheSetRaw("raw-key", "no expiry", undefined, redis);
+      // -1 means the key exists with no expiry.
+      expect(await redis.ttl("cache:raw-key")).toBe(-1);
+    });
 
-      const ttl = await redis.ttl("cache:raw-key");
-      expect(ttl).toBe(-1);
+    it("treats ttl of 0 as no expiry (falsy)", async () => {
+      await cacheSetRaw("raw-key", "zero ttl", 0, redis);
+      expect(await redis.ttl("cache:raw-key")).toBe(-1);
+      expect(await cacheGetRaw("raw-key", redis)).toBe("zero ttl");
     });
 
     it("returns null for non-existent key", async () => {
-      const result = await cacheGetRaw("nonexistent");
-      expect(result).toBeNull();
+      expect(await cacheGetRaw("nonexistent", redis)).toBeNull();
     });
   });
 });

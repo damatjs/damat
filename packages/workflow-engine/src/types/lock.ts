@@ -25,6 +25,12 @@ export interface WorkflowLockConfig {
    * Default: 100
    */
   retryDelayMs?: number;
+  /**
+   * Keep the lock alive while the workflow runs by re-extending the TTL
+   * every ttlMs/2. Use for workflows that may run longer than the TTL.
+   * Default: false
+   */
+  autoExtend?: boolean;
 }
 
 /**

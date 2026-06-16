@@ -54,7 +54,7 @@ export function diffIndexes(
         type: "add_index",
         tableName,
         index: { ...newIdx, name },
-        priority: PRIORITY.ADD_INDEX,
+        priority: PRIORITY.READD_INDEX,
       } as AddIndexChange);
     }
   }

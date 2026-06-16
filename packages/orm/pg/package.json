@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/orm-pg",
   "description": "PostgreSQL ORM core for @damatjs - EntityManager, Repository pattern, and query execution",
-  "version": "0.0.10",
+  "version": "0.1.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -32,6 +32,7 @@
     "@damatjs/types": "*"
   },
   "devDependencies": {
+    "@damatjs/deps": "*",
     "@damatjs/orm-processor": "*",
     "@damatjs/typescript-config": "*",
     "@types/bun": "1.3.9",
@@ -42,7 +43,7 @@
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc && tsc-alias",
     "dev": "bun run build --watch",
     "watch": "tsc --watch",
-    "test": "exit 0",
+    "test": "bun test",
     "typecheck": "tsc --noEmit"
   }
 }

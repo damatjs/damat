@@ -13,43 +13,43 @@ export class ChildLogger implements ILogger {
   }
 
   debug(message: string, context?: LogContext): void {
-    this.parent.debug(message, this.merge(context));
+    this.parent.logWithPrefix("debug", message, this.prefix, this.merge(context));
   }
 
   info(message: string, context?: LogContext): void {
-    this.parent.info(message, this.merge(context));
+    this.parent.logWithPrefix("info", message, this.prefix, this.merge(context));
   }
 
   progress(message: string, context?: LogContext): void {
-    this.parent.progress(message, this.merge(context));
+    this.parent.logWithPrefix("progress", message, this.prefix, this.merge(context));
   }
 
   cached(message: string, context?: LogContext): void {
-    this.parent.cached(message, this.merge(context));
+    this.parent.logWithPrefix("cached", message, this.prefix, this.merge(context));
   }
 
   waiting(message: string, context?: LogContext): void {
-    this.parent.waiting(message, this.merge(context));
+    this.parent.logWithPrefix("waiting", message, this.prefix, this.merge(context));
   }
 
   success(message: string, context?: LogContext): void {
-    this.parent.success(message, this.merge(context));
+    this.parent.logWithPrefix("success", message, this.prefix, this.merge(context));
   }
 
   warn(message: string, context?: LogContext): void {
-    this.parent.warn(message, this.merge(context));
+    this.parent.logWithPrefix("warn", message, this.prefix, this.merge(context));
   }
 
   error(message: string, error?: unknown, context?: LogContext): void {
-    this.parent.error(message, error, this.merge(context));
+    this.parent.logWithPrefix("error", message, this.prefix, this.merge(context), error);
   }
 
   fatal(message: string, error?: unknown, context?: LogContext): void {
-    this.parent.fatal(message, error, this.merge(context));
+    this.parent.logWithPrefix("fatal", message, this.prefix, this.merge(context), error);
   }
 
   skip(message: string, context?: LogContext): void {
-    this.parent.skip(message, this.merge(context));
+    this.parent.logWithPrefix("skip", message, this.prefix, this.merge(context));
   }
 
   child(context: LogContext): ILogger {

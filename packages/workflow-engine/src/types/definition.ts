@@ -1,4 +1,4 @@
-import type { RequiredStepConfig } from "./step";
+import type { RequiredStepConfig, StepConfig } from "./step";
 import type { RequiredWorkflowConfig } from "./workflow";
 import type { WorkflowResult } from "./result";
 import type { WorkflowLockConfig } from "./lock";
@@ -12,8 +12,17 @@ export interface StepDefinition<I, O> {
   name: string;
   /** Step configuration with defaults applied */
   config: RequiredStepConfig;
-  /** Main step execution function */
-  invoke: (input: I, ctx: WorkflowContext) => Promise<O>;
+  /**
+   * The config exactly as passed to createStep (no defaults applied).
+   * Lets the engine layer workflow-level defaults under step-level overrides.
+   */
+  rawConfig?: StepConfig;
+  /**
+   * Main step execution function.
+   * The signal aborts on step timeout or workflow interruption — pass it to
+   * fetch/db calls so cancelled work actually stops.
+   */
+  invoke: (input: I, ctx: WorkflowContext, signal?: AbortSignal) => Promise<O>;
   /** Optional rollback function called on workflow failure */
   compensate?: (input: I, output: O, ctx: WorkflowContext) => Promise<void>;
 }

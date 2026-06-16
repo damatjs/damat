@@ -11,7 +11,12 @@ import type {
 import { WorkflowError, WorkflowLockError } from "../errors";
 import { DEFAULT_WORKFLOW_CONFIG, DEFAULT_STEP_CONFIG } from "../config";
 import { createContextLogger } from "@damatjs/logger";
-import { acquireWorkflowLock, releaseWorkflowLock } from "../lock";
+import {
+  acquireWorkflowLock,
+  releaseWorkflowLock,
+  extendWorkflowLock,
+} from "../lock";
+import { DEFAULT_LOCK_TTL_MS } from "../lock/constants";
 import { executeWorkflowInternal } from "./execute";
 
 /**
@@ -139,11 +144,37 @@ export function createWorkflow<I, O>(
           executionId: nanoid(),
           durationMs: 0,
           compensated: false,
+          compensationsFailed: 0,
         };
       }
 
-      // Use lockId as executionId for traceability
-      const executionId = lock.lockId;
+      // The lockId is a business ID and repeats across runs — executionId
+      // must stay unique per execution for tracing. The lockId is correlated
+      // separately via workflow metadata.
+      const executionId = nanoid();
+
+      // Optionally keep the lock alive while the workflow runs, so executions
+      // longer than the TTL don't silently lose mutual exclusion.
+      const ttlMs = lockConfig.ttlMs ?? DEFAULT_LOCK_TTL_MS;
+      let heartbeat: ReturnType<typeof setInterval> | undefined;
+      if (lockConfig.autoExtend && lock.lockValue) {
+        heartbeat = setInterval(
+          () => {
+            extendWorkflowLock(name, lock.lockId, lock.lockValue!, ttlMs).then(
+              (extended) => {
+                if (!extended) {
+                  workflowLogger.warn(
+                    `Lock auto-extend failed — lock expired or taken over`,
+                    { lockId: lock.lockId, executionId },
+                  );
+                }
+              },
+              () => {},
+            );
+          },
+          Math.max(1000, Math.floor(ttlMs / 2)),
+        );
+      }
 
       try {
         workflowLogger.debug(`Workflow lock acquired`, {
@@ -160,6 +191,9 @@ export function createWorkflow<I, O>(
           executionId,
         );
       } finally {
+        if (heartbeat) {
+          clearInterval(heartbeat);
+        }
         // Always release lock
         if (lock.lockValue) {
           await releaseWorkflowLock(name, lock.lockId, lock.lockValue);

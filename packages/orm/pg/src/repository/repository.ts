@@ -24,10 +24,10 @@ export class PgRepository<T extends QueryResultRow = QueryResultRow, Cols extend
     this.client = new PgModelClient<T, Cols>(config.model, config.connection as Pool, config.connection as PoolClient);
   }
 
-  async findMany(opt: FindOptions<Cols> = {}): Promise<any> { return this.client.findMany(opt); }
+  async findMany(opt: FindOptions<Cols> = {}): Promise<T[]> { return (await this.client.findMany(opt)).rows; }
   async findOne(opt: Omit<FindOptions<Cols>, "limit" | "offset"> = {}): Promise<T | undefined> { return (await this.client.findOne(opt)).rows[0]; }
   async findById(id: string, opt: Omit<FindOptions<Cols>, "where"> = {}): Promise<T | undefined> { return this.findOne({ ...opt, where: { id } as any }); }
-  async findManyByIds(ids: string[], opt: Omit<FindOptions<Cols>, "where"> = {}): Promise<any> { return this.client.findMany({ ...opt, where: { id: { in: ids } } as any }); }
+  async findManyByIds(ids: string[], opt: Omit<FindOptions<Cols>, "where"> = {}): Promise<T[]> { return (await this.client.findMany({ ...opt, where: { id: { in: ids } } as any })).rows; }
 
   async create(opt: CreateOptions<Cols>): Promise<T> {
     const res = await this.client.create(opt);

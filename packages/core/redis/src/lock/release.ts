@@ -1,7 +1,6 @@
 import type { Redis } from "../types";
 import { getRedis } from "../singleton";
-
-const LOCK_PREFIX = "lock:";
+import { LOCK_PREFIX } from "./constants";
 
 /**
  * Release a distributed lock.

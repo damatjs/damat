@@ -38,3 +38,7 @@ yarn-error.log*
 *.pem
 
 /backend/examples
+/modules
+
+# TypeScript incremental build cache
+*.tsbuildinfo

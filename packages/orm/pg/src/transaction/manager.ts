@@ -3,6 +3,15 @@ import type { ILogger } from "@damatjs/logger";
 import type { TransactionOptions } from "@damatjs/orm-type";
 import { TransactionContext } from "./context";
 
+// Runtime guard: isolation level is interpolated into SQL, so values that
+// bypass the type system (untyped config, JSON input) must be rejected.
+const VALID_ISOLATION_LEVELS = new Set([
+  "READ UNCOMMITTED",
+  "READ COMMITTED",
+  "REPEATABLE READ",
+  "SERIALIZABLE",
+]);
+
 export class TransactionManager {
   private pool: Pool;
   private logger?: ILogger | undefined;
@@ -38,7 +47,17 @@ export class TransactionManager {
       await ctx.commit();
       return result;
     } catch (error) {
-      await ctx.rollback();
+      try {
+        await ctx.rollback();
+      } catch (rollbackError) {
+        // Surface the original failure — a broken rollback must not mask it
+        this.logger?.error?.(
+          "Transaction rollback failed",
+          rollbackError instanceof Error
+            ? rollbackError
+            : new Error(String(rollbackError))
+        );
+      }
       throw error;
     } finally {
       ctx.release();
@@ -52,6 +71,11 @@ export class TransactionManager {
     const statements: string[] = [];
 
     if (options.isolationLevel) {
+      if (!VALID_ISOLATION_LEVELS.has(options.isolationLevel)) {
+        throw new Error(
+          `Invalid transaction isolation level: "${options.isolationLevel}"`
+        );
+      }
       statements.push(`SET TRANSACTION ISOLATION LEVEL ${options.isolationLevel}`);
     }
 

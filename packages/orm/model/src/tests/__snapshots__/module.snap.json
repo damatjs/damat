@@ -60,6 +60,13 @@
           "nullable": true,
           "primaryKey": false,
           "unique": false
+        },
+        {
+          "name": "deleted_at",
+          "type": "date",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
         }
       ],
       "indexes": [],
@@ -168,6 +175,13 @@
         },
         {
           "name": "updated_at",
+          "type": "date",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "name": "deleted_at",
           "type": "date",
           "nullable": true,
           "primaryKey": false,
@@ -285,6 +299,13 @@
           "nullable": true,
           "primaryKey": false,
           "unique": false
+        },
+        {
+          "name": "deleted_at",
+          "type": "date",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
         }
       ],
       "indexes": [
@@ -369,6 +390,13 @@
         },
         {
           "name": "updated_at",
+          "type": "date",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "name": "deleted_at",
           "type": "date",
           "nullable": true,
           "primaryKey": false,
@@ -498,6 +526,13 @@
           "array": false,
           "autoincrement": false,
           "default": "now()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "date",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
         }
       ],
       "indexes": [
@@ -549,7 +584,8 @@
   ],
   "relationships": [
     {
-      "from": "product",
+      "fromTable": "product",
+      "from": "category",
       "to": "category",
       "type": "belongsTo",
       "mappedBy": [
@@ -560,7 +596,8 @@
       ]
     },
     {
-      "from": "order_item",
+      "fromTable": "order_item",
+      "from": "order",
       "to": "order",
       "type": "belongsTo",
       "mappedBy": [
@@ -571,7 +608,8 @@
       ]
     },
     {
-      "from": "order_item",
+      "fromTable": "order_item",
+      "from": "product",
       "to": "product",
       "type": "belongsTo",
       "mappedBy": [
@@ -582,7 +620,8 @@
       ]
     },
     {
-      "from": "user",
+      "fromTable": "user",
+      "from": "orders",
       "to": "order",
       "type": "hasMany",
       "mappedBy": [

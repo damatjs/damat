@@ -33,11 +33,13 @@ export function loadEnv(
   cwd: string = process.cwd(),
 ): void {
   const envFiles = [
-    `.env.${environment}.local`,
-    `.env.${environment}`,
-    ".env.local",
     ".env",
+    ".env.local",
+    `.env.${environment}`,
+    `.env.${environment}.local`,
   ];
+
+  const preexisting = new Set(Object.keys(process.env));
 
   for (const envFile of envFiles) {
     const envPath = path.join(cwd, envFile);
@@ -47,13 +49,11 @@ export function loadEnv(
         const content = fs.readFileSync(envPath, "utf-8");
         const parsed = parseEnvFile(content);
 
-        // Only set if not already defined (allows system env vars to take precedence)
         for (const [key, value] of Object.entries(parsed)) {
-          if (value && process.env[key] === undefined) {
+          if (value && !preexisting.has(key)) {
             process.env[key] = value;
           }
         }
-        return;
       } catch (error) {
         console.warn(`Warning: Failed to load ${envFile}:`, error);
       }

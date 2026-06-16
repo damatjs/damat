@@ -1,6 +1,6 @@
 {
   "name": "@damatjs/deps",
-  "version": "0.0.10",
+  "version": "0.1.0",
   "description": "Dependencies for damatjs",
   "type": "module",
   "main": "dist/index.js",
@@ -18,10 +18,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./better-auth": {
-      "types": "./dist/better-auth.d.ts",
-      "default": "./dist/better-auth.js"
     },
     "./effect": {
       "types": "./dist/effect.d.ts",
@@ -55,7 +51,8 @@
   },
   "author": "Abel Lamesgen",
   "scripts": {
-    "build": "rm -rf dist tsconfig.tsbuildinfo && tsc --build"
+    "build": "rm -rf dist tsconfig.tsbuildinfo && tsc --build",
+    "test": "bun test"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",

@@ -1,5 +1,60 @@
 import { Logger } from "@damatjs/logger";
-import type { CliConfig, CommandContext } from "../types";
+import type { CliConfig, CommandContext, CommandOption } from "../types";
+
+/**
+ * Parse raw argv tokens against a command's option definitions.
+ * Supports --name value, --name=value, -a value, and boolean flags.
+ * Defaults from the option definitions are applied first.
+ */
+export function parseCommandArgs(
+  args: string[],
+  optionDefs: CommandOption[] = [],
+): { options: Record<string, unknown>; positional: string[] } {
+  const options: Record<string, unknown> = {};
+  const positional: string[] = [];
+
+  for (const def of optionDefs) {
+    if (def.default !== undefined) {
+      options[def.name] = def.default;
+    }
+  }
+
+  const findDef = (token: string): CommandOption | undefined => {
+    const isLong = token.startsWith("--");
+    const name = token.replace(/^--?/, "");
+    return optionDefs.find((d) => (isLong ? d.name === name : d.alias === name));
+  };
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (!arg) continue;
+
+    if (arg.startsWith("-")) {
+      let token = arg;
+      let inlineValue: string | undefined;
+      const eqIndex = arg.indexOf("=");
+      if (eqIndex !== -1) {
+        token = arg.slice(0, eqIndex);
+        inlineValue = arg.slice(eqIndex + 1);
+      }
+
+      const def = findDef(token);
+      if (!def) continue; // unknown flag — ignore rather than fail
+
+      if (def.type === "boolean") {
+        options[def.name] = inlineValue !== undefined ? inlineValue !== "false" : true;
+      } else {
+        const value = inlineValue ?? args[++i];
+        if (value === undefined) continue;
+        options[def.name] = def.type === "number" ? Number(value) : value;
+      }
+    } else {
+      positional.push(arg);
+    }
+  }
+
+  return { options, positional };
+}
 
 export function buildCommandContext(
   commandName: string,

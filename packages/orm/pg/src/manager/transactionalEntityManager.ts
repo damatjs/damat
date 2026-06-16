@@ -17,13 +17,19 @@ export class TransactionalEntityManager<
     modelRegistry: ModelRegistry,
     transactionContext: any,
     logger: ILogger,
-    modelsConfig: TModels
+    modelsConfig?: TModels
   ) {
     this.modelRegistry = modelRegistry;
     this.transactionContext = transactionContext;
     this.logger = logger;
 
-    for (const key of Object.keys(modelsConfig)) {
+    // Accessors come from the registry when no explicit config is given —
+    // the entity manager registers models there, not in a config object.
+    const modelNames = modelsConfig
+      ? Object.keys(modelsConfig)
+      : modelRegistry.getModelNames();
+
+    for (const key of modelNames) {
       Object.defineProperty(this, key, {
         get: () => this.getRepository(key),
         enumerable: true,

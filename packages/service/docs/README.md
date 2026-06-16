@@ -1,0 +1,77 @@
+# @damatjs/services — Internals
+
+Maintainer notes for the service layer. Three concerns: the `ModuleService` factory that generates CRUD classes, the `PoolManager` static that holds the shared pool, and `defineModule` that produces lazy, typed module instances.
+
+## Module map
+
+| File / dir | Responsibility |
+| --- | --- |
+| `src/index.ts` | Barrel: `export * from "./manager" "./module" "./service"`. |
+| `src/manager/pool.ts` | `PoolManager` — process-wide holder of `Pool` / `PgEntityManager` / `ConnectionManager`, with state on `globalThis`. Plus `PoolManagerStats`, `ConnectionManagerLike`. |
+| `src/manager/index.ts` | Re-exports `./pool`. |
+| `src/service/module.ts` | `ModuleService(config)` — the factory that builds the abstract base class with per-model accessors and `transaction()`. |
+| `src/service/methods.ts` | `ModelMethods<T>` — the per-model CRUD implementation (delegates to `PgRepository`) + relation loading. |
+| `src/service/type.ts` | Option types (`FindOptions`, `CreateOptions`, ...), `ModuleServiceConfig`, `ModelsMap`, `ToCamelCase`. |
+| `src/service/index.ts` | Re-exports `./methods` `./module` `./type`. |
+| `src/module/define.ts` | `defineModule(name, definition)` — wraps a service class into a `ModuleInstance` with a lazy `Proxy` service. |
+| `src/module/type.ts` | `ModuleDefinition`, `ModuleInstance`, `ModuleCredentials`, `ModuleRegistry` (augmentation point). |
+| `src/module/index.ts` | Re-exports `./define` `./type`. |
+| `src/util/string.ts` | `toCamelCase` (first-char lowercase). |
+| `src/util/index.ts` | Re-exports `./string`. |
+| `src/tests/**` | `bun:test` suites for pool, types, and `toCamelCase`. (The `defineModule` test is currently commented out.) |
+
+## Architecture overview
+
+```
+defineModule(name, { service, credentials })
+        │  builds a ModuleInstance whose .service is a Proxy
+        │  (first access -> new service(parsedCredentials))
+        ▼
+class extends ModuleService({ models, credentialsSchema })   <-- the service class
+        │  constructor:
+        │    - parses credentials (zod)
+        │    - asserts PoolManager.isInitialized()
+        │    - PoolManager.getPgEntityManager()
+        │    - registerModel() + new ModelMethods() per model
+        ▼
+PoolManager  (globalThis-backed static)
+        │  getPgEntityManager() -> PgEntityManager (from @damatjs/orm-pg)
+        ▼
+ModelMethods -> PgRepository (per model)  -> PostgreSQL
+```
+
+## Startup / initialization flow
+
+The order matters; the framework enforces it at boot:
+
+1. **Pool setup.** Something (the framework's `initDatabase`, or a test) calls `PoolManager.setup({ pool, logger, connectionManager })`. This constructs the `PgEntityManager` and stores all three on `globalThis`.
+2. **Module registration.** The framework imports each module's default export (a `ModuleInstance` from `defineModule`) and calls `init()`, which **constructs** the service for the first time.
+3. **Service construction.** The generated `ModuleService` constructor parses credentials, asserts the pool is initialized, grabs the entity manager, and for each model calls `entityManager.registerModel(name, model)` and creates a `ModelMethods`.
+4. **Use.** Accessing `service.<model>` returns the corresponding `ModelMethods`; calling `service.<model>.create(...)` delegates to a `PgRepository` obtained from the entity manager (or the transactional EM if inside `transaction()`).
+
+## Request / call flow (per method)
+
+`service.user.findMany({ where, include })`:
+
+1. The `user` accessor returns the cached `ModelMethods` for that model.
+2. `findMany` calls `getRepository()` — returns the transactional repository if a transaction is active, else the entity manager's repository.
+3. The repository runs the query; if `include` is set, `loadRelations` walks the model's `RelationSchema[]` and issues follow-up queries per relation (`belongsTo` / `hasMany` / `hasOne`).
+
+## Invariants & design decisions
+
+- **`PoolManager` state lives on `globalThis`, not class statics.** Keyed by `Symbol.for("damatjs.services.poolManager")`. This is deliberate: if two copies of `@damatjs/services` end up in one process (a linked dev package next to an installed one), class statics would be per-copy and the second copy would see an uninitialized pool. The global symbol guarantees a single shared pool/entity manager.
+- **Construct-on-init, not cache-forever.** `defineModule`'s `init()` always constructs a fresh instance. After a `PoolManager.reset()` (tests, harness reboot), re-initializing yields a service bound to the *current* pool instead of one holding a stale connection.
+- **Service construction requires an initialized pool.** The `ModuleService` constructor throws `"PoolManager not initialized..."` if `PoolManager.isInitialized()` is false. This surfaces misordered startup immediately.
+- **Accessor names are camelCased model keys.** `toCamelCase` only lowercases the first character (`account` → `account`, `Verification` → `verification`, `APIKey` → `aPIKey`). It does **not** convert snake_case or kebab-case (see `module-service.md` gotchas).
+- **Relation FK conventions are by-convention.** `loadRelation` infers FK column names (`<model>_id`) from relation metadata; non-standard FK naming will not resolve. See `module-service.md`.
+- **`ModuleRegistry` is the typing seam.** Apps augment it via declaration merging so the framework's `getModule("user")` is typed. The interface ships empty.
+
+## Build note
+
+`package.json` build is `tsc && tsc-alias` because the service layer uses `@/...` path aliases (e.g. `import { toCamelCase } from "@/util/string"` in `service/module.ts`); `tsc-alias` rewrites those to relative paths in the emitted output. The local alias is declared in `tsconfig.json` (`paths: { "@/*": ["src/*"] }`).
+
+## Split docs
+
+- [`module-service.md`](./module-service.md) — the factory and generated CRUD methods in detail.
+- [`pool-manager.md`](./pool-manager.md) — the shared pool holder.
+- [`define-module.md`](./define-module.md) — lazy proxy init, `ModuleInstance` / `ModuleDefinition` / `ModuleRegistry`.
