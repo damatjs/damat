@@ -106,6 +106,19 @@ describe("@damatjs/deps package.json exports", () => {
 
   // Build the flat list of every file an export condition points at, so the
   // assertion message tells us exactly which subpath/condition is dangling.
+  // The build (`tsc --build`) emits dist/X.{js,d.ts} from src/X.ts, so every
+  // export target maps back to exactly one source file. Asserting the SOURCE
+  // exists catches a dangling export (a subpath with no source the build could
+  // ever emit) WITHOUT depending on a prior build — `bun test` / `turbo run
+  // test` do not build this package before running it.
+  const sourceForTarget = (file: string): string => {
+    const base = file
+      .replace(/^(\.\/)?dist\//, "")
+      .replace(/\.d\.ts$/, "")
+      .replace(/\.js$/, "");
+    return join(pkgRoot, "src", `${base}.ts`);
+  };
+
   const targets = Object.entries(pkg.exports).flatMap(([subpath, conditions]) =>
     Object.entries(conditions).map(([condition, file]) => ({
       subpath,
@@ -115,16 +128,16 @@ describe("@damatjs/deps package.json exports", () => {
   );
 
   it.each(targets)(
-    "$subpath [$condition] -> $file resolves to a built file",
+    "$subpath [$condition] -> $file is backed by a source the build emits",
     ({ file }) => {
-      // Every export target must point at a file the build actually emits;
-      // a dangling target ships a package consumers cannot import.
-      expect(existsSync(join(pkgRoot, file))).toBe(true);
+      // A target with no matching src/*.ts is one the build can never emit —
+      // it would ship a package consumers cannot import.
+      expect(existsSync(sourceForTarget(file))).toBe(true);
     },
   );
 
-  it("points `main` and `types` at built files", () => {
-    expect(existsSync(join(pkgRoot, pkg.main))).toBe(true);
-    expect(existsSync(join(pkgRoot, pkg.types))).toBe(true);
+  it("points `main` and `types` at sources the build emits", () => {
+    expect(existsSync(sourceForTarget(pkg.main))).toBe(true);
+    expect(existsSync(sourceForTarget(pkg.types))).toBe(true);
   });
 });

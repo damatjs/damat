@@ -2,7 +2,6 @@ import { spawn } from "bun";
 import { join } from "node:path";
 import { writeFileSync, existsSync, mkdirSync, unlinkSync } from "node:fs";
 import type { Command } from "@damatjs/cli";
-import { loadEnv } from "@damatjs/load-env";
 
 export const moduleDevCommand: Command = {
   name: "dev",
@@ -28,6 +27,7 @@ export const moduleDevCommand: Command = {
       `import { runModuleEntry } from '@damatjs/module';\nrunModuleEntry();\n`,
     );
 
+    const { loadEnv } = await import("@damatjs/load-env");
     loadEnv(process.env.NODE_ENV || "development", ctx.cwd);
 
     const port = ctx.options.port as number | undefined;
@@ -46,7 +46,7 @@ export const moduleDevCommand: Command = {
 
     try {
       if (existsSync(entryFile)) unlinkSync(entryFile);
-    } catch {}
+    } catch { }
 
     return { exitCode };
   },

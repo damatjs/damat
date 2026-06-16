@@ -2,7 +2,6 @@ import { spawn } from "bun";
 import { join } from "node:path";
 import { writeFileSync, unlinkSync, existsSync, mkdirSync } from "node:fs";
 import type { Command } from "@damatjs/cli";
-import { loadEnv } from '@damatjs/load-env';
 
 
 export const devCommand: Command = {
@@ -40,6 +39,7 @@ export const devCommand: Command = {
 
     clear && console.clear();
 
+    const { loadEnv } = await import("@damatjs/load-env");
     loadEnv(process.env.NODE_ENV || "development", process.cwd());
 
     const result = spawn({
