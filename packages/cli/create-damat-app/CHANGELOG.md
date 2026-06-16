@@ -1,5 +1,17 @@
 # @damatjs/create-damat-app
 
+## 0.1.0
+
+### Minor Changes
+
+- Stabilized core functionality, expanded testing, and resolved known issues. Ready for minor release.
+
+### Patch Changes
+
+- Updated dependencies
+  - @damatjs/cli@0.1.0
+  - @damatjs/deps@0.1.0
+
 ## 0.0.10
 
 ### Patch Changes
