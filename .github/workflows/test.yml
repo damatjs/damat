@@ -7,33 +7,18 @@ on:
   pull_request:
 
 jobs:
-  # Package suites — run in parallel. A Postgres service is provided so the
-  # orm/pg live-database integration tests run (they are skipIf(!DATABASE_URL));
-  # orm/pg is the only package that touches the DB and does so in an isolated
-  # schema, so parallel execution is safe. Redis is intentionally NOT provided,
-  # so redis live-server tests self-skip (they gate on REDIS_URL) — see the
-  # integration job for why REDIS_URL is withheld.
-  packages:
-    name: Build & test packages
+  # Builds and tests everything that is actually committed: packages/** (the
+  # framework) and backend/** (the default app). The modules/** workspaces are
+  # gitignored (.gitignore: /modules), so they are NOT in a clean checkout and
+  # cannot be tested here.
+  #
+  # No external services: tests that need a live database or redis self-skip
+  # when their env var is unset — orm/pg's integration suite is
+  # skipIf(!DATABASE_URL) and the redis live-server tests gate on REDIS_URL.
+  # Everything else (the vast majority of the suite) is infra-free.
+  test:
+    name: Build & test (packages + default app)
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: damatjs
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    env:
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/damatjs
 
     steps:
       - name: Checkout repo
@@ -44,58 +29,15 @@ jobs:
         with:
           bun-version: 1.3.9
 
+      # NOT --frozen-lockfile: the root workspace globs include `modules/*`,
+      # which are gitignored, so the committed lockfile records workspaces that
+      # are absent from a clean checkout and a frozen install always reports
+      # "lockfile had changes". A plain install resolves what is present.
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install
 
       - name: Build packages
         run: bun run build --filter='./packages/**'
 
-      - name: Test packages
-        run: bun run test --filter='./packages/**'
-
-  # Module + backend integration suites — these boot a live app, connect to a
-  # real Postgres and auto-apply their migrations on boot, so they need a
-  # database. They share one database, so they must run SEQUENTIALLY
-  # (--concurrency=1): each module owns its own tables, but concurrent boots
-  # race on migration/DDL. Redis is intentionally NOT provided — the modules
-  # don't require it, and setting REDIS_URL flips tr-ref-check onto a separate
-  # (currently failing) cache path.
-  integration:
-    name: Build & test modules + backend
-    runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: damatjs
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    env:
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/damatjs
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.3.9
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build all workspaces
-        run: bun run build
-
-      - name: Test modules + backend
-        run: bun run test --filter='./modules/**' --filter='./backend/**' --concurrency=1
+      - name: Test packages + default app
+        run: bun run test --filter='./packages/**' --filter='./backend/**'
