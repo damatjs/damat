@@ -134,7 +134,7 @@ harness (`withModule`/`bootModule`).
 Prefer the MCP tools (below) or the CLI:
 `damat module add <registry-ref | path | github | git-url>` →
 `damat-orm migrate:up` → restart. See
-[the guide §17](./docs/GUIDE.md#17-installing-existing-modules).
+[the guide](./docs/guide/14-installing-modules.md).
 
 ### Add a workflow
 Define steps with `createStep` (forward + compensation) and compose them with
@@ -161,9 +161,11 @@ Recommended flow: **search → module_info → add_module → tell the user to r
 `DAMAT_MODULE_REGISTRY` to enable registry tools; without it, install from a
 path or git URL.
 
-There is also a Claude Code skill, **`damat-modules`**
-([.claude/skills/damat-modules](./.claude/skills/damat-modules/SKILL.md)), that
-encodes the full add/author workflow.
+Two Claude Code skills encode the workflows:
+- **`damat-backend`** ([.claude/skills/damat-backend](./.claude/skills/damat-backend/SKILL.md))
+  — general backend work: models, services, routes, workflows, migrations, run/debug.
+- **`damat-modules`** ([.claude/skills/damat-modules](./.claude/skills/damat-modules/SKILL.md))
+  — authoring standalone modules and installing existing ones.
 
 ---
 
