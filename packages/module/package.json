@@ -38,6 +38,7 @@
     "@damatjs/workflow-engine": "*"
   },
   "devDependencies": {
+    "@damatjs/typescript-config": "*",
     "@types/bun": "1.3.9",
     "typescript": "^5.9.3"
   },
