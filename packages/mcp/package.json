@@ -16,6 +16,7 @@
   "author": "Abel Lamesgen",
   "files": [
     "bin",
+    "src",
     "registry.example.json"
   ],
   "dependencies": {},

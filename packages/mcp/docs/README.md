@@ -20,30 +20,32 @@ registration + env sync + package install.
 
 ## Module map
 
-| File | Responsibility |
+The server is plain TypeScript run by Bun (no build step). `bin/damat-mcp.ts`
+is just the executable entry — it carries the shebang and the env-var reference,
+then calls `run()`. Everything else lives under `src/`, split so no file
+exceeds ~100 lines:
+
+| Path | Responsibility |
 |------|----------------|
-| `bin/damat-mcp.ts` | The entire server: registry reader, tool registry, and the JSON-RPC/stdio loop. |
+| `bin/damat-mcp.ts` | Executable entry: shebang + env-var docs; imports `run` from `src/server` and calls it. |
+| `src/constants.ts` | Server identity (`SERVER_NAME`/`SERVER_VERSION`), `DEFAULT_PROTOCOL`, and shared strings (`NO_REGISTRY_MSG`, `SERVER_INSTRUCTIONS`). |
+| `src/env.ts` | Config from environment: `appDir()`, `registryLocation()`, `damatCli()`. |
+| `src/registry/` | Registry layer — `types.ts` (inline copies of `@damatjs/module` shapes), `ref.ts` (`parseModuleRef`/`formatModuleRef`), `load.ts` (`loadRegistryIndex`/`lookupEntry`), `summarize.ts` (`summarizeEntry`). |
+| `src/app/` | The target Damat app — `cli.ts` (`runDamat`, shells out to the CLI) and `installed.ts` (`listInstalled`, scans the modules dir). |
+| `src/tools/` | One MCP tool per file (`list-modules`, `search-modules`, `module-info`, `list-installed`, `add-module`), the `ToolDef` type, and `index.ts` assembling the `tools` catalog. |
+| `src/server/` | The MCP transport — `rpc.ts` (`send`/`reply`/`replyError`), `dispatch.ts` (`handleMessage`), `run.ts` (the newline-delimited stdin loop). |
 | `registry.example.json` | A sample registry index used by the repo's `.mcp.json` and for local testing. |
-| `package.json` | Declares the `damat-mcp` bin (raw `.ts`, run by Bun — no build). |
+| `package.json` | Declares the `damat-mcp` bin (raw `.ts`, run by Bun — no build); publishes `bin` + `src`. |
 
-`bin/damat-mcp.ts` is organized in four sections:
-
-1. **Registry types + reader** — inline copies of the registry shapes from
-   `@damatjs/module` (`ModuleRef`, `RegistryIndex`, `RegistryModuleEntry`),
-   plus `parseModuleRef`, `loadRegistryIndex`, and `lookupEntry`. Kept inline so
-   the server has zero workspace dependencies and runs without a build.
-2. **Helpers** — `appDir()`, `registryLocation()`, `damatCli()`, `runDamat()`,
-   `summarizeEntry()`, `listInstalled()`.
-3. **Tool definitions** — the `tools` array; each entry has a `name`,
-   `description`, JSON-Schema `inputSchema`, and an async `handler`.
-4. **JSON-RPC over stdio** — `send`/`reply`/`replyError`, `handleMessage`, and
-   `main()` (the newline-delimited read loop).
+Each folder has an `index.ts` barrel, so imports stay at the folder level
+(`from "../registry"`, `from "../tools"`). The dependency direction is
+one-way: `server` → `tools` → `registry`/`app` → `env`/`constants`.
 
 ## Transport & protocol
 
 - **Transport:** stdio. Each JSON-RPC message is a single UTF-8 line
-  terminated by `\n`. `main()` buffers stdin and splits on newlines; malformed
-  lines are ignored.
+  terminated by `\n`. `run()` (in `src/server/run.ts`) buffers stdin and splits
+  on newlines; malformed lines are ignored.
 - **Protocol version:** the server echoes the client's requested
   `protocolVersion` on `initialize`, falling back to `DEFAULT_PROTOCOL`
   (`2025-06-18`).
@@ -91,13 +93,16 @@ CLI/`@damatjs/module` and is controlled by `DAMAT_MODULE_VERIFY`.
 
 ## Extending the server
 
-- **New tool:** push a `ToolDef` onto `tools`. Give it a precise
+- **New tool:** add `src/tools/<your-tool>.ts` exporting a `ToolDef`, then
+  register it in the `tools` array in `src/tools/index.ts`. Give it a precise
   `description` (the model reads it) and a strict `inputSchema`
   (`additionalProperties: false`). Return `{ text, isError? }`.
-- **Richer registry output:** edit `summarizeEntry()` and the inline registry
-  types — keep them in sync with `@damatjs/module/src/registry/entry.ts`.
+- **Richer registry output:** edit `summarizeEntry()` in
+  `src/registry/summarize.ts` and the inline types in `src/registry/types.ts`
+  — keep them in sync with `@damatjs/module/src/registry/entry.ts`.
 - **Resources/prompts:** not implemented. If you add them, advertise the
-  capability in the `initialize` response and handle `resources/list` etc.
+  capability in the `initialize` response (`src/server/dispatch.ts`) and handle
+  `resources/list` etc.
 
 ## Testing locally
 

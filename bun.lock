@@ -218,6 +218,16 @@
         "typescript": "^5.9.3",
       },
     },
+    "packages/mcp": {
+      "name": "@damatjs/mcp",
+      "version": "0.0.10",
+      "bin": {
+        "damat-mcp": "./bin/damat-mcp.ts",
+      },
+      "devDependencies": {
+        "@types/bun": "1.3.9",
+      },
+    },
     "packages/module": {
       "name": "@damatjs/module",
       "version": "0.0.10",
@@ -501,6 +511,8 @@
     "@damatjs/load-env": ["@damatjs/load-env@workspace:packages/core/env"],
 
     "@damatjs/logger": ["@damatjs/logger@workspace:packages/core/logger"],
+
+    "@damatjs/mcp": ["@damatjs/mcp@workspace:packages/mcp"],
 
     "@damatjs/module": ["@damatjs/module@workspace:packages/module"],
 
