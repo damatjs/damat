@@ -68,15 +68,10 @@ export class HasOne extends Relation {
    * @param fromProp  Property name this relation is registered under.
    */
   toRelationSchema(fromTable: string, fromProp: string): RelationSchema {
-    const targetTable =
-      typeof this.target === "string"
-        ? this.target
-        : this.getModuleTarget()._tableName;
-
     const schema: RelationSchema = {
       fromTable,
       from: fromProp,
-      to: targetTable,
+      to: this.getModuleTargetTable(),
       type: "hasOne",
     };
 

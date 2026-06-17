@@ -42,8 +42,17 @@ export abstract class Relation {
     return resolveModuleTarget(this.target);
   }
 
-  /** Return the target's SQL table name. */
+  /**
+   * Return the target's SQL table name.
+   *
+   * When the target was supplied as a plain table-name string, that string
+   * *is* the table name — return it directly without resolving the model
+   * through the registry. This lets a relation reference a table by name
+   * (including across module boundaries) without importing and eagerly
+   * resolving the target model.
+   */
   getModuleTargetTable(): string {
+    if (typeof this.target === "string") return this.target;
     return this.getModuleTarget()._tableName;
   }
 

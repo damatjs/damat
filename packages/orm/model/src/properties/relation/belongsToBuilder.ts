@@ -19,6 +19,7 @@ import {
 } from "../column";
 import { Relation } from "./base";
 import { ModelTarget, removeLastS } from "@/utils/target";
+import { toPascalCase } from "@/utils/stringConvertor";
 
 // ─── BelongsTo ────────────────────────────────────────────────────────────────
 
@@ -101,7 +102,7 @@ export class BelongsTo extends Relation {
    */
   link(config: LinkConfig): this {
     if (config.foreignKey === undefined) {
-      config.foreignKey = [`${this.getModuleTarget()._tableName}_id`];
+      config.foreignKey = [`${this.getModuleTargetTable()}_id`];
     }
     if (config.reference === undefined) {
       config.reference = ["id"];
@@ -210,7 +211,7 @@ export class BelongsTo extends Relation {
     if (!this._foreignKey || this._foreignKey.length === 0) {
       this._foreignKey = [
         {
-          name: `${this.getModuleTarget()._tableName}_id`,
+          name: `${this.getModuleTargetTable()}_id`,
           type: "text",
         },
       ];
@@ -221,7 +222,7 @@ export class BelongsTo extends Relation {
   getConstrainName(): string {
     if (!this._constraintName) {
       const fk = this.getForeignKey();
-      this._constraintName = `${this.getModuleTarget()._tableName}_${fk.map((fk) => fk.name).join("_")}_fk`;
+      this._constraintName = `${this.getModuleTargetTable()}_${fk.map((fk) => fk.name).join("_")}_fk`;
     }
     return this._constraintName;
   }
@@ -249,7 +250,7 @@ export class BelongsTo extends Relation {
    * Falls back to `deriveNameFromTable(target._tableName)`.
    */
   getMappedBy(): string {
-    return this._mappedBy ?? removeLastS(this.getModuleTarget()._tableName);
+    return this._mappedBy ?? removeLastS(this.getModuleTargetTable());
   }
 
   /** Returns `true` only when `mappedBy` was explicitly provided. */
@@ -273,7 +274,7 @@ export class BelongsTo extends Relation {
     const fk: ForeignKeySchema = {
       name: name,
       columns: foreignKey,
-      referencedTable: this.getModuleTarget()._tableName,
+      referencedTable: this.getModuleTargetTable(),
       referencedColumns: reference,
     };
 
@@ -346,7 +347,7 @@ export class BelongsTo extends Relation {
     const schema: RelationSchema = {
       fromTable,
       from: fromProp,
-      to: this.getModuleTarget()._tableName,
+      to: this.getModuleTargetTable(),
       type: "belongsTo",
       mappedBy: [this.getMappedBy()],
       linkedBy: this.getForeignKey().map((fk) => fk.name),
@@ -372,6 +373,9 @@ export class BelongsTo extends Relation {
   }
 
   toTsType(): any {
+    if (typeof this.target === "string") {
+      return toPascalCase(this.target);
+    }
     return `${this.getModuleTarget().toTsType()}`;
   }
 }

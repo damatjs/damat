@@ -32,7 +32,7 @@ export function checkBelongsTo(
     // Only validate when mappedBy was explicitly declared.
     if (!propValue.hasExplicitMappedBy()) continue;
 
-    const targetTable = propValue.getModuleTarget()._tableName;
+    const targetTable = propValue.getModuleTargetTable();
     const targetModel = modelMap.get(targetTable);
 
     // Target not registered in this module — skip.

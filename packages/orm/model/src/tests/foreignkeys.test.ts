@@ -85,6 +85,34 @@ describe("transform › belongsTo / foreign keys", () => {
     ).toBeUndefined();
   });
 
+  it("belongsTo accepts a string table name without resolving the target model", () => {
+    // No model is ever defined for "publishing_houses" — referencing it by
+    // table-name string must still produce the FK column, constraint and
+    // relation schema without a registry lookup.
+    const Book = model("books_str", {
+      id: columns.id().primaryKey(),
+      publisher: columns.belongsTo("publishing_houses"),
+    });
+    const schema = Book.toTableSchema();
+
+    // FK column defaults to "<targetTable>_id".
+    expect(
+      schema.columns.find((c) => c.name === "publishing_houses_id"),
+    ).toBeDefined();
+
+    // FK constraint references the string table name directly.
+    const fk = schema.foreignKeys?.find((f) =>
+      f.columns.map((c) => c.name).includes("publishing_houses_id"),
+    )!;
+    expect(fk.referencedTable).toBe("publishing_houses");
+    expect(fk.referencedColumns).toEqual(["id"]);
+
+    // Relation schema points at the string table name.
+    const rel = schema.relations?.find((r) => r.type === "belongsTo")!;
+    expect(rel.to).toBe("publishing_houses");
+    expect(rel.linkedBy).toEqual(["publishing_houses_id"]);
+  });
+
   it("hasMany does not create a column on the owner side", () => {
     const { UserSchema } = require("./__fixtures__/models");
     const colNames = UserSchema.toTableSchema().columns.map(

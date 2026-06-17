@@ -32,7 +32,7 @@ export function checkInverse(
     // No mappedBy declared — one-sided relation, nothing to validate.
     if (mappedBy === undefined) continue;
 
-    const targetTable = propValue.getModuleTarget()._tableName;
+    const targetTable = propValue.getModuleTargetTable();
     const targetModel = modelMap.get(targetTable);
 
     // Target not registered in this module — skip.

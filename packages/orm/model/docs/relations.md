@@ -30,8 +30,8 @@ abstract class Relation {
   readonly kind: RelationType;            // "belongsTo" | "hasMany" | "hasOne"
   protected target: ModelTarget;
 
-  getModuleTarget(): ModelDefinition;     // resolves the target
-  getModuleTargetTable(): string;         // target._tableName
+  getModuleTarget(): ModelDefinition;     // resolves the target (registry/thunk/model)
+  getModuleTargetTable(): string;         // target table name — string target used as-is, no resolution
 
   abstract createsForeignKey(): boolean;  // true only for BelongsTo
   abstract toRelationSchema(fromTable: string, fromProp: string): RelationSchema;
@@ -120,8 +120,15 @@ toColumnBuilder(): ColumnBuilder[]  // one builder per FK column
 toColumnSchema(): ColumnSchema[]    // .toColumnBuilder().map(b => b.toSchema())
 toForeignKeySchema(): ForeignKeySchema
 toRelationSchema(fromTable, fromProp): RelationSchema
-toTsType(): string                  // delegates to target.toTsType()
+toTsType(): string                  // delegates to target.toTsType(); toPascalCase(target) for string targets
 ```
+
+All table-name lookups (`getForeignKey()`, `getConstrainName()`, `getMappedBy()`,
+`toForeignKeySchema()`, `toRelationSchema()`) go through `getModuleTargetTable()`,
+so a `belongsTo("orders")` string target emits its FK column, constraint and
+relation schema **without** resolving the target model — same as `hasMany` /
+`hasOne`. This is what makes cross-module relations (referencing a table owned by
+another module) work without importing that module's model.
 
 - **`toColumnBuilder()`** picks the builder by `fk.type`: `uuid` →
   `UuidColumnBuilder`; `integer`/`smallint`/`bigint` → `IntegerColumnBuilder`;
@@ -242,9 +249,13 @@ user"). `RelationValidationError`'s message is `formatViolations(violations)`.
   `removeLastS(targetTable)`; `hasMany`/`hasOne` do **not** auto-derive (their
   `getMappedBy()` returns `undefined` when unset), so a one-sided inverse passes
   validation untouched.
-- **String targets need ordering.** `belongsTo("user")` resolves through the
-  global registry, so `User` must have been constructed first. Prefer lazy thunks
-  (`() => User`) within a file to avoid both circular-import and ordering issues.
+- **String targets and ordering.** Schema generation (columns, FK, relation
+  metadata, codegen) uses the string table name directly via
+  `getModuleTargetTable()` — no registry lookup, so ordering does **not** matter
+  there. Only *query-time* resolution (`getModuleTarget()` in `@damatjs/orm-pg`'s
+  relation resolver) needs the live model, so the target must be loaded before you
+  run a query that traverses the relation. Within a single file, lazy thunks
+  (`() => User`) remain a good way to dodge circular-import issues.
 - The legacy `src/properties/foreignKeys/base.ts` is entirely commented out;
   `BelongsTo` fully replaces that `ForeignKeyBuilder`. Don't revive it.
 

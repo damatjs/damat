@@ -74,6 +74,33 @@ describe("transform › relations (module level)", () => {
     expect(rel!.mappedBy).toBeUndefined();
   });
 
+  it("hasMany accepts a string table name without resolving the target model", () => {
+    // "comments_str" never gets a model defined — referencing it by table-name
+    // string must still emit a relation that points at that table directly.
+    const Post = model("posts_str", {
+      id: columns.id().primaryKey(),
+      comments: columns.hasMany("comments_str").mappedBy("post"),
+    });
+    const rel = Post.toTableSchema().relations?.find(
+      (r) => r.type === "hasMany",
+    )!;
+    expect(rel.to).toBe("comments_str");
+    expect(rel.mappedBy).toEqual(["post"]);
+  });
+
+  it("hasOne accepts a string table name without resolving the target model", () => {
+    // "profiles_str" never gets a model defined.
+    const Account = model("accounts_str", {
+      id: columns.id().primaryKey(),
+      profile: columns.hasOne("profiles_str").mappedBy("account"),
+    });
+    const rel = Account.toTableSchema().relations?.find(
+      (r) => r.type === "hasOne",
+    )!;
+    expect(rel.to).toBe("profiles_str");
+    expect(rel.mappedBy).toEqual(["account"]);
+  });
+
   it("hasOne relation: fromTable = source table, to = target table", () => {
     const Profile = model("profile", { id: columns.id().primaryKey() });
     const Account = model("account", {
