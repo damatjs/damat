@@ -116,3 +116,37 @@ describe("transform › relations (module level)", () => {
     expect(rel!.mappedBy).toEqual(["account"]);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// hasOne with a *string* target — like hasMany, the inverse side creates no DB
+// artifact; it is pure ORM metadata. The target table is referenced by name
+// without ever resolving a model.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("transform › hasOne string target", () => {
+  it("creates no FK column and no foreign key on the owner side", () => {
+    const Account = model("accounts_no_col", {
+      id: columns.id().primaryKey(),
+      profile: columns.hasOne("profiles_str"),
+    });
+    const schema = Account.toTableSchema();
+    expect(schema.columns.map((c) => c.name)).not.toContain("profiles_str_id");
+    expect(schema.foreignKeys ?? []).toHaveLength(0);
+  });
+
+  it("without mappedBy omits mappedBy from the relation", () => {
+    const Account = model("accounts_nomap", {
+      id: columns.id().primaryKey(),
+      profile: columns.hasOne("profiles_str"),
+    });
+    const rel = Account.toTableSchema().relations?.find(
+      (r) => r.type === "hasOne",
+    )!;
+    expect(rel.to).toBe("profiles_str");
+    expect(rel.mappedBy).toBeUndefined();
+  });
+
+  it("toTsType() returns the PascalCased table name", () => {
+    expect(columns.hasOne("profiles_str").toTsType()).toBe("ProfilesStr");
+  });
+});

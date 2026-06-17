@@ -283,3 +283,68 @@ describe("assertValidRelations", () => {
     expect(thrown!.message).toMatch(/Found \d+ relation violation/);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// String targets in validation — the validators must resolve the target table
+// through the string-aware `getModuleTargetTable()`, so a string reference to a
+// table owned by *another* module is skipped silently (its model isn't in the
+// list), while string references *within* the module are validated normally.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("validateRelations › string targets", () => {
+  it("belongsTo string target to a table outside the module is skipped silently", () => {
+    // "posts_external" is owned by another module — no model for it in this list.
+    const Comment = model("comments_x", {
+      id: columns.id().primaryKey(),
+      post: columns.belongsTo("posts_external", { mappedBy: "comments" }),
+    });
+    const result = validateRelations([Comment]);
+    expect(result.valid).toBe(true);
+    expect(result.violations).toHaveLength(0);
+  });
+
+  it("hasOne string target to a table outside the module is skipped silently", () => {
+    const Account = model("accounts_x", {
+      id: columns.id().primaryKey(),
+      profile: columns.hasOne("profiles_external").mappedBy("account"),
+    });
+    const result = validateRelations([Account]);
+    expect(result.valid).toBe(true);
+    expect(result.violations).toHaveLength(0);
+  });
+
+  it("fully wired belongsTo + hasOne via string targets passes", () => {
+    const Profile = model("profiles_in", {
+      id: columns.id().primaryKey(),
+      account: columns.belongsTo("accounts_in"),
+    });
+    const Account = model("accounts_in", {
+      id: columns.id().primaryKey(),
+      profile: columns.hasOne("profiles_in").mappedBy("account"),
+    });
+    const result = validateRelations([Account, Profile]);
+    expect(result.valid).toBe(true);
+    expect(result.violations).toHaveLength(0);
+  });
+
+  it("still detects a mappedBy mismatch when both sides use string targets", () => {
+    const Post = model("posts_mm", {
+      id: columns.id().primaryKey(),
+      // claims the inverse on users_mm is "articles"
+      writer: columns.belongsTo("users_mm", { mappedBy: "articles" }),
+    });
+    const User = model("users_mm", {
+      id: columns.id().primaryKey(),
+      // but the inverse says the FK prop on posts_mm is "author", not "writer"
+      articles: columns.hasMany("posts_mm").mappedBy("author"),
+    });
+    const result = validateRelations([User, Post]);
+    expect(result.valid).toBe(false);
+    const mismatch = result.violations.find(
+      (x) => x.kind === "mappedBy_mismatch",
+    );
+    expect(mismatch).toBeDefined();
+    expect(mismatch!.sourceTable).toBe("posts_mm");
+    expect(mismatch!.targetTable).toBe("users_mm");
+  });
+});

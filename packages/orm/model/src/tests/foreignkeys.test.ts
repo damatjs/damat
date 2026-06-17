@@ -122,3 +122,130 @@ describe("transform › belongsTo / foreign keys", () => {
     expect(colNames).not.toContain("orders_id");
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// belongsTo with a *string* target — the table is referenced purely by name,
+// no model is ever defined or resolved through the registry. Every FK artifact
+// (column, constraint, relation schema) must be derived from the string alone.
+// This is what enables cross-module relations without importing the target.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("transform › belongsTo string target", () => {
+  it(".link({ foreignKey }) overrides the FK column name", () => {
+    const Book = model("books_link", {
+      id: columns.id().primaryKey(),
+      publisher: columns
+        .belongsTo("publishing_houses")
+        .link({ foreignKey: "pub_ref" }),
+    });
+    const schema = Book.toTableSchema();
+
+    expect(schema.columns.find((c) => c.name === "pub_ref")).toBeDefined();
+    expect(
+      schema.columns.find((c) => c.name === "publishing_houses_id"),
+    ).toBeUndefined();
+
+    const fk = schema.foreignKeys?.find((f) =>
+      f.columns.map((c) => c.name).includes("pub_ref"),
+    )!;
+    expect(fk.referencedTable).toBe("publishing_houses");
+  });
+
+  it("auto-generates the constraint name from the target table name", () => {
+    const Book = model("books_cn", {
+      id: columns.id().primaryKey(),
+      publisher: columns.belongsTo("publishing_houses"),
+    });
+    const fk = Book.toTableSchema().foreignKeys?.find(
+      (f) => f.referencedTable === "publishing_houses",
+    )!;
+    expect(fk.name).toBe("publishing_houses_publishing_houses_id_fk");
+  });
+
+  it(".nullable() makes the FK column nullable and sets ON DELETE SET NULL", () => {
+    const Book = model("books_nl", {
+      id: columns.id().primaryKey(),
+      publisher: columns.belongsTo("publishing_houses").nullable(),
+    });
+    const schema = Book.toTableSchema();
+
+    expect(schema.columns.find((c) => c.name === "publishing_houses_id")!.nullable).toBe(
+      true,
+    );
+
+    const fk = schema.foreignKeys?.find(
+      (f) => f.referencedTable === "publishing_houses",
+    )!;
+    expect(fk.onDelete).toBe("SET NULL");
+    expect(fk.nullable).toBe(true);
+  });
+
+  it(".unique() + .indexed() set the FK flags", () => {
+    const Book = model("books_uq", {
+      id: columns.id().primaryKey(),
+      publisher: columns.belongsTo("publishing_houses").unique().indexed(),
+    });
+    const schema = Book.toTableSchema();
+
+    expect(schema.columns.find((c) => c.name === "publishing_houses_id")!.unique).toBe(
+      true,
+    );
+
+    const fk = schema.foreignKeys?.find(
+      (f) => f.referencedTable === "publishing_houses",
+    )!;
+    expect(fk.unique).toBe(true);
+    expect(fk.indexed).toBe(true);
+  });
+
+  it("onDelete/onUpdate appear on the relation rule", () => {
+    const Book = model("books_rule", {
+      id: columns.id().primaryKey(),
+      publisher: columns
+        .belongsTo("publishing_houses")
+        .onDelete("CASCADE")
+        .onUpdate("RESTRICT"),
+    });
+    const rel = Book.toTableSchema().relations?.find(
+      (r) => r.type === "belongsTo",
+    )!;
+    expect(rel.rule?.onDelete).toBe("CASCADE");
+    expect(rel.rule?.onUpdate).toBe("RESTRICT");
+  });
+
+  it("default mappedBy is derived from the target table name (drops trailing 's')", () => {
+    const Book = model("books_mb", {
+      id: columns.id().primaryKey(),
+      publisher: columns.belongsTo("publishers"),
+    });
+    const rel = Book.toTableSchema().relations?.find(
+      (r) => r.type === "belongsTo",
+    )!;
+    // "publishers" → "publisher"
+    expect(rel.mappedBy).toEqual(["publisher"]);
+  });
+
+  it("supports a composite FK referencing the string table", () => {
+    const Item = model("items_comp", {
+      id: columns.id().primaryKey(),
+      product: columns.belongsTo("products").link({
+        foreignKey: ["vendor_id", "sku"],
+        reference: ["vendor_id", "sku"],
+      }),
+    });
+    const schema = Item.toTableSchema();
+
+    expect(schema.columns.find((c) => c.name === "vendor_id")).toBeDefined();
+    expect(schema.columns.find((c) => c.name === "sku")).toBeDefined();
+
+    const fk = schema.foreignKeys?.find((f) => f.referencedTable === "products")!;
+    expect(fk.columns.map((c) => c.name)).toEqual(["vendor_id", "sku"]);
+    expect(fk.referencedColumns).toEqual(["vendor_id", "sku"]);
+  });
+
+  it("toTsType() returns the PascalCased table name", () => {
+    expect(columns.belongsTo("publishing_houses").toTsType()).toBe(
+      "PublishingHouses",
+    );
+  });
+});
