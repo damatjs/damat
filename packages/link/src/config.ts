@@ -23,8 +23,8 @@ function hasEntryIndex(dir: string): boolean {
  *
  * `links` is a path or list of paths (e.g. `"./src/links"`). Only directories
  * that exist and expose an entry index are returned, so apps that don't use
- * links are unaffected. Shared by the framework boot and the `damat-orm` CLI so
- * a links directory automatically participates in both running and migrating.
+ * links are unaffected. Used by the framework boot to register the aggregated
+ * `link` runtime module.
  */
 export function resolveLinkModuleEntries(
   links: string | string[] | undefined,
@@ -39,6 +39,47 @@ export function resolveLinkModuleEntries(
     if (!hasEntryIndex(abs)) continue;
     const id = paths.length === 1 ? "link" : `link:${path.basename(abs)}`;
     entries.push({ id, resolve: abs, path: rel });
+  }
+
+  return entries;
+}
+
+/**
+ * Resolve the per-owner-module link directories under `config.links` for
+ * migration + type discovery.
+ *
+ * The links tree mirrors modules: `src/links/<owner>/{models,index.ts,migrations}`.
+ * Each `<owner>` directory is its own migration module (id `link:<owner>`), so
+ * its junction tables get a dedicated `migrations/` folder and snapshot — the
+ * `damat-orm` CLI treats each like a normal module.
+ */
+export function resolveLinkMigrationModules(
+  links: string | string[] | undefined,
+  cwd: string,
+): LinkModuleEntry[] {
+  if (!links) return [];
+  const roots = Array.isArray(links) ? links : [links];
+  const entries: LinkModuleEntry[] = [];
+
+  for (const rel of roots) {
+    const absRoot = path.isAbsolute(rel) ? rel : path.resolve(cwd, rel);
+    if (!fs.existsSync(absRoot)) continue;
+
+    for (const name of fs.readdirSync(absRoot)) {
+      const sub = path.join(absRoot, name);
+      let isDir = false;
+      try {
+        isDir = fs.statSync(sub).isDirectory();
+      } catch {
+        continue;
+      }
+      if (!isDir || !hasEntryIndex(sub)) continue;
+      entries.push({
+        id: `link:${name}`,
+        resolve: sub,
+        path: path.join(rel, name),
+      });
+    }
   }
 
   return entries;

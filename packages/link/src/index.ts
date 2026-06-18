@@ -6,4 +6,9 @@ export * from "./service";
 export * from "./defineLinkModule";
 export * from "./graph";
 export { defaultPivotTable, pivotColumns } from "./naming";
-export { resolveLinkModuleEntries, type LinkModuleEntry } from "./config";
+export {
+  resolveLinkModuleEntries,
+  resolveLinkMigrationModules,
+  type LinkModuleEntry,
+} from "./config";
+export * from "./codegen";

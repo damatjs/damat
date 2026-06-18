@@ -1,5 +1,5 @@
 {
-  "moduleName": "link",
+  "moduleName": "link:user",
   "schema": "public",
   "tables": [
     {

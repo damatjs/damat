@@ -9,3 +9,4 @@ export * from "./accounts";
 export * from "./accounts.zod";
 export * from "./users";
 export * from "./users.zod";
+export * from "./users.links";

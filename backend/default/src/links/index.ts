@@ -1,14 +1,11 @@
-import { defineLinkModule, collectLinkModels } from "@damatjs/framework";
-import userOrganization from "./user-organization";
-
-/** All links declared in this app. */
-export const links = [userOrganization];
+import { defineLinkModule } from "@damatjs/framework";
+import { links as userLinks } from "./user";
 
 /**
- * Junction models for the migration + type generators. `damat-orm` discovers
- * this `models` export exactly as it does for a normal module.
+ * Aggregate every owner directory's links into the single `link` runtime
+ * module. `getModule("link")` resolves the link service for create / dismiss /
+ * fetch / graph across all links. Migrations live per-owner (links/<owner>/migrations).
  */
-export const models = collectLinkModels(links);
+export const links = [...userLinks];
 
-/** Registered as the `link` module at boot — `getModule("link")` is the link service. */
 export default defineLinkModule(links);

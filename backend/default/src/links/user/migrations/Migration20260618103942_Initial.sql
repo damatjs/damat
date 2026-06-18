@@ -1,8 +1,8 @@
 -- Migration: Initial
--- Module: link
--- Created: 2026-06-18T08:53:07.408Z
+-- Module: link:user
+-- Created: 2026-06-18T10:39:42.685Z
 --
--- Baseline migration for module "link" (1 table(s))
+-- Baseline migration for module "link:user" (1 table(s))
 --
 -- This migration was auto-generated based on schema changes.
 -- Review the SQL statements before running in production.
