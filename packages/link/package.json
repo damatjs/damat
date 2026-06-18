@@ -1,13 +1,10 @@
 {
-  "name": "@damatjs/orm-cli",
-  "description": "Damatjs ORM CLI - unified command line interface for codegen and migrations",
+  "name": "@damatjs/link",
+  "description": "Cross-module links for Damat — define relationships between two modules, generate the junction table, migrate it, and query linked records across modules.",
   "version": "0.1.2",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "bin": {
-    "damat-orm": "./dist/bin.js"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -22,36 +19,33 @@
   },
   "files": [
     "dist",
-    "!dist/tests",
     "!dist/**/__tests__",
-    "!dist/**/__fixtures__",
-    "!dist/**/__mocks__",
-    "!dist/**/__snapshots__"
+    "!dist/**/tests",
+    "!dist/**/__fixtures__"
   ],
   "author": "Abel Lamesgen",
   "dependencies": {
-    "@damatjs/cli": "*",
     "@damatjs/deps": "*",
-    "@damatjs/logger": "*",
-    "@damatjs/orm-codegen": "*",
-    "@damatjs/orm-migration": "*",
-    "@damatjs/orm-processor": "*",
     "@damatjs/orm-model": "*",
+    "@damatjs/orm-pg": "*",
     "@damatjs/orm-type": "*",
-    "@damatjs/link": "*"
+    "@damatjs/services": "*",
+    "@damatjs/logger": "*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "*",
+    "@damatjs/orm-codegen": "*",
+    "@damatjs/orm-connector": "*",
+    "@damatjs/orm-migration": "*",
+    "@damatjs/orm-processor": "*",
     "@types/bun": "1.3.9",
     "tsc-alias": "^1.8.16",
     "typescript": "^5.9.3"
   },
   "scripts": {
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc && tsc-alias",
-    "postbuild": "chmod +x dist/bin.js",
     "dev": "bun run build --watch",
     "watch": "tsc --watch",
-    "test": "bun test src/tests/",
-    "prepublishOnly": "test -f dist/bin.js || (echo 'Error: dist/bin.js not found. Run bun run build first.' && exit 1)"
+    "test": "bun test"
   }
 }

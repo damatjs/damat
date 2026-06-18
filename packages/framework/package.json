@@ -66,6 +66,7 @@
     "@damatjs/deps": "*",
     "@damatjs/types": "*",
     "@damatjs/services": "*",
+    "@damatjs/link": "*",
     "@damatjs/orm-connector": "*",
     "@damatjs/orm-type": "*",
     "@damatjs/workflow-engine": "*",

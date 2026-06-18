@@ -30,5 +30,12 @@ export default defineConfig({
       resolve: "./src/modules/user",
       id: "user",
     },
+    organization: {
+      resolve: "./src/modules/organization",
+      id: "organization",
+    },
   },
+  // Cross-module links live in src/links and are registered as a `link` module
+  // for boot, migrations, and type generation.
+  links: "./src/links",
 });

@@ -8,3 +8,4 @@ export * from "./services/redis";
 export { getModule, hasModule, clearModules, getAllModules, initModules, registerModule } from "./services/moduleService";
 
 export * from "@damatjs/services";
+export * from "@damatjs/link";

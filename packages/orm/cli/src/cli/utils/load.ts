@@ -1,5 +1,6 @@
 import path from "node:path";
 import fs from "node:fs";
+import { resolveLinkModuleEntries } from "@damatjs/link";
 import { OrmModuleContainer } from "../types";
 
 export interface DatabaseConfig {
@@ -115,6 +116,20 @@ export async function loadModules<T = Record<string, { resolve: string }>>(
         resolve: resolvedPath,
         path: module.resolve,
         name: moduleName,
+      };
+    }
+
+    // Cross-module link directories (config.links) are treated as ordinary
+    // modules so migrate:create / migrate:up / generate:types pick up the
+    // generated junction tables. Paths resolve against the config directory,
+    // matching the module path resolution above.
+    for (const entry of resolveLinkModuleEntries(config.links, configDir)) {
+      if (modules[entry.id]) continue; // never clobber a real module
+      modules[entry.id] = {
+        id: entry.id,
+        resolve: entry.resolve,
+        path: entry.path,
+        name: entry.id,
       };
     }
 

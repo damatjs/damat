@@ -53,6 +53,7 @@ damat/
 └── packages/
     ├── framework/             # @damatjs/framework — app framework (config, router, server, bootstrap)
     ├── service/               # @damatjs/services — ModuleService, PoolManager, defineModule
+    ├── link/                  # @damatjs/link — cross-module links (junction tables, fetch, graph query)
     ├── module/                # @damatjs/module — the module system (authoring, manifest, harness, runtime, registry)
     ├── workflow-engine/       # @damatjs/workflow-engine — saga engine (Effect-TS)
     ├── deps/                  # @damatjs/deps — pinned external re-exports

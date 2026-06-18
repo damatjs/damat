@@ -1,0 +1,77 @@
+{
+  "moduleName": "organization",
+  "schema": "public",
+  "tables": [
+    {
+      "name": "organizations",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "nullable": false,
+          "unique": false,
+          "array": false,
+          "autoincrement": false,
+          "default": "generate_id('org')"
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "nullable": false,
+          "unique": false,
+          "array": false,
+          "autoincrement": false
+        },
+        {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "nullable": false,
+          "unique": true,
+          "array": false,
+          "autoincrement": false
+        },
+        {
+          "name": "created_at",
+          "type": "date",
+          "nullable": false,
+          "default": "now()",
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "name": "updated_at",
+          "type": "date",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "name": "deleted_at",
+          "type": "date",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "organizations_slug",
+          "columns": [
+            {
+              "name": "slug"
+            }
+          ],
+          "unique": true,
+          "type": "btree"
+        }
+      ],
+      "foreignKeys": [],
+      "constraints": []
+    }
+  ],
+  "enums": [],
+  "relationships": []
+}

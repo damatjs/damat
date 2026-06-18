@@ -3,7 +3,8 @@ import { initLogger, closeLogger } from "./logger";
 import { initDatabase, closeDatabase, getConnectionManager } from "./database";
 import { AppConfig } from "../config";
 import { disconnectRedis, getRedis, initRedis, connectRedis } from "./redis";
-import { initModules, getAllModules } from "./moduleService";
+import { initModules, getAllModules, getModule } from "./moduleService";
+import { resolveLinkModuleEntries, setLinkModuleResolver } from "@damatjs/link";
 
 export async function initializeServices(
   config: AppConfig,
@@ -83,10 +84,24 @@ export async function initializeServices(
     });
   }
 
-  if (config.modules && Object.values(config.modules)?.length) {
-    await initModules(Object.values(config.modules), cwd);
+  // Modules plus any cross-module link directories (registered as `link`
+  // module(s)) are initialised together, so `getModule("link")` resolves the
+  // link service alongside the rest.
+  const moduleConfigs = [
+    ...Object.values(config.modules ?? {}),
+    ...resolveLinkModuleEntries(config.links, cwd).map((entry) => ({
+      id: entry.id,
+      resolve: entry.resolve,
+    })),
+  ];
+  if (moduleConfigs.length) {
+    await initModules(moduleConfigs, cwd);
     instances.modules = getAllModules();
   }
+
+  // Let the link service hydrate linked rows by calling other modules'
+  // services. No-op when no link module is registered.
+  setLinkModuleResolver((id: string) => getModule(id));
 
   instances.shutdownHandlers.push({
     name: "logger",
