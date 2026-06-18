@@ -1,5 +1,14 @@
 # @damatjs/workflow-engine
 
+## 0.1.2
+
+### Patch Changes
+
+- Added support for linking hasOne and belongsTo relations by table name, with foreign keys inferred by convention.
+- Updated dependencies
+  - @damatjs/logger@0.1.2
+  - @damatjs/redis@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes

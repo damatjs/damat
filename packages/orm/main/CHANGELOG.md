@@ -1,5 +1,18 @@
 # @damatjs/orm
 
+## 0.1.2
+
+### Patch Changes
+
+- Added support for linking hasOne and belongsTo relations by table name, with foreign keys inferred by convention.
+- Updated dependencies
+  - @damatjs/deps@0.1.2
+  - @damatjs/orm-connector@0.1.2
+  - @damatjs/orm-migration@0.1.2
+  - @damatjs/orm-model@0.1.2
+  - @damatjs/orm-pg@0.1.2
+  - @damatjs/orm-processor@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes

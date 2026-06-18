@@ -1,5 +1,11 @@
 # @damatjs/load-env
 
+## 0.1.2
+
+### Patch Changes
+
+- Added support for linking hasOne and belongsTo relations by table name, with foreign keys inferred by convention.
+
 ## 0.1.1
 
 ### Patch Changes
