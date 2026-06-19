@@ -10,6 +10,30 @@ import { locateModuleDir } from "./locate";
 import { buildModuleAppConfig } from "./appConfig";
 import type { RunningModuleApp, StartModuleAppOptions } from "./types";
 
+type ClosableServer = {
+  close(cb: (err?: Error) => void): void;
+  closeIdleConnections?: () => void;
+  closeAllConnections?: () => void;
+};
+
+/**
+ * Close the HTTP server, forcing any lingering connections shut.
+ *
+ * A graceful `server.close()` resolves only once every connection has ended.
+ * Under Node a keep-alive or still-active socket — e.g. a POST whose request
+ * body the route never read — never closes on its own, so teardown hangs
+ * forever. Closing idle + all connections makes `close()` resolve. The calls are
+ * `?.`-guarded so runtimes whose server lacks them (e.g. Bun, where `close()`
+ * already resolves promptly) are a harmless no-op.
+ */
+export async function closeServer(server: ClosableServer): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    server.close((err) => (err ? reject(err) : resolve()));
+    server.closeIdleConnections?.();
+    server.closeAllConnections?.();
+  });
+}
+
 /**
  * Run ONE module as a live app — the framework's full HTTP stack
  * (middleware, file routes from the module's api/ dir, health checks)
@@ -78,9 +102,7 @@ export async function startModuleApp(
     port,
     manifest,
     stop: async () => {
-      await new Promise<void>((resolve, reject) => {
-        server.close((err) => (err ? reject(err) : resolve()));
-      });
+      await closeServer(server);
       for (const { handler } of services.shutdownHandlers) {
         try {
           await handler();
