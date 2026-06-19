@@ -18,16 +18,6 @@ import {
   type GraphQueryResult,
 } from "./graph";
 
-/** The subset of a model accessor (ModelMethods) the link service drives. */
-interface PivotMethods {
-  find(opts: any): Promise<any | null>;
-  findMany(opts: any): Promise<any[]>;
-  create(opts: any): Promise<any>;
-  restore(opts: any): Promise<any[]>;
-  softDelete(opts: any): Promise<any[]>;
-  getModelDefinition(): any;
-}
-
 /**
  * The slice of the generated `ModuleService` base the link service relies on.
  * `ModuleService` over a wide `Record<string, ModelDefinition>` types its model
@@ -61,9 +51,18 @@ export function createLinkService(links: LinkDefinition[]) {
     /** The indexed link definitions backing this service. */
     readonly links = registry;
 
-    /** The junction model accessor (ModelMethods) for a link. */
-    #pivot(link: LinkDefinition): PivotMethods {
-      return (this as any)[link.pivotName] as PivotMethods;
+    // The junction model accessor (a ModelMethods instance) for a link. Typed
+    // with an inline literal rather than a named interface so no private name
+    // leaks into the exported `LinkService` type (TS4082) for consumers, while
+    // callers still get a typed surface (e.g. findMany -> any[]).
+    #pivot(link: LinkDefinition): {
+      find(opts: any): Promise<any | null>;
+      findMany(opts: any): Promise<any[]>;
+      create(opts: any): Promise<any>;
+      restore(opts: any): Promise<any[]>;
+      softDelete(opts: any): Promise<any[]>;
+    } {
+      return (this as any)[link.pivotName];
     }
 
     /**

@@ -9,6 +9,8 @@ export const setupDefaultsStep = createStep<
   async (input, _ctx) => {
     return {
       created_at: new Date(),
+      updated_at: null,
+      deleted_at: null,
       id: "sda",
       identifier: input.user.email,
       value: "",
