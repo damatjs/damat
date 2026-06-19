@@ -27,7 +27,7 @@ function resolveEndpoint(endpoint: LinkEndpoint): ResolvedEndpoint {
  * without either module importing the other.
  *
  * ```ts
- * // src/links/user-organization.ts
+ * // src/links/user/models/user-organization.ts
  * export default defineLink(
  *   { module: "user", model: "user", field: "users" },
  *   { module: "organization", model: "organization", field: "organizations" },

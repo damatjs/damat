@@ -3,7 +3,7 @@
  */
 
 export const SERVER_NAME = "damat-mcp";
-export const SERVER_VERSION = "0.0.10";
+export const SERVER_VERSION = "0.1.3";
 export const DEFAULT_PROTOCOL = "2025-06-18";
 
 /** Returned by every registry tool when DAMAT_MODULE_REGISTRY is unset. */
