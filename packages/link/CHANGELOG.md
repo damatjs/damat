@@ -1,4 +1,4 @@
-# @damatjs/mcp
+# @damatjs/link
 
 ## 0.1.3
 
@@ -11,21 +11,10 @@
   `graph` query to traverse linked records across modules. Links live in
   `src/links/` and are wired in via a new `links` field in `damat.config.ts`; the
   framework boot and the `damat-orm` CLI both pick them up automatically.
-
-## 0.1.2
-
-### Patch Changes
-
-- Added support for linking hasOne and belongsTo relations by table name, with foreign keys inferred by convention.
-
-## 0.1.1
-
-### Patch Changes
-
-- minor clean up on ci and test
-
-## 0.1.0
-
-### Minor Changes
-
-- Stabilized core functionality, expanded testing, and resolved known issues. Ready for minor release.
+- Updated dependencies
+  - @damatjs/orm-type@0.1.3
+  - @damatjs/logger@0.1.3
+  - @damatjs/deps@0.1.3
+  - @damatjs/orm-model@0.1.3
+  - @damatjs/orm-pg@0.1.3
+  - @damatjs/services@0.1.3

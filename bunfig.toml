@@ -1,0 +1,5 @@
+[install]
+# Platform binaries (turbo, esbuild, swc, …) ship as optional dependencies.
+# The global ~/.bunfig.toml disables optional installs; re-enable them here so
+# `@turbo/<platform>` and friends are written to node_modules for the build.
+optional = true
