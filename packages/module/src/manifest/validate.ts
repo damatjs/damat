@@ -60,6 +60,9 @@ export function validateModuleManifest(raw: unknown): ModuleManifest {
   if (manifest.modules !== undefined && !Array.isArray(manifest.modules)) {
     throw new Error('module.json "modules" must be an array of module ids');
   }
+  if (manifest.pairsWith !== undefined && !Array.isArray(manifest.pairsWith)) {
+    throw new Error('module.json "pairsWith" must be an array of module ids');
+  }
   if (
     manifest.registry !== undefined &&
     (manifest.registry === null || typeof manifest.registry !== "object")

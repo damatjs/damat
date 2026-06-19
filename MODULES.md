@@ -63,7 +63,8 @@ my-module/
   "packages": {                   // npm packages the host app must install
     "better-auth": "^1.4.18"      //   name -> semver range
   },
-  "modules": ["organization"],    // other damat modules this one depends on (registry ids)
+  "pairsWith": ["organization"],  // non-binding hint: modules this pairs well with
+  // "modules": ["organization"], // rare: a HARD dependency — prefer pairsWith
 
   // Layout overrides (omit to use the standard layout) ----------------------
   "paths": {
@@ -95,13 +96,19 @@ my-module/
 | `author` | string \| object | — | `"Name <email> (url)"` or `{ name, email?, url? }`. Mirrored by the registry; **not** the verified owner. |
 | `env` | `ModuleEnvVar[]` | — | Each: `{ name, required?, description?, example? }`. Drives `.env.example` sync. |
 | `packages` | `Record<string,string>` | — | npm deps installed into the host app on `add`. |
-| `modules` | `string[]` | — | Other module ids this module needs (a warning if missing). |
+| `pairsWith` | `string[]` | — | Non-binding hint: modules this one pairs well with. A comment for the backend owner — never enforced or installed. **Prefer this** to express relationships. |
+| `modules` | `string[]` | — | **Rare.** A hard dependency on other modules (install only *warns* if missing). A module should stay self-contained — reach for `pairsWith` instead. |
 | `paths` | object | — | Overrides for `entry`/`models`/`migrations`/`workflows`/`types`. |
 | `registry` | object | — | `namespace`, `keywords`, `license`, `repository`, `homepage`. |
 
 **Standard layout** (used when `paths` is omitted): `entry ./index.ts`,
 `models ./models`, `migrations ./migrations`, `workflows ./workflows`,
 `types ./types`.
+
+> **Composition is the backend owner's job.** A module is a single-purpose unit;
+> it should not decide what it is plugged into. Use `pairsWith` (or `description`)
+> to *suggest* pairings, and leave cross-module links and wiring to the app.
+> `modules` is an escape hatch for genuine hard dependencies only.
 
 ---
 

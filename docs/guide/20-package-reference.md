@@ -37,4 +37,4 @@ A machine-readable map of the whole site (chapters + packages) lives in
 
 ---
 
-Prev: [← Deployment](./17-deployment.md) · [Guide home](../GUIDE.md) · Next: [Troubleshooting →](./19-troubleshooting.md)
+Prev: [← Deployment](./19-deployment.md) · [Guide home](../GUIDE.md) · Next: [Troubleshooting →](./21-troubleshooting.md)

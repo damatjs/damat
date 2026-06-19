@@ -36,4 +36,4 @@ bunx create-damat-app@latest --module my-mod # new standalone module
 
 ---
 
-Prev: [← Installing modules with AI](./15-installing-modules-with-ai.md) · [Guide home](../GUIDE.md) · Next: [Deployment →](./17-deployment.md)
+Prev: [← Composing & linking modules](./17-composing-and-linking-modules.md) · [Guide home](../GUIDE.md) · Next: [Deployment →](./19-deployment.md)

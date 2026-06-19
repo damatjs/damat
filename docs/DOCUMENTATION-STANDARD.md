@@ -55,6 +55,11 @@ Rules:
   routed to the relevant `<version>.md`.
 - Do **not** create a `<version>.md` for dependency-only or CI-only bumps — note
   them in the index instead.
+- **Unreleased changes** — when you make a package-relevant change but no version
+  is being cut yet, record it in `releases/<package>/next.md` (same template,
+  titled `@damatjs/<package> Unreleased`). List it as "Unreleased" at the top of
+  the package index. When the version is published, rename `next.md` →
+  `<version>.md` and update the index entry.
 
 ### `<version>.md` template
 

@@ -17,4 +17,4 @@ in this repo.
 
 ---
 
-Prev: [← Package reference](./18-package-reference.md) · [Guide home](../GUIDE.md)
+Prev: [← Package reference](./20-package-reference.md) · [Guide home](../GUIDE.md)

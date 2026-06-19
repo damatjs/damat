@@ -1,14 +1,14 @@
 ---
 name: damat-backend
 description: >-
-  Build and operate a Damat backend app — add models, services, routes, and
-  workflows; run the dev server; create and apply migrations; wire config; use
-  Redis/logging. Use when working inside a Damat app (it has damat.config.ts and
-  src/modules/) on anything that is NOT specifically packaging/installing a
-  module (for that, use the damat-modules skill). Triggers on "add an endpoint",
-  "add a model/table", "add a service method", "create a migration", "run the
-  damat app", "add a workflow", "wire up config", or general "work on the damat
-  backend".
+  Build, operate, and ASSEMBLE a Damat backend app — add models/services/routes/
+  workflows, run the dev server, run migrations, wire config, use Redis/logging,
+  AND compose modules: install them, wire them into damat.config.ts, link two
+  modules, and set up the module-install MCP. Use when working inside a Damat app
+  (damat.config.ts + src/modules/). For AUTHORING a standalone shareable module,
+  use the damat-modules skill. Triggers: "add an endpoint/model/service/migration/
+  workflow", "run the damat app", "wire up config", "install a module", "link two
+  modules", "compose modules", "set up the module MCP".
 ---
 
 # Working in a Damat backend
@@ -23,6 +23,8 @@ References in the repo (read when you need detail):
 - `docs/guide/02-concepts.md` — the mental model (read this first if unsure).
 - `AGENTS.md` — repo map, conventions, common-task recipes.
 - `backend/default/` — a complete worked example; copy its patterns.
+- `packages/link/README.md` — cross-module links (composition).
+- `packages/mcp/README.md` — the module-install MCP server.
 - `releases/<package>/` — per-package version history & upgrade notes. When you
   change a package, update both its living docs and `releases/` per
   `docs/DOCUMENTATION-STANDARD.md`.
@@ -90,6 +92,24 @@ table stores it.
 `defineLink`, `collectLinkModels`, `defineLinkModule` import from `@damatjs/framework`.
 Details: `packages/link/README.md`.
 
+### Install & compose modules (assemble the app)
+You build the app by composing modules — installing and wiring is the backend
+owner's job (a module never decides this for you). Prefer the MCP tools if the
+`@damatjs/mcp` server is connected (`search_modules`, `module_info`, `add_module`,
+`list_installed`); otherwise the CLI: `damat module add <registry-ref | ./path |
+owner/repo | git-url>` → set new env in `.env` → `damat-orm migrate:up` → restart.
+Check trust first (never a `rejected`/`revoked` module; respect
+`DAMAT_MODULE_VERIFY`), and don't hand-edit `damat.config.ts` or copy files when
+`add_module` / `damat module add` can do it. A module's `pairsWith` is only a
+hint — you decide what's actually installed and linked. Guide:
+`docs/guide/14-installing-modules.md`.
+
+### Set up module install for AI (MCP)
+`bun add -D @damatjs/mcp`, then add a `damat-modules` server to `.mcp.json` with
+`DAMAT_MODULE_REGISTRY`, `DAMAT_APP_DIR`, and `DAMAT_CLI` in its `env`. Smoke-test
+the installed bin: `printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{}}}' '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' | bunx damat-mcp`.
+Guide: `docs/guide/15-installing-modules-with-ai.md`.
+
 ### Use Redis (cache / rate limit / lock / queue)
 `initRedis(REDIS_URL)` once (the framework does this when `redisUrl` is set),
 then `cacheGet/cacheSet`, `checkRateLimit`, `withLock`, `RedisQueue`, etc.
@@ -114,11 +134,12 @@ When debugging boot failures, suspect **config/credentials validation first**
 DB issues, check `DATABASE_URL` and `damat-orm migrate:status`. For Redis
 no-ops, check `REDIS_URL`.
 
-## Need to package or install a feature as a module?
+## Authoring a standalone, shareable module?
 
-Switch to the **`damat-modules`** skill — it covers authoring a standalone
-module (`damat module init/dev/validate`, the `module.json` contract) and
-installing existing ones (`damat module add`, the MCP tools).
+Switch to the **`damat-modules`** skill — it covers building one self-contained
+module (`damat module init/dev/migration:create/codegen/validate`, the
+`module.json` contract, the isolation harness). Installing, linking, and composing
+modules into *this* app stay here.
 
 ## Guardrails
 

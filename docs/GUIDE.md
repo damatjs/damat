@@ -32,15 +32,17 @@ the whole thing (chapters + packages) lives in
 12. [The default backend, end to end](./guide/12-default-backend.md)
 
 ### Modules & sharing
-13. [Authoring a module](./guide/13-authoring-modules.md)
+13. [Authoring a module](./guide/13-authoring-modules.md) — build one self-contained module (the blade)
 14. [Installing existing modules](./guide/14-installing-modules.md)
 15. [Installing modules with AI (MCP)](./guide/15-installing-modules-with-ai.md)
+16. [Module capabilities](./guide/16-module-capabilities.md) — everything one module can do
+17. [Composing & linking modules](./guide/17-composing-and-linking-modules.md) — the backend owner assembles the blades
 
 ### Operate & reference
-16. [CLI reference](./guide/16-cli-reference.md)
-17. [Deployment](./guide/17-deployment.md)
-18. [Package reference](./guide/18-package-reference.md)
-19. [Troubleshooting](./guide/19-troubleshooting.md)
+18. [CLI reference](./guide/18-cli-reference.md)
+19. [Deployment](./guide/19-deployment.md)
+20. [Package reference](./guide/20-package-reference.md)
+21. [Troubleshooting](./guide/21-troubleshooting.md)
 
 ---
 
@@ -50,7 +52,7 @@ the whole thing (chapters + packages) lives in
   [`docs/guide/`](./guide/) with prev/next navigation.
 - **Usage** lives here. For the **internals** of any package (if you're changing
   its code), follow the *Internals* links into each package's `docs/` folder, or
-  see the [Package reference](./guide/18-package-reference.md).
+  see the [Package reference](./guide/20-package-reference.md).
 - Related top-level docs: the [module manifest contract (MODULES.md)](../MODULES.md)
   and the [AI contributor guide (AGENTS.md)](../AGENTS.md).
 

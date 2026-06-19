@@ -73,8 +73,17 @@ export interface ModuleManifest {
   env?: ModuleEnvVar[];
   /** npm packages the host app must install, name -> semver range */
   packages?: Record<string, string>;
-  /** Other damat modules this module depends on (registry ids) */
+  /**
+   * Hard dependency on other damat modules (registry ids). Rarely appropriate —
+   * a module should stay self-contained. Prefer `pairsWith` and leave composition
+   * to the backend owner; install only *warns* if a listed module is missing.
+   */
   modules?: string[];
+  /**
+   * Non-binding hint: other modules this one pairs well with or can be linked to.
+   * Purely a comment for the backend owner — tooling never enforces or installs it.
+   */
+  pairsWith?: string[];
   /** Layout overrides — omit to use the standard layout */
   paths?: ModuleManifestPaths;
   /** Registry publishing metadata */

@@ -1,9 +1,25 @@
 /**
  * Server identity, protocol defaults, and shared user-facing strings.
  */
+import { readFileSync } from "node:fs";
 
 export const SERVER_NAME = "damat-mcp";
-export const SERVER_VERSION = "0.1.3";
+
+/**
+ * Read from this package's package.json at load time so the reported version
+ * never drifts from the published release.
+ */
+export const SERVER_VERSION: string = (() => {
+  try {
+    const pkg = JSON.parse(
+      readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+    ) as { version?: string };
+    return pkg.version ?? "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+})();
+
 export const DEFAULT_PROTOCOL = "2025-06-18";
 
 /** Returned by every registry tool when DAMAT_MODULE_REGISTRY is unset. */

@@ -123,8 +123,11 @@ three mechanisms:
   link generates a junction table and a `getModule("link")` service to create,
   dismiss, fetch, and graph-query across modules. See
   [`@damatjs/link`](../../packages/link/README.md) for the full model.
-- **Module dependencies** — a module can declare in its `module.json` that it
-  needs other modules (by id); installing it warns if a dependency is missing.
+- **Pairing hints** — a module can leave a non-binding `pairsWith` hint in its
+  `module.json` suggesting modules it works well with. It's a comment for the
+  backend owner, who decides what to actually install and link — a module never
+  dictates composition. (A hard `modules` dependency exists as a rare escape
+  hatch; installing warns if one is missing.)
 
 ## The module lifecycle
 

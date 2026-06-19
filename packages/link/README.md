@@ -53,10 +53,10 @@ export default defineLink(
 module's `models` map** (i.e. its service accessor — `user`, not the table
 `users`). `field` is the name the linked side is exposed as.
 
-> **Import surface.** App code imports `defineLink` / `collectLinkModels` /
-> `defineLinkModule` from **`@damatjs/framework`**; a standalone module package
-> imports the same names from **`@damatjs/module`** (it re-exports this package).
-> Either way the link definitions live in the app's `src/links/`.
+> **Import surface.** Links are an **app** concern. Import `defineLink` /
+> `collectLinkModels` / `defineLinkModule` from **`@damatjs/framework`** and put
+> the definitions in the app's `src/links/`. Module packages don't author links —
+> the `@damatjs/module` surface deliberately doesn't expose these helpers.
 
 This generates a `user_organization` junction table: `id`, `user_id`,
 `organization_id`, timestamps, a soft-delete column, a **unique** index on

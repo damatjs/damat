@@ -43,7 +43,7 @@ standalone modules) `@damatjs/module`.
 | **Reference app** | [`@damatjs/default`](../../backend/default/README.md) |
 
 Each package ships a `README.md` (overview) and a `docs/` folder (internals).
-The [Package reference](./18-package-reference.md) chapter links them all.
+The [Package reference](./20-package-reference.md) chapter links them all.
 
 ---
 

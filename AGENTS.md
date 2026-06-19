@@ -156,8 +156,8 @@ both modules in `src/links/<owner>/` (mirroring a module: `models/`, `index.ts`,
    `damat-orm generate:types <module>` so each side gains the linked field.
 6. At runtime use `getModule("link")` → `create` / `dismiss` / `fetch` / `graph`.
 Import `defineLink` / `collectLinkModels` / `defineLinkModule` from
-`@damatjs/framework` (app) or `@damatjs/module` (standalone module). Full guide:
-[`@damatjs/link`](./packages/link/README.md).
+`@damatjs/framework`. Links are an **app / backend-owner** concern — a module
+never defines them. Full guide: [`@damatjs/link`](./packages/link/README.md).
 
 ---
 
@@ -181,9 +181,10 @@ path or git URL.
 
 Two Claude Code skills encode the workflows:
 - **`damat-backend`** ([.claude/skills/damat-backend](./.claude/skills/damat-backend/SKILL.md))
-  — general backend work: models, services, routes, workflows, migrations, run/debug.
+  — backend work **and assembling the app**: models, services, routes, workflows,
+  migrations, run/debug, and installing / linking / composing modules.
 - **`damat-modules`** ([.claude/skills/damat-modules](./.claude/skills/damat-modules/SKILL.md))
-  — authoring standalone modules and installing existing ones.
+  — authoring one self-contained, shareable module (the blade); no composition.
 
 ---
 
@@ -199,11 +200,13 @@ Two Claude Code skills encode the workflows:
   relations reference the **target table name** (`columns.hasMany("accounts")`).
 - Use `@damatjs/deps/<lib>` (e.g. `@damatjs/deps/zod`) instead of importing
   `zod`/`hono`/`effect`/`pg`/`ioredis` directly.
-- Cross-module relationships are **links**, not relations: declare them in
-  `src/links/` (not inside a module), wire `links:` in `damat.config.ts`, and
-  reach them at runtime via `getModule("link")`. `defineLink`/`collectLinkModels`/
-  `defineLinkModule` come from `@damatjs/framework` (app) or `@damatjs/module`
-  (module). See [`@damatjs/link`](./packages/link/README.md).
+- Cross-module relationships are **links**, not relations, and are an
+  **app/backend-owner** concern: declare them in `src/links/` (never inside a
+  module), wire `links:` in `damat.config.ts`, and reach them at runtime via
+  `getModule("link")`. `defineLink`/`collectLinkModels`/`defineLinkModule` come
+  from `@damatjs/framework` only. A module may suggest pairings with a non-binding
+  `pairsWith` hint in `module.json` but never defines links. See
+  [`@damatjs/link`](./packages/link/README.md).
 
 ---
 

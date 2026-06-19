@@ -61,7 +61,6 @@ export function manifestTemplate(name: string): string {
       description: `${name} module`,
       registry: { namespace: "", license: "MIT", keywords: [] },
       env: [],
-      modules: [],
       paths: {
         entry: "./index.ts",
         models: "./models",

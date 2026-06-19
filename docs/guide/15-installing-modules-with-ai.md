@@ -49,4 +49,4 @@ flows) and [`damat-backend`](../../.claude/skills/damat-backend/SKILL.md)
 
 ---
 
-Prev: [← Installing existing modules](./14-installing-modules.md) · [Guide home](../GUIDE.md) · Next: [CLI reference →](./16-cli-reference.md)
+Prev: [← Installing existing modules](./14-installing-modules.md) · [Guide home](../GUIDE.md) · Next: [Module capabilities →](./16-module-capabilities.md)

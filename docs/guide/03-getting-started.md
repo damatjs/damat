@@ -12,7 +12,7 @@
   sessions, and rate limiting.
 
 The fastest way to get Postgres + Redis locally is the `docker-compose.yml` that
-ships with the default backend (see [Deployment](./17-deployment.md)).
+ships with the default backend (see [Deployment](./19-deployment.md)).
 
 ## Option A — scaffold a new app
 

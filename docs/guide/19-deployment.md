@@ -21,4 +21,4 @@ run `damat build` then `damat start`, and apply migrations with
 
 ---
 
-Prev: [← CLI reference](./16-cli-reference.md) · [Guide home](../GUIDE.md) · Next: [Package reference →](./18-package-reference.md)
+Prev: [← CLI reference](./18-cli-reference.md) · [Guide home](../GUIDE.md) · Next: [Package reference →](./20-package-reference.md)

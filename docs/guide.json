@@ -162,7 +162,7 @@
           "title": "Authoring a module",
           "slug": "authoring-modules",
           "path": "docs/guide/13-authoring-modules.md",
-          "summary": "Build and test a standalone, portable module."
+          "summary": "Build one self-contained, single-purpose module (the blade) and test it in isolation."
         },
         {
           "id": "installing-modules",
@@ -179,6 +179,22 @@
           "slug": "installing-modules-with-ai",
           "path": "docs/guide/15-installing-modules-with-ai.md",
           "summary": "Discover and install modules through the MCP server."
+        },
+        {
+          "id": "module-capabilities",
+          "order": 16,
+          "title": "Module capabilities",
+          "slug": "module-capabilities",
+          "path": "docs/guide/16-module-capabilities.md",
+          "summary": "Everything one module can do — the full model/service/config/migration/codegen/workflow/test/packaging surface."
+        },
+        {
+          "id": "composing-and-linking-modules",
+          "order": 17,
+          "title": "Composing & linking modules",
+          "slug": "composing-and-linking-modules",
+          "path": "docs/guide/17-composing-and-linking-modules.md",
+          "summary": "The backend owner's job: getModule, cross-module links, pairsWith hints, and wiring modules into the app."
         }
       ]
     },
@@ -188,34 +204,34 @@
       "chapters": [
         {
           "id": "cli-reference",
-          "order": 16,
+          "order": 18,
           "title": "CLI reference",
           "slug": "cli-reference",
-          "path": "docs/guide/16-cli-reference.md",
+          "path": "docs/guide/18-cli-reference.md",
           "summary": "damat, damat-orm, and create-damat-app."
         },
         {
           "id": "deployment",
-          "order": 17,
+          "order": 19,
           "title": "Deployment",
           "slug": "deployment",
-          "path": "docs/guide/17-deployment.md",
+          "path": "docs/guide/19-deployment.md",
           "summary": "Docker and production release flow."
         },
         {
           "id": "package-reference",
-          "order": 18,
+          "order": 20,
           "title": "Package reference",
           "slug": "package-reference",
-          "path": "docs/guide/18-package-reference.md",
+          "path": "docs/guide/20-package-reference.md",
           "summary": "Links to every package's README and internals."
         },
         {
           "id": "troubleshooting",
-          "order": 19,
+          "order": 21,
           "title": "Troubleshooting",
           "slug": "troubleshooting",
-          "path": "docs/guide/19-troubleshooting.md",
+          "path": "docs/guide/21-troubleshooting.md",
           "summary": "Common symptoms and fixes."
         }
       ]
