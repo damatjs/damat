@@ -81,6 +81,7 @@ const packageList: Array<{ dir: string; group: string }> = [
   { dir: "packages/framework", group: "Framework & app" },
   { dir: "packages/service", group: "Framework & app" },
   { dir: "packages/module", group: "Framework & app" },
+  { dir: "packages/link", group: "Framework & app" },
   { dir: "packages/workflow-engine", group: "Framework & app" },
   { dir: "packages/orm/main", group: "ORM" },
   { dir: "packages/orm/model", group: "ORM" },

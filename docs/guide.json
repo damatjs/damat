@@ -273,6 +273,16 @@
           ]
         },
         {
+          "name": "@damatjs/link",
+          "description": "Cross-module links for Damat — define relationships between two modules, generate the junction table, migrate it, and query linked records across modules.",
+          "dir": "packages/link",
+          "readme": "packages/link/README.md",
+          "docsIndex": "packages/link/docs/README.md",
+          "docs": [
+            "packages/link/docs/README.md"
+          ]
+        },
+        {
           "name": "@damatjs/workflow-engine",
           "description": "Damatjs saga-style workflow engine built on Effect-TS",
           "dir": "packages/workflow-engine",

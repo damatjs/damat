@@ -90,6 +90,14 @@ keeps provenance and env/migration wiring correct.
 7. **Validate:** `damat module validate` until there are **no warnings** — then
    it's registry-ready.
 
+> **Relating to other modules?** A module never imports another module or
+> foreign-keys into it. Cross-module relationships are **links**, declared in the
+> *app's* `src/links/` (not inside the module). The authoring surface re-exports
+> the helpers, so module code can use `import { defineLink, collectLinkModels,
+> defineLinkModule } from "@damatjs/module"`. The runtime service is
+> `getModule("link")` (`create`/`dismiss`/`fetch`/`graph`). See
+> `packages/link/README.md`.
+
 ---
 
 ## C. Set up module install for AI (MCP)

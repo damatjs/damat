@@ -31,7 +31,12 @@ References in the repo (read when you need detail):
   `getModule` from `@damatjs/framework`; route helpers (`RouteHandler`,
   `defineRoute`) from `@damatjs/framework/router`; models from
   `@damatjs/orm-model`. Use `@damatjs/deps/<lib>` (e.g. `@damatjs/deps/zod`)
-  instead of importing `zod`/`hono`/`effect`/`pg`/`ioredis` directly.
+  instead of importing `zod`/`hono`/`effect`/`pg`/`ioredis` directly. Cross-module
+  link helpers (`defineLink`, `collectLinkModels`, `defineLinkModule`) also come
+  from `@damatjs/framework`.
+- **Cross-module relationships are links, not relations.** A `columns.hasMany(...)`
+  relation is for tables *within one module*; to relate models across modules use
+  a **link** in `src/links/` (see the task below).
 - **`modules` in `damat.config.ts` is a keyed object** `{ id: { resolve, id } }`,
   not an array.
 - **Schema changes are not live until migrated.** After any model change, run
@@ -66,6 +71,21 @@ Define steps with `createStep<I,O>(name, forward, compensation?, config?)` and
 compose them with `createWorkflow` + `executeStep` inside `Effect.gen`. Run with
 `.execute(input)` or `.executeWithLock(input, { lockId, ttlMs })`. Guide:
 `docs/guide/09-workflows.md`.
+
+### Relate two modules (cross-module link)
+Modules stay decoupled and can't foreign-key into each other, so a many-to-many
+relationship lives **outside** both modules under `src/links/<owner>/` (same shape
+as a module: `models/`, `index.ts`, `migrations/`). An auto-generated junction
+table stores it.
+1. `src/links/<owner>/models/<a>-<b>.ts`:
+   `export default defineLink({ module:"user", model:"user", field:"users" }, { module:"organization", model:"organization", field:"organizations" })`.
+2. `src/links/<owner>/index.ts`: `export const links=[...]; export const models=collectLinkModels(links);`.
+3. `src/links/index.ts`: aggregate owners, `export default defineLinkModule(links)`.
+4. `damat.config.ts`: add `links: "./src/links"`.
+5. `damat-orm migrate:create link:<owner>` → `damat-orm migrate:up` → `damat-orm generate:types <module>`.
+6. Query at runtime via `getModule("link")`: `.create / .dismiss / .fetch / .graph`.
+`defineLink`, `collectLinkModels`, `defineLinkModule` import from `@damatjs/framework`.
+Details: `packages/link/README.md`.
 
 ### Use Redis (cache / rate limit / lock / queue)
 `initRedis(REDIS_URL)` once (the framework does this when `redisUrl` is set),

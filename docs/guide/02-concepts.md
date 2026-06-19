@@ -119,7 +119,10 @@ three mechanisms:
 - **`getModule(id)`** — at runtime, any route, step, or service can fetch another
   module's service by id. This is the everyday way modules call each other.
 - **Links** (`src/links/`) — declare cross-module relationships *outside* the
-  modules themselves, so neither module hard-depends on the other's tables.
+  modules themselves, so neither module hard-depends on the other's tables. A
+  link generates a junction table and a `getModule("link")` service to create,
+  dismiss, fetch, and graph-query across modules. See
+  [`@damatjs/link`](../../packages/link/README.md) for the full model.
 - **Module dependencies** — a module can declare in its `module.json` that it
   needs other modules (by id); installing it warns if a dependency is missing.
 

@@ -53,6 +53,11 @@ export default defineLink(
 module's `models` map** (i.e. its service accessor — `user`, not the table
 `users`). `field` is the name the linked side is exposed as.
 
+> **Import surface.** App code imports `defineLink` / `collectLinkModels` /
+> `defineLinkModule` from **`@damatjs/framework`**; a standalone module package
+> imports the same names from **`@damatjs/module`** (it re-exports this package).
+> Either way the link definitions live in the app's `src/links/`.
+
 This generates a `user_organization` junction table: `id`, `user_id`,
 `organization_id`, timestamps, a soft-delete column, a **unique** index on
 `(user_id, organization_id)`, and an index per foreign-key column. No real

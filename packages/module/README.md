@@ -29,6 +29,7 @@ Inside the Damat monorepo it is a workspace package — depend on it with the `*
 Use it when:
 
 - You are **authoring a module package** — `import { defineModule, ModuleService, model, columns, createStep, z } from "@damatjs/module"` is the whole surface.
+- You are **relating modules to each other** — `defineLink` / `collectLinkModels` / `defineLinkModule` are re-exported here so the app's `src/links/` can declare cross-module relationships from the same surface (the runtime service is `getModule("link")`). See [`@damatjs/link`](../link/README.md).
 - You want to **develop or test a module standalone** against a real Postgres, without spinning up a backend (`bootModule` / `withModule`).
 - You want to **run one module as a live app** — full framework HTTP stack, just this module registered (`startModuleApp`, what `damat module dev` boots).
 - You build **tooling**: generate a module's types or create a diff migration with no `damat.config.ts` (`generateModuleTypes`, `createModuleMigration`).
@@ -99,6 +100,7 @@ harness and for the runtime when serving. In test suites gate DB tests with
 | `model`, `columns` | re-export | ORM model DSL (from `@damatjs/orm-model`). |
 | `createStep`, `createWorkflow`, `executeStep`, `parallel`, `when`, `ifElse`, `RetryPolicies`, `Effect`, … | re-export | Workflow engine (from `@damatjs/workflow-engine`). |
 | `getModule`, `hasModule`, `registerModule` | re-export | App-side registry access (from `@damatjs/framework`). |
+| `defineLink`, `collectLinkModels`, `defineLinkModule` | re-export | Cross-module [links](../link/README.md): relate this module to another through a junction table; `getModule("link")` exposes create/dismiss/fetch/graph. |
 | `z` | re-export | Zod validation. |
 | `defineModuleConfig` | function | Type-safe helper for `module.config.ts`. |
 | `loadModuleConfig` | function | Load a package's `module.config.ts` (empty config if absent). |
@@ -113,7 +115,7 @@ harness and for the runtime when serving. In test suites gate DB tests with
 | `normalizeVersionEntry` | function | Coerce a registry version value (string or object) to `RegistryVersionEntry`. |
 | `MODULE_MANIFEST_FILENAME`, `DEFAULT_MODULE_PATHS`, `DEFAULT_MODULE_PORT`, `VERIFICATION_STATUSES` | const | Constants for the contract / runtime / registry. |
 
-Key types: `ModuleManifest` (+ `ModuleEnvVar`, `ModuleAuthor`, `ModuleManifestPaths`, `ModuleRegistryMeta`), `ModuleAppConfig`, `BootModuleOptions` / `BootedModule`, `StartModuleAppOptions` / `RunningModuleApp`, `ModuleRef`, `ModuleValidationReport`, `RegistryIndex` / `RegistryModuleEntry` (back-compat alias `RegistryIndexEntry`) / `RegistryVersionEntry` / `RegistryOwner` / `RegistryAuthor` / `RegistryVerification`, `ResolvedRegistryModule`, `VerificationStatus` / `VerificationPolicy`.
+Key types: `ModuleManifest` (+ `ModuleEnvVar`, `ModuleAuthor`, `ModuleManifestPaths`, `ModuleRegistryMeta`), `ModuleAppConfig`, `BootModuleOptions` / `BootedModule`, `StartModuleAppOptions` / `RunningModuleApp`, `ModuleRef`, `ModuleValidationReport`, `RegistryIndex` / `RegistryModuleEntry` (back-compat alias `RegistryIndexEntry`) / `RegistryVersionEntry` / `RegistryOwner` / `RegistryAuthor` / `RegistryVerification`, `ResolvedRegistryModule`, `VerificationStatus` / `VerificationPolicy`, `LinkService` / `LinkDefinition` / `LinkEndpoint` / `LinkOptions` / `LinkRowRef` / `LinkModelRef`.
 
 See the [`module.json` reference](../../MODULES.md) for the full manifest contract.
 

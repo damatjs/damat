@@ -63,9 +63,13 @@ export const AccountModel = model("accounts", {
   .timestamps();                       // adds createdAt / updatedAt
 ```
 
-Cross-module relationships live in `src/links/` so modules stay decoupled — see
-[Concepts → How modules compose](./02-concepts.md#how-modules-compose) and
-[the default backend](./12-default-backend.md).
+Relations like `belongsTo`/`hasMany` are for tables **within one module**. To
+relate models that live in **different** modules, use a cross-module **link**
+instead (`src/links/`, with `defineLink`/`collectLinkModels`/`defineLinkModule`)
+so neither module depends on the other — see
+[Concepts → How modules compose](./02-concepts.md#how-modules-compose),
+[the default backend](./12-default-backend.md), and the full
+[`@damatjs/link`](../../packages/link/README.md) reference.
 
 Once models change, generate and apply a [migration](./06-migrations.md).
 

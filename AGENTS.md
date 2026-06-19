@@ -142,6 +142,21 @@ Define steps with `createStep` (forward + compensation) and compose them with
 `createWorkflow` + `executeStep` inside `Effect.gen`. See
 [workflow-engine](./packages/workflow-engine/README.md).
 
+### Link two modules (cross-module relationship)
+Modules can't FK into each other, so a many-to-many relationship lives **outside**
+both modules in `src/links/<owner>/` (mirroring a module: `models/`, `index.ts`,
+`migrations/`). The junction table is auto-generated; neither module imports the other.
+1. `src/links/<owner>/models/<a>-<b>.ts`: `export default defineLink({ module, model, field }, { module, model, field })`.
+2. `src/links/<owner>/index.ts`: `export const links = [...]; export const models = collectLinkModels(links);`.
+3. `src/links/index.ts`: aggregate every owner and `export default defineLinkModule(links)`.
+4. Point `damat.config.ts` at it: `links: "./src/links"`.
+5. `damat-orm migrate:create link:<owner>` → `damat-orm migrate:up`, then
+   `damat-orm generate:types <module>` so each side gains the linked field.
+6. At runtime use `getModule("link")` → `create` / `dismiss` / `fetch` / `graph`.
+Import `defineLink` / `collectLinkModels` / `defineLinkModule` from
+`@damatjs/framework` (app) or `@damatjs/module` (standalone module). Full guide:
+[`@damatjs/link`](./packages/link/README.md).
+
 ---
 
 ## Installing modules via MCP (for AI assistants)
@@ -182,6 +197,11 @@ Two Claude Code skills encode the workflows:
   relations reference the **target table name** (`columns.hasMany("accounts")`).
 - Use `@damatjs/deps/<lib>` (e.g. `@damatjs/deps/zod`) instead of importing
   `zod`/`hono`/`effect`/`pg`/`ioredis` directly.
+- Cross-module relationships are **links**, not relations: declare them in
+  `src/links/` (not inside a module), wire `links:` in `damat.config.ts`, and
+  reach them at runtime via `getModule("link")`. `defineLink`/`collectLinkModels`/
+  `defineLinkModule` come from `@damatjs/framework` (app) or `@damatjs/module`
+  (module). See [`@damatjs/link`](./packages/link/README.md).
 
 ---
 
