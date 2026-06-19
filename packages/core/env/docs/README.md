@@ -11,45 +11,51 @@ are no runtime dependencies.
 
 | File                   | Responsibility                                                                       |
 | ---------------------- | ----------------------------------------------------------------------------------- |
-| `src/index.ts`         | `loadEnv()` — builds the file cascade, reads the first existing file, merges it.     |
+| `src/index.ts`         | `loadEnv()` — builds the file cascade, reads every existing file, merges them.       |
 | `src/parseEnvFile.ts`  | `parseEnvFile()` — line-by-line parser (comments, quotes, inline comments).          |
 | `package.json`         | Name `@damatjs/load-env`, version, `exports` map (`.` → `dist/index.js`).            |
 | `tsconfig.json`        | Extends `@damatjs/typescript-config/base.json`; `@/*` path alias → `src/*` (resolved at build by `tsc-alias`). |
 
-Both source files are re-exported through `src/index.ts` (which exports `loadEnv` and
-imports/uses `parseEnvFile`, itself re-exported from its module).
+`src/index.ts` is the package entry point and exports `loadEnv`. It imports
+`parseEnvFile` from `src/parseEnvFile.ts` for internal use; `parseEnvFile` is **not**
+re-exported and is not part of the public API.
 
 ## Architecture overview
 
 ```
 loadEnv(environment, cwd)
   │
-  ├─ build cascade:  [".env.{env}.local", ".env.{env}", ".env.local", ".env"]
+  ├─ snapshot preexisting = new Set(Object.keys(process.env))
   │
-  ├─ for each candidate (in order):
+  ├─ build cascade:  [".env", ".env.local", ".env.{env}", ".env.{env}.local"]
+  │
+  ├─ for each candidate (in order, all of them):
   │     ├─ path.join(cwd, candidate)
-  │     ├─ fs.existsSync? ──no──► try next candidate
+  │     ├─ fs.existsSync? ──no──► skip to next candidate
   │     └─ yes:
   │           ├─ fs.readFileSync(utf-8)
   │           ├─ parseEnvFile(content)  ──►  Record<string,string>
-  │           ├─ for each [key,value]: set process.env[key]
-  │           │     only if value is truthy AND process.env[key] is undefined
-  │           └─ return   ◄── STOPS after the first existing file
+  │           └─ for each [key,value]: set process.env[key]
+  │                 only if value is truthy AND key ∉ preexisting
   │
-  └─ (no file found) → return, process.env unchanged
+  └─ (no file found) → process.env unchanged
 ```
 
-The full step-by-step behavior, parsing rules, and the important "first match wins"
-nuance are documented in [architecture.md](./architecture.md).
+The full step-by-step behavior, parsing rules, and the cascade merge semantics are
+documented in [architecture.md](./architecture.md).
 
 ## Control / data flow
 
 1. The caller invokes `loadEnv(environment, cwd)` once, early in process startup.
-2. `loadEnv` constructs an ordered list of candidate filenames based on `environment`.
-3. It iterates the list; for the **first** file that exists it reads, parses, merges,
-   and then `return`s immediately — later candidates are never consulted.
-4. Merge is non-destructive: a key is written only if it has a truthy value *and* is not
-   already present in `process.env`. Pre-existing (system) variables therefore win.
+2. `loadEnv` snapshots the keys already in `process.env` into a `preexisting` set, then
+   constructs an ordered list of candidate filenames based on `environment`.
+3. It iterates **every** candidate in order; each file that exists is read, parsed, and
+   merged. Lower-priority files (`.env`) are merged first, higher-priority files
+   (`.env.{env}.local`) last, so the last writer of a shared key wins among the files.
+4. Merge respects the snapshot: a key is written only if it has a truthy value *and* it
+   was **not** in `preexisting`. Pre-existing (system) variables therefore win, and a key
+   first set by an earlier file can still be overridden by a later file (because the
+   snapshot is frozen before the loop and does not grow as keys are added).
 5. Read/parse errors for a candidate are caught, logged via `console.warn`, and the loop
    continues to the next candidate.
 
@@ -57,26 +63,26 @@ nuance are documented in [architecture.md](./architecture.md).
 
 - **Zero dependencies.** Only `node:fs` and `node:path`. Keeps the package light and at
   the bottom of the dependency graph.
-- **First existing file wins; no merging across files.** The loop `return`s after the
-  first hit. This differs from loaders that layer all files together. See the caveat in
-  [architecture.md](./architecture.md) — it also differs from the ordering language in
-  the package docstring.
-- **System env always wins.** `process.env[key]` is only set when it is currently
-  `undefined`, so exported shell variables and platform-injected vars are never
-  clobbered.
+- **All matching files are merged; later files override earlier.** The loop reads every
+  existing file in cascade order. The effective precedence is
+  `.env.{env}.local` > `.env.{env}` > `.env.local` > `.env`, realized by *layering* (each
+  file overwrites shared keys set by lower-priority files). See
+  [architecture.md](./architecture.md).
+- **System env always wins.** Keys present in `process.env` before the call are captured
+  in a snapshot and never overwritten, so exported shell variables and platform-injected
+  vars are preserved.
 - **Falsy values are skipped.** The merge guard is `if (value && ...)`, so empty-string
   values parsed from a file are *not* written.
 - **Failures are non-fatal.** A failed read/parse warns and is skipped, never throws.
 
 ## Gotchas
 
-- The docstring in `src/index.ts` lists the order as `.env` → `.env.local` →
-  `.env.{environment}` → `.env.{environment}.local` ("later files override earlier"),
-  but the implementation iterates the **reverse** order and stops at the first match.
-  The effective precedence is `.env.{env}.local` > `.env.{env}` > `.env.local` > `.env`,
-  realized by *selection* (first found), not by *override*. Trust the code.
-- Because only one file is loaded, you cannot keep shared defaults in `.env` and override
-  a subset in `.env.production` — if `.env.production` exists, `.env` is ignored entirely.
+- Shared defaults layer correctly: keep common values in `.env` and override a subset in
+  `.env.{env}` or the `.local` variants. Every existing file is read, and the
+  higher-priority file's value for a shared key wins.
+- The "system env wins" guard uses a snapshot taken **before** the loop, not a live
+  `process.env` check. A key first written by `.env` is therefore still overridable by a
+  later file in the same call — only keys that existed *before* `loadEnv` ran are locked.
 - The parser supports neither variable expansion (`${VAR}`) nor multiline values nor
   `export ` prefixes. See [architecture.md](./architecture.md) for the exact rules.
 

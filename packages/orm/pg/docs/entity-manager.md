@@ -12,7 +12,7 @@ The manager layer is the top-level entry point. It wraps a `Pool`, owns a `Model
 
 ```ts
 class PgEntityManager<TModels extends Record<string, ModelDefinition> = …> {
-  constructor(config: PgEntityManagerConfig) // { pool: Pool; logger?: ILogger }
+  constructor(config: PgEntityManagerConfig) // { pool: Pool; logger?: ILogger; models?: TModels }
 }
 ```
 
@@ -21,18 +21,26 @@ On construction it:
 1. stores `config.pool`,
 2. builds a logger (uses `config.logger`, else `new Logger({ prefix: "ORM", timestamp: true })`),
 3. creates a `ModelRegistry(logger)` and a `TransactionManager(pool, logger)`,
-4. calls `_initializeRepositories()` — builds a repo for every model already in the registry
-   (empty on a fresh manager, since nothing is registered yet).
+4. if `config.models` is given, `registerModel(name, model)` for each entry,
+5. calls `_initializeRepositories()` — builds a repo for every model already in the registry.
 
-> **Config gotcha:** `PgEntityManagerConfig` is `{ pool, logger? }` only — there is **no** `models`
-> field. The integration test passes `{ pool, models }`; that shape is stale. Register models with
+> **Config:** `PgEntityManagerConfig` is `{ pool, logger?, models? }`. The `models` map is optional;
+> models passed there are registered at construction. You can also register later with
 > `registerModel(name, model)`.
+
+### Dynamic model accessors
+
+Every registered model also gets a getter on the manager itself, so `em.user` returns the cached
+repository for `"user"` (the same instance as `em.repo("user")`). `_defineModelAccessor(name)` installs
+it during `registerModel`, but only if the name does not already exist on the instance — a model named
+after a real method/field (e.g. `transaction`, `pool`) keeps the method, and you reach its repo via
+`getRepository(name)`. This mirrors the `tx.<model>` accessors on the transactional manager.
 
 ### Methods
 
 | Method | Behaviour |
 | --- | --- |
-| `registerModel(name, model)` | Registers in the `ModelRegistry` **and** eagerly creates+caches a `PgRepository` for it. |
+| `registerModel(name, model)` | Registers in the `ModelRegistry`, eagerly creates+caches a `PgRepository`, and installs the `em.<name>` accessor. |
 | `getRepository<T>(name)` / `repo<T>(name)` | Returns the cached repo; throws `ModelRegistryError` if the model is not registered; lazily creates+caches on first access. |
 | `transaction<R>(cb, options?)` / `tx<R>(cb, options?)` | Runs `cb` inside a transaction; `cb` receives a `TransactionalEntityManager` (typed with `tx.<model>` accessors). |
 | `raw<T>(sql, params?, ctx?)` / `execute<T>(sql, params?)` | Runs raw SQL on the pool; returns `{ rows, rowCount }`; wraps driver errors in `QueryExecutionError`. |
@@ -144,8 +152,11 @@ manager paths — model-not-found uses `ModelRegistryError` from `@damatjs/orm-c
 ## Edge cases & gotchas
 
 - Calling `getRepository`/`repo` for an unregistered model throws `ModelRegistryError`.
-- A fresh `PgEntityManager` has zero repos until you `registerModel`; `_initializeRepositories` only
-  picks up models already in the registry at construction time.
+- A `PgEntityManager` built without `config.models` has zero repos until you `registerModel`;
+  `_initializeRepositories` only picks up models already in the registry at construction time (the
+  `config.models` entries are registered just before it runs).
+- The `em.<model>` accessor is skipped when the model name collides with an existing method/field —
+  use `getRepository(name)` for those.
 - `tx.<model>` accessors are derived from registry names at the moment the `TransactionalEntityManager`
   is constructed — register models before opening the transaction.
 - Non-transactional repo statements may each land on different pooled connections; use a transaction

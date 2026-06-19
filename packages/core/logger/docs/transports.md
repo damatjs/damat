@@ -95,7 +95,7 @@ fall back to 📝.
 
 - The directory is created (`mkdirSync(..., { recursive: true })`) once in the
   constructor when enabled.
-- Call `Logger.close()` ([`logger.ts:67`](../src/logger.ts)) on shutdown — it calls
+- Call `Logger.close()` ([`logger.ts`](../src/logger.ts)) on shutdown — it calls
   `FileTransport.close()`, which clears the flush interval and performs a final `flush()`.
   Forgetting this can lose up to one buffer interval of logs and leaves the interval
   timer running.

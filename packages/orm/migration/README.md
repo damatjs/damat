@@ -42,8 +42,9 @@ import {
 
 // 1. Generate a migration for the "user" module.
 //    Initial run → baseline; subsequent runs → diff vs the saved snapshot.
-//    Models are auto-discovered from src/modules/user/models/.
-await createMigration("user", "src/modules");
+//    The second argument is the module's own directory (its resolver), which
+//    is import()ed for its `models` export.
+await createMigration("user", "src/modules/user");
 
 // 2. Apply pending migrations. Pass a pg Pool and a module container.
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -72,9 +73,10 @@ console.log(status.modules);
 | `getModuleMigrationStatus(pool, resolver)` | function | Same, for one module (throws if it has no migrations). |
 | `MigrationTracker` | class | CRUD over `_damat_migration_logs` (`ensureTable`, `getApplied`, `recordApplied`, `recordReverted`). |
 | `bootstrapDatabase(pool)` | function | Idempotent DB setup: `pgcrypto` + `generate_id(prefix)` function. |
-| `executeMigration(pool, migration, moduleName, tracker)` | function | Run one `.sql` file in a transaction and record it. |
 | `log`, `separator`, `successBanner`, `errorBanner` | functions | Migration logging helpers (re-exported from `@damatjs/logger`). |
-| `MigrationInfo`, `ModuleMigrationResult`, `ModuleMigrationStatus`, `MigrationStatus`, `DatabaseConfig`, `AppliedMigration` | types | Public type surface. |
+| `MigrationTracker`, `AppliedMigration` | class / type | The tracker and its applied-row type. |
+
+`MigrationInfo`, `ModuleMigrationResult`, `ModuleMigrationStatus`, `MigrationStatus`, and `DatabaseConfig` are internal types: they describe the shapes returned by the functions above (so you get them through inference) but are not re-exported as named types from the package root. `executeMigration` is likewise internal — `runMigrations` is the entry point for applying migrations.
 
 **Subpath exports:** none — everything is under `.`.
 

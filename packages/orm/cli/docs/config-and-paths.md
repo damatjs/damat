@@ -22,15 +22,22 @@ Steps:
    does not exist.
 2. `configDir = dirname(filePath)` — the base for relative module `resolve`
    paths.
-3. Import with cache busting: `import("file://" + filePath + "?t=" +
-   Date.now())`, then `config = mod.default ?? mod`.
+3. Import with cache busting via `loadConfigModule`: copy the config to a
+   transient sidecar file (`.damat-config-<pid>-<n><ext>` next to it) so every
+   load gets a distinct module identity, `import("file://" + sidecar)`, then
+   delete the sidecar in `finally`. `config = mod.default ?? mod`.
 4. For each key in `config.modules`:
    - `id = module.id ?? moduleName` (falls back to the object key).
    - `resolvedPath = isAbsolute(module.resolve) ? module.resolve :
      path.resolve(configDir, module.resolve)`.
    - Store `modules[id] = { id, resolve: resolvedPath, path: module.resolve,
      name: moduleName }`.
-5. Return the `OrmModuleContainer` (keyed by `id`).
+5. For each link migration module from
+   `resolveLinkMigrationModules(config.links, configDir)` (one `link:<owner>` per
+   `src/links/<owner>` directory): store
+   `modules[entry.id] = { id, resolve, path, name: id, kind: "link" }`, skipping
+   any id that already names a real module (real modules are never clobbered).
+6. Return the `OrmModuleContainer` (keyed by `id`).
 
 Errors that start with `Config file not found` are re-thrown untouched; any other
 failure is wrapped as `Failed to load config from '<path>': <message>`.
@@ -118,12 +125,16 @@ export default {
     user: { id: "user", resolve: "./src/modules/user" },
     billing: { resolve: "./src/modules/billing" }, // id defaults to "billing"
   },
+  links: "./src/links", // optional; each src/links/<owner> → link:<owner>
 };
 ```
 
 Given this, `migrate:create user` resolves models from
 `<configDir>/src/modules/user/models`, writes the migration under
-`…/user/migrations`, and `generate:types user` writes to `…/user/types`.
+`…/user/migrations`, and `generate:types user` writes to `…/user/types`. A
+`src/links/user/` directory is registered as `link:user`, so
+`migrate:create link:user` writes its junction-table migration under
+`…/links/user/migrations`.
 
 ## Gotchas
 
@@ -134,4 +145,10 @@ Given this, `migrate:create user` resolves models from
 - **Empty `databaseUrl` is silent**: `loadDatabaseUrl` returns `""` rather than
   throwing; each db command treats falsy as an error and exits 1.
 - **Cache busting** means the config is re-read on every command invocation; a
-  long-lived process calling these helpers repeatedly will pick up edits.
+  long-lived process calling these helpers repeatedly will pick up edits. It
+  works by importing a transient sidecar copy of the config and deleting it
+  afterwards, so the config's own module identity never gets cached across loads.
+- **`config.links` is optional**: when absent (or pointing at a directory with no
+  qualifying `<owner>` subdirectories) `loadModules` returns only the real
+  modules. Otherwise each `src/links/<owner>` is added as a `link:<owner>` entry
+  tagged `kind: "link"`.

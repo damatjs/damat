@@ -59,8 +59,10 @@ const pool = await cm.connect();
 // 3. The entity manager — register models, then get repositories.
 const em = new PgEntityManager({ pool });
 em.registerModel("user", User);
+// Or register up front: new PgEntityManager({ pool, models: { user: User } }).
 
 const users = em.repo("user"); // alias for getRepository("user")
+// em.user is the same repository — a dynamic accessor is defined per model.
 
 await users.create({ data: { id: "usr_1", email: "a@b.com", name: "Alice" } });
 
@@ -90,7 +92,7 @@ Exported from the package root (`@damatjs/orm-pg`):
 
 | Export | Kind | Summary |
 | --- | --- | --- |
-| `PgEntityManager` | class | Top-level manager: caches `PgRepository` per model, runs transactions, raw SQL. `registerModel` / `getRepository` / `repo` / `transaction` / `tx` / `raw` / `execute`. |
+| `PgEntityManager` | class | Top-level manager: caches `PgRepository` per model, runs transactions, raw SQL, and exposes a dynamic `em.<model>` repository accessor per registered model. `registerModel` / `getRepository` / `repo` / `transaction` / `tx` / `raw` / `execute`. |
 | `EntityManager` | const | Alias of `PgEntityManager` (`export const EntityManager = PgEntityManager`). |
 | `TransactionalEntityManager` | class | The `tx` object inside `em.transaction(...)`: dynamic model accessors (`tx.user`), `repo`, `query`, savepoint methods. |
 | `EntityManagerError`, `QueryExecutionError` | class | Errors thrown by the manager layer. |
@@ -117,10 +119,11 @@ re-exported `WhereClause`, `WhereOperators`, `BuiltQuery`, and `*Descriptor` typ
 
 The package has a single export entry (`.`); there are no subpath exports.
 
-> **Note:** the `PgEntityManager` constructor takes only `{ pool, logger? }` (`PgEntityManagerConfig`).
-> Models are added via `registerModel(name, model)`, not a `models` field. The
-> `tests/integration.test.ts` file shows an older `{ pool, models }` shape that the current
-> `PgEntityManagerConfig` no longer accepts — trust the source.
+> **Note:** the `PgEntityManager` constructor takes `PgEntityManagerConfig` —
+> `{ pool, logger?, models? }`. Models can be registered up front via the optional
+> `models` map or later with `registerModel(name, model)`; either way each model
+> gets a cached `PgRepository` and a dynamic `em.<model>` accessor (mirroring
+> `tx.<model>` inside a transaction).
 
 ## How it fits
 

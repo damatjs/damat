@@ -23,9 +23,13 @@ in isolation and install into any Damat app with one command.
 | Work in this repo with an AI assistant | [AGENTS.md](./AGENTS.md) |
 | Dive into one package (overview) | each package's `README.md` (table below) |
 | Change a package's code (internals) | each package's `docs/` folder |
+| Upgrade, or see what changed in a version | [releases/](./releases/README.md) |
 
 Every package ships **two** docs: a `README.md` (overview, for users) and a
-`docs/` folder (detailed internals, for maintainers).
+`docs/` folder (detailed internals, for maintainers). Both describe the **current
+version only** — the per-version change history and upgrade steps live in
+[`releases/`](./releases/README.md). See the
+[Documentation & releases standard](./docs/DOCUMENTATION-STANDARD.md).
 
 ---
 

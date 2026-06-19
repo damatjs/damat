@@ -5,12 +5,11 @@
 (`src/utils/commands/executor.ts`), and a `ProcessManager`
 (`src/utils/commands/manager.ts`) that adds retries and lifecycle hooks.
 
-> The earlier design supported npm / yarn / pnpm detection. The current
-> `PackageManager` does not — it only detects the Bun version and runs Bun. The
-> `src/utils/__tests__/packageManager.test.ts` suite still tests the old
-> multi-manager API (`useNpm`/`useYarn`/`usePnpm`, `getPackageManager`,
-> `getCommandStr` throwing) and does **not** match the current class; treat it as
-> stale, not as the contract.
+> The `PackageManager` detects only the Bun version and runs Bun — there is no
+> npm / yarn / pnpm detection. The `src/utils/__tests__/packageManager.test.ts`
+> suite tests a multi-manager API (`useNpm`/`useYarn`/`usePnpm`,
+> `getPackageManager`, `getCommandStr` throwing) that does **not** match the
+> current class; treat it as stale, not as the contract.
 
 ## `PackageManager` (`package/manager.ts`)
 

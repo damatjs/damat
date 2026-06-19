@@ -44,10 +44,11 @@ interface SchemaDiff {
 // src/diff/priority.ts  (lower = executed first)
 CREATE_ENUM: 10,  CREATE_TABLE: 20,  ADD_COLUMN: 30,  ADD_INDEX: 40,  ADD_FOREIGN_KEY: 50,
 ALTER_ENUM: 60,   ALTER_COLUMN: 70,  RENAME_COLUMN: 75, RENAME_TABLE: 80,
-DROP_FOREIGN_KEY: 100, DROP_INDEX: 110, DROP_COLUMN: 120, DROP_TABLE: 130, DROP_ENUM: 140
+DROP_FOREIGN_KEY: 100, READD_FOREIGN_KEY: 105, DROP_INDEX: 110, READD_INDEX: 115,
+DROP_COLUMN: 120, DROP_TABLE: 130, DROP_ENUM: 140
 ```
 
-This single ordering is the contract between the diff and SQL layers. Creates come before the things that depend on them (enums before tables, tables before FKs, columns before indexes); drops come last and in reverse dependency order (FKs before indexes before columns before tables). `diffSchemas` sorts once with `a.priority - b.priority`, so the generator can iterate `diff.changes` blindly.
+This single ordering is the contract between the diff and SQL layers. Creates come before the things that depend on them (enums before tables, tables before FKs, columns before indexes); drops come last and in reverse dependency order (FKs before indexes before columns before tables). The two `READD_*` slots sit just after their matching drop so that a **changed** index or FK (handled as drop + re-add) re-creates *after* the old one is removed, rather than racing it. `diffSchemas` sorts once with `a.priority - b.priority`, so the generator can iterate `diff.changes` blindly.
 
 ## Entry point: `diffSchemas`
 
@@ -86,11 +87,11 @@ Algorithm:
 
 ### Indexes — `diff/indexes.ts`
 
-Indexes are keyed by name; when an index has no explicit `name`, a synthetic one is derived: `${tableName}_${col1_col2}_idx`. `indexesEqual` compares `unique`, `type`, `where`, and `JSON.stringify(columns)`. A **changed** index becomes `drop_index` + `add_index` (PostgreSQL cannot alter an index in place). Added indexes carry the resolved `name` so the generator and a later drop agree on it.
+Indexes are keyed by name; when an index has no explicit `name`, a synthetic one is derived: `${tableName}_${col1_col2}_idx`. `indexesEqual` compares `unique`, `type`, `where`, and `JSON.stringify(columns)`. A **changed** index becomes `drop_index` (priority `DROP_INDEX` 110) + `add_index` at the higher `READD_INDEX` priority (115), so the re-add sorts after the drop (PostgreSQL cannot alter an index in place). A purely *added* index uses the normal `ADD_INDEX` priority (40). Added indexes carry the resolved `name` so the generator and a later drop agree on it.
 
 ### Foreign keys — `diff/foreignKeys.ts`
 
-Keyed by `fk.name`. `foreignKeysEqual` compares `referencedTable`, `onDelete`, `onUpdate`, `deferrable`, `match`, and JSON of `columns` / `referencedColumns`. A **changed** FK becomes `drop_foreign_key` + `add_foreign_key` (no `ALTER CONSTRAINT` in PostgreSQL).
+Keyed by `fk.name`. `foreignKeysEqual` compares `referencedTable`, `onDelete`, `onUpdate`, `deferrable`, `match`, and JSON of `columns` / `referencedColumns`. A **changed** FK becomes `drop_foreign_key` (priority `DROP_FOREIGN_KEY` 100) + `add_foreign_key` at the higher `READD_FOREIGN_KEY` priority (105), so the re-add sorts after the drop (no `ALTER CONSTRAINT` in PostgreSQL). A purely *added* FK uses the normal `ADD_FOREIGN_KEY` priority (50).
 
 ### Enums — `diff/enums.ts`
 

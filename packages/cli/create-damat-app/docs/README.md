@@ -3,13 +3,13 @@
 Maintainer-facing reference for the `create-damat-app` scaffolder. Read alongside
 the [package README](../README.md), which covers user-facing usage.
 
-> History note: this package was modernized to be **Bun-only** and to run on the
-> shared `@damatjs/cli` runner. Older notes mentioning `cac` for argv parsing and
-> a multi-manager (npm/yarn/pnpm) `PackageManager` describe a previous design;
-> the current code parses argv through `@damatjs/cli` (`src/index.ts`) and the
-> `PackageManager` (`src/utils/package/manager.ts`) targets Bun exclusively. The
-> `src/utils/__tests__/packageManager.test.ts` suite still asserts the old
-> multi-manager API and does not match the current class — treat it as stale.
+This package is **Bun-only** and runs on the shared `@damatjs/cli` runner: argv is
+parsed through `@damatjs/cli` (`src/index.ts`) and the `PackageManager`
+(`src/utils/package/manager.ts`) targets Bun exclusively.
+
+> The `src/utils/__tests__/packageManager.test.ts` suite asserts a multi-manager
+> (`useNpm`/`useYarn`/`usePnpm`) API that the current `PackageManager` class does
+> not expose — treat that suite as stale, not as the contract.
 
 ## Split docs
 

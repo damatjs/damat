@@ -36,9 +36,26 @@ The shared base every backend package extends. Full contents:
     "paths": { /* monorepo aliases, see below */ }
   },
   "include": ["${configDir}/src"],
-  "exclude": ["${configDir}/dist", "${configDir}/node_modules"]
+  "exclude": [
+    "${configDir}/dist",
+    "${configDir}/node_modules",
+    "${configDir}/**/*.test.ts",
+    "${configDir}/**/*.test.tsx",
+    "${configDir}/**/*.spec.ts",
+    "${configDir}/**/*.spec.tsx",
+    "${configDir}/**/tests/**",
+    "${configDir}/**/__tests__/**",
+    "${configDir}/**/__mocks__/**",
+    "${configDir}/**/__fixtures__/**",
+    "${configDir}/**/__snapshots__/**"
+  ]
 }
 ```
+
+`include`/`exclude` are written with `${configDir}` so they apply to the
+**extending** package's own tree: only its `src/` is compiled, and its build
+output, dependencies, and test/mock/fixture/snapshot files are kept out of the
+emitted declaration build.
 
 ### Why each option
 

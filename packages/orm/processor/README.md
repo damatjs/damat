@@ -96,7 +96,7 @@ The root export (`.`) re-exports the type definitions, the `diff`, `sqlGenerator
 
 **Subpath exports:** none — everything is under `.`.
 
-**Key types** (re-exported from `@damatjs/orm-type` via `SchemaChange`): `ColumnSchema`, `TableSchema`, `ModuleSchema`, `EnumSchema`, `IndexSchema`, `ForeignKeySchema`, `ColumnType`.
+**Key types from `@damatjs/orm-type`:** `ColumnSchema`, `TableSchema`, `ModuleSchema`, `EnumSchema`, `IndexSchema`, `ForeignKeySchema`, `ColumnType`. This package's `SchemaChange` records embed them, but it does **not** re-export them — import these directly from `@damatjs/orm-type`.
 
 ## How it fits
 
@@ -110,7 +110,7 @@ It performs **no I/O except snapshot file read/write** (Node `fs`/`path`) and ne
 **Depended on by (in-repo):**
 
 - [`@damatjs/orm-migration`](../migration/README.md) — calls `diffSchemas`, `generateFromDiff`/`generateFromSnapshot`, `loadSnapshot`/`saveSnapshot`.
-- `@damatjs/orm-pg`, `@damatjs/orm-cli`, `@damatjs/orm-main`.
+- `@damatjs/orm-pg`, `@damatjs/orm-cli`, `@damatjs/orm-main`, `@damatjs/link`.
 
 ## Documentation
 

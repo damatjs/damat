@@ -14,11 +14,13 @@ export function loadEnv(
   cwd: string = process.cwd(),
 ): void {
   const envFiles = [
-    `.env.${environment}.local`,
-    `.env.${environment}`,
-    ".env.local",
     ".env",
+    ".env.local",
+    `.env.${environment}`,
+    `.env.${environment}.local`,
   ];
+
+  const preexisting = new Set(Object.keys(process.env));
 
   for (const envFile of envFiles) {
     const envPath = path.join(cwd, envFile);
@@ -28,13 +30,11 @@ export function loadEnv(
         const content = fs.readFileSync(envPath, "utf-8");
         const parsed = parseEnvFile(content);
 
-        // Only set if not already defined (allows system env vars to take precedence)
         for (const [key, value] of Object.entries(parsed)) {
-          if (value && process.env[key] === undefined) {
+          if (value && !preexisting.has(key)) {
             process.env[key] = value;
           }
         }
-        return; // ← stops at the first existing file
       } catch (error) {
         console.warn(`Warning: Failed to load ${envFile}:`, error);
       }
@@ -45,41 +45,46 @@ export function loadEnv(
 
 ### The candidate list
 
-For `environment = "production"` the cascade is:
+For `environment = "production"` the cascade, in load order, is:
 
-1. `.env.production.local`
-2. `.env.production`
-3. `.env.local`
-4. `.env`
+1. `.env`
+2. `.env.local`
+3. `.env.production`
+4. `.env.production.local`
 
 Files are searched in `cwd` only (no upward directory walk). Filenames are joined with
 `path.join(cwd, name)`.
 
-### First match wins (important)
+### All files merge; later files override (important)
 
-The loop `return`s as soon as it has successfully read, parsed, and merged a file. This
-means:
+The loop iterates **every** candidate — there is no early `return`. Each file that exists
+is read, parsed, and merged into `process.env`. This means:
 
-- Only **one** `.env` file is ever applied per call.
-- The ordering of the array is a **priority list for selection**, not a layering order.
-  If `.env.production` exists, `.env.local` and `.env` are never read.
+- Every existing `.env` file in the cascade contributes its keys.
+- The ordering of the array is a **layering order**: lower-priority files are applied
+  first, higher-priority files last. For a key present in more than one file, the last
+  (highest-priority) file to write it wins.
 - The effective precedence is therefore:
-  `.env.{env}.local` > `.env.{env}` > `.env.local` > `.env`.
+  `.env.{env}.local` > `.env.{env}` > `.env.local` > `.env`,
+  realized by *override*, not by *selection*.
 
-> Caveat: the function's own JSDoc claims files load `.env` → `.env.local` →
-> `.env.{environment}` → `.env.{environment}.local` with "later files override earlier".
-> That describes a layering model the code does **not** implement. The code selects the
-> single highest-priority file that exists. Trust the implementation.
+This matches the function's JSDoc, which lists the order as `.env` → `.env.local` →
+`.env.{environment}` → `.env.{environment}.local` with "later files override earlier".
 
 ### Merge semantics
 
-For each `[key, value]` parsed from the chosen file:
+Before the loop, `loadEnv` snapshots the current keys of `process.env` into a
+`preexisting` set. For each `[key, value]` parsed from a file:
 
-- It is written to `process.env[key]` **only if** `value` is truthy **and**
-  `process.env[key]` is currently `undefined`.
-- Consequence 1 — **system/process env wins:** any variable already present (exported in
-  the shell, injected by the platform, set earlier in the process) is preserved.
-- Consequence 2 — **empty values are dropped:** a line like `EMPTY=` parses to
+- It is written to `process.env[key]` **only if** `value` is truthy **and** `key` is
+  **not** in `preexisting`.
+- Consequence 1 — **system/process env wins:** any variable already present *before*
+  `loadEnv` ran (exported in the shell, injected by the platform, set earlier in the
+  process) is preserved.
+- Consequence 2 — **later files still override earlier files:** the snapshot is frozen
+  before the loop and does not grow as keys are added, so a key first set by `.env` is not
+  in `preexisting` and can be overwritten by `.env.{env}.local` later in the same call.
+- Consequence 3 — **empty values are dropped:** a line like `EMPTY=` parses to
   `EMPTY: ""`, which is falsy, so it is not written.
 
 ### Error handling
@@ -171,10 +176,10 @@ export const parseEnvFile = (content: string): Record<string, string> => {
 
 ## Safe extension
 
-- To support layering across multiple `.env` files, remove the early `return` and let
-  the loop continue (but keep the "set only if undefined" guard so higher-priority files
-  read first still win). This is a behavior change — document it and bump accordingly.
 - To support expansion, do it after parsing (resolve `${VAR}` against the
   already-merged `process.env`), ideally as an opt-in flag to preserve current behavior.
+- If you want a "first file written locks the key" model (so `.env` cannot be overridden
+  by `.env.{env}`), refresh the guard against live `process.env` instead of the frozen
+  `preexisting` snapshot. This is a behavior change — document it and bump accordingly.
 - Keep the parser dependency-free; if richer parsing is needed, prefer delegating to
   `dotenv`/`dotenv-expand` from `@damatjs/deps` rather than growing this file.

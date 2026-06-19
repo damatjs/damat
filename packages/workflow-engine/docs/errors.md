@@ -34,7 +34,7 @@ It is also used directly with two codes produced by the workflow runner:
 | --- | --- | --- | --- | --- |
 | `StepExecutionError` | `STEP_EXECUTION_FAILED` | `StepExecutionError` | `step.invoke` throws | `cause` = the thrown error |
 | `StepTimeoutError` | `STEP_TIMEOUT` | `StepTimeoutError` | a step attempt exceeds `timeoutMs` | `timeoutMs` |
-| `MaxRetriesExceededError` | `MAX_RETRIES_EXCEEDED` | `MaxRetriesExceededError` | all retries exhausted | `maxRetries`; `cause` = last error |
+| `MaxRetriesExceededError` | `MAX_RETRIES_EXCEEDED` | `MaxRetriesExceededError` | all retries exhausted (surfaced at the **workflow** boundary) | `maxRetries`; `cause` = last error |
 | `CompensationError` | `COMPENSATION_FAILED` | `CompensationError` | a compensation throws | `cause` = the thrown error |
 | `WorkflowLockError` | `WORKFLOW_LOCKED` | `WorkflowLockError` | lock can't be acquired | `lockId` |
 
@@ -55,8 +55,12 @@ new WorkflowLockError(workflowName, lockId);
   failure that the retry loop sees.
 - **`StepTimeoutError`** comes from `Effect.timeoutFail` per attempt. Retryable by
   default.
-- **`MaxRetriesExceededError`** replaces the per-attempt error once
-  `attemptCount > maxAttempts`. `cause` holds the last underlying error.
+- **`MaxRetriesExceededError`** is **not** raised by the step. Once
+  `attemptCount > maxAttempts`, the step re-fails with its last
+  `StepExecutionError`/`StepTimeoutError`, and the engine records a
+  `MaxRetriesExceededError` on `ctx.engineState.retriesExceeded`. The workflow
+  boundary then promotes that recorded error to `result.error`. `cause` holds the
+  last underlying error.
 - **`CompensationError`** is constructed inside the compensation finalizer, then
   **logged and swallowed** — it never reaches `result.error`. Its only externally
   visible effect is incrementing `result.compensationsFailed`.

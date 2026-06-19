@@ -73,7 +73,7 @@ export function generateDescription(diff: SchemaDiff): string
 
 ### Tables — `sqlGenerator/tables.ts`
 
-- `generateCreateTable(change, opts) → TableSqlResult` — emits `CREATE TABLE[ IF NOT EXISTS] "schema"."name" ( ...col defs... )`. Computes PK columns: single PK is inlined per column; composite PK adds `CONSTRAINT "<table>_pkey" PRIMARY KEY (...)` and passes `skipPrimaryKey` to each column. `TableSqlResult.foreignKeyStatements` is now always empty (FKs are separate changes); the field is retained for backward compatibility.
+- `generateCreateTable(change, opts) → TableSqlResult` — emits `CREATE TABLE[ IF NOT EXISTS] "schema"."name" ( ...col defs... )`. Computes PK columns: single PK is inlined per column; composite PK adds `CONSTRAINT "<table>_pkey" PRIMARY KEY (...)` and passes `skipPrimaryKey` to each column. `TableSqlResult.foreignKeyStatements` is always empty (FKs are emitted as separate `add_foreign_key` changes); the field exists only so the result shape stays uniform.
 - `generateDropTable(change, opts)` — `DROP TABLE[ IF EXISTS] "schema"."name"[ CASCADE]` (cascade if `change.cascade` or `opts.cascadeDrops`).
 - `generateRenameTable(change, opts)` — `ALTER TABLE ... RENAME TO ...`.
 - `generateTableSql(table, opts)` — thin wrapper that calls `generateCreateTable` from a raw `TableSchema` (no change context).

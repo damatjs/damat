@@ -100,6 +100,25 @@ await users.user.create({ data: { email: "a@b.co" } });
 > The same module can be **developed and tested in isolation** as a standalone
 > package — see [Authoring a module](./13-authoring-modules.md).
 
+## 7.4 Relating modules
+
+`getModule(id)` is how one module *calls* another. To declare a **data
+relationship** between two independent modules without either importing the
+other, use a **cross-module link** (`@damatjs/link`). Links live at the app level
+under `src/links/`, generate a junction table, and surface the related records on
+each module's own entity type:
+
+```ts
+const link = getModule("link");
+const { data } = await link.graph({
+  module: "user", entity: "user",
+  fields: ["*", "organizations.*"],   // follows the link to the other module
+});
+```
+
+Authoring a link, wiring `damat.config.ts`, and migrating it are covered in the
+[`@damatjs/link` README](../../packages/link/README.md).
+
 ---
 
 Prev: [← Migrations](./06-migrations.md) · [Guide home](../GUIDE.md) · Next: [Building HTTP APIs →](./08-http-apis.md)

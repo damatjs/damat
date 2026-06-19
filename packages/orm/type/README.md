@@ -157,7 +157,7 @@ driver types from `@damatjs/deps` and four type groups: `connection`, `model`,
 
 | Export | Kind | Summary |
 | --- | --- | --- |
-| `OrmModule` | interface | `{ id, name, path, resolve }` module manifest entry. |
+| `OrmModule` | interface | `{ id, name, path, resolve, kind? }` module manifest entry. `kind?: "module" \| "link"` tags a cross-module link directory (`"link"`); ordinary modules leave it `undefined`. |
 | `OrmModuleContainer` | interface | `{ [key]: OrmModule }` keyed module map. |
 
 > Both `OrmModule` and `OrmModuleContainer` live under `migration/index.ts`. The

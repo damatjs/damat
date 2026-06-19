@@ -24,7 +24,7 @@ Maintainer-facing reference for the `damat-orm` CLI. Read alongside the
 | `src/cli/commands/migrate/*` | The `migrate` group: `index.ts` (parent) + `up`, `status`, `list`, `create` |
 | `src/cli/commands/generate/*` | The `generate` group: `index.ts` (parent) + `types` |
 | `src/cli/config/index.ts` | `requireDatabaseUrl(logger)` — reads `process.env.DATABASE_URL`, exits 1 if missing |
-| `src/cli/utils/load.ts` | `loadModules(configPath, cwd)` and `loadDatabaseUrl(configPath, cwd)` — import `damat.config.ts` and normalize it |
+| `src/cli/utils/load.ts` | `loadModules(configPath, cwd)` and `loadDatabaseUrl(configPath, cwd)` — import `damat.config.ts` and normalize it; `loadModules` also adds `link:<owner>` migration modules from `config.links` (via `resolveLinkMigrationModules` from `@damatjs/link`) |
 | `src/cli/utils/index.ts` | Re-exports `./paths` |
 | `src/cli/utils/paths/*` | `resolveModelsPath`, `resolveMigrationsPath`, `resolveTypesPath`, `resolvePaths`, `resolveBasePath`, `getModulesDir`, `DEFAULT_MODULES_DIR` |
 | `src/tests/*` | `bun:test` coverage of commands, config loading, paths, registry, migrate/generate structure |
@@ -53,7 +53,7 @@ bin.ts
               ▼  dynamic import of the ORM package that does the work:
         @damatjs/orm-migration | @damatjs/orm-processor
         @damatjs/orm-model     | @damatjs/orm-codegen
-        @damatjs/deps/pg (Pool)
+        @damatjs/link          | @damatjs/deps/pg (Pool)
 ```
 
 Every handler returns `{ exitCode: number }` and reports via `ctx.logger`
@@ -85,8 +85,14 @@ Every handler returns `{ exitCode: number }` and reports via `ctx.logger`
   keyed by module id, each value `{ id, name, path, resolve }` with `resolve`
   always an absolute path. Per-module commands look up `modules[moduleName]` and
   error if absent.
-- **Cache busting**: `loadModules`/`loadDatabaseUrl` import the config with a
-  `?t=${Date.now()}` query so edits are always picked up.
+- **Cache busting**: `loadModules`/`loadDatabaseUrl` import the config through a
+  transient sidecar copy (written next to the config, imported, then deleted) so
+  every load gets a fresh module identity and edits are always picked up.
+- **Link modules**: `loadModules` also folds in cross-module link migration
+  modules from `config.links` — one `link:<owner>` entry per `src/links/<owner>`
+  directory, tagged `kind: "link"`. They share the `migrations/`+snapshot layout
+  of real modules; `generate:types` skips them and instead weaves their fields
+  into the linked modules' types.
 - **Pools are always closed**: db-touching handlers wrap work in
   `try { … } finally { await pool.end() }`.
 - **Exit codes**: missing config / missing module / missing db URL / failed

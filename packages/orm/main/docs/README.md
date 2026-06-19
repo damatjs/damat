@@ -16,6 +16,7 @@ deliberately tiny: it is a re-export aggregator with no behaviour of its own.
 | `src/migration.ts` | `export * from "@damatjs/orm-migration"` (subpath `./migration`) |
 | `src/processor.ts` | `export * from "@damatjs/orm-processor"` (subpath `./processor`) |
 | `src/pg.ts` | `export * from "@damatjs/orm-pg"` (subpath `./pg`) |
+| `src/tests/exports.test.ts` | Smoke tests for the re-export wiring (every subpath resolves; barrel aggregates the sub-packages) |
 | `package.json` `exports` | Maps each subpath to its compiled `dist/*.js` + `.d.ts` |
 
 ## Architecture overview
@@ -45,8 +46,10 @@ exactly one slice and get tighter tree-shaking and clearer intent.
   `package.json#exports` there must be a `src/<name>.ts` re-exporting the
   matching `@damatjs/orm-<name>` package, and that package must be listed in
   `dependencies`.
-- **`test` is a no-op** (`"test": "exit 0"`) — the real tests live in each
-  sub-package and in `@damatjs/orm-pg`'s integration suite. Build is just `tsc`.
+- **Tests are smoke tests only** (`"test": "bun test ./src"`) — `src/tests/exports.test.ts`
+  asserts that every subpath resolves to a non-empty namespace and that the
+  barrel aggregates the sub-packages' surfaces. The real behaviour tests live in
+  each sub-package and in `@damatjs/orm-pg`'s integration suite. Build is just `tsc`.
 - **Name collisions** between sub-packages would surface here as duplicate
   `export *` symbols. Today the five packages export disjoint names; introducing
   an overlap would require an explicit re-export with renaming.

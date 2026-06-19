@@ -73,7 +73,7 @@ function executeStep<I, O>(
   ctx: WorkflowContext,
 ): Effect.Effect<
   O,
-  StepExecutionError | StepTimeoutError | MaxRetriesExceededError,
+  StepExecutionError | StepTimeoutError,
   Scope.Scope
 >;
 ```
@@ -102,9 +102,14 @@ It requires a `Scope` in its context — supplied by `Effect.scoped(...)` in
      handed the **unwrapped** error (`StepExecutionError.cause ?? error`, or the
      `StepTimeoutError` for timeouts).
 4. **Map exhausted retries**: after retrying, `catchAll` checks
-   `attemptCount > maxAttempts`; if so it fails with
-   `MaxRetriesExceededError(stepName, maxAttempts, lastError, workflowName)`.
-   Otherwise (predicate stopped retries early) the last error propagates as-is.
+   `attemptCount > maxAttempts`. If so it records
+   `MaxRetriesExceededError(stepName, maxAttempts, lastError, workflowName)` onto
+   `ctx.engineState.retriesExceeded` and then **re-fails the step with the last
+   `StepExecutionError`/`StepTimeoutError`** (not the `MaxRetriesExceededError`).
+   The workflow boundary later surfaces the recorded error as `result.error`
+   (code `MAX_RETRIES_EXCEEDED`). If the predicate stopped retries early
+   (`attemptCount <= maxAttempts`), nothing is recorded and the last error
+   propagates as-is.
 5. **Run the attempt(s)** and log `debug` "Step completed" with `durationMs` and
    `attempts`.
 6. **Register compensation** (only if `step.compensate` exists) via

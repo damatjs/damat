@@ -6,7 +6,7 @@ Maintainer notes for the core framework. This index gives the module map, the en
 
 | File / dir | Responsibility |
 | --- | --- |
-| `src/index.ts` | Public barrel. Re-exports bootstrap, config, server, shutdown, entry, redis service, the module-registry helpers, framework types, and **all of `@damatjs/services`**. |
+| `src/index.ts` | Public barrel. Re-exports bootstrap, config, server, shutdown, entry, redis service, the module-registry helpers, framework types, **all of `@damatjs/services`**, and **the link authoring surface from `@damatjs/link`** (`defineLink`, `defineLinkModule`, `collectLinkModels`, ...). |
 | `src/entry.ts` | `start(cwd?)` — the full boot pipeline; `runEntry()` — `start()` with error handling. |
 | `src/types.ts` | Cross-cutting types: `ServerConfig`, `HealthCheckConfig`/`HealthCheckFn`, `BootstrapOptions`/`BootstrapResult`, `ShutdownHandler`; re-exports `Logger`/`ILogger`. |
 | `src/bootstrap/index.ts` | `bootstrap(options)` — builds the Hono app (middleware + file router + dev/health routes). See [bootstrap.md](./bootstrap.md). |
@@ -16,7 +16,7 @@ Maintainer notes for the core framework. This index gives the module map, the en
 | `src/handlers/` | Built-in routes: `/` info (`/damat`), route introspection (`/damat/api/routes`), `/health`. See [handlers.md](./handlers.md). |
 | `src/server/index.ts` | `startServer` via `@hono/node-server`. See [server-and-shutdown.md](./server-and-shutdown.md). |
 | `src/shutdown/index.ts` | Signal handlers + shutdown-handler registry. See [server-and-shutdown.md](./server-and-shutdown.md). |
-| `src/services/` | Service wiring: `initializeServices`, logger, database (`PoolManager.setup`), redis (re-export), module registry. See [services.md](./services.md). |
+| `src/services/` | Service wiring: `initializeServices`, logger, database (`PoolManager.setup`), redis (re-export), module registry, and cross-module link wiring (`resolveLinkModuleEntries` / `setLinkModuleResolver`). See [services.md](./services.md). |
 | `src/utils/windowParser.ts` | `parseWindowToMs("1m" \| "5m" \| "1h" \| "1d")` for rate-limit windows. |
 | `src/tests/` | `bun:test` suites: health handler, router helpers/response, scanner (`folderToUrlPath`, `sortRoutes`), services (logger, redis). |
 
@@ -26,7 +26,7 @@ Maintainer notes for the core framework. This index gives the module map, the en
 damat.config.ts (defineConfig)
         │ loadConfigAsync()
         ▼
-initializeServices(config)  ── logger ── PostgreSQL pool (PoolManager.setup) ── Redis ── modules
+initializeServices(config)  ── logger ── PostgreSQL pool (PoolManager.setup) ── Redis ── modules + links (link module)
         │ returns { healthChecks, shutdownHandlers, modules }
         ▼
 bootstrap({ routesDir, projectConfig, healthCheck })
@@ -41,7 +41,7 @@ startServer(app, config, logger)  → @hono/node-server serve(...)
 ## Boot pipeline (`entry.ts:start`)
 
 1. **Load config** — `loadConfigAsync(cwd)` dynamically imports `damat.config.ts`, validates it has `projectConfig`, and caches it.
-2. **Init services** — `initializeServices(config)`: creates the global logger; if `databaseUrl` is set, connects the pool and calls `PoolManager.setup(...)`; if `redisUrl` is set, inits + connects Redis; if `modules` are present, imports and registers each. Returns `healthChecks` and `shutdownHandlers`.
+2. **Init services** — `initializeServices(config)`: creates the global logger; if `databaseUrl` is set, connects the pool and calls `PoolManager.setup(...)`; if `redisUrl` is set, inits + connects Redis; imports and registers each module plus any `links` directories (registered as a `link` module via `resolveLinkModuleEntries`), and wires the link resolver (`setLinkModuleResolver`). Returns `healthChecks` and `shutdownHandlers`.
 3. **Resolve routes dir** — `config.projectConfig.http.api?.entryRouterPath ?? "/src/api/routes"`, joined with `cwd`.
 4. **Bootstrap the app** — `bootstrap({ routesDir, projectConfig, healthCheck })` builds the Hono app.
 5. **Shutdown handlers** — `setupShutdownHandlers(logger)` installs signal handlers; each service shutdown handler is `registerShutdown`ed.

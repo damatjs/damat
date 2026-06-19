@@ -81,16 +81,17 @@ operation.
 - **Registry:** new lookup helpers belong on `ModelRegistry` and should read from
   the existing maps. If they need new state, populate it inside `register()` so
   `registerMany()` stays correct automatically.
-- **`resolveRelation`:** today it finds a relation by checking
-  `propertyName in r` against each `RelationSchema` and then resolving
-  `relation.to` via the table index. See [registry.md](./registry.md) for the
-  subtlety here (`from` vs. `propertyName`) before changing it.
+- **`resolveRelation`:** it finds a relation by matching `r.from === propertyName`
+  against each `RelationSchema`, then resolves `relation.to` (a table name) via the
+  table index. See [registry.md](./registry.md) before changing it.
 - **Logger:** add new categories as optional `QueryLoggerOptions` flags
   (defaulting to `true` in the constructor's `Required<>` fill-in) and gate the
   new method on them.
-- **Tests:** `test` is `exit 0` — there are no unit tests in this package.
-  Validate changes by building and exercising `@damatjs/orm-pg`, which consumes
-  both classes.
+- **Tests:** `test` runs `bun test`. Unit tests live in `src/__tests__/`
+  (`registry.test.ts`, `logger.test.ts`, `index.test.ts`, with shared
+  `helpers.ts`) and cover the registry indexes/relation resolution and the
+  logger's category gating and singleton helpers. Also exercise `@damatjs/orm-pg`,
+  which consumes both classes, after non-trivial changes.
 
 ## Related
 

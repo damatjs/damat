@@ -68,7 +68,7 @@ const User = model(
     metadata: columns.jsonb().nullable(),
 
     // inverse side — no FK column; FK lives on `order.user`
-    orders: columns.hasMany(() => Order).mappedBy("user"),
+    orders: columns.hasMany("order").mappedBy("user"),
   },
   { schema: "store" },
 ).indexes([
@@ -82,7 +82,7 @@ const Order = model("order", {
   placedAt: columns.timestamp({ withTimezone: true }).defaultNow(),
 
   // owning side — creates the `user_id` FK column on `order`
-  user: columns.belongsTo(() => User).onDelete("CASCADE").indexed(),
+  user: columns.belongsTo("user").onDelete("CASCADE").indexed(),
 })
   .constrain([
     columns.constrains("orders_total_pos").check("total > 0"),

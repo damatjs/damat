@@ -31,8 +31,10 @@ reference backend.
    the curated re-exports in [`@damatjs/deps`](./packages/deps/README.md).
 4. **TypeScript, ESM, strict.** All packages are `"type": "module"` and extend
    [`@damatjs/typescript-config`](./packages/typescript-config/README.md).
-5. **Keep docs in sync.** Each package has a `README.md` (overview) and a
-   `docs/` folder (internals). If you change a package's public API, update both.
+5. **Keep docs in sync — two tiers.** Living docs (package `README.md` + `docs/`,
+   the guide) describe the **current version only**; the change history + upgrade
+   steps live in **`releases/<package>/`**. Change a package → update both tiers.
+   Full rules: [Documentation & releases standard](./docs/DOCUMENTATION-STANDARD.md).
 6. **Tests live next to code** (`src/tests/`, `tests/`, or `*.test.ts`). Run the
    package's `test` script.
 
@@ -205,8 +207,32 @@ Two Claude Code skills encode the workflows:
 
 ---
 
+## Documentation & releases (read before editing docs)
+
+Two separate tiers — keep them apart. Full rules:
+[Documentation & releases standard](./docs/DOCUMENTATION-STANDARD.md).
+
+- **Living docs** — package `README.md`, package `docs/`, and `docs/guide/`
+  describe the software **as it is now**. No version annotations ("new in X",
+  "since", "deprecated"), no change history, no upgrade steps. When behavior
+  changes, edit them in place and delete the old description.
+- **Release notes** — [`releases/<package>/`](./releases/README.md) is the change
+  record: one folder per package (its unscoped name), an index `README.md`, and a
+  `<version>.md` per version with package-relevant changes (before → after +
+  action required). Pure dependency/CI bumps are noted in the index, no file.
+
+**When you change a package**, in the *same* change: (1) update its living docs to
+the new behavior, (2) add `releases/<package>/<new-version>.md`, (3) update
+`releases/<package>/README.md`. A change isn't done until both tiers are updated —
+living docs that mention a version, or a behavior change with no `releases/` entry,
+are defects.
+
+---
+
 ## Where to read more
 
 - [docs/GUIDE.md](./docs/GUIDE.md) — full usage walkthrough.
 - [MODULES.md](./MODULES.md) — the `module.json` contract + registry/trust model.
+- [docs/DOCUMENTATION-STANDARD.md](./docs/DOCUMENTATION-STANDARD.md) — docs + releases rules.
+- [releases/](./releases/README.md) — per-package version history & upgrade notes.
 - Any `packages/**/docs/README.md` — that package's internals.

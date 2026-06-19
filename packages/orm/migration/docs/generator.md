@@ -20,12 +20,12 @@ export async function createMigration(
 ): Promise<string | DiffMigrationResult>
 ```
 
-Computes `migrationsDir = path.join(modulesDir, moduleName, "migrations")` and chooses:
+Computes `migrationsDir = path.join(modulesDir, moduleName, "migrations")` for the snapshot check and chooses:
 
-- `snapshotExist(migrationsDir)` is **false** → `createInitialMigration` (returns a file-path `string`).
-- **true** → `createDiffMigration` (returns a `DiffMigrationResult`).
+- `snapshotExist(migrationsDir)` is **false** → `createInitialMigration(moduleName, modulesDir, options)` (returns a file-path `string`).
+- **true** → `createDiffMigration(moduleName, modulesDir, options)` (returns a `DiffMigrationResult`).
 
-> Note the argument naming differs between the router and the builders: `createMigration` takes `(moduleName, modulesDir)` and joins `modulesDir/moduleName`, whereas `createInitialMigration`/`createDiffMigration` take `(moduleName, moduleResolver)` where `moduleResolver` is the **module directory itself** (e.g. `src/modules/user`). The router bridges this by passing the joined path differently — see the per-builder signatures below and pass the module's own directory when calling the builders directly.
+> The router checks the snapshot under `modulesDir/moduleName/migrations` but passes its `modulesDir` argument **unchanged** to the builders as their `moduleResolver` (the directory that gets `import()`ed for models). So `createMigration`'s second argument must already be the module's own directory (e.g. `src/modules/user`), not a modules-root like `src/modules` — pass the same value you would pass the builders. The in-repo callers (`@damatjs/orm-cli`, `@damatjs/module`) skip the router and call `createInitialMigration` / `createDiffMigration` directly with the module's resolver path.
 
 ## `createInitialMigration` — baseline
 

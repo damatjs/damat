@@ -14,7 +14,7 @@ without re-implementing formatting or re-opening file transports.
 
 ## `Logger.child(context)` and `Logger.withPrefix(prefix)`
 
-[`logger.ts:57`](../src/logger.ts):
+[`logger.ts`](../src/logger.ts):
 
 ```ts
 child(context: LogContext): ILogger {
@@ -64,16 +64,23 @@ reqLog.info("created", { amount: 500 });
 // prefix: "charge" (or "<parentPrefix>:charge" if the root Logger had a prefix)
 ```
 
-### Important: prefix routing
+### Prefix routing
 
-`ChildLogger` stores its `prefix` but **forwards log calls to the parent `Logger`'s
-methods** (`this.parent.info(...)`, etc.), which format using the *parent's* `prefix`
-field, not the child's. The child's prefix is preserved for further `withPrefix`
-chaining and is applied when a `Logger`-level `withPrefix` created the child, but a
-prefix added via `ChildLogger.withPrefix()` is not independently injected into the parent's
-formatter. If you need a prefix to always appear in output, set it on the root `Logger`
-(via `LoggerConfig.prefix` or `Logger.withPrefix`). Treat divergence here as a known
-limitation when editing `child.ts`.
+`ChildLogger` forwards every log call to the parent `Logger`'s `logWithPrefix(level,
+message, prefix, context?, error?)` entry point, passing **its own** `prefix` as the
+third argument:
+
+```ts
+debug(message, context?) {
+  this.parent.logWithPrefix("debug", message, this.prefix, this.merge(context));
+}
+```
+
+`Logger.logWithPrefix` then formats the entry with exactly that prefix, so a prefix set
+via `ChildLogger.withPrefix()` (or inherited from a `Logger`-level `withPrefix`) appears
+in the output. Formatting and file transport still happen once, inside the parent. The
+parent's own private `log()` is just `logWithPrefix(level, msg, this.prefix, …)`, so a
+root `Logger` uses its configured `prefix` while a child overrides it with the child's.
 
 ### `request()`
 

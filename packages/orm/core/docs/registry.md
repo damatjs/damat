@@ -82,20 +82,17 @@ Steps:
 
 1. `get(modelName)` → entry (return `undefined` if missing).
 2. `entry.model.toTableSchema()` → read `schema.relations`.
-3. Find the relation whose object contains the key `propertyName`
-   (`schema.relations?.find(r => propertyName in r)`).
-4. Return `getByTableName(relation.to)` — the target model's entry.
+3. Find the relation whose `from` equals `propertyName`
+   (`schema.relations?.find(r => r.from === propertyName)`), where `from` is the
+   property name the relation was defined under on the model.
+4. Return `getByTableName(relation.to)` — the target model's entry, looked up by
+   the relation's target table name.
 
-> **Subtlety / known sharp edge:** the lookup uses `propertyName in r`, i.e. it
-> checks whether `propertyName` is a *key of the `RelationSchema` object itself*
-> (`fromTable`, `from`, `to`, `type`, `mappedBy`, `linkedBy`, `rule`) — not
-> whether it equals `r.from` (the property name the relation was defined under).
-> In practice this matches only when `propertyName` happens to be one of those
-> field names. If you are extending relation resolution, the intent is almost
-> certainly `r.from === propertyName`; verify against `@damatjs/orm-pg`'s relation
-> resolver (`src/query/relations/resolver.ts`) before relying on or changing this
-> behavior. `toTableSchema()` is also re-evaluated on every call here — cache it
-> if this becomes hot.
+> **Note:** `relation.to` is a table name, so resolution goes through the
+> `tableNameIndex` (not the logical-name map). A relation whose target table is
+> not registered resolves to `undefined`. `toTableSchema()` is re-evaluated on
+> every call here — cache it if this becomes hot. The companion driver-side
+> resolver lives in `@damatjs/orm-pg` (`src/query/relations/resolver.ts`).
 
 ## `ModelRegistryError`
 

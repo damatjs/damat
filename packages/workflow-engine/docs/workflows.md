@@ -83,8 +83,10 @@ Generates a `nanoid` `executionId` and delegates to `executeWorkflowInternal`.
 5. `const exit = await Effect.runPromiseExit(workflowEffect)`; compute `durationMs`.
 6. **Map the `Exit` to a `WorkflowResult`:**
    - **Success** → `{ success: true, result, executionId, durationMs }`.
-   - **Failure** → `Cause.squash(exit.cause)`; if it's a `WorkflowError`, use it,
-     else wrap as `WorkflowError("WORKFLOW_FAILED", message, name, undefined, raw)`.
+   - **Failure** → if `engineState.retriesExceeded` is set (a step exhausted its
+     retries), use that `MaxRetriesExceededError`. Otherwise `Cause.squash(exit.cause)`;
+     if it's a `WorkflowError`, use it, else wrap as
+     `WorkflowError("WORKFLOW_FAILED", message, name, undefined, raw)`.
      Return `{ success: false, error, executionId, durationMs, compensated: engineState.compensationsRun > 0, compensationsFailed: engineState.compensationsFailed }`.
 
 ## `WorkflowResult` — the return contract

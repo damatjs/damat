@@ -33,7 +33,7 @@ There are **ten** levels. Each has a numeric threshold (`LOG_LEVELS`) and a visu
 
 A level is emitted when `LOG_LEVELS[level] >= minLevel`, where `minLevel` comes from the
 configured `level` (default `"info"` → `1`). The stream is chosen in
-[`logger.ts:42`](../src/logger.ts): `error`/`fatal` → `console.error`, `warn` →
+[`logger.ts`](../src/logger.ts): `error`/`fatal` → `console.error`, `warn` →
 `console.warn`, everything else → `console.log`.
 
 > Threshold ordering caveat: the numeric ordering places `success` (5), `warn` (6),
@@ -109,7 +109,7 @@ proper stack capture; treat this as a known bug if you touch `logger.ts`.
 ## Error normalization
 
 Regardless of method, only values that are `instanceof Error` are normalized (in
-[`logger.ts:32`](../src/logger.ts)) into `{ name, message, stack }` for both the file
+[`logger.ts`](../src/logger.ts)) into `{ name, message, stack }` for both the file
 transport and the formatter. Non-`Error` values passed as the error argument are ignored
 for the error block.
 

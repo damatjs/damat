@@ -1,9 +1,7 @@
 # @damatjs/logger — Internals
 
 Maintainer-facing documentation for `@damatjs/logger`. For the user-facing overview see
-the [package README](../README.md). This index folds in the package's former
-`ARCHITECTURE.md` and corrects it to match the current source (ten log levels, the
-`json`/`pretty`/`simple` formats, and the actual file-transport behavior).
+the [package README](../README.md).
 
 It is a centralized, zero-dependency logging package: colorized console output plus an
 optional dual-format file transport for post-mortem analysis. It uses only Node's
@@ -31,7 +29,7 @@ built-in `fs`/`path` and raw ANSI escape codes — no external packages.
                     ┌───────────────┐
    user code  ───►  │    Logger     │  (or ChildLogger ─► parent Logger)
                     └───────┬───────┘
-                            │ Logger.log(level, msg, ctx?, error?)
+                            │ Logger.logWithPrefix(level, msg, prefix, ctx?, error?)
             shouldLog? ─────┤   (LOG_LEVELS[level] >= minLevel)
                             │
               ┌─────────────┼──────────────────────────┐
@@ -44,8 +42,11 @@ built-in `fs`/`path` and raw ANSI escape codes — no external packages.
 ```
 
 `Logger` is the orchestrator. On construction it builds a `Formatter` (which owns a
-`Colorizer`) and, if file logging is requested/enabled, a `FileTransport`. Every public
-method funnels through the private `log()` method, which:
+`Colorizer`) and, if file logging is requested/enabled, a `FileTransport`. Every leveled
+method funnels through `logWithPrefix(level, message, prefix, context?, error?)` — the
+`Logger`'s own methods call it via the private `log()` wrapper (passing the logger's
+configured `prefix`), and a `ChildLogger` calls it directly (passing the child's prefix).
+`logWithPrefix` then:
 
 1. Drops the entry if its level is below the configured minimum (`shouldLog`).
 2. Computes a timestamp (if `timestamp` enabled) and normalizes any `Error` into

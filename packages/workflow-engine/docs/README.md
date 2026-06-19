@@ -57,7 +57,8 @@ execute(input, metadata)
        │          ├─ resolveStepConfig (defaults < workflow defaults < step)
        │          ├─ Effect.timeoutFail( Effect.tryPromise(step.invoke) )
        │          ├─ Effect.retry(..., { schedule, while: isRetryable })
-       │          ├─ on retries exhausted → MaxRetriesExceededError
+       │          ├─ on retries exhausted → re-fail with last error +
+       │          │     record MaxRetriesExceededError on engineState.retriesExceeded
        │          └─ if step.compensate: Effect.addFinalizer (runs on scope failure)
        ├─ Effect.timeoutFail(...)                       ← whole-workflow timeout
        └─ Effect.runPromiseExit → map Exit to WorkflowResult
@@ -78,10 +79,11 @@ no-ops.
   increment `compensationsRun` / `compensationsFailed`, which the workflow result
   then reports. Steps must not read or mutate it.
 - **Errors flow as the Effect error channel.** Step-level errors are
-  `StepExecutionError | StepTimeoutError | MaxRetriesExceededError`. At the
-  workflow boundary, `Cause.squash` extracts the failure; if it is already a
-  `WorkflowError` it is passed through, otherwise it is wrapped as
-  `WorkflowError("WORKFLOW_FAILED", ...)`.
+  `StepExecutionError | StepTimeoutError`. At the workflow boundary, if a step
+  recorded `engineState.retriesExceeded` (retries exhausted), that
+  `MaxRetriesExceededError` becomes the result error; otherwise `Cause.squash`
+  extracts the failure — if it is already a `WorkflowError` it is passed through,
+  else it is wrapped as `WorkflowError("WORKFLOW_FAILED", ...)`.
 
 ## Invariants & design decisions
 

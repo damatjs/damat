@@ -2,7 +2,7 @@
 
 > The general CLI framework powering Damat's command-line tools: declarative command/subcommand registry, argument & option parsing, validation, help, and banners.
 
-`@damatjs/cli` turns a single declarative config object into a runnable CLI. You describe commands, options, and handlers; it parses `process.argv` (via [cac](https://github.com/cacjs/cac)), validates and coerces options, dispatches to your handler with a typed `CommandContext`, loads optional project config, and renders help and a banner. It is the `core` framework that the user-facing `damat` CLI and `@damatjs/orm`'s migration CLI are built on.
+`@damatjs/cli` turns a single declarative config object into a runnable CLI. You describe commands, options, and handlers; it parses `process.argv` (via [cac](https://github.com/cacjs/cac)), validates and coerces options, dispatches to your handler with a typed `CommandContext`, loads optional project config, and renders help and a banner. It is the `core` framework that the user-facing `@damatjs/damat-cli` and `@damatjs/orm-cli` migration CLI are built on.
 
 Part of the [Damat](../../../README.md) monorepo · [Full guide](../../../docs/GUIDE.md) · [Internals](./docs/README.md)
 
@@ -142,9 +142,9 @@ All exports come from the single entry point `@damatjs/cli` (no subpath exports)
 
 **Depended on by (in repo)**
 
-- `@damatjs/damat` (`packages/cli/damat`) — the user-facing `damat` CLI; re-exports this package and defines `dev`/`build`/`start`/`module` commands.
-- `@damatjs/orm`'s CLI (`packages/orm/cli`) — migration/generate commands.
-- `create-damat-app` (`packages/cli/create-damat-app`).
+- `@damatjs/damat-cli` (`packages/cli/damat`) — the user-facing `damat` CLI; re-exports this package and defines `dev`/`build`/`start`/`module` commands.
+- `@damatjs/orm-cli` (`packages/orm/cli`) — migration/generate commands.
+- `@damatjs/create-damat-app` (`packages/cli/create-damat-app`).
 
 ## Documentation
 

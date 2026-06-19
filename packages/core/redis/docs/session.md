@@ -82,7 +82,6 @@ await sessions.delete(token);          // logout
 ## Gotchas
 
 - **`maybeExtend` hard-codes the key prefix** as `` `session:${token}` `` for the `TTL` read; keep that consistent with `SESSION_PREFIX` if you change the prefix.
-- **The stale test bug**: `tests/sessionManager.test.ts` imports from `../src/sessionManager` (no such file — it's `src/session/manager.ts`) and passes `autoExtendThreshold` (the real option is `extendThreshold`). The unknown option is silently ignored and falls back to the `0.5` default. Treat the test as outdated, not the source.
 - **Same-as-cache JSON caveats** — non-JSON-safe types don't round-trip; malformed JSON reads as `null`.
 
 ## Safe extension

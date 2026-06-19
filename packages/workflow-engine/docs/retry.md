@@ -109,12 +109,20 @@ fast and succeeds. Timeouts are retryable by default (their `name` is not
 
 ## Exhaustion
 
-When all retries are spent (`attemptCount > maxAttempts`), the step fails with:
+When all retries are spent (`attemptCount > maxAttempts`), the step itself
+**re-fails with the last `StepExecutionError`/`StepTimeoutError`** — not with a
+`MaxRetriesExceededError`. Instead, the engine records the latter on the context:
 
 ```ts
-new MaxRetriesExceededError(step.name, maxAttempts, lastError, ctx.workflowName)
+ctx.engineState.retriesExceeded = new MaxRetriesExceededError(
+  step.name, maxAttempts, lastError, ctx.workflowName,
+);
 // code: "MAX_RETRIES_EXCEEDED"; .cause = last error
 ```
+
+The workflow boundary then surfaces this recorded error as the `WorkflowResult`'s
+`error` (so `result.error.code === "MAX_RETRIES_EXCEEDED"`). At the **step**
+level, the error channel is only `StepExecutionError | StepTimeoutError`.
 
 ## Gotchas
 

@@ -23,6 +23,9 @@ References in the repo (read when you need detail):
 - `docs/guide/02-concepts.md` — the mental model (read this first if unsure).
 - `AGENTS.md` — repo map, conventions, common-task recipes.
 - `backend/default/` — a complete worked example; copy its patterns.
+- `releases/<package>/` — per-package version history & upgrade notes. When you
+  change a package, update both its living docs and `releases/` per
+  `docs/DOCUMENTATION-STANDARD.md`.
 
 ## Ground rules
 

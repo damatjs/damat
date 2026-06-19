@@ -40,6 +40,7 @@ export function clearConfigCache(): void;
 interface AppConfig {
   projectConfig: ProjectConfig;     // required
   modules?: ModuleConfigObject;     // map id -> ModuleConfig
+  links?: string | string[];        // cross-module link dir(s), e.g. "./src/links"
   services?: ServicesConfig;        // redis/database/workflowLock overrides
 }
 
@@ -93,6 +94,7 @@ interface ServicesConfig {
 - `projectConfig.databaseUrl` / `services.database` → `initDatabase` → `PoolManager.setup`.
 - `projectConfig.redisUrl` / `services.redis` → `initRedis` + `connectRedis`.
 - `modules` → `initModules(Object.values(config.modules), cwd)` → each module's `init()`.
+- `links` → `resolveLinkModuleEntries(config.links, cwd)` (from `@damatjs/link`) → appended to the module configs as `link` module(s), then `initModules` initializes them alongside `modules`. `getModule("link")` then resolves the link service.
 - `http.port` / `http.host` / `nodeEnv` → `ServerConfig` for `startServer`.
 - `http.corsConfig` → `setupMiddleware` → `corsConfigSetter`.
 - `http.rateLimit` / `http.auth` → `createFileRouter` → per-method config resolution.
@@ -105,3 +107,4 @@ interface ServicesConfig {
 - **`projectConfig` is mandatory and validated lightly.** The loader only checks that `config.projectConfig` exists; everything else is trusted by type, not runtime-validated.
 - **`http.api.bathUrl` is a typo'd, unused field** preserved in the source type; don't depend on it.
 - **`databaseUrl`/`redisUrl` are optional.** Omit `databaseUrl` and no pool is created (health reports `"not configured"`); omit `redisUrl` and rate limiting is skipped (the middleware no-ops when Redis is absent).
+- **`links` is a directory path, not a module map.** It accepts a single path or an array of paths; each must point at a directory whose `index.ts` default-exports `defineLinkModule(...)` and exports `models`. The framework turns these into `link` module entries and initializes them with the rest of the modules — no manual `modules` entry is needed.

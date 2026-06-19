@@ -52,7 +52,7 @@ Every feature function takes `client?: Redis` as its **last** parameter and reso
 const redis = client || getRedis();
 ```
 
-So the ergonomic call `cacheGet("key")` uses the global client, while `cacheGet("key", myRedis)` overrides it. Note this means the public signatures are `(...args, client?)`, **not** `(client, ...args)`. (The historical `Readme.md`, now removed, documented the old client-first order — do not trust it.)
+So the ergonomic call `cacheGet("key")` uses the global client, while `cacheGet("key", myRedis)` overrides it. Note this means the public signatures are `(...args, client?)`, **not** `(client, ...args)`.
 
 `RedisClient` (constructor) and `RedisQueue` (constructor) are the exceptions: they capture a `Redis` once and reuse it, falling back to `getRedis()` only at construction time.
 
@@ -85,7 +85,7 @@ Each concern namespaces its keys to avoid collisions; counters and the explicit 
 
 ## Tests
 
-`tests/*.test.ts` are **integration** tests using `bun:test`; they call `initRedis({ url: process.env.REDIS_URL || "redis://localhost:6379" })` in `beforeAll` and need a reachable Redis. Note `tests/sessionManager.test.ts` imports from `../src/sessionManager` and uses an `autoExtendThreshold` option — neither matches the current source (the module lives at `src/session/manager.ts` and the option is `extendThreshold`); treat that file as stale, not as API.
+`tests/*.test.ts` are **integration** tests using `bun:test`; they call `initRedis({ url: process.env.REDIS_URL || "redis://localhost:6379" })` in `beforeAll` and need a reachable Redis.
 
 ## Detail docs
 

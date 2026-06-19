@@ -30,8 +30,9 @@ Steps:
    - `initRedis({ url: services?.redis?.url ?? redisUrl, logger })` then `connectRedis()`.
    - Push a `redis` shutdown handler (`disconnectRedis()`).
    - Set `healthChecks.redis` to a real ping (`getRedis().ping()`); else `{ status: "not configured" }`.
-4. **Modules** — if `config.modules` has entries: `initModules(Object.values(config.modules), cwd)` then `instances.modules = getAllModules()`.
-5. Always push a `logger` shutdown handler (`closeLogger()`), registered last.
+4. **Modules + links** — build the module-config list from `Object.values(config.modules)` plus `resolveLinkModuleEntries(config.links, cwd)` (from `@damatjs/link`), each mapped to `{ id, resolve }`. If the list is non-empty: `initModules(list, cwd)` then `instances.modules = getAllModules()`. Link directories register as `link` module(s), so they share the module init path.
+5. **Link resolver** — `setLinkModuleResolver((id) => getModule(id))` so the link service can hydrate linked rows by calling other modules' services. No-op when no link module is registered.
+6. Always push a `logger` shutdown handler (`closeLogger()`), registered last.
 
 `bootstrap` wraps `instances.healthChecks` as `{ version: "2.0.0", checks }` for the `/health` route; `entry` `registerShutdown`s every handler.
 
@@ -90,6 +91,7 @@ async function initModules(modules: ModuleConfig[], cwd): Promise<void>;
 - **`registerModule(name, module)`** calls `module.init()` (constructs the service against the now-initialized pool) before storing it.
 - **`getModule(name)`** returns the registered instance's `.service` (or `null`). Typed via the augmentable `ModuleRegistry` (from `@damatjs/services`); without augmentation, use `getModule<UserModuleService>("user")`.
 - **`initModules(modules, cwd)`** for each `ModuleConfig`: resolves `cwd + resolve` to a `file://` URL, dynamic-imports it, takes the **default export**, requires it to have an `init` function (else throws "must default-export the result of defineModule()"), derives `id` from `config.id ?? basename(resolve)`, and `registerModule`s it.
+- **Cross-module links register as a `link` module.** `initializeServices` appends the entries from `resolveLinkModuleEntries(config.links, cwd)` to the list it passes to `initModules`, so a link directory boots through the same path as any other module and `getModule("link")` returns the link service (`create`/`dismiss`/`fetch` plus a nested `graph` query). `setLinkModuleResolver` then lets that service call other modules' services by id.
 
 ## `ServiceInstances` (`types.ts`)
 

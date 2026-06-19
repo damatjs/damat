@@ -5,6 +5,13 @@ The `migrate` group lives in `src/cli/commands/migrate/`. The parent
 the four leaves. All four call `loadModules("damat.config.ts", ctx.cwd)` and bail
 with `exitCode: 1` if the config is missing or has no modules.
 
+`loadModules` returns ordinary modules **and** cross-module link migration
+modules (one `link:<owner>` per `src/links/<owner>` directory declared under
+`config.links`, each tagged `kind: "link"`). The four migrate commands make no
+distinction: a `link:<owner>` entry has its own `migrations/` folder and snapshot
+and flows through discovery, status, listing, and execution exactly like a
+regular module.
+
 ```
 migrate (parent, lists subcommands)
 ├─ migrate:up      → runMigrations(pool, modules)
@@ -104,6 +111,7 @@ Behaviour:
 ```bash
 bun damat-orm migrate:create user       # first run: initial migration
 bun damat-orm migrate:create user       # later runs: diff migration
+bun damat-orm migrate:create link:user  # junction tables for the user owner's links
 ```
 
 ## Gotchas
@@ -111,7 +119,11 @@ bun damat-orm migrate:create user       # later runs: diff migration
 - **Module name resolution** uses the keys of the container returned by
   `loadModules` (i.e. the module `id`, which defaults to the config key when no
   explicit `id` is set). Passing a name that is not a key yields
-  `Module '<name>' not found in config`.
+  `Module '<name>' not found in config`. Link migration modules are keyed by
+  `link:<owner>`, so `migrate:create link:<owner>` / `migrate:status link:<owner>`
+  target them directly.
+- **Link modules never clobber real ones**: if a `link:<owner>` id collides with
+  an existing module key, the real module wins and the link entry is dropped.
 - **`migrate:create` never connects to the DB** — it only reads models +
   snapshot. A snapshot is the marker that flips initial → diff.
 - **`migrate:up`/`migrate:status` always `pool.end()`** in `finally`; if you add

@@ -17,6 +17,13 @@ export type { ModuleDefinition, ModuleInstance, ModuleRegistry };
 // App-side registry access — from @damatjs/framework
 export { getModule, hasModule, registerModule };
 
+// Cross-module links — from @damatjs/framework
+export { defineLink, collectLinkModels, defineLinkModule };
+export type {
+  LinkService, LinkDefinition, LinkEndpoint,
+  LinkOptions, LinkRowRef, LinkModelRef,
+};
+
 // ORM model DSL — from @damatjs/orm-model
 export { model, columns };
 
@@ -88,3 +95,8 @@ least `name`, `service`, and `init()` (see `BootableModule` in
   [workflow-engine internals](../../workflow-engine/docs/README.md)).
 - Route types come from the `@damatjs/framework/router` subpath; the file-based
   routes themselves live in the module's `api/routes` dir (served by the runtime).
+- The cross-module link helpers (`defineLink` / `collectLinkModels` /
+  `defineLinkModule` and the `Link*` types) are re-exported from
+  `@damatjs/framework` so app and standalone-module code share one link authoring
+  surface. The links themselves live in the app's `src/links/`. See
+  [`@damatjs/link`](../../link/README.md).

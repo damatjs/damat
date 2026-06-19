@@ -19,8 +19,8 @@ Both sides emit a `RelationSchema` into the table's `relations`, which
 `toModuleSchema()` hoists into the module's `relationships`.
 
 ```
-order.user  = belongsTo(User)   →  creates user_id FK column + FK constraint on `order`
-user.orders = hasMany(Order).mappedBy("user")  →  no column; metadata only
+order.user  = belongsTo("user")   →  creates user_id FK column + FK constraint on `order`
+user.orders = hasMany("order").mappedBy("user")  →  no column; metadata only
 ```
 
 ## `Relation` base (`relation/base.ts`)
@@ -51,12 +51,16 @@ resolveModuleTarget(target: ModelTarget): ModelDefinition
 removeLastS(tableName: string): string   // "users" -> "user"
 ```
 
-Three ways to point at a model:
+A relation target is a **table-name string**. Foreign keys are inferred by
+convention (`<targetTable>_id` → `id`), no import of the target model is needed,
+and circular references between tables are a non-issue. A direct model reference
+or a lazy thunk also work and resolve to the same schema:
 
 ```ts
-belongsTo(UserSchema)        // direct — requires UserSchema already defined
+belongsTo("users")           // table name — the normal form; no import needed
+belongsTo(UserSchema)        // direct model — requires UserSchema already defined
 belongsTo(() => UserSchema)  // lazy thunk — defers resolution past circular init
-hasMany("orders")            // string table name — resolved via the global registry
+hasMany("orders")            // table name on the inverse side
 ```
 
 `resolveModuleTarget`:

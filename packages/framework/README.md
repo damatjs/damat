@@ -4,7 +4,7 @@
 
 `@damatjs/framework` is the entry point that turns a `damat.config.ts` and a folder of route files into a running HTTP server. It loads and validates config, initializes services (logger, PostgreSQL pool via `@damatjs/services`, Redis, modules), scans `src/api/routes/**/route.ts` into a Hono router (with per-route validation, rate limiting, and auth), installs standard middleware (CORS, secure headers, request IDs, structured error handling), exposes health/introspection endpoints, starts the server through `@hono/node-server`, and registers SIGINT/SIGTERM shutdown handlers.
 
-It sits at the top of the Damat backend stack: it depends on `@damatjs/services`, `@damatjs/redis`, the ORM packages, `@damatjs/logger`, `@damatjs/types`, `@damatjs/workflow-engine`, and `@damatjs/deps`, and re-exports the service layer so apps import everything from one place.
+It sits at the top of the Damat backend stack: it depends on `@damatjs/services`, `@damatjs/redis`, the ORM packages, `@damatjs/logger`, `@damatjs/types`, `@damatjs/workflow-engine`, `@damatjs/link`, and `@damatjs/deps`, and re-exports the service layer and the link authoring surface so apps import everything from one place.
 
 Part of the [Damat](../../README.md) monorepo · [Full guide](../../docs/GUIDE.md) · [Internals](./docs/README.md)
 
@@ -49,8 +49,11 @@ export default defineConfig({
   modules: {
     user: { resolve: "./src/modules/user", id: "user" },
   },
+  links: "./src/links",
 });
 ```
+
+`links` points at a directory whose `index.ts` default-exports `defineLinkModule(...)` and exports `models`. The framework registers it as a `link` module, so cross-module links boot, migrate, and type-generate alongside your modules.
 
 A route file at `src/api/routes/users/[userId]/route.ts`:
 
@@ -76,7 +79,7 @@ The package has many subpath exports. Import the narrowest one you need.
 
 | Export | Kind | Summary |
 | --- | --- | --- |
-| `@damatjs/framework` | barrel | Re-exports `bootstrap`, `config`, `server`, `shutdown`, `entry`, `services/redis`, the module registry helpers (`getModule`, `hasModule`, `clearModules`, `getAllModules`, `initModules`, `registerModule`), framework types, **and all of `@damatjs/services`**. |
+| `@damatjs/framework` | barrel | Re-exports `bootstrap`, `config`, `server`, `shutdown`, `entry`, `services/redis`, the module registry helpers (`getModule`, `hasModule`, `clearModules`, `getAllModules`, `initModules`, `registerModule`), framework types, **all of `@damatjs/services`**, and **the link authoring surface from `@damatjs/link`** (`defineLink`, `defineLinkModule`, `collectLinkModels`, ...). |
 | `@damatjs/framework/entry` | module | `start(cwd?)` — full boot pipeline; `runEntry()` — `start()` with top-level error handling + `process.exit(1)`. |
 | `@damatjs/framework/config` | module | `defineConfig(config)`, `loadConfigAsync(cwd?)`, `loadConfig` (throws — use async), `clearConfigCache()`, and all config types (`AppConfig`, `ProjectConfig`, `HttpConfig`, `HttpRateLimitConfig`, `HttpAuthConfig`, `ModuleConfig`, `ServicesConfig`). |
 | `@damatjs/framework/bootstrap` | module | `bootstrap(options) => { app, config }` — builds the Hono app (middleware + file router + handlers) without starting it. |
@@ -91,7 +94,7 @@ Key types: `AppConfig`, `ProjectConfig`, `HttpConfig`, `BootstrapOptions`, `Boot
 
 ## How it fits
 
-- **Dependencies:** `@damatjs/services`, `@damatjs/redis`, `@damatjs/logger`, `@damatjs/types`, `@damatjs/orm-connector`, `@damatjs/orm-type`, `@damatjs/workflow-engine`, `@damatjs/deps`, and `@hono/node-server`.
+- **Dependencies:** `@damatjs/services`, `@damatjs/redis`, `@damatjs/logger`, `@damatjs/types`, `@damatjs/orm-connector`, `@damatjs/orm-type`, `@damatjs/workflow-engine`, `@damatjs/link`, `@damatjs/deps`, and `@hono/node-server`.
 - **In-repo dependents:** the reference app `@damatjs/default` (`backend/default`) imports `defineConfig`, `defineRoute`/`RouteHandler`, `ModuleService`, and `defineModule` from here. The framework's `services/database.ts` calls `PoolManager.setup(...)` from `@damatjs/services`, and `services/moduleService.ts` registers each app module.
 
 ## Documentation
