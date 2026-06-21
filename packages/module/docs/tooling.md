@@ -67,7 +67,7 @@ console.log(`generated ${files.length} files in ${outputDir}`);
 Both share the same front end — `locateModuleDir` + `readModuleManifest` — so they
 work on a module package laid out with `src/module.json` or the legacy
 root-`module.json`. They are deliberately thin: all real work lives in the ORM
-packages (`orm-migration`, `orm-model`, `orm-codegen`). This package's job is to
+packages (`orm-migration`, `orm-model`, `codegen`). This package's job is to
 make those usable *for a single module package* without app config.
 
 ## Gotchas

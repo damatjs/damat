@@ -63,9 +63,9 @@ my-app/
 └── src/
     ├── api/
     │   ├── middleware/       # Hono middleware (auth, etc.)
-    │   └── routes/           # file-based routes -> URL paths
-    │       ├── posts/route.ts            # GET/POST  /posts
-    │       └── users/[userId]/route.ts   # GET/PUT/DELETE /users/:userId
+    │   └── routes/           # file-based routes -> /api/* URL paths
+    │       ├── posts/route.ts            # GET/POST  /api/posts
+    │       └── users/[userId]/route.ts   # GET/PUT/DELETE /api/users/:userId
     ├── modules/             # your domain modules
     │   └── user/
     │       ├── index.ts      # defineModule(...)

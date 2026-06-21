@@ -1,4 +1,4 @@
-# orm-codegen internals
+# @damatjs/codegen internals
 
 Maintainer-facing documentation for `@damatjs/codegen`. For the public overview and quick start, see the [package README](../README.md).
 

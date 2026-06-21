@@ -74,8 +74,10 @@ Full walkthrough: **[docs/GUIDE.md](./docs/GUIDE.md)**.
 
 ## Monorepo structure
 
-A Bun + [Turborepo](https://turborepo.dev) monorepo. Packages are versioned
-together (currently `0.0.10`).
+A Bun + [Turborepo](https://turborepo.dev) monorepo. Packages share a release
+cadence (managed with [Changesets](https://github.com/changesets/changesets))
+and are published together; see [releases/](./releases/README.md) for the
+version history.
 
 ### Framework & app
 

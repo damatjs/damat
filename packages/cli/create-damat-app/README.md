@@ -77,7 +77,7 @@ bunx @damatjs/create-damat-app@latest my-app
 bunx @damatjs/create-damat-app@latest my-module --module
 
 # pin damat package versions and choose a directory
-bunx @damatjs/create-damat-app@latest my-app -v 0.0.10 -d ./projects
+bunx @damatjs/create-damat-app@latest my-app -v 0.1.4 -d ./projects
 
 # scaffold from a custom starter, with full logs
 bunx @damatjs/create-damat-app@latest my-app -r https://github.com/me/my-starter --verbose

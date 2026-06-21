@@ -404,7 +404,7 @@
         },
         {
           "name": "@damatjs/codegen",
-          "description": "Damatjs orm codegen",
+          "description": "Damatjs codegen — agnostic type + zod + CRUD scaffold generation",
           "dir": "packages/core/codegen",
           "readme": "packages/core/codegen/README.md",
           "docsIndex": "packages/core/codegen/docs/README.md",
@@ -553,7 +553,7 @@
         },
         {
           "name": "@damatjs/orm-cli",
-          "description": "Damatjs ORM CLI - unified command line interface for codegen and migrations",
+          "description": "Damatjs ORM CLI - database migration commands",
           "dir": "packages/orm/cli",
           "readme": "packages/orm/cli/README.md",
           "docsIndex": "packages/orm/cli/docs/README.md",

@@ -4,15 +4,18 @@ Change history for this package. For how it works **now**, read the
 [package README](../../packages/cli/create-damat-app/README.md) and its
 [docs](../../packages/cli/create-damat-app/docs/).
 
-`create-damat-app` is the project scaffolder: it clones a starter repo, renames
-and re-versions it, writes default env, installs with Bun, and (for projects)
-starts the dev server. Most version bumps reach it only as dependency updates —
-the framework/ORM features they carry (cross-module links, relation-by-table-name)
-flow in through the starter repos and the `@damatjs/*` deps it pins, not through
-the scaffolder's own code. Those are marked below as maintenance.
+`create-damat-app` is the project/module scaffolder. For an **app** it clones a
+starter repo, renames and re-versions it, writes default env, installs with Bun, and
+starts the dev server. For a **module** (`--module`) it scaffolds locally via
+`damat module init` (or clones a custom `--repo-url`). Many version bumps reach it
+only as dependency updates — framework/ORM features (cross-module links,
+relation-by-table-name) flow in through the starter repos and the pinned
+`@damatjs/*` deps, not the scaffolder's own code — and are marked below as
+maintenance.
 
 | Version | Summary | Upgrade notes |
 |---------|---------|---------------|
+| 0.1.4 | `--module` scaffolds locally via `damat module init` (was: clone a remote starter); `--repo-url` clones a custom starter; `create-damat-app <name>` works without typing `create`. | [0.1.4 →](./0.1.4.md) |
 | 0.1.3 | Maintenance / dependency bumps (carries `@damatjs/link` cross-module links via deps + starter) | — |
 | 0.1.2 | Maintenance / dependency bumps (carries relation-by-table-name via deps) | — |
 | 0.1.1 | Maintenance / CI + test cleanup | — |

@@ -6,6 +6,7 @@ Change history for this package. For how it works **now**, read the
 
 | Version | Summary | Upgrade notes |
 |---------|---------|---------------|
+| 0.1.4 | `damat module init` emits a root `README.md` + full `AGENTS.md` guide; `damat codegen` / `damat module codegen` scaffold a per-table CRUD slice (steps, workflows, routes). | [0.1.4 →](./0.1.4.md) |
 | 0.1.3 | Dependency/version bump only — no change to the `damat` CLI (monorepo-wide bump alongside `@damatjs/link`; cross-module links are handled by the framework/orm, and `damat build` already copies all of `src/` including `src/links` generically). | — |
 | 0.1.2 | Dependency/version bump only — no change to the `damat` CLI (table-name `hasOne`/`belongsTo` relations land via the ORM/module deps). | — |
 | 0.1.1 | Maintenance — CI/test workflow cleanup; no change to the `damat` CLI. | — |
