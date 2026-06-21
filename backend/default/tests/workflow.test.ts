@@ -35,7 +35,7 @@ const state: {
 };
 
 const fakeUserService = {
-  user: {
+  users: {
     create: mock(async (args: CreateArgs) => {
       state.createCalls.push(args);
       return state.createImpl(args);
@@ -80,8 +80,8 @@ beforeEach(() => {
   state.moduleLoaded = true;
   state.createCalls = [];
   state.deleteCalls = [];
-  fakeUserService.user.create.mockClear();
-  fakeUserService.user.delete.mockClear();
+  fakeUserService.users.create.mockClear();
+  fakeUserService.users.delete.mockClear();
 });
 
 // ─── step config / metadata ──────────────────────────────────────────────────
@@ -115,7 +115,7 @@ describe("steps › createProfileStep.invoke", () => {
     );
     expect(out).toEqual({ id: "usr_test", email: "new@user.co", name: "New User" });
 
-    expect(fakeUserService.user.create).toHaveBeenCalledTimes(1);
+    expect(fakeUserService.users.create).toHaveBeenCalledTimes(1);
     const callArg = state.createCalls[0]!;
     expect(callArg.data).toEqual({ email: "new@user.co", name: "New User" });
     expect(callArg.returning).toEqual(["id", "email", "name"]);
@@ -143,7 +143,7 @@ describe("steps › createProfileStep.invoke", () => {
       { id: "usr_42", email: "x@y.co", name: null } as any,
       ctx,
     );
-    expect(fakeUserService.user.delete).toHaveBeenCalledTimes(1);
+    expect(fakeUserService.users.delete).toHaveBeenCalledTimes(1);
     expect(state.deleteCalls[0]).toEqual({ where: { id: "usr_42" } });
   });
 
@@ -171,7 +171,7 @@ describe("steps › sendWelcomeEmailStep.invoke", () => {
 
   it("does not call any external service (no DB interaction)", async () => {
     await sendWelcomeEmailStep.invoke({ id: "usr_1" } as any, ctx);
-    expect(fakeUserService.user.create).not.toHaveBeenCalled();
+    expect(fakeUserService.users.create).not.toHaveBeenCalled();
   });
 });
 
@@ -221,8 +221,8 @@ describe("workflow › userOnboardingWorkflow.execute", () => {
     }
 
     // exactly one user create, no compensation on the happy path
-    expect(fakeUserService.user.create).toHaveBeenCalledTimes(1);
-    expect(fakeUserService.user.delete).not.toHaveBeenCalled();
+    expect(fakeUserService.users.create).toHaveBeenCalledTimes(1);
+    expect(fakeUserService.users.delete).not.toHaveBeenCalled();
   });
 
   it("fails gracefully and compensates when the first step throws", async () => {
@@ -239,7 +239,7 @@ describe("workflow › userOnboardingWorkflow.execute", () => {
       expect(res.compensated).toBe(false);
     }
     // create threw before returning, so no user was persisted to roll back
-    expect(fakeUserService.user.delete).not.toHaveBeenCalled();
+    expect(fakeUserService.users.delete).not.toHaveBeenCalled();
   });
 
   it("rolls back the created profile when a later step fails", async () => {
@@ -255,8 +255,8 @@ describe("workflow › userOnboardingWorkflow.execute", () => {
       if (!res.success) expect(res.compensated).toBe(true);
 
       // createProfile succeeded, so its compensation must delete the new user
-      expect(fakeUserService.user.create).toHaveBeenCalledTimes(1);
-      expect(fakeUserService.user.delete).toHaveBeenCalledTimes(1);
+      expect(fakeUserService.users.create).toHaveBeenCalledTimes(1);
+      expect(fakeUserService.users.delete).toHaveBeenCalledTimes(1);
       expect(state.deleteCalls[0]).toEqual({ where: { id: "usr_test" } });
     } finally {
       (sendWelcomeEmailStep as any).invoke = original;

@@ -1,13 +1,21 @@
+import type { Effect, Scope } from "effect";
 import type { RequiredStepConfig, StepConfig } from "./step";
 import type { RequiredWorkflowConfig } from "./workflow";
 import type { WorkflowResult } from "./result";
 import type { WorkflowLockConfig } from "./lock";
+import type { WorkflowError } from "../errors";
 import { WorkflowContext } from './context';
 
 /**
- * Step definition with typed input/output
+ * Step definition with typed input/output.
+ *
+ * A step is also **callable**: `step(input, ctx)` is sugar for
+ * `executeStep(step, input, ctx)` and returns the Effect, so a workflow body
+ * can be written as `(input, ctx) => step(input, ctx)` (single step) or
+ * `yield* step(input, ctx)` (inside `Effect.gen`) — no `executeStep` noise.
  */
 export interface StepDefinition<I, O> {
+  (input: I, ctx: WorkflowContext): Effect.Effect<O, WorkflowError, Scope.Scope>;
   /** Unique step name for logging and tracing */
   name: string;
   /** Step configuration with defaults applied */

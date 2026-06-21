@@ -75,6 +75,11 @@ mock.module("@damatjs/orm-codegen", () => ({
     if (state.generateThrows) throw state.generateThrows;
     return state.filesMap;
   },
+  // App-mode CRUD scaffold + registry augmentation written alongside types.
+  generateCrudScaffold: () => ({ created: [], skipped: [] }),
+  resolveServiceClassName: (_dir: string, id: string) => `${id}Service`,
+  registryAugmentation: (id: string, cls: string) =>
+    `// generated registry for "${id}" -> ${cls}\n`,
 }));
 
 function createLogger() {
@@ -239,7 +244,12 @@ describe("generate:types - success path", () => {
     // Files were actually written to {resolve}/types.
     const typesDir = path.join(resolve, "types");
     expect(fs.existsSync(typesDir)).toBe(true);
-    expect(fs.readdirSync(typesDir).sort()).toEqual(["index.ts", "users.ts"]);
+    // generate:types now also emits the registry augmentation alongside types.
+    expect(fs.readdirSync(typesDir).sort()).toEqual([
+      "index.ts",
+      "registry.ts",
+      "users.ts",
+    ]);
     expect(fs.readFileSync(path.join(typesDir, "index.ts"), "utf-8")).toBe(
       "// index content",
     );

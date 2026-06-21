@@ -41,8 +41,8 @@ import { registerModel } from "@/utils/registry";
  *   ]);
  * ```
  */
-export class ModelDefinition {
-  readonly _tableName: string;
+export class ModelDefinition<Name extends string = string> {
+  readonly _tableName: Name;
   readonly _name: string;
   _schemaName?: string;
   readonly _properties: Record<string, PropertyValue>;
@@ -53,7 +53,7 @@ export class ModelDefinition {
   _deletedAtField: string = "deleted_at";
 
   constructor(
-    tableName: string,
+    tableName: Name,
     properties: Record<string, PropertyValue>,
     options?: { schema?: string; name?: string },
   ) {
@@ -71,7 +71,7 @@ export class ModelDefinition {
     return this._name;
   }
 
-  get tableName(): string {
+  get tableName(): Name {
     return this._tableName;
   }
 
@@ -296,12 +296,12 @@ export class ModelDefinition {
  *   ]);
  * ```
  */
-export function model<T extends Record<string, PropertyValue>>(
-  tableName: string,
+export function model<Name extends string, T extends Record<string, PropertyValue>>(
+  tableName: Name,
   properties: T,
   options?: { schema?: string; name?: string },
-): ModelDefinition {
-  return new ModelDefinition(tableName, properties, options);
+): ModelDefinition<Name> {
+  return new ModelDefinition<Name>(tableName, properties, options);
 }
 
 export default model;

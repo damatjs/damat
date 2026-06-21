@@ -1,11 +1,11 @@
 import { join, relative } from "node:path";
-import { existsSync, rmSync } from "node:fs";
+import { existsSync } from "node:fs";
 import type { Command } from "@damatjs/cli";
 import { readModuleManifest, locateModuleDir, evaluateVerification } from "@damatjs/module";
 import type { ModuleSource } from "@damatjs/framework";
 import {
   resolveModuleSource,
-  copyModule,
+  installModuleSplit,
   registerModuleInConfig,
   syncEnvVars,
   installModulePackages,
@@ -106,20 +106,34 @@ export const moduleAddCommand: Command = {
         }
       }
 
-      if (existsSync(targetDir)) {
-        if (!ctx.options.force) {
-          ctx.logger.error(
-            `${relative(ctx.cwd, targetDir)} already exists — use --force to overwrite`,
-          );
-          return { exitCode: 1 };
-        }
-        rmSync(targetDir, { recursive: true, force: true });
+      if (existsSync(targetDir) && !ctx.options.force) {
+        ctx.logger.error(
+          `${relative(ctx.cwd, targetDir)} already exists — use --force to overwrite`,
+        );
+        return { exitCode: 1 };
       }
 
-      // Only the module source is inserted — package scaffolding (tests,
-      // package.json, module.config.ts) stays with the standalone package.
-      copyModule(sourceModuleDir, targetDir);
-      ctx.logger.success(`Copied module to ${relative(ctx.cwd, targetDir)}`);
+      // Split the module across the app's layers (the package scaffolding —
+      // tests, package.json, module.config.ts — stays with the standalone
+      // package): routes → src/api/routes/<id>, workflows → src/workflows/<id>,
+      // everything else → src/modules/<id>.
+      const layout = installModuleSplit(sourceModuleDir, {
+        cwd: ctx.cwd,
+        moduleId,
+        modulesDir,
+        force: Boolean(ctx.options.force),
+      });
+      ctx.logger.success(
+        `Installed module to ${relative(ctx.cwd, layout.moduleHome)}`,
+      );
+      if (layout.apiTarget) {
+        ctx.logger.info(`  routes → ${relative(ctx.cwd, layout.apiTarget)}`);
+      }
+      if (layout.workflowsTarget) {
+        ctx.logger.info(
+          `  workflows → ${relative(ctx.cwd, layout.workflowsTarget)}`,
+        );
+      }
 
       // Register in damat.config.ts, recording where the module came from
       const configPath = join(ctx.cwd, "damat.config.ts");

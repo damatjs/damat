@@ -1,8 +1,14 @@
 /**
- * @damatjs/module — the module system in one package.
+ * @damatjs/module — the module system's contract, config, runtime, and tooling.
  *
- * - Authoring:  the complete authoring surface (defineModule, ModuleService,
- *               model/columns, workflow engine, route types, zod)
+ * Authoring symbols are imported from the real packages, not re-exported here:
+ *   - defineModule / ModuleService           → @damatjs/services
+ *   - getModule / hasModule / registerModule  → @damatjs/framework
+ *   - model / columns                         → @damatjs/orm-model
+ *   - workflow engine (createStep, …)         → @damatjs/workflow-engine
+ *   - RouteHandler / RouteValidator           → @damatjs/framework/router
+ *   - z                                       → @damatjs/deps/zod
+ *
  * - Contract:   ModuleManifest (module.json) + validation
  * - Config:     defineModuleConfig — the only thing a module author sets up
  * - Runtime:    startModuleApp / runModuleEntry — a module package runs as a
@@ -11,9 +17,6 @@
  * - Tooling:    createModuleMigration / generateModuleTypes — no app config needed
  * - Registry:   refs, readiness validation, and registry resolution
  */
-
-// Authoring surface (single import for module authors)
-export * from "./authoring";
 
 // Manifest contract
 export * from "./manifest";

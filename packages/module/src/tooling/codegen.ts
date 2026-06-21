@@ -1,6 +1,11 @@
 import { join } from "node:path";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { generateFilesMap } from "@damatjs/orm-codegen";
+import {
+  generateFilesMap,
+  generateCrudScaffold,
+  resolveServiceClassName,
+  registryAugmentation,
+} from "@damatjs/orm-codegen";
 import { toModuleSchema } from "@damatjs/orm-model";
 import { discoverModels } from "@damatjs/orm-migration";
 import type { ILogger } from "@damatjs/logger";
@@ -11,6 +16,8 @@ import { locateModuleDir } from "../runtime/locate";
 export interface ModuleCodegenResult {
   outputDir: string;
   files: string[];
+  /** CRUD scaffold files newly created this run (scaffold-once). */
+  scaffolded: string[];
 }
 
 /**
@@ -42,5 +49,34 @@ export async function generateModuleTypes(
     files.push(fileName);
   }
 
-  return { outputDir, files };
+  // Generated module-registry augmentation: makes `getModule("<id>")` resolve
+  // to the typed service everywhere — no `as any`, no manual cast. Overwritten
+  // every run (it is type-only). The service class is read from `service.ts`.
+  const serviceClass = resolveServiceClassName(moduleDir, manifest.name);
+  writeFileSync(
+    join(outputDir, "registry.ts"),
+    registryAugmentation(manifest.name, serviceClass),
+    "utf-8",
+  );
+  files.push("registry.ts");
+
+  // Scaffold the per-operation CRUD slice (steps + workflows + split routes)
+  // alongside the types. Module-mode output roots live inside the module so
+  // the install-splitter can later relocate api/ and workflows/ into the app.
+  // Scaffold-once: existing files are never overwritten.
+  const scaffold = generateCrudScaffold(
+    schema,
+    {
+      moduleId: manifest.name,
+      routesRoot: join(moduleDir, "api", "routes"),
+      workflowsRoot: join(
+        moduleDir,
+        manifest.paths?.workflows ?? DEFAULT_MODULE_PATHS.workflows,
+      ),
+      typesDir: outputDir,
+    },
+    logger,
+  );
+
+  return { outputDir, files, scaffolded: scaffold.created };
 }

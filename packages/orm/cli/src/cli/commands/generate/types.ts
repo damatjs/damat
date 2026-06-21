@@ -10,7 +10,12 @@ const generateTypes: Command = {
   handler: async (ctx) => {
     const fs = await import("node:fs");
     const path = await import("node:path");
-    const { generateFilesMap } = await import("@damatjs/orm-codegen");
+    const {
+      generateFilesMap,
+      generateCrudScaffold,
+      resolveServiceClassName,
+      registryAugmentation,
+    } = await import("@damatjs/orm-codegen");
     const { toModuleSchema } = await import("@damatjs/orm-model");
     const { discoverModels } = await import("@damatjs/orm-migration");
     const moduleName = ctx.args[0];
@@ -84,6 +89,44 @@ const generateTypes: Command = {
       for (const [fileName, content] of filesMap) {
         const outputPath = path.join(outputDir, fileName);
         fs.writeFileSync(outputPath, content, "utf-8");
+      }
+
+      // App-mode CRUD scaffold: a model written inside an app gets the same
+      // route → workflow → step → service slice as a standalone module. Routes
+      // land in the app's `src/api/routes/<id>` and workflows in
+      // `src/workflows/<id>` (where the framework actually mounts/uses them);
+      // the model/service/types stay in the module. Scaffold-once — existing
+      // files are never overwritten. Plus the `ModuleRegistry` augmentation so
+      // `getModule("<id>")` is typed (no `as any`).
+      try {
+        const scaffold = generateCrudScaffold(
+          schema,
+          {
+            moduleId: moduleName,
+            routesRoot: path.join(ctx.cwd, "src", "api", "routes"),
+            workflowsRoot: path.join(ctx.cwd, "src", "workflows", moduleName),
+            typesDir: outputDir,
+          },
+          ctx.logger,
+        );
+        if (scaffold.created.length > 0) {
+          ctx.logger.success(
+            `Scaffolded ${scaffold.created.length} CRUD files (steps, workflows, routes)`,
+          );
+        }
+        const serviceClass = resolveServiceClassName(
+          moduleConfig.resolve,
+          moduleName,
+        );
+        fs.writeFileSync(
+          path.join(outputDir, "registry.ts"),
+          registryAugmentation(moduleName, serviceClass),
+          "utf-8",
+        );
+      } catch (e) {
+        ctx.logger.warn(
+          `CRUD scaffold skipped: ${e instanceof Error ? e.message : String(e)}`,
+        );
       }
 
       ctx.logger.info(`Output: ${outputDir}`);

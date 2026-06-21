@@ -5,13 +5,13 @@ import { getModule } from "@damatjs/framework";
 export const createProfileStep = createStep<NewUsers, Users>(
   "create-profile",
   async (input, _ctx) => {
-    const userService: any = getModule("user");
+    const userService = getModule("user");
 
     // const userService = userModule.init() as any;
 
     if (!userService) throw new Error("User module not loaded");
 
-    const user = (await userService.user.create({
+    const user = (await userService.users.create({
       data: {
         email: input.email,
         name: input.name,
@@ -24,10 +24,10 @@ export const createProfileStep = createStep<NewUsers, Users>(
     return user;
   },
   async (_input, output, _ctx) => {
-    const userService: any = getModule("user");
+    const userService = getModule("user");
     if (!userService) throw new Error("User module not loaded");
 
-    await userService.user.delete({
+    await userService.users.delete({
       where: {
         id: output.id,
       },

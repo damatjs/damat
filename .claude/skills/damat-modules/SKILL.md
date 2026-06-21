@@ -48,11 +48,15 @@ You're in **your own** module package with the `@damatjs/*` packages installed
      `damatjs/damat-starter-module` repo (the full starter: README, AGENTS.md, CI,
      tests). Same flow as creating a backend; needs network.
    - `damat module init <name>` — an offline local scaffold (`package.json`
-     scripts, `module.config.ts`, `src/index.ts`/`service.ts`/`accessor.ts`,
+     scripts, `module.config.ts`, `src/index.ts`/`service.ts`,
      `src/config/schema`, `src/module.json`, a contract test).
-2. **Implement**, importing the authoring surface from `@damatjs/module`:
+2. **Implement**, importing each symbol from its real package:
    ```ts
-   import { defineModule, ModuleService, model, columns, z } from "@damatjs/module";
+   import { defineModule, ModuleService } from "@damatjs/services";
+   import { getModule } from "@damatjs/framework";
+   import { model, columns } from "@damatjs/orm-model";
+   import { createStep, createWorkflow, executeStep, Effect } from "@damatjs/workflow-engine";
+   import { z } from "@damatjs/deps/zod";
    ```
    - `src/models/` — model definitions (the `@damatjs/orm-model` DSL). Reference
      relations **inside your own module** by table name
@@ -61,8 +65,9 @@ You're in **your own** module package with the `@damatjs/*` packages installed
    - `src/service.ts` — register models in the `models` map; `export class XService
      extends ModuleService({ models, credentialsSchema })` + your domain methods.
    - `src/config/` — a zod `schema` and a `load(env)` credentials loader.
-   - `src/index.ts` — `defineModule(MODULE_ID, { service, credentials: load })`
-     (plus a `ModuleRegistry` merge so `getModule()` is typed; `accessor.ts` wraps it).
+   - `src/index.ts` — `defineModule(MODULE_ID, { service, credentials: load })`.
+     The `ModuleRegistry` merge that makes `getModule("<name>")` typed is
+     generated into `src/types/registry.ts` by codegen (no `accessor.ts`).
 3. **Migrate + codegen:** `bun run migration:create` then `bun run codegen`.
 4. **Test in isolation** with the harness (needs `DATABASE_URL`, no server):
    ```ts

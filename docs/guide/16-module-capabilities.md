@@ -9,18 +9,19 @@ service, config, optional workflows, and optional HTTP routes, packaged behind a
 [`module.json`](../../MODULES.md) manifest so it can be developed in isolation and
 installed into any app.
 
-A module's only direct dependency is
-[`@damatjs/module`](../../packages/module/README.md). Its
-[authoring surface](../../packages/module/docs/authoring.md) re-exports a single
-curated import for everything below — `defineModule`, `ModuleService`,
-`model`/`columns`, the workflow engine, route types, and `z`:
+A module imports each symbol from its **real** package, so the code fits
+unchanged when an app installs it. [`@damatjs/module`](../../packages/module/README.md)
+itself carries only the contract/config/runtime/tooling.
 
 ```ts
+import { defineModule, ModuleService } from "@damatjs/services";
+import { getModule } from "@damatjs/framework";
+import { model, columns } from "@damatjs/orm-model";
 import {
-  defineModule, ModuleService, model, columns, z,
   createStep, createWorkflow, executeStep, RetryPolicies, Effect,
-} from "@damatjs/module";
-import type { RouteHandler, RouteValidator } from "@damatjs/module";
+} from "@damatjs/workflow-engine";
+import type { RouteHandler, RouteValidator } from "@damatjs/framework/router";
+import { z } from "@damatjs/deps/zod";
 ```
 
 > **Scope of this chapter.** Everything here lives *inside one module*. What a
@@ -59,7 +60,7 @@ SQL. Every model self-registers in a process-global table-name registry on
 construction (this is what makes string relation targets resolvable).
 
 ```ts
-import { model, columns } from "@damatjs/module";
+import { model, columns } from "@damatjs/orm-model";
 
 export const UserModel = model(
   "users",
@@ -277,7 +278,8 @@ with one camelCased accessor per model, plus `transaction()`, `em`, and
 `getModels`. You subclass it.
 
 ```ts
-import { ModuleService, z } from "@damatjs/module";
+import { ModuleService } from "@damatjs/services";
+import { z } from "@damatjs/deps/zod";
 import { UserModel, AccountModel } from "./models";
 
 const models = { user: UserModel, account: AccountModel };
