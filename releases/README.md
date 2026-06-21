@@ -33,7 +33,7 @@ your target version.
 - [`orm-connector`](./orm-connector/) — `@damatjs/orm-connector`
 - [`orm-migration`](./orm-migration/) — `@damatjs/orm-migration`
 - [`orm-processor`](./orm-processor/) — `@damatjs/orm-processor`
-- [`orm-codegen`](./orm-codegen/) — `@damatjs/orm-codegen`
+- [`codegen`](./codegen/) — `@damatjs/codegen`
 - [`orm-core`](./orm-core/) — `@damatjs/orm-core`
 - [`orm-type`](./orm-type/) — `@damatjs/orm-type`
 

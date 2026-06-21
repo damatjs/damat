@@ -44,8 +44,9 @@ Start a fresh module package one of two ways — the same shape comes out either
 way:
 
 ```bash
-# A) Clone the module starter (same flow as creating a backend). Pulls
-#    github.com/damatjs/damat-starter-module: README, AGENTS.md, CI, tests.
+# A) create-damat-app with --module: scaffolds the module LOCALLY (no clone) by
+#    running `damat module init` under the hood, then installs deps. Pass
+#    --repo-url <git> to clone a custom starter repo instead.
 bunx create-damat-app@latest my-module --module
 
 # B) Offline local scaffold — no network, generated from built-in templates.

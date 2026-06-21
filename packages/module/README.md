@@ -126,7 +126,7 @@ Depends on (all `@damatjs/*` workspace packages):
 
 - `@damatjs/services` — `defineModule`, `ModuleService`, `PoolManager`.
 - `@damatjs/framework` — bootstrap, `initializeServices`, app-side module registry.
-- `@damatjs/orm-connector` / `orm-migration` / `orm-model` / `orm-codegen` / `orm-type` — connection, migrations, model DSL, codegen.
+- `@damatjs/orm-connector` / `orm-migration` / `orm-model` / `codegen` / `orm-type` — connection, migrations, model DSL, codegen.
 - `@damatjs/workflow-engine` — workflow authoring surface.
 - `@damatjs/logger`, `@damatjs/deps` — logging, bundled deps (Hono, Zod).
 

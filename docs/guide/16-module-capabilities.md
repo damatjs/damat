@@ -409,12 +409,13 @@ export default defineModule("user", {
 
 A module **owns its schema**. Migrations live in the module's `migrations/` dir and
 are diffed from the models, not hand-written. Codegen produces row types and zod
-schemas into `types/`. Both run on the standalone package, no `damat.config.ts`
-required:
+schemas into `types/`, refreshes the typed `registry.ts`, and scaffolds-once a
+per-table CRUD slice (steps, workflows, and `api/routes`). Both run on the
+standalone package, no `damat.config.ts` required:
 
 ```bash
 damat module migration:create   # diff models -> a new SQL migration (only if changed)
-damat module codegen             # generate row types + zod schemas into types/
+damat module codegen             # row types + zod + registry, and scaffold-once CRUD
 ```
 
 Under the hood:
@@ -424,8 +425,11 @@ Under the hood:
   `{ hasChanges, filePath? }`; nothing is written when models already match.
 - `generateModuleTypes(packageDir, logger)` builds the module schema, generates a
   file map (row types + `New*`/`Update*` + zod), and writes it into the manifest's
-  `paths.types` dir (default `./types`). Re-running overwrites — treat `types/` as
-  generated output, never hand-edit it.
+  `paths.types` dir (default `./types`), plus the typed `registry.ts`. Re-running
+  overwrites the generated `types/` — treat it as generated output, never hand-edit
+  it. It then **scaffolds-once** a per-table CRUD slice (steps, workflows, and
+  `api/routes`); existing files are left untouched (`writeOnce`), so your edits to
+  the scaffold survive re-runs.
 
 Neither touches the database; they diff against the snapshot and read model files.
 **Applying** migrations is the harness/runtime's job (below) or `bun damat-orm
@@ -535,8 +539,8 @@ maps to URL paths; each route lives in a `route.ts`:
 ```
 src/api/routes/
   users/route.ts             ->  /users          (mounted at /api/users)
-  users/[userId]/route.ts    ->  /users/:userId
-  auth/[...auth]/route.ts    ->  /auth/*
+  users/[userId]/route.ts    ->  /users/:userId  (mounted at /api/users/:userId)
+  auth/[...auth]/route.ts    ->  /auth/*          (mounted at /api/auth/*)
 ```
 
 Dynamic segments use `[userId]` → `:userId`; catch-all uses `[...rest]` → Hono `*`.

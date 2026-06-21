@@ -4,7 +4,7 @@
 
 [`@damatjs/default`](../../backend/default/README.md) is a complete reference app
 demonstrating the whole framework: a `user` module (Better Auth models),
-file-based routes (`/health`, `/posts`, `/users/:userId`, `/workflows`),
+file-based routes under `/api` (`/api/posts`, `/api/users/:userId`, `/api/workflows`) plus a top-level `/health`,
 cross-module `links/`, a `user-onboarding` saga workflow, Redis usage, and a
 Docker setup. Read it alongside this guide as a worked example — most patterns
 here are taken directly from it. Its README has the full route and feature list.

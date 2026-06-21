@@ -6,7 +6,7 @@ Change history for this package. For how it works **now**, read the
 
 | Version | Summary | Upgrade notes |
 |---------|---------|---------------|
-| Unreleased | `SERVER_VERSION` now derives from package.json (no more drift). | [Unreleased →](./next.md) |
+| 0.1.4 | `SERVER_VERSION` now derives from package.json (no more drift). | [0.1.4 →](./0.1.4.md) |
 | 0.1.3 | Dependency/version bump only — no change to the MCP server (monorepo-wide bump alongside `@damatjs/link`). | — |
 | 0.1.2 | Dependency/version bump only — no change to the MCP server (monorepo-wide bump). | — |
 | 0.1.1 | Maintenance — CI/test workflow cleanup; no change to the MCP server. | — |

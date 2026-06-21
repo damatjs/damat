@@ -91,7 +91,7 @@ const packageList: Array<{ dir: string; group: string }> = [
   { dir: "packages/orm/connector", group: "ORM" },
   { dir: "packages/orm/migration", group: "ORM" },
   { dir: "packages/orm/processor", group: "ORM" },
-  { dir: "packages/orm/codegen", group: "ORM" },
+  { dir: "packages/core/codegen", group: "ORM" },
   { dir: "packages/orm/core", group: "ORM" },
   { dir: "packages/orm/type", group: "ORM" },
   { dir: "packages/core/logger", group: "Core" },

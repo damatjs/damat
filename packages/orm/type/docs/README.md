@@ -40,7 +40,7 @@ type-safe.
         └───────────────────────────────────────┘
                           ▲
        depended on by everything else in the ORM stack
-   (orm-model, orm-core, orm-pg, orm-migration, orm-codegen, …)
+   (orm-model, orm-core, orm-pg, orm-migration, codegen, …)
 ```
 
 There is exactly one published entry point (`exports["."]`). Consumers import

@@ -6,7 +6,7 @@ Change history for this package. For how it works **now**, read the
 
 | Version | Summary | Upgrade notes |
 |---------|---------|---------------|
-| Unreleased | Link helpers removed from the authoring surface; new non-binding `pairsWith` manifest hint. | [Unreleased →](./next.md) |
+| 0.2.0 | Link helpers removed from the authoring surface; new non-binding `pairsWith` manifest hint; codegen-first scaffold conventions. | [0.2.0 →](./0.2.0.md) |
 | 0.1.3 | Re-exports the `@damatjs/link` cross-module authoring surface (`defineLink` / `collectLinkModels` / `defineLinkModule` + `Link*` types) from the single `@damatjs/module` import, and force-closes lingering connections so `startModuleApp().stop()` can't hang in dev/test teardown. | [0.1.3 →](./0.1.3.md) |
 | 0.1.2 | Maintenance / dependency bumps (relation-by-table-name lands in the ORM packages; no `@damatjs/module` API change). | — |
 | 0.1.1 | Maintenance / dependency bumps (CI + test cleanup). | — |

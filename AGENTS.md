@@ -63,6 +63,7 @@ damat/
     ├── mcp/                   # @damatjs/mcp — MCP server for module install
     ├── core/
     │   ├── cli/               # @damatjs/cli — general CLI framework
+    │   ├── codegen/           # @damatjs/codegen — TypeScript types + zod + CRUD scaffold from models
     │   ├── env/               # @damatjs/load-env — .env cascade loader
     │   ├── logger/            # @damatjs/logger — structured logging
     │   ├── redis/             # @damatjs/redis — cache/queue/lock/session/rate-limit
@@ -74,7 +75,6 @@ damat/
     │   ├── connector/         # @damatjs/orm-connector — pg pool/connection manager
     │   ├── migration/         # @damatjs/orm-migration — module-aware migrations
     │   ├── processor/         # @damatjs/orm-processor — snapshot/diff/SQL generation
-    │   ├── codegen/           # @damatjs/codegen — types from models
     │   ├── core/              # @damatjs/orm-core — registry + query logging
     │   ├── type/              # @damatjs/orm-type — shared ORM types
     │   └── cli/               # @damatjs/orm-cli — `damat-orm` migrations/codegen

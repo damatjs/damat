@@ -3,7 +3,8 @@ import { generateModuleTypes } from "@damatjs/module";
 
 export const moduleCodegenCommand: Command = {
   name: "codegen",
-  description: "Generate row types + zod schemas for this module package",
+  description:
+    "Generate row types + zod + registry and scaffold-once CRUD (steps, workflows, routes) for this module package",
   handler: async (ctx) => {
     try {
       const result = await generateModuleTypes(ctx.cwd, ctx.logger);
