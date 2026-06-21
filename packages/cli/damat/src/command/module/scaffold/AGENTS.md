@@ -35,17 +35,18 @@ working on **this one module**.
 └── src/
     ├── module.json       # the portable contract (name, version, env, registry, pairsWith)
     ├── index.ts          # defineModule(...) — the module's public definition
-    ├── service.ts        # ModuleService({ models, credentialsSchema }) + the `models` map
+    ├── service.ts        # ModuleService({ models, credentialsSchema }); models = collectModels([...])
     ├── config/
     │   ├── schema/index.ts  # zod schema for this module's credentials
     │   ├── load.ts          # read credentials from env
     │   └── index.ts         # default export { schema, load }
     ├── models/           # ORM model definitions (your tables)
     ├── migrations/       # SQL migrations (generated)
-    ├── types/            # GENERATED: row types + zod + registry.ts (getModule typing can add custom but the one generated will be updated so avoid touching the generated once)
-    ├── lib/              # any custom function or logic that needs to be running in the service should be here if a provider or third party api their code and setup is laid here and called in the service.ts
-    ├── workflows/        # GENERATED CRUD steps + workflows (scaffold-once)
-    └── api/routes/       # GENERATED CRUD routes, split into api/validator/query/middleware
+    ├── types/            # GENERATED (overwritten each run): row types + zod + registry.ts — don't hand-edit
+    ├── lib/              # third-party SDK code (one file per provider, e.g. lib/stripe.ts) — called by the service
+    ├── utils/            # small pure helpers (one concern per file)
+    ├── workflows/        # GENERATED per-operation steps + callable workflows (scaffold-once — edit freely)
+    └── api/routes/       # GENERATED routes, split into api/validator/query/middleware/route (scaffold-once)
 └── tests/contract.test.ts
 ```
 
@@ -62,6 +63,55 @@ bun test                  # the contract test + your own tests
 
 ---
 
+## The build flow — basics first, then the rest
+
+A module is **codegen-first**. You do **not** hand-write CRUD. The fast path:
+
+1. **Model the data** — one table per file in `src/models/`.
+2. **`bun run codegen`** — from your models it generates the WHOLE basic slice:
+   `src/types/` (row types + zod + `registry.ts` that types `getModule`) and,
+   **scaffold-once**, the per-operation `src/workflows/<table>/` (steps +
+   workflows) and `src/api/routes/<table>/` (split route files). That is your
+   working foundation — route → workflow → step → service, already wired.
+3. **Build the rest ON TOP** of what codegen made: put real logic in the
+   generated steps (each ships a compensation/fallback hook), add custom
+   non-CRUD workflows/steps next to the generated ones, add third-party
+   integrations on the service (SDK code in `src/lib/`), and pure helpers in
+   `src/utils/`.
+4. **Re-run `codegen`** after any model change — types/registry are overwritten;
+   your step/workflow/route edits are kept (scaffold-once).
+
+So: **models → codegen → extend.** Never reproduce CRUD by hand, and never create
+a parallel route/step/workflow that competes with the generated one — extend it.
+
+## Hard rules — never break these (so the code always "fits")
+
+- **Layering is one-way: API route → workflow → step → service.**
+  - A **route** ONLY calls a workflow (`await workflow.execute(input)`) and shapes
+    the response. It NEVER calls the service, NEVER holds business logic.
+  - Only a **step** touches the service, via the typed `getModule("<name>")`.
+  - **Business logic + orchestration live in steps/workflows** — never in a route,
+    never in the service.
+- **The service is data + integrations ONLY** — the generated CRUD plus
+  third-party calls (do/reverse pairs). No business logic, no orchestration.
+- **No big files.** Split by concern: one model per file, one integration per
+  `src/lib/<provider>.ts`, one helper-group per `src/utils/<concern>.ts`. The
+  moment a file holds more than one idea, split it.
+- **Import from the real packages** (see below), never the `@damatjs/module`
+  umbrella.
+- **Stay a blade:** no cross-module links, no importing another module.
+
+## Where each kind of code goes
+
+| You are adding… | It goes in… | Notes |
+|---|---|---|
+| a table | `src/models/<name>.ts` | one model per file |
+| CRUD (create / find / update / delete / list) | **GENERATED — don't hand-write** | `codegen` scaffolds the steps/workflows/routes |
+| business logic / orchestration | the generated `src/workflows/<table>/` steps & workflows (and your own custom ones) | steps call the service; workflows orchestrate steps |
+| a third-party SDK (Stripe, AI provider, …) | `src/lib/<provider>.ts`, surfaced on the **service** as do/reverse methods | the service is the ONLY place integrations live |
+| pure helpers / formatting / mappers | `src/utils/<concern>.ts` | small, one concern per file |
+| the HTTP surface | **GENERATED** `src/api/routes/<table>/` — handlers ONLY call workflows | never call the service from a route |
+
 ## The authoring surface
 
 Import each symbol from its **real** package — so the code fits unchanged when an
@@ -70,7 +120,7 @@ app pulls the module in:
 ```ts
 import { defineModule, ModuleService } from "@damatjs/services";
 import { getModule } from "@damatjs/framework";
-import { model, columns } from "@damatjs/orm-model";
+import { model, columns, collectModels } from "@damatjs/orm-model";
 import { createStep, createWorkflow, executeStep, Effect } from "@damatjs/workflow-engine";
 import type { RouteHandler, RouteValidator } from "@damatjs/framework/router";
 import { z } from "@damatjs/deps/zod";
@@ -106,25 +156,29 @@ Register every model in `src/service.ts`'s `models` map.
 / `delete` / `softDelete` / `restore` / `count` / `exists`, plus
 `this.transaction(cb)`.
 
-**Register every model under the camelCase of its TABLE NAME** (no pluralizing) —
-`model("items")` → `items`, `model("ai_sessions")` → `aiSessions`. The codegen
-scaffolder wires generated steps to `service.<camelTable>`, so the key must match.
+**Pass models as an ARRAY via `collectModels`** — it derives each accessor key
+from the model's TABLE NAME (camelCased, no pluralizing), so you never hand-write
+a redundant key: `model("items")` → `service.items`, `model("ai_sessions")` →
+`service.aiSessions`. The codegen scaffolder wires generated steps to
+`service.<camelTable>`, so the key (= table name) is the single source of truth.
 
 The service is the **data + integration layer only**: bare CRUD plus any
-third-party integration (Stripe, etc.) — the SDK import and its calls live here,
-as a do/reverse pair so steps can compensate. Business logic does **not** live
-here; it lives in steps/workflows (route → workflow → step → service).
+third-party integration (Stripe, etc.) — the SDK import and its calls live here
+(in `src/lib/<integration>.ts`), as a do/reverse pair so steps can compensate.
+Business logic does **not** live here; it lives in steps/workflows
+(route → workflow → step → service).
 
 ```ts
 import { ModuleService } from "@damatjs/services";
+import { collectModels } from "@damatjs/orm-model";
 import { schema } from "./config/schema";
 import { Widget } from "./models/widget";
 
-export const models = { widgets: Widget };
+export const models = collectModels([Widget]);   // -> { widgets: Widget }
 
 export class WidgetService extends ModuleService({ models, credentialsSchema: schema }) {
-  // Third-party integrations only — split each into ./service/<integration>.ts:
-  //   import { charge, refund } from "./service/stripe";
+  // Third-party integrations only — split each into ./lib/<integration>.ts:
+  //   import { charge, refund } from "./lib/stripe";
 }
 ```
 
@@ -171,14 +225,32 @@ After changing models: `bun run migration:create`, review the SQL, then
 `bun run codegen` scaffolds a per-operation CRUD slice from your models —
 `src/workflows/<table>/{steps,workflows}/…` and split routes under
 `src/api/routes/<table>/…` — **scaffold-once** (your edits survive). The layering
-is route → workflow → step → service: a route calls a workflow, the workflow
-orchestrates steps. A single-step workflow is just `(input, ctx) => myStep(input, ctx)`
-(steps are directly callable); for multi-step, compose them in `Effect.gen` with
-`yield* myStep(input, ctx)`. Only steps touch the service, via the typed
-`getModule("<name>")`. Add custom (non-CRUD) workflows alongside the generated
-ones. On install the app's `damat module add` relocates each resource into the
-app's own `src/api/routes/<table>` and `src/workflows/<table>` (keyed by the
-table name, the source of truth — not the module id).
+is route → workflow → step → service. A single-step workflow is just
+`(input, ctx) => myStep(input, ctx)` (steps are directly callable); for
+multi-step, compose them in `Effect.gen` with `yield* myStep(input, ctx)`. Only
+steps touch the service, via the typed `getModule("<name>")`. Add custom
+(non-CRUD) workflows alongside the generated ones.
+
+A route ONLY calls a workflow — never the service, never business logic:
+
+```ts
+// ✅ api.ts — the route just calls the workflow and shapes the response
+export const POST: RouteHandler = async (c) => {
+  const result = await createWidgetsWorkflow.execute(await c.req.json());
+  if (!result.success) return c.json({ success: false, error: result.error?.message }, 500);
+  return c.json({ success: true, data: result.result }, 201);
+};
+
+// ❌ NEVER do this in a route — no getModule/service, no business logic here
+export const POST: RouteHandler = async (c) => {
+  const svc = getModule("widget");                 // ❌ route reaching the service
+  if (await svc.widgets.find(/* … */)) { /* ❌ logic */ }
+  return c.json(await svc.widgets.create({ data: await c.req.json() })); // ❌
+};
+```
+
+On install the app's `damat module add` relocates each resource into the app's
+own `src/api/routes` / `src/workflows`.
 
 ---
 
@@ -226,7 +298,7 @@ import mod from "../src";
 describe.skipIf(!process.env.DATABASE_URL)("widget", () => {
   test("creates a widget", async () => {
     await withModule(mod, { moduleDir: new URL("../src", import.meta.url).pathname }, async ({ service }) => {
-      const w = await service.widget.create({ data: { name: "a" } });
+      const w = await service.widgets.create({ data: { name: "a" } });
       expect(w.name).toBe("a");
     });
   });
@@ -262,7 +334,8 @@ app installs it with `damat module add <ref | path | git-url>`.
   `RouteHandler`/`RouteValidator` from `@damatjs/framework/router`, and `z` from
   `@damatjs/deps/zod`.
 - `ModuleService({ models, credentialsSchema })` — object args, not positional;
-  register models under their table name; keep it CRUD + integrations only.
+  build `models` with `collectModels([...])` (keys derived from table names);
+  keep the service CRUD + integrations only.
 - Relations reference the **target table name**, and only your own tables.
 - For the full API, read the package READMEs (in `node_modules/@damatjs/…`).
 - Keep files small and readable — split, don't pile into one big file.

@@ -21,8 +21,8 @@ Name prompts and defaults are mode-aware: the prompt copy says "module" vs
 
 | Step | Project (`damatProjectCreator`) | Module (`damatModuleCreator`) |
 |---|---|---|
-| Default starter repo | `damat-starter-default` | `damat-starter-module` |
-| Clone + fresh git | yes (`runCloneRepo`, isModule: false) | yes (`runCloneRepo`, isModule: true) |
+| Scaffolding source | clones `damat-starter-default` | local scaffold via `@damatjs/damat-cli module init` (clones only with `--repo-url`) |
+| Clone + fresh git | yes (`runCloneRepo`, isModule: false) | no by default (`runScaffoldModule`); clones with `--repo-url` |
 | package.json: name + `packageManager` | yes | yes |
 | Pin `@damatjs/*` to `--version` | **yes** (`PackageVersionsUpdate`) | **no** |
 | Write default `.env` | **yes** (CORS, REDIS_URL, JWT/COOKIE secrets) | **no** |

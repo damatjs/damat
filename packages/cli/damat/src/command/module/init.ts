@@ -14,8 +14,13 @@ import {
   contractTestTemplate,
   envExampleTemplate,
   gitignoreTemplate,
+  readmeTemplate,
   toPascal,
 } from "./scaffold/templates";
+// The authoring guide is embedded as a compiled string (generated from
+// scaffold/AGENTS.md by scripts/embedAgents.ts) so it ships inside the published
+// JS — no runtime file read, no asset to copy into dist.
+import { AGENTS_GUIDE } from "./scaffold/agents.generated";
 
 const MODULE_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
 
@@ -55,6 +60,7 @@ export const moduleInitCommand: Command = {
       "module.config.ts": moduleConfigTemplate(),
       ".env.example": envExampleTemplate(),
       ".gitignore": gitignoreTemplate(),
+      "README.md": readmeTemplate(name),
       "src/module.json": manifestTemplate(name),
       "src/index.ts": entryTemplate(name, serviceClass),
       "src/service.ts": serviceTemplate(serviceClass),
@@ -62,6 +68,7 @@ export const moduleInitCommand: Command = {
       "src/config/load.ts": configLoadTemplate(),
       "src/config/index.ts": configIndexTemplate(),
       "tests/contract.test.ts": contractTestTemplate(name),
+      "AGENTS.md": AGENTS_GUIDE,
     };
 
     for (const dir of ["src/models", "src/migrations", "src/workflows", "src/api/routes"]) {
@@ -79,6 +86,8 @@ export const moduleInitCommand: Command = {
     ctx.logger.success(`Module package created at ${targetDir}`);
     ctx.logger.info(
       [
+        "Wrote README.md + AGENTS.md (read AGENTS.md — it's the full authoring guide).",
+        "",
         "Next steps:",
         `  cd ${name} && bun install`,
         "  # add models in src/models, service logic in src/service.ts",

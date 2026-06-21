@@ -55,6 +55,8 @@ runCli({
   version: "0.0.1",
   description: "Create a damat project using a single command.",
   commands: [createCommand],
+  // So `create-damat-app my-app [--module]` works without typing `create`.
+  defaultCommand: "create",
   banner: {
     title: "Create Damat App",
     subtitle: "Scaffold new DamatJS projects instantly",

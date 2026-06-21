@@ -58,6 +58,20 @@ export async function runCli(config: CliConfig): Promise<void> {
   if (commandName) {
     const cmd = getRegistry().get(commandName);
     if (!cmd) {
+      // The first token isn't a known command. If a default command is
+      // configured, treat the whole arg list as that command's arguments
+      // (e.g. `create-damat-app my-app` -> `create my-app`). Aliases are
+      // registered as commands, so this only ever catches genuine arguments.
+      const fallback = config.defaultCommand
+        ? getRegistry().get(config.defaultCommand)
+        : undefined;
+      if (fallback) {
+        const { options, positional } = parseCommandArgs(args, fallback.options);
+        const ctx = buildCommandContext(fallback.name, options, logger, config);
+        const result = await fallback.handler({ ...ctx, args: positional });
+        process.exit(result.exitCode);
+      }
+
       logger.error(`Unknown command: ${commandName}`);
       console.log("");
       printDefaultHelp(config, getRegistry().getAll());

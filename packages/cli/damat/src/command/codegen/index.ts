@@ -10,24 +10,25 @@ import { ModuleContainer, modelsPath, typesPath } from './constant';
  * App-mode codegen: for a module declared in `damat.config.ts`, generate its
  * row types + zod + registry, weave in cross-module link fields, and scaffold
  * the CRUD slice. Resolution (config, paths, links) lives here; the actual
- * generation is the shared, agnostic `@damatjs/codegen` core. The api/router
- * layout is your choice via `--api-layout`: `flat` (default) dumps just the
- * models at `src/api/routes/<table>`; `module` groups them at
- * `src/api/routes/<module>/<table>`. Workflows always group under
+ * generation is the shared, agnostic `@damatjs/codegen` core.
+ *
+ * api/router layout: by DEFAULT routes group under the module
+ * (`src/api/routes/<module>/<table>`). Pass `--flat` to dump just the models,
+ * left alone (`src/api/routes/<table>`). Workflows always group under
  * `src/workflows/<module>`.
  */
 export const codegenCommand: Command = {
   name: "codegen",
   description: "Generate types + zod + registry + CRUD scaffold for an app module",
   usage: "damat codegen <module> [--flat]",
-  examples: ["damat codegen user", "damat codegen user"],
+  examples: ["damat codegen user", "damat codegen user --flat"],
   options: [
     {
       name: "flat",
-      alias: "flat",
+      alias: "f",
       type: "boolean",
       description:
-        "api/router folder layout flat: 'true' (src/api/routes/<table>) or 'false' (src/api/routes/<module>/<table>, default)",
+        "Dump routes flat at src/api/routes/<table> instead of grouping under the module (src/api/routes/<module>/<table>, the default)",
       default: false,
     },
   ],
@@ -71,17 +72,15 @@ export const codegenCommand: Command = {
       return { exitCode: 1 };
     }
 
-    // api/router layout: `flat` dumps just the models (src/api/routes/<table>);
-    // `module` groups them under the module (src/api/routes/<module>/<table>).
-    const flat = ctx.options.flat;
-
+    // Default groups routes under the module (src/api/routes/<module>/<table>);
+    // `--flat` dumps just the models (src/api/routes/<table>).
+    const flat = Boolean(ctx.options.flat);
     const apiRoutesBase = join(ctx.cwd, "src", "api", "routes");
-    const routesRoot =
-      !flat ? join(apiRoutesBase, moduleName) : apiRoutesBase;
+    const routesRoot = flat ? apiRoutesBase : join(apiRoutesBase, moduleName);
 
     try {
       ctx.logger.info(
-        `Generating codegen for module '${moduleName}' (api-layout: ${flat ? "module" : "flat"})...`,
+        `Generating codegen for module '${moduleName}' (routes: ${flat ? "flat" : "module"})...`,
       );
       const typesDir = typesPath(moduleConfig.resolve);
       const result = await runCodegen(
