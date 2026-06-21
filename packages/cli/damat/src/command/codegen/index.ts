@@ -10,14 +10,27 @@ import { ModuleContainer, modelsPath, typesPath } from './constant';
  * App-mode codegen: for a module declared in `damat.config.ts`, generate its
  * row types + zod + registry, weave in cross-module link fields, and scaffold
  * the CRUD slice. Resolution (config, paths, links) lives here; the actual
- * generation is the shared, agnostic `@damatjs/codegen` core. Routes land flat
- * under `src/api/routes/<table>`; workflows group under `src/workflows/<module>`.
+ * generation is the shared, agnostic `@damatjs/codegen` core. The api/router
+ * layout is your choice via `--api-layout`: `flat` (default) dumps just the
+ * models at `src/api/routes/<table>`; `module` groups them at
+ * `src/api/routes/<module>/<table>`. Workflows always group under
+ * `src/workflows/<module>`.
  */
 export const codegenCommand: Command = {
   name: "codegen",
   description: "Generate types + zod + registry + CRUD scaffold for an app module",
-  usage: "damat codegen <module>",
-  examples: ["damat codegen user"],
+  usage: "damat codegen <module> [--flat]",
+  examples: ["damat codegen user", "damat codegen user"],
+  options: [
+    {
+      name: "flat",
+      alias: "flat",
+      type: "boolean",
+      description:
+        "api/router folder layout flat: 'true' (src/api/routes/<table>) or 'false' (src/api/routes/<module>/<table>, default)",
+      default: false,
+    },
+  ],
   handler: async (ctx) => {
     const moduleName = ctx.args[0];
     if (!moduleName) {
@@ -58,8 +71,18 @@ export const codegenCommand: Command = {
       return { exitCode: 1 };
     }
 
+    // api/router layout: `flat` dumps just the models (src/api/routes/<table>);
+    // `module` groups them under the module (src/api/routes/<module>/<table>).
+    const flat = ctx.options.flat;
+
+    const apiRoutesBase = join(ctx.cwd, "src", "api", "routes");
+    const routesRoot =
+      !flat ? join(apiRoutesBase, moduleName) : apiRoutesBase;
+
     try {
-      ctx.logger.info(`Generating codegen for module '${moduleName}'...`);
+      ctx.logger.info(
+        `Generating codegen for module '${moduleName}' (api-layout: ${flat ? "module" : "flat"})...`,
+      );
       const typesDir = typesPath(moduleConfig.resolve);
       const result = await runCodegen(
         {
@@ -67,7 +90,7 @@ export const codegenCommand: Command = {
           moduleId: moduleName,
           serviceDir: moduleConfig.resolve,
           typesDir,
-          routesRoot: join(ctx.cwd, "src", "api", "routes"),
+          routesRoot,
           workflowsRoot: join(ctx.cwd, "src", "workflows", moduleName),
           augmentFilesMap: (filesMap) =>
             augmentWithLinks(

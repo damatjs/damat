@@ -119,4 +119,33 @@ describe("damat codegen command", () => {
     });
     expect(typeof cg.runArgs.augmentFilesMap).toBe("function");
   });
+
+  it("--api-layout module groups routes under the module (workflows unchanged)", async () => {
+    cg.modules = { user: { resolve: "/app/src/modules/user" } };
+    fsState.existsMap = { "/app/src/modules/user/models": true };
+    const cmd = await getCmd();
+    const { ctx } = createContext(
+      { apiLayout: "module" },
+      { args: ["user"], cwd: "/app" },
+    );
+    const res = await cmd.handler(ctx);
+    expect(res.exitCode).toBe(0);
+    expect(cg.runArgs).toMatchObject({
+      routesRoot: "/app/src/api/routes/user",
+      workflowsRoot: "/app/src/workflows/user",
+    });
+  });
+
+  it("an unknown --api-layout falls back to flat", async () => {
+    cg.modules = { user: { resolve: "/app/src/modules/user" } };
+    fsState.existsMap = { "/app/src/modules/user/models": true };
+    const cmd = await getCmd();
+    const { ctx } = createContext(
+      { apiLayout: "bogus" },
+      { args: ["user"], cwd: "/app" },
+    );
+    const res = await cmd.handler(ctx);
+    expect(res.exitCode).toBe(0);
+    expect(cg.runArgs).toMatchObject({ routesRoot: "/app/src/api/routes" });
+  });
 });
