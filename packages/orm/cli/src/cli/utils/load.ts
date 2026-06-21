@@ -143,10 +143,9 @@ export async function loadModules<T = Record<string, { resolve: string }>>(
     ) {
       throw error;
     }
-    throw new Error(
-      `Failed to load config from '${filePath}': ${error instanceof Error ? error.message : String(error)
-      }`,
-    );
+    const wrapped = new Error(`Failed to load config from '${filePath}'`);
+    (wrapped as Error & { cause?: unknown }).cause = error;
+    throw wrapped;
   }
 }
 
@@ -211,9 +210,8 @@ export async function loadDatabaseUrl(
     ) {
       throw error;
     }
-    throw new Error(
-      `Failed to load database URL from '${filePath}': ${error instanceof Error ? error.message : String(error)
-      }`,
-    );
+    const wrapped = new Error(`Failed to load database URL from '${filePath}'`);
+    (wrapped as Error & { cause?: unknown }).cause = error;
+    throw wrapped;
   }
 }

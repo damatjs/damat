@@ -1,7 +1,8 @@
 import type { CAC } from "cac";
-import type { CliConfig, Command } from "../types";
+import type { CliConfig, Command, CommandResult } from "../types";
 import { Logger } from "@damatjs/logger";
 import { CliError } from "../errors";
+import { reportError, getExitCode } from "../utils/output";
 import { validateOptions, applyDefaults, coerceOptions } from "../utils/validate";
 import { loadConfig } from "../config";
 import { buildCommandContext } from "./buildCommand";
@@ -52,7 +53,13 @@ export function registerSingleCommand(
       throw error;
     }
 
-    const projectConfig = await loadConfig(config.configLoader);
+    let projectConfig: unknown;
+    try {
+      projectConfig = await loadConfig(config.configLoader);
+    } catch (error) {
+      reportError(logger, error, { prefix: "Failed to load configuration" });
+      process.exit(getExitCode(error));
+    }
 
     const ctx = buildCommandContext(cmd.name, processedOptions, logger, config);
 
@@ -67,15 +74,16 @@ export function registerSingleCommand(
       logger.debug("Verbose mode enabled");
     }
 
+    let result: CommandResult;
     try {
-      const result = await cmd.handler(ctx);
-      process.exit(result.exitCode);
+      result = await cmd.handler(ctx);
     } catch (error) {
-      logger.error(`Command failed: ${error instanceof Error ? error.message : String(error)}`);
+      reportError(logger, error, { prefix: "Command failed" });
       if (config.onError) {
         config.onError(error instanceof Error ? error : new Error(String(error)), ctx);
       }
-      process.exit(1);
+      process.exit(getExitCode(error));
     }
+    process.exit(result.exitCode);
   });
 }

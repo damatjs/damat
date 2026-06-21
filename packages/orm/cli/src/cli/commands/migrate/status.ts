@@ -1,4 +1,4 @@
-import type { Command } from "@damatjs/cli";
+import { type Command, reportError } from "@damatjs/cli";
 import { loadDatabaseUrl, loadModules } from "@/cli/utils/load";
 import { OrmModuleContainer } from "@/cli/types";
 
@@ -23,9 +23,7 @@ const migrateStatus: Command = {
     try {
       modules = await loadModules("damat.config.ts", ctx.cwd);
     } catch (error) {
-      ctx.logger.error(
-        `Failed to load config: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      reportError(ctx.logger, error, { prefix: "Failed to load config" });
       return { exitCode: 1 };
     }
 
@@ -42,9 +40,7 @@ const migrateStatus: Command = {
       const config = await loadDatabaseUrl("damat.config.ts", ctx.cwd);
       databaseUrl = config.databaseUrl;
     } catch (error) {
-      ctx.logger.error(
-        `Failed to load database config: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      reportError(ctx.logger, error, { prefix: "Failed to load database config" });
       return { exitCode: 1 };
     }
 

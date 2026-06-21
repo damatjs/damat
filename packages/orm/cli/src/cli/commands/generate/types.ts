@@ -1,7 +1,7 @@
 import { OrmModuleContainer } from "@/cli/types";
 import { resolveModelsPath, resolveTypesPath } from "@/cli/utils";
 import { loadModules } from "@/cli/utils/load";
-import { type Command } from "@damatjs/cli";
+import { type Command, reportError } from "@damatjs/cli";
 import type { ResolvedLinkField } from "@damatjs/link";
 
 const generateTypes: Command = {
@@ -25,9 +25,7 @@ const generateTypes: Command = {
     try {
       modules = await loadModules("damat.config.ts", ctx.cwd);
     } catch (error) {
-      ctx.logger.error(
-        `Failed to load config: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      reportError(ctx.logger, error, { prefix: "Failed to load config" });
       return { exitCode: 1 };
     }
 
@@ -92,9 +90,7 @@ const generateTypes: Command = {
 
       return { exitCode: 0 };
     } catch (error) {
-      ctx.logger.error(
-        `Failed to generate types: ${error instanceof Error ? error.message : error}`,
-      );
+      reportError(ctx.logger, error, { prefix: "Failed to generate types" });
       return { exitCode: 1 };
     }
   },

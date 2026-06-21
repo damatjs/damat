@@ -35,9 +35,11 @@ describe("loadConfig - error and edge paths", () => {
       testDir
     );
 
-    await expect(promise).rejects.toBeInstanceOf(ConfigLoadError);
-    await expect(promise).rejects.toThrow(/loader exploded/);
-    await expect(promise).rejects.toThrow(configPath);
+    const err = (await promise.catch((e) => e)) as Error & { cause?: Error };
+    expect(err).toBeInstanceOf(ConfigLoadError);
+    // The file path stays in the message; the underlying error is the `cause`.
+    expect(err.message).toContain(configPath);
+    expect(err.cause?.message).toBe("loader exploded");
   });
 
   test("wraps a module that throws on import in a ConfigLoadError", async () => {
