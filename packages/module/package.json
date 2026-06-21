@@ -29,7 +29,7 @@
     "@damatjs/deps": "*",
     "@damatjs/framework": "*",
     "@damatjs/logger": "*",
-    "@damatjs/orm-codegen": "*",
+    "@damatjs/codegen": "*",
     "@damatjs/orm-connector": "*",
     "@damatjs/orm-migration": "*",
     "@damatjs/orm-model": "*",

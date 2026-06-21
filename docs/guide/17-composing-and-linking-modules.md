@@ -203,8 +203,8 @@ and apply the junction migration per owner, then regenerate the types of the
 ```bash
 damat-orm migrate:create link:user    # generate the junction migration (links/user/migrations)
 damat-orm migrate:up                  # create the junction table
-damat-orm generate:types user         # Users gains `organizations?: Organizations[]`
-damat-orm generate:types organization # Organizations gains `users?: Users[]`
+damat codegen user         # Users gains `organizations?: Organizations[]`
+damat codegen organization # Organizations gains `users?: Users[]`
 ```
 
 `generate:types <module>` writes a sibling `<table>.links.ts` next to the

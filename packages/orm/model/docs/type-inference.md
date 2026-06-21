@@ -104,7 +104,7 @@ Practical guidance for maintainers:
 - The reliable, in-package row-type emitter is `ModelDefinition.toTsType()`
   (base interface only; raw enum names; no `New`/`Update` variants).
 - Full file-per-table codegen (insert/update types, `…Enum` naming via
-  `toEnumTypeName`) lives in the separate `@damatjs/orm-codegen` package — that is
+  `toEnumTypeName`) lives in the separate `@damatjs/codegen` package — that is
   where `generateFilesMap`-style logic belongs. If you intend to restore the
   `codegen` script here, point it at that package or recreate `src/codegen/`;
   don't assume it currently runs.

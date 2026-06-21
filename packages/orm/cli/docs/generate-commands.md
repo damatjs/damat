@@ -30,7 +30,7 @@ Pipeline:
 5. **Build schema**: `schema = toModuleSchema(moduleName, models)` (from
    `@damatjs/orm-model`).
 6. **Generate files**: `filesMap = generateFilesMap(schema, {}, ctx.logger)`
-   (from `@damatjs/orm-codegen`) — a `Map<fileName, content>` that includes an
+   (from `@damatjs/codegen`) — a `Map<fileName, content>` that includes an
    `index.ts` plus one file per table.
 7. **Weave link augmentations**: `augmentWithLinks(...)` inspects every
    `link:<owner>` module in the container, and for each link this module
@@ -46,7 +46,7 @@ Any thrown error → `logger.error("Failed to generate types: …")`, return `1`
 Success → `0`.
 
 ```bash
-bun damat-orm generate:types user
+bun damat codegen user
 # Output: <project>/src/modules/user/types
 # Files: index.ts, <table>.ts, ...
 ```
@@ -70,7 +70,7 @@ bun damat-orm generate:types user
   `ctx.logger`; per-codegen options are not surfaced through the CLI yet.
 - Files are written verbatim from the map keys — codegen owns the file naming
   (e.g. `index.ts` + per-table files). The CLI does not post-process them.
-- Like the migrate commands, `@damatjs/orm-codegen`, `@damatjs/orm-model`,
+- Like the migrate commands, `@damatjs/codegen`, `@damatjs/orm-model`,
   `@damatjs/orm-migration`, and `@damatjs/link` are loaded via `await import(...)`
   inside the handler.
 - **Link modules don't generate types** — `generate:types link:<owner>` is a

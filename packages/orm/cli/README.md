@@ -42,7 +42,7 @@ subcommand prints the available subcommands.
 | `migrate:status [module]` | Show applied/pending counts (optionally for one module) | `damat-orm migrate:status user` |
 | `migrate:list` | List modules that have migrations, with counts | `damat-orm migrate:list` |
 | `migrate:create <module>` | Create an initial or diff migration for a module | `damat-orm migrate:create user` |
-| `generate:types <module>` | Generate row/type files from a module's models | `damat-orm generate:types user` |
+| `generate:types <module>` | Generate row/type files from a module's models | `damat codegen user` |
 
 > `migrate:status` also accepts `--module <name>` / `-m <name>` as an
 > alternative to the positional argument.
@@ -73,8 +73,8 @@ tables that join models living in different modules.
 
   ```bash
   # user and organization are linked → regenerate the linked modules
-  bun damat-orm generate:types user           # Users gains e.g. organizations?: Organizations[]
-  bun damat-orm generate:types organization   # Organizations gains the reverse field
+  bun damat codegen user           # Users gains e.g. organizations?: Organizations[]
+  bun damat codegen organization   # Organizations gains the reverse field
   ```
 
 ## When to use
@@ -121,7 +121,7 @@ bun damat-orm migrate:status user      # or: --module user
 bun damat-orm migrate:list
 
 # 5. generate TypeScript types from the user module's models
-bun damat-orm generate:types user
+bun damat codegen user
 ```
 
 Notes grounded in the source:
@@ -153,7 +153,7 @@ Notes grounded in the source:
   `getMigrationStatus`, `discoverModels`, `discoverAllMigrations`).
 - `@damatjs/orm-processor` — `snapshotExist` (initial-vs-diff decision).
 - `@damatjs/orm-model` — `toModuleSchema` (builds the schema for codegen).
-- `@damatjs/orm-codegen` — `generateFilesMap` (turns a schema into type files).
+- `@damatjs/codegen` — `generateFilesMap` (turns a schema into type files).
 - `@damatjs/link` — `resolveLinkMigrationModules` (discovers `link:<owner>`
   migration modules) and `renderLinkAugmentations` (the `<table>.links.ts`
   files woven into linked modules' generated types).

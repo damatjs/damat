@@ -1,7 +1,7 @@
 {
-  "name": "@damatjs/orm-codegen",
-  "description": "Damatjs orm codegen",
-  "version": "1.0.3",
+  "name": "@damatjs/codegen",
+  "description": "Damatjs codegen — agnostic type + zod + CRUD scaffold generation",
+  "version": "0.1.3",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -34,6 +34,7 @@
     "@damatjs/logger": "*"
   },
   "dependencies": {
+    "@damatjs/orm-migration": "*",
     "@damatjs/orm-model": "*",
     "@damatjs/orm-type": "*"
   },

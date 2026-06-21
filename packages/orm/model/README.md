@@ -191,7 +191,7 @@ model code rarely needs to import `@damatjs/orm-type` directly.
 
 - [`@damatjs/orm-core`](../core) — registers `ModelDefinition`s.
 - `@damatjs/orm-pg` — builds queries from `ModelDefinition` and relation builders.
-- `@damatjs/orm-processor`, `@damatjs/orm-migration`, `@damatjs/orm-codegen`,
+- `@damatjs/orm-processor`, `@damatjs/orm-migration`, `@damatjs/codegen`,
   `@damatjs/orm-cli`, `@damatjs/orm-main`.
 - `@damatjs/module`, `@damatjs/service`.
 

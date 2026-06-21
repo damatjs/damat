@@ -52,7 +52,7 @@ bin.ts
               │
               ▼  dynamic import of the ORM package that does the work:
         @damatjs/orm-migration | @damatjs/orm-processor
-        @damatjs/orm-model     | @damatjs/orm-codegen
+        @damatjs/orm-model     | @damatjs/codegen
         @damatjs/link          | @damatjs/deps/pg (Pool)
 ```
 

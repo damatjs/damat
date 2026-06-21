@@ -1,18 +1,18 @@
-# @damatjs/orm-codegen
+# @damatjs/codegen
 
 > Generate TypeScript types and Zod schemas from Damat ORM model schemas.
 
-`@damatjs/orm-codegen` turns a serialized `ModuleSchema` (from [`@damatjs/orm-type`](../type/README.md)) into ready-to-write TypeScript source: row interfaces, `New*`/`Update*` mutation types, enum unions, relation fields, and matching Zod validation schemas (`new`/`update`/`query`/`id`). It is a pure string-generation library — it produces file contents, never writing to disk itself — and is consumed by the ORM CLI and the framework's module system to keep generated DB types in sync with your models.
+`@damatjs/codegen` turns a serialized `ModuleSchema` (from [`@damatjs/orm-type`](../type/README.md)) into ready-to-write TypeScript source: row interfaces, `New*`/`Update*` mutation types, enum unions, relation fields, and matching Zod validation schemas (`new`/`update`/`query`/`id`). It is a pure string-generation library — it produces file contents, never writing to disk itself — and is consumed by the ORM CLI and the framework's module system to keep generated DB types in sync with your models.
 
 Part of the [Damat](../../../README.md) monorepo · [Full guide](../../../docs/GUIDE.md) · [Internals](./docs/README.md)
 
 ## Install
 
 ```bash
-bun add @damatjs/orm-codegen
+bun add @damatjs/codegen
 ```
 
-Inside this monorepo it is referenced as a workspace dependency with `"@damatjs/orm-codegen": "*"`.
+Inside this monorepo it is referenced as a workspace dependency with `"@damatjs/codegen": "*"`.
 
 ## When to use
 
@@ -31,7 +31,7 @@ Do **not** use it to:
 ## Quick start
 
 ```ts
-import { generateTypes, generateFilesMap } from "@damatjs/orm-codegen";
+import { generateTypes, generateFilesMap } from "@damatjs/codegen";
 import type { ModuleSchema } from "@damatjs/orm-type";
 
 const schema: ModuleSchema = {
@@ -80,7 +80,7 @@ for (const [name, contents] of files) {
 | `relationFields(relations)` | function | Optional loaded-relation interface fields. |
 | `GenerateTypesOptions`, `GeneratedFilesMap` | types | Options (`autoFields`, `banner`) and the files-map result type. |
 
-**Subpath exports:** `@damatjs/orm-codegen/types` is declared in `package.json` (maps to `dist/types/index.js`). It is a build-output subpath; the public, source-backed surface is the root `.` export above.
+**Subpath exports:** `@damatjs/codegen/types` is declared in `package.json` (maps to `dist/types/index.js`). It is a build-output subpath; the public, source-backed surface is the root `.` export above.
 
 ## How it fits
 

@@ -7,7 +7,7 @@
     "dev": "damat dev",
     "build": "damat build",
     "start": "damat start",
-    "codegen": "damat-orm generate:types",
+    "codegen": "damat codegen",
     "db:migrate": "damat-orm migrate:up",
     "db:status": "damat-orm migrate:status",
     "db:create": "damat-orm migrate:create",

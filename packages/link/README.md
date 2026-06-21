@@ -97,8 +97,8 @@ linked types are generated **into the modules**, not here:
 ```bash
 damat-orm migrate:create link:user   # generate the junction migration (links/user/migrations)
 damat-orm migrate:up                 # create the junction table
-damat-orm generate:types user        # Users gains `organizations?: Organization[]`
-damat-orm generate:types organization # Organization gains `users?: User[]`
+damat codegen user        # Users gains `organizations?: Organization[]`
+damat codegen organization # Organization gains `users?: User[]`
 ```
 
 ## Linked types extend the modules

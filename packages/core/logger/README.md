@@ -163,7 +163,7 @@ Also exported: `LogContext`, `LogEntry`, `RequestLogData`, `ILogger`.
 **In-repo dependents** (depend on `@damatjs/logger` via `"*"`):
 
 - `@damatjs/framework` · `@damatjs/services` · `@damatjs/workflow-engine`
-- `@damatjs/orm-core` · `@damatjs/orm-pg` · `@damatjs/orm-connector` · `@damatjs/orm-migration` · `@damatjs/orm-codegen` · `@damatjs/orm-cli`
+- `@damatjs/orm-core` · `@damatjs/orm-pg` · `@damatjs/orm-connector` · `@damatjs/orm-migration` · `@damatjs/codegen` · `@damatjs/orm-cli`
 - `@damatjs/module` (`packages/module`) · `@damatjs/redis` (`packages/core/redis`)
 - CLIs: `damat` (`packages/cli/damat`), `@damatjs/core-cli` (`packages/core/cli`)
 - `@damatjs/default` (`backend/default`)

@@ -177,7 +177,7 @@ driver types from `@damatjs/deps` and four type groups: `connection`, `model`,
   builders that produce `TableSchema` / `ModuleSchema`.
 - [`@damatjs/orm-core`](../core) — registry & logger.
 - `@damatjs/orm-pg`, `@damatjs/orm-processor`, `@damatjs/orm-connector`,
-  `@damatjs/orm-migration`, `@damatjs/orm-codegen`, `@damatjs/orm-cli` — the
+  `@damatjs/orm-migration`, `@damatjs/codegen`, `@damatjs/orm-cli` — the
   driver, query, migration, and tooling layers.
 - `@damatjs/framework`, `@damatjs/module`, `@damatjs/service` — higher-level
   framework packages.

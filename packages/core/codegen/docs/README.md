@@ -1,6 +1,6 @@
 # orm-codegen internals
 
-Maintainer-facing documentation for `@damatjs/orm-codegen`. For the public overview and quick start, see the [package README](../README.md).
+Maintainer-facing documentation for `@damatjs/codegen`. For the public overview and quick start, see the [package README](../README.md).
 
 The codegen package is a **pure string factory**. It takes a `ModuleSchema` and produces TypeScript source as strings — interfaces, mutation types, enum unions, relation fields, and Zod schemas. It never writes files and never connects to a database; callers (the ORM CLI, the module system) decide where the output goes.
 

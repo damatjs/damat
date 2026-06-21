@@ -28,7 +28,10 @@
     "@damatjs/logger": "*",
     "@damatjs/load-env": "*",
     "@damatjs/framework": "*",
-    "@damatjs/module": "*"
+    "@damatjs/module": "*",
+    "@damatjs/codegen": "*",
+    "@damatjs/orm-cli": "*",
+    "@damatjs/link": "*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "*",
