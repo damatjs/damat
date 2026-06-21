@@ -28,7 +28,10 @@
     "@damatjs/logger": "*",
     "@damatjs/load-env": "*",
     "@damatjs/framework": "*",
-    "@damatjs/module": "*"
+    "@damatjs/module": "*",
+    "@damatjs/codegen": "*",
+    "@damatjs/orm-cli": "*",
+    "@damatjs/link": "*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "*",
@@ -36,10 +39,10 @@
     "typescript": "^5.9.3"
   },
   "scripts": {
-    "build": "rm -rf tsconfig.tsbuildinfo dist && tsc && chmod +x dist/cli.js",
+    "build": "rm -rf tsconfig.tsbuildinfo dist && bun scripts/embedAgents.ts && tsc && chmod +x dist/cli.js",
     "test": "bun test",
     "dev": "bun run build --watch",
     "postinstall": "chmod +x dist/cli.js || true",
-    "prepublishOnly": "test -f dist/cli.js || (echo 'Error: dist/cli.js not found. Run bun run build first.' && exit 1)"
+    "prepublishOnly": "test -f dist/cli.js && test -f dist/command/module/scaffold/agents.generated.js || (echo 'Error: build artifacts missing (dist/cli.js or embedded AGENTS guide). Run bun run build first.' && exit 1)"
   }
 }

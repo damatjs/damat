@@ -5,6 +5,7 @@ import type {
   WorkflowContext,
 } from "../types";
 import { DEFAULT_STEP_CONFIG, DEFAULT_RETRY_POLICY } from "../config";
+import { executeStep } from "./execute";
 
 /**
  * Creates a workflow step with typed input/output and optional compensation.
@@ -43,11 +44,15 @@ export function createStep<I, O>(
     retry: { ...DEFAULT_RETRY_POLICY, ...config.retry },
   };
 
-  return {
-    name,
-    config: mergedConfig,
-    rawConfig: config,
-    invoke,
-    ...(compensate ? { compensate } : {}),
-  };
+  // The step is a callable: `step(input, ctx)` ≡ `executeStep(step, input, ctx)`.
+  // executeStep reads `step.invoke`/`name`/`config` — it never calls `step()`,
+  // so there is no recursion.
+  const step = ((input: I, ctx: WorkflowContext) =>
+    executeStep(step, input, ctx)) as unknown as StepDefinition<I, O>;
+  Object.defineProperty(step, "name", { value: name, configurable: true });
+  step.config = mergedConfig;
+  step.rawConfig = config;
+  step.invoke = invoke;
+  if (compensate) step.compensate = compensate;
+  return step;
 }

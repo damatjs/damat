@@ -403,15 +403,15 @@
           ]
         },
         {
-          "name": "@damatjs/orm-codegen",
+          "name": "@damatjs/codegen",
           "description": "Damatjs orm codegen",
-          "dir": "packages/orm/codegen",
-          "readme": "packages/orm/codegen/README.md",
-          "docsIndex": "packages/orm/codegen/docs/README.md",
+          "dir": "packages/core/codegen",
+          "readme": "packages/core/codegen/README.md",
+          "docsIndex": "packages/core/codegen/docs/README.md",
           "docs": [
-            "packages/orm/codegen/docs/README.md",
-            "packages/orm/codegen/docs/generators.md",
-            "packages/orm/codegen/docs/type-mapping.md"
+            "packages/core/codegen/docs/README.md",
+            "packages/core/codegen/docs/generators.md",
+            "packages/core/codegen/docs/type-mapping.md"
           ]
         },
         {

@@ -199,6 +199,51 @@ describe("runCli", () => {
     expect(consoleOutput.join("\n")).toContain("Usage:");
   });
 
+  test("falls back to the default command, forwarding the unknown token as an arg", async () => {
+    let received:
+      | { args: string[]; command: string; options: Record<string, unknown> }
+      | null = null;
+    const create = makeCmd("create", {
+      options: [
+        { name: "module", type: "boolean", description: "module", default: false },
+      ],
+      handler: async (ctx) => {
+        received = { args: ctx.args, command: ctx.command, options: ctx.options };
+        return { exitCode: 0 };
+      },
+    });
+    const config: CliConfig = {
+      name: "cli",
+      version: "1.0.0",
+      banner: false,
+      defaultCommand: "create",
+      commands: [create],
+    };
+
+    // `cli my-app --module` -> `create my-app --module` (no `create` typed).
+    await run(config, ["my-app", "--module"]);
+
+    expect(received).not.toBeNull();
+    expect(received!.command).toBe("create");
+    expect(received!.args).toEqual(["my-app"]);
+    expect(received!.options.module).toBe(true);
+    expect(exitCodes[0]).toBe(0);
+    // The unknown-command error is NOT raised when a default command handles it.
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+  });
+
+  test("still reports an unknown command when no default command is configured", async () => {
+    const config: CliConfig = {
+      name: "cli",
+      version: "1.0.0",
+      banner: false,
+      commands: [makeCmd("create")],
+    };
+    await run(config, ["my-app"]);
+    expect(exitCodes[0]).toBe(1);
+    expect(loggerErrorSpy.mock.calls[0]?.[0]).toBe("Unknown command: my-app");
+  });
+
   test("dispatches a subcommand handler and exits with its result code", async () => {
     let calledWith: { args: string[]; command: string } | null = null;
     const sub = makeCmd("db:migrate", {

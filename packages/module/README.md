@@ -28,7 +28,7 @@ Inside the Damat monorepo it is a workspace package — depend on it with the `*
 
 Use it when:
 
-- You are **authoring a module package** — `import { defineModule, ModuleService, model, columns, createStep, z } from "@damatjs/module"` is the whole surface.
+- You are **authoring a module package** — import the contract/config/runtime/tooling from here; the authoring symbols come from their real packages (`defineModule`/`ModuleService` from `@damatjs/services`, `model`/`columns` from `@damatjs/orm-model`, `createStep`/… from `@damatjs/workflow-engine`, `z` from `@damatjs/deps/zod`).
 - You are **relating modules to each other** — `defineLink` / `collectLinkModels` / `defineLinkModule` are re-exported here so the app's `src/links/` can declare cross-module relationships from the same surface (the runtime service is `getModule("link")`). See [`@damatjs/link`](../link/README.md).
 - You want to **develop or test a module standalone** against a real Postgres, without spinning up a backend (`bootModule` / `withModule`).
 - You want to **run one module as a live app** — full framework HTTP stack, just this module registered (`startModuleApp`, what `damat module dev` boots).
@@ -42,14 +42,15 @@ Skip it when:
 
 ## Quick start
 
-Author a module (one import for everything):
+Author a module (import each symbol from its real package):
 
 ```ts
 // src/index.ts
-import { defineModule, ModuleService, model, columns } from "@damatjs/module";
+import { defineModule, ModuleService } from "@damatjs/services";
+import { model, columns } from "@damatjs/orm-model";
 import { loadCredentials } from "./credentials";
 
-const models = { user: model("user", { id: columns.uuid().primaryKey() }) };
+const models = { users: model("users", { id: columns.uuid().primaryKey() }) };
 
 export class UserModuleService extends ModuleService({ models }) {}
 

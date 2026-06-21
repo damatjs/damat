@@ -2,12 +2,14 @@
 
 > `create-damat-app` — scaffold a new Damat backend or module with a single command.
 
-`@damatjs/create-damat-app` provides the `create-damat-app` binary. It clones the
-appropriate starter repository, renames and re-versions the project, writes
-default environment variables, installs dependencies with Bun, and (for a full
-project) starts the dev server. It supports two modes — a full **project** and a
-standalone **module** — and runs an interactive, animated terminal experience
-(spinner, tips box, prompts) built on the shared `@damatjs/cli` runner.
+`@damatjs/create-damat-app` provides the `create-damat-app` binary. For a full
+**project** it clones the starter repository; for a **module** it scaffolds
+locally via the damat CLI's `module init` (no remote starter repo needed). It
+then renames and re-versions the package, writes default environment variables
+(projects), installs dependencies with Bun, and (for a full project) starts the
+dev server. It runs an interactive, animated terminal experience (spinner, tips
+box, prompts) built on the shared `@damatjs/cli` runner — and the project name is
+just the first argument: `create-damat-app my-app`.
 
 Part of the [Damat](../../../README.md) monorepo · [Full guide](../../../docs/GUIDE.md) · [Internals](./docs/README.md)
 
@@ -48,17 +50,19 @@ positional argument.
 | `--directory-path <path>` | `-d` | string | `process.cwd()` | Directory to create the project in |
 | `--verbose` | | boolean | `false` | Stream all command output (debugging) |
 
-Default starter repos (from `src/utils/actions/cloneRepo.ts`):
+Scaffolding source:
 
-- project → `https://github.com/damatjs/damat-starter-default`
-- module → `https://github.com/damatjs/damat-starter-module`
+- project → clones `https://github.com/damatjs/damat-starter-default`
+- module → scaffolds locally via `@damatjs/damat-cli module init` (no remote
+  starter repo). Pass `--repo-url <git>` to clone a custom starter instead.
 
 ## When to use
 
 - **Starting a new Damat backend**: `create-damat-app my-app` clones the default
   starter, prepares it, installs deps, and launches `bun run dev`.
 - **Starting a new standalone module**: `create-damat-app my-module --module`
-  clones the module starter and prepares it (no dev server is started).
+  scaffolds the module locally (via `damat module init`) and installs deps (no
+  dev server is started). Pass `--repo-url` to clone a custom module starter.
 - **From a custom template**: pass `--repo-url` to scaffold from your own fork.
 - For composing modules into an *existing* app, use `damat module add`
   (`@damatjs/damat-cli`) instead — this CLI is only for initial scaffolding.
@@ -69,7 +73,7 @@ Default starter repos (from `src/utils/actions/cloneRepo.ts`):
 # full project (clones, prepares, installs, starts dev)
 bunx @damatjs/create-damat-app@latest my-app
 
-# module package (clones + prepares; no server)
+# module package (scaffolds locally + installs; no server)
 bunx @damatjs/create-damat-app@latest my-module --module
 
 # pin damat package versions and choose a directory

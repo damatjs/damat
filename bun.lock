@@ -15,6 +15,7 @@
       "name": "@damatjs/default",
       "version": "0.0.0",
       "dependencies": {
+        "@anthropic-ai/sdk": "^0.104.2",
         "@damatjs/damat-cli": "*",
         "@damatjs/deps": "*",
         "@damatjs/framework": "*",
@@ -36,9 +37,26 @@
         "typescript": "^5.7.2",
       },
     },
+    "modules/module-sample": {
+      "name": "@damatjs/module-sample",
+      "version": "0.0.1",
+      "dependencies": {
+        "@damatjs/deps": "latest",
+        "@damatjs/framework": "latest",
+        "@damatjs/module": "latest",
+        "@damatjs/orm-model": "latest",
+        "@damatjs/services": "latest",
+        "@damatjs/workflow-engine": "latest",
+      },
+      "devDependencies": {
+        "@damatjs/damat-cli": "latest",
+        "@types/bun": "1.3.9",
+        "typescript": "^5.7.2",
+      },
+    },
     "packages/cli/create-damat-app": {
       "name": "@damatjs/create-damat-app",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "bin": {
         "create-damat-app": "./dist/index.js",
       },
@@ -64,16 +82,19 @@
     },
     "packages/cli/damat": {
       "name": "@damatjs/damat-cli",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "bin": {
         "damat": "./dist/cli.js",
       },
       "dependencies": {
         "@damatjs/cli": "*",
+        "@damatjs/codegen": "*",
         "@damatjs/framework": "*",
+        "@damatjs/link": "*",
         "@damatjs/load-env": "*",
         "@damatjs/logger": "*",
         "@damatjs/module": "*",
+        "@damatjs/orm-cli": "*",
       },
       "devDependencies": {
         "@damatjs/typescript-config": "*",
@@ -83,7 +104,7 @@
     },
     "packages/core/cli": {
       "name": "@damatjs/cli",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@damatjs/logger": "*",
         "cac": "^6.7.14",
@@ -95,9 +116,28 @@
         "typescript": "^5.9.3",
       },
     },
+    "packages/core/codegen": {
+      "name": "@damatjs/codegen",
+      "version": "0.1.3",
+      "dependencies": {
+        "@damatjs/orm-migration": "*",
+        "@damatjs/orm-model": "*",
+        "@damatjs/orm-type": "*",
+      },
+      "devDependencies": {
+        "@damatjs/logger": "*",
+        "@damatjs/typescript-config": "*",
+        "@types/bun": "1.3.9",
+        "tsc-alias": "^1.8.16",
+        "typescript": "^5.9.3",
+      },
+      "peerDependencies": {
+        "@damatjs/logger": "*",
+      },
+    },
     "packages/core/env": {
       "name": "@damatjs/load-env",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "devDependencies": {
         "@damatjs/typescript-config": "*",
         "@types/bun": "1.3.9",
@@ -107,7 +147,7 @@
     },
     "packages/core/logger": {
       "name": "@damatjs/logger",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "devDependencies": {
         "@damatjs/typescript-config": "*",
         "@types/bun": "1.3.9",
@@ -116,7 +156,7 @@
     },
     "packages/core/redis": {
       "name": "@damatjs/redis",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@damatjs/deps": "*",
         "@damatjs/logger": "*",
@@ -130,7 +170,7 @@
     },
     "packages/core/types": {
       "name": "@damatjs/types",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "devDependencies": {
         "@damatjs/typescript-config": "*",
         "@types/bun": "1.3.9",
@@ -139,7 +179,7 @@
     },
     "packages/deps": {
       "name": "@damatjs/deps",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@hono/node-server": "^1.13.7",
         "effect": "^3.19.18",
@@ -159,7 +199,7 @@
     },
     "packages/framework": {
       "name": "@damatjs/framework",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@damatjs/deps": "*",
         "@damatjs/link": "*",
@@ -180,7 +220,7 @@
     },
     "packages/link": {
       "name": "@damatjs/link",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@damatjs/deps": "*",
         "@damatjs/logger": "*",
@@ -190,7 +230,7 @@
         "@damatjs/services": "*",
       },
       "devDependencies": {
-        "@damatjs/orm-codegen": "*",
+        "@damatjs/codegen": "*",
         "@damatjs/orm-connector": "*",
         "@damatjs/orm-migration": "*",
         "@damatjs/orm-processor": "*",
@@ -202,7 +242,7 @@
     },
     "packages/mcp": {
       "name": "@damatjs/mcp",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "bin": {
         "damat-mcp": "./bin/damat-mcp.ts",
       },
@@ -212,12 +252,12 @@
     },
     "packages/module": {
       "name": "@damatjs/module",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
+        "@damatjs/codegen": "*",
         "@damatjs/deps": "*",
         "@damatjs/framework": "*",
         "@damatjs/logger": "*",
-        "@damatjs/orm-codegen": "*",
         "@damatjs/orm-connector": "*",
         "@damatjs/orm-migration": "*",
         "@damatjs/orm-model": "*",
@@ -233,7 +273,7 @@
     },
     "packages/orm/cli": {
       "name": "@damatjs/orm-cli",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "bin": {
         "damat-orm": "./dist/bin.js",
       },
@@ -242,7 +282,6 @@
         "@damatjs/deps": "*",
         "@damatjs/link": "*",
         "@damatjs/logger": "*",
-        "@damatjs/orm-codegen": "*",
         "@damatjs/orm-migration": "*",
         "@damatjs/orm-model": "*",
         "@damatjs/orm-processor": "*",
@@ -255,27 +294,9 @@
         "typescript": "^5.9.3",
       },
     },
-    "packages/orm/codegen": {
-      "name": "@damatjs/orm-codegen",
-      "version": "1.0.2",
-      "dependencies": {
-        "@damatjs/orm-model": "*",
-        "@damatjs/orm-type": "*",
-      },
-      "devDependencies": {
-        "@damatjs/logger": "*",
-        "@damatjs/typescript-config": "*",
-        "@types/bun": "1.3.9",
-        "tsc-alias": "^1.8.16",
-        "typescript": "^5.9.3",
-      },
-      "peerDependencies": {
-        "@damatjs/logger": "*",
-      },
-    },
     "packages/orm/connector": {
       "name": "@damatjs/orm-connector",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@damatjs/deps": "*",
         "@damatjs/logger": "*",
@@ -290,7 +311,7 @@
     },
     "packages/orm/core": {
       "name": "@damatjs/orm-core",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@damatjs/logger": "*",
         "@damatjs/orm-model": "*",
@@ -304,7 +325,7 @@
     },
     "packages/orm/main": {
       "name": "@damatjs/orm",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@damatjs/deps": "*",
         "@damatjs/orm-connector": "*",
@@ -321,7 +342,7 @@
     },
     "packages/orm/migration": {
       "name": "@damatjs/orm-migration",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@damatjs/deps": "*",
         "@damatjs/logger": "*",
@@ -339,7 +360,7 @@
     },
     "packages/orm/model": {
       "name": "@damatjs/orm-model",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@damatjs/deps": "*",
         "@damatjs/orm-type": "*",
@@ -353,7 +374,7 @@
     },
     "packages/orm/pg": {
       "name": "@damatjs/orm-pg",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@damatjs/logger": "*",
         "@damatjs/orm-core": "*",
@@ -372,7 +393,7 @@
     },
     "packages/orm/processor": {
       "name": "@damatjs/orm-processor",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@damatjs/deps": "*",
         "@damatjs/orm-model": "*",
@@ -388,7 +409,7 @@
     },
     "packages/orm/type": {
       "name": "@damatjs/orm-type",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@damatjs/deps": "*",
       },
@@ -400,7 +421,7 @@
     },
     "packages/service": {
       "name": "@damatjs/services",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@damatjs/deps": "*",
         "@damatjs/logger": "*",
@@ -423,7 +444,7 @@
     },
     "packages/workflow-engine": {
       "name": "@damatjs/workflow-engine",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@damatjs/logger": "*",
         "@damatjs/redis": "*",
@@ -438,6 +459,8 @@
     },
   },
   "packages": {
+    "@anthropic-ai/sdk": ["@anthropic-ai/sdk@0.104.2", "", { "dependencies": { "json-schema-to-ts": "^3.1.1", "standardwebhooks": "^1.0.0" }, "peerDependencies": { "zod": "^3.25.0 || ^4.0.0" }, "optionalPeers": ["zod"], "bin": { "anthropic-ai-sdk": "bin/cli" } }, "sha512-s1wEVDAtEwkS7Ajgep6PZKJLFqybRkmD3Byz+iVVsSpbDY0gjROXE9aOft6V3PMqynn3NTcycV5whga9tCzmKA=="],
+
     "@babel/runtime": ["@babel/runtime@7.29.7", "", {}, "sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw=="],
 
     "@changesets/apply-release-plan": ["@changesets/apply-release-plan@7.1.1", "", { "dependencies": { "@changesets/config": "^3.1.4", "@changesets/get-version-range-type": "^0.4.0", "@changesets/git": "^3.0.4", "@changesets/should-skip-package": "^0.1.2", "@changesets/types": "^6.1.0", "@manypkg/get-packages": "^1.1.3", "detect-indent": "^6.0.0", "fs-extra": "^7.0.1", "lodash.startcase": "^4.4.0", "outdent": "^0.5.0", "prettier": "^2.7.1", "resolve-from": "^5.0.0", "semver": "^7.5.3" } }, "sha512-9qPCm/rLx/xoOFXIHGB229+4GOL76S4MC+7tyOuTsR6+1jYlfFDQORdvwR5hDA6y4FL2BPt3qpbcQIS+dW85LA=="],
@@ -484,6 +507,8 @@
 
     "@damatjs/cli": ["@damatjs/cli@workspace:packages/core/cli"],
 
+    "@damatjs/codegen": ["@damatjs/codegen@workspace:packages/core/codegen"],
+
     "@damatjs/create-damat-app": ["@damatjs/create-damat-app@workspace:packages/cli/create-damat-app"],
 
     "@damatjs/damat-cli": ["@damatjs/damat-cli@workspace:packages/cli/damat"],
@@ -504,11 +529,13 @@
 
     "@damatjs/module": ["@damatjs/module@workspace:packages/module"],
 
+    "@damatjs/module-sample": ["@damatjs/module-sample@workspace:modules/module-sample"],
+
     "@damatjs/orm": ["@damatjs/orm@workspace:packages/orm/main"],
 
     "@damatjs/orm-cli": ["@damatjs/orm-cli@workspace:packages/orm/cli"],
 
-    "@damatjs/orm-codegen": ["@damatjs/orm-codegen@workspace:packages/orm/codegen"],
+    "@damatjs/orm-codegen": ["@damatjs/orm-codegen@1.0.3", "", { "dependencies": { "@damatjs/orm-model": "*", "@damatjs/orm-type": "*" }, "peerDependencies": { "@damatjs/logger": "*" } }, "sha512-BNvB9YOAmwOnTgzdjceEJHLVWY2oRPaN0G/qhE08NOKRuGWUrwFcHicI5m4YcslDGjxUXftuBy3I3YN8a4S81A=="],
 
     "@damatjs/orm-connector": ["@damatjs/orm-connector@workspace:packages/orm/connector"],
 
@@ -617,6 +644,8 @@
     "@sindresorhus/is": ["@sindresorhus/is@4.6.0", "", {}, "sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw=="],
 
     "@so-ric/colorspace": ["@so-ric/colorspace@1.1.6", "", { "dependencies": { "color": "^5.0.2", "text-hex": "1.0.x" } }, "sha512-/KiKkpHNOBgkFJwu9sh48LkHSMYGyuTcSFK/qMBdnOAlrRJzRSXAOFB5qwzaVQuDl8wAvHVMkaASQDReTahxuw=="],
+
+    "@stablelib/base64": ["@stablelib/base64@1.0.1", "", {}, "sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ=="],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 
@@ -770,6 +799,8 @@
 
     "fast-glob": ["fast-glob@3.3.3", "", { "dependencies": { "@nodelib/fs.stat": "^2.0.2", "@nodelib/fs.walk": "^1.2.3", "glob-parent": "^5.1.2", "merge2": "^1.3.0", "micromatch": "^4.0.8" } }, "sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg=="],
 
+    "fast-sha256": ["fast-sha256@1.3.0", "", {}, "sha512-n11RGP/lrWEFI/bWdygLxhI+pVeo1ZYIVwvvPkW7azl/rOy+F3HYRZ2K5zeE9mmkhQppyv9sQFx0JM9UabnpPQ=="],
+
     "fastq": ["fastq@1.20.1", "", { "dependencies": { "reusify": "^1.0.4" } }, "sha512-GGToxJ/w1x32s/D2EKND7kTil4n8OVk/9mycTc4VDza13lOvpUZTGX3mFSCtV9ksdGBVzvsyAVLM6mHFThxXxw=="],
 
     "fecha": ["fecha@4.2.3", "", {}, "sha512-OP2IUU6HeYKJi3i0z4A19kHMQoLVs4Hc+DPqqxI2h/DPZHTm/vjsfC6P0b4jCMy14XizLBqvndQ+UilD7707Jw=="],
@@ -861,6 +892,8 @@
     "joi": ["joi@18.2.1", "", { "dependencies": { "@hapi/address": "^5.1.1", "@hapi/formula": "^3.0.2", "@hapi/hoek": "^11.0.7", "@hapi/pinpoint": "^2.0.1", "@hapi/tlds": "^1.1.1", "@hapi/topo": "^6.0.2", "@standard-schema/spec": "^1.1.0" } }, "sha512-2/OKlogiESf2Nh3TFCrRjrr9z1DRHeW0I+KReF67+4J0Ns+8hBtHRmoWAZ2OFU6I5+TWLEe6sVlSdXPjHm5UbQ=="],
 
     "js-yaml": ["js-yaml@4.2.0", "", { "dependencies": { "argparse": "^2.0.1" }, "bin": { "js-yaml": "bin/js-yaml.js" } }, "sha512-ePWsvanv0DWuDRsW8dnt+R4jQ31SCRCQ7hhNcPXZPsoBZiemuZNYGf7adZdqX2D86j6rvKp3RpCxVTSb8WQlOw=="],
+
+    "json-schema-to-ts": ["json-schema-to-ts@3.1.1", "", { "dependencies": { "@babel/runtime": "^7.18.3", "ts-algebra": "^2.0.0" } }, "sha512-+DWg8jCJG2TEnpy7kOm/7/AxaYoaRbjVB4LFZLySZlWn8exGs3A4OLJR966cVvU26N7X9TWxl+Jsw7dzAqKT6g=="],
 
     "jsonfile": ["jsonfile@4.0.0", "", { "optionalDependencies": { "graceful-fs": "^4.1.6" } }, "sha512-m6F1R3z8jjlf2imQHS2Qez5sjKWQzbuuhuJ/FKYFRZvPE3PuHcSMVZzfsLhGVOkfd20obL5SWEBew5ShlquNxg=="],
 
@@ -1028,6 +1061,8 @@
 
     "standard-as-callback": ["standard-as-callback@2.1.0", "", {}, "sha512-qoRRSyROncaz1z0mvYqIE4lCd9p2R90i6GxW3uZv5ucSu8tU7B5HXUP1gG8pVZsYNVaXjk8ClXHPttLyxAL48A=="],
 
+    "standardwebhooks": ["standardwebhooks@1.0.0", "", { "dependencies": { "@stablelib/base64": "^1.0.0", "fast-sha256": "^1.3.0" } }, "sha512-BbHGOQK9olHPMvQNHWul6MYlrRTAOKn03rOe4A8O3CLWhNf4YHBqq2HJKKC+sfqpxiBY52pNeesD6jIiLDz8jg=="],
+
     "string-width": ["string-width@7.2.0", "", { "dependencies": { "emoji-regex": "^10.3.0", "get-east-asian-width": "^1.0.0", "strip-ansi": "^7.1.0" } }, "sha512-tsaTIkKW9b4N+AEj+SVA+WhJzV7/zMhcSu78mLKWSk7cXMOSHsBKFWUs0fWwq8QyK3MgJBQRX6Gbi4kYbdvGkQ=="],
 
     "string_decoder": ["string_decoder@1.3.0", "", { "dependencies": { "safe-buffer": "~5.2.0" } }, "sha512-hkRX8U1WjJFd8LsDJ2yQ/wWWxaopEsABU1XfkM8A+j0+85JAGppt16cr1Whg6KIbb4okU6Mql6BOj+uup/wKeA=="],
@@ -1059,6 +1094,8 @@
     "to-regex-range": ["to-regex-range@5.0.1", "", { "dependencies": { "is-number": "^7.0.0" } }, "sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ=="],
 
     "triple-beam": ["triple-beam@1.4.1", "", {}, "sha512-aZbgViZrg1QNcG+LULa7nhZpJTZSLm/mXnHXnbAbjmN5aSa0y7V+wvv6+4WaBtpISJzThKy+PIPxc1Nq1EJ9mg=="],
+
+    "ts-algebra": ["ts-algebra@2.0.0", "", {}, "sha512-FPAhNPFMrkwz76P7cdjdmiShwMynZYN6SgOujD1urY4oNm80Ou9oMdmbR45LotcKOXoy7wSmHkRFE6Mxbrhefw=="],
 
     "tsc-alias": ["tsc-alias@1.8.17", "", { "dependencies": { "chokidar": "^3.5.3", "commander": "^9.0.0", "get-tsconfig": "^4.10.0", "globby": "^11.0.4", "mylas": "^2.1.9", "normalize-path": "^3.0.0", "plimit-lit": "^1.2.6" }, "bin": { "tsc-alias": "dist/bin/index.js" } }, "sha512-EIduCZHqbNwPm8BZYfq1aD7BQ697A4h6uSGMOFQfYGoQwfrYFTKwYfy9Bv42YxHkduVBcn9Zx0DkX111DKskyg=="],
 
@@ -1114,6 +1151,8 @@
 
     "@damatjs/cli/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
+    "@damatjs/codegen/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
     "@damatjs/damat-cli/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@damatjs/default/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
@@ -1128,9 +1167,23 @@
 
     "@damatjs/module/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
-    "@damatjs/orm-cli/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+    "@damatjs/module-sample/@damatjs/damat-cli": ["@damatjs/damat-cli@0.1.3", "", { "dependencies": { "@damatjs/cli": "*", "@damatjs/framework": "*", "@damatjs/load-env": "*", "@damatjs/logger": "*", "@damatjs/module": "*" }, "bin": { "damat": "dist/cli.js" } }, "sha512-AhgUQ0JNK3sZocaCjAFZEUCpE2QNllIOzWl7AAD98jDuFr3Z64P6aw8GWzHPhZP2bgKS1syG7ZAGX3VIO4AAkw=="],
 
-    "@damatjs/orm-codegen/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+    "@damatjs/module-sample/@damatjs/deps": ["@damatjs/deps@0.1.3", "", { "dependencies": { "@hono/node-server": "^1.13.7", "effect": "^3.19.18", "hono": "^4.12.0", "ioredis": "^5.9.3", "nanoid": "^5.1.6", "pg": "^8.21.0", "uuid": "^13.0.0", "zod": "4.3.6" } }, "sha512-TQZQx18t9lJnI/QngiNB0w+Ew6FSDtC/k/3WfaAYHLeTHTF0+LJTFMWVO9R/M4yHiQjAqjbybik2OjULLk+OVQ=="],
+
+    "@damatjs/module-sample/@damatjs/framework": ["@damatjs/framework@0.1.3", "", { "dependencies": { "@damatjs/deps": "*", "@damatjs/link": "*", "@damatjs/logger": "*", "@damatjs/orm-connector": "*", "@damatjs/orm-type": "*", "@damatjs/redis": "*", "@damatjs/services": "*", "@damatjs/types": "*", "@damatjs/workflow-engine": "*", "@hono/node-server": "^1.13.7" } }, "sha512-XQxy15Ejq08g2rW79gabCEoYTFIjC0KBSvm3jMIs8woGF8pNqDG+CGtDtj/5qSdhIB11yWLyE8qTlP4MF7V6Gg=="],
+
+    "@damatjs/module-sample/@damatjs/module": ["@damatjs/module@0.1.3", "", { "dependencies": { "@damatjs/deps": "*", "@damatjs/framework": "*", "@damatjs/logger": "*", "@damatjs/orm-codegen": "*", "@damatjs/orm-connector": "*", "@damatjs/orm-migration": "*", "@damatjs/orm-model": "*", "@damatjs/orm-type": "*", "@damatjs/services": "*", "@damatjs/workflow-engine": "*" } }, "sha512-Py5hUO57ryx9vwETA3bhDUjWjnz3I15oAfmB7Jp7cqJ0h/T9Tf2LpIUPkI9JPmCo4HtyrfxxAE/OYG3IuJBYCw=="],
+
+    "@damatjs/module-sample/@damatjs/orm-model": ["@damatjs/orm-model@0.1.3", "", { "dependencies": { "@damatjs/deps": "*", "@damatjs/orm-type": "*" } }, "sha512-5vGoIRpXrHVzzyjrILlrDcCU9vvHcdxOufdnvkwUU4LGqSa7mPR1D8X0IpmrUg9C1NUEOJM111MJV30elrRu9Q=="],
+
+    "@damatjs/module-sample/@damatjs/services": ["@damatjs/services@0.1.3", "", { "dependencies": { "@damatjs/deps": "*", "@damatjs/logger": "*", "@damatjs/orm-connector": "*", "@damatjs/orm-model": "*", "@damatjs/orm-pg": "*", "@damatjs/orm-type": "*", "@damatjs/types": "*" } }, "sha512-WWCoYFe8w3LAy5TTAT/5kp8xpvd2gqgYRz3EHtNKzgLZXyKHEo4FwTftRtvSKjoOtuOe+sSTmvPY98pJiteIhw=="],
+
+    "@damatjs/module-sample/@damatjs/workflow-engine": ["@damatjs/workflow-engine@0.1.3", "", { "dependencies": { "@damatjs/logger": "*", "@damatjs/redis": "*", "effect": "^3.12.0", "nanoid": "^5.1.6" } }, "sha512-ic3P6QhpfOhgnAkrZmrSVg5nfPCmyFy7hdz1NnHBFxnRkgv1HoHIyhNUK8/D2nYzBCWvIsiBZJnvTGyLqcFJyg=="],
+
+    "@damatjs/module-sample/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "@damatjs/orm-cli/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@damatjs/orm-connector/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
@@ -1178,6 +1231,32 @@
 
     "wrap-ansi/strip-ansi": ["strip-ansi@7.2.0", "", { "dependencies": { "ansi-regex": "^6.2.2" } }, "sha512-yDPMNjp4WyfYBkHnjIRLfca1i6KMyGCtsVgoKe/z1+6vukgaENdgGBZt+ZmKPc4gavvEZ5OgHfHdrazhgNyG7w=="],
 
+    "@damatjs/module-sample/@damatjs/damat-cli/@damatjs/framework": ["@damatjs/framework@workspace:packages/framework"],
+
+    "@damatjs/module-sample/@damatjs/damat-cli/@damatjs/module": ["@damatjs/module@workspace:packages/module"],
+
+    "@damatjs/module-sample/@damatjs/framework/@damatjs/deps": ["@damatjs/deps@workspace:packages/deps"],
+
+    "@damatjs/module-sample/@damatjs/framework/@damatjs/services": ["@damatjs/services@workspace:packages/service"],
+
+    "@damatjs/module-sample/@damatjs/framework/@damatjs/workflow-engine": ["@damatjs/workflow-engine@workspace:packages/workflow-engine"],
+
+    "@damatjs/module-sample/@damatjs/module/@damatjs/deps": ["@damatjs/deps@workspace:packages/deps"],
+
+    "@damatjs/module-sample/@damatjs/module/@damatjs/framework": ["@damatjs/framework@workspace:packages/framework"],
+
+    "@damatjs/module-sample/@damatjs/module/@damatjs/orm-model": ["@damatjs/orm-model@workspace:packages/orm/model"],
+
+    "@damatjs/module-sample/@damatjs/module/@damatjs/services": ["@damatjs/services@workspace:packages/service"],
+
+    "@damatjs/module-sample/@damatjs/module/@damatjs/workflow-engine": ["@damatjs/workflow-engine@workspace:packages/workflow-engine"],
+
+    "@damatjs/module-sample/@damatjs/orm-model/@damatjs/deps": ["@damatjs/deps@workspace:packages/deps"],
+
+    "@damatjs/module-sample/@damatjs/services/@damatjs/deps": ["@damatjs/deps@workspace:packages/deps"],
+
+    "@damatjs/module-sample/@damatjs/services/@damatjs/orm-model": ["@damatjs/orm-model@workspace:packages/orm/model"],
+
     "ansi-align/string-width/emoji-regex": ["emoji-regex@8.0.0", "", {}, "sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A=="],
 
     "read-yaml-file/js-yaml/argparse": ["argparse@1.0.10", "", { "dependencies": { "sprintf-js": "~1.0.2" } }, "sha512-o5Roy6tNG4SL/FOkCAN6RzjiakZS25RLYFrcMttJqbdd8BWrnA+fGz57iN5Pb06pvBGvl5gQ0B48dJlslXvoTg=="],
@@ -1196,6 +1275,24 @@
 
     "wrap-ansi/strip-ansi/ansi-regex": ["ansi-regex@6.2.2", "", {}, "sha512-Bq3SmSpyFHaWjPk8If9yc6svM8c56dB5BAtW4Qbw5jHTwwXXcTLoRMkpDJp6VL0XzlWaCHTXrkFURMYmD0sLqg=="],
 
+    "@damatjs/module-sample/@damatjs/damat-cli/@damatjs/framework/@damatjs/deps": ["@damatjs/deps@workspace:packages/deps"],
+
+    "@damatjs/module-sample/@damatjs/damat-cli/@damatjs/framework/@damatjs/services": ["@damatjs/services@workspace:packages/service"],
+
+    "@damatjs/module-sample/@damatjs/damat-cli/@damatjs/framework/@damatjs/workflow-engine": ["@damatjs/workflow-engine@workspace:packages/workflow-engine"],
+
+    "@damatjs/module-sample/@damatjs/damat-cli/@damatjs/module/@damatjs/deps": ["@damatjs/deps@workspace:packages/deps"],
+
+    "@damatjs/module-sample/@damatjs/damat-cli/@damatjs/module/@damatjs/orm-model": ["@damatjs/orm-model@workspace:packages/orm/model"],
+
+    "@damatjs/module-sample/@damatjs/damat-cli/@damatjs/module/@damatjs/services": ["@damatjs/services@workspace:packages/service"],
+
+    "@damatjs/module-sample/@damatjs/damat-cli/@damatjs/module/@damatjs/workflow-engine": ["@damatjs/workflow-engine@workspace:packages/workflow-engine"],
+
+    "@damatjs/module-sample/@damatjs/framework/@damatjs/services/@damatjs/orm-model": ["@damatjs/orm-model@workspace:packages/orm/model"],
+
     "run-applescript/execa/onetime/mimic-fn": ["mimic-fn@2.1.0", "", {}, "sha512-OqbOk5oEQeAZ8WXWydlu9HJjz9WVdEIvamMCcXmuqUYjTknH/sqsWvhQ3vgwKFRR1HpjvNBKQ37nbJgYzGqGcg=="],
+
+    "@damatjs/module-sample/@damatjs/damat-cli/@damatjs/framework/@damatjs/services/@damatjs/orm-model": ["@damatjs/orm-model@workspace:packages/orm/model"],
   }
 }

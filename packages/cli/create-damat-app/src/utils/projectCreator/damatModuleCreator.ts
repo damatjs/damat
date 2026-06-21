@@ -3,6 +3,7 @@ import pc from "picocolors";
 import { emojify } from "node-emoji";
 import { EOL } from "os";
 import { runCloneRepo } from "../actions/cloneRepo";
+import { runScaffoldModule } from "../actions/scaffoldModule";
 import { isAbortError } from "../commands/createAbortController";
 import { displayFactBox } from "../commands/facts";
 import logMessage from "../logger/message";
@@ -46,14 +47,28 @@ export class damatModuleCreator
     }
 
     private async cloneAndPrepareModule(): Promise<void> {
-        await runCloneRepo({
-            projectName: this.projectPath,
-            repoUrl: this.options.repoUrl ?? "",
-            abortController: this.abortController,
-            spinner: this.spinner,
-            verbose: this.options.verbose ?? false,
-            isModule: true,
-        });
+        // Default: scaffold the module locally via the damat CLI (deterministic,
+        // no dependency on a remote starter repo). Only clone when the caller
+        // explicitly points at a custom starter with `--repo-url`.
+        if (this.options.repoUrl) {
+            await runCloneRepo({
+                projectName: this.projectPath,
+                repoUrl: this.options.repoUrl,
+                abortController: this.abortController,
+                spinner: this.spinner,
+                verbose: this.options.verbose ?? false,
+                isModule: true,
+            });
+        } else {
+            await runScaffoldModule({
+                name: this.projectName,
+                directoryPath: this.options.directoryPath ?? "",
+                version: this.options.version ?? "latest",
+                abortController: this.abortController,
+                spinner: this.spinner,
+                verbose: this.options.verbose ?? false,
+            });
+        }
 
         this.factBoxOptions.interval = displayFactBox({
             ...this.factBoxOptions,

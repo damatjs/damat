@@ -43,27 +43,62 @@ You're in **your own** module package with the `@damatjs/*` packages installed
 
 ## Build a module
 
+**Codegen-first — basics first, then the rest.** You never hand-write CRUD: model
+the data, run `bun run codegen`, and it generates the whole basic slice (types +
+zod + `registry.ts`, and **scaffold-once** per-operation `workflows/<table>` +
+`api/routes/<table>`). Then build the rest ON TOP — real logic in the generated
+steps, custom non-CRUD workflows, integrations on the service. So: **models →
+codegen → extend.** Never reproduce CRUD by hand or write a parallel route/step
+that competes with the generated one.
+
+**Hard rules — so the code always fits:**
+- Layering is one-way: **route → workflow → step → service**. A route ONLY calls a
+  workflow (`workflow.execute(input)`) and shapes the response — never the
+  service, never business logic. Only steps touch the service via
+  `getModule("<name>")`; business logic + orchestration live in steps/workflows.
+- The service is **data + integrations only** (CRUD + third-party do/reverse
+  pairs) — no business logic, no orchestration.
+- **No big files** — split by concern: one model per file, one integration per
+  `src/lib/<provider>.ts`, one helper-group per `src/utils/<concern>.ts`.
+
 1. **Start the module** — two ways, same resulting shape:
-   - `bunx create-damat-app@latest <name> --module` — clones the
-     `damatjs/damat-starter-module` repo (the full starter: README, AGENTS.md, CI,
-     tests). Same flow as creating a backend; needs network.
-   - `damat module init <name>` — an offline local scaffold (`package.json`
-     scripts, `module.config.ts`, `src/index.ts`/`service.ts`/`accessor.ts`,
-     `src/config/schema`, `src/module.json`, a contract test).
-2. **Implement**, importing the authoring surface from `@damatjs/module`:
+   - `bunx create-damat-app@latest <name> --module` — the getting-started command.
+     By default it scaffolds locally (it runs `damat module init` for you, so you
+     get the same deterministic output without depending on a remote starter
+     repo); pass `--repo-url <git>` to clone a custom starter instead.
+   - `damat module init <name>` — the offline local scaffold: `package.json`
+     scripts, `module.config.ts`, `src/index.ts`/`service.ts`, `src/config/schema`,
+     `src/module.json`, a contract test, a root `README.md`, **and the full
+     `AGENTS.md` authoring guide**. `src/models/` starts empty — you add the first
+     model. (Read the generated `AGENTS.md`; it's the same guide as this skill.)
+     For a **one-off before any project exists**, run
+     `bunx @damatjs/damat-cli module init <name>` — the `damat` bin only exists
+     once `@damatjs/damat-cli` is installed, so `bunx damat …` 404s (there is no
+     npm package named `damat`).
+2. **Implement**, importing each symbol from its real package:
    ```ts
-   import { defineModule, ModuleService, model, columns, z } from "@damatjs/module";
+   import { defineModule, ModuleService } from "@damatjs/services";
+   import { getModule } from "@damatjs/framework";
+   import { model, columns, collectModels } from "@damatjs/orm-model";
+   import { createStep, createWorkflow, executeStep, Effect } from "@damatjs/workflow-engine";
+   import { z } from "@damatjs/deps/zod";
    ```
    - `src/models/` — model definitions (the `@damatjs/orm-model` DSL). Reference
      relations **inside your own module** by table name
      (`columns.belongsTo("accounts")`). Do **not** reference another module's
      tables — that's a cross-module link, which the app declares, not you.
-   - `src/service.ts` — register models in the `models` map; `export class XService
-     extends ModuleService({ models, credentialsSchema })` + your domain methods.
+   - `src/service.ts` — `export const models = collectModels([ModelA, ModelB])`
+     (keys derived from each table name), then `export class XService extends
+     ModuleService({ models, credentialsSchema })`. CRUD + third-party
+     integrations only (integrations in `src/lib/`); business logic lives in the
+     generated steps/workflows, not the service.
    - `src/config/` — a zod `schema` and a `load(env)` credentials loader.
-   - `src/index.ts` — `defineModule(MODULE_ID, { service, credentials: load })`
-     (plus a `ModuleRegistry` merge so `getModule()` is typed; `accessor.ts` wraps it).
-3. **Migrate + codegen:** `bun run migration:create` then `bun run codegen`.
+   - `src/index.ts` — `defineModule(MODULE_ID, { service, credentials: load })`.
+     The `ModuleRegistry` merge that makes `getModule("<name>")` typed is
+     generated into `src/types/registry.ts` by codegen (no `accessor.ts`).
+3. **Migrate + codegen:** `bun run migration:create`, then `bun run codegen` —
+   regenerates types/zod/`registry.ts` AND scaffolds (once) the route → workflow →
+   step CRUD slice from your models. Extend the generated files; don't recreate them.
 4. **Test in isolation** with the harness (needs `DATABASE_URL`, no server):
    ```ts
    import { withModule } from "@damatjs/module";

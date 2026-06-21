@@ -80,16 +80,21 @@ initializeProject()  → setupProject()  → startServices()
 A single linear method:
 
 - Log a rocket banner; `spinner.start()`; fact box ("Setting up plugin…").
-- `cloneAndPrepareModule()`: `runCloneRepo({ isModule: true, … })`; fact box
-  ("Created plugin directory"); `prepareProject({ isModule: true, … })`.
+- `cloneAndPrepareModule()`: by default `runScaffoldModule({ … })` (runs
+  `bunx @damatjs/damat-cli@<version> module init <name>` locally — no remote
+  starter repo); only when `--repo-url` is passed does it `runCloneRepo({ isModule:
+  true, … })` instead. Then fact box ("Created plugin directory");
+  `prepareProject({ isModule: true, … })`.
 - `spinner.success("Module Prepared")`; `showSuccessMessage()` (no dev server).
 - Same `handleError` shape as the project creator.
 
 ## 5. Clone (`actions/cloneRepo.ts`)
 
 `runCloneRepo` → `cloneRepo` runs `git clone <repoUrl|default> <dir> --depth 1`
-through `execute` (honouring the abort signal). Default repo depends on
-`isModule` (`damat-starter-default` vs `damat-starter-module`). Then:
+through `execute` (honouring the abort signal). For a **project** the default repo
+is `damat-starter-default`; a **module** only reaches `runCloneRepo` when the
+caller passes `--repo-url` (otherwise it scaffolds locally via `runScaffoldModule`
+— see §4b). Then:
 
 - `deleteGitDirectory(dir)` removes `.git` and `.github` (falls back to
   `rm -rf` / `rmdir /s /q` when `fs.rmSync` fails).

@@ -97,7 +97,7 @@ together (currently `0.0.10`).
 | [`@damatjs/orm-connector`](./packages/orm/connector/README.md) | Connection / pool manager |
 | [`@damatjs/orm-migration`](./packages/orm/migration/README.md) | Module-aware migration system |
 | [`@damatjs/orm-processor`](./packages/orm/processor/README.md) | Schema snapshot, diff, and SQL generation |
-| [`@damatjs/orm-codegen`](./packages/orm/codegen/README.md) | TypeScript types from models |
+| [`@damatjs/codegen`](./packages/core/codegen/README.md) | TypeScript types from models |
 | [`@damatjs/orm-core`](./packages/orm/core/README.md) | Model registry + query logging |
 | [`@damatjs/orm-type`](./packages/orm/type/README.md) | Shared ORM types |
 

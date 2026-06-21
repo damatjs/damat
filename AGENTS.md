@@ -74,7 +74,7 @@ damat/
     │   ├── connector/         # @damatjs/orm-connector — pg pool/connection manager
     │   ├── migration/         # @damatjs/orm-migration — module-aware migrations
     │   ├── processor/         # @damatjs/orm-processor — snapshot/diff/SQL generation
-    │   ├── codegen/           # @damatjs/orm-codegen — types from models
+    │   ├── codegen/           # @damatjs/codegen — types from models
     │   ├── core/              # @damatjs/orm-core — registry + query logging
     │   ├── type/              # @damatjs/orm-type — shared ORM types
     │   └── cli/               # @damatjs/orm-cli — `damat-orm` migrations/codegen
@@ -119,7 +119,7 @@ is roughly: `types`/`deps` → `orm-type` → `orm-model` → `orm-core`/`orm-pg
 2. Export it from the module's `service.ts` `models` map.
 3. `damat module migration:create` (in a module package) **or**
    `damat-orm migrate:create <name>` (in an app) to generate the migration.
-4. `damat-orm migrate:up`. Optionally `damat-orm generate:types`.
+4. `damat-orm migrate:up`. Optionally `damat codegen`.
 
 ### Add an HTTP route
 Create `src/api/routes/<path>/route.ts` exporting `GET`/`POST`/… as
@@ -153,7 +153,7 @@ both modules in `src/links/<owner>/` (mirroring a module: `models/`, `index.ts`,
 3. `src/links/index.ts`: aggregate every owner and `export default defineLinkModule(links)`.
 4. Point `damat.config.ts` at it: `links: "./src/links"`.
 5. `damat-orm migrate:create link:<owner>` → `damat-orm migrate:up`, then
-   `damat-orm generate:types <module>` so each side gains the linked field.
+   `damat codegen <module>` so each side gains the linked field.
 6. At runtime use `getModule("link")` → `create` / `dismiss` / `fetch` / `graph`.
 Import `defineLink` / `collectLinkModels` / `defineLinkModule` from
 `@damatjs/framework`. Links are an **app / backend-owner** concern — a module

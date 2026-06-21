@@ -8,6 +8,6 @@ import { defineLink } from "@damatjs/framework";
  * links/user (the owning module).
  */
 export default defineLink(
-  { module: "user", model: "user", field: "users" },
-  { module: "organization", model: "organization", field: "organizations" },
+  { module: "user", model: "users", field: "users" },
+  { module: "organization", model: "organizations", field: "organizations" },
 );

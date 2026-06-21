@@ -7,7 +7,7 @@
     "dev": "damat dev",
     "build": "damat build",
     "start": "damat start",
-    "codegen": "damat-orm generate:types",
+    "codegen": "damat codegen",
     "db:migrate": "damat-orm migrate:up",
     "db:status": "damat-orm migrate:status",
     "db:create": "damat-orm migrate:create",
@@ -23,17 +23,18 @@
     "bun": ">=1.1.0"
   },
   "dependencies": {
-    "@damatjs/logger": "*",
-    "@damatjs/services": "*",
-    "@damatjs/types": "*",
-    "@damatjs/deps": "*",
+    "@anthropic-ai/sdk": "^0.104.2",
     "@damatjs/damat-cli": "*",
+    "@damatjs/deps": "*",
     "@damatjs/framework": "*",
-    "@damatjs/workflow-engine": "*",
+    "@damatjs/logger": "*",
     "@damatjs/orm-cli": "*",
     "@damatjs/orm-model": "*",
+    "@damatjs/orm-pg": "*",
     "@damatjs/orm-processor": "*",
-    "@damatjs/orm-pg": "*"
+    "@damatjs/services": "*",
+    "@damatjs/types": "*",
+    "@damatjs/workflow-engine": "*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "*",

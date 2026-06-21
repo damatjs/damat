@@ -15,7 +15,7 @@ Start from the [package map](./01-introduction.md#the-package-map), or jump in:
   [connector](../../packages/orm/connector/README.md) ·
   [migration](../../packages/orm/migration/README.md) ·
   [processor](../../packages/orm/processor/README.md) ·
-  [codegen](../../packages/orm/codegen/README.md) ·
+  [codegen](../../packages/core/codegen/README.md) ·
   [core](../../packages/orm/core/README.md) ·
   [type](../../packages/orm/type/README.md)
 - **Core:** [logger](../../packages/core/logger/README.md) ·

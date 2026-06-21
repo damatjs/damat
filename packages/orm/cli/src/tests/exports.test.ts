@@ -1,10 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import * as pkgIndex from "../index";
 import * as cliIndex from "../cli/index";
-import allCommands, {
-  generateCommand,
-  migrateCommand,
-} from "../cli/commands/index";
+import allCommands, { migrateCommand } from "../cli/commands/index";
 
 describe("package public API (src/index.ts)", () => {
   it("re-exports runCli, loadModules and requireDatabaseUrl", () => {
@@ -21,25 +18,19 @@ describe("cli barrel (src/cli/index.ts)", () => {
 });
 
 describe("command aggregation (src/cli/commands/index.ts)", () => {
-  it("default export contains exactly the generate and migrate commands", () => {
+  it("default export contains exactly the migrate command", () => {
     expect(Array.isArray(allCommands)).toBe(true);
-    expect(allCommands.length).toBe(2);
+    expect(allCommands.length).toBe(1);
     const names = allCommands.map((c) => c.name).sort();
-    expect(names).toEqual(["generate", "migrate"]);
+    expect(names).toEqual(["migrate"]);
   });
 
   it("named exports match the aggregated commands", () => {
-    expect(allCommands).toContain(generateCommand);
     expect(allCommands).toContain(migrateCommand);
   });
 });
 
 describe("command tree structure", () => {
-  it("generate exposes a generate:types subcommand", () => {
-    const subs = generateCommand.subcommands ?? [];
-    expect(subs.map((s) => s.name)).toEqual(["generate:types"]);
-  });
-
   it("migrate exposes up/status/list/create subcommands", () => {
     const subs = migrateCommand.subcommands ?? [];
     expect(subs.map((s) => s.name).sort()).toEqual([

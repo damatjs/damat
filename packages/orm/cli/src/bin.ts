@@ -6,8 +6,7 @@ import allCommands from "./cli/commands/index.js";
 runCli({
   name: "damat-orm",
   version: "0.0.1",
-  description:
-    "DamatJS ORM CLI - unified command line interface for codegen and migrations",
+  description: "DamatJS ORM CLI - database migration commands",
   commands: allCommands,
   configLoader: {
     file: "damat.config.ts",
@@ -18,7 +17,7 @@ runCli({
   },
   banner: {
     title: "Damat ORM",
-    subtitle: "Database migrations and code generation",
+    subtitle: "Database migrations",
     style: "boxed",
   },
 });

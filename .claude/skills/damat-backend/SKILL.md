@@ -57,7 +57,7 @@ References in the repo (read when you need detail):
    Relations reference the **target table name** (`columns.hasMany("accounts")`).
 2. Register it in the module's `service.ts` `models` map.
 3. `damat-orm migrate:create <name>` → review the SQL → `damat-orm migrate:up`.
-4. Optionally `damat-orm generate:types` to refresh row types.
+4. Optionally `damat codegen` to refresh row types.
 Guide: `docs/guide/05-models.md`, `docs/guide/06-migrations.md`.
 
 ### Add business logic (service method)
@@ -87,7 +87,7 @@ table stores it.
 2. `src/links/<owner>/index.ts`: `export const links=[...]; export const models=collectLinkModels(links);`.
 3. `src/links/index.ts`: aggregate owners, `export default defineLinkModule(links)`.
 4. `damat.config.ts`: add `links: "./src/links"`.
-5. `damat-orm migrate:create link:<owner>` → `damat-orm migrate:up` → `damat-orm generate:types <module>`.
+5. `damat-orm migrate:create link:<owner>` → `damat-orm migrate:up` → `damat codegen <module>`.
 6. Query at runtime via `getModule("link")`: `.create / .dismiss / .fetch / .graph`.
 `defineLink`, `collectLinkModels`, `defineLinkModule` import from `@damatjs/framework`.
 Details: `packages/link/README.md`.

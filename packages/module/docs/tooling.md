@@ -52,7 +52,7 @@ Generates TypeScript row types + zod schemas for the module's models
 1. `moduleDir = locateModuleDir(packageDir)`; `manifest = readModuleManifest(moduleDir)`.
 2. `models = await discoverModels(moduleDir)` (from `@damatjs/orm-migration`).
 3. `schema = toModuleSchema(manifest.name, models)` (from `@damatjs/orm-model`).
-4. `filesMap = generateFilesMap(schema, {}, logger)` (from `@damatjs/orm-codegen`).
+4. `filesMap = generateFilesMap(schema, {}, logger)` (from `@damatjs/codegen`).
 5. `outputDir = join(moduleDir, manifest.paths?.types ?? "./types")`; `mkdir -p` it.
 6. Write each `[fileName, content]` from the map into `outputDir`.
 7. Return `{ outputDir, files }` (the filenames written).

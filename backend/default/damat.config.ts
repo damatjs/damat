@@ -1,4 +1,4 @@
-import { defineConfig, } from "@damatjs/framework";
+import { defineConfig } from "@damatjs/framework";
 
 export default defineConfig({
   projectConfig: {

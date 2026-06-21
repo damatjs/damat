@@ -25,7 +25,7 @@
 | `damat-orm migrate:status` | Show applied vs pending |
 | `damat-orm migrate:create <name>` | Create a migration |
 | `damat-orm migrate:list` | List modules with migrations |
-| `damat-orm generate:types` | Generate TypeScript types from models |
+| `damat codegen` | Generate TypeScript types from models |
 
 ## `create-damat-app` — scaffolding ([docs](../../packages/cli/create-damat-app/README.md))
 
