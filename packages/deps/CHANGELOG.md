@@ -1,5 +1,23 @@
 # @damatjs/deps
 
+## 0.2.0
+
+### Minor Changes
+
+- - Strengthen module-authoring docs and fix the scaffolding CLIs end-to-end.
+
+    **Docs & conventions** — drilled the core rules into `module`/`module-sample`, the scaffold `AGENTS.md`, the `damat-modules` skill, and the per-folder READMEs:
+    - Codegen-first flow
+    - One-way layering: route → workflow → step → service
+    - No big files: `lib/` for integrations, `utils/` for helpers
+    - Clear service/route boundaries
+
+    **Scaffolding CLIs**
+    - `damat module init` now emits a root `README.md` plus the full `AGENTS.md` guide. The guide is embedded as compiled code via `scripts/embedAgents.ts` (guarded by `prepublishOnly`) so it reliably ships in the published package.
+    - Added a `defaultCommand` to the `@damatjs/cli` framework, so `create-damat-app <name>` works without typing `create`.
+    - `create-damat-app --module` now scaffolds locally through `@damatjs/damat-cli module init` instead of cloning a missing remote starter repo. `--repo-url` still clones a custom one.
+    - Corrected the `create-damat-app` README/docs and skill guidance to match.
+
 ## 0.1.4
 
 ### Patch Changes
