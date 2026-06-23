@@ -1,5 +1,42 @@
 # @damatjs/logger
 
+## 0.3.1
+
+### Patch Changes
+
+- Introduces a new `reportError` utility function that provides structured, user-friendly error reporting in CLI commands. This replaces ad-hoc error message formatting throughout the codebase with a consistent approach that handles error causes, verbosity levels, and stack trace display.
+
+  ## Key Changes
+  - **New `reportError` utility** (`packages/core/cli/src/utils/output/reportError.ts`):
+    - Formats errors with meaningful headlines (type name + message)
+    - Walks error cause chains to surface root causes
+    - Shows full stack traces only in verbose mode (via `--verbose` flag or `DAMAT_DEBUG=1`)
+    - Displays a helpful hint pointing users to `--verbose` when not in verbose mode
+    - Handles non-Error thrown values gracefully
+  - **New helper functions**:
+    - `isVerbose()`: Detects verbosity from command-line flags or environment variables
+    - `getExitCode()`: Resolves process exit codes, respecting `CliError.exitCode` overrides
+  - **Error handling improvements**:
+    - Updated `ConfigLoadError` to use proper error `cause` chains instead of flattening messages
+    - Modified error wrapping in `loadModules` and `loadDatabaseUrl` to preserve cause chains
+    - Added try-catch blocks in `runCli` and `registerCommand` to catch unhandled command errors
+    - Added last-resort error handlers in CLI entry points (`bin.ts`, `cli.ts`)
+  - **Widespread adoption**:
+    - Replaced manual error logging in 10+ command handlers with `reportError` calls
+    - Updated migration commands (`up`, `status`, `create`, `list`) to use structured reporting
+    - Updated code generation commands (`generate/types`, `module/codegen`, etc.)
+    - Updated module commands (`add`, `validate`, `migrationCreate`)
+  - **Test coverage**:
+    - Added comprehensive test suite for `reportError`, `isVerbose`, and `getExitCode`
+    - Updated existing error tests to reflect new cause-chain behavior
+
+  ## Notable Implementation Details
+  - Error cause chains are capped at 5 levels to prevent pathological/cyclic chains
+  - The generic "Error" type name is omitted from headlines to reduce noise
+  - Meaningful error type names (e.g., "ConfigError", "ValidationError") are surfaced
+  - Stack traces are only shown when explicitly requested, keeping normal output clean
+  - The `--verbose` flag is global and not part of command option definitions, so it's auto-detected rather than threaded through layers
+
 ## 0.3.0
 
 ### Minor Changes
