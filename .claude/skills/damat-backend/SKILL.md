@@ -46,6 +46,16 @@ References in the repo (read when you need detail):
   not an array.
 - **Schema changes are not live until migrated.** After any model change, run
   `damat-orm migrate:create <name>` then `damat-orm migrate:up`.
+- **Never re-export the generated CRUD.** `ModuleService({ models })` already gives
+  every model `create`/`createMany`/`upsert`/`upsertMany`/`find`/`findById`/`findOne`/
+  `findMany`/`update`/`updateOne`/`delete`/`softDelete` (with `cascade`)/`restore`/
+  `count`/`exists` + `transaction`. A service method that just forwards to one of
+  these is dead code — call `service.<model>.find(...)` from the step/route directly.
+  Services only gain **new, model-specific** logic (e.g. provider calls, with the SDK
+  detail in `src/lib/`).
+- **No file over 100 lines; readability is the highest priority** — for modules AND
+  app code. Split by concern and subdivide long functions into sibling files/folders;
+  a long file is a refactor signal, not a documentation problem.
 - Match the surrounding code; check `backend/default/` for the idiom before
   inventing one.
 
@@ -61,9 +71,12 @@ References in the repo (read when you need detail):
 Guide: `docs/guide/05-models.md`, `docs/guide/06-migrations.md`.
 
 ### Add business logic (service method)
-Add a method to the module's `ModuleService` subclass. Use the generated
-per-model CRUD (`this.<model>.create/find/update/...`) and `this.transaction(cb)`
-for multi-write atomicity. Guide: `docs/guide/07-modules-and-services.md`.
+Add a method to the module's `ModuleService` subclass **only when it does something
+the generated CRUD can't** — never a passthrough that re-exports `find`/`create`/etc.
+Inside, use the generated per-model CRUD (`this.<model>.create/find/update/...`) and
+`this.transaction(cb)` for multi-write atomicity; put third-party/provider detail in
+`src/lib/`. Pure orchestration belongs in steps/workflows, not the service. Guide:
+`docs/guide/07-modules-and-services.md`.
 
 ### Add an HTTP endpoint
 Create `src/api/routes/<path>/route.ts` exporting `GET`/`POST`/… as

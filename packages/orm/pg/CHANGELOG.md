@@ -1,5 +1,25 @@
 # @damatjs/orm-pg
 
+## 0.3.0
+
+### Minor Changes
+
+- Add upsert, cascade delete, and row-returning writes to the service accessor.
+
+  - **`@damatjs/services`** — the generated `ModelMethods` accessor gains `upsert` / `upsertMany`, cascade delete (`delete` / `softDelete` with `cascade: true`, recursing through `hasMany`/`hasOne` relations in a transaction and honoring each relation's `rule.onDelete`), and row-returning `updateOne` / `findById` / `findOne`.
+  - **`@damatjs/orm-pg`** — adds a bulk-upsert execution path (`PgRepository.upsertMany` / `PgModelClient.upsertMany`) over the existing accessor SQL.
+
+  All `@damatjs/*` packages are versioned in lockstep, so every published package moves to this version.
+
+### Patch Changes
+
+- Updated dependencies
+  - @damatjs/logger@0.3.0
+  - @damatjs/types@0.3.0
+  - @damatjs/orm-core@0.3.0
+  - @damatjs/orm-model@0.3.0
+  - @damatjs/orm-type@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes

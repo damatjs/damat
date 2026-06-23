@@ -23,7 +23,10 @@ All Damat packages are released **in lockstep** — a release moves *every*
 published package to the same version, whether or not its own code changed. So
 there is a single version to care about, not one per package.
 
-**Current version: `0.3.0`** (every `@damatjs/*` package above).
+**Current version: `0.3.0`** — every published `@damatjs/*` package, with one
+exception: **`@damatjs/codegen` is at `1.0.0`**. It was published to npm at
+`1.0.0` independently, so it cannot be renumbered down to the shared line; it
+stays on its own version until the lockstep line catches up past `1.0.0`.
 
 A package's folder only carries a `<version>.md` (and a detailed index row) for
 versions where *its own* code changed; for a lockstep bump with no change of its
@@ -33,7 +36,7 @@ a package can sit at `0.3.0` while the newest version it actually links is older
 What changed in `0.3.0`: [`services`](./services/0.3.0.md) gained `upsert` /
 `upsertMany`, cascade delete, and row-returning `updateOne` / `findById` /
 `findOne`; [`orm-pg`](./orm-pg/0.3.0.md) gained a bulk-upsert execution path.
-Every other package moved to `0.3.0` unchanged.
+Every other published package moved to `0.3.0` unchanged.
 
 ## Packages
 

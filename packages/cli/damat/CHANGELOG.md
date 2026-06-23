@@ -1,5 +1,23 @@
 # @damatjs/damat-cli
 
+## 0.3.0
+
+### Minor Changes
+
+- Lockstep release — version bump to keep every published `@damatjs/*` package on a single shared version. No change to this package's own code; see `@damatjs/services` / `@damatjs/orm-pg` for the actual `0.3.0` feature work.
+
+### Patch Changes
+
+- Updated dependencies
+  - @damatjs/cli@0.3.0
+  - @damatjs/codegen@1.0.0
+  - @damatjs/load-env@0.3.0
+  - @damatjs/logger@0.3.0
+  - @damatjs/framework@0.3.0
+  - @damatjs/link@0.3.0
+  - @damatjs/module@0.3.0
+  - @damatjs/orm-cli@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes

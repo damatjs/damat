@@ -51,15 +51,30 @@ steps, custom non-CRUD workflows, integrations on the service. So: **models →
 codegen → extend.** Never reproduce CRUD by hand or write a parallel route/step
 that competes with the generated one.
 
-**Hard rules — so the code always fits:**
+**Hard rules — non-negotiable; they keep every module small, readable, and free of duplication:**
 - Layering is one-way: **route → workflow → step → service**. A route ONLY calls a
   workflow (`workflow.execute(input)`) and shapes the response — never the
   service, never business logic. Only steps touch the service via
   `getModule("<name>")`; business logic + orchestration live in steps/workflows.
-- The service is **data + integrations only** (CRUD + third-party do/reverse
-  pairs) — no business logic, no orchestration.
-- **No big files** — split by concern: one model per file, one integration per
-  `src/lib/<provider>.ts`, one helper-group per `src/utils/<concern>.ts`.
+- **Never re-wrap what the service already gives you.** `ModuleService({ models })`
+  already exposes the full per-model CRUD surface — `create`, `createMany`, `upsert`,
+  `upsertMany`, `find`, `findById`, `findOne`, `findMany`, `update`, `updateOne`,
+  `delete` / `softDelete` (with `cascade`), `restore`, `count`, `exists`. Do **not**
+  add a service method that just forwards to one of these. No `getUser` that calls
+  `find`, no `listUsers` that calls `findMany` — that is dead re-export. A step calls
+  `getModule("<name>").<model>.find(...)` (etc.) **directly**. The service only gains
+  **new, model-specific** logic the generated CRUD cannot do — e.g. an `ai` model's
+  provider calls: the provider catalog + request/parse detail lives in
+  `src/lib/<provider>.ts`, and the service method just picks the provider and invokes
+  it (then may persist via the accessor). Litmus test: if a method body is a single
+  CRUD call, delete the method and call the accessor from the step.
+- The service is **data + new integrations only** (the generated CRUD + third-party
+  do/reverse pairs) — no business logic, no orchestration, no CRUD passthroughs.
+- **No file over 100 lines.** Readability is the **highest priority** in every module
+  (and backend). Split by concern: one model per file, one integration per
+  `src/lib/<provider>.ts`, one helper-group per `src/utils/<concern>.ts`. When a
+  function grows, break its sub-steps into sibling files/folders so each piece reads
+  on its own — a long file is a refactor signal, never a comment-it-better one.
 
 1. **Start the module** — two ways, same resulting shape:
    - `bunx create-damat-app@latest <name> --module` — the getting-started command.
@@ -89,8 +104,9 @@ that competes with the generated one.
      tables — that's a cross-module link, which the app declares, not you.
    - `src/service.ts` — `export const models = collectModels([ModelA, ModelB])`
      (keys derived from each table name), then `export class XService extends
-     ModuleService({ models, credentialsSchema })`. CRUD + third-party
-     integrations only (integrations in `src/lib/`); business logic lives in the
+     ModuleService({ models, credentialsSchema })`. The generated CRUD is already
+     there — add **only** new model-specific integrations (in `src/lib/`), never a
+     method that re-exports `find`/`create`/etc. Business logic lives in the
      generated steps/workflows, not the service.
    - `src/config/` — a zod `schema` and a `load(env)` credentials loader.
    - `src/index.ts` — `defineModule(MODULE_ID, { service, credentials: load })`.
