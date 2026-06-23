@@ -8,6 +8,7 @@ import {
   generateCrudScaffold,
   resolveServiceClassName,
   registryAugmentation,
+  type ScaffoldAliases,
 } from "@/scaffold";
 
 /**
@@ -29,6 +30,12 @@ export interface RunModuleCodegenOptions {
   routesRoot: string;
   /** Directory under which `<resource>/{steps,workflows}` are scaffolded. */
   workflowsRoot: string;
+  /**
+   * Portable import aliases for the scaffold + registry. When set, generated
+   * files import via tsconfig path aliases (`@<id>/...`, `@workflows/<id>/...`)
+   * instead of relative paths, so they survive the standalone→installed move.
+   */
+  aliases?: ScaffoldAliases;
   /**
    * Optional hook to mutate the generated files map before it is written —
    * e.g. app-mode weaves in cross-module link fields. Module-mode passes none.
@@ -53,8 +60,15 @@ export async function runModuleCodegen(
   loggerData?: ILogger,
 ): Promise<RunModuleCodegenResult> {
   const logger = loggerData ?? getLogger();
-  const { schema, moduleId, typesDir, serviceDir, routesRoot, workflowsRoot } =
-    options;
+  const {
+    schema,
+    moduleId,
+    typesDir,
+    serviceDir,
+    routesRoot,
+    workflowsRoot,
+    aliases,
+  } = options;
 
   // 1. Row types + zod schemas.
   const filesMap = generateFilesMap(schema, {}, logger);
@@ -75,9 +89,10 @@ export async function runModuleCodegen(
   // 4. Registry augmentation so `getModule("<id>")` is typed. Written BEFORE the
   //    scaffold so a scaffold hiccup can never skip it.
   const serviceClass = resolveServiceClassName(serviceDir, moduleId);
+  const serviceImport = aliases ? `${aliases.module}/service` : "../service";
   writeFileSync(
     join(typesDir, "registry.ts"),
-    registryAugmentation(moduleId, serviceClass),
+    registryAugmentation(moduleId, serviceClass, serviceImport),
     "utf-8",
   );
   files.push("registry.ts");
@@ -88,7 +103,13 @@ export async function runModuleCodegen(
   try {
     scaffolded = generateCrudScaffold(
       schema,
-      { moduleId, routesRoot, workflowsRoot, typesDir },
+      {
+        moduleId,
+        routesRoot,
+        workflowsRoot,
+        typesDir,
+        ...(aliases ? { aliases } : {}),
+      },
       logger,
     ).created;
   } catch (e) {

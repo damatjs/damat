@@ -56,7 +56,7 @@ export const moduleInitCommand: Command = {
 
     const files: Record<string, string> = {
       "package.json": packageJsonTemplate(name),
-      "tsconfig.json": tsconfigTemplate(),
+      "tsconfig.json": tsconfigTemplate(name),
       "module.config.ts": moduleConfigTemplate(),
       ".env.example": envExampleTemplate(),
       ".gitignore": gitignoreTemplate(),

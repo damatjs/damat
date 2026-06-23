@@ -26,7 +26,7 @@ export function generateCrudScaffold(
   loggerData?: ILogger,
 ): CrudScaffoldResult {
   const logger = loggerData ?? getLogger();
-  const { moduleId, routesRoot, workflowsRoot, typesDir } = options;
+  const { moduleId, routesRoot, workflowsRoot, typesDir, aliases } = options;
   const typesIndex = join(typesDir, "index");
 
   const result: CrudScaffoldResult = { created: [], skipped: [] };
@@ -50,14 +50,27 @@ export function generateCrudScaffold(
     const routeDir = join(routesRoot, n.fileBase);
     const routeIdDir = join(routeDir, "[id]");
 
-    // Import specifiers, computed from each source dir to its target.
-    const typesFromStep = spec(stepsDir, typesIndex);
-    const typesFromWorkflow = spec(workflowsDir, typesIndex);
-    const stepsFromWorkflow = spec(workflowsDir, stepsDir);
-    const wfFromRoute = spec(routeDir, workflowsDir);
-    const typesFromRoute = spec(routeDir, typesIndex);
-    const wfFromRouteId = spec(routeIdDir, workflowsDir);
-    const typesFromRouteId = spec(routeIdDir, typesIndex);
+    // Import specifiers. With `aliases`, emit portable tsconfig-path specifiers
+    // that survive the standalone→installed relocation; otherwise fall back to
+    // the legacy relative paths computed from each source dir to its target.
+    //   - types/service STAY inside the module      → `@<id>/...`
+    //   - workflows/steps MOVE OUT (nested by id)    → `@workflows/<id>/<table>/...`
+    //   - same-directory siblings (./api, ./createX) → always relative (in templates)
+    const typesAlias = aliases ? `${aliases.module}/types/index` : null;
+    const wfDirAlias = aliases
+      ? `${aliases.workflows}/${moduleId}/${n.fileBase}/workflows`
+      : null;
+    const stepsDirAlias = aliases
+      ? `${aliases.workflows}/${moduleId}/${n.fileBase}/steps`
+      : null;
+
+    const typesFromStep = typesAlias ?? spec(stepsDir, typesIndex);
+    const typesFromWorkflow = typesAlias ?? spec(workflowsDir, typesIndex);
+    const stepsFromWorkflow = stepsDirAlias ?? spec(workflowsDir, stepsDir);
+    const wfFromRoute = wfDirAlias ?? spec(routeDir, workflowsDir);
+    const typesFromRoute = typesAlias ?? spec(routeDir, typesIndex);
+    const wfFromRouteId = wfDirAlias ?? spec(routeIdDir, workflowsDir);
+    const typesFromRouteId = typesAlias ?? spec(routeIdDir, typesIndex);
 
     // Steps
     writeOnce(join(stepsDir, `create${n.pascal}.ts`), T.stepCreate(n, typesFromStep));

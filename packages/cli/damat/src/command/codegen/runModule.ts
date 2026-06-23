@@ -86,8 +86,12 @@ export async function runModuleCodegen({
       typesDir,
       routesRoot,
       workflowsRoot: join(cwd, "src", "workflows", moduleName),
+      // Portable aliases: `@<module>/*` for the parts under src/modules/<module>
+      // (types, service), `@workflows/*` for the relocated workflow tree. The
+      // app tsconfig defines both (per-module `@<module>` added on install).
+      aliases: { module: `@${moduleName}`, workflows: "@workflows" },
       augmentFilesMap: (filesMap) =>
-        augmentWithLinks({ modules, moduleName, typesDir, logger }, filesMap),
+        augmentWithLinks({ modules, moduleName, logger }, filesMap),
     },
     logger,
   );

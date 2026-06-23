@@ -1,6 +1,6 @@
 import { defineModule } from "@damatjs/framework";
-import { UserModuleService, models } from "./service";
-import credentials from "./config";
+import { UserModuleService, models } from "@user/service";
+import credentials from "@user/config";
 
 export const USER_MODULE = "user";
 

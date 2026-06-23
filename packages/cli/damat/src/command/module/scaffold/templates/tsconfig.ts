@@ -1,6 +1,12 @@
-
-
-export function tsconfigTemplate(): string {
+/**
+ * The module's tsconfig. `paths` define the portable aliases so generated and
+ * hand-written files never use relative `../../` chains:
+ * - `@<id>/*` → the module's own `src/*` (types, service, lib, config, models)
+ * - `@workflows/*` → `src/workflows/*` (the move-out tree, named the same here
+ *   and in a host backend so the import survives install)
+ * The host backend mirrors these on `damat module add`.
+ */
+export function tsconfigTemplate(moduleId: string): string {
   return `${JSON.stringify(
     {
       compilerOptions: {
@@ -12,6 +18,11 @@ export function tsconfigTemplate(): string {
         strict: true,
         skipLibCheck: true,
         noEmit: true,
+        baseUrl: ".",
+        paths: {
+          [`@${moduleId}/*`]: ["./src/*"],
+          "@workflows/*": ["./src/workflows/*"],
+        },
       },
       include: ["src/**/*", "tests/**/*", "module.config.ts"],
     },

@@ -43,9 +43,9 @@ working on **this one module**.
     ├── models/           # ORM model definitions (your tables)
     ├── migrations/       # SQL migrations (generated)
     ├── types/            # GENERATED (overwritten each run): row types + zod + registry.ts — don't hand-edit
-    ├── lib/              # third-party SDK code (one file per provider, e.g. lib/stripe.ts) — called by the service
-    ├── utils/            # small pure helpers (one concern per file)
-    ├── workflows/        # GENERATED per-operation steps + callable workflows (scaffold-once — edit freely)
+    ├── lib/              # everything the service calls: providers (one per file), pure helpers in
+    │                     #   lib/utils/, category-D gateway ops — there is NO top-level src/utils/
+    ├── workflows/        # GENERATED, nested <module>/<table>/{steps,workflows} (scaffold-once — edit freely)
     └── api/routes/       # GENERATED routes, split into api/validator/query/middleware/route (scaffold-once)
 └── tests/contract.test.ts
 ```
@@ -63,26 +63,27 @@ bun test                  # the contract test + your own tests
 
 ---
 
-## The build flow — basics first, then the rest
+## The build flow — codegen is your propeller, build only what's missing
 
 A module is **codegen-first**. You do **not** hand-write CRUD. The fast path:
 
 1. **Model the data** — one table per file in `src/models/`.
 2. **`bun run codegen`** — from your models it generates the WHOLE basic slice:
    `src/types/` (row types + zod + `registry.ts` that types `getModule`) and,
-   **scaffold-once**, the per-operation `src/workflows/<table>/` (steps +
+   **scaffold-once**, the per-operation `src/workflows/<module>/<table>/` (steps +
    workflows) and `src/api/routes/<table>/` (split route files). That is your
    working foundation — route → workflow → step → service, already wired.
-3. **Build the rest ON TOP** of what codegen made: put real logic in the
-   generated steps (each ships a compensation/fallback hook), add custom
+3. **Build only what's missing ON TOP** of what codegen made: put real logic in
+   the generated steps (each ships a compensation/fallback hook), add custom
    non-CRUD workflows/steps next to the generated ones, add third-party
    integrations on the service (SDK code in `src/lib/`), and pure helpers in
-   `src/utils/`.
+   `src/lib/utils/`.
 4. **Re-run `codegen`** after any model change — types/registry are overwritten;
    your step/workflow/route edits are kept (scaffold-once).
 
-So: **models → codegen → extend.** Never reproduce CRUD by hand, and never create
-a parallel route/step/workflow that competes with the generated one — extend it.
+So: **models → codegen → extend.** The generated slice is your propeller — extend
+it in place. Never reproduce CRUD by hand, and never create a parallel
+route/step/workflow that competes with the generated one — extend it.
 
 ## Hard rules — never break these (so the code always "fits")
 
@@ -104,12 +105,13 @@ a parallel route/step/workflow that competes with the generated one — extend i
   `src/lib/<provider>.ts`, and the service method just selects the provider and
   invokes it (then may persist via the accessor). Litmus test: if a method body is a
   single CRUD call, delete it and call the accessor from the step.
-- **The service is data + new integrations ONLY** — the generated CRUD plus
-  third-party calls (do/reverse pairs). No business logic, no orchestration, no CRUD
-  passthroughs.
+- **The service stays small — logic lives in `src/lib/`.** It is data + new
+  integrations ONLY (the generated CRUD plus third-party calls as do/reverse pairs),
+  mostly **one-line delegates** to `src/lib/` functions. No business logic, no
+  orchestration, no CRUD passthroughs. There is no top-level `src/utils/`.
 - **No file over 100 lines. Readability is the highest priority.** Split by concern:
   one model per file, one integration per `src/lib/<provider>.ts`, one helper-group
-  per `src/utils/<concern>.ts`. The moment a file holds more than one idea — or
+  per `src/lib/utils/<concern>.ts`. The moment a file holds more than one idea — or
   crosses ~100 lines — split it; extract a long function's sub-steps into sibling
   files/folders so each piece reads on its own. A long file is a refactor signal,
   never a "comment it better" one.
@@ -123,9 +125,9 @@ a parallel route/step/workflow that competes with the generated one — extend i
 |---|---|---|
 | a table | `src/models/<name>.ts` | one model per file |
 | CRUD (create / find / update / delete / list) | **GENERATED — don't hand-write** | `codegen` scaffolds the steps/workflows/routes |
-| business logic / orchestration | the generated `src/workflows/<table>/` steps & workflows (and your own custom ones) | steps call the service; workflows orchestrate steps |
+| business logic / orchestration | the generated `src/workflows/<module>/<table>/` steps & workflows (and your own custom ones) | steps call the service; workflows orchestrate steps |
 | a third-party SDK (Stripe, AI provider, …) | `src/lib/<provider>.ts`, surfaced on the **service** as do/reverse methods | the service is the ONLY place integrations live |
-| pure helpers / formatting / mappers | `src/utils/<concern>.ts` | small, one concern per file |
+| pure helpers / formatting / mappers | `src/lib/utils/<concern>.ts` | small, one concern per file (no top-level `src/utils/`) |
 | the HTTP surface | **GENERATED** `src/api/routes/<table>/` — handlers ONLY call workflows | never call the service from a route |
 
 ## The authoring surface
@@ -146,6 +148,41 @@ import { z } from "@damatjs/deps/zod";
 (`defineModuleConfig`, `bootModule`/`withModule`, `validateModuleDir`, …). Cross-
 module link helpers are deliberately absent everywhere in the authoring surface —
 links are an app concern, never a module's.
+
+### Portable import aliases (use exactly what codegen emits)
+
+Your imports must resolve **identically** standalone here AND after `damat module add`
+inserts `src/` into a host app. The host keeps some parts inside the module dir and
+moves others out, so two `tsconfig.json` aliases split by destination:
+
+- **Stay-inside → `@<module>/*`** — `types`, `config`/`schema`, `service`, `lib`, and
+  `models` stay under `src/modules/<module>/`. Address them by the module-name alias:
+  ```ts
+  import type { Widgets } from "@widget/types";
+  import { schema } from "@widget/config/schema";
+  import type { WidgetService } from "@widget/service";
+  ```
+  Types stay inside — they are never moved out.
+- **Move-out → `@workflows/<module>/<table>/…`** — `workflows/` and `api/routes/`
+  relocate into the app's top-level `src/workflows/` / `src/api/routes/` on install.
+  Codegen nests workflows at `src/workflows/<module>/<table>/…`, so
+  `@workflows/<module>/<table>/…` is **byte-identical before and after install** — the
+  `<module>/` segment keeps the shared alias collision-free across modules:
+  ```ts
+  import { createWidgetsWorkflow } from "@workflows/widget/widgets/workflows/createWidgets";
+  ```
+  **That `<module>/<table>` nesting IS the install-stability contract — don't flatten it.**
+- **Never use `@/` in module code.** The host binds `@/` → the *app* root, so a moved-out
+  file importing `@/types` would silently resolve to the app's `src/types`, not yours.
+- **Sibling re-exports stay relative** (`./api`, `./create<Pascal>`, `./validator`,
+  `./index`) — files that always move together keep relative paths.
+- The **only** cross-module specifier you'll see is in codegen-generated link augmentation
+  (`<table>.links.ts`), which imports the linked module's types via `@<other>/types` — you
+  never hand-write it.
+
+Codegen emits these specifiers for you. When you **hand-write** a file, use the SAME
+specifiers codegen emits — don't invent a new alias and don't flatten a file to dodge a
+deep path. (Full rule: `spec/AUTHORING-GUIDE.md` §2.)
 
 ## Building the module
 
@@ -188,24 +225,33 @@ detail live in `src/lib/<provider>.ts` and the method just selects and invokes
 the provider (do/reverse pairs so steps can compensate). Business logic does
 **not** live here; it lives in steps/workflows (route → workflow → step → service).
 
+**Empty-gateway baseline.** A plain-CRUD module has **no service methods and no
+`lib/gateway`** — `ModuleService({ models })` already covers every operation, so the
+empty body below **is** the finished service, not an unfinished one. Add a `lib/gateway`
+function (taking the service as its first arg) plus a **one-line** service delegate ONLY
+for genuine category-D logic — validation/branching pipelines, multi-table roll-ups,
+money/numbering/scheduling math, or third-party integrations. "Every exemplar has a
+gateway, so I must invent one" is the failure to avoid (see `spec/MODULE-STANDARDS.md`).
+
 ```ts
 import { ModuleService } from "@damatjs/services";
 import { collectModels } from "@damatjs/orm-model";
-import { schema } from "./config/schema";
-import { Widget } from "./models/widget";
+import { schema } from "@widget/config/schema";
+import { Widget } from "@widget/models/widget";
 
 export const models = collectModels([Widget]);   // -> { widgets: Widget }
 
 export class WidgetService extends ModuleService({ models, credentialsSchema: schema }) {
+  // Plain CRUD ⇒ leave this body EMPTY — that is the finished service, not a stub.
   // NO CRUD passthroughs — `service.widgets.find(...)` already exists; call it
-  // from steps. Add ONLY new model-specific integrations, each in ./lib/<x>.ts:
-  //   import { charge, refund } from "./lib/stripe";
+  // from steps. Add ONLY new model-specific integrations, each in @widget/lib/<x>:
+  //   import { charge, refund } from "@widget/lib/stripe";
   //
-  // e.g. an `ai` model: providers + request/parse detail live in ./lib/<provider>.ts;
+  // e.g. an `ai` model: providers + request/parse detail live in @widget/lib/<provider>;
   //   the method just picks the provider and calls it (then persists via the accessor):
   //   async complete(input) {
-  //     const provider = pickProvider(this.credentials);   // ./lib/providers
-  //     return provider.complete(input);                    // ./lib/<provider>.ts
+  //     const provider = pickProvider(this.credentials);   // @widget/lib/providers
+  //     return provider.complete(input);                    // @widget/lib/<provider>
   //   }
 }
 ```
@@ -251,7 +297,8 @@ After changing models: `bun run migration:create`, review the SQL, then
 
 ### 6. Workflows & routes (generated)
 `bun run codegen` scaffolds a per-operation CRUD slice from your models —
-`src/workflows/<table>/{steps,workflows}/…` and split routes under
+`src/workflows/<module>/<table>/{steps,workflows}/…` (nested under `<module>/` for
+install stability — see *Portable import aliases* above) and split routes under
 `src/api/routes/<table>/…` — **scaffold-once** (your edits survive). The layering
 is route → workflow → step → service. A single-step workflow is just
 `(input, ctx) => myStep(input, ctx)` (steps are directly callable); for

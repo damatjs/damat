@@ -43,13 +43,13 @@ You're in **your own** module package with the `@damatjs/*` packages installed
 
 ## Build a module
 
-**Codegen-first — basics first, then the rest.** You never hand-write CRUD: model
-the data, run `bun run codegen`, and it generates the whole basic slice (types +
-zod + `registry.ts`, and **scaffold-once** per-operation `workflows/<table>` +
-`api/routes/<table>`). Then build the rest ON TOP — real logic in the generated
-steps, custom non-CRUD workflows, integrations on the service. So: **models →
-codegen → extend.** Never reproduce CRUD by hand or write a parallel route/step
-that competes with the generated one.
+**Codegen is your propeller — build only what's missing.** You never hand-write
+CRUD: model the data, run `bun run codegen`, and it generates the whole basic
+slice (types + zod + `registry.ts`, and **scaffold-once** per-operation
+`workflows/<module>/<table>` + `api/routes/<table>`). That generated slice carries
+the module — your job is to add only the custom logic *on top of it*. So: **models
+→ codegen → extend.** **Extend the generated files in place; never rebuild, fork,
+or write a parallel route/step that competes with the generated one.**
 
 **Hard rules — non-negotiable; they keep every module small, readable, and free of duplication:**
 - Layering is one-way: **route → workflow → step → service**. A route ONLY calls a
@@ -70,11 +70,40 @@ that competes with the generated one.
   CRUD call, delete the method and call the accessor from the step.
 - The service is **data + new integrations only** (the generated CRUD + third-party
   do/reverse pairs) — no business logic, no orchestration, no CRUD passthroughs.
+- **The service stays small — logic lives in `src/lib/`.** Everything the service
+  calls lives under `src/lib/` (providers, pricing, pure helpers in `src/lib/utils/`,
+  and category-D `gateway` ops); the service itself is mostly **one-line delegates**
+  to those `lib/` functions. There is no top-level `src/utils/`.
 - **No file over 100 lines.** Readability is the **highest priority** in every module
   (and backend). Split by concern: one model per file, one integration per
-  `src/lib/<provider>.ts`, one helper-group per `src/utils/<concern>.ts`. When a
+  `src/lib/<provider>.ts`, one helper-group per `src/lib/utils/<concern>.ts`. When a
   function grows, break its sub-steps into sibling files/folders so each piece reads
   on its own — a long file is a refactor signal, never a comment-it-better one.
+- **Portable imports — use the SAME specifiers codegen emits; never invent one.**
+  A module's imports must resolve identically standalone AND after `damat module add`
+  inserts `src/` into a host app. Two tsconfig aliases split parts that **stay inside**
+  the module from parts that **move out**:
+  - **Stay-inside → `@<module>/*`** — `types`, `config`/`schema`, `service`, `lib`,
+    `models` stay under `src/modules/<module>/`. Address them by the module-name alias
+    (`import type { Widgets } from "@widget/types"`). Types stay inside — never moved out.
+  - **Move-out → `@workflows/<module>/<table>/…`** — `workflows/` (and `api/routes/`)
+    relocate to the app's top-level `src/workflows/` on install. Codegen nests them at
+    `src/workflows/<module>/<table>/…`, so `@workflows/<module>/<table>/…` is byte-identical
+    before and after install; the `<module>/` segment keeps the shared alias collision-free.
+    **That nesting is the install-stability contract — don't flatten it.**
+  - **Never use `@/` in module code** — the host binds `@/` → the *app* root, so a moved-out
+    file importing `@/types` would silently hit the app's `src/types`. Sibling re-exports
+    (`./api`, `./create<Pascal>`, `./validator`, `./index`) stay relative — they move together.
+  The only cross-module specifier you'll ever see is in codegen-generated link augmentation
+  (`<table>.links.ts`), which imports the linked module's types via `@<other>/types` — you
+  never hand-write it. When you hand-write a file, mirror codegen's specifiers exactly.
+- **Plain-CRUD ⇒ empty service body, no `lib/gateway`.** `ModuleService({ models })` already
+  exposes the entire per-table surface, so a CRUD-only module's `service.ts` is just
+  `class XService extends ModuleService({ models, credentialsSchema: schema }) {}` — the empty
+  body is correct, not unfinished. Add a `lib/gateway` function + a one-line service delegate
+  ONLY for genuine category-D logic (validation/branching pipelines, multi-table roll-ups,
+  money/numbering/scheduling math, third-party integrations). Inventing `getWidget`/`listWidgets`
+  wrappers because "every exemplar has a gateway" is a defect — see `spec/MODULE-STANDARDS.md`.
 
 1. **Start the module** — two ways, same resulting shape:
    - `bunx create-damat-app@latest <name> --module` — the getting-started command.
@@ -107,7 +136,9 @@ that competes with the generated one.
      ModuleService({ models, credentialsSchema })`. The generated CRUD is already
      there — add **only** new model-specific integrations (in `src/lib/`), never a
      method that re-exports `find`/`create`/etc. Business logic lives in the
-     generated steps/workflows, not the service.
+     generated steps/workflows, not the service. **For plain CRUD the body stays
+     empty (`{}`) and there is no `lib/gateway`** — only add a gateway + a one-line
+     delegate for real category-D logic (see the hard rules above).
    - `src/config/` — a zod `schema` and a `load(env)` credentials loader.
    - `src/index.ts` — `defineModule(MODULE_ID, { service, credentials: load })`.
      The `ModuleRegistry` merge that makes `getModule("<name>")` typed is

@@ -8,6 +8,7 @@ import {
   resolveModuleSource,
   installModuleSplit,
   registerModuleInConfig,
+  registerModuleTsconfigPaths,
   syncEnvVars,
   installModulePackages,
   collectModulePackages,
@@ -154,6 +155,22 @@ export const moduleAddCommand: Command = {
         ctx.logger.warn(
           `Could not update damat.config.ts automatically — add this to your modules block:\n` +
           `  "${moduleId}": { resolve: "${relativeTarget}", id: "${moduleId}" },`,
+        );
+      }
+
+      // Portable aliases: make the module's own `@<id>/...` imports AND the
+      // shared `@workflows/*` (its relocated workflows/routes) resolve in the
+      // host backend's tsconfig. `@workflows/*` is app-level — written once and
+      // skipped on later installs (idempotent), so every module's
+      // `@workflows/<id>/<table>/…` specifiers resolve after install.
+      const tsResult = registerModuleTsconfigPaths(ctx.cwd, moduleId);
+      if (tsResult === "updated") {
+        ctx.logger.success(`Added portable aliases to tsconfig.json`);
+      } else if (tsResult === "skipped") {
+        ctx.logger.warn(
+          `Could not update tsconfig.json automatically — add to compilerOptions.paths:\n` +
+          `  "@${moduleId}/*": ["./src/modules/${moduleId}/*"]\n` +
+          `  "@workflows/*": ["./src/workflows/*"]   (app-level; add once)`,
         );
       }
 

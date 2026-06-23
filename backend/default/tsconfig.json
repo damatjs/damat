@@ -10,6 +10,15 @@
     "paths": {
       "@/*": [
         "src/*"
+      ],
+      "@workflows/*": [
+        "./src/workflows/*"
+      ],
+      "@user/*": [
+        "./src/modules/user/*"
+      ],
+      "@organization/*": [
+        "./src/modules/organization/*"
       ]
     }
   },

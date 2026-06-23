@@ -1,7 +1,5 @@
-import { relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import { renderLinkAugmentations, type ResolvedLinkField } from "@damatjs/link";
-import { typesPath } from './constant';
 
 type ModuleEntry = { resolve: string; kind?: string };
 type ModuleContainer = Record<string, ModuleEntry>;
@@ -17,12 +15,11 @@ export async function augmentWithLinks(
   args: {
     modules: ModuleContainer;
     moduleName: string;
-    typesDir: string;
     logger: { warn: (m: string) => void };
   },
   filesMap: Map<string, string>,
 ): Promise<void> {
-  const { modules, moduleName, typesDir, logger } = args;
+  const { modules, moduleName, logger } = args;
   const linkModules = Object.values(modules).filter((m) => m.kind === "link");
   if (linkModules.length === 0) return;
 
@@ -68,17 +65,17 @@ export async function augmentWithLinks(
         const otherEntry = modules[other.module];
         if (!localTable || !otherTable || !otherEntry) continue;
 
-        let rel = relative(typesDir, typesPath(otherEntry.resolve)).replace(
-          /\\/g,
-          "/",
-        );
-        if (!rel.startsWith(".")) rel = `./${rel}`;
+        // Cross-module import via the OTHER module's portable alias — resolves
+        // the same regardless of where each module's types sit in the app tree
+        // (`@<other>/* → ./src/modules/<other>/*`), instead of a brittle
+        // `../../<other>/types` relative hop.
+        const importPath = `@${other.module}/types`;
 
         fields.push({
           localTable,
           field: other.alias ?? other.model,
           otherTable,
-          importPath: rel,
+          importPath,
           isList: other.isList ?? true,
         });
       }
