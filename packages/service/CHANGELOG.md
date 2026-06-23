@@ -1,5 +1,19 @@
 # @damatjs/services
 
+## 0.3.2
+
+### Patch Changes
+
+- Fixed the codegen cli issue and add clean up the workflow to allow yield based calls
+- Updated dependencies
+  - @damatjs/logger@0.3.2
+  - @damatjs/types@0.3.2
+  - @damatjs/deps@0.3.2
+  - @damatjs/orm-connector@0.3.2
+  - @damatjs/orm-model@0.3.2
+  - @damatjs/orm-pg@0.3.2
+  - @damatjs/orm-type@0.3.2
+
 ## 0.3.1
 
 ### Patch Changes
