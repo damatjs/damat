@@ -31,6 +31,7 @@
   "author": "Abel Lamesgen",
   "dependencies": {
     "@damatjs/cli": "*",
+    "@damatjs/codegen": "*",
     "@damatjs/deps": "*",
     "@damatjs/logger": "*",
     "@damatjs/orm-migration": "*",
