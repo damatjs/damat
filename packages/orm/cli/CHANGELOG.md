@@ -1,5 +1,21 @@
 # @damatjs/orm-cli
 
+## 0.3.3
+
+### Patch Changes
+
+- Module scafolding and Codegen setup update
+- Updated dependencies
+  - @damatjs/cli@0.3.3
+  - @damatjs/codegen@1.0.3
+  - @damatjs/logger@0.3.3
+  - @damatjs/deps@0.3.3
+  - @damatjs/link@0.3.3
+  - @damatjs/orm-migration@0.3.3
+  - @damatjs/orm-model@0.3.3
+  - @damatjs/orm-processor@0.3.3
+  - @damatjs/orm-type@0.3.3
+
 ## 0.3.2
 
 ### Patch Changes

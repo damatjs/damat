@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.3
+
+### Patch Changes
+
+- Module scafolding and Codegen setup update
+- Updated dependencies
+  - @damatjs/logger@0.3.3
+  - @damatjs/deps@0.3.3
+
 ## 0.3.2
 
 ### Patch Changes

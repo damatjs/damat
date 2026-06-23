@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/codegen",
   "description": "Damatjs codegen — agnostic type + zod + CRUD scaffold generation",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

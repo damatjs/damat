@@ -1,5 +1,11 @@
 # @damatjs/mcp
 
+## 0.3.3
+
+### Patch Changes
+
+- Module scafolding and Codegen setup update
+
 ## 0.3.2
 
 ### Patch Changes
