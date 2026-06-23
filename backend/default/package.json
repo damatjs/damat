@@ -23,7 +23,6 @@
     "bun": ">=1.1.0"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.104.2",
     "@damatjs/damat-cli": "*",
     "@damatjs/deps": "*",
     "@damatjs/framework": "*",

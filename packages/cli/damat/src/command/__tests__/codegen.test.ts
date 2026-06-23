@@ -17,6 +17,9 @@ const cg = {
   modules: {} as Record<string, ModuleEntry>,
   loadThrows: null as Error | null,
   runArgs: null as any,
+  // Every runCodegen invocation, in order — lets whole-app tests assert that a
+  // module each was generated (runArgs only holds the last call).
+  runArgsList: [] as any[],
   runResult: {
     outputDir: "",
     files: [] as string[],
@@ -35,6 +38,7 @@ mock.module("@damatjs/codegen", () => ({
   ...realCodegen,
   runCodegen: async (opts: any) => {
     cg.runArgs = opts;
+    cg.runArgsList.push(opts);
     return cg.runResult;
   },
 }));
@@ -49,6 +53,7 @@ beforeEach(() => {
   cg.modules = {};
   cg.loadThrows = null;
   cg.runArgs = null;
+  cg.runArgsList = [];
   cg.runResult = {
     outputDir: "/app/src/modules/user/types",
     files: ["users.ts", "registry.ts"],
@@ -65,13 +70,50 @@ describe("damat codegen command", () => {
     expect(typeof c.handler).toBe("function");
   });
 
-  it("errors when no module name is given", async () => {
+  it("errors when the config has no modules", async () => {
+    cg.modules = {};
     const cmd = await getCmd();
     const { ctx, logger } = createContext({}, { args: [], cwd: "/app" });
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(logger.error).toHaveBeenCalled();
     expect(cg.runArgs).toBeNull();
+  });
+
+  it("with no module name, generates every non-link module", async () => {
+    cg.modules = {
+      user: { resolve: "/app/src/modules/user" },
+      organization: { resolve: "/app/src/modules/organization" },
+      userLink: { resolve: "/app/src/links/user", kind: "link" },
+    };
+    fsState.existsMap = {
+      "/app/src/modules/user/models": true,
+      "/app/src/modules/organization/models": true,
+    };
+    const cmd = await getCmd();
+    const { ctx } = createContext({}, { args: [], cwd: "/app" });
+    const res = await cmd.handler(ctx);
+    expect(res.exitCode).toBe(0);
+    // user + organization generated; the link module is skipped.
+    expect(cg.runArgsList.map((a) => a.moduleId).sort()).toEqual([
+      "organization",
+      "user",
+    ]);
+  });
+
+  it("with no module name, soft-skips modules whose models dir is missing", async () => {
+    cg.modules = {
+      user: { resolve: "/app/src/modules/user" },
+      ghost: { resolve: "/app/src/modules/ghost" },
+    };
+    // Only `user` has a models directory.
+    fsState.existsMap = { "/app/src/modules/user/models": true };
+    const cmd = await getCmd();
+    const { ctx } = createContext({}, { args: [], cwd: "/app" });
+    const res = await cmd.handler(ctx);
+    // One missing module is a skip, not a failure of the whole run.
+    expect(res.exitCode).toBe(0);
+    expect(cg.runArgsList.map((a) => a.moduleId)).toEqual(["user"]);
   });
 
   it("errors when the module is not in the config", async () => {
