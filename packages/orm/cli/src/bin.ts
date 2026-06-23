@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
-import { runCli } from "@damatjs/cli";
+import { runCli, reportError, getExitCode } from "@damatjs/cli";
+import { Logger } from "@damatjs/logger";
 import { loadModules } from "./cli/utils/load.js";
 import allCommands from "./cli/commands/index.js";
 
@@ -20,4 +21,9 @@ runCli({
     subtitle: "Database migrations",
     style: "boxed",
   },
+}).catch((error) => {
+  // Last-resort net so setup/dispatch failures surface a readable error
+  // instead of a raw unhandled-rejection dump.
+  reportError(new Logger({ timestamp: false }), error, { prefix: "Fatal error" });
+  process.exit(getExitCode(error));
 });

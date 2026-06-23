@@ -48,13 +48,14 @@ describe("CLI Errors", () => {
     expect(error.exitCode).toBe(1);
   });
 
-  test("ConfigLoadError should format message with cause", () => {
+  test("ConfigLoadError should keep the cause instead of flattening it into the message", () => {
     const cause = new Error("File not found");
     const error = new ConfigLoadError("config.ts", cause);
 
-    expect(error.message).toBe(
-      "Failed to load config from 'config.ts': File not found"
-    );
+    // The message stays clean; the underlying error is preserved as `cause`
+    // so reporters can surface it (and its stack) separately.
+    expect(error.message).toBe("Failed to load config from 'config.ts'");
+    expect((error as Error).cause).toBe(cause);
     expect(error.name).toBe("ConfigLoadError");
   });
 

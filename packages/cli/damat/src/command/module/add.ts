@@ -1,6 +1,7 @@
 import { join, relative } from "node:path";
 import { existsSync } from "node:fs";
-import type { Command } from "@damatjs/cli";
+import { type Command, reportError } from "@damatjs/cli";
+
 import { readModuleManifest, locateModuleDir, evaluateVerification } from "@damatjs/module";
 import type { ModuleSource } from "@damatjs/framework";
 import {
@@ -55,7 +56,7 @@ export const moduleAddCommand: Command = {
     try {
       resolved = await resolveModuleSource(source, ctx.cwd);
     } catch (e) {
-      ctx.logger.error(e instanceof Error ? e.message : String(e));
+      reportError(ctx.logger, e, { prefix: "Could not resolve module source" });
       return { exitCode: 1 };
     }
 
@@ -152,7 +153,7 @@ export const moduleAddCommand: Command = {
       } else {
         ctx.logger.warn(
           `Could not update damat.config.ts automatically — add this to your modules block:\n` +
-            `  "${moduleId}": { resolve: "${relativeTarget}", id: "${moduleId}" },`,
+          `  "${moduleId}": { resolve: "${relativeTarget}", id: "${moduleId}" },`,
         );
       }
 
@@ -190,7 +191,7 @@ export const moduleAddCommand: Command = {
 
       return { exitCode: 0 };
     } catch (e) {
-      ctx.logger.error(e instanceof Error ? e.message : String(e));
+      reportError(ctx.logger, e, { prefix: "Failed to add module" });
       return { exitCode: 1 };
     } finally {
       resolved.cleanup();

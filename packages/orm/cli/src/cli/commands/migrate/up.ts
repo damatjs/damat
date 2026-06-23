@@ -1,4 +1,4 @@
-import type { Command } from "@damatjs/cli";
+import { type Command, reportError } from "@damatjs/cli";
 import { loadModules, loadDatabaseUrl } from "@/cli/utils/load";
 import { OrmModuleContainer } from "@/cli/types";
 
@@ -14,9 +14,7 @@ const migrateUp: Command = {
     try {
       modules = await loadModules("damat.config.ts", ctx.cwd);
     } catch (error) {
-      ctx.logger.error(
-        `Failed to load config: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      reportError(ctx.logger, error, { prefix: "Failed to load config" });
       return { exitCode: 1 };
     }
 
@@ -31,9 +29,7 @@ const migrateUp: Command = {
       const config = await loadDatabaseUrl("damat.config.ts", ctx.cwd);
       databaseUrl = config.databaseUrl;
     } catch (error) {
-      ctx.logger.error(
-        `Failed to load database config: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      reportError(ctx.logger, error, { prefix: "Failed to load database config" });
       return { exitCode: 1 };
     }
 
@@ -48,15 +44,26 @@ const migrateUp: Command = {
 
     try {
       const results = await runMigrations(pool, modules);
-      const hasFailures = results.some((r) => !r.success);
+      // results are returned in the same order as Object.values(modules), so we
+      // can recover which module each failure belongs to and surface its error.
+      const moduleList = Object.values(modules);
+      const failures = results.filter((r) => !r.success);
 
-      if (hasFailures) {
-        ctx.logger.error("Migration failed");
+      if (failures.length > 0) {
+        results.forEach((result, index) => {
+          if (result.success) return;
+          const moduleName = moduleList[index]?.name ?? "unknown";
+          reportError(
+            ctx.logger,
+            result.error ?? new Error("Migration failed"),
+            { prefix: `Migration failed for "${moduleName}"` },
+          );
+        });
       } else {
         ctx.logger.success("Migration completed successfully");
       }
 
-      return { exitCode: hasFailures ? 1 : 0 };
+      return { exitCode: failures.length > 0 ? 1 : 0 };
     } finally {
       await pool.end();
     }

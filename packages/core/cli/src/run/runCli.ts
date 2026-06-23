@@ -1,7 +1,8 @@
 import { cac } from "cac";
 import { Logger } from "@damatjs/logger";
-import type { CliConfig } from "../types";
+import type { CliConfig, CommandResult } from "../types";
 import { getRegistry, clearRegistry } from "../registry";
+import { reportError, getExitCode } from "../utils/output";
 import { printDefaultHelp } from "../help";
 import { printBanner } from "../utils/banner";
 import { handleHelpCommand } from "./helpCommand";
@@ -90,10 +91,22 @@ export async function runCli(config: CliConfig): Promise<void> {
             subcmd.options,
           );
           const ctx = buildCommandContext(fullName, options, logger, config);
-          const result = await subcmd.handler({
-            ...ctx,
-            args: positional,
-          });
+          let result: CommandResult;
+          try {
+            result = await subcmd.handler({
+              ...ctx,
+              args: positional,
+            });
+          } catch (error) {
+            reportError(logger, error, { prefix: "Command failed" });
+            if (config.onError) {
+              config.onError(
+                error instanceof Error ? error : new Error(String(error)),
+                { ...ctx, args: positional },
+              );
+            }
+            process.exit(getExitCode(error));
+          }
           process.exit(result.exitCode);
         }
       }

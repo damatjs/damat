@@ -1,4 +1,4 @@
-import type { Command } from "@damatjs/cli";
+import { type Command, reportError } from "@damatjs/cli";
 import { generateModuleTypes } from "@damatjs/module";
 
 export const moduleCodegenCommand: Command = {
@@ -18,7 +18,7 @@ export const moduleCodegenCommand: Command = {
       }
       return { exitCode: 0 };
     } catch (e) {
-      ctx.logger.error(e instanceof Error ? e.message : String(e));
+      reportError(ctx.logger, e, { prefix: "Codegen failed" });
       return { exitCode: 1 };
     }
   },
