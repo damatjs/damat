@@ -9,8 +9,13 @@ import { codegenOne } from './codegen/one';
  * its row types + zod + registry, weave in cross-module link fields, and
  * scaffold the CRUD slice.
  *
+ * Two modes — name-by-name is the default; whole-app is explicit opt-in:
  * - `damat codegen <module>` — just that module; a missing models directory is
- *   a hard error.
+ *   a hard error. This is the default; with no module name and no `--all`, the
+ *   command errors rather than guessing.
+ * - `damat codegen --all` — every non-link module in the config. Modules without
+ *   a models directory are skipped with a warning so one stray entry can't abort
+ *   the rest.
  *
  * api/router layout: by DEFAULT routes group under the module
  * (`src/api/routes/<module>/<table>`). Pass `--flat` to dump just the models,
@@ -20,9 +25,17 @@ import { codegenOne } from './codegen/one';
 export const codegenCommand: Command = {
   name: "codegen",
   description: "Generate types + zod + registry + CRUD scaffold for app modules",
-  usage: "damat codegen [module] [--flat]",
-  examples: ["damat codegen", "damat codegen user", "damat codegen user --flat"],
+  usage: "damat codegen <module> [--flat] | damat codegen --all [--flat]",
+  examples: ["damat codegen user", "damat codegen user --flat", "damat codegen --all"],
   options: [
+    {
+      name: "all",
+      alias: "a",
+      type: "boolean",
+      description:
+        "Generate for every module in damat.config.ts (links skipped, modules without a models dir skipped with a warning). Without this, a module name is required.",
+      default: false,
+    },
     {
       name: "flat",
       alias: "f",
@@ -34,10 +47,7 @@ export const codegenCommand: Command = {
   ],
   handler: async (ctx) => {
     const moduleName = ctx.args[0];
-    if (!moduleName) {
-      ctx.logger.error("Module name is required: damat codegen <module>");
-      return { exitCode: 1 };
-    }
+    const all = Boolean(ctx.options.all);
 
     let modules: ModuleContainer;
     try {
@@ -53,20 +63,21 @@ export const codegenCommand: Command = {
       return { exitCode: 1 };
     }
 
-    // Targeted: `damat codegen <module>`.
-    if (moduleName) {
-      return codegenOne(ctx, modules, moduleName);
+    // Whole-app: explicit opt-in via `--all`.
+    if (all) {
+      return codegenAll(ctx, modules);
     }
 
-    // Whole-app: `damat codegen` — every module in the config.
-    return codegenAll(ctx, modules);
+    // Default: name-by-name. Require an explicit module name.
+    if (!moduleName) {
+      ctx.logger.error(
+        "Module name is required: damat codegen <module> (or pass --all for every module)",
+      );
+      return { exitCode: 1 };
+    }
+    return codegenOne(ctx, modules, moduleName);
   },
 };
 
 
 export default codegenCommand;
-
-//  * Two modes:
-//  * - `damat codegen` — every non-link module in the config. Modules without a
-//  *   models directory are skipped with a warning so one stray entry can't abort
-//  *   the rest.

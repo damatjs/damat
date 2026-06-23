@@ -80,7 +80,18 @@ describe("damat codegen command", () => {
     expect(cg.runArgs).toBeNull();
   });
 
-  it("with no module name, generates every non-link module", async () => {
+  it("errors when no module name is given and --all is not passed", async () => {
+    cg.modules = { user: { resolve: "/app/src/modules/user" } };
+    const cmd = await getCmd();
+    const { ctx, logger } = createContext({}, { args: [], cwd: "/app" });
+    const res = await cmd.handler(ctx);
+    // Default is name-by-name; no name + no --all is an explicit error, not "all".
+    expect(res.exitCode).toBe(1);
+    expect(logger.error).toHaveBeenCalled();
+    expect(cg.runArgs).toBeNull();
+  });
+
+  it("--all generates every non-link module", async () => {
     cg.modules = {
       user: { resolve: "/app/src/modules/user" },
       organization: { resolve: "/app/src/modules/organization" },
@@ -91,7 +102,7 @@ describe("damat codegen command", () => {
       "/app/src/modules/organization/models": true,
     };
     const cmd = await getCmd();
-    const { ctx } = createContext({}, { args: [], cwd: "/app" });
+    const { ctx } = createContext({ all: true }, { args: [], cwd: "/app" });
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(0);
     // user + organization generated; the link module is skipped.
@@ -101,7 +112,7 @@ describe("damat codegen command", () => {
     ]);
   });
 
-  it("with no module name, soft-skips modules whose models dir is missing", async () => {
+  it("--all soft-skips modules whose models dir is missing", async () => {
     cg.modules = {
       user: { resolve: "/app/src/modules/user" },
       ghost: { resolve: "/app/src/modules/ghost" },
@@ -109,7 +120,7 @@ describe("damat codegen command", () => {
     // Only `user` has a models directory.
     fsState.existsMap = { "/app/src/modules/user/models": true };
     const cmd = await getCmd();
-    const { ctx } = createContext({}, { args: [], cwd: "/app" });
+    const { ctx } = createContext({ all: true }, { args: [], cwd: "/app" });
     const res = await cmd.handler(ctx);
     // One missing module is a skip, not a failure of the whole run.
     expect(res.exitCode).toBe(0);

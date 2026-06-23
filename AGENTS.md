@@ -124,7 +124,7 @@ is roughly: `types`/`deps` → `orm-type` → `orm-model` → `orm-core`/`orm-pg
 2. Export it from the module's `service.ts` `models` map.
 3. `damat module migration:create` (in a module package) **or**
    `damat-orm migrate:create <name>` (in an app) to generate the migration.
-4. `damat-orm migrate:up`. Optionally `damat codegen`.
+4. `damat-orm migrate:up`. Optionally `damat codegen <module>` (or `--all`).
 
 ### Add an HTTP route
 Create `src/api/routes/<path>/route.ts` exporting `GET`/`POST`/… as

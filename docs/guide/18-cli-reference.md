@@ -9,7 +9,7 @@
 | `damat dev` | Start the dev server with hot reload |
 | `damat build` | Build for production |
 | `damat start` | Start the production server |
-| `damat codegen [module]` | Types + zod + registry, and scaffold-once CRUD (app module) |
+| `damat codegen <module>` \| `--all` | Types + zod + registry, and scaffold-once CRUD. Name a module, or pass `--all` for every module in the config |
 | `damat module add <src>` | Install a module (registry/path/git) |
 | `damat module list` | List installed modules |
 | `damat module init <name>` | Scaffold a standalone module package |

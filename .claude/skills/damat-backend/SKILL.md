@@ -67,7 +67,7 @@ References in the repo (read when you need detail):
    Relations reference the **target table name** (`columns.hasMany("accounts")`).
 2. Register it in the module's `service.ts` `models` map.
 3. `damat-orm migrate:create <name>` → review the SQL → `damat-orm migrate:up`.
-4. Optionally `damat codegen` to refresh row types.
+4. Optionally `damat codegen <module>` (or `--all`) to refresh row types.
 Guide: `docs/guide/05-models.md`, `docs/guide/06-migrations.md`.
 
 ### Add business logic (service method)
