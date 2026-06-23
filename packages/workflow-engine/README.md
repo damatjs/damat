@@ -86,9 +86,10 @@ if (result.success) {
 | Export | Kind | Summary |
 | --- | --- | --- |
 | `createStep(name, invoke, compensate?, config?)` | function | Build a typed `StepDefinition<I, O>` with optional compensation and per-step config. |
-| `executeStep(step, input, ctx)` | function | Run a step inside a workflow generator (handles timeout, retry, compensation registration). |
+| `executeStep(step, input, ctx, overrideConfig?)` | function | Run a step inside a workflow generator (handles timeout, retry, compensation registration). The optional `overrideConfig` layers per-call timeout/retry on top of the step's own config. |
+| `step(input, ctx, overrideConfig?)` | call | A `StepDefinition` is callable: `step(input, ctx)` ≡ `executeStep(step, input, ctx)`, with the same optional per-call override. |
 | `createWorkflow(name, definition, config?)` | function | Build a `WorkflowDefinition<I, O>` exposing `execute` and `executeWithLock`. |
-| `runStep(step, input, ctx)` | function | Alias of `executeStep` for readability. |
+| `runStep(step, input, ctx, overrideConfig?)` | function | Alias of `executeStep` for readability. |
 | `skipStep(value)` | function | An effect that immediately succeeds with `value` (for conditional branches). |
 | `parallel(...effects)` | function | Run step effects concurrently; resolves to a tuple of outputs. |
 | `when(cond, step, input, ctx, default)` | function | Run `step` if `cond`, else return `default`. |

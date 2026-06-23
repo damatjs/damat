@@ -1,5 +1,5 @@
 import { Effect, Scope } from "effect";
-import type { StepDefinition, WorkflowContext } from "../types";
+import type { StepDefinition, StepConfig, WorkflowContext } from "../types";
 import type { WorkflowError } from "../errors";
 import { executeStep } from "../step";
 
@@ -10,6 +10,8 @@ import { executeStep } from "../step";
  * @param step - Step definition to execute
  * @param input - Input data for the step
  * @param ctx - Workflow context
+ * @param overrideConfig - Optional per-call timeout/retry override, layered on
+ *   top of the step's own config (forwarded to `executeStep`).
  * @returns Effect that resolves to the step output
  *
  * @example
@@ -26,6 +28,7 @@ export function runStep<I, O>(
   step: StepDefinition<I, O>,
   input: I,
   ctx: WorkflowContext,
+  overrideConfig?: StepConfig,
 ): Effect.Effect<O, WorkflowError, Scope.Scope> {
-  return executeStep(step, input, ctx);
+  return executeStep(step, input, ctx, overrideConfig);
 }

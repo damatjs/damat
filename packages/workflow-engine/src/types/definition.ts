@@ -13,9 +13,18 @@ import { WorkflowContext } from './context';
  * `executeStep(step, input, ctx)` and returns the Effect, so a workflow body
  * can be written as `(input, ctx) => step(input, ctx)` (single step) or
  * `yield* step(input, ctx)` (inside `Effect.gen`) — no `executeStep` noise.
+ *
+ * Per-call overrides are optional and layer **on top** of the step's own config
+ * (and any workflow-level defaults): `step(input, ctx, { timeoutMs: 10_000 })`
+ * or `step(input, ctx, { retry: { maxAttempts: 5 } })`. Omit the third argument
+ * to keep the step's configured timeout/retry as-is.
  */
 export interface StepDefinition<I, O> {
-  (input: I, ctx: WorkflowContext): Effect.Effect<O, WorkflowError, Scope.Scope>;
+  (
+    input: I,
+    ctx: WorkflowContext,
+    overrideConfig?: StepConfig,
+  ): Effect.Effect<O, WorkflowError, Scope.Scope>;
   /** Unique step name for logging and tracing */
   name: string;
   /** Step configuration with defaults applied */

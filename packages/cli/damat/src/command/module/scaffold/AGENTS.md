@@ -137,7 +137,7 @@ app pulls the module in:
 import { defineModule, ModuleService } from "@damatjs/services";
 import { getModule } from "@damatjs/framework";
 import { model, columns, collectModels } from "@damatjs/orm-model";
-import { createStep, createWorkflow, executeStep, Effect } from "@damatjs/workflow-engine";
+import { createStep, createWorkflow, Effect } from "@damatjs/workflow-engine";
 import type { RouteHandler, RouteValidator } from "@damatjs/framework/router";
 import { z } from "@damatjs/deps/zod";
 ```
@@ -255,9 +255,13 @@ After changing models: `bun run migration:create`, review the SQL, then
 `src/api/routes/<table>/…` — **scaffold-once** (your edits survive). The layering
 is route → workflow → step → service. A single-step workflow is just
 `(input, ctx) => myStep(input, ctx)` (steps are directly callable); for
-multi-step, compose them in `Effect.gen` with `yield* myStep(input, ctx)`. Only
-steps touch the service, via the typed `getModule("<name>")`. Add custom
-(non-CRUD) workflows alongside the generated ones.
+multi-step, compose them in `Effect.gen` with `yield* myStep(input, ctx)`
+(`yield*` is just Effect's `await` — it runs the step and binds its result).
+A step takes an optional third arg to override retry/timeout for that one call —
+`myStep(input, ctx, { timeoutMs: 15_000, retry: { maxAttempts: 3 } })` — layered
+over the step's own `createStep(..., { timeoutMs, retry })` defaults. Only steps
+touch the service, via the typed `getModule("<name>")`. Add custom (non-CRUD)
+workflows alongside the generated ones.
 
 A route ONLY calls a workflow — never the service, never business logic:
 

@@ -1,4 +1,4 @@
-import { createWorkflow, executeStep, Effect } from "@damatjs/workflow-engine";
+import { createWorkflow, Effect } from "@damatjs/workflow-engine";
 import {
   createProfileStep,
   sendWelcomeEmailStep,
@@ -17,12 +17,18 @@ export const userOnboardingWorkflow = createWorkflow<
   "user-onboarding",
   (input, ctx) =>
     Effect.gen(function* () {
-      const user = yield* executeStep(createProfileStep, input, ctx);
+      // Steps are callable directly: `step(input, ctx)` ≡
+      // `executeStep(step, input, ctx)`.
+      const user = yield* createProfileStep(input, ctx);
 
-      const emailResult = yield* executeStep(sendWelcomeEmailStep, user, ctx);
+      // The optional third argument overrides retry/timeout for this call only
+      // — handy for a flaky external send — without touching the step itself.
+      const emailResult = yield* sendWelcomeEmailStep(user, ctx, {
+        timeoutMs: 15_000,
+        retry: { maxAttempts: 3 },
+      });
 
-      const settings = yield* executeStep(
-        setupDefaultsStep,
+      const settings = yield* setupDefaultsStep(
         { user, emailSent: emailResult.sent },
         ctx,
       );

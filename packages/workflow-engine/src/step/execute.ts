@@ -3,6 +3,7 @@ import type {
   StepDefinition,
   WorkflowContext,
   RequiredStepConfig,
+  StepConfig,
 } from "../types";
 import {
   StepExecutionError,
@@ -15,29 +16,41 @@ import { createContextLogger } from "@damatjs/logger";
 
 /**
  * Resolves the effective config for a step execution by layering:
- * engine defaults < workflow defaultStepConfig < the step's own config.
+ * engine defaults < workflow defaultStepConfig < the step's own config <
+ * the per-call override. The override is the highest-priority layer, so a
+ * caller can bump a single invocation's timeout/retry without touching the
+ * step definition.
  */
 function resolveStepConfig<I, O>(
   step: StepDefinition<I, O>,
   ctx: WorkflowContext,
+  override?: StepConfig,
 ): RequiredStepConfig {
   const workflowDefaults = ctx.engineState?.defaultStepConfig;
   const raw = step.rawConfig;
 
   // Steps built outside createStep may not carry rawConfig — fall back to
-  // their pre-merged config and skip workflow-level layering.
+  // their pre-merged config and skip workflow-level layering. A per-call
+  // override still applies on top.
   if (raw === undefined) {
-    return step.config;
+    if (!override) return step.config;
+    return {
+      ...step.config,
+      ...override,
+      retry: { ...step.config.retry, ...override.retry },
+    };
   }
 
   return {
     ...DEFAULT_STEP_CONFIG,
     ...workflowDefaults,
     ...raw,
+    ...override,
     retry: {
       ...DEFAULT_RETRY_POLICY,
       ...workflowDefaults?.retry,
       ...raw.retry,
+      ...override?.retry,
     },
   };
 }
@@ -58,6 +71,9 @@ function resolveStepConfig<I, O>(
  * @param step - Step definition to execute
  * @param input - Input data for the step
  * @param ctx - Workflow context
+ * @param overrideConfig - Optional per-call config (timeout/retry/idempotent/
+ *   description) layered on top of the step's own config — the highest-priority
+ *   layer. Omit to use the step's configured values.
  * @returns Effect that resolves to the step output
  *
  * @example
@@ -65,7 +81,12 @@ function resolveStepConfig<I, O>(
  * const workflow = createWorkflow('my-workflow', (input, ctx) =>
  *   Effect.gen(function* (_) {
  *     const order = yield* executeStep(createOrderStep, input, ctx);
- *     const payment = yield* executeStep(processPaymentStep, { orderId: order.id }, ctx);
+ *     // Per-call override: give this one payment attempt a longer timeout and
+ *     // more retries without changing the step definition.
+ *     const payment = yield* executeStep(processPaymentStep, { orderId: order.id }, ctx, {
+ *       timeoutMs: 15_000,
+ *       retry: { maxAttempts: 5 },
+ *     });
  *     return { order, payment };
  *   })
  * );
@@ -75,6 +96,7 @@ export function executeStep<I, O>(
   step: StepDefinition<I, O>,
   input: I,
   ctx: WorkflowContext,
+  overrideConfig?: StepConfig,
 ): Effect.Effect<
   O,
   StepExecutionError | StepTimeoutError,
@@ -87,7 +109,7 @@ export function executeStep<I, O>(
   });
 
   return Effect.gen(function* (_) {
-    const config = resolveStepConfig(step, ctx);
+    const config = resolveStepConfig(step, ctx, overrideConfig);
     const startTime = Date.now();
     stepLogger.debug(`Executing step`, {
       description: config.description || step.name,

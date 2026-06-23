@@ -44,11 +44,15 @@ export function createStep<I, O>(
     retry: { ...DEFAULT_RETRY_POLICY, ...config.retry },
   };
 
-  // The step is a callable: `step(input, ctx)` ≡ `executeStep(step, input, ctx)`.
-  // executeStep reads `step.invoke`/`name`/`config` — it never calls `step()`,
-  // so there is no recursion.
-  const step = ((input: I, ctx: WorkflowContext) =>
-    executeStep(step, input, ctx)) as unknown as StepDefinition<I, O>;
+  // The step is a callable: `step(input, ctx)` ≡ `executeStep(step, input, ctx)`,
+  // and an optional third argument forwards a per-call config override
+  // (`step(input, ctx, { timeoutMs, retry })`). executeStep reads
+  // `step.invoke`/`name`/`config` — it never calls `step()`, so no recursion.
+  const step = ((input: I, ctx: WorkflowContext, overrideConfig?: StepConfig) =>
+    executeStep(step, input, ctx, overrideConfig)) as unknown as StepDefinition<
+    I,
+    O
+  >;
   Object.defineProperty(step, "name", { value: name, configurable: true });
   step.config = mergedConfig;
   step.rawConfig = config;

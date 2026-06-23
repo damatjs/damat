@@ -71,6 +71,7 @@ function executeStep<I, O>(
   step: StepDefinition<I, O>,
   input: I,
   ctx: WorkflowContext,
+  overrideConfig?: StepConfig,   // optional per-call timeout/retry override
 ): Effect.Effect<
   O,
   StepExecutionError | StepTimeoutError,
@@ -82,11 +83,24 @@ You always call it inside a workflow generator: `const x = yield* executeStep(st
 It requires a `Scope` in its context — supplied by `Effect.scoped(...)` in
 `executeWorkflowInternal` — which is what lets compensation finalizers be registered.
 
+**Calling a step directly.** A step built by `createStep` is itself callable, so
+`step(input, ctx)` is exact sugar for `executeStep(step, input, ctx)` — write
+`const x = yield* createUser(input, ctx)` and skip the `executeStep` wrapper.
+
+**Per-call override.** Both forms take an optional final `StepConfig` that is
+layered **on top of** the step's own config for that one invocation —
+`step(input, ctx, { timeoutMs: 15_000, retry: { maxAttempts: 5 } })` or
+`executeStep(step, input, ctx, { timeoutMs: 15_000 })`. Omit it to keep the
+step's configured values. This keeps retry/timeout available when calling steps
+directly without baking per-site values into the step definition.
+
 ### Behavior, step by step (`src/step/execute.ts`)
 
 1. **Resolve config** via `resolveStepConfig`: `DEFAULT_STEP_CONFIG` <
-   `ctx.engineState.defaultStepConfig` < `step.rawConfig`; `retry` merged the same
-   way under `DEFAULT_RETRY_POLICY`. (No `rawConfig` ⇒ use `step.config` as-is.)
+   `ctx.engineState.defaultStepConfig` < `step.rawConfig` < the per-call
+   `overrideConfig` (highest priority); `retry` merged the same way under
+   `DEFAULT_RETRY_POLICY`. (No `rawConfig` ⇒ use `step.config`, with any
+   `overrideConfig` still layered on top.)
 2. **Build one attempt** as `Effect.timeoutFail(Effect.tryPromise(...))`:
    - `tryPromise` calls `step.invoke(input, { ...ctx, attempt: attemptCount }, signal)`.
      `attemptCount` is incremented inside `try` so `ctx.attempt` is accurate and

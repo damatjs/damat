@@ -384,3 +384,121 @@ describe("step/execute: compensation finalizer", () => {
     expect((err as StepExecutionError).message).toBe("primary failure");
   });
 });
+
+// =============================================================================
+// step/execute — per-call config override (optional 4th arg / 3rd callable arg)
+// Retry/timeout stay available when calling a step directly: pass them per-call
+// instead of baking them into the step definition. The override is the
+// highest-priority layer, so it beats the step's own config in either direction.
+// =============================================================================
+
+describe("step/execute: per-call config override", () => {
+  it("a per-call timeout override tightens a generous step timeout (shorter wins → times out)", async () => {
+    // The step itself comfortably allows a 100ms task...
+    const step = createStep<number, string>(
+      "slow-overridden",
+      async () => {
+        await new Promise((r) => setTimeout(r, 100));
+        return "too late";
+      },
+      undefined,
+      { timeoutMs: 5000 },
+    );
+    // ...but this one call tightens the timeout to 20ms.
+    const exit = await runStep(executeStep(step, 1, ctx(), { timeoutMs: 20 }));
+    const err = squashError(exit);
+
+    expect(err).toBeInstanceOf(StepTimeoutError);
+    expect((err as StepTimeoutError).timeoutMs).toBe(20);
+  });
+
+  it("a per-call timeout override can also RELAX a tight step timeout (longer wins → succeeds)", async () => {
+    const step = createStep<number, string>(
+      "tight-relaxed",
+      async () => {
+        await new Promise((r) => setTimeout(r, 60));
+        return "made it";
+      },
+      undefined,
+      { timeoutMs: 20 }, // on its own this would time out the 60ms task
+    );
+    const exit = await runStep(executeStep(step, 1, ctx(), { timeoutMs: 1000 }));
+
+    expect(Exit.isSuccess(exit)).toBe(true);
+    if (Exit.isSuccess(exit)) expect(exit.value).toBe("made it");
+  });
+
+  it("a per-call retry override adds retries to a step that has none by default", async () => {
+    let calls = 0;
+    // Default policy = no retries; without an override the first throw is fatal.
+    const step = createStep<number, string>("flaky-no-retry", async (n) => {
+      calls++;
+      if (calls < 3) throw new Error(`transient ${calls}`);
+      return `ok-${n}`;
+    });
+    const exit = await runStep(
+      executeStep(step, 7, ctx(), {
+        retry: { maxAttempts: 5, initialDelayMs: 1, maxDelayMs: 10 },
+      }),
+    );
+
+    expect(Exit.isSuccess(exit)).toBe(true);
+    if (Exit.isSuccess(exit)) expect(exit.value).toBe("ok-7");
+    expect(calls).toBe(3); // 2 failures + 1 success, enabled purely by the override
+  });
+
+  it("a per-call retry override deep-merges over the step's own retry policy", async () => {
+    let calls = 0;
+    // Step allows only 1 retry; the override bumps maxAttempts to 4 while
+    // keeping the step's fast initialDelayMs.
+    const step = createStep<number, string>(
+      "bump-attempts",
+      async () => {
+        calls++;
+        if (calls < 4) throw new Error("transient");
+        return "ok";
+      },
+      undefined,
+      { retry: { maxAttempts: 1, initialDelayMs: 1, maxDelayMs: 10 } },
+    );
+    const exit = await runStep(
+      executeStep(step, 1, ctx(), { retry: { maxAttempts: 4 } }),
+    );
+
+    expect(Exit.isSuccess(exit)).toBe(true);
+    expect(calls).toBe(4); // 3 failures + 1 success — attempts came from the override
+  });
+
+  it("the callable form forwards the override: step(input, ctx, override)", async () => {
+    const step = createStep<number, string>(
+      "callable-override",
+      async () => {
+        await new Promise((r) => setTimeout(r, 100));
+        return "too late";
+      },
+      undefined,
+      { timeoutMs: 5000 },
+    );
+    // Direct-call shorthand carrying a per-call override.
+    const exit = await runStep(step(1, ctx(), { timeoutMs: 20 }));
+    const err = squashError(exit);
+
+    expect(err).toBeInstanceOf(StepTimeoutError);
+    expect((err as StepTimeoutError).timeoutMs).toBe(20);
+  });
+
+  it("omitting the override leaves the step's own config untouched", async () => {
+    const step = createStep<number, string>(
+      "no-override",
+      async () => {
+        await new Promise((r) => setTimeout(r, 100));
+        return "too late";
+      },
+      undefined,
+      { timeoutMs: 20 },
+    );
+    // No 4th arg → the step's own 20ms timeout still applies.
+    const exit = await runStep(executeStep(step, 1, ctx()));
+    expect(squashError(exit)).toBeInstanceOf(StepTimeoutError);
+  });
+});

@@ -29,22 +29,37 @@ export const createProfileStep = createStep<NewUser, User>(
 
 ## A workflow
 
-Workflows compose steps inside an Effect generator with `executeStep`:
+A step is **callable**: `step(input, ctx)` is sugar for
+`executeStep(step, input, ctx)`, so workflows compose steps inside an Effect
+generator by calling them directly — no `executeStep` noise:
 
 ```ts
-import { createWorkflow, executeStep, Effect } from "@damatjs/workflow-engine";
+import { createWorkflow, Effect } from "@damatjs/workflow-engine";
 
 export const userOnboardingWorkflow = createWorkflow<NewUser, { user: User; emailSent: boolean }>(
   "user-onboarding",
   (input, ctx) =>
     Effect.gen(function* () {
-      const user = yield* executeStep(createProfileStep, input, ctx);
-      const email = yield* executeStep(sendWelcomeEmailStep, user, ctx);
+      const user = yield* createProfileStep(input, ctx);
+
+      // Optional third argument: override retry/timeout for THIS call only.
+      // The step definition stays untouched; omit it to keep its configured
+      // values. Layering is engine defaults < workflow defaults < step config
+      // < this per-call override.
+      const email = yield* sendWelcomeEmailStep(user, ctx, {
+        timeoutMs: 15_000,
+        retry: { maxAttempts: 3 },
+      });
+
       return { user, emailSent: email.sent };
     }),
   { timeoutMs: 60_000 },
 );
 ```
+
+The explicit `executeStep(step, input, ctx, overrideConfig?)` form is still
+exported and takes the same optional override — reach for it when you need a
+step value the generator can't infer, or prefer the named call.
 
 ## Running one
 

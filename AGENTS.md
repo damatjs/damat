@@ -146,7 +146,10 @@ Prefer the MCP tools (below) or the CLI:
 
 ### Add a workflow
 Define steps with `createStep` (forward + compensation) and compose them with
-`createWorkflow` + `executeStep` inside `Effect.gen`. See
+`createWorkflow`. Steps are directly callable: `(input, ctx) => myStep(input, ctx)`
+for one step, or `yield* myStep(input, ctx)` inside `Effect.gen` for several. Pass
+an optional third arg to override retry/timeout per call —
+`myStep(input, ctx, { timeoutMs, retry })`. See
 [workflow-engine](./packages/workflow-engine/README.md).
 
 ### Link two modules (cross-module relationship)

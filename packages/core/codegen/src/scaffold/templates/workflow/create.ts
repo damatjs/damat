@@ -1,5 +1,5 @@
 import type { CrudNames } from "../../naming";
-import { SCAFFOLD_NOTE } from '../constant';
+import { SCAFFOLD_NOTE, WORKFLOW_OVERRIDE_HINT } from '../constant';
 
 
 export function workflowCreate(n: CrudNames, typesSpec: string, stepsSpec: string): string {
@@ -10,6 +10,7 @@ import type { ${n.newType}, ${n.rowType} } from "${typesSpec}";
 
 export const create${n.pascal}Workflow = createWorkflow<${n.newType}, ${n.rowType}>(
   "${n.moduleId}.${n.prop}.create",
+${WORKFLOW_OVERRIDE_HINT}
   (input, ctx) => create${n.pascal}Step(input, ctx),
 );
 
