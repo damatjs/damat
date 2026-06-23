@@ -2,7 +2,7 @@ import type { Pool, PoolClient, QueryResultRow } from "@damatjs/orm-type";
 import type { ILogger } from "@damatjs/logger";
 import type { ModelDefinition } from "@damatjs/orm-model";
 import { PgModelClient } from "../client";
-import type { FindOptions, CreateOptions, CreateManyOptions, UpdateOptions, DeleteOptions, UpsertOptions } from "../query";
+import type { FindOptions, CreateOptions, CreateManyOptions, UpdateOptions, DeleteOptions, UpsertOptions, UpsertManyOptions } from "../query";
 
 export interface PgRepositoryConfig {
   model: ModelDefinition;
@@ -49,6 +49,8 @@ export class PgRepository<T extends QueryResultRow = QueryResultRow, Cols extend
     if (!res.rows[0]) throw new Error("Upsert failed: no rows returned");
     return res.rows[0];
   }
+
+  async upsertMany(opt: UpsertManyOptions<Cols>): Promise<T[]> { return (await this.client.upsertMany(opt)).rows; }
 
   async count(where?: Record<string, unknown>): Promise<number> {
     const { sql } = this.client.accessor.findMany({ select: [] as any, where } as any);

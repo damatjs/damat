@@ -3,7 +3,7 @@ import type { ModelDefinition } from "@damatjs/orm-model";
 import type { QueryLogger } from "@damatjs/orm-core";
 import { ModelAccessor } from "../query";
 import { executeFindMany, executeFindOne } from "./ops/find";
-import { executeCreate, executeCreateMany, executeUpdate, executeDelete, executeUpsert } from "./ops/mutate";
+import { executeCreate, executeCreateMany, executeUpdate, executeDelete, executeUpsert, executeUpsertMany } from "./ops/mutate";
 import { executeTransaction } from "./ops/transaction";
 import type {
   FindOptions,
@@ -12,6 +12,7 @@ import type {
   UpdateOptions,
   DeleteOptions,
   UpsertOptions,
+  UpsertManyOptions,
   FindOneOptions,
   PgModelClientLike,
 } from "./types";
@@ -69,6 +70,10 @@ export class PgModelClient<
 
   async upsert(options: UpsertOptions<Cols>): Promise<PgInsertResult<T>> {
     return executeUpsert<T, Cols>(this, options);
+  }
+
+  async upsertMany(options: UpsertManyOptions<Cols>): Promise<PgInsertResult<T>> {
+    return executeUpsertMany<T, Cols>(this, options);
   }
 
   async transaction<R>(callback: (tx: PgModelClient<T, Cols>) => Promise<R>): Promise<R> {

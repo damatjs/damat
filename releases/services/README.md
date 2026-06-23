@@ -6,6 +6,7 @@ Change history for this package. For how it works **now**, read the
 
 | Version | Summary | Upgrade notes |
 |---------|---------|---------------|
+| 0.3.0 | `ModelMethods` gains `upsert`/`upsertMany`, cascade delete (`delete`/`softDelete` with `cascade: true`), and row-returning `updateOne` / `findById` / `findOne` | [0.3.0 →](./0.3.0.md) |
 | 0.1.3 | Maintenance / dependency bumps — picks up cross-module links via `@damatjs/link`/`@damatjs/framework`; no change to this package's own API | — |
 | 0.1.2 | Maintenance / dependency bumps — relation-by-table-name lands in the ORM packages; no change to this package's own API | — |
 | 0.1.1 | Maintenance / dependency bumps — CI and test cleanup | — |

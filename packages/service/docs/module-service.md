@@ -112,16 +112,47 @@ Source: `src/service/methods.ts`. Constructed with `(model, modelName, entityMan
 | --- | --- | --- |
 | `create` | `(options: CreateOptions) => Promise<T>` | `repo.create` |
 | `createMany` | `(options: CreateManyOptions) => Promise<T[]>` | `repo.createMany` |
+| `upsert` | `(options: UpsertOptions) => Promise<T>` | `repo.upsert` (insert, or update on `onConflict`) — validates `data` as a full row |
+| `upsertMany` | `(options: UpsertManyOptions) => Promise<T[]>` | `repo.upsertMany` — validates each row |
 | `find` | `(options?: FindOptions) => Promise<(T & Record<string,any>) \| null>` | `repo.findOne` (+ relation loading) |
+| `findById` | `(id, options?) => Promise<(T & Record<string,any>) \| null>` | `find({ where: { id } })` |
+| `findOne` | `(where, options?) => Promise<(T & Record<string,any>) \| null>` | `find({ where })` |
 | `findMany` | `(options?: FindOptions) => Promise<(T & Record<string,any>)[]>` | `repo.findMany` (+ relation loading) |
 | `update` | `(options: UpdateOptions) => Promise<T[]>` | `repo.update({ set, where, returning })` |
-| `delete` | `(options: DeleteOptions) => Promise<number>` | `repo.delete` |
-| `softDelete` | `(options: SoftDeleteOptions) => Promise<T[]>` | `repo.update` setting the model's `_deletedAtField` (default `deleted_at`) to `new Date()` |
+| `updateOne` | `(options: UpdateOptions) => Promise<T \| null>` | `repo.updateOne(set, where, returning)` — returns the single affected row |
+| `delete` | `(options: DeleteOptions) => Promise<number>` | `repo.delete`; with `cascade: true`, recursively removes related rows in a transaction (see below) |
+| `softDelete` | `(options: SoftDeleteOptions) => Promise<T[]>` | `repo.update` setting the model's `_deletedAtField` (default `deleted_at`) to `new Date()`; with `cascade: true`, recurses (see below) |
 | `restore` | `({ where, returning? }) => Promise<T[]>` | `repo.update` setting the model's `_deletedAtField` (default `deleted_at`) to `null` |
 | `count` | `(options?: CountOptions) => Promise<number>` | `repo.count(where)` |
 | `exists` | `(options: ExistsOptions) => Promise<boolean>` | `repo.exists(where)` |
 | `setTransactionalEm` | `(tx \| null) => void` | sets/clears the transactional EM (called by `transaction()`) |
 | `getModelDefinition` | `() => ModelDefinition` | introspection |
+
+### Cascade delete (`delete`/`softDelete` with `cascade: true`)
+
+By default `delete`/`softDelete` touch only the matched rows. Pass `cascade: true`
+to also remove everything reachable through the model's `hasMany`/`hasOne`
+relations, depth-first, inside a single transaction (an existing
+`transaction()` is reused; otherwise one is opened):
+
+```ts
+// removes the org's teams and each team's members, then the org — atomically
+await service.org.delete({ where: { id }, cascade: true });
+```
+
+For each `hasMany`/`hasOne` relation the child FK is resolved the same way
+relation loading resolves it (`linkedBy`, else `<mappedBy>_id`, else
+`<modelName>_id`) and the relation's `rule.onDelete` is honoured:
+
+| `rule.onDelete` | Behaviour |
+| --- | --- |
+| _none_ / `CASCADE` | Recurse into the children, then remove them. |
+| `SET NULL` | Null the child FK; do not delete the children. |
+| `RESTRICT` / `NO ACTION` | Throw if any children exist. |
+
+Relation cycles are broken with a visited-set, and any error rolls the whole
+transaction back. `delete` returns the total number of rows removed across all
+levels; `softDelete` returns the soft-deleted top-level rows.
 
 ### Repository selection (`methods.ts:36-44`)
 

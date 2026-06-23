@@ -437,6 +437,125 @@ describe("ModelMethods", () => {
     });
   });
 
+  describe("upsert / upsertMany", () => {
+    it("forwards upsert options to repo.upsert and returns the row", async () => {
+      const repo = makeRepo({
+        upsert: mock(async (o: any) => ({ id: 1, ...o.data })),
+      });
+      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const res = await m.upsert({
+        data: { email: "a@b.com", name: "Ada" },
+        onConflict: ["email"],
+        updateColumns: ["name"],
+        returning: ["id"],
+      });
+      expect(res).toEqual({ id: 1, email: "a@b.com", name: "Ada" });
+      expect(repo.upsert).toHaveBeenCalledTimes(1);
+      expect(repo.upsert.mock.calls[0][0]).toEqual({
+        data: { email: "a@b.com", name: "Ada" },
+        onConflict: ["email"],
+        updateColumns: ["name"],
+        returning: ["id"],
+      });
+    });
+
+    it("forwards upsertMany options to repo.upsertMany and returns every row", async () => {
+      const repo = makeRepo({
+        upsertMany: mock(async (o: any) =>
+          o.data.map((d: any, i: number) => ({ id: i + 1, ...d })),
+        ),
+      });
+      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const res = await m.upsertMany({
+        data: [{ email: "a@b.com" }, { email: "c@d.com" }],
+        onConflict: ["email"],
+      });
+      expect(res).toHaveLength(2);
+      expect(res[0]).toEqual({ id: 1, email: "a@b.com" });
+      expect(repo.upsertMany).toHaveBeenCalledTimes(1);
+    });
+
+    it("validates each upsertMany row before forwarding", async () => {
+      const repo = makeRepo({ upsertMany: mock(async () => []) });
+      // `name` is a required column; the second row omits it, so validation
+      // throws before any SQL runs.
+      const validatingModel = {
+        _name: "user",
+        toTableSchema: () => ({
+          relations: [],
+          columns: [
+            { name: "id", type: "integer", nullable: false, primaryKey: true, autoincrement: true },
+            { name: "name", type: "text", nullable: false },
+            { name: "age", type: "integer", nullable: true },
+          ],
+        }),
+      } as any;
+      const m = new ModelMethods(validatingModel, "user", makeEM({ primaryRepo: repo }));
+      expect(
+        m.upsertMany({ data: [{ name: "ok" }, { age: 5 }], onConflict: ["id"] }),
+      ).rejects.toThrow();
+      expect(repo.upsertMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("updateOne", () => {
+    it("maps data onto the repository's set/where/returning and returns the single row", async () => {
+      const repo = makeRepo({
+        updateOne: mock(async (set: any) => ({ id: 1, ...set })),
+      });
+      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const res = await m.updateOne({ where: { id: 1 }, data: { name: "new" }, returning: ["id", "name"] });
+      expect(res).toEqual({ id: 1, name: "new" });
+      const [set, where, returning] = repo.updateOne.mock.calls[0];
+      expect(set).toEqual({ name: "new" });
+      expect(where).toEqual({ id: 1 });
+      expect(returning).toEqual(["id", "name"]);
+    });
+
+    it("returns null when the repository updates no row", async () => {
+      const repo = makeRepo({ updateOne: mock(async () => undefined) });
+      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      expect(await m.updateOne({ where: { id: 999 }, data: { name: "x" } })).toBeNull();
+    });
+  });
+
+  describe("findById / findOne", () => {
+    it("findById builds a where on id and returns the row", async () => {
+      const repo = makeRepo({ findOne: mock(async () => ({ id: 5, name: "x" })) });
+      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const res = await m.findById(5);
+      expect(res).toEqual({ id: 5, name: "x" });
+      expect(repo.findOne).toHaveBeenCalledWith({ where: { id: 5 } });
+    });
+
+    it("findById returns null when nothing is found", async () => {
+      const repo = makeRepo({ findOne: mock(async () => null) });
+      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      expect(await m.findById("missing")).toBeNull();
+    });
+
+    it("findOne forwards an arbitrary where to find", async () => {
+      const repo = makeRepo({ findOne: mock(async () => ({ id: 1, email: "a@b.com" })) });
+      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const res = await m.findOne({ email: "a@b.com" });
+      expect(res).toEqual({ id: 1, email: "a@b.com" });
+      expect(repo.findOne).toHaveBeenCalledWith({ where: { email: "a@b.com" } });
+    });
+
+    it("findById loads requested relations through find", async () => {
+      const primary = makeRepo({ findOne: mock(async () => ({ id: 7 })) });
+      const postRepo = makeRepo({ findMany: mock(async () => [{ id: 1 }]) });
+      const em = makeEM({ primaryRepo: primary, relatedRepos: { post: postRepo } });
+      const m = new ModelMethods(
+        makeModel({ name: "user", relations: [{ from: "posts", to: "post", type: "hasMany" }] }),
+        "user",
+        em,
+      );
+      const res: any = await m.findById(7, { include: ["posts"] });
+      expect(res.posts).toEqual([{ id: 1 }]);
+    });
+  });
+
   describe("count / exists", () => {
     it("count forwards the where clause and returns the number", async () => {
       const repo = makeRepo({ count: mock(async () => 12) });

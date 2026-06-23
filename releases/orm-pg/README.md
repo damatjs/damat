@@ -6,6 +6,7 @@ Change history for this package. For how it works **now**, read the
 
 | Version | Summary | Upgrade notes |
 |---------|---------|---------------|
+| 0.3.0 | Bulk upsert execution — adds `PgRepository.upsertMany` / `PgModelClient.upsertMany` over the existing accessor SQL | [0.3.0 →](./0.3.0.md) |
 | 0.1.3 | Dependency bump — picks up the cross-module links work in `@damatjs/link`; no change to this package's own code | — |
 | 0.1.2 | Dependency bump — picks up string table-name relations in `@damatjs/orm-model`; no change to this package's own code | — |
 | 0.1.1 | Maintenance — CI and test cleanup, dependency bumps | — |

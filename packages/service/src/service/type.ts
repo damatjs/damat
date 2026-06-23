@@ -30,14 +30,50 @@ export interface UpdateOptions<TData = Record<string, unknown>> {
   returning?: string[];
 }
 
+export interface UpsertOptions<TData = Record<string, unknown>> {
+  /** The row to insert or update. */
+  data: TData;
+  /** Unique-constraint column(s) that define the conflict target. */
+  onConflict: string[];
+  /** Columns to update on conflict. Defaults to every inserted non-conflict column. */
+  updateColumns?: string[];
+  /** Explicit column → value overrides for the `DO UPDATE SET` clause. */
+  set?: Record<string, unknown>;
+  returning?: string[];
+}
+
+export interface UpsertManyOptions<TData = Record<string, unknown>> {
+  /** The rows to insert or update. */
+  data: TData[];
+  /** Unique-constraint column(s) that define the conflict target. */
+  onConflict: string[];
+  /** Columns to update on conflict. Defaults to every inserted non-conflict column. */
+  updateColumns?: string[];
+  /** Explicit column → value overrides for the `DO UPDATE SET` clause. */
+  set?: Record<string, unknown>;
+  returning?: string[];
+}
+
 export interface DeleteOptions {
   where: Record<string, unknown>;
   returning?: string[];
+  /**
+   * When true, recursively delete the rows reachable through `hasMany`/`hasOne`
+   * relations before deleting the matched rows, all inside one transaction.
+   * Each relation's `rule.onDelete` is respected (CASCADE/SET NULL/RESTRICT).
+   */
+  cascade?: boolean;
 }
 
 export interface SoftDeleteOptions {
   where: Record<string, unknown>;
   returning?: string[];
+  /**
+   * When true, recursively soft-delete the rows reachable through
+   * `hasMany`/`hasOne` relations before soft-deleting the matched rows, all
+   * inside one transaction.
+   */
+  cascade?: boolean;
 }
 
 export interface CountOptions {

@@ -2,7 +2,7 @@
 
 > The service layer for Damat modules: auto-generated CRUD per model, a shared connection pool, and typed, lazily-initialized module instances.
 
-`@damatjs/services` turns a map of ORM model definitions into a fully-featured service class. `ModuleService({ models })` returns an abstract base class with one camelCased accessor per model (`service.user`, `service.account`, ...), each exposing `create` / `find` / `findMany` / `update` / `delete` / `softDelete` / `restore` / `count` / `exists` plus transactions and relation loading. `PoolManager` is the process-wide holder of the PostgreSQL pool and entity manager that those services bind to, and `defineModule` wraps a service class into a typed `ModuleInstance` whose service is a lazily-constructed `Proxy`.
+`@damatjs/services` turns a map of ORM model definitions into a fully-featured service class. `ModuleService({ models })` returns an abstract base class with one camelCased accessor per model (`service.user`, `service.account`, ...), each exposing `create` / `createMany` / `upsert` / `upsertMany` / `find` / `findById` / `findOne` / `findMany` / `update` / `updateOne` / `delete` / `softDelete` / `restore` / `count` / `exists` plus transactions, cascade delete, and relation loading. `PoolManager` is the process-wide holder of the PostgreSQL pool and entity manager that those services bind to, and `defineModule` wraps a service class into a typed `ModuleInstance` whose service is a lazily-constructed `Proxy`.
 
 It sits between the ORM packages (`@damatjs/orm-pg`, `@damatjs/orm-model`, `@damatjs/orm-type`) and `@damatjs/framework`, which wires the pool and registers modules at startup.
 
@@ -67,7 +67,14 @@ Generated accessors are camelCased from the model key (`account` → `service.ac
 const svc = new UserModuleService({ apiKey: "..." });
 const user = await svc.user.create({ data: { email: "a@b.com" }, returning: ["id"] });
 const many = await svc.user.findMany({ where: { active: true }, take: 10, include: ["account"] });
-await svc.user.softDelete({ where: { id: user.id } });
+
+// insert-or-update on a unique column, and update returning the single row
+await svc.user.upsert({ data: { email: "a@b.com", name: "Ada" }, onConflict: ["email"] });
+const updated = await svc.user.updateOne({ where: { id: user.id }, data: { name: "Grace" } });
+const byId = await svc.user.findById(user.id);
+
+// remove the user and everything reachable via hasMany/hasOne, atomically
+await svc.user.delete({ where: { id: user.id }, cascade: true });
 ```
 
 ## API
@@ -75,13 +82,13 @@ await svc.user.softDelete({ where: { id: user.id } });
 | Export | Kind | Summary |
 | --- | --- | --- |
 | `ModuleService(config)` | factory | Builds an abstract base class from `{ models, credentialsSchema? }`. Returns a class with `em`, `getModels`, `transaction()`, and one `ModelMethods` accessor per model (camelCased key). |
-| `ModelMethods<T>` | class | The per-model CRUD surface: `create`, `createMany`, `find`, `findMany`, `update`, `delete`, `softDelete`, `restore`, `count`, `exists`, plus relation loading and transaction binding. |
+| `ModelMethods<T>` | class | The per-model CRUD surface: `create`, `createMany`, `upsert`, `upsertMany`, `find`, `findById`, `findOne`, `findMany`, `update`, `updateOne`, `delete` (optional `cascade`), `softDelete` (optional `cascade`), `restore`, `count`, `exists`, plus relation loading and transaction binding. |
 | `PoolManager` | static class | Process-wide holder of the `Pool`, `PgEntityManager`, and `ConnectionManager`. `setup`, `getPool`, `getPgEntityManager`, `getConnectionManager`, `healthCheck`, `getStats`, `isInitialized`, `reset`. State lives on `globalThis` so duplicate package copies share one pool. |
 | `defineModule(name, definition)` | factory | Wraps a service class + credentials loader into a `ModuleInstance` whose `.service` is a lazy `Proxy`. Returns `{ name, service, credentials, init }`. |
 | `ModuleDefinition<TService>` | type | `{ service: new (credentials) => TService; credentials: (env) => any }`. |
 | `ModuleInstance<TService>` | type | `{ name; service; credentials; init() }`. |
 | `ModuleRegistry` | interface | Empty interface apps augment via declaration merging so `getModule("user")` (in the framework) is typed. |
-| `ModuleServiceConfig`, `ModelsMap`, `FindOptions`, `CreateOptions`, `CreateManyOptions`, `UpdateOptions`, `DeleteOptions`, `SoftDeleteOptions`, `CountOptions`, `ExistsOptions`, `ToCamelCase` | types | Configuration and per-method option types for the service layer. |
+| `ModuleServiceConfig`, `ModelsMap`, `FindOptions`, `CreateOptions`, `CreateManyOptions`, `UpsertOptions`, `UpsertManyOptions`, `UpdateOptions`, `DeleteOptions`, `SoftDeleteOptions`, `CountOptions`, `ExistsOptions`, `ToCamelCase` | types | Configuration and per-method option types for the service layer. |
 | `PoolManagerStats`, `ConnectionManagerLike` | types | Pool statistics and the minimal connection-manager shape `PoolManager` accepts. |
 | `toCamelCase(name)` | internal util | Lowercases the first character only (`"UserService"` → `"userService"`); used internally to derive accessor names. Lives in `src/util/string.ts` and is **not** re-exported from `@damatjs/services`. |
 

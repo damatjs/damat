@@ -312,15 +312,25 @@ Each accessor exposes the full surface:
 | --- | --- | --- |
 | `create` | `({ data, returning? }) => Promise<T>` | insert one row |
 | `createMany` | `({ data: T[], returning? }) => Promise<T[]>` | insert many |
+| `upsert` | `({ data, onConflict, updateColumns?, set?, returning? }) => Promise<T>` | insert, or update on conflict |
+| `upsertMany` | `({ data: T[], onConflict, … }) => Promise<T[]>` | bulk insert-or-update |
 | `find` | `(opts?) => Promise<T \| null>` | one row (`select`, `where`, `orderBy`, `include`) |
+| `findById` | `(id, opts?) => Promise<T \| null>` | one row by primary key |
+| `findOne` | `(where, opts?) => Promise<T \| null>` | one row by filter |
 | `findMany` | `(opts?) => Promise<T[]>` | many rows (+ `skip`, `take`, `include`) |
 | `update` | `({ where, data, returning? }) => Promise<T[]>` | update matching rows |
-| `delete` | `({ where, returning? }) => Promise<number>` | hard delete; returns count |
-| `softDelete` | `({ where, returning? }) => Promise<T[]>` | set the model's deleted-at column to `now` |
+| `updateOne` | `({ where, data, returning? }) => Promise<T \| null>` | update and return the single affected row |
+| `delete` | `({ where, returning?, cascade? }) => Promise<number>` | hard delete; `cascade: true` removes related rows in a transaction |
+| `softDelete` | `({ where, returning?, cascade? }) => Promise<T[]>` | set the model's deleted-at column to `now`; `cascade: true` recurses |
 | `restore` | `({ where, returning? }) => Promise<T[]>` | clear the deleted-at column (set to `null`) |
 | `count` | `({ where? }) => Promise<number>` | row count |
 | `exists` | `({ where }) => Promise<boolean>` | existence check |
 | `getModelDefinition` | `() => ModelDefinition` | introspection |
+
+With `cascade: true`, `delete` / `softDelete` walk the model's `hasMany` /
+`hasOne` relations depth-first inside one transaction, honouring each relation's
+`rule.onDelete` (`CASCADE` recurses, `SET NULL` nulls the child FK, `RESTRICT` /
+`NO ACTION` throw when children exist), with a visited-set guarding cycles.
 
 `FindOptions` carries `select`, `where`, `orderBy` (`[{ column, direction }]`),
 `skip`, `take`, and `include` (relation names to eager-load). Relation loading

@@ -8,6 +8,7 @@ import type {
   UpdateOptions,
   DeleteOptions,
   UpsertOptions,
+  UpsertManyOptions,
 } from "../query/accessor/type";
 
 export interface PgModelClientLike<
@@ -31,4 +32,5 @@ export type {
   UpdateOptions,
   DeleteOptions,
   UpsertOptions,
+  UpsertManyOptions,
 };

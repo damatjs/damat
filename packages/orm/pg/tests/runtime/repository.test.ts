@@ -137,6 +137,29 @@ describe("PgRepository — write methods", () => {
       }),
     ).rejects.toThrow(/Upsert failed/);
   });
+
+  it("upsertMany returns every affected row", async () => {
+    const { repo, conn } = makeRepo({ rows: [{ id: "u1" }, { id: "u2" }] });
+    const rows = await repo.upsertMany({
+      data: [
+        { id: "u1", email: "a@b.com" },
+        { id: "u2", email: "c@d.com" },
+      ],
+      onConflict: ["email"],
+    });
+    expect(rows).toEqual([{ id: "u1" }, { id: "u2" }]);
+    expect(conn.last.sql).toContain("ON CONFLICT");
+    expect(conn.last.sql).toContain("VALUES ($1, $2), ($3, $4)");
+  });
+
+  it("upsertMany returns an empty array when nothing comes back", async () => {
+    const { repo } = makeRepo({ rows: [] });
+    const rows = await repo.upsertMany({
+      data: [{ id: "u1", email: "a@b.com" }],
+      onConflict: ["email"],
+    });
+    expect(rows).toEqual([]);
+  });
 });
 
 describe("PgRepository — aggregate helpers", () => {

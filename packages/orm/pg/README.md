@@ -99,11 +99,11 @@ Exported from the package root (`@damatjs/orm-pg`):
 | `TransactionManager` | class | Owns BEGIN/COMMIT/ROLLBACK over a pooled client; validates isolation level; `begin` / `run`. |
 | `TransactionContext` | class | A live transaction: `query`, `commit`, `rollback`, `createSavepoint` / `rollbackToSavepoint` / `releaseSavepoint`, `getClient`, `release`. |
 | `TransactionError`, `TransactionContextError` | class | Errors thrown by the transaction layer. |
-| `PgRepository`, `PgRepositoryConfig` | class / type | Repository over a model: `findMany/findOne/findById/findManyByIds/create/createMany/update/updateOne/delete/deleteById/upsert/count/exists`. |
+| `PgRepository`, `PgRepositoryConfig` | class / type | Repository over a model: `findMany/findOne/findById/findManyByIds/create/createMany/update/updateOne/delete/deleteById/upsert/upsertMany/count/exists`. |
 | `createRepository` | function | Factory building a `PgRepository` from a model + connection (`Pool` / `PoolClient` / `{ getPool }`). |
 | `pgExecuteRaw` | function | Executes a `BuiltQuery` against a `Pool`/`PoolClient`, with query/slow/error logging. |
 | `pgTransaction` | function | Runs a callback inside BEGIN/COMMIT/ROLLBACK on a pooled client. |
-| `PgModelClient` | class | Per-model CRUD over a connection; returns `{ rows, rowCount, descriptor }`. `findMany/findOne/create/createMany/update/delete/upsert/transaction/withClient`. |
+| `PgModelClient` | class | Per-model CRUD over a connection; returns `{ rows, rowCount, descriptor }`. `findMany/findOne/create/createMany/update/delete/upsert/upsertMany/transaction/withClient`. |
 | `ModelAccessor` | class | Pure query factory: each method returns `{ sql: BuiltQuery, json: Descriptor }`. Exposes `builders.{select,insert,update,delete,upsert}`. |
 | `SelectBuilder`, `InsertBuilder`, `UpdateBuilder`, `DeleteBuilder`, `UpsertBuilder` | class | The low-level query builders (chainable; `generateSql()` / `generateJson()`). |
 | `QueryBase` | class | Abstract base for the builders (where/orderBy/returning + column-existence asserts). |

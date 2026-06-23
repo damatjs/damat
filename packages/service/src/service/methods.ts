@@ -15,6 +15,8 @@ import {
   FindOptions,
   SoftDeleteOptions,
   UpdateOptions,
+  UpsertOptions,
+  UpsertManyOptions,
 } from "./type";
 
 export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
@@ -93,6 +95,26 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
     return repo.createMany(options as any);
   }
 
+  /**
+   * Insert a row, or update it when it collides with `onConflict`. Validates
+   * `data` as a full row (the INSERT path needs every required column) and
+   * returns the affected row.
+   */
+  async upsert(options: UpsertOptions): Promise<T> {
+    this._validateData(options.data);
+    const repo = this.getRepository();
+    return repo.upsert(options as any);
+  }
+
+  /** Bulk variant of {@link upsert}. Validates each row, returns all affected rows. */
+  async upsertMany(options: UpsertManyOptions): Promise<T[]> {
+    for (const item of options.data) {
+      this._validateData(item);
+    }
+    const repo = this.getRepository();
+    return repo.upsertMany(options as any);
+  }
+
   async find(
     options: FindOptions = {},
   ): Promise<(T & Record<string, any>) | null> {
@@ -130,6 +152,22 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
       results.push(loaded);
     }
     return results;
+  }
+
+  /** Convenience over {@link find}: fetch a single row by its primary key. */
+  async findById(
+    id: unknown,
+    options: Omit<FindOptions, "where"> = {},
+  ): Promise<(T & Record<string, any>) | null> {
+    return this.find({ ...options, where: { id } });
+  }
+
+  /** Convenience over {@link find}: fetch a single row by an arbitrary filter. */
+  async findOne(
+    where: Record<string, unknown>,
+    options: Omit<FindOptions, "where"> = {},
+  ): Promise<(T & Record<string, any>) | null> {
+    return this.find({ ...options, where });
   }
 
   /**
@@ -202,19 +240,69 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
     } as any);
   }
 
-  async delete(options: DeleteOptions): Promise<number> {
+  /**
+   * Update and return the single affected row (or `null` when the filter
+   * matches nothing). Saves the update-then-find re-read that `update`'s `T[]`
+   * return otherwise forces.
+   */
+  async updateOne(options: UpdateOptions): Promise<T | null> {
+    this._validateData(options.data, true);
     const repo = this.getRepository();
-    return repo.delete(options as any);
+    const row = await repo.updateOne(
+      options.data as Record<string, unknown>,
+      options.where,
+      options.returning,
+    );
+    return row ?? null;
+  }
+
+  async delete(options: DeleteOptions): Promise<number> {
+    if (!options.cascade) {
+      const { cascade: _cascade, ...rest } = options;
+      const repo = this.getRepository();
+      return repo.delete(rest as any);
+    }
+
+    return this.withCascadeTransaction(async () => {
+      const targets = (await this.getRelatedRepository(this.modelName).findMany({
+        where: options.where,
+      } as any)) as Record<string, any>[];
+      const { count } = await this.cascade(
+        this.model,
+        this.modelName,
+        targets,
+        "hard",
+        new Set(),
+      );
+      return count;
+    });
   }
 
   async softDelete(options: SoftDeleteOptions): Promise<T[]> {
     const deletedAtField = this.model._deletedAtField ?? "deleted_at";
-    const repo = this.getRepository();
-    return repo.update({
-      set: { [deletedAtField]: new Date() },
-      where: options.where,
-      returning: options.returning,
-    } as any);
+
+    if (!options.cascade) {
+      const repo = this.getRepository();
+      return repo.update({
+        set: { [deletedAtField]: new Date() },
+        where: options.where,
+        returning: options.returning,
+      } as any);
+    }
+
+    return this.withCascadeTransaction(async () => {
+      const targets = (await this.getRelatedRepository(this.modelName).findMany({
+        where: options.where,
+      } as any)) as Record<string, any>[];
+      const { rows } = await this.cascade(
+        this.model,
+        this.modelName,
+        targets,
+        "soft",
+        new Set(),
+      );
+      return rows as T[];
+    });
   }
 
   async restore(options: {
@@ -228,6 +316,164 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
       where: options.where,
       returning: options.returning,
     } as any);
+  }
+
+  /**
+   * Resolve a related model's definition by table name (static metadata, read
+   * off the entity manager's registry — the same name used to resolve its
+   * repository).
+   */
+  private resolveModel(name: string): ModelDefinition {
+    if (name === this.modelName) return this.model;
+    const registry = this.entityManager?.getModelRegistry() as
+      | { get(n: string): { model?: ModelDefinition } | undefined }
+      | undefined;
+    const model = registry?.get(name)?.model;
+    if (!model) {
+      throw new Error(
+        `Cannot cascade into "${name}": model is not registered with the entity manager.`,
+      );
+    }
+    return model;
+  }
+
+  /** The primary-key column of a model (defaults to "id"). */
+  private primaryKeyColumn(model: ModelDefinition): string {
+    const columns = model.toTableSchema().columns ?? [];
+    const pk = columns.find((c) => c.primaryKey);
+    return pk?.name ?? "id";
+  }
+
+  /**
+   * The FK column on the CHILD table that references `parentModel`'s primary
+   * key, for a hasMany/hasOne relation. Mirrors relation loading: an explicit
+   * `linkedBy` wins, then `<mappedBy>_id`, else `<parentModelName>_id`.
+   */
+  private childFkColumn(
+    relation: RelationSchema,
+    parentModel: ModelDefinition,
+  ): string {
+    if (relation.linkedBy?.[0]) return relation.linkedBy[0];
+    if (relation.mappedBy?.[0]) return `${relation.mappedBy[0]}_id`;
+    return `${parentModel._name}_id`;
+  }
+
+  /**
+   * Run `fn` inside a transaction. If one is already open (the caller wrapped
+   * the work in `service.transaction(cb)`), reuse it; otherwise open one on the
+   * entity manager and bind this accessor to it for the duration so every
+   * repository it touches shares the transactional connection.
+   */
+  private async withCascadeTransaction<R>(fn: () => Promise<R>): Promise<R> {
+    if (this.transactionalEm) return fn();
+    if (!this.entityManager) throw new Error("EntityManager not initialized");
+    return this.entityManager.transaction(async (tx) => {
+      this.setTransactionalEm(tx as unknown as TransactionalEntityManager);
+      try {
+        return await fn();
+      } finally {
+        this.setTransactionalEm(null);
+      }
+    });
+  }
+
+  /**
+   * Recursively delete (or soft-delete) `targetRows` of `model` and everything
+   * reachable through its `hasMany`/`hasOne` relations, depth-first: children
+   * are removed before their parents. `visited` carries the table names on the
+   * current path to break relation cycles.
+   *
+   * Each relation's `rule.onDelete` is honoured: `CASCADE` (or no rule) recurses;
+   * `SET NULL` nulls the child FK; `RESTRICT`/`NO ACTION` throw when children
+   * exist. Returns the total rows affected across all levels (`count`, used by
+   * `delete`) and the rows affected at THIS level (`rows`, used by `softDelete`).
+   */
+  private async cascade(
+    model: ModelDefinition,
+    modelName: string,
+    targetRows: Record<string, any>[],
+    mode: "hard" | "soft",
+    visited: Set<string>,
+  ): Promise<{ count: number; rows: Record<string, any>[] }> {
+    if (targetRows.length === 0) return { count: 0, rows: [] };
+    if (visited.has(modelName)) return { count: 0, rows: [] }; // cycle guard
+    visited.add(modelName);
+
+    const pk = this.primaryKeyColumn(model);
+    const targetIds = targetRows
+      .map((r) => r[pk])
+      .filter((v) => v !== undefined && v !== null);
+
+    if (targetIds.length === 0) {
+      visited.delete(modelName);
+      return { count: 0, rows: [] };
+    }
+
+    let childCount = 0;
+    const relations = (model.toTableSchema().relations ?? []).filter(
+      (r) => r.type === "hasMany" || r.type === "hasOne",
+    );
+
+    for (const relation of relations) {
+      const childTable = relation.to;
+      const fkColumn = this.childFkColumn(relation, model);
+      const rule = relation.rule?.onDelete;
+      const childRepo = this.getRelatedRepository(childTable);
+
+      if (rule === "SET NULL") {
+        await childRepo.update({
+          set: { [fkColumn]: null },
+          where: { [fkColumn]: { in: targetIds } },
+        } as any);
+        continue;
+      }
+
+      if (rule === "RESTRICT" || rule === "NO ACTION") {
+        const blocking = await childRepo.count({
+          [fkColumn]: { in: targetIds },
+        } as any);
+        if (blocking > 0) {
+          throw new Error(
+            `Cannot delete from "${modelName}": ${blocking} related "${childTable}" row(s) exist (onDelete: ${rule}).`,
+          );
+        }
+        continue;
+      }
+
+      if (rule === "SET DEFAULT") {
+        throw new Error(
+          `onDelete rule "SET DEFAULT" is not supported by cascade delete (relation ${modelName}.${relation.from}).`,
+        );
+      }
+
+      // default (undefined) or CASCADE → recurse depth-first
+      const childRows = (await childRepo.findMany({
+        where: { [fkColumn]: { in: targetIds } },
+      } as any)) as Record<string, any>[];
+      if (childRows.length === 0) continue;
+
+      const childModel = this.resolveModel(childTable);
+      const sub = await this.cascade(childModel, childTable, childRows, mode, visited);
+      childCount += sub.count;
+    }
+
+    visited.delete(modelName);
+
+    // remove THIS level's targets last (depth-first ordering)
+    const repo = this.getRelatedRepository(modelName);
+    if (mode === "hard") {
+      const removed = await repo.delete({
+        where: { [pk]: { in: targetIds } },
+      } as any);
+      return { count: childCount + removed, rows: targetRows };
+    }
+
+    const deletedAtField = model._deletedAtField ?? "deleted_at";
+    const rows = (await repo.update({
+      set: { [deletedAtField]: new Date() },
+      where: { [pk]: { in: targetIds } },
+    } as any)) as Record<string, any>[];
+    return { count: childCount + (rows?.length ?? targetIds.length), rows };
   }
 
   async count(options: CountOptions = {}): Promise<number> {

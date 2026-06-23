@@ -152,9 +152,10 @@ Register every model in `src/service.ts`'s `models` map.
 
 ### 2. Service (`src/service.ts`)
 `ModuleService({ models, credentialsSchema })` auto-generates CRUD for each model
-(keyed by its map name): `create` / `createMany` / `find` / `findMany` / `update`
-/ `delete` / `softDelete` / `restore` / `count` / `exists`, plus
-`this.transaction(cb)`.
+(keyed by its map name): `create` / `createMany` / `upsert` / `upsertMany` /
+`find` / `findById` / `findOne` / `findMany` / `update` / `updateOne` / `delete`
+(optional `cascade`) / `softDelete` (optional `cascade`) / `restore` / `count` /
+`exists`, plus `this.transaction(cb)`.
 
 **Pass models as an ARRAY via `collectModels`** — it derives each accessor key
 from the model's TABLE NAME (camelCased, no pluralizing), so you never hand-write

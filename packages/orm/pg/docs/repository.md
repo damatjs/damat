@@ -64,10 +64,11 @@ execution, so passing a `PoolClient` makes the repo transactional and passing a 
 | `delete(opt)` | `number` | Returns `rowCount`. |
 | `deleteById(id, returning?)` | `T \| undefined` | `delete({ where: { id }, returning }).rows[0]`. |
 | `upsert(opt)` | `T` | Throws `"Upsert failed: no rows returned"` if no row comes back. |
+| `upsertMany(opt)` | `T[]` | Bulk insert-or-update; all affected rows. |
 | `getAccessor()` | `ModelAccessor` | Escape hatch to the underlying accessor. |
 
 Option types (`FindOptions`, `CreateOptions`, `UpdateOptions`, `DeleteOptions`, `UpsertOptions`,
-`CreateManyOptions`) are documented in [query-builder.md](./query-builder.md).
+`UpsertManyOptions`, `CreateManyOptions`) are documented in [query-builder.md](./query-builder.md).
 
 ## `count` / `exists` — subquery wrapping
 
