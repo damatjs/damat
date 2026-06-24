@@ -91,8 +91,14 @@ route/step/workflow that competes with the generated one — extend it.
   - A **route** ONLY calls a workflow (`await workflow.execute(input)`) and shapes
     the response. It NEVER calls the service, NEVER holds business logic.
   - Only a **step** touches the service, via the typed `getModule("<name>")`.
-  - **Business logic + orchestration live in steps/workflows** — never in a route,
-    never in the service.
+  - **The step does the work with the scaffolded CRUD accessors directly**
+    (`getModule("<name>").<table>.create/update/find/…`) and owns its compensation. If a
+    step can do the action with a handful of accessor calls and undo them itself, it is NOT
+    a service/gateway function — the step just calls the accessors. A **service method**
+    (a one-line delegate to a `src/lib/gateway` body) is reserved for logic **beyond CRUD** —
+    a third-party API call, or a genuinely-complex many-table operation — and the gateway is
+    imported **only** by the service. Never wrap an accessor in a second function (no
+    `recordEvent` over `eventEvents.create`). The step owns the **revert**.
 - **Never re-wrap what the service already gives you.** `ModuleService({ models })`
   already exposes the full per-model CRUD surface — `create`, `createMany`, `upsert`,
   `upsertMany`, `find`, `findById`, `findOne`, `findMany`, `update`, `updateOne`,
@@ -226,12 +232,15 @@ the provider (do/reverse pairs so steps can compensate). Business logic does
 **not** live here; it lives in steps/workflows (route → workflow → step → service).
 
 **Empty-gateway baseline.** A plain-CRUD module has **no service methods and no
-`lib/gateway`** — `ModuleService({ models })` already covers every operation, so the
-empty body below **is** the finished service, not an unfinished one. Add a `lib/gateway`
-function (taking the service as its first arg) plus a **one-line** service delegate ONLY
-for genuine category-D logic — validation/branching pipelines, multi-table roll-ups,
-money/numbering/scheduling math, or third-party integrations. "Every exemplar has a
-gateway, so I must invent one" is the failure to avoid (see `spec/MODULE-STANDARDS.md`).
+`lib/gateway`** — `ModuleService({ models })` already covers every operation, so the empty
+body below **is** the finished service, not an unfinished one. The step does CRUD-shaped
+work with the accessors directly. Add a `lib/gateway` function (taking the service as its
+first arg) plus a **one-line** service delegate ONLY for logic **beyond CRUD** — a
+third-party API call, or a genuinely-complex operation touching many tables. The body lives
+in `lib/gateway`, imported **only** by the service; the step calls `service.method(...)`.
+Never wrap an accessor in a second function (no `recordEvent` over `eventEvents.create`).
+"Every exemplar has a gateway, so I must invent one" is the failure to avoid — see
+`spec/MODULE-STANDARDS.md`.
 
 ```ts
 import { ModuleService } from "@damatjs/services";
