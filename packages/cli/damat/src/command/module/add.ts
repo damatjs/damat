@@ -170,11 +170,11 @@ export const moduleAddCommand: Command = {
       }
 
       // Portable aliases: make the module's own `@<id>/...` imports AND the
-      // shared `@workflows/*` (its relocated workflow tree) resolve in the host
-      // backend's tsconfig. `@workflows/*` is app-level — written once and
+      // shared `@workflows` + `@workflows/*` (its relocated workflow tree) resolve
+      // in the host backend's tsconfig. They are app-level — written once and
       // skipped on later installs (idempotent); generated routes import their
-      // workflows through the recursive `@workflows/index` barrel, which resolves
-      // via that alias both standalone and after install.
+      // workflows from the bare `@workflows` barrel root, which resolves via the
+      // non-wildcard entry both standalone and after install.
       const tsResult = registerModuleTsconfigPaths(ctx.cwd, moduleId);
       if (tsResult === "updated") {
         ctx.logger.success(`Added portable aliases to tsconfig.json`);

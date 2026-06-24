@@ -1,5 +1,19 @@
 # @damatjs/services
 
+## 0.3.5
+
+### Patch Changes
+
+- s
+- Updated dependencies
+  - @damatjs/logger@0.3.5
+  - @damatjs/types@0.3.5
+  - @damatjs/deps@0.3.5
+  - @damatjs/orm-connector@0.3.5
+  - @damatjs/orm-model@0.3.5
+  - @damatjs/orm-pg@0.3.5
+  - @damatjs/orm-type@0.3.5
+
 ## 0.3.4
 
 ### Patch Changes

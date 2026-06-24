@@ -1,5 +1,14 @@
 # @damatjs/workflow-engine
 
+## 0.3.5
+
+### Patch Changes
+
+- s
+- Updated dependencies
+  - @damatjs/logger@0.3.5
+  - @damatjs/redis@0.3.5
+
 ## 0.3.4
 
 ### Patch Changes

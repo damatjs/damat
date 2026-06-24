@@ -1,5 +1,22 @@
 # @damatjs/module
 
+## 0.3.5
+
+### Patch Changes
+
+- s
+- Updated dependencies
+  - @damatjs/codegen@1.0.5
+  - @damatjs/logger@0.3.5
+  - @damatjs/deps@0.3.5
+  - @damatjs/framework@0.3.5
+  - @damatjs/orm-connector@0.3.5
+  - @damatjs/orm-migration@0.3.5
+  - @damatjs/orm-model@0.3.5
+  - @damatjs/orm-type@0.3.5
+  - @damatjs/services@0.3.5
+  - @damatjs/workflow-engine@0.3.5
+
 ## 0.3.4
 
 ### Patch Changes

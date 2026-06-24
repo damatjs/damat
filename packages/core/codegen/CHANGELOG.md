@@ -1,5 +1,16 @@
 # @damatjs/orm-codegen
 
+## 1.0.5
+
+### Patch Changes
+
+- s
+- Updated dependencies
+  - @damatjs/logger@0.3.5
+  - @damatjs/orm-migration@0.3.5
+  - @damatjs/orm-model@0.3.5
+  - @damatjs/orm-type@0.3.5
+
 ## 1.0.4
 
 ### Patch Changes

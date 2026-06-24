@@ -1,5 +1,11 @@
 # @damatjs/deps
 
+## 0.3.5
+
+### Patch Changes
+
+- s
+
 ## 0.3.4
 
 ### Patch Changes
