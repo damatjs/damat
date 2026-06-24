@@ -39,6 +39,8 @@ bun damat module add user     # install a module
 | `dev` (`d`) | Start the dev server with hot reload | `damat dev --port 4000 --clear` |
 | `build` (`b`) | Build for production into `.damat/dist` | `damat build --minify --target node` |
 | `start` (`s`) | Run the production build | `damat start --output .damat/dist` |
+| `codegen <module>` \| `--all` | Types + zod + registry + scaffold-once CRUD for app modules | `damat codegen user` |
+| `barrel [dir]` | Recursively (re)write `index.ts` barrels so one bare import re-exports a whole tree (default `src/workflows`) | `damat barrel` |
 | `module` (`m`) | Module command group (see below); lists subcommands when run alone | `damat module` |
 | `module add <source>` | Install a module from registry ref, path, or git | `damat module add damatjs/user@0.0.1` |
 | `module list` (`ls`) | List modules installed in the app | `damat module list` |
@@ -87,11 +89,16 @@ bun damat-orm migrate:up      # apply the module's migrations
 # restart the dev server — the module self-registers via damat.config.ts
 ```
 
-`module add` reads the module's `module.json`, copies its source into
-`src/modules/<id>` (overridable with `--dir`/`--name`/`--force`), registers it in
-`damat.config.ts` with provenance, appends required env vars to `.env.example`
-(warning about any missing in `.env`), and `bun add`s the npm packages it needs.
-Registry installs pass through a verification gate before any files are written.
+`module add` reads the module's `module.json` and **splits the module across the
+app's layers**, grouping each tree by module id: models/service/config/types/
+migrations → `src/modules/<id>` (overridable with `--dir`/`--name`/`--force`),
+`api/routes/<table>` → `src/api/routes/<id>/<table>`, `workflows/<table>` →
+`src/workflows/<id>/<table>`, and `tests/` → `tests/<id>`. It then registers the
+module in `damat.config.ts` with provenance, adds the `@<id>/*` + `@workflows` /
+`@workflows/*` tsconfig aliases, regenerates the workflow barrels, appends required
+env vars to `.env.example` (warning about any missing in `.env`), and `bun add`s the
+npm packages it needs. Registry installs pass through a verification gate before any
+files are written.
 
 ### Author a standalone module
 

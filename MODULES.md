@@ -32,8 +32,12 @@ my-module/
 
 `damat module add <source>` reads `module.json` to:
 
-1. copy the module source into the app's `src/modules/<id>`,
-2. register it in `damat.config.ts`,
+1. **split the module across the app's layers**, grouping each tree by module id:
+   models/service/config/types/migrations → `src/modules/<id>`,
+   `api/routes/<table>` → `src/api/routes/<id>/<table>`,
+   `workflows/<table>` → `src/workflows/<id>/<table>`, and `tests/` → `tests/<id>`,
+2. register it in `damat.config.ts`, add its `@<id>/*` + `@workflows` tsconfig
+   aliases, and regenerate the workflow barrels,
 3. write required env vars to `.env.example` (and warn about missing ones),
 4. install the npm packages the module needs.
 

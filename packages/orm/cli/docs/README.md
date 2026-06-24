@@ -7,7 +7,8 @@ Maintainer-facing reference for the `damat-orm` CLI. Read alongside the
 
 - [migrate-commands.md](./migrate-commands.md) — `migrate:up`, `migrate:status`,
   `migrate:list`, `migrate:create`.
-- [generate-commands.md](./generate-commands.md) — `generate:types`.
+- [generate-commands.md](./generate-commands.md) — legacy `generate:types`
+  (unregistered; type generation moved to `damat codegen`).
 - [config-and-paths.md](./config-and-paths.md) — `loadModules`,
   `loadDatabaseUrl`, `requireDatabaseUrl`, and the `resolve*Path` helpers.
 
@@ -67,10 +68,11 @@ Every handler returns `{ exitCode: number }` and reports via `ctx.logger`
   itself.
 - Each `Command` has `name`, `description`, optional `options`/`subcommands`, and
   an async `handler(ctx) => { exitCode }`.
-- A **parent** command (`migrate`, `generate`) has no real work — its handler
-  just lists subcommands. The dispatchable commands are the leaves
-  (`migrate:up`, `generate:types`, …). Note the leaf `name` values use the
-  colon form (`migrate:up`), matching how users type them.
+- A **parent** command (`migrate`) has no real work — its handler just lists
+  subcommands. The dispatchable commands are the leaves (`migrate:up`,
+  `migrate:create`, …). Note the leaf `name` values use the colon form
+  (`migrate:up`), matching how users type them. (The `generate` group is no
+  longer registered — type generation moved to `damat codegen`.)
 
 > `src/cli/registry.ts` is a self-contained `CommandRegistry` (map-backed,
 > throws on duplicate names). It is exported for programmatic/embedding use but
@@ -91,7 +93,7 @@ Every handler returns `{ exitCode: number }` and reports via `ctx.logger`
 - **Link modules**: `loadModules` also folds in cross-module link migration
   modules from `config.links` — one `link:<owner>` entry per `src/links/<owner>`
   directory, tagged `kind: "link"`. They share the `migrations/`+snapshot layout
-  of real modules; `generate:types` skips them and instead weaves their fields
+  of real modules; `damat codegen` skips them and instead weaves their fields
   into the linked modules' types.
 - **Pools are always closed**: db-touching handlers wrap work in
   `try { … } finally { await pool.end() }`.

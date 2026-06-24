@@ -197,8 +197,9 @@ moves others out, so two `tsconfig.json` aliases split by destination:
   never hand-write it.
 
 Codegen emits these specifiers for you. When you **hand-write** a file, use the SAME
-specifiers codegen emits — don't invent a new alias and don't flatten a file to dodge a
-deep path. (Full rule: `spec/AUTHORING-GUIDE.md` §2.)
+specifiers codegen emits — reach workflows via the bare `@workflows` barrel, a step
+via its relative `../steps/<op>` sibling, and types via `@<module>/types`; don't
+invent a new alias.
 
 ## Building the module
 

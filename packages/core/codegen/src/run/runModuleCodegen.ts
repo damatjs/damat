@@ -120,7 +120,7 @@ export async function runModuleCodegen(
     );
   }
 
-  // 6. Recursive barrels so `@workflows/index` re-exports the whole tree. Run
+  // 6. Recursive barrels so the bare `@workflows` re-exports the whole tree. Run
   //    over this module's workflow root; the cross-module app root barrel
   //    (src/workflows/index.ts) is rebuilt by the codegen command / module add.
   //    Non-fatal — barrels are mechanical and never block the type output.

@@ -28,7 +28,7 @@ export async function codegenOne(
       strict: true,
     });
     if (outcome === "error") return { exitCode: 1 };
-    // Rebuild the cross-module workflow barrels so `@workflows/index` re-exports
+    // Rebuild the cross-module workflow barrels so the bare `@workflows` re-exports
     // this module alongside the others already present.
     generateBarrels(join(ctx.cwd, "src", "workflows"), ctx.logger);
     if (outcome === "generated") ctx.logger.success("Codegen completed");

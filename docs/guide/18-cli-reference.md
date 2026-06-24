@@ -10,7 +10,8 @@
 | `damat build` | Build for production |
 | `damat start` | Start the production server |
 | `damat codegen <module>` \| `--all` | Types + zod + registry, and scaffold-once CRUD. Name a module, or pass `--all` for every module in the config |
-| `damat module add <src>` | Install a module (registry/path/git) |
+| `damat barrel [dir]` | Recursively (re)write `index.ts` barrels so one bare import (`@workflows`) re-exports a whole tree (default `src/workflows`) |
+| `damat module add <src>` | Install a module (registry/path/git); splits routes/workflows/tests under `<moduleId>` |
 | `damat module list` | List installed modules |
 | `damat module init <name>` | Scaffold a standalone module package |
 | `damat module dev` | Run a module package as a live app |
@@ -26,7 +27,8 @@
 | `damat-orm migrate:status` | Show applied vs pending |
 | `damat-orm migrate:create <name>` | Create a migration |
 | `damat-orm migrate:list` | List modules with migrations |
-| `damat-orm generate:types <module>` | Generate row/type files from a module's models |
+
+> Type generation moved out of `damat-orm` — use `damat codegen <module>` (in an app) or `damat module codegen` (in a module package). `damat-orm` is migrations-only.
 
 ## `create-damat-app` — scaffolding ([docs](../../packages/cli/create-damat-app/README.md))
 

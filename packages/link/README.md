@@ -103,7 +103,7 @@ damat codegen organization # Organization gains `users?: User[]`
 
 ## Linked types extend the modules
 
-Links don't generate their own (junction) types. Instead, `generate:types <module>`
+Links don't generate their own (junction) types. Instead, `damat codegen <module>`
 extends each module's entity with the linked module's type — via a sibling
 `<table>.links.ts` that merges onto the base interface (the model-generated
 `<table>.ts` stays untouched):

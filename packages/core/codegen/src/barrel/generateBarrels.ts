@@ -16,7 +16,7 @@ const BARREL_NOTE =
  * directory. Each barrel does `export * from "./<child>"` for every child
  * sub-folder and every sibling `.ts`/`.tsx` file (excluding the barrel itself),
  * so the top-level barrel transitively re-exports everything beneath it — a
- * single `@workflows/index` import then reaches any workflow in the tree.
+ * bare `@workflows` import then reaches any workflow in the tree.
  *
  * Barrels are mechanical and always overwritten so they reflect what is on disk
  * (a hand-added file shows up on the next run). A folder with no exportable

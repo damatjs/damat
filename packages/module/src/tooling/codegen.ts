@@ -18,9 +18,9 @@ export type ModuleCodegenResult = RunModuleCodegenResult;
  * the `<moduleId>/` segment when it relocates these into a host app
  * (`src/api/routes/<id>/<resource>`, `src/workflows/<id>/<resource>`). Generated
  * files reach types/service via `@<module>/*` and reach workflows through the
- * recursive `@workflows/index` barrel, so the imports resolve unchanged before
- * and after install. The module has no cross-module links, so no link
- * augmentation is applied.
+ * bare `@workflows` barrel root, so the imports resolve unchanged before and
+ * after install. The module has no cross-module links, so no link augmentation
+ * is applied.
  */
 export async function generateModuleTypes(
   packageDir: string,

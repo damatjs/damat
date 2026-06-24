@@ -207,7 +207,7 @@ damat codegen user         # Users gains `organizations?: Organizations[]`
 damat codegen organization # Organizations gains `users?: Users[]`
 ```
 
-`generate:types <module>` writes a sibling `<table>.links.ts` next to the
+`damat codegen <module>` writes a sibling `<table>.links.ts` next to the
 module's generated row types that merges the linked entity onto the base
 interface (the model-generated `<table>.ts` stays untouched):
 

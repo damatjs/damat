@@ -42,10 +42,13 @@ subcommand prints the available subcommands.
 | `migrate:status [module]` | Show applied/pending counts (optionally for one module) | `damat-orm migrate:status user` |
 | `migrate:list` | List modules that have migrations, with counts | `damat-orm migrate:list` |
 | `migrate:create <module>` | Create an initial or diff migration for a module | `damat-orm migrate:create user` |
-| `generate:types <module>` | Generate row/type files from a module's models | `damat codegen user` |
 
 > `migrate:status` also accepts `--module <name>` / `-m <name>` as an
 > alternative to the positional argument.
+>
+> **Type generation lives elsewhere.** `damat-orm` is migrations-only — generate
+> row types/zod/registry with `damat codegen <module>` (in an app) or
+> `damat module codegen` (in a module package), both over `@damatjs/codegen`.
 
 ### Cross-module links
 
@@ -64,9 +67,9 @@ tables that join models living in different modules.
   bun damat-orm migrate:up                 # applies module + link migrations together
   ```
 
-- `generate:types` does **not** emit standalone types for a link module. Passing
+- `damat codegen` does **not** emit standalone types for a link module. Passing
   a `link:<owner>` id prints a notice and exits 0. Instead, running
-  `generate:types` for a **linked** module weaves the relationship in: for every
+  `damat codegen` for a **linked** module weaves the relationship in: for every
   link the module participates in, the linked entity is added as an optional
   field on the module's generated interface via a sibling `<table>.links.ts`
   declaration-merge file that is re-exported from the module's types index.
@@ -135,8 +138,8 @@ Notes grounded in the source:
 - `migrate:create` writes an **initial** migration the first time (no snapshot
   yet) and a **diff** migration thereafter; a diff with no changes is reported
   as "No changes detected." and exits 0.
-- `generate:types` writes a file-per-table map plus an `index.ts` into the
-  module's `types/` directory; when the module participates in cross-module
+- `damat codegen` (not `damat-orm`) writes a file-per-table map plus an `index.ts`
+  into the module's `types/` directory; when the module participates in cross-module
   links it also emits `<table>.links.ts` augmentation files and re-exports them
   from `index.ts`.
 - Link migration modules are discovered from `links` in `damat.config.ts`: each

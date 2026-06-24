@@ -100,9 +100,9 @@ Layout convention enforced by these helpers:
 
 ```
 <module.resolve>/
-├── models/        ← model definitions (input to generate:types & migrate:create)
+├── models/        ← model definitions (input to migrate:create & damat codegen)
 ├── migrations/    ← .sql migrations + snapshot
-└── types/         ← generated types (output of generate:types)
+└── types/         ← generated types (output of damat codegen)
 ```
 
 `resolveBasePath`/`getModulesDir` support a CLI-arg → config → default
@@ -131,7 +131,7 @@ export default {
 
 Given this, `migrate:create user` resolves models from
 `<configDir>/src/modules/user/models`, writes the migration under
-`…/user/migrations`, and `generate:types user` writes to `…/user/types`. A
+`…/user/migrations`, and `damat codegen user` writes to `…/user/types`. A
 `src/links/user/` directory is registered as `link:user`, so
 `migrate:create link:user` writes its junction-table migration under
 `…/links/user/migrations`.

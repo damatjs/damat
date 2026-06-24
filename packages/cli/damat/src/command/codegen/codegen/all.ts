@@ -31,7 +31,7 @@ export async function codegenAll(ctx: CommandContext, modules: ModuleContainer) 
     }
   }
 
-  // Rebuild the cross-module workflow barrels so `@workflows/index` re-exports
+  // Rebuild the cross-module workflow barrels so the bare `@workflows` re-exports
   // every module just generated.
   generateBarrels(join(ctx.cwd, "src", "workflows"), ctx.logger);
 

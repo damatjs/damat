@@ -43,7 +43,7 @@ src/links/
    `discoverModels` reads each owner's `models` export, so
    `migrate:create link:<owner>` / `migrate:up` create the junction tables from
    `links/<owner>/migrations`.
-3. **Types.** `generate:types <module>` (in `@damatjs/orm-cli`) skips `kind: "link"`
+3. **Types.** `damat codegen <module>` (over `@damatjs/codegen`) skips `kind: "link"`
    modules and instead, after generating a module's model types, aggregates all
    links, finds those the module participates in, and writes a `<table>.links.ts`
    augmentation into the module's `types/` (see `codegen.ts`). Junction tables get

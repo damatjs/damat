@@ -1,13 +1,19 @@
 # Generate commands
 
-The `generate` group lives in `src/cli/commands/generate/`. The parent
-`generate` command (`index.ts`) only lists subcommands; today there is a single
-leaf, `generate:types`.
+> **Moved.** Type generation is no longer a `damat-orm` command — `damat-orm` is
+> migrations-only (`src/cli/commands/index.ts` registers only `migrate`). The same
+> pipeline now runs via **`damat codegen <module>`** (in an app) and
+> **`damat module codegen`** (in a module package), both over `@damatjs/codegen`'s
+> `runCodegen`/`runModuleCodegen`. The `src/cli/commands/generate/` files described
+> below are unregistered legacy code kept for reference; the pipeline is unchanged.
+
+The `generate` group lives in `src/cli/commands/generate/`. The leaf
+`generate:types` is no longer wired into the `damat-orm` CLI; its pipeline is the
+one `damat codegen` runs:
 
 ```
-generate (parent, lists subcommands)
-└─ generate:types  → discoverModels → toModuleSchema → generateFilesMap
-                        → augmentWithLinks → write
+damat codegen <module>  → discoverModels → toModuleSchema → generateFilesMap
+                            → augmentWithLinks → write
 ```
 
 ## `generate:types <module>` — `src/cli/commands/generate/types.ts`

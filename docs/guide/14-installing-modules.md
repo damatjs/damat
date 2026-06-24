@@ -3,9 +3,24 @@
 # 14. Installing existing modules
 
 `damat module add <source>` installs a module shadcn-style: it reads the
-module's `module.json`, copies the source into `src/modules/<id>`, registers it
-in `damat.config.ts`, syncs required env vars into `.env.example`, and installs
-the npm packages it needs.
+module's `module.json`, **splits the module across the app's layers** (see below),
+registers it in `damat.config.ts`, adds its portable tsconfig aliases, regenerates
+the workflow barrels, syncs required env vars into `.env.example`, and installs the
+npm packages it needs.
+
+A module is authored **flat** (`workflows/<table>`, `api/routes/<table>`, `tests/`);
+on install the `<moduleId>/` segment is added so nothing collides:
+
+| In the module package | Lands in the app |
+| --- | --- |
+| models, service, config, types, migrations, `lib/` | `src/modules/<moduleId>/` |
+| `api/routes/<table>/` | `src/api/routes/<moduleId>/<table>/` (URL `/<moduleId>/<table>`) |
+| `workflows/<table>/` | `src/workflows/<moduleId>/<table>/` |
+| `tests/` | `tests/<moduleId>/` |
+
+Generated routes import workflows from the bare `@workflows` barrel, which the
+install wires up via the `@workflows` / `@workflows/*` and `@<moduleId>/*` tsconfig
+paths it adds.
 
 ```bash
 # from a registry ref (requires DAMAT_MODULE_REGISTRY)

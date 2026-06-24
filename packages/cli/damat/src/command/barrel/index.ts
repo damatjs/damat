@@ -3,8 +3,8 @@ import { type Command, reportError } from "@damatjs/cli";
 import { generateBarrels } from "@damatjs/codegen";
 
 /**
- * Recursively (re)write `index.ts` barrels in a directory tree so a single
- * import (`@workflows/index`) re-exports everything beneath it. Each folder gets
+ * Recursively (re)write `index.ts` barrels in a directory tree so a single bare
+ * import (`@workflows`) re-exports everything beneath it. Each folder gets
  * an `index.ts` doing `export * from "./<child>"` for every sub-folder and
  * sibling file. Codegen and `damat module add` run this automatically over
  * `src/workflows`; this command is the manual entry point (e.g. after hand-adding
