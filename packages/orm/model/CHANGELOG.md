@@ -1,5 +1,14 @@
 # @damatjs/orm-model
 
+## 0.3.4
+
+### Patch Changes
+
+- agent comment update for the scaffolding
+- Updated dependencies
+  - @damatjs/deps@0.3.4
+  - @damatjs/orm-type@0.3.4
+
 ## 0.3.3
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @damatjs/types
 
+## 0.3.4
+
+### Patch Changes
+
+- agent comment update for the scaffolding
+
 ## 0.3.3
 
 ### Patch Changes

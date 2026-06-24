@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/link",
   "description": "Cross-module links for Damat — define relationships between two modules, generate the junction table, migrate it, and query linked records across modules.",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

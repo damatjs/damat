@@ -1,5 +1,16 @@
 # @damatjs/orm-codegen
 
+## 1.0.4
+
+### Patch Changes
+
+- agent comment update for the scaffolding
+- Updated dependencies
+  - @damatjs/logger@0.3.4
+  - @damatjs/orm-migration@0.3.4
+  - @damatjs/orm-model@0.3.4
+  - @damatjs/orm-type@0.3.4
+
 ## 1.0.3
 
 ### Patch Changes

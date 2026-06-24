@@ -1,5 +1,14 @@
 # @damatjs/workflow-engine
 
+## 0.3.4
+
+### Patch Changes
+
+- agent comment update for the scaffolding
+- Updated dependencies
+  - @damatjs/logger@0.3.4
+  - @damatjs/redis@0.3.4
+
 ## 0.3.3
 
 ### Patch Changes
