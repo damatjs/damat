@@ -1,4 +1,6 @@
+import { join } from "node:path";
 import type { CommandContext } from "@damatjs/cli";
+import { generateBarrels } from "@damatjs/codegen";
 import { ModuleContainer } from "../constant";
 import { runModuleCodegen } from "../runModule";
 
@@ -28,6 +30,10 @@ export async function codegenAll(ctx: CommandContext, modules: ModuleContainer) 
       );
     }
   }
+
+  // Rebuild the cross-module workflow barrels so `@workflows/index` re-exports
+  // every module just generated.
+  generateBarrels(join(ctx.cwd, "src", "workflows"), ctx.logger);
 
   if (failed > 0) {
     ctx.logger.error(

@@ -5,8 +5,7 @@ import { SCAFFOLD_NOTE } from '../../constant';
 export function routeCollectionApi(n: CrudNames, wfDirSpec: string): string {
   return `${SCAFFOLD_NOTE}
 import type { RouteHandler } from "@damatjs/framework/router";
-import { create${n.pascal}Workflow } from "${wfDirSpec}/create${n.pascal}";
-import { findMany${n.pascal}Workflow } from "${wfDirSpec}/findMany${n.pascal}";
+import { create${n.pascal}Workflow, findMany${n.pascal}Workflow } from "${wfDirSpec}";
 import { ${n.querySchema} } from "./query";
 
 /** GET /${n.fileBase} — list ${n.prop}. */

@@ -46,7 +46,8 @@ You're in **your own** module package with the `@damatjs/*` packages installed
 **Codegen is your propeller — build only what's missing.** You never hand-write
 CRUD: model the data, run `bun run codegen`, and it generates the whole basic
 slice (types + zod + `registry.ts`, and **scaffold-once** per-operation
-`workflows/<module>/<table>` + `api/routes/<table>`). That generated slice carries
+`workflows/<table>` + `api/routes/<table>`, both flat by table — `damat module add`
+adds the `<moduleId>/` segment on install). That generated slice carries
 the module — your job is to add only the custom logic *on top of it*. So: **models
 → codegen → extend.** **Extend the generated files in place; never rebuild, fork,
 or write a parallel route/step that competes with the generated one.**
@@ -86,14 +87,19 @@ or write a parallel route/step that competes with the generated one.**
   - **Stay-inside → `@<module>/*`** — `types`, `config`/`schema`, `service`, `lib`,
     `models` stay under `src/modules/<module>/`. Address them by the module-name alias
     (`import type { Widgets } from "@widget/types"`). Types stay inside — never moved out.
-  - **Move-out → `@workflows/<module>/<table>/…`** — `workflows/` (and `api/routes/`)
-    relocate to the app's top-level `src/workflows/` on install. Codegen nests them at
-    `src/workflows/<module>/<table>/…`, so `@workflows/<module>/<table>/…` is byte-identical
-    before and after install; the `<module>/` segment keeps the shared alias collision-free.
-    **That nesting is the install-stability contract — don't flatten it.**
+  - **Move-out → the bare `@workflows` barrel** — `workflows/` (and `api/routes/`)
+    relocate to the app's top-level `src/workflows/` / `src/api/routes/` on install, where
+    `damat module add` adds the `<moduleId>/` segment. Your module ships them **flat**
+    (`workflows/<table>`), so you never write a deep workflow path: route→workflow imports go
+    through the recursive `index.ts` barrel root (`import { createWidgetsWorkflow } from
+    "@workflows"`), and workflow→step is a relative sibling (`../steps/createWidgets`).
+    `@workflows` resolves to `src/workflows/index` identically before and after install (a
+    non-wildcard `"@workflows": ["./src/workflows"]` tsconfig entry, written by the scaffold
+    and `damat module add`). Barrels are auto-generated (codegen / `damat module add` /
+    `damat barrel`) — never hand-edit one.
   - **Never use `@/` in module code** — the host binds `@/` → the *app* root, so a moved-out
     file importing `@/types` would silently hit the app's `src/types`. Sibling re-exports
-    (`./api`, `./create<Pascal>`, `./validator`, `./index`) stay relative — they move together.
+    (`./api`, `./create<Pascal>`, `./validator`, `../steps/<op>`) stay relative — they move together.
   The only cross-module specifier you'll ever see is in codegen-generated link augmentation
   (`<table>.links.ts`), which imports the linked module's types via `@<other>/types` — you
   never hand-write it. When you hand-write a file, mirror codegen's specifiers exactly.

@@ -19,8 +19,11 @@
       ],
       "@organization/*": [
         "./src/modules/organization/*"
-      ]
-    }
+      ],
+      "@workflows": [
+        "./src/workflows"
+      ],
+    },
   },
   "include": [
     "src/**/*",

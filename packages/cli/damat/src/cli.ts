@@ -1,13 +1,13 @@
 #!/usr/bin/env bun
 import { runCli, reportError, getExitCode } from "@damatjs/cli";
 import { Logger } from "@damatjs/logger";
-import { buildCommand, devCommand, startCommand, codegenCommand, moduleCommand } from './command';
+import { buildCommand, devCommand, startCommand, codegenCommand, barrelCommand, moduleCommand } from './command';
 
 runCli({
   name: "damat",
   version: "0.3.1",
   description: "Damat CLI - Development and build tool for Damat.js",
-  commands: [devCommand, startCommand, buildCommand, codegenCommand, moduleCommand],
+  commands: [devCommand, startCommand, buildCommand, codegenCommand, barrelCommand, moduleCommand],
   banner: {
     title: "Damat CLI",
     subtitle: "Development and build tool for Damat.js",

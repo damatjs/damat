@@ -1,6 +1,7 @@
 import { join, relative } from "node:path";
 import { existsSync } from "node:fs";
 import { type Command, reportError } from "@damatjs/cli";
+import { generateBarrels } from "@damatjs/codegen";
 
 import { readModuleManifest, locateModuleDir, evaluateVerification } from "@damatjs/module";
 import type { ModuleSource } from "@damatjs/framework";
@@ -123,6 +124,7 @@ export const moduleAddCommand: Command = {
         cwd: ctx.cwd,
         moduleId,
         modulesDir,
+        packageDir: resolved.dir,
         force: Boolean(ctx.options.force),
       });
       ctx.logger.success(
@@ -135,6 +137,15 @@ export const moduleAddCommand: Command = {
         ctx.logger.info(
           `  workflows → ${relative(ctx.cwd, layout.workflowsTarget)}`,
         );
+      }
+      if (layout.testsTarget) {
+        ctx.logger.info(`  tests → ${relative(ctx.cwd, layout.testsTarget)}`);
+      }
+
+      // Rebuild the app's workflow barrels so `@workflows` re-exports the newly
+      // installed module's workflows alongside the existing ones.
+      if (layout.workflowsTarget) {
+        generateBarrels(join(ctx.cwd, "src", "workflows"), ctx.logger);
       }
 
       // Register in damat.config.ts, recording where the module came from
@@ -159,10 +170,11 @@ export const moduleAddCommand: Command = {
       }
 
       // Portable aliases: make the module's own `@<id>/...` imports AND the
-      // shared `@workflows/*` (its relocated workflows/routes) resolve in the
-      // host backend's tsconfig. `@workflows/*` is app-level — written once and
-      // skipped on later installs (idempotent), so every module's
-      // `@workflows/<id>/<table>/…` specifiers resolve after install.
+      // shared `@workflows/*` (its relocated workflow tree) resolve in the host
+      // backend's tsconfig. `@workflows/*` is app-level — written once and
+      // skipped on later installs (idempotent); generated routes import their
+      // workflows through the recursive `@workflows/index` barrel, which resolves
+      // via that alias both standalone and after install.
       const tsResult = registerModuleTsconfigPaths(ctx.cwd, moduleId);
       if (tsResult === "updated") {
         ctx.logger.success(`Added portable aliases to tsconfig.json`);
@@ -170,7 +182,8 @@ export const moduleAddCommand: Command = {
         ctx.logger.warn(
           `Could not update tsconfig.json automatically — add to compilerOptions.paths:\n` +
           `  "@${moduleId}/*": ["./src/modules/${moduleId}/*"]\n` +
-          `  "@workflows/*": ["./src/workflows/*"]   (app-level; add once)`,
+          `  "@workflows": ["./src/workflows"]        (app-level; add once)\n` +
+          `  "@workflows/*": ["./src/workflows/*"]    (app-level; add once)`,
         );
       }
 

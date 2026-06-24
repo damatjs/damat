@@ -37,30 +37,37 @@ function scaffoldInto(aliases?: { module: string; workflows: string }) {
 describe("generateCrudScaffold — portable aliases", () => {
   const aliases = { module: "@shop", workflows: "@workflows" };
 
-  it("steps import types via the @<module> alias", () => {
+  it("steps import types via the bare @<module>/types alias", () => {
     const { read } = scaffoldInto(aliases);
     const step = read("workflows/widgets/steps/createWidgets.ts");
-    expect(step).toContain('from "@shop/types/index"');
+    // `@shop/types` resolves via `@shop/*` → `./src/types` → its index.ts.
+    expect(step).toContain('from "@shop/types"');
     expect(step).not.toContain("../");
   });
 
-  it("workflows import steps + types via aliases (@workflows nested by module/table)", () => {
+  it("workflows import their step relatively (same <table> subtree) and types via @<module>", () => {
     const { read } = scaffoldInto(aliases);
     const wf = read("workflows/widgets/workflows/createWidgets.ts");
-    expect(wf).toContain('from "@workflows/shop/widgets/steps/createWidgets"');
-    expect(wf).toContain('from "@shop/types/index"');
-    expect(wf).not.toContain("../");
+    // workflow → step is a sibling within the same <table> subtree, which
+    // relocates together on install, so it stays relative — no module id baked in.
+    expect(wf).toContain('from "../steps/createWidgets"');
+    expect(wf).toContain('from "@shop/types"');
+    expect(wf).not.toContain("@workflows");
   });
 
-  it("routes import workflows via @workflows and types via @<module>", () => {
+  it("routes import workflows from the bare @workflows barrel root; types via @<module>", () => {
     const { read } = scaffoldInto(aliases);
     const api = read("api/routes/widgets/api.ts");
-    expect(api).toContain('"@workflows/shop/widgets/workflows/createWidgets"');
+    // route → workflow crosses trees (depth changes on install), so it goes
+    // through the barrel root (`@workflows` → src/workflows/index via the
+    // non-wildcard tsconfig entry), not a deep, module-id-bearing path.
+    expect(api).toContain('from "@workflows"');
+    expect(api).toContain("createWidgetsWorkflow");
     const validator = read("api/routes/widgets/validator.ts");
-    expect(validator).toContain('from "@shop/types/index"');
-    // [id] route is one level deeper but the alias is depth-independent.
+    expect(validator).toContain('from "@shop/types"');
+    // [id] route is one level deeper but the barrel specifier is depth-independent.
     const idApi = read("api/routes/widgets/[id]/api.ts");
-    expect(idApi).toContain('"@workflows/shop/widgets/workflows/findWidgets"');
+    expect(idApi).toContain('from "@workflows"');
     expect(idApi).not.toContain("../../");
   });
 

@@ -50,26 +50,27 @@ export function generateCrudScaffold(
     const routeDir = join(routesRoot, n.fileBase);
     const routeIdDir = join(routeDir, "[id]");
 
-    // Import specifiers. With `aliases`, emit portable tsconfig-path specifiers
-    // that survive the standalone→installed relocation; otherwise fall back to
-    // the legacy relative paths computed from each source dir to its target.
-    //   - types/service STAY inside the module      → `@<id>/...`
-    //   - workflows/steps MOVE OUT (nested by id)    → `@workflows/<id>/<table>/...`
-    //   - same-directory siblings (./api, ./createX) → always relative (in templates)
-    const typesAlias = aliases ? `${aliases.module}/types/index` : null;
-    const wfDirAlias = aliases
-      ? `${aliases.workflows}/${moduleId}/${n.fileBase}/workflows`
-      : null;
-    const stepsDirAlias = aliases
-      ? `${aliases.workflows}/${moduleId}/${n.fileBase}/steps`
-      : null;
+    // Import specifiers (bare — directory imports resolve to the folder's
+    // `index.ts` barrel):
+    //   - types STAY inside the module                 → `@<id>/types`
+    //     (resolves via `@<id>/*` → `./src/*` → `./src/types` → index)
+    //   - workflow → step (same <table> subtree)       → relative `../steps/...`
+    //     (the subtree relocates together, so the relative path survives install)
+    //   - route → workflow (crosses api/routes↔workflows, where the relative
+    //     depth changes on install) → the recursive barrel root `@workflows`
+    //     (needs the NON-WILDCARD `"@workflows": ["./src/workflows"]` tsconfig
+    //     entry the scaffold/install write, so it resolves to `src/workflows/index`)
+    //   - same-directory siblings (./query, ./createX) → always relative (in templates)
+    // The fallback (no aliases) keeps the legacy relative paths to each target dir.
+    const typesAlias = aliases ? `${aliases.module}/types` : null;
+    const wfBarrel = aliases ? `${aliases.workflows}` : null;
 
     const typesFromStep = typesAlias ?? spec(stepsDir, typesIndex);
     const typesFromWorkflow = typesAlias ?? spec(workflowsDir, typesIndex);
-    const stepsFromWorkflow = stepsDirAlias ?? spec(workflowsDir, stepsDir);
-    const wfFromRoute = wfDirAlias ?? spec(routeDir, workflowsDir);
+    const stepsFromWorkflow = spec(workflowsDir, stepsDir);
+    const wfFromRoute = wfBarrel ?? spec(routeDir, workflowsDir);
     const typesFromRoute = typesAlias ?? spec(routeDir, typesIndex);
-    const wfFromRouteId = wfDirAlias ?? spec(routeIdDir, workflowsDir);
+    const wfFromRouteId = wfBarrel ?? spec(routeIdDir, workflowsDir);
     const typesFromRouteId = typesAlias ?? spec(routeIdDir, typesIndex);
 
     // Steps
@@ -78,7 +79,6 @@ export function generateCrudScaffold(
     writeOnce(join(stepsDir, `delete${n.pascal}.ts`), T.stepDelete(n, typesFromStep));
     writeOnce(join(stepsDir, `find${n.pascal}.ts`), T.stepFind(n, typesFromStep));
     writeOnce(join(stepsDir, `findMany${n.pascal}.ts`), T.stepFindMany(n, typesFromStep));
-    writeOnce(join(stepsDir, "index.ts"), T.stepsIndex(n));
 
     // Workflows
     writeOnce(join(workflowsDir, `create${n.pascal}.ts`), T.workflowCreate(n, typesFromWorkflow, stepsFromWorkflow));
@@ -86,7 +86,6 @@ export function generateCrudScaffold(
     writeOnce(join(workflowsDir, `delete${n.pascal}.ts`), T.workflowDelete(n, typesFromWorkflow, stepsFromWorkflow));
     writeOnce(join(workflowsDir, `find${n.pascal}.ts`), T.workflowFind(n, typesFromWorkflow, stepsFromWorkflow));
     writeOnce(join(workflowsDir, `findMany${n.pascal}.ts`), T.workflowFindMany(n, typesFromWorkflow, stepsFromWorkflow));
-    writeOnce(join(workflowsDir, "index.ts"), T.workflowsIndex(n));
 
     // Routes — collection
     writeOnce(join(routeDir, "api.ts"), T.routeCollectionApi(n, wfFromRoute));

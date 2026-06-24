@@ -35,6 +35,7 @@ export function registerModuleTsconfigPaths(
 
   const entries: Array<[string, string[]]> = [
     [`@${moduleId}/*`, [`./src/modules/${moduleId}/*`]],
+    ["@workflows", ["./src/workflows"]],
     ["@workflows/*", ["./src/workflows/*"]],
   ];
 

@@ -7,11 +7,15 @@
  * - `module` (e.g. `@referral`) anchors the parts that STAY inside the module
  *   (`types/`, `service`) — resolves to `./src/*` standalone and
  *   `./src/modules/<id>/*` in the app.
- * - `workflows` (e.g. `@workflows`) anchors the parts that MOVE OUT
- *   (`workflows/`, and the steps under them) — names the same `./src/workflows/*`
- *   dir in both the module and the app. Workflows are nested under the module id
- *   (`@workflows/<id>/<table>/…`) so the specifier is identical before and after
- *   install.
+ * - `workflows` (e.g. `@workflows`) anchors the MOVE-OUT workflow tree, mapped
+ *   to the same `./src/workflows` dir in both the module and the app (via a
+ *   non-wildcard `@workflows` entry + the `@workflows/*` form). The module ships
+ *   its workflows FLAT (`workflows/<table>`); the `<id>/` segment is added by
+ *   `damat module add`. So:
+ *     - workflow → step is a relative sibling (`../steps/<op>`) within the same
+ *       `<table>` subtree (which relocates together), needing no alias;
+ *     - route → workflow imports from the bare barrel root `@workflows`
+ *       (→ `src/workflows/index`), which resolves identically before/after install.
  */
 export interface ScaffoldAliases {
   /** Module-name alias root, e.g. `@referral` (no trailing slash). */

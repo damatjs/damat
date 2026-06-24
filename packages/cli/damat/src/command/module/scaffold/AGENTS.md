@@ -45,8 +45,8 @@ working on **this one module**.
     ├── types/            # GENERATED (overwritten each run): row types + zod + registry.ts — don't hand-edit
     ├── lib/              # everything the service calls: providers (one per file), pure helpers in
     │                     #   lib/utils/, category-D gateway ops — there is NO top-level src/utils/
-    ├── workflows/        # GENERATED, nested <module>/<table>/{steps,workflows} (scaffold-once — edit freely)
-    └── api/routes/       # GENERATED routes, split into api/validator/query/middleware/route (scaffold-once)
+    ├── workflows/        # GENERATED, flat <table>/{steps,workflows} + index.ts barrels (scaffold-once — edit freely)
+    └── api/routes/       # GENERATED routes, flat <table>/, split into api/validator/query/middleware/route (scaffold-once)
 └── tests/contract.test.ts
 ```
 
@@ -70,8 +70,9 @@ A module is **codegen-first**. You do **not** hand-write CRUD. The fast path:
 1. **Model the data** — one table per file in `src/models/`.
 2. **`bun run codegen`** — from your models it generates the WHOLE basic slice:
    `src/types/` (row types + zod + `registry.ts` that types `getModule`) and,
-   **scaffold-once**, the per-operation `src/workflows/<module>/<table>/` (steps +
-   workflows) and `src/api/routes/<table>/` (split route files). That is your
+   **scaffold-once**, the per-operation `src/workflows/<table>/` (steps +
+   workflows) and `src/api/routes/<table>/` (split route files) — both flat by
+   table; `damat module add` adds the `<moduleId>/` segment on install. That is your
    working foundation — route → workflow → step → service, already wired.
 3. **Build only what's missing ON TOP** of what codegen made: put real logic in
    the generated steps (each ships a compensation/fallback hook), add custom
@@ -131,7 +132,7 @@ route/step/workflow that competes with the generated one — extend it.
 |---|---|---|
 | a table | `src/models/<name>.ts` | one model per file |
 | CRUD (create / find / update / delete / list) | **GENERATED — don't hand-write** | `codegen` scaffolds the steps/workflows/routes |
-| business logic / orchestration | the generated `src/workflows/<module>/<table>/` steps & workflows (and your own custom ones) | steps call the service; workflows orchestrate steps |
+| business logic / orchestration | the generated `src/workflows/<table>/` steps & workflows (and your own custom ones) | steps call the service; workflows orchestrate steps |
 | a third-party SDK (Stripe, AI provider, …) | `src/lib/<provider>.ts`, surfaced on the **service** as do/reverse methods | the service is the ONLY place integrations live |
 | pure helpers / formatting / mappers | `src/lib/utils/<concern>.ts` | small, one concern per file (no top-level `src/utils/`) |
 | the HTTP surface | **GENERATED** `src/api/routes/<table>/` — handlers ONLY call workflows | never call the service from a route |
@@ -169,19 +170,28 @@ moves others out, so two `tsconfig.json` aliases split by destination:
   import type { WidgetService } from "@widget/service";
   ```
   Types stay inside — they are never moved out.
-- **Move-out → `@workflows/<module>/<table>/…`** — `workflows/` and `api/routes/`
+- **Move-out → the bare `@workflows` barrel** — `workflows/` and `api/routes/`
   relocate into the app's top-level `src/workflows/` / `src/api/routes/` on install.
-  Codegen nests workflows at `src/workflows/<module>/<table>/…`, so
-  `@workflows/<module>/<table>/…` is **byte-identical before and after install** — the
-  `<module>/` segment keeps the shared alias collision-free across modules:
+  Your module ships both trees **FLAT** (`workflows/<table>`, `api/routes/<table>`); the
+  `<moduleId>/` segment is added by `damat module add`, never by your codegen. Because the
+  folder is flat, you don't reference workflows by a deep path — you reach them through the
+  recursive `index.ts` barrels, where the bare barrel root `@workflows` re-exports every
+  workflow:
   ```ts
-  import { createWidgetsWorkflow } from "@workflows/widget/widgets/workflows/createWidgets";
+  // route → workflow (crosses trees) — from the barrel root:
+  import { createWidgetsWorkflow } from "@workflows";
+  // workflow → step (same <table> subtree, relocates together) — relative:
+  import { createWidgetsStep } from "../steps/createWidgets";
   ```
-  **That `<module>/<table>` nesting IS the install-stability contract — don't flatten it.**
+  `@workflows` resolves to `src/workflows/index` the same standalone and after install
+  (tsconfig has a non-wildcard `"@workflows": ["./src/workflows"]` entry), so it is
+  install-stable with no module-id baked into the specifier. Barrels are auto-generated
+  (codegen, `damat module add`, or `damat barrel`) — **never hand-edit an `index.ts` barrel;
+  add the file and re-run.**
 - **Never use `@/` in module code.** The host binds `@/` → the *app* root, so a moved-out
   file importing `@/types` would silently resolve to the app's `src/types`, not yours.
 - **Sibling re-exports stay relative** (`./api`, `./create<Pascal>`, `./validator`,
-  `./index`) — files that always move together keep relative paths.
+  `../steps/<op>`) — files that always move together keep relative paths.
 - The **only** cross-module specifier you'll see is in codegen-generated link augmentation
   (`<table>.links.ts`), which imports the linked module's types via `@<other>/types` — you
   never hand-write it.
@@ -306,9 +316,9 @@ After changing models: `bun run migration:create`, review the SQL, then
 
 ### 6. Workflows & routes (generated)
 `bun run codegen` scaffolds a per-operation CRUD slice from your models —
-`src/workflows/<module>/<table>/{steps,workflows}/…` (nested under `<module>/` for
-install stability — see *Portable import aliases* above) and split routes under
-`src/api/routes/<table>/…` — **scaffold-once** (your edits survive). The layering
+`src/workflows/<table>/{steps,workflows}/…` (flat by table; the `<moduleId>/`
+segment is added on install — see *Portable import aliases* above) and split routes
+under `src/api/routes/<table>/…` — **scaffold-once** (your edits survive). The layering
 is route → workflow → step → service. A single-step workflow is just
 `(input, ctx) => myStep(input, ctx)` (steps are directly callable); for
 multi-step, compose them in `Effect.gen` with `yield* myStep(input, ctx)`

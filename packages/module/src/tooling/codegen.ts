@@ -12,12 +12,15 @@ export type ModuleCodegenResult = RunModuleCodegenResult;
  *
  * This is a thin manifest resolver: it reads `module.json` to find the module's
  * paths, then hands **resolved inputs** to the shared, agnostic
- * `@damatjs/codegen` core. Routes are flat by table (`api/routes/<resource>`);
- * workflows are nested under the module id (`workflows/<module>/<resource>`) so
- * the emitted `@workflows/<module>/<resource>/…` alias is identical here and
- * after the module is installed into a host backend. Generated files import via
- * the portable `@<module>/*` and `@workflows/*` aliases. The module is its own
- * namespace and has no cross-module links, so no link augmentation is applied.
+ * `@damatjs/codegen` core. Both trees are **flat by table** here
+ * (`api/routes/<resource>` and `workflows/<resource>`) — a module is a
+ * single-purpose blade and owns no module-id namespace. `damat module add` adds
+ * the `<moduleId>/` segment when it relocates these into a host app
+ * (`src/api/routes/<id>/<resource>`, `src/workflows/<id>/<resource>`). Generated
+ * files reach types/service via `@<module>/*` and reach workflows through the
+ * recursive `@workflows/index` barrel, so the imports resolve unchanged before
+ * and after install. The module has no cross-module links, so no link
+ * augmentation is applied.
  */
 export async function generateModuleTypes(
   packageDir: string,
@@ -39,10 +42,7 @@ export async function generateModuleTypes(
         manifest.paths?.types ?? DEFAULT_MODULE_PATHS.types,
       ),
       routesRoot: join(moduleDir, "api", "routes"),
-      // Nest workflows by module id so `@workflows/<module>/<table>/…` resolves
-      // the same standalone and after install (where app workflows live at
-      // `src/workflows/<module>/<table>`).
-      workflowsRoot: join(moduleDir, workflowsBase, moduleId),
+      workflowsRoot: join(moduleDir, workflowsBase),
       aliases: { module: `@${moduleId}`, workflows: "@workflows" },
     },
     logger,

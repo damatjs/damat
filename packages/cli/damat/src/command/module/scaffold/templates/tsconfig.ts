@@ -1,9 +1,11 @@
 /**
- * The module's tsconfig. `paths` define the portable aliases so generated and
- * hand-written files never use relative `../../` chains:
+ * The module's tsconfig. `paths` define the portable aliases so cross-tree
+ * imports resolve identically standalone and after install:
  * - `@<id>/*` → the module's own `src/*` (types, service, lib, config, models)
- * - `@workflows/*` → `src/workflows/*` (the move-out tree, named the same here
- *   and in a host backend so the import survives install)
+ * - `@workflows` + `@workflows/*` → `src/workflows` / `src/workflows/*` (the
+ *   move-out tree, named the same here and in a host backend). Generated routes
+ *   import workflows from the bare barrel root `@workflows` (→ `src/workflows/index`,
+ *   via the non-wildcard entry); workflow→step stays a relative `../steps` sibling.
  * The host backend mirrors these on `damat module add`.
  */
 export function tsconfigTemplate(moduleId: string): string {
@@ -21,6 +23,7 @@ export function tsconfigTemplate(moduleId: string): string {
         baseUrl: ".",
         paths: {
           [`@${moduleId}/*`]: ["./src/*"],
+          "@workflows": ["./src/workflows"],
           "@workflows/*": ["./src/workflows/*"],
         },
       },

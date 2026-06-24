@@ -10,6 +10,7 @@ import {
   registryAugmentation,
   type ScaffoldAliases,
 } from "@/scaffold";
+import { generateBarrels } from "@/barrel";
 
 /**
  * The one orchestration both codegen entry points share. It is fully agnostic:
@@ -32,8 +33,9 @@ export interface RunModuleCodegenOptions {
   workflowsRoot: string;
   /**
    * Portable import aliases for the scaffold + registry. When set, generated
-   * files import via tsconfig path aliases (`@<id>/...`, `@workflows/<id>/...`)
-   * instead of relative paths, so they survive the standalone→installed move.
+   * files reach types/service via `@<id>/...` and reach workflows from the bare
+   * `@workflows` barrel root (workflow→step stays a relative sibling), so the
+   * imports survive the standalone→installed move unchanged.
    */
   aliases?: ScaffoldAliases;
   /**
@@ -115,6 +117,18 @@ export async function runModuleCodegen(
   } catch (e) {
     logger.warn(
       `CRUD scaffold skipped: ${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
+
+  // 6. Recursive barrels so `@workflows/index` re-exports the whole tree. Run
+  //    over this module's workflow root; the cross-module app root barrel
+  //    (src/workflows/index.ts) is rebuilt by the codegen command / module add.
+  //    Non-fatal — barrels are mechanical and never block the type output.
+  try {
+    generateBarrels(workflowsRoot, logger);
+  } catch (e) {
+    logger.warn(
+      `Barrel generation skipped: ${e instanceof Error ? e.message : String(e)}`,
     );
   }
 

@@ -5,9 +5,7 @@ import { SCAFFOLD_NOTE } from '../../constant';
 export function routeIdApi(n: CrudNames, wfDirSpec: string): string {
   return `${SCAFFOLD_NOTE}
 import type { RouteHandler } from "@damatjs/framework/router";
-import { find${n.pascal}Workflow } from "${wfDirSpec}/find${n.pascal}";
-import { update${n.pascal}Workflow } from "${wfDirSpec}/update${n.pascal}";
-import { delete${n.pascal}Workflow } from "${wfDirSpec}/delete${n.pascal}";
+import { find${n.pascal}Workflow, update${n.pascal}Workflow, delete${n.pascal}Workflow } from "${wfDirSpec}";
 
 /** GET /${n.fileBase}/:${n.pk} — fetch one ${n.prop}. */
 export const GET: RouteHandler = async (c) => {
