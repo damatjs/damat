@@ -5,7 +5,7 @@ import type { ILogger } from "@damatjs/logger";
 import { getLogger } from "@damatjs/logger";
 import { deriveNames, type CrudNames } from "./naming";
 import * as T from "./templates";
-import { CrudScaffoldOptions, CrudScaffoldResult } from './type';
+import { CrudScaffoldOptions, CrudScaffoldResult } from "./type";
 
 /** Relative import specifier from a source directory to a target (no extension). */
 function spec(fromDir: string, toNoExt: string): string {
@@ -67,36 +67,81 @@ export function generateCrudScaffold(
 
     const typesFromStep = typesAlias ?? spec(stepsDir, typesIndex);
     const typesFromWorkflow = typesAlias ?? spec(workflowsDir, typesIndex);
-    const stepsFromWorkflow = spec(workflowsDir, stepsDir);
+    const stepsFromWorkflow = wfBarrel ?? spec(workflowsDir, stepsDir);
     const wfFromRoute = wfBarrel ?? spec(routeDir, workflowsDir);
     const typesFromRoute = typesAlias ?? spec(routeDir, typesIndex);
     const wfFromRouteId = wfBarrel ?? spec(routeIdDir, workflowsDir);
     const typesFromRouteId = typesAlias ?? spec(routeIdDir, typesIndex);
 
     // Steps
-    writeOnce(join(stepsDir, `create${n.pascal}.ts`), T.stepCreate(n, typesFromStep));
-    writeOnce(join(stepsDir, `update${n.pascal}.ts`), T.stepUpdate(n, typesFromStep));
-    writeOnce(join(stepsDir, `delete${n.pascal}.ts`), T.stepDelete(n, typesFromStep));
-    writeOnce(join(stepsDir, `find${n.pascal}.ts`), T.stepFind(n, typesFromStep));
-    writeOnce(join(stepsDir, `findMany${n.pascal}.ts`), T.stepFindMany(n, typesFromStep));
+    writeOnce(
+      join(stepsDir, `create${n.pascal}.ts`),
+      T.stepCreate(n, typesFromStep),
+    );
+    writeOnce(
+      join(stepsDir, `update${n.pascal}.ts`),
+      T.stepUpdate(n, typesFromStep),
+    );
+    writeOnce(
+      join(stepsDir, `delete${n.pascal}.ts`),
+      T.stepDelete(n, typesFromStep),
+    );
+    writeOnce(
+      join(stepsDir, `find${n.pascal}.ts`),
+      T.stepFind(n, typesFromStep),
+    );
+    writeOnce(
+      join(stepsDir, `findMany${n.pascal}.ts`),
+      T.stepFindMany(n, typesFromStep),
+    );
 
     // Workflows
-    writeOnce(join(workflowsDir, `create${n.pascal}.ts`), T.workflowCreate(n, typesFromWorkflow, stepsFromWorkflow));
-    writeOnce(join(workflowsDir, `update${n.pascal}.ts`), T.workflowUpdate(n, typesFromWorkflow, stepsFromWorkflow));
-    writeOnce(join(workflowsDir, `delete${n.pascal}.ts`), T.workflowDelete(n, typesFromWorkflow, stepsFromWorkflow));
-    writeOnce(join(workflowsDir, `find${n.pascal}.ts`), T.workflowFind(n, typesFromWorkflow, stepsFromWorkflow));
-    writeOnce(join(workflowsDir, `findMany${n.pascal}.ts`), T.workflowFindMany(n, typesFromWorkflow, stepsFromWorkflow));
+    writeOnce(
+      join(workflowsDir, `create${n.pascal}.ts`),
+      T.workflowCreate(n, typesFromWorkflow, stepsFromWorkflow),
+    );
+    writeOnce(
+      join(workflowsDir, `update${n.pascal}.ts`),
+      T.workflowUpdate(n, typesFromWorkflow, stepsFromWorkflow),
+    );
+    writeOnce(
+      join(workflowsDir, `delete${n.pascal}.ts`),
+      T.workflowDelete(n, typesFromWorkflow, stepsFromWorkflow),
+    );
+    writeOnce(
+      join(workflowsDir, `find${n.pascal}.ts`),
+      T.workflowFind(n, typesFromWorkflow, stepsFromWorkflow),
+    );
+    writeOnce(
+      join(workflowsDir, `findMany${n.pascal}.ts`),
+      T.workflowFindMany(n, typesFromWorkflow, stepsFromWorkflow),
+    );
 
     // Routes — collection
-    writeOnce(join(routeDir, "api.ts"), T.routeCollectionApi(n, wfFromRoute, typesFromRoute));
-    writeOnce(join(routeDir, "validator.ts"), T.routeCollectionValidator(n, typesFromRoute));
-    writeOnce(join(routeDir, "query.ts"), T.routeCollectionQuery(n, typesFromRoute));
+    writeOnce(
+      join(routeDir, "api.ts"),
+      T.routeCollectionApi(n, wfFromRoute, typesFromRoute),
+    );
+    writeOnce(
+      join(routeDir, "validator.ts"),
+      T.routeCollectionValidator(n, typesFromRoute),
+    );
+    writeOnce(
+      join(routeDir, "query.ts"),
+      T.routeCollectionQuery(n, typesFromRoute),
+    );
     writeOnce(join(routeDir, "middleware.ts"), T.routeMiddleware());
     writeOnce(join(routeDir, "route.ts"), T.routeCollectionRoute());
 
     // Routes — single resource ([id])
-    writeOnce(join(routeIdDir, "api.ts"), T.routeIdApi(n, wfFromRouteId, typesFromRouteId));
-    writeOnce(join(routeIdDir, "validator.ts"), T.routeIdValidator(n, typesFromRouteId));
+    writeOnce(
+      join(routeIdDir, "api.ts"),
+      T.routeIdApi(n, wfFromRouteId, typesFromRouteId),
+    );
+    writeOnce(
+      join(routeIdDir, "validator.ts"),
+      T.routeIdValidator(n, typesFromRouteId),
+    );
     writeOnce(join(routeIdDir, "middleware.ts"), T.routeMiddleware());
     writeOnce(join(routeIdDir, "route.ts"), T.routeIdRoute());
   }

@@ -1,5 +1,11 @@
 # @damatjs/orm-codegen
 
+## 1.0.7
+
+### Patch Changes
+
+- codegen steps setup to use @workflow rather than direct path
+
 ## 1.0.6
 
 ### Patch Changes

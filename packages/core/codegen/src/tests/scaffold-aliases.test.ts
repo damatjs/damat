@@ -50,9 +50,8 @@ describe("generateCrudScaffold — portable aliases", () => {
     const wf = read("workflows/widgets/workflows/createWidgets.ts");
     // workflow → step is a sibling within the same <table> subtree, which
     // relocates together on install, so it stays relative — no module id baked in.
-    expect(wf).toContain('from "../steps/createWidgets"');
+    expect(wf).toContain('from "@workflows"');
     expect(wf).toContain('from "@shop/types"');
-    expect(wf).not.toContain("@workflows");
   });
 
   it("routes import workflows from the bare @workflows barrel root; types via @<module>", () => {

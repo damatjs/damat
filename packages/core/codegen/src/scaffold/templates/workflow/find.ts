@@ -1,10 +1,14 @@
 import type { CrudNames } from "../../naming";
-import { SCAFFOLD_NOTE, WORKFLOW_OVERRIDE_HINT } from '../constant';
+import { SCAFFOLD_NOTE, WORKFLOW_OVERRIDE_HINT } from "../constant";
 
-export function workflowFind(n: CrudNames, typesSpec: string, stepsSpec: string): string {
+export function workflowFind(
+  n: CrudNames,
+  typesSpec: string,
+  stepsSpec: string,
+): string {
   return `${SCAFFOLD_NOTE}
 import { createWorkflow } from "@damatjs/workflow-engine";
-import { find${n.pascal}Step } from "${stepsSpec}/find${n.pascal}";
+import { find${n.pascal}Step } from "${stepsSpec}";
 import type { ${n.rowType}, ${n.idType} } from "${typesSpec}";
 
 export const find${n.pascal}Workflow = createWorkflow<${n.idType}, ${n.rowType} | null>(
