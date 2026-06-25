@@ -88,14 +88,14 @@ export function generateCrudScaffold(
     writeOnce(join(workflowsDir, `findMany${n.pascal}.ts`), T.workflowFindMany(n, typesFromWorkflow, stepsFromWorkflow));
 
     // Routes — collection
-    writeOnce(join(routeDir, "api.ts"), T.routeCollectionApi(n, wfFromRoute));
+    writeOnce(join(routeDir, "api.ts"), T.routeCollectionApi(n, wfFromRoute, typesFromRoute));
     writeOnce(join(routeDir, "validator.ts"), T.routeCollectionValidator(n, typesFromRoute));
     writeOnce(join(routeDir, "query.ts"), T.routeCollectionQuery(n, typesFromRoute));
     writeOnce(join(routeDir, "middleware.ts"), T.routeMiddleware());
     writeOnce(join(routeDir, "route.ts"), T.routeCollectionRoute());
 
     // Routes — single resource ([id])
-    writeOnce(join(routeIdDir, "api.ts"), T.routeIdApi(n, wfFromRouteId));
+    writeOnce(join(routeIdDir, "api.ts"), T.routeIdApi(n, wfFromRouteId, typesFromRouteId));
     writeOnce(join(routeIdDir, "validator.ts"), T.routeIdValidator(n, typesFromRouteId));
     writeOnce(join(routeIdDir, "middleware.ts"), T.routeMiddleware());
     writeOnce(join(routeIdDir, "route.ts"), T.routeIdRoute());

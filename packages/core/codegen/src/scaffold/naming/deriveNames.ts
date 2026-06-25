@@ -22,9 +22,11 @@ export function deriveNames(moduleId: string, table: TableSchema): CrudNames {
     updateType: `Update${pascal}`,
     idType: `${pascal}Id`,
     queryType: `${pascal}Query`,
+    paramsType: `${pascal}Params`,
     newSchema: `new${pascal}Schema`,
     updateSchema: `update${pascal}Schema`,
     querySchema: `${pascal}QuerySchema`,
     idSchema: `${pascal}IdSchema`,
+    paramsSchema: `${pascal}ParamsSchema`,
   };
 }

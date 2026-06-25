@@ -44,3 +44,9 @@ export type SessionsQuery = z.infer<typeof SessionsQuerySchema>;
 export const SessionsIdSchema = z.string();
 
 export type SessionsId = z.infer<typeof SessionsIdSchema>;
+
+export const SessionsParamsSchema = z.object({
+  id: z.string(),
+}).strict();
+
+export type SessionsParams = z.infer<typeof SessionsParamsSchema>;

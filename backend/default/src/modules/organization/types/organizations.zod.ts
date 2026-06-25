@@ -35,3 +35,9 @@ export type OrganizationsQuery = z.infer<typeof OrganizationsQuerySchema>;
 export const OrganizationsIdSchema = z.string();
 
 export type OrganizationsId = z.infer<typeof OrganizationsIdSchema>;
+
+export const OrganizationsParamsSchema = z.object({
+  id: z.string(),
+}).strict();
+
+export type OrganizationsParams = z.infer<typeof OrganizationsParamsSchema>;

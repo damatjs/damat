@@ -1,7 +1,8 @@
 import { ZodError } from '@damatjs/deps/zod';
 import { ValidationError } from '@damatjs/types';
 import type { MiddlewareHandler } from "@damatjs/deps/hono";
-import type { RouteValidator } from '../router/types';
+import type { RouteValidator, ValidatedData } from '../router/types';
+import { VALIDATED_CONTEXT_KEY } from '../router/types';
 
 export function validate<T>(
     schema: { parse: (data: unknown) => T },
@@ -16,9 +17,6 @@ export function validate<T>(
         throw error;
     }
 }
-
-export type ValidationTarget = 'body' | 'query' | 'params' | 'json';
-
 
 export function createValidatorMiddleware(handler: RouteValidator): MiddlewareHandler {
     return async (c, next) => {
@@ -46,6 +44,8 @@ export function createValidatorMiddleware(handler: RouteValidator): MiddlewareHa
             }
         }
 
+        const validated: ValidatedData = {};
+
         try {
             if (handler.body) {
                 if (!data || data && !data.body) throw new ZodError([{
@@ -53,7 +53,7 @@ export function createValidatorMiddleware(handler: RouteValidator): MiddlewareHa
                     message: "Body is required",
                     path: ["body"],
                 }]);
-                handler.body.parse(data.body);
+                validated.body = handler.body.parse(data.body);
             }
             if (handler.query) {
                 if (!data || data && !data.query) throw new ZodError([
@@ -62,7 +62,7 @@ export function createValidatorMiddleware(handler: RouteValidator): MiddlewareHa
                         message: "Query is required",
                         path: ["query"],
                     }]);
-                handler.query.parse(data.query);
+                validated.query = handler.query.parse(data.query);
             }
             if (handler.params) {
                 if (!data || data && !data.params) throw new ZodError([
@@ -71,7 +71,7 @@ export function createValidatorMiddleware(handler: RouteValidator): MiddlewareHa
                         message: "Params is required",
                         path: ["params"],
                     }]);
-                handler.params.parse(data.params);
+                validated.params = handler.params.parse(data.params);
             }
             if (handler.json) {
                 if (!data || data && !data.json) throw new ZodError([
@@ -81,6 +81,7 @@ export function createValidatorMiddleware(handler: RouteValidator): MiddlewareHa
                         path: ["json"],
                     }]);
                 const parsed = handler.json.parse(data.json);
+                validated.json = parsed;
                 c.req.addValidatedData('json', parsed as object);
             }
         } catch (error) {
@@ -99,6 +100,10 @@ export function createValidatorMiddleware(handler: RouteValidator): MiddlewareHa
             }
             throw error;
         }
+
+        // Expose the parsed + coerced data to the handler via `getValidated`,
+        // so routes don't re-parse or re-check what was just validated.
+        c.set(VALIDATED_CONTEXT_KEY, validated);
 
         return next();
     };

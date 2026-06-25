@@ -41,3 +41,9 @@ export type UsersQuery = z.infer<typeof UsersQuerySchema>;
 export const UsersIdSchema = z.string();
 
 export type UsersId = z.infer<typeof UsersIdSchema>;
+
+export const UsersParamsSchema = z.object({
+  id: z.string(),
+}).strict();
+
+export type UsersParams = z.infer<typeof UsersParamsSchema>;

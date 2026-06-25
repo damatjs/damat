@@ -59,3 +59,9 @@ export type AccountsQuery = z.infer<typeof AccountsQuerySchema>;
 export const AccountsIdSchema = z.string();
 
 export type AccountsId = z.infer<typeof AccountsIdSchema>;
+
+export const AccountsParamsSchema = z.object({
+  id: z.string(),
+}).strict();
+
+export type AccountsParams = z.infer<typeof AccountsParamsSchema>;

@@ -1,0 +1,74 @@
+# @damatjs/framework Unreleased
+
+> The route validator middleware now hands its parsed + coerced result to the
+> handler through a new `getValidated` helper, so handlers stop re-parsing the
+> body and re-checking params/query the middleware already validated.
+
+## What changed
+
+A route's `validators` already ran before the handler and rejected invalid
+requests with a `400 VALIDATION_ERROR` — but it threw the parsed result away, so
+handlers had to read and coerce the request a second time (`await c.req.json()`,
+`QuerySchema.parse(c.req.query())`, `if (!id) return 400`).
+
+`createValidatorMiddleware` now keeps each parsed value and stores it on the
+`"validated"` context variable. A new `getValidated<T>(c, target)` helper
+(exported from `@damatjs/framework/router`) reads it back, typed:
+
+```ts
+// before — handler re-parses and re-checks
+export const PATCH: RouteHandler = async (c) => {
+  const id = c.req.param("id");
+  if (!id) return c.json({ success: false, error: "missing id" }, 400);
+  const data = await c.req.json();
+  // ...
+};
+
+// now — middleware already validated + coerced; just read it
+import { getValidated } from "@damatjs/framework/router";
+
+export const PATCH: RouteHandler = async (c) => {
+  const { id } = getValidated<ItemParams>(c, "params");
+  const data = getValidated<UpdateItem>(c, "body");
+  // ...
+};
+```
+
+`target` is a `ValidationTarget` (`"body" | "query" | "params" | "json"`).
+Targets a route declares no validator for return `undefined`.
+
+## Added
+
+- `getValidated<T>(c, target)` — typed reader for the request data a route's
+  `validators` parsed and coerced (`router/helpers.ts`).
+- `ValidationTarget` and `ValidatedData` types, and the `VALIDATED_CONTEXT_KEY`
+  constant, in `router/types/validation.ts` (re-exported from
+  `@damatjs/framework/router`).
+
+## Changed / improved
+
+- `createValidatorMiddleware` stores the parsed + coerced `body`/`query`/`params`/
+  `json` on the context (in addition to the existing `c.req.valid("json")`
+  exposure) instead of discarding it.
+
+## Breaking
+
+- None. The middleware still validates and 400s exactly as before; the stored
+  data is additive. `ValidationTarget` moved from `middleware/validator.ts` to
+  `router/types` — it was internal, and both are re-exported from the same
+  `@damatjs/framework/router` barrel.
+
+## Action required
+
+- None — drop-in. To simplify a hand-written handler, declare the request's
+  schemas in `validators` and read them with `getValidated` instead of
+  re-parsing. Routes that `codegen` scaffolds already use this pattern.
+
+## References
+
+- Current behavior: [router internals](../../packages/framework/docs/router.md)
+  (`getValidated`) and [middleware internals](../../packages/framework/docs/middleware.md)
+  (validator), and the [HTTP APIs guide](../../docs/guide/08-http-apis.md).
+- Source: `packages/framework/src/middleware/validator.ts`,
+  `packages/framework/src/router/helpers.ts`,
+  `packages/framework/src/router/types/validation.ts`.

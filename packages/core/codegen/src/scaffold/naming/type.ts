@@ -30,8 +30,12 @@ export interface CrudNames {
   // Generated zod / id names (from `types/<fileBase>.zod.ts`)
   idType: string;
   queryType: string;
+  /** Params type for the `[id]` route, e.g. `ItemParams` (`{ id: ... }`). */
+  paramsType: string;
   newSchema: string;
   updateSchema: string;
   querySchema: string;
   idSchema: string;
+  /** Params zod schema for the `[id]` route, e.g. `ItemParamsSchema`. */
+  paramsSchema: string;
 }

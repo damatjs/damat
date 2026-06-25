@@ -10,6 +10,7 @@ import {
   generateUpdateZodSchema,
   generateQueryZodSchema,
   generateIdZodSchema,
+  generateParamsZodSchema,
 } from "@/utils";
 import { ModuleSchema } from "@damatjs/orm-type";
 import { getLogger } from "@damatjs/logger";
@@ -112,6 +113,7 @@ export function generateZodTypes(
     sections.push(generateUpdateZodSchema(table, allEnums));
     sections.push(generateQueryZodSchema(table, allEnums));
     sections.push(generateIdZodSchema(table));
+    sections.push(generateParamsZodSchema(table));
   }
 
   const body = sections

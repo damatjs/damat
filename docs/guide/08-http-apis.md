@@ -36,6 +36,45 @@ export const GET = defineRoute<{ userId: string }>(async (c, params) => {
 });
 ```
 
+## Validating requests
+
+A `route.ts` can export a `validators` array — one `RouteValidator` per method
+declaring Zod schemas for the request's `body`, `query`, and/or `params`. The
+framework runs the matching validator before the handler: invalid requests are
+rejected with a `400 VALIDATION_ERROR` envelope, and the parsed + coerced data is
+handed to the handler via `getValidated`. Handlers never re-parse the body, check
+for a missing `:id`, or coerce query strings by hand.
+
+```ts
+// src/api/routes/posts/[id]/validator.ts
+import type { RouteValidator } from "@damatjs/framework/router";
+import { PostsParamsSchema, updatePostsSchema } from "@blog/types";
+
+export const validators: RouteValidator[] = [
+  { method: "GET", params: PostsParamsSchema },
+  { method: "PATCH", params: PostsParamsSchema, body: updatePostsSchema },
+  { method: "DELETE", params: PostsParamsSchema },
+];
+```
+
+```ts
+// src/api/routes/posts/[id]/api.ts
+import { getValidated, type RouteHandler } from "@damatjs/framework/router";
+import type { PostsParams, UpdatePosts } from "@blog/types";
+
+export const PATCH: RouteHandler = async (c) => {
+  const { id } = getValidated<PostsParams>(c, "params"); // already validated
+  const data = getValidated<UpdatePosts>(c, "body");
+  // ...call the workflow with id + data...
+};
+```
+
+`codegen` scaffolds exactly this shape for every table — the `*ParamsSchema` /
+`new*Schema` / `update*Schema` / `*QuerySchema` it generates into `@<module>/types`
+are wired into the route's `validators`, and the handlers read them with
+`getValidated`. `route.ts` re-exports the handlers, `validators`, and `middleware`
+so the framework can mount them.
+
 Combine routes with module services via `getModule` and add cross-cutting
 middleware in `src/api/middleware/`. Routing, the scanner, and middleware are
 documented in

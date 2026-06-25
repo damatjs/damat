@@ -2,16 +2,17 @@ import type { CrudNames } from "../../../naming";
 import { SCAFFOLD_NOTE } from '../../constant';
 
 /** Single-resource route (`[id]`): GET one, PATCH update, DELETE. */
-export function routeIdApi(n: CrudNames, wfDirSpec: string): string {
+export function routeIdApi(n: CrudNames, wfDirSpec: string, typesSpec: string): string {
   return `${SCAFFOLD_NOTE}
-import type { RouteHandler } from "@damatjs/framework/router";
+import { getValidated, type RouteHandler } from "@damatjs/framework/router";
 import { find${n.pascal}Workflow, update${n.pascal}Workflow, delete${n.pascal}Workflow } from "${wfDirSpec}";
+import type { ${n.paramsType}, ${n.updateType} } from "${typesSpec}";
 
-/** GET /${n.fileBase}/:${n.pk} — fetch one ${n.prop}. */
+/** GET /${n.fileBase}/:id — fetch one ${n.prop}. */
 export const GET: RouteHandler = async (c) => {
-  const ${n.pk} = c.req.param("${n.pk}");
-  if (!${n.pk}) return c.json({ success: false, error: "missing ${n.pk}" }, 400);
-  const result = await find${n.pascal}Workflow.execute(${n.pk});
+  // \`:id\` is already validated by the route's params validator.
+  const { id } = getValidated<${n.paramsType}>(c, "params");
+  const result = await find${n.pascal}Workflow.execute(id);
   if (!result.success) {
     return c.json({ success: false, error: result.error?.message ?? "failed" }, 500);
   }
@@ -19,23 +20,21 @@ export const GET: RouteHandler = async (c) => {
   return c.json({ success: true, data: result.result });
 };
 
-/** PATCH /${n.fileBase}/:${n.pk} — update one ${n.prop}. */
+/** PATCH /${n.fileBase}/:id — update one ${n.prop}. */
 export const PATCH: RouteHandler = async (c) => {
-  const ${n.pk} = c.req.param("${n.pk}");
-  if (!${n.pk}) return c.json({ success: false, error: "missing ${n.pk}" }, 400);
-  const data = await c.req.json();
-  const result = await update${n.pascal}Workflow.execute({ ${n.pk}, data });
+  const { id } = getValidated<${n.paramsType}>(c, "params");
+  const data = getValidated<${n.updateType}>(c, "body");
+  const result = await update${n.pascal}Workflow.execute({ id, data });
   if (!result.success) {
     return c.json({ success: false, error: result.error?.message ?? "failed" }, 500);
   }
   return c.json({ success: true, data: result.result });
 };
 
-/** DELETE /${n.fileBase}/:${n.pk} — delete one ${n.prop}. */
+/** DELETE /${n.fileBase}/:id — delete one ${n.prop}. */
 export const DELETE: RouteHandler = async (c) => {
-  const ${n.pk} = c.req.param("${n.pk}");
-  if (!${n.pk}) return c.json({ success: false, error: "missing ${n.pk}" }, 400);
-  const result = await delete${n.pascal}Workflow.execute(${n.pk});
+  const { id } = getValidated<${n.paramsType}>(c, "params");
+  const result = await delete${n.pascal}Workflow.execute(id);
   if (!result.success) {
     return c.json({ success: false, error: result.error?.message ?? "failed" }, 500);
   }

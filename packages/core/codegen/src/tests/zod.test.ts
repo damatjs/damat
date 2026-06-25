@@ -81,6 +81,13 @@ describe("generateZodFile", () => {
     expect(content).toContain("export const UserIdSchema = z.string().uuid();");
   });
 
+  it("generates params schema for the [id] route, keyed by id with the pk type", () => {
+    const content = generateZodFile(schema.tables[0]!, schema, null);
+    expect(content).toContain("export const UserParamsSchema = z.object({");
+    expect(content).toContain("  id: z.string().uuid(),");
+    expect(content).toContain("}).strict();");
+  });
+
   it("generates type exports", () => {
     const content = generateZodFile(schema.tables[0]!, schema, null);
     expect(content).toContain(
@@ -94,6 +101,9 @@ describe("generateZodFile", () => {
     );
     expect(content).toContain(
       "export type UserId = z.infer<typeof UserIdSchema>;",
+    );
+    expect(content).toContain(
+      "export type UserParams = z.infer<typeof UserParamsSchema>;",
     );
   });
 

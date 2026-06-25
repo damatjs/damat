@@ -55,12 +55,15 @@ Verified (from `tests/relation.test.ts`): a `belongsTo` with `linkedBy: ["user_i
 
 ## Zod schema builders (`src/utils/zodSchemas.ts`)
 
-All four take `(table, ...)` and return `string[]`. Enum columns whose values are known are replaced with `z.enum(['a','b'])` (looked up in `allEnums`).
+Each takes `(table, ...)` and returns `string[]`. Enum columns whose values are known are replaced with `z.enum(['a','b'])` (looked up in `allEnums`).
 
 - `generateNewZodSchema(table, autoFields, allEnums)` — `new<Pascal>Schema = z.object({...}).strict()` + `type New<Pascal>Input = z.infer<...>`. Skips `autoFields` and `deleted_at`/`created_at`/`updated_at`. Nullable → `.nullable().optional()`; has default → `.optional()`; else required.
 - `generateUpdateZodSchema(table, allEnums)` — `update<Pascal>Schema` + `Update<Pascal>Input`. Skips primary keys and `id`/timestamps/soft-delete. Every field `.optional()` (nullable also `.nullable()`).
 - `generateQueryZodSchema(table, allEnums)` — `<camel>QuerySchema` + `<Pascal>Query`. Every column optional; integer/bigint/boolean columns become `z.coerce.*` (query strings); adds `limit`/`offset`/`orderBy`/`orderDir` pagination fields.
 - `generateIdZodSchema(table)` — `<camel>IdSchema` + `<Pascal>Id` from the PK column's type (`uuid` → `z.string().uuid()`, integer/serial → `z.coerce.number().int().positive()`, bigint → `z.coerce.bigint()`, else `z.string()`). Returns `[]` if there's no PK.
+- `generateParamsZodSchema(table)` — `<Pascal>ParamsSchema = z.object({ id: <pk-schema> }).strict()` + `<Pascal>Params`. The schema for the `[id]` route's path params: always keyed by `id` (the `[id]` folder maps to the `:id` segment), with the value validated/coerced from the PK column's type (same mapping as `generateIdZodSchema`). A route's `params` validator references this so the framework rejects a missing/invalid id before the handler. Returns `[]` if there's no PK.
+
+`generateIdZodSchema` and `generateParamsZodSchema` share one internal PK→Zod mapper, so the bare id schema and the params id value never diverge.
 
 ## Combined output (`generator/generateTypes.ts`)
 
@@ -73,7 +76,7 @@ All four take `(table, ...)` and return `string[]`. Enum columns whose values ar
 
 ### `generateZodTypes(schema, options?)`
 
-Same skeleton but the first section is `import { z } from "@damatjs/deps/zod";`, then per table the four Zod builders. Empty sections are filtered out.
+Same skeleton but the first section is `import { z } from "@damatjs/deps/zod";`, then per table the Zod builders (new / update / query / id / params). Empty sections are filtered out.
 
 Both log start/completion via `getLogger()` (`@damatjs/logger`).
 
@@ -85,7 +88,7 @@ Builds one table's `.ts`. Computes imports: `import type { ...Enum } from "./enu
 
 ### `generateZodFile(table, schema, banner)`
 
-One table's Zod `.ts`: the `z` import, optional enum-type import, then the four Zod schema blocks. Uses `DEFAULT_AUTO_FIELDS` directly (does not accept extra `autoFields`).
+One table's Zod `.ts`: the `z` import, optional enum-type import, then the Zod schema blocks (new / update / query / id / params). Uses `DEFAULT_AUTO_FIELDS` directly (does not accept extra `autoFields`).
 
 ## File map (`generator/generateFilesMap.ts`)
 

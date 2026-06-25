@@ -5,6 +5,7 @@ import {
   generateUpdateZodSchema,
   generateQueryZodSchema,
   generateIdZodSchema,
+  generateParamsZodSchema,
 } from "@/utils/zodSchemas";
 import { DEFAULT_AUTO_FIELDS } from "@/defaults";
 import { getLogger } from "@damatjs/logger";
@@ -19,6 +20,7 @@ const logger = getLogger();
  * - `update{Table}Schema` - Schema for partial updates
  * - `{table}QuerySchema` - Schema for query parameters
  * - `{table}IdSchema` - Schema for record IDs
+ * - `{Table}ParamsSchema` - Schema for the `[id]` route path params
  *
  * ```ts
  * import { z } from "@damatjs/deps/zod";
@@ -66,6 +68,7 @@ export function generateZodFile(
   sections.push(generateUpdateZodSchema(table, allEnums));
   sections.push(generateQueryZodSchema(table, allEnums));
   sections.push(generateIdZodSchema(table));
+  sections.push(generateParamsZodSchema(table));
 
   const body = sections
     .filter((s) => s.length > 0)

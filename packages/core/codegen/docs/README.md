@@ -24,7 +24,7 @@ There are two conceptual halves:
 | `src/utils/newType.ts` | `generateNewType` — the `New*` insert type. |
 | `src/utils/updateType.ts` | `generateUpdateType` — the `Update*` partial type. |
 | `src/utils/enum.ts` | `generateEnumTypes`, `generateEnumsFile`, `getTableEnums`. |
-| `src/utils/zodSchemas.ts` | `generateNewZodSchema`, `generateUpdateZodSchema`, `generateQueryZodSchema`, `generateIdZodSchema`. |
+| `src/utils/zodSchemas.ts` | `generateNewZodSchema`, `generateUpdateZodSchema`, `generateQueryZodSchema`, `generateIdZodSchema`, `generateParamsZodSchema`. |
 | `src/relation/map.ts` | `buildRelationMap` — group relations by `fromTable`. |
 | `src/relation/relationFields.ts` | `relationFields` — optional loaded-relation interface fields. |
 | `src/generator/generateTypes.ts` | `generateTypes` (combined types file) + `generateZodTypes` (combined Zod file). → [generators.md](./generators.md) |
@@ -42,7 +42,7 @@ ModuleSchema
    │                  columnToZodSchema ─► (inline pg-type switch)
    │
    ├── per table  ──► generateRowInterface / generateNewType / generateUpdateType
-   │                  generate{New,Update,Query,Id}ZodSchema
+   │                  generate{New,Update,Query,Id,Params}ZodSchema
    │                  relationFields (from buildRelationMap / getRelationImports)
    │
    └── per module ──► generateTypes / generateZodTypes  (single file)

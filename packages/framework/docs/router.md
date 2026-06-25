@@ -73,7 +73,7 @@ Algorithm:
    - `resolveMethodConfig(method, module.config, module.configs, globalRateLimit, globalAuth)` → `{ rateLimit?, auth?, globalRateLimit? }`.
    - If `rateLimit` resolved → `router.on(method, fullPath, createRateLimitMiddleware(rateLimit, globalRateLimit))`.
    - If `auth` resolved → `router.on(method, fullPath, createAuthMiddleware(auth.type))`.
-   - If a `validators` entry matches the method → `router.on(method, fullPath, createValidatorMiddleware(validator))`.
+   - If a `validators` entry matches the method → `router.on(method, fullPath, createValidatorMiddleware(validator))`. The validator runs before the handler, rejects invalid requests with a 400, and stores the parsed + coerced data for the handler to read with `getValidated`.
    - Finally `router.on(method, fullPath, handler)`.
    - Record a `RegisteredRoute` with flags (`hasMiddleware/hasValidator/hasRateLimit/hasAuth`); log it if `debug`.
 6. Return a `FileRouter`:
@@ -142,6 +142,18 @@ export const GET = defineRoute<{ userId: string }>(async (c, params) => { ... })
 ```
 
 Wraps a handler so route params are extracted (`c.req.param()`) and passed as a typed second argument. The result is a plain `RouteHandler`. (Exporting `GET = async (c) => ...` directly works too; `defineRoute` just adds typed params.)
+
+### `getValidated<T>(c, target)` (`helpers.ts`)
+
+```ts
+const { id } = getValidated<ItemParams>(c, "params");
+const data = getValidated<UpdateItem>(c, "body");
+const query = getValidated<ItemQuery>(c, "query");
+```
+
+Reads the request data a route's `validators` already parsed and coerced for this method — the `body` / `query` / `params` / `json` exactly as the matching Zod schema produced it (query strings coerced to numbers/dates, etc.). `target` is one of `ValidationTarget = "body" | "query" | "params" | "json"`.
+
+The validator middleware runs before the handler and rejects invalid requests with a 400, so inside the handler the returned value is already validated — no re-parsing and no manual presence checks. Targets the route declares no validator for return `undefined`. Backing store: the middleware writes the parsed data to the `"validated"` context variable; `getValidated` is the typed reader.
 
 ### `response` (`response.ts`)
 

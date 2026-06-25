@@ -1,3 +1,5 @@
-export * from "./createProfile"
-export * from "./sendWelcomeEmail"
-export * from "./setupDefaults"
+// AUTO-GENERATED barrel — re-exports every child folder and sibling file.
+// Rebuilt by `damat barrel`, codegen, and `damat module add`. Do not edit.
+export * from "./createProfile";
+export * from "./sendWelcomeEmail";
+export * from "./setupDefaults";

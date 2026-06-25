@@ -38,3 +38,9 @@ export type VerificationsQuery = z.infer<typeof VerificationsQuerySchema>;
 export const VerificationsIdSchema = z.string();
 
 export type VerificationsId = z.infer<typeof VerificationsIdSchema>;
+
+export const VerificationsParamsSchema = z.object({
+  id: z.string(),
+}).strict();
+
+export type VerificationsParams = z.infer<typeof VerificationsParamsSchema>;

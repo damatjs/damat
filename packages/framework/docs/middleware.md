@@ -119,7 +119,8 @@ interface AuthMiddlewareOptions { session?: MiddlewareHandler; apiKey?: Middlewa
 `createValidatorMiddleware(validator: RouteValidator)`:
 
 - For `GET`/`DELETE`, collects `{ query, params }`; for others, attempts `c.req.json()` for `body` (falls back to query+params if no JSON body).
-- For each present schema (`body`/`query`/`params`/`json`), requires the corresponding data (else a custom `ZodError` "X is required") and `.parse()`s it.
+- For each present schema (`body`/`query`/`params`/`json`), requires the corresponding data (else a custom `ZodError` "X is required") and `.parse()`s it, keeping the parsed + coerced result.
+- Stores the parsed results on the `"validated"` context variable, so handlers read validated + coerced input with `getValidated(c, target)` instead of re-parsing or re-checking it (and `json` is also exposed via Hono's `c.req.valid("json")`).
 - On `ZodError` → returns a 400 `VALIDATION_ERROR` envelope with mapped `details` (`{ path, message }`). Other errors rethrow (caught by `errorHandler`).
 
 `validate(schema, data)` is a standalone helper: `schema.parse(data)`, converting a `ZodError` into a `ValidationError` (from `@damatjs/types`). Use it inside handlers for ad-hoc validation.

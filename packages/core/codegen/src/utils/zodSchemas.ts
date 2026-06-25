@@ -181,6 +181,24 @@ export const generateQueryZodSchema = (
 };
 
 /**
+ * Map a primary-key column to the Zod schema that validates (and coerces) a
+ * single id value. Path params and query strings arrive as strings, so numeric
+ * keys are coerced.
+ */
+const primaryKeyZodSchema = (
+  pkCol: ModuleSchema["tables"][number]["columns"][number],
+): string => {
+  if (pkCol.type === "uuid") return "z.string().uuid()";
+  if (pkCol.type === "integer" || pkCol.type === "serial") {
+    return "z.coerce.number().int().positive()";
+  }
+  if (pkCol.type === "bigint" || pkCol.type === "bigserial") {
+    return "z.coerce.bigint()";
+  }
+  return "z.string()";
+};
+
+/**
  * Generate Zod schema for record IDs.
  *
  * ```ts
@@ -196,21 +214,45 @@ export const generateIdZodSchema = (
 
   if (!pkCol) return [];
 
-  // Determine ID schema based on type
-  let idSchema: string;
-  if (pkCol.type === "uuid") {
-    idSchema = "z.string().uuid()";
-  } else if (pkCol.type === "integer" || pkCol.type === "serial") {
-    idSchema = "z.coerce.number().int().positive()";
-  } else if (pkCol.type === "bigint" || pkCol.type === "bigserial") {
-    idSchema = "z.coerce.bigint()";
-  } else {
-    idSchema = "z.string()";
-  }
+  const idSchema = primaryKeyZodSchema(pkCol);
 
   return [
     `export const ${toCamelCase(name)}IdSchema = ${idSchema};`,
     ``,
     `export type ${name}Id = z.infer<typeof ${toCamelCase(name)}IdSchema>;`,
+  ];
+};
+
+/**
+ * Generate the Zod schema for the single-resource route's path params.
+ *
+ * The `[id]` route folder maps to the `:id` URL param, so the params object is
+ * always keyed by `id`; its value is validated/coerced with the primary key's
+ * type. This is what a route's `params` validator references so the framework
+ * rejects a missing/invalid id before the handler runs.
+ *
+ * ```ts
+ * export const UserParamsSchema = z.object({
+ *   id: z.string().uuid(),
+ * }).strict();
+ * export type UserParams = z.infer<typeof UserParamsSchema>;
+ * ```
+ */
+export const generateParamsZodSchema = (
+  table: ModuleSchema["tables"][number],
+): string[] => {
+  const name = toPascalCase(table.name);
+  const pkCol = table.columns.find((c) => c.primaryKey);
+
+  if (!pkCol) return [];
+
+  const idSchema = primaryKeyZodSchema(pkCol);
+
+  return [
+    `export const ${name}ParamsSchema = z.object({`,
+    `  id: ${idSchema},`,
+    `}).strict();`,
+    ``,
+    `export type ${name}Params = z.infer<typeof ${name}ParamsSchema>;`,
   ];
 };
