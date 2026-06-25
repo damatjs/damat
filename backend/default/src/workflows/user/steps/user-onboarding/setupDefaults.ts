@@ -1,4 +1,4 @@
-import { createStep } from "@damatjs/workflow-engine";
+import { createStep, StepResponse } from "@damatjs/workflow-engine";
 import type { Verifications, Users } from "@/modules/user/types";
 
 export const setupDefaultsStep = createStep<
@@ -7,7 +7,8 @@ export const setupDefaultsStep = createStep<
 >(
   "setup-defaults",
   async (input, _ctx) => {
-    return {
+    // Nothing to roll back → output only, no compensation function.
+    return new StepResponse({
       created_at: new Date(),
       updated_at: null,
       deleted_at: null,
@@ -15,9 +16,9 @@ export const setupDefaultsStep = createStep<
       identifier: input.user.email,
       value: "",
       expiresAt: new Date(),
-    };
+    });
   },
-  async (_input, _output, _ctx) => {},
+  undefined,
   {
     timeoutMs: 5_000,
     description: "Setup default user settings",

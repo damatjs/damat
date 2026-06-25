@@ -99,9 +99,9 @@ describe("steps › definitions", () => {
     expect(sendWelcomeEmailStep.compensate).toBeUndefined();
   });
 
-  it("setupDefaultsStep has a (no-op) compensation handler", () => {
+  it("setupDefaultsStep has no compensation handler", () => {
     expect(setupDefaultsStep.name).toBe("setup-defaults");
-    expect(typeof setupDefaultsStep.compensate).toBe("function");
+    expect(setupDefaultsStep.compensate).toBeUndefined();
   });
 });
 
@@ -113,7 +113,8 @@ describe("steps › createProfileStep.invoke", () => {
       { email: "new@user.co", name: "New User" },
       ctx,
     );
-    expect(out).toEqual({ id: "usr_test", email: "new@user.co", name: "New User" });
+    // invoke now returns a StepResponse; the row is on `.output`.
+    expect(out.output).toEqual({ id: "usr_test", email: "new@user.co", name: "New User" });
 
     expect(fakeUserService.users.create).toHaveBeenCalledTimes(1);
     const callArg = state.createCalls[0]!;
@@ -138,23 +139,21 @@ describe("steps › createProfileStep.invoke", () => {
   });
 
   it("compensation deletes the created user by id", async () => {
+    // compensate now receives the compensateInput (the created user) + ctx.
     await createProfileStep.compensate!(
-      { email: "x@y.co" },
       { id: "usr_42", email: "x@y.co", name: null } as any,
       ctx,
     );
     expect(fakeUserService.users.delete).toHaveBeenCalledTimes(1);
-    expect(state.deleteCalls[0]).toEqual({ where: { id: "usr_42" } });
+    expect(state.deleteCalls[0]).toEqual({
+      where: { id: "usr_42" }
+    });
   });
 
   it("compensation throws when the user module is not loaded", async () => {
     state.moduleLoaded = false;
     await expect(
-      createProfileStep.compensate!(
-        { email: "x@y.co" },
-        { id: "usr_42" } as any,
-        ctx,
-      ),
+      createProfileStep.compensate!({ id: "usr_42" } as any, ctx),
     ).rejects.toThrow("User module not loaded");
   });
 });
@@ -165,8 +164,8 @@ describe("steps › sendWelcomeEmailStep.invoke", () => {
   it("returns sent:true and a deterministic-prefixed emailId", async () => {
     const user = { id: "usr_99" } as any;
     const out = await sendWelcomeEmailStep.invoke(user, ctx);
-    expect(out.sent).toBe(true);
-    expect(out.emailId.startsWith("email-usr_99-")).toBe(true);
+    expect(out.output.sent).toBe(true);
+    expect(out.output.emailId.startsWith("email-usr_99-")).toBe(true);
   });
 
   it("does not call any external service (no DB interaction)", async () => {
@@ -183,17 +182,15 @@ describe("steps › setupDefaultsStep.invoke", () => {
       { user: { email: "u@x.co" } as any, emailSent: true },
       ctx,
     );
-    expect(out.identifier).toBe("u@x.co");
-    expect(out.id).toBe("sda");
-    expect(out.value).toBe("");
-    expect(out.created_at).toBeInstanceOf(Date);
-    expect(out.expiresAt).toBeInstanceOf(Date);
+    expect(out.output.identifier).toBe("u@x.co");
+    expect(out.output.id).toBe("sda");
+    expect(out.output.value).toBe("");
+    expect(out.output.created_at).toBeInstanceOf(Date);
+    expect(out.output.expiresAt).toBeInstanceOf(Date);
   });
 
-  it("has a compensation that is a safe no-op", async () => {
-    await expect(
-      setupDefaultsStep.compensate!({} as any, {} as any, ctx),
-    ).resolves.toBeUndefined();
+  it("has no compensation handler", () => {
+    expect(setupDefaultsStep.compensate).toBeUndefined();
   });
 });
 

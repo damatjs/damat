@@ -10,18 +10,26 @@ compensations of completed steps in reverse.
 
 ## A step (with compensation)
 
+The forward action returns a `StepResponse(output, compensateInput?)`: `output`
+flows downstream to the next steps, while `compensateInput` is the payload handed
+to the compensation. The compensation receives **only** that payload (plus the
+context) — capture whatever rollback needs. The third generic `C` is the payload
+type; when it excludes `undefined`, supplying it is required at compile time.
+
 ```ts
-import { createStep } from "@damatjs/workflow-engine";
+import { createStep, StepResponse } from "@damatjs/workflow-engine";
 import { getModule } from "@damatjs/framework";
 
-export const createProfileStep = createStep<NewUser, User>(
+export const createProfileStep = createStep<NewUser, User, string>(
   "create-profile",
   async (input, ctx) => {                       // forward
     const users = getModule("user");
-    return users.user.create({ data: { email: input.email }, returning: ["id", "email"] });
+    const user = await users.user.create({ data: { email: input.email }, returning: ["id", "email"] });
+    // output = the user (downstream); compensateInput = its id (for rollback).
+    return new StepResponse(user, user.id);
   },
-  async (input, output, ctx) => {               // compensation (rollback)
-    getModule("user").user.delete({ where: { id: output.id } });
+  async (userId, ctx) => {                       // compensation (rollback)
+    getModule("user").user.delete({ where: { id: userId } });
   },
   { timeoutMs: 10_000, description: "Create user profile" },
 );

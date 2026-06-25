@@ -4,6 +4,7 @@ import type { RequiredWorkflowConfig } from "./workflow";
 import type { WorkflowResult } from "./result";
 import type { WorkflowLockConfig } from "./lock";
 import type { WorkflowError } from "../errors";
+import type { StepResponse } from "../step/response";
 import { WorkflowContext } from './context';
 
 /**
@@ -18,8 +19,12 @@ import { WorkflowContext } from './context';
  * (and any workflow-level defaults): `step(input, ctx, { timeoutMs: 10_000 })`
  * or `step(input, ctx, { retry: { maxAttempts: 5 } })`. Omit the third argument
  * to keep the step's configured timeout/retry as-is.
+ *
+ * `C` is the compensation payload type — the value `invoke` puts in the second
+ * slot of its `StepResponse` and that `compensate` receives. It defaults to
+ * `undefined` (no rollback data).
  */
-export interface StepDefinition<I, O> {
+export interface StepDefinition<I, O, C = undefined> {
   (
     input: I,
     ctx: WorkflowContext,
@@ -35,13 +40,23 @@ export interface StepDefinition<I, O> {
    */
   rawConfig?: StepConfig;
   /**
-   * Main step execution function.
+   * Main step execution function. Returns a {@link StepResponse} carrying the
+   * step's `output` (delivered downstream) and an optional `compensateInput`
+   * (delivered to `compensate`).
    * The signal aborts on step timeout or workflow interruption — pass it to
    * fetch/db calls so cancelled work actually stops.
    */
-  invoke: (input: I, ctx: WorkflowContext, signal?: AbortSignal) => Promise<O>;
-  /** Optional rollback function called on workflow failure */
-  compensate?: (input: I, output: O, ctx: WorkflowContext) => Promise<void>;
+  invoke: (
+    input: I,
+    ctx: WorkflowContext,
+    signal?: AbortSignal,
+  ) => Promise<StepResponse<O, C>>;
+  /**
+   * Optional rollback function called on workflow failure. Receives ONLY the
+   * `compensateInput` captured by the forward step (or `undefined` when none was
+   * provided — there is no fallback to the output) plus the workflow context.
+   */
+  compensate?: (compensateInput: C, ctx: WorkflowContext) => Promise<void>;
 }
 
 // Re-export WorkflowContext for convenience

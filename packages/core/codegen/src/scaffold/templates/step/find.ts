@@ -4,7 +4,7 @@ import { SCAFFOLD_NOTE } from '../constant';
 
 export function stepFind(n: CrudNames, typesSpec: string): string {
   return `${SCAFFOLD_NOTE}
-import { createStep } from "@damatjs/workflow-engine";
+import { createStep, StepResponse } from "@damatjs/workflow-engine";
 import { getModule } from "@damatjs/framework";
 import type { ${n.rowType}, ${n.idType} } from "${typesSpec}";
 
@@ -13,7 +13,8 @@ export const find${n.pascal}Step = createStep<${n.idType}, ${n.rowType} | null>(
   async (id, _ctx) => {
     const service = getModule("${n.moduleId}");
     if (!service) throw new Error("${n.moduleId} module not loaded");
-    return service.${n.prop}.find({ where: { ${n.pk}: id } });
+    const row = await service.${n.prop}.find({ where: { ${n.pk}: id } });
+    return new StepResponse(row);
   },
   undefined,
   { description: "Find ${n.prop} by ${n.pk}", idempotent: true },

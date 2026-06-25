@@ -9,9 +9,9 @@ export function workflowDelete(
   return `${SCAFFOLD_NOTE}
 import { createWorkflow } from "@damatjs/workflow-engine";
 import { delete${n.pascal}Step } from "${stepsSpec}";
-import type { ${n.rowType}, ${n.idType} } from "${typesSpec}";
+import type { ${n.idType} } from "${typesSpec}";
 
-export const delete${n.pascal}Workflow = createWorkflow<${n.idType}, ${n.rowType} | null>(
+export const delete${n.pascal}Workflow = createWorkflow<${n.idType}, boolean>(
   "${n.moduleId}.${n.prop}.delete",
 ${WORKFLOW_OVERRIDE_HINT}
   (input, ctx) => delete${n.pascal}Step(input, ctx),

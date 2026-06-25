@@ -1,5 +1,29 @@
 # @damatjs/workflow-engine
 
+## 0.3.7
+
+### Patch Changes
+
+- Adopt Medusa-style `StepResponse` for step output + compensation.
+
+  `invoke` now returns `new StepResponse(output, compensateInput?)`: `output` flows
+  downstream (unchanged), while `compensateInput` is the payload delivered to the
+  compensation function. There is no output fallback — a step that provides no
+  payload gives its compensation `undefined`. The payload is type-enforced: when the
+  compensation type `C` excludes `undefined`, omitting it is a compile error.
+
+  This makes reversible `update` steps clean — the forward step snapshots the prior
+  row and returns `new StepResponse(updatedRow, priorRow)`; the compensation restores
+  from the prior row, with no `ctx.metadata`/`WeakMap` side channels.
+
+  BREAKING (`@damatjs/workflow-engine`): the compensation signature changed from
+  `compensate(input, output, ctx)` to `compensate(compensateInput, ctx)`, and
+  `invoke` must return a `StepResponse`. `createStep`/`executeStep`/`StepDefinition`
+  gain a third generic `C` (defaults to `undefined`). New `StepResponse` export.
+
+  BREAKING (`@damatjs/codegen`): generated CRUD steps now wrap their return in
+  `StepResponse` and use the new compensation signature.
+
 ## 0.3.6
 
 ### Patch Changes

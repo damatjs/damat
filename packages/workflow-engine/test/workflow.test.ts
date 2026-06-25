@@ -22,7 +22,7 @@ mock.module("@damatjs/redis", () => ({ acquireLock, releaseLock, getRedis }));
 
 import { Effect } from "effect";
 import { createWorkflow } from "../src/workflow";
-import { createStep, executeStep } from "../src/step";
+import { createStep, executeStep, StepResponse } from "../src/step";
 import { runStep, parallel, when, skipStep } from "../src/utils";
 import { WorkflowError, WorkflowLockError, StepExecutionError } from "../src/index";
 import type { WorkflowContext } from "../src/types";
@@ -159,14 +159,16 @@ describe("workflow/execute: failure & compensation", () => {
 
   it("runs compensation for completed steps when a later step fails (saga rollback)", async () => {
     const events: string[] = [];
-    const stepA = createStep<number, string>(
+    const stepA = createStep<number, string, string>(
       "A",
       async () => {
         events.push("A-run");
-        return "a-out";
+        // output flows downstream; the 2nd arg is the rollback payload the
+        // compensation will receive.
+        return new StepResponse("a-out", "a-out");
       },
-      async (_in, out) => {
-        events.push(`A-comp(${out})`);
+      async (compensateInput) => {
+        events.push(`A-comp(${compensateInput})`);
       },
     );
     const stepB = createStep<string, string>(

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import { Effect, Scope, Exit, Cause } from "effect";
-import { createStep, executeStep } from "../src/step";
+import { createStep, executeStep, StepResponse } from "../src/step";
 import {
   StepExecutionError,
   StepTimeoutError,
@@ -331,17 +331,18 @@ describe("step/execute: compensation finalizer", () => {
     expect(compensated).toBe(false);
   });
 
-  it("runs compensation when a later effect in the same scope fails", async () => {
+  it("delivers the StepResponse compensateInput to compensation (not input/output)", async () => {
     let compensated = false;
-    let compInput: unknown;
-    let compOutput: unknown;
-    const step = createStep<number, string>(
+    let received: unknown = "unset";
+    let receivedCtx: WorkflowContext | undefined;
+    const step = createStep<number, string, { undo: string }>(
       "comp-run",
-      async () => "step-output",
-      async (input, output) => {
+      // output flows downstream; the 2nd arg is the rollback payload.
+      async () => new StepResponse("step-output", { undo: "token-1" }),
+      async (compensateInput, c) => {
         compensated = true;
-        compInput = input;
-        compOutput = output;
+        received = compensateInput;
+        receivedCtx = c;
       },
     );
 
@@ -357,9 +358,30 @@ describe("step/execute: compensation finalizer", () => {
 
     expect(Exit.isFailure(exit)).toBe(true);
     expect(compensated).toBe(true);
-    // compensate receives (input, output, ctx)
-    expect(compInput).toBe(123);
-    expect(compOutput).toBe("step-output");
+    // compensate receives (compensateInput, ctx) — the payload, plus context.
+    expect(received).toEqual({ undo: "token-1" });
+    expect(receivedCtx?.workflowName).toBe("test-wf");
+  });
+
+  it("gives compensation `undefined` when no compensateInput was provided (no output fallback)", async () => {
+    let received: unknown = "unset";
+    const step = createStep<number, string>(
+      "comp-none",
+      async () => new StepResponse("the-output"),
+      async (compensateInput) => {
+        received = compensateInput;
+      },
+    );
+    const program = Effect.scoped(
+      Effect.gen(function* () {
+        yield* executeStep(step, 1, ctx());
+        return yield* Effect.fail(new StepExecutionError("ds", "boom"));
+      }),
+    );
+    await Effect.runPromiseExit(program);
+
+    // The compensation gets nothing — explicitly NOT the output ("the-output").
+    expect(received).toBeUndefined();
   });
 
   it("swallows compensation errors (does not change the original failure)", async () => {
@@ -382,6 +404,39 @@ describe("step/execute: compensation finalizer", () => {
     // The surfaced error is still the primary failure, not the compensation error.
     expect(err).toBeInstanceOf(StepExecutionError);
     expect((err as StepExecutionError).message).toBe("primary failure");
+  });
+});
+
+// =============================================================================
+// step/execute — StepResponse unwrapping
+// =============================================================================
+
+describe("step/execute: StepResponse", () => {
+  it("unwraps the StepResponse so downstream receives the output, not the wrapper", async () => {
+    const step = createStep<number, string, string>(
+      "unwrap",
+      async () => new StepResponse("real-output", "rollback-token"),
+    );
+    const exit = await runStep(executeStep(step, 1, ctx()));
+
+    expect(Exit.isSuccess(exit)).toBe(true);
+    // The workflow sees the plain output — never the StepResponse instance.
+    if (Exit.isSuccess(exit)) {
+      expect(exit.value).toBe("real-output");
+      expect(StepResponse.isStepResponse(exit.value)).toBe(false);
+    }
+  });
+
+  it("isStepResponse detects instances via the brand and rejects look-alikes", () => {
+    expect(StepResponse.isStepResponse(new StepResponse("x", "y"))).toBe(true);
+    expect(StepResponse.isStepResponse(new StepResponse("x"))).toBe(true);
+    // A structural look-alike without the brand is NOT a StepResponse.
+    expect(
+      StepResponse.isStepResponse({ output: "x", compensateInput: "y" }),
+    ).toBe(false);
+    expect(StepResponse.isStepResponse(null)).toBe(false);
+    expect(StepResponse.isStepResponse("x")).toBe(false);
+    expect(StepResponse.isStepResponse(undefined)).toBe(false);
   });
 });
 

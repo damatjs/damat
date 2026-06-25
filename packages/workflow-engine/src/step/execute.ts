@@ -11,6 +11,7 @@ import {
   MaxRetriesExceededError,
   CompensationError,
 } from "../errors";
+import { StepResponse } from "./response";
 import { DEFAULT_STEP_CONFIG, DEFAULT_RETRY_POLICY } from "../config";
 import { createContextLogger } from "@damatjs/logger";
 
@@ -21,8 +22,8 @@ import { createContextLogger } from "@damatjs/logger";
  * caller can bump a single invocation's timeout/retry without touching the
  * step definition.
  */
-function resolveStepConfig<I, O>(
-  step: StepDefinition<I, O>,
+function resolveStepConfig<I, O, C>(
+  step: StepDefinition<I, O, C>,
   ctx: WorkflowContext,
   override?: StepConfig,
 ): RequiredStepConfig {
@@ -92,8 +93,8 @@ function resolveStepConfig<I, O>(
  * );
  * ```
  */
-export function executeStep<I, O>(
-  step: StepDefinition<I, O>,
+export function executeStep<I, O, C = undefined>(
+  step: StepDefinition<I, O, C>,
   input: I,
   ctx: WorkflowContext,
   overrideConfig?: StepConfig,
@@ -150,7 +151,7 @@ export function executeStep<I, O>(
     );
 
     let executionEffect: Effect.Effect<
-      O,
+      StepResponse<O, C>,
       StepExecutionError | StepTimeoutError
     > = attemptEffect;
 
@@ -166,7 +167,7 @@ export function executeStep<I, O>(
       );
 
       const retried: Effect.Effect<
-        O,
+        StepResponse<O, C>,
         StepExecutionError | StepTimeoutError
       > = Effect.retry(attemptEffect, {
         schedule,
@@ -214,7 +215,16 @@ export function executeStep<I, O>(
       );
     }
 
-    const result = yield* executionEffect;
+    const raw = yield* executionEffect;
+    // Unwrap the StepResponse once: `output` flows downstream, `compensateInput`
+    // is held for the compensation finalizer. The brand check (not `instanceof`)
+    // also defends against a JS caller returning a bare value despite the types —
+    // such a value has no compensation payload.
+    const isResp = StepResponse.isStepResponse(raw);
+    const output = (isResp ? (raw as StepResponse<O, C>).output : raw) as O;
+    const compensateInput = (
+      isResp ? (raw as StepResponse<O, C>).compensateInput : undefined
+    ) as C;
 
     const duration = Date.now() - startTime;
     stepLogger.debug(`Step completed`, {
@@ -231,7 +241,7 @@ export function executeStep<I, O>(
           stepLogger.info(`Running compensation for step`);
           return Effect.tryPromise({
             try: async () => {
-              await step.compensate!(input, result, ctx);
+              await step.compensate!(compensateInput, ctx);
               if (engineState) engineState.compensationsRun++;
             },
             catch: (e) => {
@@ -257,6 +267,6 @@ export function executeStep<I, O>(
       });
     }
 
-    return result;
+    return output;
   });
 }

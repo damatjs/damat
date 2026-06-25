@@ -24,9 +24,9 @@ import { executeStep } from "../step";
  * );
  * ```
  */
-export function when<I, O>(
+export function when<I, O, C = undefined>(
   condition: boolean,
-  step: StepDefinition<I, O>,
+  step: StepDefinition<I, O, C>,
   input: I,
   ctx: WorkflowContext,
   defaultValue: O,
@@ -58,10 +58,10 @@ export function when<I, O>(
  * );
  * ```
  */
-export function ifElse<I, O>(
+export function ifElse<I, O, C = undefined>(
   condition: boolean,
-  ifTrue: StepDefinition<I, O>,
-  ifFalse: StepDefinition<I, O>,
+  ifTrue: StepDefinition<I, O, C>,
+  ifFalse: StepDefinition<I, O, C>,
   input: I,
   ctx: WorkflowContext,
 ): Effect.Effect<O, WorkflowError, Scope.Scope> {

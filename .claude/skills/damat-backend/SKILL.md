@@ -85,10 +85,12 @@ Create `src/api/routes/<path>/route.ts` exporting `GET`/`POST`/… as
 cross-cutting concerns in `src/api/middleware/`. Guide: `docs/guide/08-http-apis.md`.
 
 ### Add a workflow (multi-step, must roll back)
-Define steps with `createStep<I,O>(name, forward, compensation?, config?)` and
-compose them with `createWorkflow` + `executeStep` inside `Effect.gen`. Run with
-`.execute(input)` or `.executeWithLock(input, { lockId, ttlMs })`. Guide:
-`docs/guide/09-workflows.md`.
+Define steps with `createStep<I,O,C>(name, forward, compensation?, config?)`. The
+`forward` returns `new StepResponse(output, compensateInput?)` (output flows
+downstream; `compensateInput` is the rollback payload `C`), and `compensation`
+receives `(compensateInput, ctx)`. Compose them with `createWorkflow` +
+`executeStep` inside `Effect.gen`. Run with `.execute(input)` or
+`.executeWithLock(input, { lockId, ttlMs })`. Guide: `docs/guide/09-workflows.md`.
 
 ### Relate two modules (cross-module link)
 Modules stay decoupled and can't foreign-key into each other, so a many-to-many

@@ -6,6 +6,7 @@ Change history for this package. For how it works **now**, read the
 
 | Version | Summary | Upgrade notes |
 |---------|---------|---------------|
+| 0.3.7 | Steps return `StepResponse(output, compensateInput?)`; compensation is `(compensateInput, ctx)` with a type-enforced rollback payload (no output fallback) | [0.3.7 →](./0.3.7.md) |
 | 0.1.3 | Dependency bump (`@damatjs/logger`, `@damatjs/redis`) — picks up the cross-module links work in `@damatjs/link`; no change to this package's API | — |
 | 0.1.2 | Dependency bump (`@damatjs/logger`, `@damatjs/redis`) — version sync alongside the table-name relations work in `@damatjs/orm-model`; no change to this package's API | — |
 | 0.1.1 | Maintenance — CI and test cleanup, dependency bumps | — |
@@ -19,5 +20,3 @@ Change history for this package. For how it works **now**, read the
 | 0.0.4 | Pre-release — build fixes, dependency bumps | — |
 | 0.0.3 | Pre-release — build fixes, dependency bumps | — |
 | 0.0.2 | First pre-alpha release — the saga-style workflow engine (steps, compensation, retry/timeout, distributed locking) | [0.0.2 →](./0.0.2.md) |
-</content>
-</invoke>

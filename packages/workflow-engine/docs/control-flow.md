@@ -10,8 +10,8 @@ own beyond what `executeStep` does (except `parallel`, which adds concurrency).
 ## `runStep`
 
 ```ts
-function runStep<I, O>(
-  step: StepDefinition<I, O>,
+function runStep<I, O, C = undefined>(
+  step: StepDefinition<I, O, C>,
   input: I,
   ctx: WorkflowContext,
 ): Effect.Effect<O, WorkflowError, Scope.Scope>;
@@ -72,9 +72,9 @@ The engine test asserts three 20ms steps finish in under 100ms — well below th
 ## `when`
 
 ```ts
-function when<I, O>(
+function when<I, O, C = undefined>(
   condition: boolean,
-  step: StepDefinition<I, O>,
+  step: StepDefinition<I, O, C>,
   input: I,
   ctx: WorkflowContext,
   defaultValue: O,
@@ -93,10 +93,10 @@ const verification = yield* when(
 ## `ifElse`
 
 ```ts
-function ifElse<I, O>(
+function ifElse<I, O, C = undefined>(
   condition: boolean,
-  ifTrue: StepDefinition<I, O>,
-  ifFalse: StepDefinition<I, O>,
+  ifTrue: StepDefinition<I, O, C>,
+  ifFalse: StepDefinition<I, O, C>,
   input: I,
   ctx: WorkflowContext,
 ): Effect.Effect<O, WorkflowError, Scope.Scope>;

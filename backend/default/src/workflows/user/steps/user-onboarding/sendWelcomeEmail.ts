@@ -1,4 +1,4 @@
-import { createStep } from "@damatjs/workflow-engine";
+import { createStep, StepResponse } from "@damatjs/workflow-engine";
 import type { Users } from "@/modules/user/types";
 
 export const sendWelcomeEmailStep = createStep<
@@ -7,10 +7,11 @@ export const sendWelcomeEmailStep = createStep<
 >(
   "send-welcome-email",
   async (user, _ctx) => {
-    return {
+    // Side-effect only, nothing to roll back → output, no compensation payload.
+    return new StepResponse({
       sent: true,
       emailId: `email-${user.id}-${Date.now()}`,
-    };
+    });
   },
   undefined,
   {

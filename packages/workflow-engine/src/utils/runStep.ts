@@ -24,8 +24,8 @@ import { executeStep } from "../step";
  * );
  * ```
  */
-export function runStep<I, O>(
-  step: StepDefinition<I, O>,
+export function runStep<I, O, C = undefined>(
+  step: StepDefinition<I, O, C>,
   input: I,
   ctx: WorkflowContext,
   overrideConfig?: StepConfig,

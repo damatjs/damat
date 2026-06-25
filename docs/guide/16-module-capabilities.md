@@ -461,12 +461,15 @@ resume-after-crash) — skip workflows when a single function with `try/catch` c
 the need.
 
 ```ts
-import { createStep, createWorkflow, executeStep, RetryPolicies, Effect } from "@damatjs/module";
+import { createStep, createWorkflow, executeStep, StepResponse, RetryPolicies, Effect } from "@damatjs/module";
 
-const createOrder = createStep(
+const createOrder = createStep<{ items: string[] }, Order, string>(
   "create-order",
-  async (input: { items: string[] }, ctx, signal) => orderService.create(input, { signal }),
-  async (input, output) => { await orderService.cancel(output.id); },  // compensation (undo)
+  async (input, ctx, signal) => {
+    const order = await orderService.create(input, { signal });
+    return new StepResponse(order, order.id);   // output downstream; id is the rollback payload
+  },
+  async (orderId, ctx) => { await orderService.cancel(orderId); },  // compensation (undo)
   { retry: RetryPolicies.standard, timeoutMs: 10_000 },
 );
 
@@ -488,12 +491,16 @@ else { /* result.error.code, result.compensated */ }
 
 ### Steps
 
-`createStep(name, invoke, compensate?, config?)`. `invoke` is
-`(input, ctx, signal?) => Promise<output>`; forward `signal` into `fetch`/db calls
-so timeouts actually cancel work. `compensate` is `(input, output, ctx) => Promise<void>`,
-registered **after** the step succeeds and run (in reverse order) only if a *later*
-step fails. `StepConfig`: `timeoutMs` (per-attempt, default 30s), `retry` (a
-`RetryPolicy`), `idempotent` (intent metadata only), `description`.
+`createStep<I, O, C>(name, invoke, compensate?, config?)`. `invoke` is
+`(input, ctx, signal?) => Promise<StepResponse<O, C>>` — return
+`new StepResponse(output, compensateInput?)`, and forward `signal` into `fetch`/db
+calls so timeouts actually cancel work. `compensate` is
+`(compensateInput, ctx) => Promise<void>` — it gets **only** the payload from the
+`StepResponse` (or `undefined`), not the input or output — registered **after** the
+step succeeds and run (in reverse order) only if a *later* step fails. When `C`
+excludes `undefined`, supplying the payload is required at compile time. `StepConfig`:
+`timeoutMs` (per-attempt, default 30s), `retry` (a `RetryPolicy`), `idempotent`
+(intent metadata only), `description`.
 
 ### Retry
 

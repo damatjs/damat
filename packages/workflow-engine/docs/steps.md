@@ -8,15 +8,21 @@ optional `compensate` (undo) function and per-step config. `executeStep` is what
 actually runs it inside a workflow, applying retry, timeout, and registering
 compensation.
 
+`invoke` returns a [`StepResponse`](#stepresponse) wrapping its `output` (what
+flows downstream) and an optional `compensateInput` (the payload handed to
+`compensate`). `compensate` receives **only** that payload plus the context — not
+the original input or output. The third generic `C` is the compensation payload
+type and defaults to `undefined`.
+
 ## `createStep`
 
 ```ts
-function createStep<I, O>(
+function createStep<I, O, C = undefined>(
   name: string,
-  invoke: (input: I, ctx: WorkflowContext, signal?: AbortSignal) => Promise<O>,
-  compensate?: (input: I, output: O, ctx: WorkflowContext) => Promise<void>,
+  invoke: (input: I, ctx: WorkflowContext, signal?: AbortSignal) => Promise<StepResponse<O, C>>,
+  compensate?: (compensateInput: C, ctx: WorkflowContext) => Promise<void>,
   config: StepConfig = {},
-): StepDefinition<I, O>;
+): StepDefinition<I, O, C>;
 ```
 
 It merges config eagerly and returns a plain object:
@@ -40,12 +46,12 @@ hand without `rawConfig` falls back to `config` and skips workflow layering.
 ### Step definition shape
 
 ```ts
-interface StepDefinition<I, O> {
+interface StepDefinition<I, O, C = undefined> {
   name: string;
   config: RequiredStepConfig;
   rawConfig?: StepConfig;
-  invoke: (input: I, ctx: WorkflowContext, signal?: AbortSignal) => Promise<O>;
-  compensate?: (input: I, output: O, ctx: WorkflowContext) => Promise<void>;
+  invoke: (input: I, ctx: WorkflowContext, signal?: AbortSignal) => Promise<StepResponse<O, C>>;
+  compensate?: (compensateInput: C, ctx: WorkflowContext) => Promise<void>;
 }
 ```
 
@@ -64,11 +70,48 @@ interface StepConfig {
 > to change behavior. Mark steps that are safe to retry for human readers and to
 > signal the author's intent.
 
+## `StepResponse`
+
+Source: `src/step/response.ts`. The value `invoke` returns.
+
+```ts
+class StepResponse<O, C = undefined> {
+  readonly output: O;          // flows downstream / to the next step
+  readonly compensateInput: C; // handed to compensate (or undefined)
+  constructor(
+    output: O,
+    // required when C excludes undefined, optional otherwise
+    ...rest: undefined extends C ? [compensateInput?: C] : [compensateInput: C]
+  );
+  static isStepResponse(value: unknown): value is StepResponse<unknown, unknown>;
+}
+```
+
+- **`output`** is unwrapped by `executeStep` and returned downstream — the
+  workflow never sees the `StepResponse` itself.
+- **`compensateInput`** is the *only* thing `compensate` receives (plus `ctx`).
+  There is **no fallback**: provide nothing and `compensate` gets `undefined`,
+  never the output.
+- **Type-enforced optionality.** When `C` excludes `undefined`, the second
+  constructor argument is **required** — a step that declares it needs rollback
+  data cannot forget to capture it (`new StepResponse(output)` is a compile
+  error). Type `C` as `… | undefined` to opt out, then the payload may be omitted
+  and `compensate` must guard for `undefined`.
+- **Detection** uses a realm-global `Symbol.for` brand (`isStepResponse`), not
+  `instanceof`, so it survives duplicate copies of the package.
+
+```ts
+// rollback needs the prior row → capture it as the payload
+return new StepResponse(updatedRow, priorRow);
+// read-only step → output only, no payload
+return new StepResponse(rows);
+```
+
 ## `executeStep`
 
 ```ts
-function executeStep<I, O>(
-  step: StepDefinition<I, O>,
+function executeStep<I, O, C = undefined>(
+  step: StepDefinition<I, O, C>,
   input: I,
   ctx: WorkflowContext,
   overrideConfig?: StepConfig,   // optional per-call timeout/retry override
@@ -124,23 +167,25 @@ directly without baking per-site values into the step definition.
    (code `MAX_RETRIES_EXCEEDED`). If the predicate stopped retries early
    (`attemptCount <= maxAttempts`), nothing is recorded and the last error
    propagates as-is.
-5. **Run the attempt(s)** and log `debug` "Step completed" with `durationMs` and
-   `attempts`.
+5. **Run the attempt(s)**, then **unwrap the `StepResponse`** once: `output` is
+   returned downstream; `compensateInput` (or `undefined` when none was provided)
+   is held for the finalizer. A non-`StepResponse` value (a JS caller ignoring the
+   types) is treated as the `output` with no payload. Log `debug` "Step completed".
 6. **Register compensation** (only if `step.compensate` exists) via
    `Effect.addFinalizer((exit) => ...)`:
-   - If the scope closes with **failure**, run `step.compensate(input, result, ctx)`.
+   - If the scope closes with **failure**, run `step.compensate(compensateInput, ctx)`.
      On success, increment `engineState.compensationsRun`.
      On throw, increment `engineState.compensationsFailed`, log the error
      (with the squashed original cause), and **swallow** it (`Effect.catchAll → Effect.void`).
    - If the scope closes with **success**, the finalizer is a no-op.
-7. **Return** the step output.
+7. **Return** the step output (the unwrapped `StepResponse.output`).
 
 ### Compensation timing
 
-Compensation is registered **after** the step succeeds, so an output exists to
-pass to `compensate(input, output, ctx)`. Finalizers run in **reverse**
-registration order when the workflow scope fails — i.e. the most recently
-completed step is rolled back first.
+Compensation is registered **after** the step succeeds, so the `compensateInput`
+captured by the forward step exists to pass to `compensate(compensateInput, ctx)`.
+Finalizers run in **reverse** registration order when the workflow scope fails —
+i.e. the most recently completed step is rolled back first.
 
 ```ts
 const a = createStep("a", invokeA, undoA);

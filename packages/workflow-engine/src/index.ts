@@ -86,7 +86,7 @@ export {
 // STEP
 // =============================================================================
 
-export { createStep, executeStep } from "./step";
+export { createStep, executeStep, StepResponse } from "./step";
 
 // =============================================================================
 // WORKFLOW

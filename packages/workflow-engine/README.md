@@ -39,26 +39,30 @@ import {
   createStep,
   createWorkflow,
   executeStep,
+  StepResponse,
   RetryPolicies,
   Effect,
 } from "@damatjs/workflow-engine";
 
-// A step: (input, ctx, signal) => Promise<output>, plus an optional compensation.
-const createOrder = createStep(
+// A step returns a StepResponse(output, compensateInput?): the output flows
+// downstream; the compensateInput is the only thing the compensation receives.
+const createOrder = createStep<{ items: string[] }, Order, string>(
   "create-order",
-  async (input: { items: string[] }, ctx, signal) => {
-    return orderService.create(input, { signal }); // forward signal so timeouts cancel work
+  async (input, ctx, signal) => {
+    const order = await orderService.create(input, { signal }); // forward signal so timeouts cancel
+    return new StepResponse(order, order.id); // output = order; rollback payload = order id
   },
-  // Compensation — runs (in reverse order) if a *later* step fails.
-  async (input, output) => {
-    await orderService.cancel(output.id);
+  // Compensation — runs (in reverse order) if a *later* step fails. Receives the
+  // compensateInput (the order id) plus ctx — not the original input/output.
+  async (orderId, ctx) => {
+    await orderService.cancel(orderId);
   },
   { retry: RetryPolicies.standard, timeoutMs: 10_000 },
 );
 
-const chargeCard = createStep(
+const chargeCard = createStep<{ orderId: string }, Payment>(
   "charge-card",
-  async (input: { orderId: string }) => paymentService.charge(input.orderId),
+  async (input) => new StepResponse(await paymentService.charge(input.orderId)),
 );
 
 const placeOrder = createWorkflow(
@@ -85,7 +89,8 @@ if (result.success) {
 
 | Export | Kind | Summary |
 | --- | --- | --- |
-| `createStep(name, invoke, compensate?, config?)` | function | Build a typed `StepDefinition<I, O>` with optional compensation and per-step config. |
+| `createStep(name, invoke, compensate?, config?)` | function | Build a typed `StepDefinition<I, O, C>`. `invoke` returns a `StepResponse<O, C>`; `compensate(compensateInput, ctx)` gets the `C` payload. |
+| `StepResponse(output, compensateInput?)` | class | `invoke`'s return: `output` flows downstream, `compensateInput` is delivered to `compensate` (required when `C` excludes `undefined`). |
 | `executeStep(step, input, ctx, overrideConfig?)` | function | Run a step inside a workflow generator (handles timeout, retry, compensation registration). The optional `overrideConfig` layers per-call timeout/retry on top of the step's own config. |
 | `step(input, ctx, overrideConfig?)` | call | A `StepDefinition` is callable: `step(input, ctx)` ≡ `executeStep(step, input, ctx)`, with the same optional per-call override. |
 | `createWorkflow(name, definition, config?)` | function | Build a `WorkflowDefinition<I, O>` exposing `execute` and `executeWithLock`. |

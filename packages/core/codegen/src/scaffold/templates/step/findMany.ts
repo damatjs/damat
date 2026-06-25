@@ -3,7 +3,7 @@ import { SCAFFOLD_NOTE } from '../constant';
 
 export function stepFindMany(n: CrudNames, typesSpec: string): string {
   return `${SCAFFOLD_NOTE}
-import { createStep } from "@damatjs/workflow-engine";
+import { createStep, StepResponse } from "@damatjs/workflow-engine";
 import { getModule } from "@damatjs/framework";
 import type { ${n.rowType}, ${n.queryType} } from "${typesSpec}";
 
@@ -13,7 +13,7 @@ export const findMany${n.pascal}Step = createStep<${n.queryType}, ${n.rowType}[]
     const service = getModule("${n.moduleId}");
     if (!service) throw new Error("${n.moduleId} module not loaded");
     const { limit, offset, orderBy, orderDir, ...where } = query;
-    return service.${n.prop}.findMany({
+    const rows = await service.${n.prop}.findMany({
       where,
       ...(limit !== undefined ? { take: limit } : {}),
       ...(offset !== undefined ? { skip: offset } : {}),
@@ -21,6 +21,7 @@ export const findMany${n.pascal}Step = createStep<${n.queryType}, ${n.rowType}[]
         ? { orderBy: [{ column: orderBy, direction: orderDir === "desc" ? "DESC" : "ASC" }] }
         : {}),
     });
+    return new StepResponse(rows);
   },
   undefined,
   { description: "List ${n.prop}", idempotent: true },

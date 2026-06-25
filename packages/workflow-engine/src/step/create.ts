@@ -4,6 +4,7 @@ import type {
   RequiredStepConfig,
   WorkflowContext,
 } from "../types";
+import type { StepResponse } from "./response";
 import { DEFAULT_STEP_CONFIG, DEFAULT_RETRY_POLICY } from "../config";
 import { executeStep } from "./execute";
 
@@ -11,33 +12,41 @@ import { executeStep } from "./execute";
  * Creates a workflow step with typed input/output and optional compensation.
  *
  * @param name - Unique step name for logging and tracing
- * @param invoke - Main step execution function
- * @param compensate - Optional rollback function called on workflow failure
+ * @param invoke - Main step execution function. Returns a {@link StepResponse}
+ *   wrapping the step's `output` and an optional `compensateInput`.
+ * @param compensate - Optional rollback function called on workflow failure.
+ *   Receives the `compensateInput` from the step's `StepResponse` (or `undefined`
+ *   when none was provided — no output fallback) plus the workflow context.
  * @param config - Step configuration (timeout, retry, etc.)
  * @returns Step definition object
  *
  * @example
  * ```typescript
- * const createOrderStep = createStep(
+ * const createOrderStep = createStep<{ userId: string; items: Item[] }, Order, string>(
  *   'create-order',
- *   async (input: { userId: string; items: Item[] }, ctx) => {
+ *   async (input, ctx) => {
  *     const order = await orderService.create(input);
- *     return order;
+ *     // output = the order (downstream); compensateInput = its id (rollback)
+ *     return new StepResponse(order, order.id);
  *   },
- *   async (input, output, ctx) => {
- *     // Compensation: cancel the order if workflow fails
- *     await orderService.cancel(output.id);
+ *   async (orderId, ctx) => {
+ *     // Compensation: cancel the order if a later step fails
+ *     await orderService.cancel(orderId);
  *   },
  *   { timeoutMs: 5000, retry: RetryPolicies.standard }
  * );
  * ```
  */
-export function createStep<I, O>(
+export function createStep<I, O, C = undefined>(
   name: string,
-  invoke: (input: I, ctx: WorkflowContext, signal?: AbortSignal) => Promise<O>,
-  compensate?: (input: I, output: O, ctx: WorkflowContext) => Promise<void>,
+  invoke: (
+    input: I,
+    ctx: WorkflowContext,
+    signal?: AbortSignal,
+  ) => Promise<StepResponse<O, C>>,
+  compensate?: (compensateInput: C, ctx: WorkflowContext) => Promise<void>,
   config: StepConfig = {},
-): StepDefinition<I, O> {
+): StepDefinition<I, O, C> {
   const mergedConfig: RequiredStepConfig = {
     ...DEFAULT_STEP_CONFIG,
     ...config,
@@ -51,7 +60,8 @@ export function createStep<I, O>(
   const step = ((input: I, ctx: WorkflowContext, overrideConfig?: StepConfig) =>
     executeStep(step, input, ctx, overrideConfig)) as unknown as StepDefinition<
     I,
-    O
+    O,
+    C
   >;
   Object.defineProperty(step, "name", { value: name, configurable: true });
   step.config = mergedConfig;

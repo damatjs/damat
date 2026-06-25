@@ -1,8 +1,8 @@
-import { createStep } from "@damatjs/workflow-engine";
+import { createStep, StepResponse } from "@damatjs/workflow-engine";
 import type { Users, NewUsers } from "@/modules/user/types";
 import { getModule } from "@damatjs/framework";
 
-export const createProfileStep = createStep<NewUsers, Users>(
+export const createProfileStep = createStep<NewUsers, Users, Users>(
   "create-profile",
   async (input, _ctx) => {
     const userService = getModule("user");
@@ -21,15 +21,17 @@ export const createProfileStep = createStep<NewUsers, Users>(
       returning: ["id", "email", "name"],
     })) as Users;
 
-    return user;
+    // output = the created user (downstream); compensateInput = the same user,
+    // used to delete it if a later step fails.
+    return new StepResponse(user, user);
   },
-  async (_input, output, _ctx) => {
+  async (user, _ctx) => {
     const userService = getModule("user");
     if (!userService) throw new Error("User module not loaded");
 
     await userService.users.delete({
       where: {
-        id: output.id,
+        id: user.id,
       },
     });
   },
