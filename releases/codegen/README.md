@@ -10,7 +10,7 @@ Change history for this package. For how it works **now**, read the
 
 | Version | Summary | Upgrade notes |
 |---------|---------|---------------|
-| Unreleased | Generates a per-table `<Pascal>ParamsSchema` and scaffolds routes that validate `params`/`query`/`body` through the framework's validation middleware (read via `getValidated`) instead of hand-checking `:id` in the handler. | [Unreleased →](./next.md) |
+| 1.0.6 | Generates a per-table `<Pascal>ParamsSchema` and scaffolds routes that validate `params`/`query`/`body` through the framework's validation middleware (read via `getValidated`) instead of hand-checking `:id` in the handler. | [1.0.6 →](./1.0.6.md) |
 | 0.1.4 | Codegen graduates from types-only to the engine behind the codegen-first module workflow: alongside row types + zod it now writes the typed `registry.ts` and **scaffolds-once** a per-table CRUD slice (steps, workflows, and split `api/routes`). Existing files are never overwritten (`writeOnce`). | [0.1.4 →](./0.1.4.md) |
 | 0.1.3 | Dependency bump (`@damatjs/orm-type`, `@damatjs/orm-model`, `@damatjs/logger` → 0.1.3) — picks up cross-module links in `@damatjs/link`; the type/Zod core consumes the unchanged `RelationSchema` shape, no change to this package's generated output | — |
 | 0.1.2 | Dependency bump (deps → 0.1.2) — enables table-name relation targets in `@damatjs/orm-model`; relation rendering already handles them, no change to this package's code | — |

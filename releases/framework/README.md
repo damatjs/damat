@@ -6,7 +6,7 @@ Change history for this package. For how it works **now**, read the
 
 | Version | Summary | Upgrade notes |
 |---------|---------|---------------|
-| Unreleased | Route validator middleware stores its parsed + coerced result; new `getValidated(c, target)` helper lets handlers read validated `body`/`query`/`params`/`json` instead of re-parsing. | [Unreleased →](./next.md) |
+| 0.3.6 | Route validator middleware stores its parsed + coerced result; new `getValidated(c, target)` helper lets handlers read validated `body`/`query`/`params`/`json` instead of re-parsing. | [0.3.6 →](./0.3.6.md) |
 | 0.1.3 | Cross-module links: new top-level `links` field in `damat.config.ts`, link directories wired as a `link` module at boot, and the `@damatjs/link` authoring surface (`defineLink`/`defineLinkModule`/`collectLinkModels`) re-exported from the barrel. | [0.1.3 →](./0.1.3.md) |
 | 0.1.2 | Dependency bump (relation-by-table-name lands in the ORM packages; no framework API change). | — |
 | 0.1.1 | CI / test cleanup. | — |
