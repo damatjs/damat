@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/services",
   "description": "Damatjs services definition",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

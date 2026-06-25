@@ -1,5 +1,21 @@
 # @damatjs/damat-cli
 
+## 0.3.6
+
+### Patch Changes
+
+- - Added type-check gate to damat build and introduce damat module build for module verification
+  - Introduce getValidated helper for accessing pre-parsed and coerced request data in route handlers.
+- Updated dependencies
+  - @damatjs/cli@0.3.6
+  - @damatjs/codegen@1.0.6
+  - @damatjs/load-env@0.3.6
+  - @damatjs/logger@0.3.6
+  - @damatjs/framework@0.3.6
+  - @damatjs/link@0.3.6
+  - @damatjs/module@0.3.6
+  - @damatjs/orm-cli@0.3.6
+
 ## 0.3.5
 
 ### Patch Changes

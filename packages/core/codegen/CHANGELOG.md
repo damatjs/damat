@@ -1,5 +1,17 @@
 # @damatjs/orm-codegen
 
+## 1.0.6
+
+### Patch Changes
+
+- - Added type-check gate to damat build and introduce damat module build for module verification
+  - Introduce getValidated helper for accessing pre-parsed and coerced request data in route handlers.
+- Updated dependencies
+  - @damatjs/logger@0.3.6
+  - @damatjs/orm-migration@0.3.6
+  - @damatjs/orm-model@0.3.6
+  - @damatjs/orm-type@0.3.6
+
 ## 1.0.5
 
 ### Patch Changes
