@@ -43,8 +43,8 @@ describe("buildCommand registration", () => {
     expect(typeof buildCommand.handler).toBe("function");
   });
 
-  it("declares output/target/minify options with correct defaults", () => {
-    expect(buildCommand.options).toHaveLength(3);
+  it("declares output/target/minify/typecheck options with correct defaults", () => {
+    expect(buildCommand.options).toHaveLength(4);
 
     const output = findOption(buildCommand, "output");
     expect(output).toMatchObject({
@@ -68,6 +68,14 @@ describe("buildCommand registration", () => {
       alias: "m",
       type: "boolean",
       default: false,
+    });
+
+    // Type-checking gates the build by default; --no-typecheck opts out.
+    const typecheck = findOption(buildCommand, "typecheck");
+    expect(typecheck).toMatchObject({
+      name: "typecheck",
+      type: "boolean",
+      default: true,
     });
   });
 });

@@ -40,7 +40,7 @@ bun run migration:create   # diff models -> SQL migration
 bun run codegen            # types + zod + registry + CRUD scaffold
 bun run dev                # run the module standalone (its own server + /health)
 bun test                   # contract test always; service/api tests when DATABASE_URL is set
-bun run validate           # contract + registry readiness (aim for no warnings)
+bun run build              # type-check + contract validate — the release gate
 \`\`\`
 
 ## Stay portable

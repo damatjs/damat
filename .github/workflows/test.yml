@@ -39,5 +39,10 @@ jobs:
       - name: Build packages
         run: bun run build --filter='./packages/**'
 
+      # The default app is bundled by `damat build` (no tsc), so its type errors
+      # are not caught by the package builds above — gate them explicitly.
+      - name: Type-check default app
+        run: bun --filter='./backend/**' run typecheck
+
       - name: Test packages + default app
         run: bun run test --filter='./packages/**' --filter='./backend/**'

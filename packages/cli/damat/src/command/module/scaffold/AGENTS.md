@@ -58,6 +58,7 @@ bun run migration:create  # diff models -> a SQL migration in src/migrations
 bun run codegen           # generate row types + zod schemas
 bun run validate          # check the module.json contract + registry-readiness
 bun run typecheck         # tsc --noEmit
+bun run build             # type-check + contract validate (the release gate)
 bun test                  # the contract test + your own tests
 ```
 
@@ -409,9 +410,11 @@ module per process.
 
 ## Validate, then share
 
-Run `bun run validate` until it reports **no warnings** — then it's
-registry-ready. Publish to your registry, or just push to git / keep it local; an
-app installs it with `damat module add <ref | path | git-url>`.
+Run `bun run build` — it **type-checks** the module (`tsc --noEmit`) and runs the
+contract **validate** in one gate; it must exit clean. Keep going until `validate`
+reports **no warnings** too — then it's registry-ready. Publish to your registry,
+or just push to git / keep it local; an app installs it with
+`damat module add <ref | path | git-url>`.
 
 ---
 

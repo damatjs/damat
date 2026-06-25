@@ -12,6 +12,7 @@
       ],
       "outputs": [
         "dist/**",
+        ".damat/dist/**",
         ".next/**",
         "!.next/cache/**"
       ],

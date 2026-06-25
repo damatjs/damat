@@ -7,7 +7,7 @@
 | Command | Description |
 |---------|-------------|
 | `damat dev` | Start the dev server with hot reload |
-| `damat build` | Build for production |
+| `damat build` | Type-check the whole app (`tsc --noEmit`), then bundle for production. Fails on any type error; `--no-typecheck` skips the check |
 | `damat start` | Start the production server |
 | `damat codegen <module>` \| `--all` | Types + zod + registry, and scaffold-once CRUD. Name a module, or pass `--all` for every module in the config |
 | `damat barrel [dir]` | Recursively (re)write `index.ts` barrels so one bare import (`@workflows`) re-exports a whole tree (default `src/workflows`) |
@@ -18,6 +18,7 @@
 | `damat module migration:create` | Diff models → migration (in a module) |
 | `damat module codegen` | Types + zod + registry, and scaffold-once CRUD (in a module) |
 | `damat module validate` | Contract + registry-readiness check |
+| `damat module build` | Release gate for a module: type-check (`tsc --noEmit`) + contract validate. `--no-typecheck` / `--no-validate` skip a step |
 
 ## `damat-orm` — migrations & codegen ([docs](../../packages/orm/cli/README.md))
 

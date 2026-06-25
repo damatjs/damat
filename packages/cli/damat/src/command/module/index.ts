@@ -6,6 +6,7 @@ import { moduleInitCommand } from "./init";
 import { moduleMigrationCreateCommand } from "./migrationCreate";
 import { moduleCodegenCommand } from "./codegen";
 import { moduleValidateCommand } from "./validate";
+import { moduleBuildCommand } from "./build";
 
 export const moduleCommand: Command = {
   name: "module",
@@ -19,6 +20,7 @@ export const moduleCommand: Command = {
     moduleMigrationCreateCommand,
     moduleCodegenCommand,
     moduleValidateCommand,
+    moduleBuildCommand,
   ],
   handler: async (ctx) => {
     ctx.logger.info(
@@ -29,6 +31,7 @@ export const moduleCommand: Command = {
         "  damat module migration:create   Diff models -> migration",
         "  damat module codegen            Generate row types + zod schemas",
         "  damat module validate           Contract + registry readiness check",
+        "  damat module build              Type-check + contract validate for release",
         "",
         "App side (inside a backend):",
         "  damat module add <source>       Install from registry ref, path, or git",
@@ -47,4 +50,5 @@ export {
   moduleMigrationCreateCommand,
   moduleCodegenCommand,
   moduleValidateCommand,
+  moduleBuildCommand,
 };

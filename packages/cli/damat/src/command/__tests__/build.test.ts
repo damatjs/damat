@@ -11,9 +11,10 @@ import {
   copyCalls,
   mockMkdirSync,
   resetMocks,
+  setSpawnHandler,
 } from "./setup";
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { createContext } from "./helpers";
+import { createContext, fakeSpawnResult } from "./helpers";
 import type { Command } from "@damatjs/cli";
 
 /**
@@ -232,5 +233,88 @@ describe("buildCommand.handler", () => {
     await buildCommand.handler(ctx);
 
     expect(spawnCalls[0]!.cmd).toContain("/srv/app/custom-out/entry.js");
+  });
+});
+
+describe("buildCommand.handler — type-check gate", () => {
+  // Some cases below drive per-spawn exit codes via setSpawnHandler; restore the
+  // default (push + shared exit code) handler so it never leaks across tests.
+  afterEach(() => {
+    setSpawnHandler((opts) => {
+      spawnCalls.push(opts);
+      return fakeSpawnResult(state.spawnExitCode);
+    });
+  });
+
+  it("type-checks first (bunx tsc --noEmit) when a tsconfig.json exists", async () => {
+    state.existsMap = { "/project/tsconfig.json": true }; // src absent -> stop after entry build
+    const { ctx, logger } = createContext(
+      { output: ".damat/dist", target: "bun", minify: false },
+      { cwd: CWD },
+    );
+
+    await buildCommand.handler(ctx);
+
+    expect(logger.info).toHaveBeenCalledWith("Type-checking app...");
+    expect(spawnCalls[0]!.cmd).toEqual(["bunx", "tsc", "--noEmit"]);
+    expect(spawnCalls[0]!.cwd).toBe(CWD);
+    // The entry bundle is the SECOND spawn, after the type-check passes.
+    expect(spawnCalls[1]!.cmd).toContain("build");
+  });
+
+  it("aborts before bundling when the type-check fails", async () => {
+    state.existsMap = { "/project/tsconfig.json": true };
+    state.spawnExitCode = 2; // the (first) tsc spawn fails
+    const { ctx, logger } = createContext(
+      { output: ".damat/dist", target: "bun", minify: false },
+      { cwd: CWD },
+    );
+
+    const result = await buildCommand.handler(ctx);
+
+    expect(result.exitCode).toBe(2);
+    expect(spawnCalls).toHaveLength(1); // only tsc; no entry/config build
+    expect(spawnCalls[0]!.cmd).toEqual(["bunx", "tsc", "--noEmit"]);
+    expect(rmCalls).toHaveLength(0); // never cleaned the output dir
+    expect(logger.success).not.toHaveBeenCalled();
+  });
+
+  it("skips the type-check when --no-typecheck (typecheck:false) is passed", async () => {
+    state.existsMap = { "/project/tsconfig.json": true }; // present, but opted out
+    const { ctx, logger } = createContext(
+      { output: ".damat/dist", target: "bun", minify: false, typecheck: false },
+      { cwd: CWD },
+    );
+
+    await buildCommand.handler(ctx);
+
+    expect(logger.info).not.toHaveBeenCalledWith("Type-checking app...");
+    expect(spawnCalls).toHaveLength(1); // entry build only, no tsc
+    expect(spawnCalls[0]!.cmd[0]).toBe("bun"); // the entry bundle, not `bunx tsc`
+    expect(spawnCalls[0]!.cmd).toContain("/project/.damat/build-entry.ts");
+  });
+
+  it("fails the build when the config bundle fails", async () => {
+    state.existsMap = {
+      "/project/src": true,
+      "/project/damat.config.ts": true,
+      // no tsconfig.json -> type-check skipped, isolating the config path
+    };
+    // Entry build succeeds; the config build (damat.config.ts) fails.
+    setSpawnHandler((opts) => {
+      spawnCalls.push(opts);
+      const isConfig = opts.cmd.includes("/project/damat.config.ts");
+      return fakeSpawnResult(isConfig ? 1 : 0);
+    });
+    const { ctx, logger } = createContext(
+      { output: ".damat/dist", target: "bun", minify: false },
+      { cwd: CWD },
+    );
+
+    const result = await buildCommand.handler(ctx);
+
+    expect(result.exitCode).toBe(1);
+    expect(logger.error).toHaveBeenCalledWith("Config build failed");
+    expect(logger.success).not.toHaveBeenCalled();
   });
 });

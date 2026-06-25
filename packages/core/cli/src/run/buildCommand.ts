@@ -3,7 +3,8 @@ import type { CliConfig, CommandContext, CommandOption } from "../types";
 
 /**
  * Parse raw argv tokens against a command's option definitions.
- * Supports --name value, --name=value, -a value, and boolean flags.
+ * Supports --name value, --name=value, -a value, boolean flags, and
+ * `--no-name` negation of boolean flags (mirrors cac's top-level parsing).
  * Defaults from the option definitions are applied first.
  */
 export function parseCommandArgs(
@@ -36,6 +37,17 @@ export function parseCommandArgs(
       if (eqIndex !== -1) {
         token = arg.slice(0, eqIndex);
         inlineValue = arg.slice(eqIndex + 1);
+      }
+
+      // `--no-<name>` negates a boolean option.
+      if (token.startsWith("--no-")) {
+        const negated = optionDefs.find(
+          (d) => d.type === "boolean" && d.name === token.slice(5),
+        );
+        if (negated) {
+          options[negated.name] = false;
+          continue;
+        }
       }
 
       const def = findDef(token);

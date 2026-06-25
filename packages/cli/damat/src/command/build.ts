@@ -2,6 +2,7 @@ import { spawn } from "bun";
 import { join } from "node:path";
 import { existsSync, mkdirSync, writeFileSync, unlinkSync, readdirSync, statSync, copyFileSync, rmSync } from "node:fs";
 import { type Command } from "@damatjs/cli";
+import { runTypeCheck } from "./shared/typecheck";
 
 function copyDir(src: string, dest: string) {
   if (!existsSync(dest)) {
@@ -48,12 +49,31 @@ export const buildCommand: Command = {
       description: "Minify the output",
       default: false,
     },
+    {
+      name: "typecheck",
+      type: "boolean",
+      description: "Type-check the app before building (use --no-typecheck to skip)",
+      default: true,
+    },
   ],
   handler: async (ctx) => {
     const outputDir = join(ctx.cwd, ctx.options.output as string);
     const target = ctx.options.target as string;
     const minify = ctx.options.minify as boolean;
     const damatDir = join(ctx.cwd, ".damat");
+
+    // Gate the build on a full type-check so an error anywhere in the app
+    // (workflows, routes, services, config) fails the build — not just a broken
+    // entry bundle. Runs first so a failure never wipes the previous output.
+    const typecheckExit = await runTypeCheck({
+      cwd: ctx.cwd,
+      logger: ctx.logger,
+      skip: ctx.options.typecheck === false,
+      label: "app",
+    });
+    if (typecheckExit !== 0) {
+      return { exitCode: typecheckExit };
+    }
 
     if (!existsSync(damatDir)) {
       mkdirSync(damatDir, { recursive: true });
@@ -114,7 +134,11 @@ export const buildCommand: Command = {
           stderr: "inherit",
         });
 
-        await configResult.exited;
+        const configExit = await configResult.exited;
+        if (configExit !== 0) {
+          ctx.logger.error("Config build failed");
+          return { exitCode: configExit };
+        }
       }
 
       ctx.logger.success("Build complete!");

@@ -352,18 +352,23 @@ decision of whether to actually install and connect the pair to the app owner.
 // "modules": ["organization"]
 ```
 
-## Validate until clean
+## Build it for release
 
-Run the validator until it reports no warnings:
+`damat module build` is the release gate. A module ships as source (no bundle),
+so "build" means it must **compile** and be a **valid, installable** module:
 
 ```bash
-damat module validate            # contract + registry-readiness check
+damat module build               # type-check (tsc --noEmit) + contract validate
 ```
 
-It runs two passes. **Errors** block installing (missing entry, broken manifest)
-— fix these first. **Warnings** block publishing (missing version, license,
-namespace, …) — clear them so the module is registry-ready even before a hosted
-registry exists. The same check is available programmatically as
+It type-checks the whole module first (fails on any type error), then runs the
+same contract + registry-readiness check as `damat module validate`. Skip a step
+with `--no-typecheck` / `--no-validate` when you only want one.
+
+The validate pass runs two checks. **Errors** block installing (missing entry,
+broken manifest) — fix these first. **Warnings** block publishing (missing
+version, license, namespace, …) — clear them so the module is registry-ready even
+before a hosted registry exists. The same check is available programmatically as
 `validateModuleDir`, which is worth asserting on in your test suite (see above).
 
 ## Stay in your lane

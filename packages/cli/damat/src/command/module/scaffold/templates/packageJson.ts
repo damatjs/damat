@@ -7,6 +7,7 @@ export function packageJsonTemplate(name: string): string {
       private: true,
       scripts: {
         dev: "damat module dev",
+        build: "damat module build",
         test: "bun test",
         typecheck: "tsc --noEmit",
         "migration:create": "damat module migration:create",
