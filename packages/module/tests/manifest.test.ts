@@ -34,9 +34,11 @@ describe("validateModuleManifest", () => {
       env: [{ name: "STRIPE_KEY", required: true }],
       packages: { stripe: "^14.0.0" },
       modules: ["user"],
+      pairsWith: ["user"],
       registry: { namespace: "damatjs", license: "MIT", keywords: ["billing"] },
     });
     expect(manifest.registry?.namespace).toBe("damatjs");
+    expect(manifest.pairsWith).toEqual(["user"]);
   });
 
   test("accepts author as a string or an object, rejects other shapes", () => {
@@ -77,6 +79,12 @@ describe("validateModuleManifest", () => {
     expect(() =>
       validateModuleManifest({ name: "x", registry: "MIT" }),
     ).toThrow('"registry" must be an object');
+  });
+
+  test("rejects a non-array pairsWith", () => {
+    expect(() =>
+      validateModuleManifest({ name: "x", pairsWith: "user" }),
+    ).toThrow('"pairsWith" must be an array');
   });
 });
 

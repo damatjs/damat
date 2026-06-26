@@ -85,10 +85,12 @@ import {
 } from "@damatjs/module";
 ```
 
-What is **deliberately not** in this surface: **link helpers**. There is no
-`defineLink` here, no way to declare a relationship to another module's tables.
-That omission is intentional and load-bearing — a single-purpose module does not
-author cross-module links. Composition is the app's job (see
+What is **deliberately not** in this surface: **link helpers**. `@damatjs/module`
+has no `defineLink`, and a module's **models** never declare a relationship to
+another module's tables. A module may still *ship* a **dormant** link file under
+`links/` (a `defineLink` imported from `@damatjs/framework`) that the backend owner
+activates by migrating — but it never imports the other module and never creates the
+connection itself. Composition stays the app's job (see
 [ch. 17](./17-composing-and-linking-modules.md)). The authoring surface is the
 full reference; see [authoring.md](../../packages/module/docs/authoring.md).
 
@@ -376,10 +378,12 @@ before a hosted registry exists. The same check is available programmatically as
 The module author's job ends at the package boundary. A module is a single,
 self-contained blade:
 
-- **No links.** Don't author cross-module relationships — the link helpers are
-  deliberately absent from `@damatjs/module`.
-- **No imports of other modules**, and **no reaching into another module's
-  tables**. Cross-module references are plain id columns, not foreign keys.
+- **No model-level links.** Your models reference only your own tables; cross-module
+  references are plain id columns, not foreign keys. (You *may* ship a **dormant**
+  `defineLink` file under `links/` for the owner to activate — it imports nothing
+  from the other module and creates nothing until migrated. See ch. 17.)
+- **No imports of other modules**, and **no activating a link yourself**. Whether and
+  when a shipped link is turned on is the backend owner's call.
 - **Don't decide composition.** Whether your module is installed, what it's
   connected to, and how, is the **backend owner's** call.
 - **Do leave a `pairsWith` hint** when a pairing is natural — a suggestion, not a

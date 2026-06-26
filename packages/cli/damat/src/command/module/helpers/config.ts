@@ -52,6 +52,34 @@ export function registerModuleInConfig(
   return false;
 }
 
+/**
+ * Ensure `links: "<linksPath>"` is present in damat.config.ts so the framework
+ * boots, migrates, and type-generates the generated `src/links` tree. Conservative
+ * like `registerModuleInConfig`: no-op when a `links:` key already exists (we never
+ * overwrite the owner's value), and returns false when the config can't be edited
+ * safely so the caller can print a manual step.
+ */
+export function ensureLinksInConfig(
+  configPath: string,
+  linksPath = "./src/links",
+): boolean {
+  if (!existsSync(configPath)) return false;
+  const content = readFileSync(configPath, "utf-8");
+
+  if (/\blinks\s*:/.test(content)) return true; // already configured — leave it
+
+  const closingMatch = content.match(/\n\}\)\s*;?\s*$/);
+  if (closingMatch && closingMatch.index !== undefined) {
+    const before = content.slice(0, closingMatch.index).replace(/,\s*$/, "");
+    const block = `,\n  links: "${linksPath}",\n`;
+    const updated = before + block + content.slice(closingMatch.index + 1);
+    writeFileSync(configPath, updated);
+    return true;
+  }
+
+  return false;
+}
+
 function toCamel(name: string): string {
   return name.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase());
 }

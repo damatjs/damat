@@ -6,12 +6,13 @@ workflows + HTTP routes) that any Damat app can install with one command. You ar
 working on **this one module**.
 
 > **The rule that shapes everything: a module is a single-purpose blade.** It does
-> one thing well and stays independent. It must **not** define cross-module links,
-> import another module, or decide what it is plugged into or what it "needs". If
-> it pairs naturally with another module, leave a **non-binding `pairsWith` hint**
-> in `src/module.json` — the *backend owner* who installs it decides composition.
-> Building the app (links, wiring, what to combine) is their job; building the
-> blade is yours.
+> one thing well and stays independent. It must **not** import another module's code
+> or decide what it is plugged into or what it "needs". If it pairs naturally with
+> another module, leave a **non-binding `pairsWith` hint** in `src/module.json`. It
+> MAY also ship a **dormant link file** under `src/links/` (a `defineLink` the
+> *backend owner* activates by migrating) — but it never imports the other module and
+> never creates the connection itself. Building the app (what to combine, when to
+> activate links) is their job; building the blade is yours.
 
 ---
 
@@ -125,7 +126,9 @@ route/step/workflow that competes with the generated one — extend it.
   never a "comment it better" one.
 - **Import from the real packages** (see below), never the `@damatjs/module`
   umbrella.
-- **Stay a blade:** no cross-module links, no importing another module.
+- **Stay a blade:** never import another module's code. You MAY ship a **dormant
+  link file** under `src/links/` (see "Shipping a link" below) — it creates nothing
+  until the backend owner migrates it.
 
 ## Where each kind of code goes
 
@@ -137,6 +140,7 @@ route/step/workflow that competes with the generated one — extend it.
 | a third-party SDK (Stripe, AI provider, …) | `src/lib/<provider>.ts`, surfaced on the **service** as do/reverse methods | the service is the ONLY place integrations live |
 | pure helpers / formatting / mappers | `src/lib/utils/<concern>.ts` | small, one concern per file (no top-level `src/utils/`) |
 | the HTTP surface | **GENERATED** `src/api/routes/<table>/` — handlers ONLY call workflows | never call the service from a route |
+| an optional dormant link | `src/links/models/<from>-<to>.ts` (`defineLink`) | hand-written; splits into the app's `src/links/<moduleId>/` on install; ships no migration (see "Shipping a link") |
 
 ## The authoring surface
 
@@ -153,9 +157,10 @@ import { z } from "@damatjs/deps/zod";
 ```
 
 `@damatjs/module` itself now carries only the contract/config/runtime/tooling
-(`defineModuleConfig`, `bootModule`/`withModule`, `validateModuleDir`, …). Cross-
-module link helpers are deliberately absent everywhere in the authoring surface —
-links are an app concern, never a module's.
+(`defineModuleConfig`, `bootModule`/`withModule`, `validateModuleDir`, …) — it does
+**not** re-export link helpers. To ship a dormant link, import `defineLink` /
+`collectLinkModels` from `@damatjs/framework` (the same surface the app uses) in a
+`src/links/models/<a>-<b>.ts` file. See "Shipping a link" below.
 
 ### Portable import aliases (use exactly what codegen emits)
 
@@ -207,7 +212,8 @@ invent a new alias.
 ### 1. Models (`src/models/`)
 Use the `@damatjs/orm-model` DSL (`model` / `columns`). Reference
 relations only to your **own** tables, by table name. Never reference another
-module's tables — that would be a cross-module link, which only the app declares.
+module's tables in a model relation — a cross-module connection is a separate,
+dormant **link file** (see "Shipping a link"), never a model relation.
 
 ```ts
 import { model, columns } from "@damatjs/orm-model";
@@ -420,12 +426,38 @@ or just push to git / keep it local; an app installs it with
 
 ## Stay in your lane (the blade)
 
-- ❌ No cross-module links, no `defineLink`, no `src/links/`, no importing another
-  module. Links and composition belong to the **consuming app** (the backend
-  owner) — the module authoring surface intentionally omits link helpers.
+- ❌ Never import another module's code, and never activate a connection yourself.
 - ❌ Don't decide what is "needed" or what plugs into what.
 - ✅ Do one thing well, expose clean models + a service, and — if it pairs
   naturally with something — leave a `pairsWith` hint.
+- ✅ You MAY ship a **dormant** `defineLink` under `src/links/models/` — it proposes
+  a connection but creates nothing until the **backend owner** migrates it (see
+  "Shipping a link").
+
+## Shipping a link (optional)
+
+Most modules ship no links. If yours genuinely pairs with another (e.g. `user` ↔
+`organization`), you can ship the connection as a **dormant** link file instead of
+leaving the owner to hand-write it:
+
+- Put a `defineLink(...)` in `src/links/models/<from>-<to>.ts`, importing from
+  `@damatjs/framework`. Name your **own** side concretely and the target by the
+  module id you expect (the owner edits it if they installed that module under a
+  different id):
+  ```ts
+  import { defineLink } from "@damatjs/framework";
+  export default defineLink(
+    { module: "user", model: "users", field: "users" },          // your side
+    { module: "organization", model: "organizations", field: "organizations" }, // target
+  );
+  ```
+- **Ship no migration for it.** On `damat module add`, the file splits into the
+  app's `src/links/<moduleId>/` and the owner index + top-level aggregator are
+  regenerated. The link is **dormant** until the backend runs
+  `damat-orm migrate:create link:<moduleId>` + `migrate:up`, and **inert** until
+  queried — so it's harmless even if the target module isn't installed.
+- You never import the other module's code, and you never create the connection —
+  the backend owner stays in control of whether and when to activate it.
 
 ## Conventions
 

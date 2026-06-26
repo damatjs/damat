@@ -10,6 +10,7 @@ import {
   installModuleSplit,
   registerModuleInConfig,
   registerModuleTsconfigPaths,
+  ensureLinksInConfig,
   syncEnvVars,
   installModulePackages,
   collectModulePackages,
@@ -138,6 +139,9 @@ export const moduleAddCommand: Command = {
           `  workflows → ${relative(ctx.cwd, layout.workflowsTarget)}`,
         );
       }
+      if (layout.linksTarget) {
+        ctx.logger.info(`  links → ${relative(ctx.cwd, layout.linksTarget)}`);
+      }
       if (layout.testsTarget) {
         ctx.logger.info(`  tests → ${relative(ctx.cwd, layout.testsTarget)}`);
       }
@@ -167,6 +171,19 @@ export const moduleAddCommand: Command = {
           `Could not update damat.config.ts automatically — add this to your modules block:\n` +
           `  "${moduleId}": { resolve: "${relativeTarget}", id: "${moduleId}" },`,
         );
+      }
+
+      // Links: the module shipped real defineLink files (now under
+      // src/links/<moduleId>/). Make sure the app boots/migrates/typegens the
+      // links tree by ensuring `links: "./src/links"` in the config.
+      if (layout.linksTarget) {
+        if (ensureLinksInConfig(configPath)) {
+          ctx.logger.success(`Ensured links: "./src/links" in damat.config.ts`);
+        } else {
+          ctx.logger.warn(
+            `Add \`links: "./src/links"\` to your damat.config.ts (could not edit it automatically)`,
+          );
+        }
       }
 
       // Portable aliases: make the module's own `@<id>/...` imports AND the
@@ -216,6 +233,13 @@ export const moduleAddCommand: Command = {
           "Next steps:",
           `  1. bun damat-orm migrate:up    # apply the module's migrations`,
           `  2. restart the dev server      # the module self-registers via damat.config.ts`,
+          ...(layout.linksTarget
+            ? [
+                `  3. bun damat-orm migrate:create link:${moduleId}   # generate the link junction migration`,
+                `  4. bun damat-orm migrate:up                        # create the junction table(s)`,
+                `  5. damat codegen ${moduleId}                       # regenerate types incl. link fields`,
+              ]
+            : []),
         ].join("\n"),
       );
 

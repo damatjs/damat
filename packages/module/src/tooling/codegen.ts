@@ -19,8 +19,13 @@ export type ModuleCodegenResult = RunModuleCodegenResult;
  * (`src/api/routes/<id>/<resource>`, `src/workflows/<id>/<resource>`). Generated
  * files reach types/service via `@<module>/*` and reach workflows through the
  * bare `@workflows` barrel root, so the imports resolve unchanged before and
- * after install. The module has no cross-module links, so no link augmentation
- * is applied.
+ * after install.
+ *
+ * No `augmentFilesMap` hook is passed, so **no link augmentation runs in
+ * module mode** — deliberately, even if the module ships dormant `src/links/`
+ * files. Link augmentation needs the *target* module's types, which exist only
+ * in a host app; the app's own codegen weaves them in after install (skipping
+ * any link whose target module is absent). Do not add link processing here.
  */
 export async function generateModuleTypes(
   packageDir: string,

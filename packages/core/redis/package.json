@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/redis",
   "description": "Damatjs redis",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

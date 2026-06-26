@@ -27,6 +27,7 @@ my-module/
     ├── models/            # ORM model definitions
     ├── migrations/        # SQL migrations
     ├── workflows/         # workflow definitions
+    ├── links/             # optional: dormant cross-module defineLink files
     └── types/             # generated row types + zod schemas
 ```
 
@@ -35,7 +36,8 @@ my-module/
 1. **split the module across the app's layers**, grouping each tree by module id:
    models/service/config/types/migrations → `src/modules/<id>`,
    `api/routes/<table>` → `src/api/routes/<id>/<table>`,
-   `workflows/<table>` → `src/workflows/<id>/<table>`, and `tests/` → `tests/<id>`,
+   `workflows/<table>` → `src/workflows/<id>/<table>`,
+   `links/models/<x>` → `src/links/<id>/models/<x>`, and `tests/` → `tests/<id>`,
 2. register it in `damat.config.ts`, add its `@<id>/*` + `@workflows` tsconfig
    aliases, and regenerate the workflow barrels,
 3. write required env vars to `.env.example` (and warn about missing ones),
@@ -111,8 +113,16 @@ my-module/
 
 > **Composition is the backend owner's job.** A module is a single-purpose unit;
 > it should not decide what it is plugged into. Use `pairsWith` (or `description`)
-> to *suggest* pairings, and leave cross-module links and wiring to the app.
-> `modules` is an escape hatch for genuine hard dependencies only.
+> to *suggest* pairings, and leave wiring to the app. `modules` is an escape hatch
+> for genuine hard dependencies only.
+>
+> A module **may** ship a **dormant link file** under `links/models/` (a real
+> `defineLink`). It is not declared in `module.json` — the file itself is the
+> source of truth. On `damat module add` it splits into the app's
+> `src/links/<moduleId>/`, but it creates nothing until the backend owner runs
+> `damat-orm migrate:create link:<moduleId>` + `migrate:up`. The module never
+> imports the other module and never activates the connection — the owner stays in
+> control. (See the guide chapter on composing & linking modules.)
 
 ---
 

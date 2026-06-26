@@ -17,8 +17,6 @@ export const delete${n.pascal}Step = createStep<${n.idType},  boolean, ${n.rowTy
     await service.${n.prop}.delete({ where: { ${n.pk}: id } });
     return new StepResponse(true, existing);
   },
-  // Reverse: recreate the deleted row if a later step fails. Spread into a fresh
-  // object so it satisfies the CRUD \`data\` contract (Record<string, unknown>).
   async (deleted, _ctx) => {
     if (!deleted) return;
     const service = getModule("${n.moduleId}");

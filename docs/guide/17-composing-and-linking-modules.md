@@ -285,6 +285,47 @@ For the link service internals and junction-table shape, see the
 [`@damatjs/link` README](../../packages/link/README.md) and its
 [internals doc](../../packages/link/docs/README.md).
 
+### Links shipped by a module
+
+Everything above is the **owner** authoring a link by hand in `src/links/`. A
+module can also *ship the link for you* — as a real `defineLink` file, the same form
+you'd write yourself — so installing it is one step, not five. The module never
+imports the other module and never activates the connection; the file it ships is
+**dormant** until you migrate it.
+
+1. **The module ships a link file** at `links/models/<from>-<to>.ts`, naming its
+   **own** side concretely and the target by the module id it expects:
+
+   ```ts
+   // in the module package: links/models/user-organization.ts
+   import { defineLink } from "@damatjs/framework";
+   export default defineLink(
+     { module: "user", model: "users", field: "users" },
+     { module: "organization", model: "organizations", field: "organizations" },
+   );
+   ```
+
+   `model` is the **key in that module's `models` map** (e.g. `users` /
+   `organizations`), not necessarily the table name.
+
+2. **Install** the module: `damat module add <source>`. The file splits into
+   `src/links/<moduleId>/models/`, the owner `index.ts` and the top-level
+   `src/links/index.ts` aggregator are regenerated from the filesystem, an (empty)
+   `src/links/<moduleId>/migrations/` is created, and `links: "./src/links"` is
+   ensured in `damat.config.ts`. The copied file is **yours** — edit it (e.g. if you
+   installed the target under a different id); a re-install won't clobber your edit
+   unless you pass `--force`.
+
+3. **Activate** it with the normal link steps from §17.3 — the module ships no link
+   migration, so you generate and run it: `damat-orm migrate:create link:<moduleId>`,
+   `migrate:up`, then `damat codegen` for each linked module. Until you do, the link
+   is dormant (and harmless even if the target module isn't installed — it's inert
+   until queried).
+
+A shipped link is still **non-binding**: it creates nothing on its own, and you stay
+in control of whether and when to activate it. If you don't want it, delete
+`src/links/<moduleId>/` before migrating.
+
 ## 17.4 Reading a module's signals
 
 A module can hint at how it likes to be composed, but those hints are **advice to
@@ -296,6 +337,10 @@ you**, never commands — composition stays the owner's decision (see the
   user module that lists `"pairsWith": ["organization"]` is *suggesting* you might
   want to install the organization module and link the two — but whether you do,
   and how you link them, is entirely up to you.
+- **shipped link files** — a module may also *ship* the connection as a dormant
+  `defineLink` under `links/` (see the subsection above). Like `pairsWith` it is
+  non-binding and creates nothing on its own: `add` drops it into `src/links/`, and
+  you activate it by migrating (or delete it if you don't want it).
 - **`modules`** — a **rare** hard dependency on other modules. Even then it only
   *warns* at install time if a listed module is missing; it does not install
   anything for you. A well-built module stays self-contained and prefers

@@ -1,6 +1,5 @@
 import type { CrudNames } from "../../naming";
-import { SCAFFOLD_NOTE } from '../constant';
-
+import { SCAFFOLD_NOTE } from "../constant";
 
 export function stepCreate(n: CrudNames, typesSpec: string): string {
   return `${SCAFFOLD_NOTE}
@@ -14,11 +13,8 @@ export const create${n.pascal}Step = createStep<${n.newType}, ${n.rowType}, ${n.
     const service = getModule("${n.moduleId}");
     if (!service) throw new Error("${n.moduleId} module not loaded");
     const created = await service.${n.prop}.create({ data: input });
-    // output = the created row (returned downstream); compensateInput = the same
-    // row, used to undo the create on rollback.
     return new StepResponse(created, created);
   },
-  // Reverse: undo the create if a later step in the workflow fails.
   async (created, _ctx) => {
     const service = getModule("${n.moduleId}");
     if (!service) return;
