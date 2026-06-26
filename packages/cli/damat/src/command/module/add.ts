@@ -11,6 +11,7 @@ import {
   registerModuleInConfig,
   registerModuleTsconfigPaths,
   syncEnvVars,
+  syncLinkDrafts,
   installModulePackages,
   collectModulePackages,
 } from "./helpers";
@@ -198,6 +199,20 @@ export const moduleAddCommand: Command = {
         );
       }
 
+      // Link rules: seed the module's declared links into the editable draft so
+      // the owner can fill targets, then run `damat module link-setup`.
+      const { addedDrafts, needsTarget } = syncLinkDrafts(ctx.cwd, manifest);
+      if (addedDrafts.length > 0) {
+        ctx.logger.info(`Seeded link drafts: ${addedDrafts.join(", ")}`);
+      }
+      if (needsTarget.length > 0) {
+        ctx.logger.warn(
+          `These links need a target before "damat module link-setup":\n` +
+            `  edit src/links/.link-drafts.json (fill to.module / to.model), then run it.\n` +
+            `  pending: ${needsTarget.join(", ")}`,
+        );
+      }
+
       // npm packages: the module package's own deps + manifest overrides
       const packages = collectModulePackages(resolved.dir, manifest);
       if (Object.keys(packages).length > 0) {
@@ -216,6 +231,11 @@ export const moduleAddCommand: Command = {
           "Next steps:",
           `  1. bun damat-orm migrate:up    # apply the module's migrations`,
           `  2. restart the dev server      # the module self-registers via damat.config.ts`,
+          ...(addedDrafts.length > 0
+            ? [
+                `  3. fill src/links/.link-drafts.json, then: damat module link-setup`,
+              ]
+            : []),
         ].join("\n"),
       );
 

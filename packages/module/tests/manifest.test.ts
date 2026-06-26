@@ -34,9 +34,17 @@ describe("validateModuleManifest", () => {
       env: [{ name: "STRIPE_KEY", required: true }],
       packages: { stripe: "^14.0.0" },
       modules: ["user"],
+      link: [
+        {
+          name: "customer-user",
+          from: { module: "billing-stripe", model: "customers", field: "customers" },
+          to: { module: "", model: "", field: "" },
+        },
+      ],
       registry: { namespace: "damatjs", license: "MIT", keywords: ["billing"] },
     });
     expect(manifest.registry?.namespace).toBe("damatjs");
+    expect(manifest.link?.[0].from.model).toBe("customers");
   });
 
   test("accepts author as a string or an object, rejects other shapes", () => {
@@ -77,6 +85,35 @@ describe("validateModuleManifest", () => {
     expect(() =>
       validateModuleManifest({ name: "x", registry: "MIT" }),
     ).toThrow('"registry" must be an object');
+  });
+
+  test("accepts a link rule with a blank target, rejects malformed link", () => {
+    const manifest = validateModuleManifest({
+      name: "user",
+      link: [
+        {
+          from: { module: "user", model: "users", field: "users" },
+          to: { module: "", model: "", field: "" },
+        },
+      ],
+    });
+    expect(manifest.link?.[0].to.module).toBe("");
+
+    expect(() =>
+      validateModuleManifest({ name: "x", link: "user-organization" }),
+    ).toThrow('"link" must be an array');
+    expect(() =>
+      validateModuleManifest({
+        name: "x",
+        link: [{ from: { module: "x", model: "things" } }],
+      }),
+    ).toThrow('needs a "to" object');
+    expect(() =>
+      validateModuleManifest({
+        name: "x",
+        link: [{ from: { module: "x" }, to: {} }],
+      }),
+    ).toThrow('requires "from.model"');
   });
 });
 

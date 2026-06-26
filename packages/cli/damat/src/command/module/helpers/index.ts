@@ -4,5 +4,6 @@ export * from "./copy";
 export * from "./config";
 export * from "./tsconfig";
 export * from "./env";
+export * from "./link";
 export * from "./packages";
 export * from "./dependencies";

@@ -285,6 +285,60 @@ For the link service internals and junction-table shape, see the
 [`@damatjs/link` README](../../packages/link/README.md) and its
 [internals doc](../../packages/link/docs/README.md).
 
+### Declaring a link rule from a module (`module.json` `link`)
+
+Everything above is the **owner** authoring a link by hand in `src/links/`. A
+module can also *ship a link rule* so that wiring is mostly done for you — without
+the module ever importing another or creating the connection itself. This mirrors
+the `env` flow: declare in the manifest, get a fill-in-the-blanks file on install,
+complete it, done.
+
+1. **Declare the rule** in the module's `module.json`. The module specifies its
+   **own** side (`from`) and leaves the **target** (`to`) blank for the owner:
+
+   ```jsonc
+   {
+     "name": "user",
+     "link": [
+       {
+         "name": "user-organization",
+         "from": { "module": "user", "model": "users", "field": "users" },
+         "to":   { "module": "", "model": "", "field": "" }
+       }
+     ]
+   }
+   ```
+
+   `model` is the **key in that module's `models` map** (the same value used in a
+   hand-written `defineLink`, e.g. `users` / `organizations`) — not necessarily
+   the table name. Tooling emits it verbatim; copy the exact key.
+
+2. **Install** the module: `damat module add <source>`. Each rule is seeded into
+   `src/links/.link-drafts.json` (created if absent) with `status: "needs-target"`,
+   and `add` warns which links still need a target. The draft is the editable
+   surface — re-running `add --force` never clobbers a target you already filled.
+
+3. **Fill the target** in `src/links/.link-drafts.json`:
+
+   ```jsonc
+   "to": { "module": "organization", "model": "organizations", "field": "organizations" }
+   ```
+
+4. **Materialize** it: `damat module link-setup`. For every *ready* draft it
+   generates `src/links/<owner>/models/<from>-<to>.ts` (a `defineLink(...)`),
+   rebuilds the owner `index.ts` and the top-level aggregator from the filesystem,
+   creates `src/links/<owner>/migrations/`, and ensures `links: "./src/links"` in
+   `damat.config.ts`. It then prints the migration/codegen next steps — it does
+   **not** run them. Re-running is idempotent and never overwrites a generated
+   model file you've since edited.
+
+5. Finish with the normal link steps from §17.3: `migrate:create link:<owner>`,
+   `migrate:up`, and `codegen` for each linked module.
+
+A `link` rule is still **non-binding**, exactly like `pairsWith`: it creates
+nothing on its own, and the owner stays in control of whether and how the
+connection is made.
+
 ## 17.4 Reading a module's signals
 
 A module can hint at how it likes to be composed, but those hints are **advice to
@@ -296,6 +350,10 @@ you**, never commands — composition stays the owner's decision (see the
   user module that lists `"pairsWith": ["organization"]` is *suggesting* you might
   want to install the organization module and link the two — but whether you do,
   and how you link them, is entirely up to you.
+- **`link`** — cross-module link **rules** (see the subsection above). Like
+  `pairsWith` it is non-binding and creates nothing on its own, but it carries a
+  concrete connection shape: on `add` it seeds an editable draft, and you complete
+  it and run `damat module link-setup` to generate the link under `src/links/`.
 - **`modules`** — a **rare** hard dependency on other modules. Even then it only
   *warns* at install time if a listed module is missing; it does not install
   anything for you. A well-built module stays self-contained and prefers

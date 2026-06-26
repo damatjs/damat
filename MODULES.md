@@ -69,6 +69,13 @@ my-module/
   },
   "pairsWith": ["organization"],  // non-binding hint: modules this pairs well with
   // "modules": ["organization"], // rare: a HARD dependency — prefer pairsWith
+  "link": [                       // cross-module link RULES (non-binding, like pairsWith)
+    {
+      "name": "user-organization",
+      "from": { "module": "user", "model": "users", "field": "users" },  // this module's side
+      "to":   { "module": "", "model": "", "field": "" }                 // backend owner fills the target
+    }
+  ],
 
   // Layout overrides (omit to use the standard layout) ----------------------
   "paths": {
@@ -101,6 +108,7 @@ my-module/
 | `env` | `ModuleEnvVar[]` | — | Each: `{ name, required?, description?, example? }`. Drives `.env.example` sync. |
 | `packages` | `Record<string,string>` | — | npm deps installed into the host app on `add`. |
 | `pairsWith` | `string[]` | — | Non-binding hint: modules this one pairs well with. A comment for the backend owner — never enforced or installed. **Prefer this** to express relationships. |
+| `link` | `ModuleLink[]` | — | Cross-module link **rules** (non-binding, like `pairsWith`). Each: `{ name?, from, to, pivotTable?, foreignKeys? }` where `from`/`to` are `{ module?, model?, field?, primaryKey?, isList? }`. `from` is this module's own side; `to` is left blank for the backend owner. On `add` each rule is seeded into `src/links/.link-drafts.json`; the owner fills the target and runs `damat module link-setup` to generate `src/links/<owner>/`. **A module never creates the connection itself.** |
 | `modules` | `string[]` | — | **Rare.** A hard dependency on other modules (install only *warns* if missing). A module should stay self-contained — reach for `pairsWith` instead. |
 | `paths` | object | — | Overrides for `entry`/`models`/`migrations`/`workflows`/`types`. |
 | `registry` | object | — | `namespace`, `keywords`, `license`, `repository`, `homepage`. |
@@ -113,6 +121,12 @@ my-module/
 > it should not decide what it is plugged into. Use `pairsWith` (or `description`)
 > to *suggest* pairings, and leave cross-module links and wiring to the app.
 > `modules` is an escape hatch for genuine hard dependencies only.
+>
+> A `link` rule goes one step further than `pairsWith`: it ships a concrete,
+> reusable *shape* for a connection (this module's own endpoint plus a blank
+> target). It still creates nothing on its own — `damat module add` only seeds an
+> editable draft, and the backend owner fills the target and runs
+> `damat module link-setup` to materialize the link under `src/links/<owner>/`.
 
 ---
 

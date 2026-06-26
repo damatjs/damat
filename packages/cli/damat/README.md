@@ -44,6 +44,7 @@ bun damat module add user     # install a module
 | `module` (`m`) | Module command group (see below); lists subcommands when run alone | `damat module` |
 | `module add <source>` | Install a module from registry ref, path, or git | `damat module add damatjs/user@0.0.1` |
 | `module list` (`ls`) | List modules installed in the app | `damat module list` |
+| `module link-setup` | Materialize completed link drafts into `src/links/<owner>/` code | `damat module link-setup` |
 | `module init <name>` | Scaffold a new standalone module package | `damat module init user-management` |
 | `module dev` | Run the current module package standalone, hot reload | `damat module dev --port 7654` |
 | `module migration:create` | Diff the module's models vs snapshot → migration | `damat module migration:create` |
