@@ -88,9 +88,10 @@ import {
 What is **deliberately not** in this surface: **link helpers**. `@damatjs/module`
 has no `defineLink`, and a module's **models** never declare a relationship to
 another module's tables. A module may still *ship* a **dormant** link file under
-`links/` (a `defineLink` imported from `@damatjs/framework`) that the backend owner
-activates by migrating — but it never imports the other module and never creates the
-connection itself. Composition stays the app's job (see
+`src/links/models/` (a `defineLink` imported from `@damatjs/framework`) that the backend
+owner activates by migrating — but it never imports the other module and never creates the
+connection itself (see [Ship a cross-module link template](#ship-a-cross-module-link-template-dormant)
+below). Composition stays the app's job (see
 [ch. 17](./17-composing-and-linking-modules.md)). The authoring surface is the
 full reference; see [authoring.md](../../packages/module/docs/authoring.md).
 
@@ -110,6 +111,7 @@ my-module/
     ├── config/            # credentials loader + credentials schema
     ├── migrations/        # SQL migrations (generated) + schema snapshot
     ├── types/             # generated row types + zod schemas
+    ├── links/models/      # optional: dormant cross-module link TEMPLATES (defineLink)
     ├── workflows/         # optional: workflow + step definitions
     └── api/routes/        # optional: file-based HTTP routes
 ```
@@ -194,6 +196,46 @@ This keeps your migrations self-contained: nothing in your schema depends on a
 table your module doesn't own. The actual cross-module relationship (a junction
 table, link graph, cascade behavior) is something the backend owner declares in
 the app, never something the module bakes in.
+
+### Ship a cross-module link template (dormant)
+
+A module can't foreign-key into another module's tables — but it **can ship the connection
+as a dormant link template** so the backend wires it in one step instead of hand-authoring
+it. Drop a real `defineLink` file under **`src/links/models/<from>-<to>.ts`**:
+
+```ts
+// src/links/models/checks-customer.ts
+import { defineLink } from "@damatjs/framework";
+
+export default defineLink(
+  { module: "check", model: "checks", field: "checks" },                       // → customer.checks: Checks[]
+  { module: "customer", model: "customer", field: "customer", isList: false }, // → check.customer: Customer
+);
+```
+
+Each endpoint is `{ module, model, field?, primaryKey?, isList? }`:
+
+- `module` — the target module id (the `getModule` key).
+- `model` — the **key in that module's `models` map** (the service accessor, e.g. `checks`),
+  not the database table name.
+- `field` — how the linked side is exposed when traversing (defaults to `model`).
+- `isList` — whether that side is a list on the other (default `true`; set `false` for the
+  to-one side, e.g. a check has one `customer`).
+- `primaryKey` — the target column the link keys on (default `"id"`; set e.g. `"sku"` to link
+  by a natural key).
+
+`defineLink` comes from **`@damatjs/framework`** (the dep your module already has) — it is
+deliberately **not** in the `@damatjs/module` surface, because a link is normally the app's
+call. The file still **imports nothing from the other module and creates nothing**: it names
+the target by module id + accessor key, and is **dormant** until the backend owner activates
+it. On `damat module add` it is split into the app's `src/links/<moduleId>/models/`, the
+owner index + top-level aggregator are regenerated, and `links: "./src/links"` is ensured —
+but the module ships **no link migration**, so the owner turns it on with
+`damat-orm migrate:create link:<id>` → `migrate:up` → `damat codegen` (and the link is inert
+until queried, even if the target module isn't installed). This complements `pairsWith`:
+`pairsWith` *names* a module to pair with, a shipped link *describes the exact connection* —
+both non-binding, both deletable. Full activation flow:
+[ch. 17.3 — Links shipped by a module](./17-composing-and-linking-modules.md#links-shipped-by-a-module).
 
 ### Config: credentials loader + schema
 
@@ -380,8 +422,9 @@ self-contained blade:
 
 - **No model-level links.** Your models reference only your own tables; cross-module
   references are plain id columns, not foreign keys. (You *may* ship a **dormant**
-  `defineLink` file under `links/` for the owner to activate — it imports nothing
-  from the other module and creates nothing until migrated. See ch. 17.)
+  `defineLink` template under `src/links/models/` for the owner to activate — it imports
+  nothing from the other module and creates nothing until migrated. See the
+  [link-template section](#ship-a-cross-module-link-template-dormant) above and ch. 17.)
 - **No imports of other modules**, and **no activating a link yourself**. Whether and
   when a shipped link is turned on is the backend owner's call.
 - **Don't decide composition.** Whether your module is installed, what it's
