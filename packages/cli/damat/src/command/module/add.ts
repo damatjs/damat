@@ -10,8 +10,8 @@ import {
   installModuleSplit,
   registerModuleInConfig,
   registerModuleTsconfigPaths,
+  ensureLinksInConfig,
   syncEnvVars,
-  syncLinkDrafts,
   installModulePackages,
   collectModulePackages,
 } from "./helpers";
@@ -139,6 +139,9 @@ export const moduleAddCommand: Command = {
           `  workflows → ${relative(ctx.cwd, layout.workflowsTarget)}`,
         );
       }
+      if (layout.linksTarget) {
+        ctx.logger.info(`  links → ${relative(ctx.cwd, layout.linksTarget)}`);
+      }
       if (layout.testsTarget) {
         ctx.logger.info(`  tests → ${relative(ctx.cwd, layout.testsTarget)}`);
       }
@@ -170,6 +173,19 @@ export const moduleAddCommand: Command = {
         );
       }
 
+      // Links: the module shipped real defineLink files (now under
+      // src/links/<moduleId>/). Make sure the app boots/migrates/typegens the
+      // links tree by ensuring `links: "./src/links"` in the config.
+      if (layout.linksTarget) {
+        if (ensureLinksInConfig(configPath)) {
+          ctx.logger.success(`Ensured links: "./src/links" in damat.config.ts`);
+        } else {
+          ctx.logger.warn(
+            `Add \`links: "./src/links"\` to your damat.config.ts (could not edit it automatically)`,
+          );
+        }
+      }
+
       // Portable aliases: make the module's own `@<id>/...` imports AND the
       // shared `@workflows` + `@workflows/*` (its relocated workflow tree) resolve
       // in the host backend's tsconfig. They are app-level — written once and
@@ -199,20 +215,6 @@ export const moduleAddCommand: Command = {
         );
       }
 
-      // Link rules: seed the module's declared links into the editable draft so
-      // the owner can fill targets, then run `damat module link-setup`.
-      const { addedDrafts, needsTarget } = syncLinkDrafts(ctx.cwd, manifest);
-      if (addedDrafts.length > 0) {
-        ctx.logger.info(`Seeded link drafts: ${addedDrafts.join(", ")}`);
-      }
-      if (needsTarget.length > 0) {
-        ctx.logger.warn(
-          `These links need a target before "damat module link-setup":\n` +
-            `  edit src/links/.link-drafts.json (fill to.module / to.model), then run it.\n` +
-            `  pending: ${needsTarget.join(", ")}`,
-        );
-      }
-
       // npm packages: the module package's own deps + manifest overrides
       const packages = collectModulePackages(resolved.dir, manifest);
       if (Object.keys(packages).length > 0) {
@@ -231,9 +233,11 @@ export const moduleAddCommand: Command = {
           "Next steps:",
           `  1. bun damat-orm migrate:up    # apply the module's migrations`,
           `  2. restart the dev server      # the module self-registers via damat.config.ts`,
-          ...(addedDrafts.length > 0
+          ...(layout.linksTarget
             ? [
-                `  3. fill src/links/.link-drafts.json, then: damat module link-setup`,
+                `  3. bun damat-orm migrate:create link:${moduleId}   # generate the link junction migration`,
+                `  4. bun damat-orm migrate:up                        # create the junction table(s)`,
+                `  5. damat codegen ${moduleId}                       # regenerate types incl. link fields`,
               ]
             : []),
         ].join("\n"),

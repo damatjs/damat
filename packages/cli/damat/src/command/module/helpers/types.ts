@@ -26,10 +26,3 @@ export interface PackageInstallResult {
   ok: boolean;
   output: string;
 }
-
-export interface LinkSyncResult {
-  /** Rule keys ("<owner>:<name>") newly written to the draft file. */
-  addedDrafts: string[];
-  /** Rule keys still missing a target module/model — the owner must fill these. */
-  needsTarget: string[];
-}

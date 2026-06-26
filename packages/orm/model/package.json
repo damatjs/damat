@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/orm-model",
   "description": "Damatjs orm model definition",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

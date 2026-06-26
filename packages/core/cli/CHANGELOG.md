@@ -1,5 +1,31 @@
 # @damatjs/cli
 
+## 0.3.7
+
+### Patch Changes
+
+- - Split a module's shipped link files into the app on `damat module add`.
+
+    A module can now ship cross-module link files (real `defineLink`s) under
+    `links/models/`. `damat module add` splits them into `src/links/<moduleId>/` —
+    the same "add it like routes/workflows" model — then regenerates the owner
+    `index.ts` and the top-level `src/links/index.ts` aggregator from the filesystem
+    and ensures `links: "./src/links"` in `damat.config.ts`. Link model files are
+    copied skip-existing (overwritten only with `--force`) so an owner can edit a
+    copied link's target without a re-install clobbering it.
+
+    The module ships **no** link migration: `add` creates an empty
+    `src/links/<moduleId>/migrations/` and prints the
+    `damat-orm migrate:create link:<moduleId>` → `migrate:up` → `codegen` steps. A
+    shipped link stays dormant until the backend migrates it and is inert until
+    queried, so it is harmless even if its target module is not installed.
+
+    This replaces the previous draft-based flow — the `.link-drafts.json` accumulator
+    and the `damat module link-setup` command are removed.
+
+- Updated dependencies
+  - @damatjs/logger@0.3.7
+
 ## 0.3.6
 
 ### Patch Changes

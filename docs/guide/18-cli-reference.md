@@ -11,9 +11,8 @@
 | `damat start` | Start the production server |
 | `damat codegen <module>` \| `--all` | Types + zod + registry, and scaffold-once CRUD. Name a module, or pass `--all` for every module in the config |
 | `damat barrel [dir]` | Recursively (re)write `index.ts` barrels so one bare import (`@workflows`) re-exports a whole tree (default `src/workflows`) |
-| `damat module add <src>` | Install a module (registry/path/git); splits routes/workflows/tests under `<moduleId>`; seeds any declared `link` rules into `src/links/.link-drafts.json` |
+| `damat module add <src>` | Install a module (registry/path/git); splits routes/workflows/tests under `<moduleId>`, and splits any shipped link files into `src/links/<moduleId>/` (ensuring `links:` in `damat.config.ts`) |
 | `damat module list` | List installed modules |
-| `damat module link-setup` | Materialize completed link drafts (`src/links/.link-drafts.json`) into `src/links/<owner>/` code; ensures `links:` in `damat.config.ts` |
 | `damat module init <name>` | Scaffold a standalone module package |
 | `damat module dev` | Run a module package as a live app |
 | `damat module migration:create` | Diff models → migration (in a module) |

@@ -1,10 +1,4 @@
-import type {
-  ModuleAuthor,
-  ModuleEnvVar,
-  ModuleLink,
-  ModuleLinkEndpoint,
-  ModuleManifest,
-} from "./types";
+import type { ModuleAuthor, ModuleEnvVar, ModuleManifest } from "./types";
 
 const MODULE_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
 
@@ -68,31 +62,6 @@ export function validateModuleManifest(raw: unknown): ModuleManifest {
   }
   if (manifest.pairsWith !== undefined && !Array.isArray(manifest.pairsWith)) {
     throw new Error('module.json "pairsWith" must be an array of module ids');
-  }
-  if (manifest.link !== undefined) {
-    if (!Array.isArray(manifest.link)) {
-      throw new Error('module.json "link" must be an array');
-    }
-    for (const entry of manifest.link) {
-      if (entry === null || typeof entry !== "object") {
-        throw new Error('each module.json "link" entry must be an object');
-      }
-      const link = entry as Partial<ModuleLink>;
-      for (const side of ["from", "to"] as const) {
-        const endpoint = link[side];
-        if (endpoint === null || typeof endpoint !== "object") {
-          throw new Error(
-            `each module.json "link" entry needs a "${side}" object`,
-          );
-        }
-      }
-      // The module's OWN side ("from") must name its model at authoring time;
-      // the target ("to") may stay blank for the backend owner to fill.
-      const from = link.from as ModuleLinkEndpoint;
-      if (typeof from.model !== "string" || from.model.length === 0) {
-        throw new Error('each module.json "link" entry requires "from.model"');
-      }
-    }
   }
   if (
     manifest.registry !== undefined &&

@@ -25,8 +25,9 @@ import { z } from "@damatjs/deps/zod";
 ```
 
 > **Scope of this chapter.** Everything here lives *inside one module*. What a
-> module deliberately **cannot** do — cross-module links, importing other modules,
-> declaring what it plugs into — is covered in
+> module deliberately **cannot** do — import other modules, form model relations
+> across modules, or activate a connection itself (it may only *ship* a dormant link
+> file) — is covered in
 > ["Out of scope for a module"](#out-of-scope-for-a-module) and in
 > [Composing & linking modules](./17-composing-and-linking-modules.md).
 
@@ -246,10 +247,10 @@ assertValidRelations([Category, Product]);  // throws RelationValidationError on
 ```
 
 > **Relations stay within one module.** A module models its own tables and the
-> relationships among them. It does **not** reference another module's tables to
-> form a real, validated relationship — that is a cross-module *link*, which is the
-> backend owner's job (ch. 17). The authoring surface does not even expose link
-> helpers.
+> relationships among them. It does **not** reference another module's tables in a
+> model relation — a cross-module connection is a separate *link*, activated by the
+> backend owner (ch. 17). `@damatjs/module` exposes no `defineLink`; a module that
+> *ships* a dormant link imports it from `@damatjs/framework`.
 
 ### Generated types
 
@@ -716,12 +717,14 @@ A module is a **single-purpose unit; it does not decide what it is plugged into.
 The following are deliberately *not* a module's job — they belong to the backend
 owner (see [Composing & linking modules](./17-composing-and-linking-modules.md)):
 
-- **No cross-module links.** A module never forms a real, validated relationship to
-  another module's tables. Relations are intra-module only, by table name. The
-  authoring surface from `@damatjs/module` **intentionally omits** link helpers —
-  links are authored with `@damatjs/framework` at the app level.
+- **No model-level cross-module relations.** A module never forms a real, validated
+  model relationship to another module's tables. Relations are intra-module only, by
+  table name. A module *may* ship a **dormant** `defineLink` file under `links/`
+  (imported from `@damatjs/framework`) for the owner to activate by migrating — but
+  that creates nothing on its own and `@damatjs/module` itself omits link helpers.
 - **No importing other modules.** A module stays self-contained; it does not import
-  or reach into a sibling module's models, service, or internals.
+  or reach into a sibling module's models, service, or internals — not even the one a
+  shipped link names (the link is just string references, resolved by the app).
 - **No declaring what's needed or plugged in.** A module does not wire itself into
   an app, mount its own routes globally, or assert what surrounds it. Installation
   and composition (`damat.config.ts`, links, route mounting) are the app's work.

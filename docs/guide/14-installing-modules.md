@@ -6,17 +6,19 @@
 module's `module.json`, **splits the module across the app's layers** (see below),
 registers it in `damat.config.ts`, adds its portable tsconfig aliases, regenerates
 the workflow barrels, syncs required env vars into `.env.example`, and installs the
-npm packages it needs. If the module declares `link` rules, they are seeded into
-`src/links/.link-drafts.json` for you to complete (see below).
+npm packages it needs. If the module ships any link files, they split into
+`src/links/<moduleId>/` (see below).
 
-A module is authored **flat** (`workflows/<table>`, `api/routes/<table>`, `tests/`);
-on install the `<moduleId>/` segment is added so nothing collides:
+A module is authored **flat** (`workflows/<table>`, `api/routes/<table>`,
+`links/models/`, `tests/`); on install the `<moduleId>/` segment is added so nothing
+collides:
 
 | In the module package | Lands in the app |
 | --- | --- |
 | models, service, config, types, migrations, `lib/` | `src/modules/<moduleId>/` |
 | `api/routes/<table>/` | `src/api/routes/<moduleId>/<table>/` (URL `/<moduleId>/<table>`) |
 | `workflows/<table>/` | `src/workflows/<moduleId>/<table>/` |
+| `links/models/<x>.ts` | `src/links/<moduleId>/models/<x>.ts` |
 | `tests/` | `tests/<moduleId>/` |
 
 Generated routes import workflows from the bare `@workflows` barrel, which the
@@ -42,17 +44,19 @@ Useful commands:
 
 ```bash
 damat module list                # what's installed in this app
-damat module add <src> --force   # overwrite an existing module
+damat module add <src> --force   # overwrite an existing module (incl. shipped link files)
 damat module add <src> --name x  # install under a different id
-damat module link-setup          # materialize seeded link drafts into src/links/
 ```
 
-**Module-declared links.** A module can ship cross-module link **rules** in its
-`module.json` (`link[]`). It never creates the connection itself — `add` only
-seeds an editable draft into `src/links/.link-drafts.json` with the target left
-blank. Fill in `to.module` / `to.model`, then run `damat module link-setup` to
-generate `src/links/<owner>/` and wire `links:` into `damat.config.ts`. See
-[§17.3 → Declaring a link rule from a module](./17-composing-and-linking-modules.md#declaring-a-link-rule-from-a-module-modulejson-link).
+**Module-shipped links.** A module can ship cross-module link files (a real
+`defineLink`) under `links/models/`. On `add` they split into `src/links/<moduleId>/`,
+the owner index + top-level aggregator are regenerated, and `links: "./src/links"`
+is ensured in `damat.config.ts`. The link is **dormant** until you run
+`damat-orm migrate:create link:<moduleId>` + `migrate:up`, and harmless if its
+target module isn't installed. The copied files are yours to edit (e.g. to point at
+a target installed under a different id) — a re-install won't clobber them unless you
+pass `--force`. See
+[§17.3 → Links shipped by a module](./17-composing-and-linking-modules.md#links-shipped-by-a-module).
 
 **Trust:** registry installs carry an owner + verification status; the install
 gate is controlled by `DAMAT_MODULE_VERIFY` (`off` / `warn` / `require`).

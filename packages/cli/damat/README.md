@@ -42,9 +42,8 @@ bun damat module add user     # install a module
 | `codegen <module>` \| `--all` | Types + zod + registry + scaffold-once CRUD for app modules | `damat codegen user` |
 | `barrel [dir]` | Recursively (re)write `index.ts` barrels so one bare import re-exports a whole tree (default `src/workflows`) | `damat barrel` |
 | `module` (`m`) | Module command group (see below); lists subcommands when run alone | `damat module` |
-| `module add <source>` | Install a module from registry ref, path, or git | `damat module add damatjs/user@0.0.1` |
+| `module add <source>` | Install a module from registry ref, path, or git (splits any shipped link files into `src/links/<moduleId>/`) | `damat module add damatjs/user@0.0.1` |
 | `module list` (`ls`) | List modules installed in the app | `damat module list` |
-| `module link-setup` | Materialize completed link drafts into `src/links/<owner>/` code | `damat module link-setup` |
 | `module init <name>` | Scaffold a new standalone module package | `damat module init user-management` |
 | `module dev` | Run the current module package standalone, hot reload | `damat module dev --port 7654` |
 | `module migration:create` | Diff the module's models vs snapshot → migration | `damat module migration:create` |

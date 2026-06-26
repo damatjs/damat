@@ -7,7 +7,6 @@ import { moduleMigrationCreateCommand } from "./migrationCreate";
 import { moduleCodegenCommand } from "./codegen";
 import { moduleValidateCommand } from "./validate";
 import { moduleBuildCommand } from "./build";
-import { moduleLinkSetupCommand } from "./linkSetup";
 
 export const moduleCommand: Command = {
   name: "module",
@@ -22,7 +21,6 @@ export const moduleCommand: Command = {
     moduleCodegenCommand,
     moduleValidateCommand,
     moduleBuildCommand,
-    moduleLinkSetupCommand,
   ],
   handler: async (ctx) => {
     ctx.logger.info(
@@ -38,7 +36,6 @@ export const moduleCommand: Command = {
         "App side (inside a backend):",
         "  damat module add <source>       Install from registry ref, path, or git",
         "  damat module list               List installed modules",
-        "  damat module link-setup         Materialize link drafts into src/links/",
       ].join("\n"),
     );
     return { exitCode: 0 };
@@ -54,5 +51,4 @@ export {
   moduleCodegenCommand,
   moduleValidateCommand,
   moduleBuildCommand,
-  moduleLinkSetupCommand,
 };
