@@ -1,5 +1,20 @@
 # @damatjs/orm-pg
 
+## 0.4.0
+
+### Minor Changes
+
+- matching the version cleanup on the workflow package deps, and setup the migration cli for the modules
+
+### Patch Changes
+
+- Updated dependencies
+  - @damatjs/logger@0.4.0
+  - @damatjs/types@0.4.0
+  - @damatjs/orm-core@0.4.0
+  - @damatjs/orm-model@0.4.0
+  - @damatjs/orm-type@0.4.0
+
 ## 0.3.7
 
 ### Patch Changes

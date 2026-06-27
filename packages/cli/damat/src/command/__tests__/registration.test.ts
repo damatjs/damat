@@ -11,6 +11,11 @@ import type { Command, CommandOption } from "@damatjs/cli";
 import { buildCommand } from "../build";
 import { devCommand } from "../dev";
 import { startCommand } from "../start";
+import {
+  moduleCommand,
+  moduleMigrationRunCommand,
+  moduleMigrationStatusCommand,
+} from "../module";
 import * as commandIndex from "../index";
 
 /**
@@ -135,6 +140,22 @@ describe("startCommand registration", () => {
       type: "string",
       default: ".damat/dist",
     });
+  });
+});
+
+describe("module subcommand registration", () => {
+  it("registers migration:run and migration:status alongside migration:create", () => {
+    const names = (moduleCommand.subcommands ?? []).map((c) => c.name);
+    expect(names).toContain("migration:create");
+    expect(names).toContain("migration:run");
+    expect(names).toContain("migration:status");
+  });
+
+  it("re-exports the migration commands with the expected wiring", () => {
+    expect(moduleMigrationRunCommand.name).toBe("migration:run");
+    expect(typeof moduleMigrationRunCommand.handler).toBe("function");
+    expect(moduleMigrationStatusCommand.name).toBe("migration:status");
+    expect(typeof moduleMigrationStatusCommand.handler).toBe("function");
   });
 });
 

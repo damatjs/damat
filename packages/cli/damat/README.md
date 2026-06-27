@@ -47,6 +47,8 @@ bun damat module add user     # install a module
 | `module init <name>` | Scaffold a new standalone module package | `damat module init user-management` |
 | `module dev` | Run the current module package standalone, hot reload | `damat module dev --port 7654` |
 | `module migration:create` | Diff the module's models vs snapshot → migration | `damat module migration:create` |
+| `module migration:run` | Apply the module's own migrations to `DATABASE_URL` | `damat module migration:run` |
+| `module migration:status` | Show the module's applied vs pending migrations | `damat module migration:status` |
 | `module codegen` | Generate row types + zod schemas for the module | `damat module codegen` |
 | `module validate` | Contract + registry-readiness check for the module | `damat module validate` |
 

@@ -1,5 +1,5 @@
-import { Effect, Scope } from "effect";
-import { nanoid } from "nanoid";
+import { Effect, Scope } from "@damatjs/deps/effect";
+import { nanoid } from "@damatjs/deps/nanoid";
 import type {
   WorkflowConfig,
   WorkflowDefinition,
@@ -169,7 +169,7 @@ export function createWorkflow<I, O>(
                   );
                 }
               },
-              () => {},
+              () => { },
             );
           },
           Math.max(1000, Math.floor(ttlMs / 2)),

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { Effect, Scope, Exit, Cause } from "effect";
+import { Effect, Scope, Exit, Cause } from "@damatjs/deps/effect";
 import { createStep } from "../src/step";
 import { runStep, skipStep, parallel, when, ifElse } from "../src/utils";
 import { StepExecutionError } from "../src/index";

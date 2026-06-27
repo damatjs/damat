@@ -6,6 +6,7 @@ Change history for this package. For how it works **now**, read the
 
 | Version | Summary | Upgrade notes |
 |---------|---------|---------------|
+| 0.4.0 | New `damat module migration:run` (apply this module's migrations to `DATABASE_URL`, idempotent) and `damat module migration:status` (applied vs pending), plus matching scaffold scripts — completing the per-module migrate loop. | [0.4.0 →](./0.4.0.md) |
 | 0.3.7 | `damat module add` splits a module's shipped link files (`defineLink`s) into `src/links/<moduleId>/`, regenerates the aggregator, and ensures `links:` in config; the junction migration runs on the backend (dormant until activated). Removes the draft flow + `damat module link-setup`. | [0.3.7 →](./0.3.7.md) |
 | 0.3.6 | `damat build` type-checks the whole app before bundling (fails on any error; `--no-typecheck` opts out) and fails on a broken config bundle; new `damat module build` gate (type-check + contract validate). | [0.3.6 →](./0.3.6.md) |
 | 0.1.4 | `damat module init` emits a root `README.md` + full `AGENTS.md` guide; `damat codegen` / `damat module codegen` scaffold a per-table CRUD slice (steps, workflows, routes). | [0.1.4 →](./0.1.4.md) |

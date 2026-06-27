@@ -262,14 +262,19 @@ the module package directly — no `damat.config.ts` required:
 
 ```bash
 damat module migration:create   # diff models against the last snapshot -> a new migration
+damat module migration:run       # apply this module's migrations to DATABASE_URL
+damat module migration:status    # show this module's applied vs pending migrations
 damat module codegen            # generate row types + zod schemas into types/
 ```
 
 `migration:create` writes a migration only when the models actually differ from
-the recorded snapshot; if they already match, nothing is written. `codegen`
-overwrites the `types/` directory — treat it as generated output, not
-hand-edited source. Details on both are in
-[tooling.md](../../packages/module/docs/tooling.md).
+the recorded snapshot; if they already match, nothing is written. To test the
+module against a real database, set `DATABASE_URL` in your `.env` and run
+`migration:run` — it connects, applies only this module's migrations (tracked
+under the module's name, so it's idempotent), and disconnects; `migration:status`
+reports which are applied vs pending. `codegen` overwrites the `types/`
+directory — treat it as generated output, not hand-edited source. Details on
+these are in [tooling.md](../../packages/module/docs/tooling.md).
 
 ## Test it in isolation with the harness
 

@@ -1,5 +1,18 @@
 # @damatjs/workflow-engine
 
+## 0.4.0
+
+### Minor Changes
+
+- matching the version cleanup on the workflow package deps, and setup the migration cli for the modules
+
+### Patch Changes
+
+- Updated dependencies
+  - @damatjs/logger@0.4.0
+  - @damatjs/redis@0.4.0
+  - @damatjs/deps@0.4.0
+
 ## 0.3.8
 
 ### Patch Changes

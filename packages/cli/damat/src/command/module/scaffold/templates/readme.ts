@@ -37,6 +37,8 @@ per \`src/lib/<provider>.ts\`, one helper-group per \`src/utils/<concern>.ts\`.
 bun install
 # add a model in src/models/, register it in src/service.ts via collectModels([...])
 bun run migration:create   # diff models -> SQL migration
+bun run migration:run      # apply this module's migrations to DATABASE_URL
+bun run migration:status   # show applied vs pending migrations
 bun run codegen            # types + zod + registry + CRUD scaffold
 bun run dev                # run the module standalone (its own server + /health)
 bun test                   # contract test always; service/api tests when DATABASE_URL is set

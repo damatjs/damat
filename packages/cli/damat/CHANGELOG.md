@@ -1,5 +1,23 @@
 # @damatjs/damat-cli
 
+## 0.4.0
+
+### Minor Changes
+
+- matching the version cleanup on the workflow package deps, and setup the migration cli for the modules
+
+### Patch Changes
+
+- Updated dependencies
+  - @damatjs/module@0.4.0
+  - @damatjs/cli@0.4.0
+  - @damatjs/load-env@0.4.0
+  - @damatjs/logger@0.4.0
+  - @damatjs/framework@0.4.0
+  - @damatjs/link@0.4.0
+  - @damatjs/orm-cli@0.4.0
+  - @damatjs/codegen@2.0.0
+
 ## 0.3.7
 
 ### Patch Changes

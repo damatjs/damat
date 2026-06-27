@@ -1,4 +1,4 @@
-import { Effect, Scope, Exit, Cause, Schedule, Duration } from "effect";
+import { Effect, Scope, Exit, Cause, Schedule, Duration } from "@damatjs/deps/effect";
 import type {
   StepDefinition,
   WorkflowContext,

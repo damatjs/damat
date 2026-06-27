@@ -1,7 +1,7 @@
 {
     "name": "@damatjs/types",
     "description": "Damat Types definition",
-    "version": "0.3.7",
+    "version": "0.4.0",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

@@ -16,6 +16,8 @@
 | `damat module init <name>` | Scaffold a standalone module package |
 | `damat module dev` | Run a module package as a live app |
 | `damat module migration:create` | Diff models → migration (in a module) |
+| `damat module migration:run` | Apply this module's migrations to `DATABASE_URL` (scoped to the module) |
+| `damat module migration:status` | Show this module's applied vs pending migrations |
 | `damat module codegen` | Types + zod + registry, and scaffold-once CRUD (in a module) |
 | `damat module validate` | Contract + registry-readiness check |
 | `damat module build` | Release gate for a module: type-check (`tsc --noEmit`) + contract validate. `--no-typecheck` / `--no-validate` skip a step |

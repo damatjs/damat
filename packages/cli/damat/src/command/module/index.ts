@@ -4,6 +4,8 @@ import { moduleListCommand } from "./list";
 import { moduleDevCommand } from "./dev";
 import { moduleInitCommand } from "./init";
 import { moduleMigrationCreateCommand } from "./migrationCreate";
+import { moduleMigrationRunCommand } from "./migrationRun";
+import { moduleMigrationStatusCommand } from "./migrationStatus";
 import { moduleCodegenCommand } from "./codegen";
 import { moduleValidateCommand } from "./validate";
 import { moduleBuildCommand } from "./build";
@@ -18,6 +20,8 @@ export const moduleCommand: Command = {
     moduleDevCommand,
     moduleInitCommand,
     moduleMigrationCreateCommand,
+    moduleMigrationRunCommand,
+    moduleMigrationStatusCommand,
     moduleCodegenCommand,
     moduleValidateCommand,
     moduleBuildCommand,
@@ -29,6 +33,8 @@ export const moduleCommand: Command = {
         "  damat module init <name>        Scaffold a standalone module package",
         "  damat module dev                Run the module as a live app",
         "  damat module migration:create   Diff models -> migration",
+        "  damat module migration:run      Apply migrations to DATABASE_URL",
+        "  damat module migration:status   Show applied vs pending migrations",
         "  damat module codegen            Generate row types + zod schemas",
         "  damat module validate           Contract + registry readiness check",
         "  damat module build              Type-check + contract validate for release",
@@ -48,6 +54,8 @@ export {
   moduleDevCommand,
   moduleInitCommand,
   moduleMigrationCreateCommand,
+  moduleMigrationRunCommand,
+  moduleMigrationStatusCommand,
   moduleCodegenCommand,
   moduleValidateCommand,
   moduleBuildCommand,

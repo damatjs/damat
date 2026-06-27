@@ -2,10 +2,15 @@
 
 Source: `src/tooling/migration.ts`, `src/tooling/codegen.ts`.
 
-Two helpers that operate on a **standalone module package** — no `damat.config.ts`
+Helpers that operate on a **standalone module package** — no `damat.config.ts`
 required. They locate the module dir, read its manifest, and drive the ORM
 migration/codegen packages directly. The `damat` CLI calls these for a module
 package's own migrate/codegen commands.
+
+`createModuleMigration` (diff → SQL) and `generateModuleTypes` work offline
+against the model files and snapshot. `runModuleMigration` and
+`runModuleMigrationStatus` connect to `DATABASE_URL` to apply / report the
+module's own migrations against a real database.
 
 ## `createModuleMigration`
 
@@ -34,6 +39,62 @@ snapshot — nothing is written.
 const { hasChanges, filePath } = await createModuleMigration(process.cwd());
 if (hasChanges) console.log("wrote", filePath);
 ```
+
+## `runModuleMigration`
+
+```ts
+interface RunModuleMigrationResult {
+  moduleName: string;
+  applied: string[];   // migration names applied this run
+  pending: string[];   // names that were pending before the run
+  success: boolean;
+  error?: Error;
+  hadMigrations: boolean; // false when the module has no migrations dir yet
+}
+
+function runModuleMigration(packageDir: string): Promise<RunModuleMigrationResult>;
+```
+
+**Applies the module's own migration files to `DATABASE_URL`** — scoped to this
+module only (`migration.ts`):
+
+1. `moduleDir = locateModuleDir(packageDir)`; `manifest = readModuleManifest(moduleDir)`.
+2. If the migrations dir is missing, return early with `hadMigrations: false`
+   (nothing to apply — run `createModuleMigration` first).
+3. `resolveDatabaseConfig({})` (DATABASE_URL env) → connect via
+   `ConnectionManager` (same wiring as `bootModule`).
+4. `runMigrations(pool, { [manifest.name]: { … resolve: moduleDir } })` (from
+   `@damatjs/orm-migration`) — a single-module container, so only this module's
+   migrations run, tracked under `manifest.name`.
+5. Disconnect and return the applied/pending names.
+
+Idempotent: migrations already recorded under the module's name are skipped, so
+re-running applies nothing.
+
+```ts
+const r = await runModuleMigration(process.cwd());
+if (r.applied.length) console.log("applied", r.applied.join(", "));
+```
+
+## `runModuleMigrationStatus`
+
+```ts
+interface ModuleMigrationStatusResult {
+  moduleName: string;
+  applied: number;
+  pending: number;
+  migrations: { name: string; applied: boolean }[];
+  hadMigrations: boolean;
+}
+
+function runModuleMigrationStatus(packageDir: string): Promise<ModuleMigrationStatusResult>;
+```
+
+**Reports which of the module's migrations are applied vs pending** against
+`DATABASE_URL`, without changing anything. Discovers the migration files
+(`discoverModuleMigrations(moduleDir)`) and cross-references the tracking table
+(`MigrationTracker.getApplied(manifest.name)`) — keyed by the same module name
+`runModuleMigration` records under, so counts stay consistent.
 
 ## `generateModuleTypes`
 
@@ -77,8 +138,12 @@ make those usable *for a single module package* without app config.
   output is controlled by `manifest.paths.types` (default `./types`).
 - `generateModuleTypes` requires a `logger` argument; `createModuleMigration` does
   not. Don't assume a symmetric signature.
-- These do not touch the database — they diff against the snapshot and read model
-  files. Applying migrations is the harness/runtime's job (`applyModuleMigrations`,
-  see [harness.md](./harness.md)).
+- `createModuleMigration` and `generateModuleTypes` do not touch the database —
+  they diff against the snapshot and read model files. `runModuleMigration` /
+  `runModuleMigrationStatus` do connect (they need `DATABASE_URL`), but stay
+  scoped to this module. During an actual `damat module dev`/test boot, applying
+  migrations is the harness/runtime's job (`applyModuleMigrations`, see
+  [harness.md](./harness.md)); the tooling functions are the explicit
+  CLI-invoked path.
 - Re-running codegen overwrites files in the types dir; treat that dir as
   generated output, not hand-edited source.

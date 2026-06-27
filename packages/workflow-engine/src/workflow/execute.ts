@@ -1,4 +1,4 @@
-import { Effect, Scope, Exit, Cause, Duration } from "effect";
+import { Effect, Scope, Exit, Cause, Duration } from "@damatjs/deps/effect";
 import type {
   RequiredWorkflowConfig,
   WorkflowContext,
@@ -86,12 +86,12 @@ export async function executeWorkflowInternal<I, O>(
       : rawError instanceof WorkflowError
         ? rawError
         : new WorkflowError(
-            "WORKFLOW_FAILED",
-            rawError instanceof Error ? rawError.message : String(rawError),
-            name,
-            undefined,
-            rawError,
-          );
+          "WORKFLOW_FAILED",
+          rawError instanceof Error ? rawError.message : String(rawError),
+          name,
+          undefined,
+          rawError,
+        );
 
     workflowLogger.error(`Workflow failed`, error, {
       executionId,

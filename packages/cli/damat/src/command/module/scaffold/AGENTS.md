@@ -56,6 +56,8 @@ working on **this one module**.
 ```bash
 bun run dev               # run the module standalone (its own server + DB)
 bun run migration:create  # diff models -> a SQL migration in src/migrations
+bun run migration:run     # apply this module's migrations to DATABASE_URL
+bun run migration:status  # show applied vs pending migrations for DATABASE_URL
 bun run codegen           # generate row types + zod schemas
 bun run validate          # check the module.json contract + registry-readiness
 bun run typecheck         # tsc --noEmit
@@ -320,7 +322,9 @@ export default defineModule(MODULE_ID, {
 
 ### 5. Migrate + generate types
 After changing models: `bun run migration:create`, review the SQL, then
-`bun run codegen`.
+`bun run codegen`. To test against a real database, set `DATABASE_URL` and run
+`bun run migration:run` to apply this module's migrations; `bun run
+migration:status` shows which are applied vs pending.
 
 ### 6. Workflows & routes (generated)
 `bun run codegen` scaffolds a per-operation CRUD slice from your models —

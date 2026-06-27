@@ -1,4 +1,4 @@
-import type { Effect, Scope } from "effect";
+import type { Effect, Scope } from "@damatjs/deps/effect";
 import type { RequiredStepConfig, StepConfig } from "./step";
 import type { RequiredWorkflowConfig } from "./workflow";
 import type { WorkflowResult } from "./result";

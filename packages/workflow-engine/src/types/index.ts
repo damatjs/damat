@@ -13,4 +13,4 @@ export * from "./definition"
 export * from "./lock"
 
 // Re-export Effect types
-export { Effect, Scope } from "effect";
+export { Effect, Scope } from "@damatjs/deps/effect";

@@ -32,7 +32,7 @@ Use it when:
 - You are **relating modules to each other** — `defineLink` / `collectLinkModels` / `defineLinkModule` are re-exported here so the app's `src/links/` can declare cross-module relationships from the same surface (the runtime service is `getModule("link")`). See [`@damatjs/link`](../link/README.md).
 - You want to **develop or test a module standalone** against a real Postgres, without spinning up a backend (`bootModule` / `withModule`).
 - You want to **run one module as a live app** — full framework HTTP stack, just this module registered (`startModuleApp`, what `damat module dev` boots).
-- You build **tooling**: generate a module's types or create a diff migration with no `damat.config.ts` (`generateModuleTypes`, `createModuleMigration`).
+- You build **tooling**: generate a module's types, create a diff migration, or apply/inspect a module's own migrations against `DATABASE_URL` — all with no `damat.config.ts` (`generateModuleTypes`, `createModuleMigration`, `runModuleMigration`, `runModuleMigrationStatus`).
 - You implement **module distribution**: parse/format module refs, read & validate `module.json`, check registry-readiness, resolve & verify entries against a registry index.
 
 Skip it when:
@@ -109,6 +109,7 @@ harness and for the runtime when serving. In test suites gate DB tests with
 | `bootModule`, `withModule` | function | Boot a module standalone (with migrations) for dev/test; auto-teardown variant. |
 | `startModuleApp`, `runModuleEntry` | function | Run one module as a live HTTP app; `damat module dev` entry. |
 | `createModuleMigration`, `generateModuleTypes` | function | Diff-migration & codegen for a standalone module package. |
+| `runModuleMigration`, `runModuleMigrationStatus` | function | Apply / report a standalone module's own migrations against `DATABASE_URL`. |
 | `parseModuleRef`, `formatModuleRef` | function | Parse / format refs like `damatjs/user@0.2.0`. |
 | `validateModuleDir` | function | Registry-readiness report (errors block install, warnings block publish). |
 | `resolveRegistryEntry`, `resolveRegistryRef` | function | Resolve a ref against a registry index → source + owner + verification. |

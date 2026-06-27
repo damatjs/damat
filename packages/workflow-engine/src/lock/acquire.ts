@@ -1,5 +1,5 @@
 import { acquireLock } from "@damatjs/redis";
-import { nanoid } from "nanoid";
+import { nanoid } from "@damatjs/deps/nanoid";
 import type { WorkflowLockConfig, WorkflowLockResult } from "../types";
 import { createContextLogger } from "@damatjs/logger";
 import {

@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Effect } from "@damatjs/deps/effect";
 
 /**
  * Creates a no-op step for conditional workflows.

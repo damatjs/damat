@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Effect } from "@damatjs/deps/effect";
 
 /**
  * Combines multiple independent steps to run in parallel.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { Effect, Scope, Exit, Cause } from "effect";
+import { Effect, Scope, Exit, Cause } from "@damatjs/deps/effect";
 import { createStep, executeStep, StepResponse } from "../src/step";
 import {
   StepExecutionError,
@@ -54,7 +54,7 @@ describe("step/create: createStep", () => {
   });
 
   it("includes compensate when supplied", () => {
-    const comp = async () => {};
+    const comp = async () => { };
     const step = createStep<number, number>("s", async (n) => n, comp);
     expect(step.compensate).toBe(comp);
   });

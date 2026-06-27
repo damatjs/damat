@@ -11,6 +11,8 @@ export function packageJsonTemplate(name: string): string {
         test: "bun test",
         typecheck: "tsc --noEmit",
         "migration:create": "damat module migration:create",
+        "migration:run": "damat module migration:run",
+        "migration:status": "damat module migration:status",
         codegen: "damat module codegen",
         validate: "damat module validate",
       },

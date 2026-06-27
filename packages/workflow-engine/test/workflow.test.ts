@@ -20,7 +20,7 @@ const getRedis = mock(() => ({
 
 mock.module("@damatjs/redis", () => ({ acquireLock, releaseLock, getRedis }));
 
-import { Effect } from "effect";
+import { Effect } from "@damatjs/deps/effect";
 import { createWorkflow } from "../src/workflow";
 import { createStep, executeStep, StepResponse } from "../src/step";
 import { runStep, parallel, when, skipStep } from "../src/utils";
