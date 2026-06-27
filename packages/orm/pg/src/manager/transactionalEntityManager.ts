@@ -39,7 +39,9 @@ export class TransactionalEntityManager<
   }
 
   getRepository<T extends QueryResultRow = QueryResultRow>(modelName: string): PgRepository<T> {
-    const entry = this.modelRegistry.get(modelName);
+    const entry =
+      this.modelRegistry.get(modelName) ??
+      this.modelRegistry.getByTableName(modelName);
     if (!entry) throw new ModelRegistryError(`Model "${modelName}" not registered`);
     const cached = this.repositories.get(modelName);
     if (cached) return cached as PgRepository<T>;

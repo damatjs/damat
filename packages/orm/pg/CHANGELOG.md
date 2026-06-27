@@ -1,5 +1,17 @@
 # @damatjs/orm-pg
 
+## 0.4.1
+
+### Patch Changes
+
+- pg and service update to allow entry fetch from the table name
+- Updated dependencies
+  - @damatjs/logger@0.4.1
+  - @damatjs/types@0.4.1
+  - @damatjs/orm-core@0.4.1
+  - @damatjs/orm-model@0.4.1
+  - @damatjs/orm-type@0.4.1
+
 ## 0.4.0
 
 ### Minor Changes

@@ -326,9 +326,12 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
   private resolveModel(name: string): ModelDefinition {
     if (name === this.modelName) return this.model;
     const registry = this.entityManager?.getModelRegistry() as
-      | { get(n: string): { model?: ModelDefinition } | undefined }
+      | {
+        get(n: string): { model?: ModelDefinition } | undefined;
+        getByTableName(n: string): { model?: ModelDefinition } | undefined;
+      }
       | undefined;
-    const model = registry?.get(name)?.model;
+    const model = registry?.get(name)?.model ?? registry?.getByTableName(name)?.model;
     if (!model) {
       throw new Error(
         `Cannot cascade into "${name}": model is not registered with the entity manager.`,

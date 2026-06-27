@@ -1,5 +1,11 @@
 # @damatjs/deps
 
+## 0.4.1
+
+### Patch Changes
+
+- pg and service update to allow entry fetch from the table name
+
 ## 0.4.0
 
 ### Minor Changes

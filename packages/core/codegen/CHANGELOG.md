@@ -1,5 +1,16 @@
 # @damatjs/orm-codegen
 
+## 2.0.1
+
+### Patch Changes
+
+- pg and service update to allow entry fetch from the table name
+- Updated dependencies
+  - @damatjs/logger@0.4.1
+  - @damatjs/orm-migration@0.4.1
+  - @damatjs/orm-model@0.4.1
+  - @damatjs/orm-type@0.4.1
+
 ## 2.0.0
 
 ### Patch Changes

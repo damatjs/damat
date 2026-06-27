@@ -1,5 +1,20 @@
 # @damatjs/damat-cli
 
+## 0.4.1
+
+### Patch Changes
+
+- pg and service update to allow entry fetch from the table name
+- Updated dependencies
+  - @damatjs/cli@0.4.1
+  - @damatjs/codegen@2.0.1
+  - @damatjs/load-env@0.4.1
+  - @damatjs/logger@0.4.1
+  - @damatjs/framework@0.4.1
+  - @damatjs/link@0.4.1
+  - @damatjs/module@0.4.1
+  - @damatjs/orm-cli@0.4.1
+
 ## 0.4.0
 
 ### Minor Changes
