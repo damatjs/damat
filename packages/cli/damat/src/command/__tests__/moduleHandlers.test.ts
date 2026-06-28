@@ -23,6 +23,11 @@ import { createContext } from "./helpers";
 // strip exports siblings rely on (setLinkModuleResolver etc.). Same pattern as
 // the existing migrationRun / migrationStatus tests.
 import * as realModule from "@damatjs/module";
+// Same guard for @damatjs/codegen: codegen.test.ts mock.module()s this package
+// globally (Bun mocks persist across files) and leaves its generateBarrels stub —
+// which throws when its own cg.barrelThrows is set — in place. add.ts calls the
+// real generateBarrels, so own the mock here too to stay order-independent.
+import * as realCodegen from "@damatjs/codegen";
 
 // Shared mutable state the single @damatjs/module mock reads. Every handler test
 // drives behaviour by mutating this, never by re-registering the mock.
@@ -84,6 +89,16 @@ mock.module("@damatjs/module", () => ({
   parseModuleRef: (_input: string) => mm.parseRef,
   formatModuleRef: (ref: { name: string }) => ref.name,
   resolveRegistryEntry: async (_ref: unknown) => mm.registryRecord,
+}));
+
+// add.ts rebuilds the app's workflow barrels after a split install. These tests
+// drive that via the fs mock (the target src/workflows is kept absent so the real
+// helper no-ops); stub generateBarrels to a deterministic no-op so the suite does
+// not depend on codegen.test.ts's leaked, throwing stub winning or losing the
+// global mock race.
+mock.module("@damatjs/codegen", () => ({
+  ...realCodegen,
+  generateBarrels: () => ({ written: [] }),
 }));
 
 beforeEach(() => {
@@ -777,7 +792,8 @@ describe("module add command", () => {
       "/pkg/src/api/routes": true,
       "/pkg/src/workflows": true,
       "/pkg/tests": true,
-      // generateBarrels(real) probes src/workflows — keep it false so it no-ops.
+      // generateBarrels is stubbed to a no-op above; the target tree stays absent
+      // anyway to mirror a fresh app.
       "/app/src/workflows": false,
     });
     fsState.readFileMap = {
