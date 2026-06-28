@@ -1,9 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { createFileRouter } from "../../router/builder";
 
-const SCRATCH = "/tmp/claude-0/-home-user-damat/481a0807-5e66-5762-ac17-c771e29d585e/scratchpad";
+// Use the OS temp dir so the suite works on any machine (including CI), not a
+// session-specific scratchpad path.
+const SCRATCH = tmpdir();
 
 let root: string;
 
