@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.5.0
+
+### Minor Changes
+
+- Audit of critical/complex paths plus a broad test-hardening pass. Adds 25
+  test files (~270 edge-case tests) and fixes two genuine bugs uncovered while
+  writing them.
+
+  Bug fixes:
+
+  framework handleError: a thrown non-Error value (e.g. throw "boom") matched
+  none of the instanceof branches, so its content was silently dropped from the
+  logs. Capture a safe string form (circular-safe) and surface it in dev.
+  orm-migration discovery: discoverModuleMigrations sorted lexically while
+  discoverAllMigrations sorts numerically by timestamp, so a timestamp-less
+  file ordered differently depending on the entry point. Both now sort by
+  numeric timestamp with filename as a stable tiebreaker.
+  New coverage (infra-free, runs in CI):
+
+  framework: rateLimit, requestSetup, router/builder, services/moduleService,
+  services/database (singleton lifecycle via mocked ConnectionManager/PoolManager),
+  and expanded handleError non-Error cases.
+  workflow-engine: step/workflow execute (timeout, retry exhaustion,
+  reverse-order + throwing compensation), retry config precedence, lock ops,
+  errors and parallel/conditional utils.
+  link: cross-module graph queries, column pruning, soft-delete, missing
+  module/model, and a circular-link termination regression test.
+  orm-migration: executor rollback paths, tracker UPSERT idempotency, ordering.
+  mcp (was 0 tests): registry/server/tools/app with all I/O mocked.
+  orm-type (was 0 tests): load guard only (package is pure type declarations).
+  mcp and orm-type test scripts switched from exit 0 to bun test.
+
+### Patch Changes
+
+- Updated dependencies
+  - @damatjs/logger@0.5.0
+  - @damatjs/deps@0.5.0
+
 ## 0.4.1
 
 ### Patch Changes
