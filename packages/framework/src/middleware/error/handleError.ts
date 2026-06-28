@@ -59,6 +59,27 @@ function parseError(error: unknown, logger: Logger | ILogger, requestId: string,
       details = error.stack;
     }
   }
+  else {
+    // A non-Error value was thrown (e.g. `throw "boom"` or `throw { code: 1 }`).
+    // None of the branches above match, so without this the thrown value would
+    // be lost entirely from the logs. Capture a safe string form so the failure
+    // is still observable, and surface it in development like a generic Error.
+    const thrown = safeStringify(error);
+    logger.error("Unhandled non-error throw", undefined, { requestId, thrown });
+    if (isDev) {
+      message = thrown;
+    }
+  }
 
   return { statusCode, code, message, details };
+}
+
+function safeStringify(value: unknown): string {
+  if (typeof value === "string") return value;
+  try {
+    return JSON.stringify(value) ?? String(value);
+  } catch {
+    // Circular references or non-serializable values fall back to String().
+    return String(value);
+  }
 }

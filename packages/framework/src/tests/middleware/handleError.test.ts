@@ -118,6 +118,51 @@ describe("handleError", () => {
     expect(body.error.code).toBe("INTERNAL_ERROR");
   });
 
+  it("captures the content of a thrown non-Error string in the logs", async () => {
+    const logger = createMockLogger();
+    handleError(createMockContext(), "boom-string", logger as never);
+
+    // The thrown value must not be silently dropped: it should appear in a log
+    // call's metadata so the failure remains diagnosable in production.
+    const loggedThrown = logger.error.mock.calls.some(
+      (call) => (call[2] as { thrown?: string } | undefined)?.thrown === "boom-string",
+    );
+    expect(loggedThrown).toBe(true);
+  });
+
+  it("captures the content of a thrown non-Error object in the logs", async () => {
+    const logger = createMockLogger();
+    handleError(createMockContext(), { code: 42, reason: "nope" }, logger as never);
+
+    const loggedThrown = logger.error.mock.calls.some((call) =>
+      ((call[2] as { thrown?: string } | undefined)?.thrown ?? "").includes("42"),
+    );
+    expect(loggedThrown).toBe(true);
+  });
+
+  it("does not throw when a non-Error value with a circular reference is thrown", async () => {
+    const logger = createMockLogger();
+    const circular: Record<string, unknown> = { a: 1 };
+    circular.self = circular;
+
+    // safeStringify must not blow up on circular references.
+    const res = handleError(createMockContext(), circular, logger as never);
+    const body = (await res.json()) as ErrorBody;
+    expect(res.status).toBe(500);
+    expect(body.error.code).toBe("INTERNAL_ERROR");
+    expect(logger.error).toHaveBeenCalled();
+  });
+
+  it("surfaces a thrown non-Error value as the message in development", async () => {
+    process.env.NODE_ENV = "development";
+    const logger = createMockLogger();
+    const res = handleError(createMockContext(), "dev-detail", logger as never);
+    const body = (await res.json()) as ErrorBody;
+
+    expect(res.status).toBe(500);
+    expect(body.error.message).toBe("dev-detail");
+  });
+
   it("falls back to 'unknown' requestId when none is set on the context", async () => {
     const logger = createMockLogger();
     // Build a context whose get() never returns a requestId.
