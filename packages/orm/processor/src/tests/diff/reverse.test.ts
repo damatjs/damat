@@ -146,6 +146,42 @@ describe("reverseDiff › invertible operations", () => {
       expect(change.changes.unique).toEqual({ from: true, to: false });
     }
   });
+
+  it("inverts length, scale and array sub-changes of an alter_column", () => {
+    const diff = diffOf(
+      moduleSchema({
+        tables: [
+          table("t", [
+            col("c", {
+              type: "numeric",
+              length: 10,
+              scale: 2,
+              array: false,
+            }),
+          ]),
+        ],
+      }),
+      moduleSchema({
+        tables: [
+          table("t", [
+            col("c", {
+              type: "numeric",
+              length: 20,
+              scale: 4,
+              array: true,
+            }),
+          ]),
+        ],
+      }),
+    );
+    const change = reverseDiff(diff).changes[0]!;
+    expect(change.type).toBe("alter_column");
+    if (change.type === "alter_column") {
+      expect(change.changes.length).toEqual({ from: 20, to: 10 });
+      expect(change.changes.scale).toEqual({ from: 4, to: 2 });
+      expect(change.changes.array).toEqual({ from: true, to: false });
+    }
+  });
 });
 
 describe("reverseDiff › non-invertible operations", () => {

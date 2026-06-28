@@ -155,6 +155,25 @@ describe("FileTransport: buffer lifecycle", () => {
     expect(readdirSync(tmp)).toHaveLength(0);
   });
 
+  it("auto-flushes via the interval timer when bufferFlushMs > 0", async () => {
+    // A real (short) interval means the constructor installs a setInterval whose
+    // callback `() => this.flush()` fires on its own. We log, wait for one tick,
+    // and assert the buffer was written WITHOUT calling flush()/close() first.
+    // close() is still called afterwards to clear the timer (no leak).
+    const t = makeTransport({ bufferFlushMs: 5 });
+    t.log(entry({ message: "auto-flushed" }));
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      const logFile = readdirSync(tmp).find((f) => f.endsWith(".log"));
+      expect(logFile).toBeDefined();
+      expect(readFileSync(join(tmp, logFile!), "utf-8")).toContain(
+        "auto-flushed",
+      );
+    } finally {
+      t.close();
+    }
+  });
+
   it("close() flushes remaining buffer", () => {
     const t = makeTransport();
     t.log(entry({ message: "on-close" }));

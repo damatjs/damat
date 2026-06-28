@@ -1,7 +1,11 @@
 import type { Command, CommandRegistry } from "@damatjs/cli";
 
 class CommandRegistryImpl implements CommandRegistry {
-  private commands: Map<string, Command> = new Map();
+  private commands: Map<string, Command>;
+
+  constructor() {
+    this.commands = new Map();
+  }
 
   register(command: Command): void {
     if (this.commands.has(command.name)) {

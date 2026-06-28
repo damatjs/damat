@@ -1,7 +1,7 @@
 {
     "name": "@damatjs/orm-type",
     "description": "Damat ORM shared types",
-    "version": "0.4.1",
+    "version": "0.5.0",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -36,6 +36,6 @@
     "scripts": {
         "build": "rm -rf dist tsconfig.tsbuildinfo && tsc",
         "watch": "tsc --watch",
-        "test": "exit 0"
+        "test": "bun test"
     }
 }

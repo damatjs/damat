@@ -277,6 +277,26 @@ describe("migrate:up", () => {
     expect(state.poolConnectionStrings.length).toBe(0);
   });
 
+  it("exits 1 when loading the database config throws", async () => {
+    // Valid `modules` so loadModules succeeds, but `projectConfig` is a throwing
+    // getter so the later loadDatabaseUrl call lands in its catch branch.
+    fs.writeFileSync(
+      path.join(tempRoot, "damat.config.ts"),
+      `export default {
+         get projectConfig() { throw new Error("db getter boom"); },
+         modules: { user: { resolve: ${JSON.stringify(USER)} } },
+       };`,
+      "utf-8",
+    );
+    const cmd = await loadUp();
+    const { ctx, calls } = ctxFor();
+    const res = await cmd.handler(ctx);
+    expect(res.exitCode).toBe(1);
+    expect(hasLog(calls, "error", /Failed to load database config/)).toBe(true);
+    // Failure happens before the pool is created.
+    expect(state.poolConnectionStrings.length).toBe(0);
+  });
+
   it("runs migrations, closes the pool, and exits 0 on success", async () => {
     writeConfig({ modules: { user: USER } });
     state.runMigrationsResult = [{ success: true }, { success: true }];
@@ -335,6 +355,23 @@ describe("migrate:status", () => {
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(hasLog(calls, "error", /No databaseUrl found/)).toBe(true);
+  });
+
+  it("exits 1 when loading the database config throws", async () => {
+    fs.writeFileSync(
+      path.join(tempRoot, "damat.config.ts"),
+      `export default {
+         get projectConfig() { throw new Error("db getter boom"); },
+         modules: { user: { resolve: ${JSON.stringify(USER)} } },
+       };`,
+      "utf-8",
+    );
+    const cmd = await loadStatus();
+    const { ctx, calls } = ctxFor();
+    const res = await cmd.handler(ctx);
+    expect(res.exitCode).toBe(1);
+    expect(hasLog(calls, "error", /Failed to load database config/)).toBe(true);
+    expect(state.poolConnectionStrings.length).toBe(0);
   });
 
   it("reports all-module status when no module is specified", async () => {

@@ -151,6 +151,30 @@ describe("createFactBox", () => {
     });
     expect(spinner.text).toContain("Setting up");
   });
+
+  it("should refresh the fact on each interval tick (exercises the callback)", () => {
+    const spinner = createFakeSpinner();
+    // capture the interval callback registered by setInterval
+    let intervalCb: (() => void) | undefined;
+    setIntervalSpy.mockImplementation((cb: any) => {
+      intervalCb = cb;
+      return 12345 as any;
+    });
+
+    createFactBox({
+      spinner: spinner as any,
+      title: "Refreshing",
+      processManager,
+    });
+
+    // initial fact set
+    expect(spinner.text).toContain("Refreshing");
+    spinner.text = "";
+    // fire the interval callback -> showFact runs again and resets the text
+    expect(intervalCb).toBeDefined();
+    intervalCb!();
+    expect(spinner.text).toContain("Refreshing");
+  });
 });
 
 describe("resetFactBox", () => {

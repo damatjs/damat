@@ -16,10 +16,14 @@ type ModuleEntry = { resolve: string; kind?: string };
 const cg = {
   modules: {} as Record<string, ModuleEntry>,
   loadThrows: null as Error | null,
+  runThrows: null as Error | null,
   runArgs: null as any,
   // Every runCodegen invocation, in order — lets whole-app tests assert that a
   // module each was generated (runArgs only holds the last call).
   runArgsList: [] as any[],
+  barrelCalls: [] as any[],
+  barrelWritten: [] as string[],
+  barrelThrows: null as Error | null,
   runResult: {
     outputDir: "",
     files: [] as string[],
@@ -39,7 +43,25 @@ mock.module("@damatjs/codegen", () => ({
   runCodegen: async (opts: any) => {
     cg.runArgs = opts;
     cg.runArgsList.push(opts);
+    // Invoke the augment hook the real generator would call, so runModule.ts's
+    // `augmentFilesMap` closure is exercised. The test configs carry no link
+    // modules, so augmentWithLinks no-ops immediately.
+    if (typeof opts.augmentFilesMap === "function") {
+      await opts.augmentFilesMap(new Map<string, string>());
+    }
+    // Let a test force the generator to throw (covers the catch branches in
+    // codegen/all.ts + codegen/one.ts).
+    if (cg.runThrows) throw cg.runThrows;
     return cg.runResult;
+  },
+  // codegenAll/One (and the barrel command) always rebuild the workflow barrels;
+  // stub it so the run never touches a real src/workflows tree and we can assert
+  // it ran. `cg.barrelWritten` / `cg.barrelThrows` let the barrel-command tests
+  // drive the result branches.
+  generateBarrels: (...args: any[]) => {
+    cg.barrelCalls.push(args);
+    if (cg.barrelThrows) throw cg.barrelThrows;
+    return { written: cg.barrelWritten };
   },
 }));
 // @damatjs/link is NOT mocked — `renderLinkAugmentations` is only reached via the
@@ -49,11 +71,19 @@ async function getCmd() {
   return (await import("../codegen")).codegenCommand;
 }
 
+async function getBarrel() {
+  return (await import("../barrel")).barrelCommand;
+}
+
 beforeEach(() => {
   cg.modules = {};
   cg.loadThrows = null;
+  cg.runThrows = null;
   cg.runArgs = null;
   cg.runArgsList = [];
+  cg.barrelCalls = [];
+  cg.barrelWritten = [];
+  cg.barrelThrows = null;
   cg.runResult = {
     outputDir: "/app/src/modules/user/types",
     files: ["users.ts", "registry.ts"],
@@ -184,5 +214,96 @@ describe("damat codegen command", () => {
       routesRoot: "/app/src/api/routes",
       workflowsRoot: "/app/src/workflows/user",
     });
+  });
+
+  it("errors when the config fails to load", async () => {
+    cg.loadThrows = new Error("config blew up");
+    const cmd = await getCmd();
+    const { ctx, logger } = createContext({}, { args: ["user"], cwd: "/app" });
+    const res = await cmd.handler(ctx);
+    expect(res.exitCode).toBe(1);
+    expect(logger.error).toHaveBeenCalled();
+    expect(cg.runArgs).toBeNull();
+  });
+
+  it("rebuilds the workflow barrels after a single-module run", async () => {
+    cg.modules = { user: { resolve: "/app/src/modules/user" } };
+    fsState.existsMap = { "/app/src/modules/user/models": true };
+    const cmd = await getCmd();
+    const { ctx } = createContext({}, { args: ["user"], cwd: "/app" });
+    await cmd.handler(ctx);
+    expect(cg.barrelCalls.length).toBeGreaterThan(0);
+  });
+
+  it("single-module run surfaces a generation failure as exit 1", async () => {
+    cg.modules = { user: { resolve: "/app/src/modules/user" } };
+    fsState.existsMap = { "/app/src/modules/user/models": true };
+    cg.runThrows = new Error("gen failed");
+    const cmd = await getCmd();
+    const { ctx, logger } = createContext({}, { args: ["user"], cwd: "/app" });
+    const res = await cmd.handler(ctx);
+    expect(res.exitCode).toBe(1);
+    expect(logger.error).toHaveBeenCalled();
+  });
+
+  it("--all reports a non-zero exit when a module's generation throws", async () => {
+    cg.modules = {
+      user: { resolve: "/app/src/modules/user" },
+      org: { resolve: "/app/src/modules/org" },
+    };
+    fsState.existsMap = {
+      "/app/src/modules/user/models": true,
+      "/app/src/modules/org/models": true,
+    };
+    cg.runThrows = new Error("explode");
+    const cmd = await getCmd();
+    const { ctx, logger } = createContext({ all: true }, { args: [], cwd: "/app" });
+    const res = await cmd.handler(ctx);
+    expect(res.exitCode).toBe(1);
+    expect(logger.error).toHaveBeenCalled();
+    // Barrels are rebuilt even on a partial-failure run.
+    expect(cg.barrelCalls.length).toBeGreaterThan(0);
+  });
+});
+
+// The barrel command shares the @damatjs/codegen mock (generateBarrels), so its
+// tests live here to keep that mock single-registered process-wide.
+describe("damat barrel command", () => {
+  it("has the expected wiring and defaults to src/workflows", async () => {
+    cg.barrelWritten = ["src/workflows/index.ts"];
+    const cmd = await getBarrel();
+    expect(cmd.name).toBe("barrel");
+    const { ctx } = createContext({}, { args: [], cwd: "/app" });
+    await cmd.handler(ctx);
+    // Default target is <cwd>/src/workflows.
+    expect(cg.barrelCalls.at(-1)![0]).toBe("/app/src/workflows");
+  });
+
+  it("reports the number of barrels written", async () => {
+    cg.barrelWritten = ["a/index.ts", "b/index.ts"];
+    const cmd = await getBarrel();
+    const { ctx, logger } = createContext({}, { args: ["src/foo"], cwd: "/app" });
+    const res = await cmd.handler(ctx);
+    expect(res.exitCode).toBe(0);
+    expect(cg.barrelCalls.at(-1)![0]).toBe("/app/src/foo");
+    expect(logger.success).toHaveBeenCalled();
+  });
+
+  it("warns when nothing was barreled", async () => {
+    cg.barrelWritten = [];
+    const cmd = await getBarrel();
+    const { ctx, logger } = createContext({}, { args: ["missing"], cwd: "/app" });
+    const res = await cmd.handler(ctx);
+    expect(res.exitCode).toBe(0);
+    expect(logger.warn).toHaveBeenCalled();
+  });
+
+  it("fails when generation throws", async () => {
+    cg.barrelThrows = new Error("barrel boom");
+    const cmd = await getBarrel();
+    const { ctx, logger } = createContext({}, { args: [], cwd: "/app" });
+    const res = await cmd.handler(ctx);
+    expect(res.exitCode).toBe(1);
+    expect(logger.error).toHaveBeenCalled();
   });
 });

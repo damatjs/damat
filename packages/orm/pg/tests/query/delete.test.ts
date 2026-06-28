@@ -57,4 +57,13 @@ describe("DeleteBuilder.generateJson", () => {
       returning: ["id"],
     });
   });
+
+  it("includes cloned whereRaw clauses in the descriptor", () => {
+    const json = del()
+      .where({ id: "u1" })
+      .whereRaw({ sql: '"age" < $1', params: [18] })
+      .generateJson();
+    expect(json.where).toEqual([{ id: "u1" }]);
+    expect(json.whereRaw).toEqual([{ sql: '"age" < $1', params: [18] }]);
+  });
 });

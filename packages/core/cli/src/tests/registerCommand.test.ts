@@ -1,4 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach, spyOn } from "bun:test";
+import fs, { mkdtempSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { cac } from "cac";
 import { Logger } from "@damatjs/logger";
 import { registerSingleCommand } from "../run/registerCommand";
@@ -195,6 +198,102 @@ describe("registerSingleCommand", () => {
     expect(onErrorArgs).not.toBeNull();
     expect(onErrorArgs!.error).toBeInstanceOf(Error);
     expect(onErrorArgs!.error.message).toBe("kaboom");
+  });
+
+  test("logs and exits with the CliError exit code when validation throws a non-default code", async () => {
+    // Drive the action directly so cac flag-parsing cannot supply the required
+    // option; this guarantees validateOptions throws a CliError and we hit the
+    // logger.error + process.exit(error.exitCode) branch.
+    const cli = cac("cli");
+    const cmd: Command = {
+      name: "req",
+      description: "req",
+      options: [{ name: "token", description: "Token", required: true }],
+      handler: async () => ({ exitCode: 0 }),
+    };
+    registerSingleCommand(cli, cmd, baseConfig, logger);
+
+    await invokeAction(cli, ["req"], {});
+    expect(firstExitCode()).toBe(1);
+    expect(logErrorSpy).toHaveBeenCalled();
+    expect(logErrorSpy.mock.calls[0]?.[0]).toContain("Missing required option");
+  });
+
+  test("attaches a successfully loaded project config onto ctx.options.config", async () => {
+    const cli = cac("cli");
+    let received: CommandContext | null = null;
+    const loaded = { db: { url: "postgres://x" } };
+    const config: CliConfig = {
+      ...baseConfig,
+      configLoader: {
+        file: "ok.config.ts",
+        load: async () => loaded,
+      },
+    };
+    const cmd: Command = {
+      name: "usescfg",
+      description: "usescfg",
+      handler: async (ctx) => {
+        received = ctx;
+        return { exitCode: 0 };
+      },
+    };
+    registerSingleCommand(cli, cmd, config, logger);
+
+    const dir = mkdtempSync(path.join(os.tmpdir(), "damat-cli-okcfg-"));
+    fs.writeFileSync(path.join(dir, "ok.config.ts"), "export default {};");
+    const cwd = process.cwd();
+    process.chdir(dir);
+    try {
+      await invokeAction(cli, ["usescfg"], {});
+    } finally {
+      process.chdir(cwd);
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+
+    expect(received).not.toBeNull();
+    expect(received!.options.config).toEqual(loaded);
+  });
+
+  test("reports and exits when loading the project config fails", async () => {
+    const cli = cac("cli");
+    const config: CliConfig = {
+      ...baseConfig,
+      configLoader: {
+        file: "anything.config.ts",
+        load: async () => {
+          throw new Error("config blew up");
+        },
+      },
+    };
+    const cmd: Command = {
+      name: "withcfg",
+      description: "withcfg",
+      handler: async () => ({ exitCode: 0 }),
+    };
+    registerSingleCommand(cli, cmd, config, logger);
+
+    // The loader's file must exist for loadConfig to attempt the load. Point it
+    // at a real temp file and run from that dir so the relative path resolves.
+    const dir = mkdtempSync(path.join(os.tmpdir(), "damat-cli-regcmd-"));
+    const cfgPath = path.join(dir, "anything.config.ts");
+    fs.writeFileSync(cfgPath, "export default {};");
+    const cwd = process.cwd();
+    process.chdir(dir);
+    try {
+      await invokeAction(cli, ["withcfg"], {});
+    } finally {
+      process.chdir(cwd);
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+
+    expect(firstExitCode()).not.toBe("no-exit");
+    expect(logErrorSpy).toHaveBeenCalled();
+    expect(
+      logErrorSpy.mock.calls.some((c: unknown[]) =>
+        String(c[0]).includes("Failed to load configuration"),
+      ),
+    ).toBe(true);
   });
 
   test("emits the auto verbose info message when --verbose is set", async () => {

@@ -46,11 +46,9 @@ export function registerSingleCommand(
     try {
       validateOptions(processedOptions, cmd.options, cmd.name);
     } catch (error) {
-      if (error instanceof CliError) {
-        logger.error(error.message);
-        process.exit(error.exitCode);
-      }
-      throw error;
+      if (!(error instanceof CliError)) throw error;
+      logger.error(error.message);
+      process.exit(error.exitCode);
     }
 
     let projectConfig: unknown;

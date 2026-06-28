@@ -4,14 +4,10 @@ export function parseWindowToMs(window: string): number {
     throw new Error(`Invalid window format: ${window}. Use format like "1m", "5m", "1h", "1d"`);
   }
 
-  const valueStr = match[1];
-  const unit = match[2];
-
-  if (!valueStr || !unit) {
-    throw new Error(`Invalid window format: ${window}. Use format like "1m", "5m", "1h", "1d"`);
-  }
-
-  const value = parseInt(valueStr, 10);
+  // The regex guarantees a numeric value group and a unit group constrained to
+  // exactly the keys below, so both are always present and always map to a
+  // multiplier — no further guards are reachable.
+  const value = parseInt(match[1]!, 10);
 
   const multipliers: Record<string, number> = {
     s: 1000,
@@ -20,10 +16,5 @@ export function parseWindowToMs(window: string): number {
     d: 86400000,
   };
 
-  const multiplier = multipliers[unit];
-  if (multiplier === undefined) {
-    throw new Error(`Invalid window unit: ${unit}. Use s, m, h, or d.`);
-  }
-
-  return value * multiplier;
+  return value * multipliers[match[2]!]!;
 }

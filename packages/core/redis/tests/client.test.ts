@@ -4,6 +4,7 @@ import {
   createRedis,
   disconnect,
   initRedis,
+  connectRedis,
   getRedis,
   getRedisClient,
   hasRedis,
@@ -108,6 +109,83 @@ describe("Redis Client (offline)", () => {
       expect(await client.ping()).toBe(false);
       spy.mockRestore();
     });
+
+    it("wires event handlers that log and flip isConnected on connect/close", () => {
+      // The underlying ioredis client is an EventEmitter; emitting the lifecycle
+      // events drives the handlers registered in the constructor.
+      const calls: Record<string, unknown[][]> = {
+        error: [],
+        info: [],
+        warn: [],
+        debug: [],
+      };
+      const logger = {
+        error: (...a: unknown[]) => calls.error.push(a),
+        info: (...a: unknown[]) => calls.info.push(a),
+        warn: (...a: unknown[]) => calls.warn.push(a),
+        debug: (...a: unknown[]) => calls.debug.push(a),
+      } as any;
+
+      const client = new RedisClient({ url: TEST_URL, name: "evt", logger });
+      const raw = client.client;
+
+      // error → logger.error, no state change.
+      raw.emit("error", new Error("boom"));
+      expect(calls.error.length).toBe(1);
+
+      // connect → isConnected true + logger.info.
+      raw.emit("connect");
+      expect(client.isConnected).toBe(true);
+      expect(calls.info.length).toBe(1);
+
+      // close → isConnected false + logger.warn.
+      raw.emit("close");
+      expect(client.isConnected).toBe(false);
+      expect(calls.warn.length).toBe(1);
+
+      // reconnecting with debug disabled → handler runs but does NOT log.
+      raw.emit("reconnecting");
+      expect(calls.debug.length).toBe(0);
+    });
+
+    it("logs reconnecting only when debug is enabled", () => {
+      const debugCalls: unknown[][] = [];
+      const logger = {
+        error: () => {},
+        info: () => {},
+        warn: () => {},
+        debug: (...a: unknown[]) => debugCalls.push(a),
+      } as any;
+
+      const client = new RedisClient({ url: TEST_URL, debug: true, logger });
+      client.client.emit("reconnecting");
+      expect(debugCalls.length).toBe(1);
+    });
+
+    it("defaults the logger to console when none is provided", () => {
+      // No logger in config → falls back to console; emitting error must not throw.
+      const errSpy = spyOn(console, "error").mockImplementation(() => {});
+      const client = new RedisClient({ url: TEST_URL });
+      client.client.emit("error", new Error("x"));
+      expect(errSpy).toHaveBeenCalled();
+      errSpy.mockRestore();
+    });
+
+    it("connect() delegates to the underlying client and disconnect() flips state", async () => {
+      const client = new RedisClient({ url: TEST_URL });
+      const connectSpy = spyOn(client.client, "connect").mockResolvedValue(
+        undefined as never,
+      );
+      await client.connect();
+      expect(connectSpy).toHaveBeenCalled();
+
+      // Mark connected, then disconnect() must quit and clear the flag.
+      client.client.emit("connect");
+      expect(client.isConnected).toBe(true);
+      await client.disconnect();
+      expect(client.isConnected).toBe(false);
+      connectSpy.mockRestore();
+    });
   });
 
   describe("singleton lifecycle (offline)", () => {
@@ -158,6 +236,50 @@ describe("Redis Client (offline)", () => {
       const second = initRedis({ url: TEST_URL, name: "second" });
       expect(first).not.toBe(second);
       expect(getRedisClient()).toBe(second!);
+      await disconnectRedis();
+    });
+
+    it("re-initializing warns via the supplied logger", async () => {
+      const warnings: unknown[][] = [];
+      const logger = { warn: (...a: unknown[]) => warnings.push(a) } as any;
+      initRedis({ url: TEST_URL, name: "first" });
+      // Second init with globalClient present → the warn branch fires.
+      initRedis({ url: TEST_URL, name: "second" }, logger);
+      expect(warnings.length).toBe(1);
+      expect(String(warnings[0]?.[0])).toContain("already initialized");
+      await disconnectRedis();
+    });
+
+    it("swallows a rejected disconnect of the previous client on re-init", async () => {
+      const first = initRedis({ url: TEST_URL, name: "first" })!;
+      // Make the old client's disconnect reject so the `.catch(() => {})` in
+      // initRedis is exercised (the rejection must be swallowed, not thrown).
+      const disconnectSpy = spyOn(first, "disconnect").mockRejectedValue(
+        new Error("teardown failed"),
+      );
+      // Re-init must not throw despite the rejected teardown.
+      expect(() => initRedis({ url: TEST_URL, name: "second" })).not.toThrow();
+      // Give the swallowed promise a tick to settle.
+      await Promise.resolve();
+      expect(disconnectSpy).toHaveBeenCalled();
+      disconnectSpy.mockRestore();
+      await disconnectRedis();
+    });
+
+    it("connectRedis throws RedisNotInitializedError before init", async () => {
+      expect(hasRedis()).toBe(false);
+      await expect(connectRedis()).rejects.toThrow(RedisNotInitializedError);
+    });
+
+    it("connectRedis pings the singleton client and returns it", async () => {
+      const client = initRedis({ url: TEST_URL })!;
+      // The lazy client is truthy, so connect() is skipped; stub ping so no real
+      // network round-trip is needed.
+      const pingSpy = spyOn(client.client, "ping").mockResolvedValue("PONG");
+      const redis = await connectRedis();
+      expect(redis).toBe(client.client);
+      expect(pingSpy).toHaveBeenCalled();
+      pingSpy.mockRestore();
       await disconnectRedis();
     });
   });

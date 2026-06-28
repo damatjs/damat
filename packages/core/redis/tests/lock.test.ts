@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach } from "bun:test";
-import { acquireLock, releaseLock, withLock } from "../src/index";
+import {
+  acquireLock,
+  releaseLock,
+  withLock,
+  extendLock,
+  isLocked,
+} from "../src/index";
 import { createFakeRedis, type FakeRedis } from "./helpers/fakeRedis";
 
 describe("Distributed Locks", () => {
@@ -140,6 +146,51 @@ describe("Distributed Locks", () => {
 
       // The other owner's lock must survive.
       expect(await redis.get("lock:test-lock")).toBe(otherOwner);
+    });
+  });
+
+  describe("extendLock", () => {
+    it("extends the TTL when the lock is still held with the given value", async () => {
+      const lockValue = await acquireLock("test-lock", 100, redis);
+      expect(lockValue).not.toBeNull();
+
+      // Re-arm to a much longer TTL.
+      const extended = await extendLock("test-lock", lockValue!, 10000, redis);
+      expect(extended).toBe(true);
+
+      // The lock survives well past the ORIGINAL 100ms TTL.
+      redis.advanceTime(150);
+      expect(await redis.get("lock:test-lock")).toBe(lockValue);
+    });
+
+    it("returns false when the lock value does not match", async () => {
+      await acquireLock("test-lock", 10000, redis);
+      const extended = await extendLock("test-lock", "wrong-value", 10000, redis);
+      expect(extended).toBe(false);
+    });
+
+    it("returns false when the lock does not exist", async () => {
+      const extended = await extendLock("missing", "any", 10000, redis);
+      expect(extended).toBe(false);
+    });
+  });
+
+  describe("isLocked", () => {
+    it("returns true while the lock is held and false once released", async () => {
+      expect(await isLocked("test-lock", redis)).toBe(false);
+
+      const lockValue = await acquireLock("test-lock", 10000, redis);
+      expect(await isLocked("test-lock", redis)).toBe(true);
+
+      await releaseLock("test-lock", lockValue!, redis);
+      expect(await isLocked("test-lock", redis)).toBe(false);
+    });
+
+    it("returns false after the lock TTL expires", async () => {
+      await acquireLock("test-lock", 100, redis);
+      expect(await isLocked("test-lock", redis)).toBe(true);
+      redis.advanceTime(150);
+      expect(await isLocked("test-lock", redis)).toBe(false);
     });
   });
 });

@@ -198,6 +198,31 @@ describe("validateRelations › mappedBy_mismatch", () => {
     expect(mismatch!.sourceTable).toBe("post2");
     expect(mismatch!.targetTable).toBe("user3");
   });
+
+  it("detects the mismatch from the hasMany side (checkInverse pass)", () => {
+    // The hasMany declares mappedBy "ref"; the target's belongsTo at "ref"
+    // carries an explicit mappedBy ("other") that disagrees with the hasMany's
+    // own property name ("widgets") — this is the checkInverse branch.
+    const Widget = model("widget_ci", {
+      id: columns.id().primaryKey(),
+      ref: columns.belongsTo(() => Gadget, { mappedBy: "other" }),
+    });
+    const Gadget = model("gadget_ci", {
+      id: columns.id().primaryKey(),
+      widgets: columns.hasMany(Widget).mappedBy("ref"),
+    });
+    const result = validateRelations([Gadget, Widget]);
+    expect(result.valid).toBe(false);
+    const mismatch = result.violations.find(
+      (x) =>
+        x.kind === "mappedBy_mismatch" &&
+        x.sourceTable === "gadget_ci" &&
+        x.sourceProp === "widgets",
+    );
+    expect(mismatch).toBeDefined();
+    expect(mismatch!.targetTable).toBe("widget_ci");
+    expect(mismatch!.targetProp).toBe("ref");
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

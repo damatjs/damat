@@ -48,6 +48,23 @@ describe("createHealthRoute", () => {
     expect(data.checks.database).toEqual({ status: "unhealthy" });
   });
 
+  it("returns degraded status when the redis check throws", async () => {
+    const healthRouter = createHealthRoute({
+      checks: {
+        redis: async () => {
+          throw new Error("Redis down");
+        },
+      },
+    });
+
+    const res = await healthRouter.request("/health");
+    const data = (await res.json()) as { status: string; checks: { redis: { status: string } } };
+
+    expect(res.status).toBe(503);
+    expect(data.status).toBe("degraded");
+    expect(data.checks.redis).toEqual({ status: "unhealthy" });
+  });
+
   it("returns degraded when some checks are unhealthy", async () => {
     const healthRouter = createHealthRoute({
       checks: {

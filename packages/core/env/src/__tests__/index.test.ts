@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach, spyOn } from "bun:test";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -212,6 +212,26 @@ describe("loadEnv", () => {
       loadEnv(undefined, tmpDir);
 
       expect(process.env.DEV_DEFAULT).toBe("on");
+    });
+  });
+
+  describe("read failures", () => {
+    it("warns (and does not throw) when an env path exists but cannot be read", () => {
+      // Create `.env` as a DIRECTORY: fs.existsSync() is true so the loader
+      // attempts to read it, but fs.readFileSync() throws EISDIR. This exercises
+      // the loader's try/catch around the read without mocking the fs module.
+      fs.mkdirSync(path.join(tmpDir, ".env"));
+      const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
+
+      try {
+        expect(() => loadEnv("development", tmpDir)).not.toThrow();
+        expect(warnSpy).toHaveBeenCalled();
+        expect(String(warnSpy.mock.calls[0]?.[0])).toContain(
+          "Failed to load .env",
+        );
+      } finally {
+        warnSpy.mockRestore();
+      }
     });
   });
 

@@ -1,5 +1,16 @@
-import { describe, it, expect } from "bun:test";
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  mock,
+} from "bun:test";
 import { PackageVersionsUpdate } from "../package/versionsUpdater";
+
+import * as realFsMod from "fs";
+const REAL_FS = { ...realFsMod };
 
 describe("PackageVersionsUpdate", () => {
   it("should update @damatjs/* dependencies to the target version", () => {
@@ -95,5 +106,59 @@ describe("PackageVersionsUpdate", () => {
 
     expect(result.dependencies["not-@damatjs/core"]).toBe("^1.0.0");
     expect(result.dependencies["@damatjsx/core"]).toBe("^1.0.0");
+  });
+});
+
+// The string-path branch reads a package.json from disk and (when applyChanges)
+// writes it back. Boundary-mock fs so nothing touches disk; restore in afterAll.
+describe("PackageVersionsUpdate (string path input)", () => {
+  let readImpl: (p: string, enc: string) => string = () =>
+    JSON.stringify({ dependencies: { "@damatjs/core": "1.0.0" } });
+  const writeCalls: any[] = [];
+  const mockReadFileSync = mock((p: string, enc: string) => readImpl(p, enc));
+  const mockWriteFileSync = mock((p: string, data: string) => {
+    writeCalls.push([p, data]);
+  });
+
+  beforeAll(() => {
+    mock.module("fs", () => ({
+      ...REAL_FS,
+      readFileSync: mockReadFileSync,
+      writeFileSync: mockWriteFileSync,
+    }));
+  });
+
+  afterAll(() => {
+    mock.module("fs", () => ({ ...REAL_FS }));
+  });
+
+  beforeEach(() => {
+    writeCalls.length = 0;
+    readImpl = () =>
+      JSON.stringify({ dependencies: { "@damatjs/core": "1.0.0" } });
+    mockReadFileSync.mockClear();
+    mockWriteFileSync.mockClear();
+  });
+
+  it("should read the package.json from the given path and update versions", () => {
+    const result = PackageVersionsUpdate("/proj/package.json", "7.0.0");
+    expect(mockReadFileSync).toHaveBeenCalledTimes(1);
+    expect(mockReadFileSync.mock.calls[0]![0]).toBe("/proj/package.json");
+    expect(result.dependencies["@damatjs/core"]).toBe("7.0.0");
+  });
+
+  it("should NOT write to disk when applyChanges is false (default)", () => {
+    PackageVersionsUpdate("/proj/package.json", "7.0.0");
+    expect(mockWriteFileSync).not.toHaveBeenCalled();
+  });
+
+  it("should write the updated package.json back when applyChanges is true", () => {
+    PackageVersionsUpdate("/proj/package.json", "8.0.0", {
+      applyChanges: true,
+    });
+    expect(mockWriteFileSync).toHaveBeenCalledTimes(1);
+    expect(writeCalls[0]![0]).toBe("/proj/package.json");
+    const written = JSON.parse(writeCalls[0]![1]);
+    expect(written.dependencies["@damatjs/core"]).toBe("8.0.0");
   });
 });

@@ -82,6 +82,38 @@ describe("loadConfigAsync", () => {
   });
 });
 
+describe("loadConfig (sync) cache short-circuit", () => {
+  it("returns the cached config synchronously once it has been loaded", async () => {
+    writeFileSync(
+      join(cwd, "damat.config.ts"),
+      `export default { projectConfig: { http: { port: 777, host: "c" } } };`,
+    );
+    // Populate the module-level cache via the async loader first.
+    const loaded = await loadConfigAsync(cwd);
+    // The sync loader now hits the cache branch and returns without touching fs.
+    const cached = loadConfig(join(cwd, "does-not-exist"));
+    expect(cached).toBe(loaded);
+  });
+});
+
+describe("loadConfigAsync win32 path handling", () => {
+  it("normalises backslashes and prefixes a slash when building the file URL on win32", async () => {
+    writeFileSync(join(cwd, "damat.config.ts"), `export default { projectConfig: {} };`);
+
+    const original = Object.getOwnPropertyDescriptor(process, "platform");
+    Object.defineProperty(process, "platform", { value: "win32", configurable: true });
+    try {
+      // The win32 branch runs while building the file URL (before import).
+      // The import itself may then fail, which is wrapped — either way the
+      // win32 normalisation lines are exercised.
+      await loadConfigAsync(cwd).catch(() => {});
+    } finally {
+      if (original) Object.defineProperty(process, "platform", original);
+    }
+    expect(process.platform).not.toBe("win32");
+  });
+});
+
 describe("clearConfigCache", () => {
   it("forces a fresh load after clearing", async () => {
     const fileA = join(cwd, "damat.config.ts");

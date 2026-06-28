@@ -36,6 +36,31 @@ describe("generateChangeSQL dispatch", () => {
     expect(sql).toHaveLength(2);
   });
 
+  it("dispatches add_column to a single ADD COLUMN statement", () => {
+    const change: SchemaChange = {
+      type: "add_column",
+      tableName: "t",
+      column: { name: "email", type: "text", nullable: false },
+      priority: 30,
+    };
+    const sql = generateChangeSQL(change, opts);
+    expect(sql).toHaveLength(1);
+    expect(sql[0]).toContain("ADD COLUMN");
+  });
+
+  it("dispatches rename_column to a single RENAME COLUMN statement", () => {
+    const change: SchemaChange = {
+      type: "rename_column",
+      tableName: "t",
+      fromName: "old_name",
+      toName: "new_name",
+      priority: 90,
+    };
+    const sql = generateChangeSQL(change, opts);
+    expect(sql).toHaveLength(1);
+    expect(sql[0]).toContain("RENAME COLUMN");
+  });
+
   it("dispatches alter_enum to ADD VALUE statements", () => {
     const change: SchemaChange = {
       type: "alter_enum",

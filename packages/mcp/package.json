@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/mcp",
   "description": "Model Context Protocol (MCP) server for discovering and installing Damat modules with AI",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "type": "module",
   "bin": {
     "damat-mcp": "./bin/damat-mcp.ts"
@@ -26,6 +26,6 @@
   "scripts": {
     "build": "exit 0",
     "start": "bun run bin/damat-mcp.ts",
-    "test": "exit 0"
+    "test": "bun test"
   }
 }

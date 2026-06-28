@@ -10,6 +10,18 @@ describe("ModelAccessor.builders", () => {
     expect(a.builders.select).not.toBe(a.builders.select);
     expect(a.builders.insert).not.toBe(a.builders.insert);
   });
+
+  it("exposes update / delete / upsert builder getters too", () => {
+    const a = acc();
+    // Touch every getter so all of them are exercised (each is independent).
+    expect(a.builders.update).not.toBe(a.builders.update);
+    expect(a.builders.delete).not.toBe(a.builders.delete);
+    expect(a.builders.upsert).not.toBe(a.builders.upsert);
+    // And they are the right builder kinds (constructor names).
+    expect(a.builders.update.constructor.name).toBe("UpdateBuilder");
+    expect(a.builders.delete.constructor.name).toBe("DeleteBuilder");
+    expect(a.builders.upsert.constructor.name).toBe("UpsertBuilder");
+  });
 });
 
 describe("ModelAccessor.findMany", () => {
@@ -100,6 +112,30 @@ describe("ModelAccessor.update", () => {
       'UPDATE "app"."user" SET "verified" = $1 RETURNING *',
     );
   });
+
+  it("applies whereRaw (single clause) on update", () => {
+    const { sql } = acc().update({
+      set: { verified: true },
+      whereRaw: { sql: '"age" > $1', params: [18] },
+    });
+    expect(sql.sql).toBe(
+      'UPDATE "app"."user" SET "verified" = $1 WHERE "age" > $2 RETURNING *',
+    );
+    expect(sql.params).toEqual([true, 18]);
+  });
+
+  it("applies whereRaw (array of clauses) on update", () => {
+    const { sql } = acc().update({
+      set: { verified: true },
+      whereRaw: [
+        { sql: '"age" > $1', params: [18] },
+        { sql: '"name" IS NOT NULL', params: [] },
+      ],
+    });
+    expect(sql.sql).toContain('"age" > $2');
+    expect(sql.sql).toContain('"name" IS NOT NULL');
+    expect(sql.params).toEqual([true, 18]);
+  });
 });
 
 describe("ModelAccessor.delete", () => {
@@ -108,6 +144,29 @@ describe("ModelAccessor.delete", () => {
     expect(sql.sql).toBe(
       'DELETE FROM "app"."user" WHERE "id" = $1 RETURNING *',
     );
+  });
+
+  it("applies whereRaw (single clause) on delete", () => {
+    const { sql } = acc().delete({
+      whereRaw: { sql: '"age" < $1', params: [18] },
+    });
+    expect(sql.sql).toBe(
+      'DELETE FROM "app"."user" WHERE "age" < $1 RETURNING *',
+    );
+    expect(sql.params).toEqual([18]);
+  });
+
+  it("applies whereRaw (array of clauses) and allowFullTable on delete", () => {
+    const { sql } = acc().delete({
+      whereRaw: [
+        { sql: '"age" < $1', params: [18] },
+        { sql: '"verified" = false', params: [] },
+      ],
+      allowFullTable: true,
+    });
+    expect(sql.sql).toContain('"age" < $1');
+    expect(sql.sql).toContain('"verified" = false');
+    expect(sql.params).toEqual([18]);
   });
 });
 

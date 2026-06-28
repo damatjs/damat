@@ -50,6 +50,26 @@ describe("PgEntityManager — model registration & repositories", () => {
     expect(em.getPool()).toBe(pool as any);
     expect(em.getModelRegistry()).toBeInstanceOf(ModelRegistry);
   });
+
+  it("exposes a registered model as a lazy `manager.<name>` repository accessor", () => {
+    const { em } = makeEm();
+    em.registerModel("user", UserModel);
+    // The dynamic getter installed by _defineModelAccessor resolves to the
+    // same repository as getRepository("user").
+    expect((em as any).user).toBe(em.getRepository("user"));
+  });
+
+  it("constructs with a models config, registering each one up front", () => {
+    const pool = new FakePool();
+    const em = new PgEntityManager({
+      pool,
+      logger: noopLogger,
+      models: { user: UserModel },
+    } as any);
+    expect(em.getRegisteredModels()).toContain("user");
+    // The accessor is wired for config-provided models too.
+    expect((em as any).user).toBe(em.getRepository("user"));
+  });
 });
 
 describe("PgEntityManager — repository CRUD wiring", () => {
@@ -133,6 +153,18 @@ describe("PgEntityManager.transaction", () => {
     ).rejects.toThrow("work failed");
     expect(pool.client.sqlLog).toEqual(["BEGIN", "ROLLBACK"]);
   });
+
+  it("tx() is an alias of transaction()", async () => {
+    const { em, pool } = makeEm({ rows: [{ id: "u1" }] });
+    em.registerModel("user", UserModel);
+    const out = await em.tx(async (tx) => {
+      expect(tx).toBeInstanceOf(TransactionalEntityManager);
+      return await tx.getRepository("user").findById("u1");
+    });
+    expect(out).toEqual({ id: "u1" });
+    expect(pool.client.sqlLog[0]).toBe("BEGIN");
+    expect(pool.client.sqlLog.at(-1)).toBe("COMMIT");
+  });
 });
 
 describe("TransactionalEntityManager (constructed directly)", () => {
@@ -204,6 +236,45 @@ describe("TransactionalEntityManager (constructed directly)", () => {
       "ROLLBACK TO SAVEPOINT sp1",
       "RELEASE SAVEPOINT sp1",
     ]);
+  });
+
+  it("repo() is an alias of getRepository()", () => {
+    const { tx } = makeTx();
+    expect(tx.repo("user")).toBe(tx.getRepository("user"));
+  });
+
+  it("derives model accessors from the registry when no models config is given", () => {
+    // Build a tx manager WITHOUT a modelsConfig so the constructor falls back to
+    // modelRegistry.getModelNames() for the dynamic accessor keys.
+    const registry = new ModelRegistry(noopLogger);
+    registry.register("user", UserModel);
+    const client = new FakePoolClient({ rows: [{ id: "u1" }] });
+    const ctx = {
+      getClient: () => client,
+      query: async (sql: string, params?: unknown[]) =>
+        client.query(sql, params ?? []),
+    };
+    const tx = new TransactionalEntityManager(registry, ctx as any, noopLogger);
+    // The "user" accessor was installed from the registry's model names.
+    expect(tx.user).toBe(tx.getRepository("user"));
+  });
+
+  it("getRepository falls back to a table-name lookup when the key misses", () => {
+    // The model is registered under the key "user" but its TABLE is also "user".
+    // Looking up by the table name exercises the getByTableName fallback branch.
+    const registry = new ModelRegistry(noopLogger);
+    registry.register("UserAlias", UserModel);
+    const client = new FakePoolClient();
+    const ctx = { getClient: () => client };
+    const tx = new TransactionalEntityManager(
+      registry,
+      ctx as any,
+      noopLogger,
+      { UserAlias: UserModel } as any,
+    );
+    // "user" is not a registry key, but it IS the table name → fallback resolves.
+    const repo = tx.getRepository("user");
+    expect(repo).toBeDefined();
   });
 });
 

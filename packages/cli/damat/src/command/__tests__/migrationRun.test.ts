@@ -12,12 +12,14 @@ import * as realModule from "@damatjs/module";
 const mm = {
   result: {} as Awaited<ReturnType<typeof realModule.runModuleMigration>>,
   calls: [] as string[],
+  throws: null as Error | null,
 };
 
 mock.module("@damatjs/module", () => ({
   ...realModule,
   runModuleMigration: async (packageDir: string) => {
     mm.calls.push(packageDir);
+    if (mm.throws) throw mm.throws;
     return mm.result;
   },
 }));
@@ -30,6 +32,7 @@ const ORIGINAL_DB_URL = process.env.DATABASE_URL;
 
 beforeEach(() => {
   mm.calls = [];
+  mm.throws = null;
   mm.result = {
     moduleName: "demo",
     applied: [],
@@ -105,6 +108,16 @@ describe("damat module migration:run command", () => {
     expect(res.exitCode).toBe(0);
     expect(logger.info).toHaveBeenCalled();
     expect(logger.success).not.toHaveBeenCalled();
+  });
+
+  it("reports an unexpected failure when the runner throws", async () => {
+    process.env.DATABASE_URL = "postgres://localhost:5432/postgres";
+    mm.throws = new Error("connection refused");
+    const cmd = await getCmd();
+    const { ctx, logger } = createContext({}, { args: [], cwd: "/project" });
+    const res = await cmd.handler(ctx);
+    expect(res.exitCode).toBe(1);
+    expect(logger.error).toHaveBeenCalled();
   });
 
   it("fails when a migration errors", async () => {

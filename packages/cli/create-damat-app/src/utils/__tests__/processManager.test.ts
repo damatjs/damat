@@ -56,6 +56,25 @@ describe("ProcessManager", () => {
       pm.addInterval(2 as any);
       expect(pm.intervals).toEqual([1, 2] as any);
     });
+
+    it("should clearInterval for each tracked interval on termination", async () => {
+      const clearSpy = mock((_h: any) => {});
+      const origClear = globalThis.clearInterval;
+      globalThis.clearInterval = clearSpy as any;
+      try {
+        const pm = new ProcessManager();
+        pm.addInterval(101 as any);
+        pm.addInterval(202 as any);
+
+        process.emit("SIGTERM");
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(clearSpy).toHaveBeenCalledWith(101 as any);
+        expect(clearSpy).toHaveBeenCalledWith(202 as any);
+      } finally {
+        globalThis.clearInterval = origClear;
+      }
+    });
   });
 
   describe("MAX_RETRIES", () => {

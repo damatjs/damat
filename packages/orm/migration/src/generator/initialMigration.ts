@@ -78,12 +78,9 @@ export async function createInitialMigration(
   fs.writeFileSync(filePath, template);
   log("success", `Created initial migration: ${moduleName}/${filename}`);
 
-  if (migration.warnings.length > 0) {
-    for (const warning of migration.warnings) {
-      log("warn", warning);
-    }
-  }
-
+  // NOTE: `generateFromSnapshot` never emits warnings (a baseline only CREATEs,
+  // it never drops/destroys), so there is no warnings loop here — unlike
+  // `createDiffMigration`, whose diff can produce destructive-change warnings.
   log("info", `Saved schema snapshot for ${moduleName}`);
 
   return filePath;

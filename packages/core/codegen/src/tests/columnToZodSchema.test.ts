@@ -188,6 +188,14 @@ describe("columnToZodSchema › arrays", () => {
   });
 });
 
+describe("columnToZodSchema › unmatched types", () => {
+  it("falls back to z.unknown() for a type the switch does not cover", () => {
+    expect(columnToZodSchema(col("not_a_real_type" as ColumnType))).toBe(
+      "z.unknown()",
+    );
+  });
+});
+
 describe("columnToZodSchema › nullability is NOT applied here", () => {
   it("does not add .nullable()/.optional() regardless of the nullable flag", () => {
     // Those modifiers are appended by the schema generators, not by this fn.

@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/damat-cli",
   "description": "Damat CLI - Development and build tool for Damat.js",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "type": "module",
   "bin": {
     "damat": "./dist/cli.js"

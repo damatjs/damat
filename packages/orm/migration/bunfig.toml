@@ -1,0 +1,8 @@
+[test]
+coverage = true
+coverageThreshold = 1.0
+coveragePathIgnorePatterns = ["**/dist/**", "**/node_modules/**", "**/*.test.ts", "**/tests/**", "**/__tests__/**", "**/__fixtures__/**", "**/orm-mig-*/**"]
+# reason: `orm-mig-*` are throwaway module fixtures the generator/discovery tests
+# write to os.tmpdir() and dynamically import() (e.g. `export const models = …`).
+# They are test inputs, not package source, and live outside the package tree, so
+# they must not count toward this package's coverage gate.
