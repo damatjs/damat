@@ -47,8 +47,14 @@ const fakeUserService = {
   },
 };
 
-// Replace the whole framework module: the step files only import getModule.
+// Override getModule on the framework module so the step files resolve our fake
+// user service instead of a real (DB-backed) one. We spread the real module so
+// that OTHER exports (defineModule / defineLink / collectLinkModels / …) keep
+// working — `mock.module` is process-global, so clobbering the whole module
+// would break any other test file that imports from @damatjs/framework.
+const realFramework = await import("@damatjs/framework");
 mock.module("@damatjs/framework", () => ({
+  ...realFramework,
   getModule: (name: string) =>
     state.moduleLoaded && name === "user" ? fakeUserService : null,
 }));

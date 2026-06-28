@@ -7,6 +7,7 @@ import {
   beforeEach,
   afterEach,
   mock,
+  spyOn,
 } from "bun:test";
 import path from "path";
 import {
@@ -132,6 +133,14 @@ describe("ProjectCreatorFactory", () => {
     process.removeAllListeners("SIGINT");
   });
 
+  it("should be a static-only class with a private constructor", () => {
+    // ProjectCreatorFactory exposes only static helpers; its private constructor
+    // exists solely to prevent instantiation. Invoke it reflectively so the
+    // (otherwise dead) constructor is exercised.
+    const instance = new (ProjectCreatorFactory as any)();
+    expect(instance).toBeInstanceOf(ProjectCreatorFactory);
+  });
+
   describe("validateNodeVersion", () => {
     it("should NOT log an error when bun meets the minimum version", () => {
       bunVersionImpl = () => 1;
@@ -243,6 +252,19 @@ describe("ProjectCreatorFactory", () => {
         const validate = lastTextOpts.validate;
         expect(validate("good-name")).toBeUndefined();
       });
+    });
+
+    it("should cancel and exit(0) when the prompt is cancelled", async () => {
+      isCancelImpl = () => true;
+      const exitSpy = spyOn(process, "exit").mockImplementation(((_c?: number) =>
+        undefined as never) as any);
+      try {
+        await getProjectName([], "/tmp");
+        expect(mockCancel).toHaveBeenCalledWith("Operation cancelled");
+        expect(exitSpy).toHaveBeenCalledWith(0);
+      } finally {
+        exitSpy.mockRestore();
+      }
     });
   });
 

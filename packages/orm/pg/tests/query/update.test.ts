@@ -94,4 +94,15 @@ describe("UpdateBuilder.generateJson", () => {
       returning: ["id"],
     });
   });
+
+  it("includes cloned whereRaw and orderBy clauses in the descriptor", () => {
+    const json = upd()
+      .set({ verified: true })
+      .where({ id: "u1" })
+      .whereRaw({ sql: '"age" > $1', params: [18] })
+      .orderBy("name", "ASC")
+      .generateJson();
+    expect(json.whereRaw).toEqual([{ sql: '"age" > $1', params: [18] }]);
+    expect(json.orderBy).toEqual([{ column: "name", direction: "ASC" }]);
+  });
 });

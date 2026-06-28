@@ -12,21 +12,11 @@ export async function initializeServices(
 ): Promise<ServiceInstances> {
   const logger = initLogger(config.projectConfig.loggerConfig);
 
+  // `database` and `redis` are always assigned below (either the live probe or
+  // a "not configured" stub), so the map starts empty rather than carrying
+  // placeholder closures that would only ever be overwritten.
   const instances: ServiceInstances = {
-    healthChecks: {
-      database: async () => {
-        return {
-          status: "Ideal",
-          data: {},
-        };
-      },
-      redis: async () => {
-        return {
-          status: "Ideal",
-          data: {},
-        };
-      },
-    },
+    healthChecks: {},
     shutdownHandlers: [],
   };
   if (config.projectConfig.databaseUrl) {

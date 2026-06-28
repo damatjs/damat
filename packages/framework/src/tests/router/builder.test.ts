@@ -113,6 +113,9 @@ describe("createFileRouter", () => {
     expect(route).toBeDefined();
     expect(route!.hasRateLimit).toBe(true);
     expect(route!.hasMiddleware).toBe(true);
+
+    // A request within the limit reaches the handler.
+    expect((await fr.router.request("/limited")).status).toBe(200);
   });
 
   it("marks hasAuth when method config provides auth", async () => {
@@ -128,6 +131,9 @@ describe("createFileRouter", () => {
     const route = fr.routes.find((r) => r.path === "/secured" && r.method === "GET");
     expect(route).toBeDefined();
     expect(route!.hasAuth).toBe(true);
+
+    // The built-in "session" auth passes through, so the handler is reached.
+    expect((await fr.router.request("/secured")).status).toBe(200);
   });
 
   it("applies basePath as a prefix to registered routes", async () => {
@@ -156,5 +162,81 @@ describe("createFileRouter", () => {
     const json = fr.getRoutesJson();
     expect(json).toContainEqual({ method: "GET", path: "/a" });
     expect(json).toContainEqual({ method: "POST", path: "/b" });
+
+    // Exercise the registered handlers so the fixtures are fully covered.
+    expect((await fr.router.request("/a")).status).toBe(200);
+    expect((await fr.router.request("/b", { method: "POST" })).status).toBe(200);
+  });
+
+  it("logs scanning + per-route registration details when debug is enabled", async () => {
+    writeRoute("dbg", `export const GET = (c) => c.text("ok");`);
+
+    const { logger, infos } = recordingLogger();
+    const fr = await createFileRouter({ routesDir: root, debug: true, logger });
+
+    // The scan summary and the per-route registration line are both logged.
+    expect(infos.some((i) => /Scanning routes/.test(i.msg))).toBe(true);
+    expect(infos.some((i) => /Registered route: GET \/dbg/.test(i.msg))).toBe(true);
+    expect((await fr.router.request("/dbg")).status).toBe(200);
+  });
+
+  it("applies route-level middleware exported by the module", async () => {
+    writeRoute(
+      "guarded",
+      `export const middleware = [async (c, next) => { c.header("x-mw", "1"); await next(); }];
+       export const GET = (c) => c.text("ok");`,
+    );
+
+    const { logger } = recordingLogger();
+    const fr = await createFileRouter({ routesDir: root, logger });
+
+    const route = fr.routes.find((r) => r.path === "/guarded");
+    expect(route!.hasMiddleware).toBe(true);
+
+    const res = await fr.router.request("/guarded");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-mw")).toBe("1");
+  });
+
+  it("registers a validator middleware when the module declares validators", async () => {
+    // The validator middleware only needs a `{ parse }` shape; using a plain
+    // pass-through schema keeps the fixture free of cross-package imports it
+    // cannot resolve from the OS temp dir.
+    writeRoute(
+      "validated",
+      `const querySchema = { parse: (data) => data };
+       export const validators = [{ method: "GET", query: querySchema }];
+       export const GET = (c) => c.text("ok");`,
+    );
+
+    const { logger } = recordingLogger();
+    const fr = await createFileRouter({ routesDir: root, logger });
+
+    const route = fr.routes.find((r) => r.path === "/validated" && r.method === "GET");
+    expect(route!.hasValidator).toBe(true);
+
+    // The validator runs and passes the request through to the handler.
+    expect((await fr.router.request("/validated?q=hi")).status).toBe(200);
+  });
+
+  it("getRouteList renders a grouped, human-readable route table", async () => {
+    writeRoute(
+      "list",
+      `export const GET = (c) => c.text("g");
+       export const POST = (c) => c.text("p");`,
+    );
+
+    const { logger } = recordingLogger();
+    const fr = await createFileRouter({ routesDir: root, logger });
+
+    const text = fr.getRouteList();
+    expect(text).toContain("Registered Routes:");
+    expect(text).toContain("/list");
+    // GET and POST on the same path are grouped onto one line.
+    expect(text).toMatch(/GET, POST.*\/list/);
+
+    // Exercise the registered handlers so the fixture is fully covered.
+    expect((await fr.router.request("/list")).status).toBe(200);
+    expect((await fr.router.request("/list", { method: "POST" })).status).toBe(200);
   });
 });

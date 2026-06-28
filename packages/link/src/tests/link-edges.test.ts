@@ -255,4 +255,26 @@ describe("config — resolveLinkMigrationModules edge cases", () => {
       resolveLinkMigrationModules("./does-not-exist", os.tmpdir()),
     ).toEqual([]);
   });
+
+  test("skips entries whose stat() throws (e.g. a dangling symlink)", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "link-mig-"));
+    const linksDir = path.join(root, "links");
+    fs.mkdirSync(linksDir, { recursive: true });
+
+    // A symlink pointing at a missing target: statSync (which follows symlinks)
+    // throws ENOENT, exercising the try/catch -> continue branch.
+    fs.symlinkSync(
+      path.join(root, "nowhere"),
+      path.join(linksDir, "broken"),
+    );
+
+    // A valid owner module alongside the broken entry still resolves.
+    const owner = path.join(linksDir, "user");
+    fs.mkdirSync(owner, { recursive: true });
+    fs.writeFileSync(path.join(owner, "index.ts"), "export const models = {};");
+
+    const entries = resolveLinkMigrationModules("./links", root);
+    expect(entries.map((e) => e.id)).toEqual(["link:user"]);
+    fs.rmSync(root, { recursive: true, force: true });
+  });
 });

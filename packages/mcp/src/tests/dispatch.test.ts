@@ -161,3 +161,100 @@ describe("handleMessage — unknown method", () => {
     expect(res.error.message).toMatch(/Method not found/);
   });
 });
+
+describe("handleMessage — tool handler failures", () => {
+  test("wraps a throwing tool handler as an isError text result", async () => {
+    const throwing = {
+      name: "explode",
+      description: "always throws",
+      inputSchema: { type: "object" },
+      handler: async () => {
+        throw new Error("kaboom");
+      },
+    };
+    tools.push(throwing as never);
+    try {
+      const [res] = await dispatchCapture({
+        jsonrpc: "2.0",
+        id: 20,
+        method: "tools/call",
+        params: { name: "explode", arguments: {} },
+      });
+      expect(res.id).toBe(20);
+      expect(res.result.isError).toBe(true);
+      expect(res.result.content[0].text).toBe("kaboom");
+    } finally {
+      tools.splice(tools.indexOf(throwing as never), 1);
+    }
+  });
+
+  test("stringifies a non-Error thrown by a tool handler", async () => {
+    const throwing = {
+      name: "explode-string",
+      description: "throws a string",
+      inputSchema: { type: "object" },
+      handler: async () => {
+        throw "plain failure";
+      },
+    };
+    tools.push(throwing as never);
+    try {
+      const [res] = await dispatchCapture({
+        jsonrpc: "2.0",
+        id: 21,
+        method: "tools/call",
+        params: { name: "explode-string", arguments: {} },
+      });
+      expect(res.result.isError).toBe(true);
+      expect(res.result.content[0].text).toBe("plain failure");
+    } finally {
+      tools.splice(tools.indexOf(throwing as never), 1);
+    }
+  });
+});
+
+describe("handleMessage — unexpected dispatch failure (outer catch)", () => {
+  test("replies with an internal error when message handling throws unexpectedly", async () => {
+    // A tool whose `name` getter throws makes tools/list's map() throw from
+    // outside the tools/call inner try, exercising the outer error boundary.
+    const hostile = {
+      get name(): string {
+        throw new Error("name explosion");
+      },
+      description: "hostile",
+      inputSchema: { type: "object" },
+      handler: async () => ({ text: "" }),
+    };
+    tools.push(hostile as never);
+    try {
+      const [res] = await dispatchCapture({
+        jsonrpc: "2.0",
+        id: 30,
+        method: "tools/list",
+      });
+      expect(res.error.code).toBe(-32603);
+      expect(res.error.message).toBe("name explosion");
+    } finally {
+      tools.splice(tools.indexOf(hostile as never), 1);
+    }
+  });
+
+  test("stays silent on an unexpected failure for a notification (no id)", async () => {
+    const hostile = {
+      get name(): string {
+        throw new Error("silent explosion");
+      },
+      description: "hostile",
+      inputSchema: { type: "object" },
+      handler: async () => ({ text: "" }),
+    };
+    tools.push(hostile as never);
+    try {
+      const frames = await dispatchCapture({ jsonrpc: "2.0", method: "tools/list" });
+      // No id -> notification -> the outer catch swallows without replying.
+      expect(frames).toHaveLength(0);
+    } finally {
+      tools.splice(tools.indexOf(hostile as never), 1);
+    }
+  });
+});

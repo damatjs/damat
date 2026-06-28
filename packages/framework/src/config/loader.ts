@@ -1,5 +1,6 @@
 import path from "node:path";
 import fs from "node:fs";
+import { pathToFileURL } from "node:url";
 import { AppConfig } from './types';
 
 const CONFIG_FILE = "damat.config.ts";
@@ -33,7 +34,7 @@ export async function loadConfigAsync(cwd: string = process.cwd()): Promise<AppC
   }
 
   try {
-    const configUrl = pathToFileURL(configPath);
+    const configUrl = pathToFileURL(path.resolve(configPath));
     const configModule = await import(configUrl.href);
     const config = configModule.default || configModule;
 
@@ -50,16 +51,4 @@ export async function loadConfigAsync(cwd: string = process.cwd()): Promise<AppC
 
 export function clearConfigCache(): void {
   cachedConfig = null;
-}
-
-function pathToFileURL(filePath: string): URL {
-  const resolved = path.resolve(filePath);
-  let urlPath = resolved;
-  if (process.platform === "win32") {
-    urlPath = resolved.replace(/\\/g, "/");
-  }
-  if (!urlPath.startsWith("/")) {
-    urlPath = "/" + urlPath;
-  }
-  return new URL(`file://${urlPath}`);
 }

@@ -30,6 +30,34 @@ describe("ChildLogger: context binding + merge", () => {
     expect(log).toHaveBeenCalledWith("success", "s", undefined, { service: "auth" });
   });
 
+  it("forwards the status-style methods (progress/cached/waiting/skip) to the parent", () => {
+    const parent = makeParent();
+    const log = spyOn(parent, "logWithPrefix").mockImplementation(() => {});
+
+    const child = new ChildLogger(parent, { job: "build" }, "ci");
+    child.progress("p");
+    child.cached("c");
+    child.waiting("w");
+    child.skip("s");
+
+    expect(log).toHaveBeenCalledWith("progress", "p", "ci", { job: "build" });
+    expect(log).toHaveBeenCalledWith("cached", "c", "ci", { job: "build" });
+    expect(log).toHaveBeenCalledWith("waiting", "w", "ci", { job: "build" });
+    expect(log).toHaveBeenCalledWith("skip", "s", "ci", { job: "build" });
+  });
+
+  it("merges per-call context into the status-style methods too", () => {
+    const parent = makeParent();
+    const log = spyOn(parent, "logWithPrefix").mockImplementation(() => {});
+    const child = new ChildLogger(parent, { a: 1 });
+    child.progress("p", { b: 2 });
+    child.cached("c", { b: 2 });
+    child.waiting("w", { b: 2 });
+    expect(log).toHaveBeenCalledWith("progress", "p", undefined, { a: 1, b: 2 });
+    expect(log).toHaveBeenCalledWith("cached", "c", undefined, { a: 1, b: 2 });
+    expect(log).toHaveBeenCalledWith("waiting", "w", undefined, { a: 1, b: 2 });
+  });
+
   it("merges per-call context with bound context (per-call wins on key clash)", () => {
     const parent = makeParent();
     const log = spyOn(parent, "logWithPrefix").mockImplementation(() => {});

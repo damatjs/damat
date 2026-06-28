@@ -1,0 +1,4 @@
+[test]
+coverage = true
+coverageThreshold = 1.0
+coveragePathIgnorePatterns = ["**/dist/**", "**/node_modules/**", "**/*.test.ts", "**/tests/**", "**/__tests__/**", "**/__fixtures__/**", "**/src/index.ts"] # src/index.ts is the bin entrypoint: it calls runCli(...) at module load (registers the create command and runs the interactive CLI), so importing it has side effects and it cannot be unit-tested without launching the CLI.

@@ -3,6 +3,7 @@ import {
   TransactionManager,
   TransactionContext,
   TransactionError,
+  TransactionContextError,
 } from "../../src/transaction";
 import { FakePool, FakePoolClient, noopLogger } from "../helpers/fixtures";
 
@@ -167,5 +168,20 @@ describe("TransactionError", () => {
     expect(err.name).toBe("TransactionError");
     expect(err.message).toBe("wrapped");
     expect(err.cause).toBe(cause);
+  });
+
+  it("allows omitting the cause", () => {
+    const err = new TransactionError("no cause");
+    expect(err.name).toBe("TransactionError");
+    expect(err.cause).toBeUndefined();
+  });
+});
+
+describe("TransactionContextError", () => {
+  it("is an Error carrying its message and a distinct name", () => {
+    const err = new TransactionContextError("no active transaction context");
+    expect(err).toBeInstanceOf(Error);
+    expect(err.name).toBe("TransactionContextError");
+    expect(err.message).toBe("no active transaction context");
   });
 });

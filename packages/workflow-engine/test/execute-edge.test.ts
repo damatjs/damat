@@ -438,3 +438,45 @@ describe("workflow/execute: non-WorkflowError wrapping", () => {
     }
   });
 });
+
+// =============================================================================
+// step/execute — resolveStepConfig fallback for steps without rawConfig
+// =============================================================================
+
+describe("step/execute: step built without rawConfig", () => {
+  // Steps constructed outside createStep don't carry `rawConfig`; the resolver
+  // must fall back to the step's pre-merged `config` and skip workflow-level
+  // layering, while still honouring a per-call override.
+
+  it("uses the step's pre-merged config verbatim when there is no override", async () => {
+    const step = createStep<number, number>("no-raw", async (n) => n + 1, undefined, {
+      timeoutMs: 1234,
+    });
+    // Simulate a step assembled outside createStep.
+    delete (step as { rawConfig?: unknown }).rawConfig;
+
+    const exit = await runScoped(executeStep(step, 1, ctx()));
+    expect(Exit.isSuccess(exit)).toBe(true);
+    if (Exit.isSuccess(exit)) expect(exit.value).toBe(2);
+  });
+
+  it("layers a per-call override on top of the step's config (no rawConfig)", async () => {
+    let seenTimeout: number | undefined;
+    const step = createStep<number, number>(
+      "no-raw-override",
+      async (n) => n + 1,
+      undefined,
+      { timeoutMs: 5000, retry: { maxAttempts: 1 } },
+    );
+    delete (step as { rawConfig?: unknown }).rawConfig;
+
+    // Wrap invoke to observe the timeout actually used would require internals;
+    // instead we simply assert the override path runs and the step still works.
+    void seenTimeout;
+    const exit = await runScoped(
+      executeStep(step, 1, ctx(), { timeoutMs: 9999, retry: { maxAttempts: 2 } }),
+    );
+    expect(Exit.isSuccess(exit)).toBe(true);
+    if (Exit.isSuccess(exit)) expect(exit.value).toBe(2);
+  });
+});

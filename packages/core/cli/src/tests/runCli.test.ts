@@ -303,6 +303,80 @@ describe("runCli", () => {
     expect(received!.count).toBe(5);
   });
 
+  test("reports a thrown subcommand error, calls onError, and exits with its code", async () => {
+    let onErrorArgs: { error: Error; command: string } | null = null;
+    const sub = makeCmd("db:migrate", {
+      handler: async () => {
+        const err = new Error("subcommand boom");
+        throw err;
+      },
+    });
+    const parent = makeCmd("db", { subcommands: [sub] });
+    const config: CliConfig = {
+      name: "cli",
+      version: "1.0.0",
+      banner: false,
+      commands: [parent],
+      onError: (error, ctx) => {
+        onErrorArgs = { error, command: ctx.command };
+      },
+    };
+
+    await run(config, ["db", "migrate"]);
+
+    // reportError logged via the internal logger (spied in beforeEach).
+    expect(loggerErrorSpy).toHaveBeenCalled();
+    // A generic Error maps to exit code 1.
+    expect(exitCodes[0]).toBe(1);
+    expect(onErrorArgs).not.toBeNull();
+    expect(onErrorArgs!.error).toBeInstanceOf(Error);
+    expect(onErrorArgs!.error.message).toBe("subcommand boom");
+    expect(onErrorArgs!.command).toBe("db:migrate");
+  });
+
+  test("reports a thrown subcommand error even without an onError hook", async () => {
+    const sub = makeCmd("db:migrate", {
+      handler: async () => {
+        throw "string failure";
+      },
+    });
+    const parent = makeCmd("db", { subcommands: [sub] });
+    const config: CliConfig = {
+      name: "cli",
+      version: "1.0.0",
+      banner: false,
+      commands: [parent],
+    };
+
+    await run(config, ["db", "migrate"]);
+    expect(loggerErrorSpy).toHaveBeenCalled();
+    expect(exitCodes[0]).toBe(1);
+  });
+
+  test("falls through to cli.parse when the named subcommand is not registered", async () => {
+    let subCalled = false;
+    const sub = makeCmd("db:migrate", {
+      handler: async () => {
+        subCalled = true;
+        return { exitCode: 0 };
+      },
+    });
+    const parent = makeCmd("db", { subcommands: [sub] });
+    const config: CliConfig = {
+      name: "cli",
+      version: "1.0.0",
+      banner: false,
+      commands: [parent],
+    };
+
+    // `db bogus` -> subcommandName is "bogus" but no such subcommand exists, so
+    // the dispatch block is skipped and control reaches cli.parse() (no exit).
+    await run(config, ["db", "bogus"]);
+    expect(subCalled).toBe(false);
+    // No process.exit was requested by the dispatch path.
+    expect(exitCodes.length).toBe(0);
+  });
+
   test("does not dispatch a subcommand when only the parent is given", async () => {
     let subCalled = false;
     const sub = makeCmd("db:migrate", {

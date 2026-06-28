@@ -217,6 +217,17 @@ describe("PoolManager lifecycle", () => {
     });
   });
 
+  describe("private constructor", () => {
+    it("can be instantiated (private at type level only, not at runtime)", () => {
+      // PoolManager is a static-only singleton with a private no-op constructor.
+      // The constructor is unreachable through normal use; exercise it directly
+      // (TS `private` is not enforced at runtime) so coverage reflects reality.
+      const Ctor = PoolManager as unknown as { new (): PoolManager };
+      const instance = new Ctor();
+      expect(instance).toBeInstanceOf(PoolManager);
+    });
+  });
+
   describe("reset after setup", () => {
     it("clears pool, entity manager, and connection manager", () => {
       setup(makePool(), makeConnectionManager({}));

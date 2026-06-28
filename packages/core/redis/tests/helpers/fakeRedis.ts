@@ -403,8 +403,9 @@ export class FakeRedis {
 
   // ---- lua ---------------------------------------------------------------
   /**
-   * Only the compare-and-delete script used by releaseLock is supported:
-   *   if get(KEYS[1]) == ARGV[1] then return del(KEYS[1]) else return 0 end
+   * Two compare-and-act scripts are supported, distinguished by the script body:
+   *   releaseLock: if get(KEYS[1]) == ARGV[1] then return del(KEYS[1]) else 0 end
+   *   extendLock : if get(KEYS[1]) == ARGV[1] then return pexpire(KEYS[1], ARGV[2]) else 0 end
    * Signature mirrors ioredis: eval(script, numKeys, ...keysAndArgs).
    */
   async eval(_script: string, numKeys: number, ...keysAndArgs: string[]): Promise<unknown> {
@@ -414,6 +415,10 @@ export class FakeRedis {
     const expected = argv[0];
     const current = await this.get(key);
     if (current !== null && current === expected) {
+      // The extend script re-arms the TTL via pexpire; everything else deletes.
+      if (_script.includes("pexpire")) {
+        return this.pexpire(key, Number(argv[1]));
+      }
       return this.del(key);
     }
     return 0;

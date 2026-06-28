@@ -2,7 +2,11 @@ import type { Command, CommandRegistry } from "../types";
 import { CommandRegistrationError } from "../errors";
 
 export class CommandRegistryImpl implements CommandRegistry {
-  private commands: Map<string, Command> = new Map();
+  private commands: Map<string, Command>;
+
+  constructor() {
+    this.commands = new Map();
+  }
 
   register(command: Command, prefix = ""): void {
     // Subcommands are namespaced under their parent ("module:dev") so they

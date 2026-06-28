@@ -1,0 +1,9 @@
+[test]
+coverage = true
+coverageThreshold = 1.0
+coveragePathIgnorePatterns = ["**/dist/**", "**/node_modules/**", "**/*.test.ts", "**/tests/**", "**/__tests__/**", "**/__fixtures__/**", "**/.damat-config-*"]
+# reason: `.damat-config-*` are transient cache-busting sidecar copies of a
+# user's damat.config.ts that loadConfigModule writes to os.tmpdir(), imports,
+# then deletes. They are test inputs (sometimes intentionally throwing configs),
+# not package source, and live outside the package tree, so they must not count
+# toward this package's coverage gate.

@@ -10,6 +10,8 @@ import {
   rmCalls,
   copyCalls,
   mockMkdirSync,
+  mockReaddirSync,
+  mockStatSync,
   resetMocks,
   setSpawnHandler,
 } from "./setup";
@@ -162,6 +164,34 @@ describe("buildCommand.handler", () => {
       dest: "/project/.damat/dist/src/app.ts",
     });
     expect(logger.success).toHaveBeenCalledWith("Build complete!");
+  });
+
+  it("recurses into subdirectories when copying src", async () => {
+    state.spawnExitCode = 0;
+    state.existsMap = { "/project/src": true }; // config absent
+    // src/ holds one subdir ("sub") and one file ("app.ts"); sub/ holds one file.
+    mockReaddirSync.mockImplementation((p: string) => {
+      if (p === "/project/src") return ["sub", "app.ts"] as never;
+      if (p === "/project/.damat/dist/src/sub" || p === "/project/src/sub")
+        return ["nested.ts"] as never;
+      return [] as never;
+    });
+    // Only the "sub" entry is a directory; everything else is a file.
+    mockStatSync.mockImplementation((p: string) => ({
+      isDirectory: () => String(p).endsWith("/sub"),
+    }));
+    const { ctx } = createContext(
+      { output: ".damat/dist", target: "bun", minify: false },
+      { cwd: CWD },
+    );
+
+    await buildCommand.handler(ctx);
+
+    // The nested file was copied through the recursive branch.
+    expect(
+      copyCalls.some((c) => c.src === "/project/src/sub/nested.ts"),
+    ).toBe(true);
+    expect(copyCalls.some((c) => c.src === "/project/src/app.ts")).toBe(true);
   });
 
   it("builds damat.config.ts with a second spawn when a config file exists", async () => {

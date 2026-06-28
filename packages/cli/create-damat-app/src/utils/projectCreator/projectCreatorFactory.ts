@@ -10,6 +10,9 @@ import { damatProjectCreator } from "./damatProjectCreator";
 import terminalLink from "terminal-link";
 
 export class ProjectCreatorFactory {
+  // Static-only utility class: it is never meant to be instantiated. A private
+  // constructor documents/enforces that intent.
+  private constructor() {}
 
   static async create(
     args: string[],

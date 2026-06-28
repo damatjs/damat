@@ -11,11 +11,13 @@ const state: {
   acquireResults: (string | null)[];
   releaseResult: boolean;
   redisEvalResult: number;
+  redisEvalThrows: boolean;
   redisGetValue: string | null;
 } = {
   acquireResults: [],
   releaseResult: true,
   redisEvalResult: 1,
+  redisEvalThrows: false,
   redisGetValue: null,
 };
 
@@ -23,7 +25,10 @@ const acquireLock = mock(async (_key: string, _ttl: number) =>
   state.acquireResults.length ? state.acquireResults.shift()! : "lock-value",
 );
 const releaseLock = mock(async (_key: string, _value: string) => state.releaseResult);
-const redisEval = mock(async (..._args: unknown[]) => state.redisEvalResult);
+const redisEval = mock(async (..._args: unknown[]) => {
+  if (state.redisEvalThrows) throw new Error("redis eval failed");
+  return state.redisEvalResult;
+});
 const redisGet = mock(async (_key: string) => state.redisGetValue);
 const getRedis = mock(() => ({ get: redisGet, eval: redisEval }));
 
@@ -43,6 +48,7 @@ beforeEach(() => {
   state.acquireResults = [];
   state.releaseResult = true;
   state.redisEvalResult = 1;
+  state.redisEvalThrows = false;
   state.redisGetValue = null;
   acquireLock.mockClear();
   releaseLock.mockClear();
@@ -187,6 +193,69 @@ describe("workflow/executeWithLock: edges", () => {
 
     // Heartbeat at ttl/2 = 1000ms fires at least once during the 1.2s run.
     expect(redisEval).toHaveBeenCalled();
+    expect(releaseLock).toHaveBeenCalledTimes(1);
+  });
+
+  it("logs a warning when an autoExtend heartbeat fails to extend the lock", async () => {
+    state.acquireResults = ["lv"];
+    // eval -> 0 means the extension script reports the lock is no longer held,
+    // so extendWorkflowLock resolves false and the heartbeat takes the warn path.
+    state.redisEvalResult = 0;
+    const slow = createStep<number, number>(
+      "slow-extend-fail",
+      async () => {
+        await new Promise((r) => setTimeout(r, 1200));
+        return 1;
+      },
+      undefined,
+      { timeoutMs: 5000 },
+    );
+    const wf = createWorkflow<number, number>(
+      "auto-extend-fail",
+      (input, ctx) => executeStep(slow, input, ctx),
+      { timeoutMs: 5000 },
+    );
+    const res = await wf.executeWithLock(1, {
+      lockId: "id",
+      ttlMs: 2000,
+      autoExtend: true,
+    });
+
+    // The failed extension only warns; the workflow still completes and the
+    // lock is released in the finally block.
+    expect(redisEval).toHaveBeenCalled();
+    expect(res.success).toBe(true);
+    expect(releaseLock).toHaveBeenCalledTimes(1);
+  });
+
+  it("swallows a rejected autoExtend heartbeat without failing the workflow", async () => {
+    state.acquireResults = ["lv"];
+    // The redis eval rejects, so extendWorkflowLock rejects and the heartbeat's
+    // rejection handler (a deliberate no-op) is exercised.
+    state.redisEvalThrows = true;
+    const slow = createStep<number, number>(
+      "slow-extend-reject",
+      async () => {
+        await new Promise((r) => setTimeout(r, 1200));
+        return 1;
+      },
+      undefined,
+      { timeoutMs: 5000 },
+    );
+    const wf = createWorkflow<number, number>(
+      "auto-extend-reject",
+      (input, ctx) => executeStep(slow, input, ctx),
+      { timeoutMs: 5000 },
+    );
+    const res = await wf.executeWithLock(1, {
+      lockId: "id",
+      ttlMs: 2000,
+      autoExtend: true,
+    });
+
+    expect(redisEval).toHaveBeenCalled();
+    // The rejected extension is swallowed; the workflow still succeeds.
+    expect(res.success).toBe(true);
     expect(releaseLock).toHaveBeenCalledTimes(1);
   });
 

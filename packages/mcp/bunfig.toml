@@ -1,0 +1,14 @@
+[test]
+coverage = true
+coverageThreshold = 1.0
+coveragePathIgnorePatterns = [
+  "**/dist/**",
+  "**/node_modules/**",
+  "**/*.test.ts",
+  "**/tests/**",
+  "**/__tests__/**",
+  "**/__fixtures__/**",
+  # reason: interactive stdin loop / process.exit — entrypoint that reads stdin
+  # line-by-line and exits the process on "end"; not unit-coverable.
+  "**/src/server/run.ts",
+]

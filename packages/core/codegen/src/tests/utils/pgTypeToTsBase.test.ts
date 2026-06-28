@@ -105,6 +105,13 @@ describe("pgTypeToTsBase › structured mappings", () => {
     expect(pgTypeToTsBase("int8multirange")).toContain("lower: bigint | null");
     expect(pgTypeToTsBase("tstzmultirange")).toContain("lower: Date | null");
   });
+
+  it("maps nummultirange and datemultirange to their range Array<...>", () => {
+    expect(pgTypeToTsBase("nummultirange").startsWith("Array<{")).toBe(true);
+    expect(pgTypeToTsBase("nummultirange")).toContain("lower: number | null");
+    expect(pgTypeToTsBase("datemultirange").startsWith("Array<{")).toBe(true);
+    expect(pgTypeToTsBase("datemultirange")).toContain("lower: Date | null");
+  });
 });
 
 describe("pgTypeToTsBase › unmatched", () => {

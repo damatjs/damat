@@ -79,36 +79,34 @@ export async function runCli(config: CliConfig): Promise<void> {
       process.exit(1);
     }
 
-    if (cmd.subcommands && args.length > 1) {
-      const subcommandName = args[1];
-      if (subcommandName) {
-        const fullName = `${cmd.name}:${subcommandName}`;
-        const subcmd = getRegistry().get(fullName) || getRegistry().get(subcommandName);
+    const subcommandName = cmd.subcommands && args.length > 1 ? args[1] : undefined;
+    if (subcommandName) {
+      const fullName = `${cmd.name}:${subcommandName}`;
+      const subcmd = getRegistry().get(fullName) || getRegistry().get(subcommandName);
 
-        if (subcmd && subcmd !== cmd) {
-          const { options, positional } = parseCommandArgs(
-            args.slice(2),
-            subcmd.options,
-          );
-          const ctx = buildCommandContext(fullName, options, logger, config);
-          let result: CommandResult;
-          try {
-            result = await subcmd.handler({
-              ...ctx,
-              args: positional,
-            });
-          } catch (error) {
-            reportError(logger, error, { prefix: "Command failed" });
-            if (config.onError) {
-              config.onError(
-                error instanceof Error ? error : new Error(String(error)),
-                { ...ctx, args: positional },
-              );
-            }
-            process.exit(getExitCode(error));
+      if (subcmd && subcmd !== cmd) {
+        const { options, positional } = parseCommandArgs(
+          args.slice(2),
+          subcmd.options,
+        );
+        const ctx = buildCommandContext(fullName, options, logger, config);
+        let result: CommandResult;
+        try {
+          result = await subcmd.handler({
+            ...ctx,
+            args: positional,
+          });
+        } catch (error) {
+          reportError(logger, error, { prefix: "Command failed" });
+          if (config.onError) {
+            config.onError(
+              error instanceof Error ? error : new Error(String(error)),
+              { ...ctx, args: positional },
+            );
           }
-          process.exit(result.exitCode);
+          process.exit(getExitCode(error));
         }
+        process.exit(result.exitCode);
       }
     }
   }

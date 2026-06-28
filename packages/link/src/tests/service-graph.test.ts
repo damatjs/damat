@@ -190,6 +190,64 @@ describe("LinkService.graph — cross-module resolution", () => {
     expect(row.books[0].id).toBeDefined();
   });
 
+  test("passes intra-module relation child fields through to the owning service's include", async () => {
+    const pivot = makePivot([{ author_id: "a1", book_id: "b1" }]);
+    const svc = buildService([link], { [link.pivotName]: pivot });
+
+    // The blog/author model declares an intra-module relation "profile"; the
+    // graph must classify it as a relation (not a cross-module link) by reading
+    // the model definition's relations list.
+    setLinkModuleResolver((id) =>
+      ({
+        blog: makeModule({
+          author: {
+            rows: [{ id: "a1", name: "Tolkien", profile: { bio: "writer" } }],
+            relations: [{ from: "profile" }],
+          },
+        }),
+        store: makeModule({ book: { rows: [{ id: "b1", title: "Hobbit" }] } }),
+      })[id] ?? null,
+    );
+
+    const res = await svc.graph({
+      module: "blog",
+      entity: "author",
+      fields: ["name", "profile.bio", "books.title"],
+      filters: { id: "a1" },
+    });
+
+    expect(res.data).toHaveLength(1);
+    expect(res.data[0].name).toBe("Tolkien");
+    // The relation field is included by the owning service.
+    expect(res.data[0].profile).toEqual({ bio: "writer" });
+    expect(res.data[0].books.map((b: any) => b.title)).toEqual(["Hobbit"]);
+  });
+
+  test("leaves a link field empty when the row has no junction entries", async () => {
+    // No pivot rows: the link child resolves to an empty list/null without ever
+    // building the linked-row index (the otherRows map runs over an empty set).
+    const pivot = makePivot([]);
+    const svc = buildService([link], { [link.pivotName]: pivot });
+    setLinkModuleResolver((id) =>
+      ({
+        blog: makeModule({ author: { rows: [{ id: "a1", name: "Solo" }] } }),
+        store: makeModule({ book: { rows: [{ id: "b1", title: "Hobbit" }] } }),
+      })[id] ?? null,
+    );
+
+    const res = await svc.graph({
+      module: "blog",
+      entity: "author",
+      fields: ["name", "books.title"],
+      filters: { id: "a1" },
+    });
+
+    expect(res.data).toHaveLength(1);
+    expect(res.data[0].name).toBe("Solo");
+    // isList endpoint with no links -> empty array.
+    expect(res.data[0].books).toEqual([]);
+  });
+
   test("uses the field alias as the output key, not the model name", async () => {
     const pivot = makePivot([{ author_id: "a1", book_id: "b1" }]);
     const svc = buildService([link], { [link.pivotName]: pivot });
@@ -479,6 +537,16 @@ describe("LinkService.create / dismiss / list / fetch", () => {
     expect(rows[0].book_id).toBe("b1");
   });
 
+  test("listLinkedIds returns only the linked to-side ids for live rows", async () => {
+    await svc.create(from, to);
+    await svc.create(from, { module: "store", model: "book", id: "b2" });
+    await svc.create(from, { module: "store", model: "book", id: "b3" });
+    await svc.dismiss(from, { module: "store", model: "book", id: "b3" });
+
+    const ids = await svc.listLinkedIds(from, { module: "store", model: "book" });
+    expect(ids.sort()).toEqual(["b1", "b2"]);
+  });
+
   test("fetch hydrates linked rows through the target module service", async () => {
     await svc.create(from, to);
     setLinkModuleResolver((id) =>
@@ -488,6 +556,33 @@ describe("LinkService.create / dismiss / list / fetch", () => {
     );
     const books = await svc.fetch(from, { module: "store", model: "book" });
     expect(books).toEqual([{ id: "b1", title: "Hobbit" }]);
+  });
+
+  test("fetch resolves the target module from the link when `to` omits its module", async () => {
+    await svc.create(from, to);
+    setLinkModuleResolver((id) =>
+      id === "store"
+        ? makeModule({ book: { rows: [{ id: "b1", title: "Hobbit" }] } })
+        : null,
+    );
+    // `to` carries only the model, so fetch must fall back to the link's other
+    // endpoint module ("store").
+    const books = await svc.fetch(from, { model: "book" } as any);
+    expect(books).toEqual([{ id: "b1", title: "Hobbit" }]);
+  });
+
+  test("fetch works in the reverse direction (to -> from endpoint)", async () => {
+    await svc.create(from, to);
+    setLinkModuleResolver((id) =>
+      id === "blog"
+        ? makeModule({ author: { rows: [{ id: "a1", name: "Tolkien" }] } })
+        : null,
+    );
+    const authors = await svc.fetch(
+      { module: "store", model: "book", id: "b1" },
+      { module: "blog", model: "author" },
+    );
+    expect(authors).toEqual([{ id: "a1", name: "Tolkien" }]);
   });
 
   test("fetch returns [] when there are no linked ids (no module call)", async () => {
@@ -517,3 +612,7 @@ describe("LinkService.create / dismiss / list / fetch", () => {
     ).toThrow(/No link defined/);
   });
 });
+
+
+
+

@@ -1,0 +1,12 @@
+[test]
+coverage = true
+coverageThreshold = 1.0
+coveragePathIgnorePatterns = ["**/dist/**", "**/node_modules/**", "**/*.test.ts", "**/tests/**", "**/__tests__/**", "**/__fixtures__/**", "**/modules/user/service.ts", "**/modules/organization/service.ts"]
+# reason (both service.ts): `export class XModuleService extends ModuleService({...}) {}`
+# is an EMPTY derived class. bun's coverage instrumentation never marks the
+# implicit/derived constructor as a hit function even when the class is
+# instantiated and every line of its body executes (funcs 0% / lines 100%).
+# Verified to be a bun limitation, not a missing-test gap — reproduced with a
+# minimal `class Sub extends Base() {}` and with a real `new XModuleService(...)`
+# against a stubbed PoolManager. The service logic itself lives in the
+# @damatjs/services factory (covered there), so nothing here is left untested.

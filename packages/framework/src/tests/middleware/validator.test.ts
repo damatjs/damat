@@ -160,4 +160,90 @@ describe("createValidatorMiddleware", () => {
     expect(body.error.code).toBe("VALIDATION_ERROR");
     expect(body.error.details[0]!.message).toBe("Json is required");
   });
+
+  it("validates and exposes route params via the 'params' target", async () => {
+    const app = new Hono();
+    app.get(
+      "/users/:id",
+      createValidatorMiddleware({ params: z.object({ id: z.string() }) } as never),
+      (c) => c.json({ ok: true }),
+    );
+
+    const res = await app.request("/users/42");
+    expect(res.status).toBe(200);
+    expect((await res.json()).ok).toBe(true);
+  });
+
+  it("returns a 400 VALIDATION_ERROR when params fail validation", async () => {
+    const app = new Hono();
+    app.get(
+      "/users/:id",
+      createValidatorMiddleware({ params: z.object({ id: z.coerce.number() }) } as never),
+      (c) => c.json({ ok: true }),
+    );
+
+    const res = await app.request("/users/not-a-number");
+    const body = (await res.json()) as ErrBody;
+    expect(res.status).toBe(400);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(body.error.details[0]!.path).toBe("id");
+  });
+
+  // The "<target> is required" guards only fire when the parsed request data
+  // for a target is falsy. Hono always returns an object for query()/param(),
+  // so to exercise those defensive branches we drive the middleware directly
+  // with a fake context whose getters return undefined (boundary-level fake,
+  // no module mocking).
+  function fakeContext(method: string, getters: Record<string, unknown>) {
+    const captured: { status?: number; payload?: unknown } = {};
+    return {
+      captured,
+      c: {
+        req: {
+          method,
+          query: () => getters.query,
+          param: () => getters.params,
+          json: async () => getters.json,
+          addValidatedData: () => {},
+        },
+        set: () => {},
+        json: (payload: unknown, status?: number) => {
+          captured.payload = payload;
+          captured.status = status;
+          return payload;
+        },
+      },
+    };
+  }
+
+  it("throws 'Query is required' when the parsed query is missing", async () => {
+    const mw = createValidatorMiddleware({ query: z.object({ q: z.string() }) } as never);
+    const { c, captured } = fakeContext("GET", { query: undefined, params: {} });
+    await mw(c as never, (async () => {}) as never);
+    expect(captured.status).toBe(400);
+    const payload = captured.payload as ErrBody;
+    expect(payload.error.details[0]!.message).toBe("Query is required");
+  });
+
+  it("re-throws a non-Zod error raised while parsing a target", async () => {
+    const boom = new Error("schema exploded");
+    const mw = createValidatorMiddleware({
+      body: {
+        parse: () => {
+          throw boom;
+        },
+      },
+    } as never);
+    const { c } = fakeContext("POST", { query: {}, params: {}, json: { a: 1 } });
+    await expect(mw(c as never, (async () => {}) as never)).rejects.toThrow(boom);
+  });
+
+  it("throws 'Params is required' when the parsed params are missing", async () => {
+    const mw = createValidatorMiddleware({ params: z.object({ id: z.string() }) } as never);
+    const { c, captured } = fakeContext("GET", { query: {}, params: undefined });
+    await mw(c as never, (async () => {}) as never);
+    expect(captured.status).toBe(400);
+    const payload = captured.payload as ErrBody;
+    expect(payload.error.details[0]!.message).toBe("Params is required");
+  });
 });
