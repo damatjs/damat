@@ -33,6 +33,16 @@ describe("pruneColumns", () => {
     const row = { id: "1", name: "a", secret: "s" };
     expect(pruneColumns(row, tree)).toEqual(row);
   });
+
+  test("keeps the model's REAL primary key, not a hardcoded 'id'", () => {
+    // A model keyed on `sku` (not `id`). Pruning must retain the real PK and
+    // must NOT force-add a stray `id` that leaked onto the row.
+    const tree = parseFields(["name"]);
+    const row = { sku: "S1", id: "stray", name: "Widget", secret: "s" };
+    const pruned = pruneColumns(row, tree, "sku");
+    expect(pruned).toEqual({ sku: "S1", name: "Widget" });
+    expect(pruned.id).toBeUndefined();
+  });
 });
 
 describe("LinkRegistry", () => {

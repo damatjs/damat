@@ -1,4 +1,5 @@
 import { describe, test, expect } from "bun:test";
+import { model, columns } from "@damatjs/orm-model";
 import { defineLink } from "../defineLink";
 import { collectLinkModels } from "../registry";
 import { defaultPivotTable, pivotColumns } from "../naming";
@@ -67,19 +68,116 @@ describe("defineLink", () => {
     );
     expect(custom.pivotTable).toBe("membership");
   });
+
+  test("honors pivotColumns overrides", () => {
+    const custom = defineLink(
+      { module: "user", model: "user" },
+      { module: "organization", model: "organization" },
+      { pivotColumns: { left: "member_id", right: "org_id" } },
+    );
+    expect(custom.leftColumn).toBe("member_id");
+    expect(custom.rightColumn).toBe("org_id");
+    expect(columnNames(custom)).toEqual(
+      expect.arrayContaining(["member_id", "org_id"]),
+    );
+  });
 });
 
+describe("defineLink — table-name derivation (key != singular table)", () => {
+  // The reference-app shape: plural tables, so the models-map keys are plural
+  // ("users"/"organizations") while the migrated junction is user_organization.
+  const link = defineLink(
+    { module: "user", model: "users", field: "users" },
+    { module: "organization", model: "organizations", field: "organizations" },
+  );
+
+  test("plural model keys still derive the singular junction naming", () => {
+    expect(link.pivotTable).toBe("user_organization");
+    expect(link.leftColumn).toBe("user_id");
+    expect(link.rightColumn).toBe("organization_id");
+  });
+
+  test("camelCase model keys derive snake_case singular column names", () => {
+    const l = defineLink(
+      { module: "catering", model: "functionSpaces" },
+      { module: "location", model: "location" },
+    );
+    expect(l.leftColumn).toBe("function_space_id");
+    expect(l.rightColumn).toBe("location_id");
+    expect(l.pivotTable).toBe("catering_function_space_location");
+  });
+});
+
+describe("defineLink — registry-resolved tables and primary keys", () => {
+  // Register real models (table names are unique to avoid registry bleed).
+  const Product = model("lk_products", {
+    sku: columns.text().primaryKey(),
+    name: columns.text(),
+  });
+  const Warehouse = model("lk_warehouses", {
+    id: columns.id({ prefix: "wh" }).primaryKey(),
+  });
+  void Product;
+  void Warehouse;
+
+  const link = defineLink(
+    { module: "catalog", model: "lkProducts" },
+    { module: "wms", model: "lkWarehouses" },
+    { database: { foreignKeys: true } },
+  );
+
+  test("resolves each side's real table for naming", () => {
+    expect(link.left.table).toBe("lk_products");
+    expect(link.right.table).toBe("lk_warehouses");
+    expect(link.leftColumn).toBe("lk_product_id");
+    expect(link.rightColumn).toBe("lk_warehouse_id");
+  });
+
+  test("FKs target the real table, honor the model's PK, and cascade", () => {
+    const fks = link.model.toTableSchema().foreignKeys ?? [];
+    const productFk = fks.find((f) => f.referencedTable === "lk_products");
+    expect(productFk?.referencedColumns).toEqual(["sku"]);
+    expect(productFk?.onDelete).toBe("CASCADE");
+    const warehouseFk = fks.find((f) => f.referencedTable === "lk_warehouses");
+    expect(warehouseFk?.referencedColumns).toEqual(["id"]);
+    expect(warehouseFk?.onDelete).toBe("CASCADE");
+  });
+
+  test("the endpoint's primaryKey defaults to the model's actual PK", () => {
+    expect(link.left.primaryKey).toBe("sku");
+    expect(link.right.primaryKey).toBe("id");
+  });
+
+  test("an explicit endpoint primaryKey wins over the registry", () => {
+    const l = defineLink(
+      { module: "catalog", model: "lkProducts", primaryKey: "name" },
+      { module: "wms", model: "lkWarehouses" },
+      { pivotTable: "lk_pk_override", database: { foreignKeys: true } },
+    );
+    const fk = (l.model.toTableSchema().foreignKeys ?? []).find(
+      (f) => f.referencedTable === "lk_products",
+    );
+    expect(fk?.referencedColumns).toEqual(["name"]);
+  });
+});
+
+const ep = (module: string, table: string) => ({ module, table });
+
 describe("naming", () => {
-  test("collapses module/model segments when equal", () => {
-    const left = { module: "user", model: "user", primaryKey: "id", alias: "user", isList: true };
-    const right = { module: "billing", model: "invoice", primaryKey: "id", alias: "invoice", isList: true };
-    expect(defaultPivotTable(left, right)).toBe("user_billing_invoice");
+  test("collapses module/table segments when equal", () => {
+    expect(defaultPivotTable(ep("user", "user"), ep("billing", "invoice"))).toBe(
+      "user_billing_invoice",
+    );
+  });
+
+  test("collapses a plural table onto its module's logical name", () => {
+    expect(defaultPivotTable(ep("user", "users"), ep("organization", "organizations"))).toBe(
+      "user_organization",
+    );
   });
 
   test("disambiguates identical column names across modules", () => {
-    const a = { module: "a", model: "note", primaryKey: "id", alias: "note", isList: true };
-    const b = { module: "b", model: "note", primaryKey: "id", alias: "note", isList: true };
-    const { leftColumn, rightColumn } = pivotColumns(a, b);
+    const { leftColumn, rightColumn } = pivotColumns(ep("a", "note"), ep("b", "note"));
     expect(leftColumn).toBe("a_note_id");
     expect(rightColumn).toBe("b_note_id");
   });

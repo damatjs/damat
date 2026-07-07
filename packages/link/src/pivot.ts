@@ -1,14 +1,29 @@
 import { model, columns, type ModelDefinition } from "@damatjs/orm-model";
 import type { LinkOptions } from "./types";
 
+/** One side's FK target: the real table plus the column the FK references. */
+export interface PivotForeignKeyTarget {
+  table: string;
+  reference: string;
+}
+
 export interface BuildPivotInput {
   table: string;
   leftColumn: string;
   rightColumn: string;
   idPrefix: string;
-  /** When set, emit a real FK column (belongsTo) to these target tables. */
-  foreignKeys?: { leftTarget: string; rightTarget: string };
+  /** When set, emit real FK columns (belongsTo) to these target tables. */
+  foreignKeys?: { left: PivotForeignKeyTarget; right: PivotForeignKeyTarget };
   options: LinkOptions;
+}
+
+/** A junction FK column: references the target's real PK, cascades on delete. */
+function foreignKeyColumn(column: string, target: PivotForeignKeyTarget) {
+  return columns
+    .belongsTo(target.table)
+    .link({ foreignKey: column, reference: target.reference })
+    .onDelete("CASCADE")
+    .indexed();
 }
 
 /**
@@ -26,10 +41,10 @@ export function buildPivotModel(input: BuildPivotInput): ModelDefinition {
   const { table, leftColumn, rightColumn, idPrefix, foreignKeys, options } = input;
 
   const leftCol = foreignKeys
-    ? columns.belongsTo(foreignKeys.leftTarget).link({ foreignKey: leftColumn }).indexed()
+    ? foreignKeyColumn(leftColumn, foreignKeys.left)
     : columns.text();
   const rightCol = foreignKeys
-    ? columns.belongsTo(foreignKeys.rightTarget).link({ foreignKey: rightColumn }).indexed()
+    ? foreignKeyColumn(rightColumn, foreignKeys.right)
     : columns.text();
 
   const props: Record<string, any> = {

@@ -75,6 +75,17 @@ function makePivot(rows: Record<string, any>[] = []) {
       store.push(row);
       return { ...row };
     },
+    /** Mirrors INSERT … ON CONFLICT (pair) DO UPDATE SET <set> RETURNING *. */
+    async upsert({ data, set }: any) {
+      const existing = store.find((r) => matches(r, data));
+      if (existing) {
+        Object.assign(existing, set ?? {});
+        return { ...existing };
+      }
+      const row = { id: `pv_${store.length}`, deleted_at: null, ...data };
+      store.push(row);
+      return { ...row };
+    },
     async softDelete({ where }: any) {
       const affected = store.filter((r) => matches(r, where));
       for (const r of affected) r.deleted_at = new Date();
@@ -113,11 +124,16 @@ function buildService(
 function makeModule(
   tables: Record<
     string,
-    { rows: Record<string, any>[]; relations?: { from: string }[] }
+    {
+      rows: Record<string, any>[];
+      relations?: { from: string }[];
+      /** Real primary key column, when it is not the default `id`. */
+      primaryKey?: string;
+    }
   >,
 ) {
   const accessors: Record<string, any> = {};
-  for (const [model, { rows, relations }] of Object.entries(tables)) {
+  for (const [model, { rows, relations, primaryKey }] of Object.entries(tables)) {
     accessors[model] = {
       lastFindMany: undefined as any,
       async findMany(opts: any = {}) {
@@ -137,7 +153,10 @@ function makeModule(
         return out.map((r) => ({ ...r }));
       },
       getModelDefinition: () => ({
-        toTableSchema: () => ({ relations: relations ?? [] }),
+        toTableSchema: () => ({
+          relations: relations ?? [],
+          columns: [{ name: primaryKey ?? "id", primaryKey: true }],
+        }),
       }),
     };
   }
@@ -188,6 +207,42 @@ describe("LinkService.graph — cross-module resolution", () => {
     // child pruned to title + id (isbn dropped)
     expect(row.books[0].isbn).toBeUndefined();
     expect(row.books[0].id).toBeDefined();
+  });
+
+  test("prunes each node to its REAL primary key (non-'id'), never force-adding id", async () => {
+    // The `store.product` model is keyed on `sku`, not `id`. The resolver must
+    // thread that PK into pruning so `sku` survives and the stray `id` on the
+    // row is dropped rather than force-kept.
+    const skuLink = defineLink(
+      { module: "store", model: "product", field: "products", primaryKey: "sku" },
+      { module: "warehouse", model: "bin", field: "bins" },
+    );
+    const pivot = makePivot([]);
+    const svc = buildService([skuLink], { [skuLink.pivotName]: pivot });
+    setLinkModuleResolver((id) =>
+      id === "store"
+        ? makeModule({
+            product: {
+              rows: [{ sku: "S1", id: "stray", name: "Widget", secret: "x" }],
+              primaryKey: "sku",
+            },
+          })
+        : null,
+    );
+
+    const res = await svc.graph({
+      module: "store",
+      entity: "product",
+      fields: ["name"],
+      filters: {},
+    });
+
+    expect(res.data).toHaveLength(1);
+    const row = res.data[0];
+    expect(row.sku).toBe("S1"); // real PK survives
+    expect(row.name).toBe("Widget");
+    expect(row.id).toBeUndefined(); // stray "id" NOT force-added
+    expect(row.secret).toBeUndefined();
   });
 
   test("passes intra-module relation child fields through to the owning service's include", async () => {
@@ -369,12 +424,26 @@ describe("LinkService.graph — cross-module resolution", () => {
   test("throws when the starting entity has no model accessor", async () => {
     const pivot = makePivot([]);
     const svc = buildService([link], { [link.pivotName]: pivot });
+    // "author" participates in the link, but the module exposes no accessor.
+    setLinkModuleResolver((id) => (id === "blog" ? { somethingElse: {} } : null));
+    expect(
+      svc.graph({ module: "blog", entity: "author", fields: ["name"], filters: {} }),
+    ).rejects.toThrow(/no model accessor/);
+  });
+
+  test("refuses a root entity that is not part of any registered link", async () => {
+    const pivot = makePivot([]);
+    const svc = buildService([link], { [link.pivotName]: pivot });
+    // The module resolves fine — but "secretModel" is on no link, so the link
+    // service must not become a read path into it.
     setLinkModuleResolver((id) =>
-      id === "blog" ? makeModule({ author: { rows: [] } }) : null,
+      id === "blog"
+        ? makeModule({ secretModel: { rows: [{ id: "s1", secret: "x" }] } })
+        : null,
     );
     expect(
-      svc.graph({ module: "blog", entity: "missingModel", fields: ["name"], filters: {} }),
-    ).rejects.toThrow(/no model accessor/);
+      svc.graph({ module: "blog", entity: "secretModel", fields: ["*"], filters: {} }),
+    ).rejects.toThrow(/not part of any registered link/);
   });
 });
 
@@ -502,6 +571,23 @@ describe("LinkService.create / dismiss / list / fetch", () => {
     expect(row.author_id).toBe("a1");
     expect(row.book_id).toBe("b1");
     expect(pivot.store).toHaveLength(1);
+  });
+
+  test("create is a single atomic upsert (no check-then-insert window)", async () => {
+    const p: any = makePivot([]);
+    p.find = async () => {
+      throw new Error("find must not be called by create");
+    };
+    p.create = async () => {
+      throw new Error("create must not be called by create");
+    };
+    p.restore = async () => {
+      throw new Error("restore must not be called by create");
+    };
+    const s = buildService([link], { [link.pivotName]: p });
+    const row = await s.create(from, to);
+    expect(row.author_id).toBe("a1");
+    expect(row.book_id).toBe("b1");
   });
 
   test("create is idempotent for an existing live link", async () => {

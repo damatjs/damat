@@ -9,10 +9,10 @@ and codegen need **no** special-casing.
 
 | File | Responsibility |
 |------|----------------|
-| `types.ts` | `LinkEndpoint`, `ResolvedEndpoint`, `LinkOptions`, `LinkDefinition`, row/model refs. |
-| `naming.ts` | `defaultPivotTable` (segment-collapsing, 63-byte clamp) + `pivotColumns` (collision-safe FK column names). |
-| `pivot.ts` | `buildPivotModel` — constructs the junction `ModelDefinition` with the orm-model DSL (id + 2 FK columns + unique/per-column indexes; timestamps & soft-delete on by default). |
-| `defineLink.ts` | `defineLink(left, right, options?)` — resolves endpoints and assembles a `LinkDefinition`. |
+| `types.ts` | `LinkEndpoint`, `ResolvedEndpoint` (incl. the resolved `table`), `LinkOptions`, `LinkDefinition`, row/model refs. |
+| `naming.ts` | `defaultPivotTable` + `pivotColumns` — derive names from each side's REAL table, singularized via the ORM's `removeLastS` rule (segment-collapsing, collision-safe columns, 63-byte clamp). |
+| `pivot.ts` | `buildPivotModel` — constructs the junction `ModelDefinition` with the orm-model DSL (id + 2 FK columns + unique/per-column indexes; timestamps & soft-delete on by default; opt-in FKs reference the real table/PK with `ON DELETE CASCADE`). |
+| `defineLink.ts` | `defineLink(left, right, options?)` — resolves endpoints (real table + primary key through the global model registry, with a deterministic key-derived fallback) and assembles a `LinkDefinition`. |
 | `registry.ts` | `LinkRegistry` (resolve a pair in either direction, list outgoing links) + `collectLinkModels`. |
 | `resolver.ts` | `setLinkModuleResolver` / `resolveLinkedModule` — dependency inversion so the link service can call other modules without importing `@damatjs/framework`. |
 | `service.ts` | `createLinkService(links)` → `LinkService extends ModuleService({models})` with `create`/`dismiss`/`list`/`listLinkedIds`/`fetch`/`graph`. |
@@ -57,7 +57,8 @@ src/links/
 
 ## Junction table shape
 
-For `defineLink({module:"user",model:"user"}, {module:"organization",model:"organization"})`:
+For `defineLink({module:"user",model:"users"}, {module:"organization",model:"organizations"})`
+(models-map keys for the `users` / `organizations` tables):
 
 ```sql
 CREATE TABLE "public"."user_organization" (
@@ -73,19 +74,31 @@ CREATE INDEX "user_organization_user_id_idx"        ON "public"."user_organizati
 CREATE INDEX "user_organization_organization_id_idx" ON "public"."user_organization" ("organization_id");
 ```
 
-- **Naming.** A segment collapses to the module id when `module === model`
-  (`user`), else `module_model`; the two segments join with `_`. Override with
-  `options.pivotTable`. Names are clamped to Postgres' 63-byte limit with a stable
-  hash suffix.
-- **Idempotency.** `create` find-or-restore-or-creates against the unique pair
-  index; re-creating a dismissed (soft-deleted) link revives it.
+- **Naming.** Each endpoint resolves its REAL table name (global model
+  registry when loaded, else camelCase key -> snake_case) and contributes its
+  logical singular (`removeLastS`: `users` -> `user`). A segment collapses to
+  the module id when `module === logical` (`user`), else `module_logical`; the
+  two segments join with `_`; columns are `<logical>_id` (module-qualified only
+  on collision). Override with `options.pivotTable` / `options.pivotColumns`.
+  Names are clamped to Postgres' 63-byte limit with a stable hash suffix.
+- **Idempotency.** `create` is a single `INSERT … ON CONFLICT (left, right)
+  DO UPDATE SET deleted_at = NULL` against the unique pair index — atomic
+  (no check-then-insert race), and re-creating a dismissed (soft-deleted)
+  link revives it.
 - **Soft delete.** `dismiss` sets `deleted_at`; every link read filters
   `deleted_at: null` (the ORM does not auto-filter soft-deletes).
+- **Opt-in FKs.** `{ database: { foreignKeys: true } }` emits FKs that
+  reference each side's resolved table and actual primary key with
+  `ON DELETE CASCADE`. If a target model isn't importable at definition time
+  (e.g. `migrate:create link:<owner>` loads only the links dir) the PK falls
+  back to `id` — set `primaryKey` on the endpoint explicitly for non-`id` PKs.
 
 ## Graph query
 
 `LinkService.graph({ module, entity, fields, filters, pagination })` resolves a
-field tree:
+field tree. The root `module.entity` must participate in a registered link —
+the service refuses unlinked roots so it cannot be used as a generic read path
+into arbitrary modules.
 
 - Columns (`"*"` or explicit) are selected/pruned per node.
 - A child whose name matches a link's far-side `field`/`model` is a **cross-module

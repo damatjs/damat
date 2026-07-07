@@ -56,34 +56,27 @@ export function createLinkService(links: LinkDefinition[]) {
     // leaks into the exported `LinkService` type (TS4082) for consumers, while
     // callers still get a typed surface (e.g. findMany -> any[]).
     #pivot(link: LinkDefinition): {
-      find(opts: any): Promise<any | null>;
       findMany(opts: any): Promise<any[]>;
-      create(opts: any): Promise<any>;
-      restore(opts: any): Promise<any[]>;
+      upsert(opts: any): Promise<any>;
       softDelete(opts: any): Promise<any[]>;
     } {
       return (this as any)[link.pivotName];
     }
 
     /**
-     * Create a link between two rows. Idempotent: re-creating an existing link
-     * returns it, and re-creating a previously dismissed (soft-deleted) link
-     * revives it rather than violating the junction's unique index.
+     * Create a link between two rows. Idempotent AND race-safe: a single
+     * `INSERT … ON CONFLICT` against the junction's unique pair index either
+     * inserts the row, revives a previously dismissed (soft-deleted) link, or
+     * leaves an existing live link untouched — and returns the row. No
+     * check-then-insert window.
      */
     async create(from: LinkRowRef, to: LinkRowRef): Promise<Record<string, any>> {
       const o = registry.resolve(from, to);
-      const pivot = this.#pivot(o.link);
-      const where = { [o.fromColumn]: from.id, [o.toColumn]: to.id };
-
-      const existing = await pivot.find({ where });
-      if (existing) {
-        if (existing.deleted_at) {
-          const [restored] = await pivot.restore({ where });
-          return restored ?? existing;
-        }
-        return existing;
-      }
-      return pivot.create({ data: where });
+      return this.#pivot(o.link).upsert({
+        data: { [o.fromColumn]: from.id, [o.toColumn]: to.id },
+        onConflict: [o.link.leftColumn, o.link.rightColumn],
+        set: { deleted_at: null },
+      });
     }
 
     /** Remove a link (soft delete). Returns the number of junction rows affected. */
@@ -157,6 +150,16 @@ export function createLinkService(links: LinkDefinition[]) {
     async graph<T = Record<string, any>>(
       config: GraphQueryConfig,
     ): Promise<GraphQueryResult<T>> {
+      // Scope the entry point: only entities that participate in a registered
+      // link are queryable here, so the link service never becomes a side-door
+      // into arbitrary modules' data. Nested hops are already constrained to
+      // declared links and the owning model's own relations.
+      if (registry.linksFrom(config.module, config.entity).length === 0) {
+        throw new Error(
+          `Graph query: "${config.module}.${config.entity}" is not part of any ` +
+            "registered link. Only linked entities can be graph roots.",
+        );
+      }
       const tree = parseFields(config.fields);
       const data = await this.#resolveNode(config.module, config.entity, tree, {
         where: config.filters,
@@ -188,11 +191,13 @@ export function createLinkService(links: LinkDefinition[]) {
 
       // Classify each requested child as a cross-module link or an intra-module relation.
       const outgoing = registry.linksFrom(moduleId, modelKey);
+      const tableSchema = methods.getModelDefinition().toTableSchema();
       const relationNames = new Set<string>(
-        (methods.getModelDefinition().toTableSchema().relations ?? []).map(
-          (r: any) => r.from,
-        ),
+        (tableSchema.relations ?? []).map((r: any) => r.from),
       );
+      // This node's REAL primary key drives pruning — never a hardcoded "id".
+      const primaryKey =
+        tableSchema.columns?.find((c: any) => c.primaryKey)?.name ?? "id";
 
       type LinkChild = {
         name: string;
@@ -257,7 +262,7 @@ export function createLinkService(links: LinkDefinition[]) {
         }
       }
 
-      return rows.map((r) => pruneColumns(r, node));
+      return rows.map((r) => pruneColumns(r, node, primaryKey));
     }
   }
 

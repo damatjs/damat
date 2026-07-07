@@ -67,7 +67,12 @@ migrations.
 | `search_modules` | Filter the registry by a query matched against ref, description and keywords. |
 | `module_info` | Full registry details for one ref (e.g. `damatjs/user@0.2.0`) — read before installing. |
 | `list_installed` | Scan the app's `src/modules` for installed modules (via their `module.json`). |
-| `add_module` | Install a module by running `damat module add <source>` (registry ref, path, github shorthand, or git URL). |
+| `add_module` | Install a module by running `damat module add <source>` (registry ref, path, github shorthand, or git URL). Path/git sources are refused unless `allowUnverified: true` is passed; dependency lifecycle scripts stay off unless `allowScripts: true`. |
+
+Installs are default-deny for anything a registry has not verified: the
+assistant must set `allowUnverified` explicitly (after the user approved that
+exact source) before a git/path install proceeds, and `bun add` runs with
+`--ignore-scripts` unless `allowScripts` is set.
 
 ## Configuration
 
