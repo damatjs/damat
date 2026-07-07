@@ -262,13 +262,25 @@ describe("installModulePackages (packages.ts)", () => {
     expect(spawnSyncCalls).toHaveLength(0);
   });
 
-  it("runs `bun add` with versioned + bare specs and reports success", async () => {
+  it("runs `bun add --ignore-scripts` with versioned + bare specs by default", async () => {
     fsState.spawnSyncResult = { status: 0, stdout: "added", stderr: "" };
     const fn = await get();
     const res = fn("/app", { stripe: "^14.0.0", lodash: "*" });
     expect(res.ok).toBe(true);
     expect(spawnSyncCalls[0]!.cmd).toBe("bun");
-    expect(spawnSyncCalls[0]!.args).toEqual(["add", "stripe@^14.0.0", "lodash"]);
+    expect(spawnSyncCalls[0]!.args).toEqual([
+      "add",
+      "--ignore-scripts",
+      "stripe@^14.0.0",
+      "lodash",
+    ]);
+  });
+
+  it("drops --ignore-scripts only when allowScripts is set", async () => {
+    fsState.spawnSyncResult = { status: 0, stdout: "added", stderr: "" };
+    const fn = await get();
+    fn("/app", { stripe: "^14.0.0" }, { allowScripts: true });
+    expect(spawnSyncCalls[0]!.args).toEqual(["add", "stripe@^14.0.0"]);
   });
 
   it("reports failure (and combined output) on a non-zero status", async () => {
@@ -277,6 +289,90 @@ describe("installModulePackages (packages.ts)", () => {
     const res = fn("/app", { stripe: "^14.0.0" });
     expect(res.ok).toBe(false);
     expect(res.output).toBe("outerr");
+  });
+});
+
+describe("invalidPackageSpecs (packages.ts)", () => {
+  const get = async () =>
+    (await import("../module/helpers/packages")).invalidPackageSpecs;
+
+  it("accepts sane names with semver ranges and dist-tags", async () => {
+    const fn = await get();
+    expect(
+      fn({
+        stripe: "^14.0.0",
+        "@scope/pkg": ">=1.2.3-beta.1",
+        lodash: "*",
+        next: "latest",
+        bare: "",
+      }),
+    ).toEqual([]);
+  });
+
+  it("rejects invalid npm names (flags, spaces, uppercase, traversal)", async () => {
+    const fn = await get();
+    for (const name of ["--registry=http://x", "a b", "Evil", "../up", ""]) {
+      expect(fn({ [name]: "1.0.0" })).toHaveLength(1);
+    }
+  });
+
+  it("rejects protocol/path ranges and whitespace by default", async () => {
+    const fn = await get();
+    for (const range of [
+      "file:../../pwn",
+      "git+https://github.com/a/b.git",
+      "https://evil.example/x.tgz",
+      "owner/repo",
+      ">=1.0.0 <2.0.0",
+    ]) {
+      const bad = fn({ pkg: range });
+      expect(bad).toHaveLength(1);
+      expect(bad[0]).toContain("--allow-unverified");
+    }
+  });
+
+  it("permits protocol ranges — but never whitespace — with allowUnsafeRanges", async () => {
+    const fn = await get();
+    expect(
+      fn(
+        { pkg: "git+https://github.com/a/b.git", other: "file:../local" },
+        { allowUnsafeRanges: true },
+      ),
+    ).toEqual([]);
+    expect(
+      fn({ pkg: "1.0.0; rm -rf /" }, { allowUnsafeRanges: true }),
+    ).toHaveLength(1);
+  });
+});
+
+describe("module add guards (guard.ts)", () => {
+  const get = async () => import("../module/helpers/guard");
+
+  it("moduleIdError accepts kebab-case ids and rejects everything else", async () => {
+    const { moduleIdError } = await get();
+    expect(moduleIdError("user-management")).toBeNull();
+    for (const id of ["../evil", "a/b", "..", "Evil", "1bad", ""]) {
+      expect(moduleIdError(id)).toContain("kebab-case");
+    }
+  });
+
+  it("modulesDirError rejects absolute paths and .. segments", async () => {
+    const { modulesDirError } = await get();
+    expect(modulesDirError("src/modules")).toBeNull();
+    expect(modulesDirError("src/./modules")).toBeNull();
+    for (const dir of ["/etc", "../out", "src/../../up", ""]) {
+      expect(modulesDirError(dir)).toContain("--dir");
+    }
+  });
+
+  it("unverifiedSourceError gates by opt-in flag and policy", async () => {
+    const { unverifiedSourceError } = await get();
+    expect(unverifiedSourceError("git", true, "warn")).toBeNull();
+    expect(unverifiedSourceError("path", false, "off")).toBeNull();
+    for (const policy of ["warn", "require"] as const) {
+      const message = unverifiedSourceError("git", false, policy);
+      expect(message).toContain("--allow-unverified");
+    }
   });
 });
 

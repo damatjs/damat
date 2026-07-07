@@ -8,6 +8,11 @@ import { ProjectCreator, ProjectOptions } from "./creator";
 import { damatModuleCreator } from "./damatModuleCreator";
 import { damatProjectCreator } from "./damatProjectCreator";
 import terminalLink from "terminal-link";
+import {
+  isValidRepoUrl,
+  isValidVersion,
+  validateProjectName,
+} from "../validation";
 
 export class ProjectCreatorFactory {
   // Static-only utility class: it is never meant to be instantiated. A private
@@ -19,6 +24,7 @@ export class ProjectCreatorFactory {
     options: ProjectOptions,
   ): Promise<ProjectCreator> {
     ProjectCreatorFactory.validateNodeVersion();
+    ProjectCreatorFactory.validateOptions(options);
 
     const projectName = await ProjectCreatorFactory.getProjectName(
       args,
@@ -29,6 +35,25 @@ export class ProjectCreatorFactory {
     return options.module
       ? new damatModuleCreator(projectName, options, args)
       : new damatProjectCreator(projectName, options, args);
+  }
+
+  // Validate CLI options early with a clear message. Both values end up as
+  // git/bunx arguments, so reject anything that isn't a plausible repo
+  // location or version tag. logMessage({ type: "error" }) exits the process.
+  private static validateOptions(options: ProjectOptions): void {
+    if (options.repoUrl && !isValidRepoUrl(options.repoUrl)) {
+      logMessage({
+        message: `Invalid --repo-url "${options.repoUrl}". Expected an http(s), git, or ssh URL, a git@host:path address, or an owner/repo shorthand.`,
+        type: "error",
+      });
+    }
+
+    if (options.version && !isValidVersion(options.version)) {
+      logMessage({
+        message: `Invalid --version "${options.version}". Expected a semver version or tag such as 1.2.3, v1.2.3-beta.1, or latest.`,
+        type: "error",
+      });
+    }
   }
 
   private static validateNodeVersion(): void {
@@ -52,9 +77,13 @@ export class ProjectCreatorFactory {
     const pathName = args[0]
     let askProjectName = args.length === 0;
     if (args.length > 0 && pathName) {
+      // Names from CLI args reach git/bunx as arguments and become directory
+      // names, so they must be a safe slug (letters, digits, `-`, `_`).
+      const nameError = validateProjectName(pathName, isModule);
 
       const projectPath = path.join(directoryPath || "", pathName);
       if (
+        !nameError &&
         fs.existsSync(projectPath) &&
         fs.lstatSync(projectPath).isDirectory()
       ) {
@@ -64,12 +93,9 @@ export class ProjectCreatorFactory {
           type: "warn",
         });
         askProjectName = true;
-      } else if (pathName.includes(".")) {
-        // We don't allow projects to have a dot in the name, as this causes issues for
-        // for MikroORM path resolutions.
+      } else if (nameError) {
         logMessage({
-          message: `Project names cannot contain a dot (.) character. Please enter a different ${isModule ? "module" : "project"
-            } name.`,
+          message: nameError,
           type: "error",
         });
         askProjectName = true;
@@ -95,14 +121,11 @@ async function askForProjectName(
     validate: (value: string) => {
       const input = slugify(value).toLowerCase();
 
-      // We don't allow projects to have a dot in the name, as this causes issues for
-      // for MikroORM path resolutions.
-      if (input.includes(".")) {
-        return `Project names cannot contain a dot (.) character. Please enter a different ${isModule ? "module" : "project"} name.`;
-      }
-
-      if (!input.length) {
-        return `Please enter a ${isModule ? "module" : "project"} name`;
+      // Enforce the same safe slug as CLI-arg names (no dots for MikroORM
+      // path resolutions, no shell/flag characters).
+      const nameError = validateProjectName(input, isModule);
+      if (nameError) {
+        return nameError;
       }
 
       const projectPath = path.join(directoryPath || "", input);
@@ -112,6 +135,8 @@ async function askForProjectName(
       ) {
         return `A directory already exists with the same name. Please enter a different ${isModule ? "module" : "project"} name.`;
       }
+
+      return undefined;
     },
   });
 

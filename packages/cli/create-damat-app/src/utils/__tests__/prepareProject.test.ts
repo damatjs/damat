@@ -180,10 +180,36 @@ describe("prepareProject action", () => {
       expect(envContent).toContain("FRONTEND_CORS=");
       expect(envContent).toContain("AUTH_CORS=");
       expect(envContent).toContain("REDIS_URL=redis://localhost:6379");
-      expect(envContent).toContain("JWT_SECRET=supersecret");
-      expect(envContent).toContain("COOKIE_SECRET=supersecret");
+      // secrets are random (64 hex chars), never a hardcoded default
+      expect(envContent).toMatch(/JWT_SECRET=[0-9a-f]{64}/);
+      expect(envContent).toMatch(/COOKIE_SECRET=[0-9a-f]{64}/);
+      expect(envContent).not.toContain("supersecret");
+      // DATABASE_URL placeholder so the app fails with a clear connection
+      // error instead of a missing-var crash
+      expect(envContent).toContain(
+        "DATABASE_URL=postgres://postgres:postgres@localhost:5432/cool_app",
+      );
+      expect(envContent).toContain("# Update DATABASE_URL");
       // FRONTEND_CORS should include the docs origin appended
       expect(envContent).toContain("https://docs.damat.com");
+    });
+
+    it("should generate a fresh secret per invocation", async () => {
+      const pm = makePackageManager("bun@1.0.0");
+      const run = () =>
+        prepare({
+          isModule: false,
+          directory: "/proj",
+          projectName: "app",
+          spinner: makeSpinner(),
+          processManager,
+          packageManager: pm,
+        });
+      await run();
+      await run();
+      const first = appendFileCalls[0]![1].match(/JWT_SECRET=([0-9a-f]{64})/)![1];
+      const second = appendFileCalls[1]![1].match(/JWT_SECRET=([0-9a-f]{64})/)![1];
+      expect(first).not.toBe(second);
     });
 
     it("should NOT update versions when no version is provided", async () => {

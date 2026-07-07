@@ -28,7 +28,8 @@ export async function runScaffoldModule({
   try {
     await execute(
       [
-        `bunx @damatjs/damat-cli@${version || "latest"} module init ${name}`,
+        "bunx",
+        [`@damatjs/damat-cli@${version || "latest"}`, "module", "init", name],
         {
           signal: abortController?.signal,
           cwd: directoryPath || process.cwd(),

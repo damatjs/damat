@@ -2,6 +2,7 @@
 import { runCli, type Command } from "@damatjs/cli";
 import create from "./commands/create";
 import type { ProjectOptions } from "./utils/projectCreator";
+import { CLI_VERSION } from "./version.generated";
 
 const createCommand: Command = {
   name: "create",
@@ -52,7 +53,7 @@ const createCommand: Command = {
 
 runCli({
   name: "create-damat-app",
-  version: "0.0.1",
+  version: CLI_VERSION,
   description: "Create a damat project using a single command.",
   commands: [createCommand],
   // So `create-damat-app my-app [--module]` works without typing `create`.

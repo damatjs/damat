@@ -1,12 +1,18 @@
-import { exec, spawnSync, SpawnSyncOptions } from "child_process"
+import { execFile, spawnSync } from "child_process"
 import util from "util"
 import { getAbortError } from "./createAbortController"
 
-const promiseExec = util.promisify(exec)
+const promiseExecFile = util.promisify(execFile)
 
 export type ExecuteResult = {
   stdout?: string
   stderr?: string
+}
+
+export type ExecuteOptions = {
+  cwd?: string | undefined
+  signal?: AbortSignal | undefined
+  env?: NodeJS.ProcessEnv | undefined
 }
 
 export type VerboseOptions = {
@@ -20,32 +26,37 @@ export type VerboseOptions = {
   needOutput?: boolean
 }
 
-type PromiseExecParams = Parameters<typeof promiseExec>
-type SpawnParams = [string, SpawnSyncOptions]
+// Commands are always [binary, argv[], options?]. Arguments are passed as an
+// argv array and never interpreted by a shell (shell: false), so values such
+// as project names, repo URLs, versions, and paths with spaces are treated as
+// literal single arguments — no command injection, no word splitting.
+export type ExecuteCommand = [string, string[], ExecuteOptions?]
 
 const execute = async (
-  command: SpawnParams | PromiseExecParams,
+  command: ExecuteCommand,
   { verbose = false, needOutput = false }: VerboseOptions
 ): Promise<ExecuteResult> => {
+  const [binary, args, options = {}] = command
+  const env = {
+    ...process.env,
+    ...(options.env || {}),
+  }
+
   if (verbose) {
-    const [commandStr, options] = command as SpawnParams
-    const childProcess = spawnSync(commandStr, {
+    const childProcess = spawnSync(binary, args, {
       ...options,
-      shell: true,
+      shell: false,
       stdio: needOutput
         ? "pipe"
         : [process.stdin, process.stdout, process.stderr],
-      env: {
-        ...process.env,
-        ...(options.env || {}),
-      },
+      env,
     })
 
     if (childProcess.error || childProcess.status !== 0) {
       throw (
         childProcess.error ||
         childProcess.stderr?.toString() ||
-        `${commandStr} failed with status ${childProcess.status}`
+        `${[binary, ...args].join(" ")} failed with status ${childProcess.status}`
       )
     }
 
@@ -67,13 +78,9 @@ const execute = async (
       stderr: childProcess.stderr?.toString() || "",
     }
   } else {
-    const [commandStr, options] = command as PromiseExecParams
-    const childProcess = await promiseExec(commandStr, {
+    const childProcess = await promiseExecFile(binary, args, {
       ...options,
-      env: {
-        ...process.env,
-        ...(options?.env || {}),
-      },
+      env,
     })
 
     return {

@@ -25,18 +25,21 @@ const colNames = (schema: TableSchema): string[] =>
   schema.columns.map((c) => c.name);
 
 // Every model in this module has timestamps + soft-delete enabled by default.
+// Auto-timestamps are timestamptz (sub-second); updated_at is maintained on
+// every write, so it is NOT NULL with a now() default (not perpetually NULL).
 const expectAuditColumns = (schema: TableSchema) => {
   const createdAt = col(schema, "created_at");
-  expect(createdAt.type).toBe("date");
+  expect(createdAt.type).toBe("timestamp with time zone");
   expect(createdAt.nullable).toBe(false);
   expect(createdAt.default).toBe("now()");
 
   const updatedAt = col(schema, "updated_at");
-  expect(updatedAt.type).toBe("date");
-  expect(updatedAt.nullable).toBe(true);
+  expect(updatedAt.type).toBe("timestamp with time zone");
+  expect(updatedAt.nullable).toBe(false);
+  expect(updatedAt.default).toBe("now()");
 
   const deletedAt = col(schema, "deleted_at");
-  expect(deletedAt.type).toBe("date");
+  expect(deletedAt.type).toBe("timestamp with time zone");
   expect(deletedAt.nullable).toBe(true);
 };
 

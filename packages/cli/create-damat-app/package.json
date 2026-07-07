@@ -16,15 +16,16 @@
   "license": "MIT",
   "scripts": {
     "dev": "bun run src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target bun",
+    "build": "bun scripts/embedVersion.ts && bun build src/index.ts --outdir dist --target bun",
     "start": "bun run dist/index.js",
     "typecheck": "bun tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)"
   },
   "dependencies": {
     "@clack/prompts": "^0.9.1",
-    "@damatjs/cli": "*",
-    "@damatjs/deps": "*",
+    "@damatjs/cli": "workspace:*",
+    "@damatjs/deps": "workspace:*",
     "boxen": "^8.0.1",
     "configstore": "^8.0.0",
     "node-emoji": "^2.0.2",
@@ -38,7 +39,7 @@
   },
   "devDependencies": {
     "@types/bun": "1.3.9",
-    "@damatjs/typescript-config": "*"
+    "@damatjs/typescript-config": "workspace:*"
   },
   "engines": {
     "bun": ">=1.1.0"
@@ -48,6 +49,9 @@
     "url": "https://github.com/damatjs/damat",
     "directory": "packages/cli/create-damat-app"
   },
+  "files": [
+    "dist"
+  ],
   "author": "Abel Lamesgen",
   "publishConfig": {
     "access": "public"

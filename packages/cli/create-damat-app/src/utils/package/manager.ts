@@ -1,5 +1,5 @@
 import path from "path"
-import execute, { VerboseOptions } from "../commands/executor"
+import execute, { ExecuteOptions, VerboseOptions } from "../commands/executor"
 import logMessage from "../logger/message"
 import ProcessManager from "../commands/manager"
 import { existsSync, rmSync } from "fs"
@@ -25,11 +25,11 @@ export default class PackageManager {
 
 
   private async getVersion(
-    execOptions: Record<string, unknown>
+    execOptions: ExecuteOptions
   ): Promise<string | undefined> {
 
     try {
-      const result = await execute(["bun -v", execOptions], {
+      const result = await execute(["bun", ["-v"], execOptions], {
         verbose: false,
       })
       const version = result.stdout?.trim()
@@ -51,7 +51,7 @@ export default class PackageManager {
     }
   }
 
-  async setPackageManager(execOptions: Record<string, unknown>): Promise<void> {
+  async setPackageManager(execOptions: ExecuteOptions): Promise<void> {
     // check whether package manager is available and get version
     await this.processManager.runProcess({
       process: async () => {
@@ -80,8 +80,7 @@ export default class PackageManager {
   async removeLockFiles(directory: string): Promise<void> {
     const lockFiles: string[] = ["bun.lock", "package-lock.json", "pnpm-lock.yaml", ".bun"];
 
-    const filesToRemove = lockFiles || []
-    for (const file of filesToRemove) {
+    for (const file of lockFiles) {
       const filePath = path.join(directory, file)
       if (existsSync(filePath)) {
         rmSync(filePath, {
@@ -92,17 +91,15 @@ export default class PackageManager {
     }
   }
 
-  async installDependencies(execOptions: Record<string, unknown>) {
+  async installDependencies(execOptions: ExecuteOptions) {
     // Remove lock files from other package managers
     if (execOptions.cwd && typeof execOptions.cwd === "string") {
       await this.removeLockFiles(execOptions.cwd)
     }
 
-    const command: string = "bun install"
-
     await this.processManager.runProcess({
       process: async () => {
-        await execute([command, execOptions], {
+        await execute(["bun", ["install"], execOptions], {
           verbose: this.verbose,
         })
       },
@@ -110,17 +107,16 @@ export default class PackageManager {
     })
   }
 
+  // `args` is an argv array (e.g. ["dev"] or ["db:migrate", "--force"]);
+  // each entry is passed to the child process as a literal argument.
   async runCommand(
-    command: string,
-    execOptions: Record<string, unknown>,
+    args: string[],
+    execOptions: ExecuteOptions,
     verboseOptions: VerboseOptions = {}
   ) {
-
-    const commandStr = this.getCommandStr(command)
-
     return await this.processManager.runProcess({
       process: async () => {
-        return await execute([commandStr, execOptions], {
+        return await execute(["bun", ["run", ...args], execOptions], {
           verbose: this.verbose,
           ...verboseOptions,
         })
@@ -130,17 +126,13 @@ export default class PackageManager {
   }
 
   async rundamatCommand(
-
-    command: string,
-    execOptions: Record<string, unknown>,
+    args: string[],
+    execOptions: ExecuteOptions,
     verboseOptions: VerboseOptions = {}
   ) {
-
-    const commandStr = `bun run damat ${command}`
-
     return await this.processManager.runProcess({
       process: async () => {
-        return await execute([commandStr, execOptions], {
+        return await execute(["bun", ["run", "damat", ...args], execOptions], {
           verbose: this.verbose,
           ...verboseOptions,
         })
@@ -153,6 +145,11 @@ export default class PackageManager {
     const format: string = `bun run ${command}`;
 
     return format
+  }
+
+  // argv form of getCommandStr for shell-free spawning: [binary, args].
+  getCommandArgs(command: string): [string, string[]] {
+    return ["bun", ["run", command]]
   }
 
 

@@ -27,9 +27,20 @@ export default async function cloneRepo({
 }: CloneRepoOptions) {
   const defaultRepo = isModule ? DEFAULT_MODULE_REPO : DEFAULT_REPO;
 
+  // `--` stops git option parsing so a hostile repo URL can never be
+  // interpreted as a flag (e.g. --upload-pack). Arguments are passed as an
+  // argv array, so directory names with spaces are a single literal argument.
   await execute(
     [
-      `git clone ${repoUrl || defaultRepo} ${directoryName} --depth 1`,
+      "git",
+      [
+        "clone",
+        "--depth",
+        "1",
+        "--",
+        repoUrl || defaultRepo,
+        ...(directoryName ? [directoryName] : []),
+      ],
       {
         signal: abortController?.signal,
       },
@@ -63,7 +74,7 @@ export async function runCloneRepo({
     });
 
     deleteGitDirectory(projectName);
-    initializeFreshGit({ abortController, verbose });
+    await initializeFreshGit({ directory: projectName, abortController, verbose });
   } catch (e) {
     if (isAbortError(e)) {
       process.exit();
@@ -114,24 +125,31 @@ function deleteWithCommand(projectDirectory: string, dirName: string) {
 }
 
 export async function initializeFreshGit({
+  directory,
   abortController,
   verbose = false,
   initialMessage = "chore: bootstrap project structure",
   branchName = "main",
 }: {
+  // The scaffolded project directory. Every git step MUST run inside it —
+  // omitting cwd would silently init/commit a repo over the user's current
+  // working tree instead of the new project.
+  directory: string;
   abortController?: AbortController;
   verbose?: boolean;
   initialMessage?: string;
   branchName?: string;
 }) {
   const execOptions = {
+    cwd: directory,
     signal: abortController?.signal,
   };
 
-  const run = (command: string) => execute([command, execOptions], { verbose });
+  const run = (args: string[]) =>
+    execute(["git", args, execOptions], { verbose });
 
   try {
-    await run(`git init -b ${branchName}`);
+    await run(["init", "-b", branchName]);
   } catch (err) {
     if (verbose) {
       console.warn("No changes to initialize.");
@@ -139,7 +157,7 @@ export async function initializeFreshGit({
   }
 
   try {
-    await run(`git add .`);
+    await run(["add", "."]);
   } catch (err) {
     if (verbose) {
       console.warn("No changes to add.");
@@ -147,7 +165,7 @@ export async function initializeFreshGit({
   }
 
   try {
-    await run(`git commit -m "${initialMessage}"`);
+    await run(["commit", "-m", initialMessage]);
   } catch (err) {
     if (verbose) {
       console.warn("No changes to commit.");

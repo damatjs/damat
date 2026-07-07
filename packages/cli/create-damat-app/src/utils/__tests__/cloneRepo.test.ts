@@ -109,34 +109,63 @@ describe("cloneRepo actions", () => {
       await cloneRepo({ directoryName: "my-app" });
       expect(mockExecute).toHaveBeenCalledTimes(1);
       const [commandArg] = executeCalls[0]!;
-      expect(commandArg[0]).toContain("git clone");
-      expect(commandArg[0]).toContain("damat-starter-default");
-      expect(commandArg[0]).toContain("my-app");
-      expect(commandArg[0]).toContain("--depth 1");
+      expect(commandArg[0]).toBe("git");
+      expect(commandArg[1]).toEqual([
+        "clone",
+        "--depth",
+        "1",
+        "--",
+        "https://github.com/damatjs/damat-starter-default",
+        "my-app",
+      ]);
     });
 
     it("should clone the default MODULE repo when isModule is true", async () => {
       await cloneRepo({ directoryName: "mod", isModule: true });
       const [commandArg] = executeCalls[0]!;
-      expect(commandArg[0]).toContain("damat-starter-module");
+      expect(commandArg[1]).toContain(
+        "https://github.com/damatjs/damat-starter-module",
+      );
     });
 
     it("should use a custom repoUrl when provided", async () => {
       await cloneRepo({ directoryName: "x", repoUrl: "https://example.com/r" });
       const [commandArg] = executeCalls[0]!;
-      expect(commandArg[0]).toContain("https://example.com/r");
+      expect(commandArg[1]).toContain("https://example.com/r");
+    });
+
+    it("should keep a directory name with spaces as ONE argv entry", async () => {
+      await cloneRepo({ directoryName: "my app dir" });
+      const [commandArg] = executeCalls[0]!;
+      expect(commandArg[1]).toContain("my app dir");
+    });
+
+    it("should place `--` before the repo URL so it can never be parsed as a git flag", async () => {
+      await cloneRepo({ directoryName: "x", repoUrl: "https://example.com/r" });
+      const [commandArg] = executeCalls[0]!;
+      const args = commandArg[1] as string[];
+      expect(args.indexOf("--")).toBeGreaterThan(-1);
+      expect(args.indexOf("--")).toBeLessThan(args.indexOf("https://example.com/r"));
     });
 
     it("should pass the abort signal through to execute", async () => {
       const ac = new AbortController();
       await cloneRepo({ directoryName: "x", abortController: ac });
       const [commandArg] = executeCalls[0]!;
-      expect(commandArg[1].signal).toBe(ac.signal);
+      expect(commandArg[2].signal).toBe(ac.signal);
     });
 
-    it("should default directoryName to empty string", async () => {
+    it("should omit the directory argument when directoryName is empty", async () => {
       await cloneRepo({});
       expect(mockExecute).toHaveBeenCalledTimes(1);
+      const [commandArg] = executeCalls[0]!;
+      expect(commandArg[1]).toEqual([
+        "clone",
+        "--depth",
+        "1",
+        "--",
+        "https://github.com/damatjs/damat-starter-default",
+      ]);
     });
   });
 
@@ -152,9 +181,6 @@ describe("cloneRepo actions", () => {
         spinner,
       });
 
-      // runCloneRepo kicks off initializeFreshGit WITHOUT awaiting it, so flush
-      // microtasks before asserting on the fire-and-forget git init/add/commit.
-      await new Promise((r) => setTimeout(r, 0));
       // 1 clone + 3 init commands (init, add, commit)
       expect(mockExecute).toHaveBeenCalledTimes(4);
       // rmSync called for .git and .github
@@ -162,6 +188,25 @@ describe("cloneRepo actions", () => {
       expect(mockRmSync.mock.calls[0]![0]).toBe(path.join("proj", ".git"));
       expect(mockRmSync.mock.calls[1]![0]).toBe(path.join("proj", ".github"));
       expect(spinner.stop).not.toHaveBeenCalled();
+    });
+
+    it("REGRESSION: should run every git init step inside the project directory (cwd)", async () => {
+      // Without cwd, `git init && git add . && git commit` would run in the
+      // user's CURRENT directory, silently committing over their working tree.
+      await runCloneRepo({
+        projectName: "proj",
+        repoUrl: "",
+        abortController: new AbortController(),
+        spinner: baseSpinner(),
+      });
+
+      const gitSteps = executeCalls.filter(
+        (c) => c[0][0] === "git" && c[0][1][0] !== "clone",
+      );
+      expect(gitSteps).toHaveLength(3);
+      for (const [commandArg] of gitSteps) {
+        expect(commandArg[2].cwd).toBe("proj");
+      }
     });
 
     it("should fall back to execFileSync deletion when fs.rmSync throws", async () => {
@@ -241,7 +286,9 @@ describe("cloneRepo actions", () => {
       isAbortErrorImpl = () => false;
       executeImpl = async (cmd: any) => {
         // fail only on the clone (first call), not the git-init calls
-        if (String(cmd[0]).includes("git clone")) throw new Error("clone boom");
+        if (cmd[0] === "git" && cmd[1][0] === "clone") {
+          throw new Error("clone boom");
+        }
         return { stdout: "", stderr: "" };
       };
       const spinner = baseSpinner();
@@ -259,22 +306,48 @@ describe("cloneRepo actions", () => {
 
   describe("initializeFreshGit", () => {
     it("should run git init, add, and commit with defaults", async () => {
-      await initializeFreshGit({});
-      const cmds = executeCalls.map((c) => c[0][0]);
-      expect(cmds[0]).toBe("git init -b main");
-      expect(cmds[1]).toBe("git add .");
-      expect(cmds[2]).toContain("git commit -m");
-      expect(cmds[2]).toContain("chore: bootstrap project structure");
+      await initializeFreshGit({ directory: "/scaffolded/proj" });
+      const argvs = executeCalls.map((c) => c[0][1]);
+      expect(argvs[0]).toEqual(["init", "-b", "main"]);
+      expect(argvs[1]).toEqual(["add", "."]);
+      expect(argvs[2]).toEqual([
+        "commit",
+        "-m",
+        "chore: bootstrap project structure",
+      ]);
+    });
+
+    it("REGRESSION: should pass the project directory as cwd to EVERY git step", async () => {
+      await initializeFreshGit({ directory: "/scaffolded/proj" });
+      expect(executeCalls).toHaveLength(3);
+      for (const [commandArg] of executeCalls) {
+        expect(commandArg[0]).toBe("git");
+        expect(commandArg[2].cwd).toBe("/scaffolded/proj");
+      }
+    });
+
+    it("should pass the commit message as ONE argv entry (quotes/spaces safe)", async () => {
+      await initializeFreshGit({
+        directory: "proj",
+        initialMessage: 'has "quotes" and $(subshell)',
+      });
+      const commitArgs = executeCalls[2]![0][1];
+      expect(commitArgs).toEqual([
+        "commit",
+        "-m",
+        'has "quotes" and $(subshell)',
+      ]);
     });
 
     it("should honor custom branchName and initialMessage", async () => {
       await initializeFreshGit({
+        directory: "proj",
         branchName: "develop",
         initialMessage: "init!",
       });
-      const cmds = executeCalls.map((c) => c[0][0]);
-      expect(cmds[0]).toBe("git init -b develop");
-      expect(cmds[2]).toContain("init!");
+      const argvs = executeCalls.map((c) => c[0][1]);
+      expect(argvs[0]).toEqual(["init", "-b", "develop"]);
+      expect(argvs[2]).toContain("init!");
     });
 
     it("should swallow errors from each git step (no verbose warning)", async () => {
@@ -283,7 +356,9 @@ describe("cloneRepo actions", () => {
       };
       const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
       try {
-        await expect(initializeFreshGit({})).resolves.toBeUndefined();
+        await expect(
+          initializeFreshGit({ directory: "proj" }),
+        ).resolves.toBeUndefined();
         expect(warnSpy).not.toHaveBeenCalled();
       } finally {
         warnSpy.mockRestore();
@@ -296,7 +371,7 @@ describe("cloneRepo actions", () => {
       };
       const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
       try {
-        await initializeFreshGit({ verbose: true });
+        await initializeFreshGit({ directory: "proj", verbose: true });
         expect(warnSpy).toHaveBeenCalledTimes(3);
       } finally {
         warnSpy.mockRestore();

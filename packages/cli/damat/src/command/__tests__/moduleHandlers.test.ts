@@ -7,6 +7,7 @@ import {
   spawnCalls,
   spawnSyncCalls,
   rmCalls,
+  cpCalls,
   loadEnvCalls,
   appendCalls,
   mockMkdirSync,
@@ -669,6 +670,22 @@ describe("resolveModuleSource (helpers/source.ts)", () => {
       /neither an existing path nor a recognizable git source/,
     );
   });
+
+  it("refuses a github-shorthand subpath that escapes the clone (path traversal)", async () => {
+    // The temp dir exists after clone, so the only thing that can fail is the
+    // containment check — a `..`-laden subpath resolves outside the checkout.
+    mockExistsSync.mockImplementation((p: string) =>
+      String(p).includes("damat-module-"),
+    );
+    fsState.spawnSyncResult = { status: 0, stdout: "", stderr: "" };
+    const fn = await get();
+    await expect(fn("acme/mod/../../etc", "/cwd")).rejects.toThrow(
+      /escapes the cloned repository/,
+    );
+    expect(rmCalls.some((c) => String(c.path).includes("damat-module-"))).toBe(
+      true,
+    );
+  });
 });
 
 describe("module add command", () => {
@@ -724,7 +741,7 @@ describe("module add command", () => {
     baseLocalInstall();
     const cmd = await get();
     const { ctx, logger } = createContext(
-      { dir: "src/modules" },
+      { dir: "src/modules", "allow-unverified": true },
       { args: ["/pkg"], cwd: "/app" },
     );
     const res = await cmd.handler(ctx);
@@ -753,7 +770,7 @@ describe("module add command", () => {
     };
     const cmd = await get();
     const { ctx, logger } = createContext(
-      { dir: "src/modules" },
+      { dir: "src/modules", "allow-unverified": true },
       { args: ["/pkg"], cwd: "/app" },
     );
     await cmd.handler(ctx);
@@ -766,7 +783,7 @@ describe("module add command", () => {
     baseLocalInstall({ "/app/src/modules/user": true });
     const cmd = await get();
     const { ctx, logger } = createContext(
-      { dir: "src/modules" },
+      { dir: "src/modules", "allow-unverified": true },
       { args: ["/pkg"], cwd: "/app" },
     );
     const res = await cmd.handler(ctx);
@@ -780,7 +797,7 @@ describe("module add command", () => {
     baseLocalInstall({ "/app/src/modules/user": true });
     const cmd = await get();
     const { ctx } = createContext(
-      { dir: "src/modules", force: true },
+      { dir: "src/modules", force: true, "allow-unverified": true },
       { args: ["/pkg"], cwd: "/app" },
     );
     const res = await cmd.handler(ctx);
@@ -809,7 +826,7 @@ describe("module add command", () => {
     });
     const cmd = await get();
     const { ctx, logger } = createContext(
-      { dir: "src/modules" },
+      { dir: "src/modules", "allow-unverified": true },
       { args: ["/pkg"], cwd: "/app" },
     );
     const res = await cmd.handler(ctx);
@@ -846,7 +863,7 @@ describe("module add command", () => {
     mockStatSyncForLinks();
     const cmd = await get();
     const { ctx, logger } = createContext(
-      { dir: "src/modules" },
+      { dir: "src/modules", "allow-unverified": true },
       { args: ["/pkg"], cwd: "/app" },
     );
     const res = await cmd.handler(ctx);
@@ -888,7 +905,7 @@ describe("module add command", () => {
     mockStatSyncForLinks();
     const cmd = await get();
     const { ctx, logger } = createContext(
-      { dir: "src/modules" },
+      { dir: "src/modules", "allow-unverified": true },
       { args: ["/pkg"], cwd: "/app" },
     );
     const res = await cmd.handler(ctx);
@@ -984,7 +1001,7 @@ describe("module add command", () => {
     fsState.spawnSyncResult = { status: 0, stdout: "ok", stderr: "" };
     const cmd = await get();
     const { ctx, logger } = createContext(
-      { dir: "src/modules" },
+      { dir: "src/modules", "allow-unverified": true },
       { args: ["/pkg"], cwd: "/app" },
     );
     const res = await cmd.handler(ctx);
@@ -1004,8 +1021,10 @@ describe("module add command", () => {
       logger.warn.mock.calls.some((c) => String(c[0]).includes("before starting")),
     ).toBe(true);
     expect(appendCalls.length).toBeGreaterThan(0);
-    // `bun add` ran.
-    expect(spawnSyncCalls.some((c) => c.cmd === "bun")).toBe(true);
+    // `bun add` ran, with lifecycle scripts off by default.
+    const bunAdd = spawnSyncCalls.find((c) => c.cmd === "bun");
+    expect(bunAdd).toBeDefined();
+    expect(bunAdd!.args).toContain("--ignore-scripts");
   });
 
   it("fails when the package install fails", async () => {
@@ -1018,7 +1037,7 @@ describe("module add command", () => {
     fsState.spawnSyncResult = { status: 1, stdout: "", stderr: "boom" };
     const cmd = await get();
     const { ctx, logger } = createContext(
-      { dir: "src/modules" },
+      { dir: "src/modules", "allow-unverified": true },
       { args: ["/pkg"], cwd: "/app" },
     );
     const res = await cmd.handler(ctx);
@@ -1045,7 +1064,7 @@ describe("module add command", () => {
     };
     const cmd = await get();
     const { ctx } = createContext(
-      { dir: "src/modules" },
+      { dir: "src/modules", "allow-unverified": true },
       { args: ["/pkg"], cwd: "/app" },
     );
     const res = await cmd.handler(ctx);
@@ -1062,12 +1081,169 @@ describe("module add command", () => {
     const cmd = await get();
     // readModuleManifest returns undefined → manifest.name throws inside try.
     const { ctx, logger } = createContext(
-      { dir: "src/modules" },
+      { dir: "src/modules", "allow-unverified": true },
       { args: ["/pkg"], cwd: "/app" },
     );
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(logger.error).toHaveBeenCalled();
+  });
+
+  // --- hardening gates -------------------------------------------------
+
+  /** Run fn with DAMAT_MODULE_VERIFY forced to `value` (undefined = unset). */
+  async function withVerifyPolicy(value: string | undefined, fn: () => Promise<void>) {
+    const saved = process.env.DAMAT_MODULE_VERIFY;
+    if (value === undefined) delete process.env.DAMAT_MODULE_VERIFY;
+    else process.env.DAMAT_MODULE_VERIFY = value;
+    try {
+      await fn();
+    } finally {
+      if (saved === undefined) delete process.env.DAMAT_MODULE_VERIFY;
+      else process.env.DAMAT_MODULE_VERIFY = saved;
+    }
+  }
+
+  it("refuses a path source without --allow-unverified, writing nothing", async () => {
+    await withVerifyPolicy(undefined, async () => {
+      baseLocalInstall();
+      const cmd = await get();
+      const { ctx, logger } = createContext(
+        { dir: "src/modules" },
+        { args: ["/pkg"], cwd: "/app" },
+      );
+      const res = await cmd.handler(ctx);
+      expect(res.exitCode).toBe(1);
+      expect(
+        logger.error.mock.calls.some((c) =>
+          String(c[0]).includes("--allow-unverified"),
+        ),
+      ).toBe(true);
+      expect(cpCalls).toHaveLength(0);
+      expect(writeCalls).toHaveLength(0);
+    });
+  });
+
+  it("honours DAMAT_MODULE_VERIFY=off as the unverified opt-in", async () => {
+    await withVerifyPolicy("off", async () => {
+      baseLocalInstall();
+      const cmd = await get();
+      const { ctx } = createContext(
+        { dir: "src/modules" },
+        { args: ["/pkg"], cwd: "/app" },
+      );
+      const res = await cmd.handler(ctx);
+      expect(res.exitCode).toBe(0);
+    });
+  });
+
+  it("blocks an unverified source that fails local validation", async () => {
+    baseLocalInstall();
+    mm.validateReport = {
+      valid: false,
+      errors: ["broken entry"],
+      warnings: [],
+      manifest: { name: "user" },
+    };
+    const cmd = await get();
+    const { ctx, logger } = createContext(
+      { dir: "src/modules", "allow-unverified": true },
+      { args: ["/pkg"], cwd: "/app" },
+    );
+    const res = await cmd.handler(ctx);
+    expect(res.exitCode).toBe(1);
+    expect(
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("failed validation"),
+      ),
+    ).toBe(true);
+    expect(cpCalls).toHaveLength(0);
+  });
+
+  it("rejects a --name override that is not a safe module id", async () => {
+    baseLocalInstall();
+    const cmd = await get();
+    for (const name of ["../evil", "a/b", "..", "Evil"]) {
+      const { ctx, logger } = createContext(
+        { dir: "src/modules", name, "allow-unverified": true },
+        { args: ["/pkg"], cwd: "/app" },
+      );
+      const res = await cmd.handler(ctx);
+      expect(res.exitCode).toBe(1);
+      expect(
+        logger.error.mock.calls.some((c) => String(c[0]).includes("kebab-case")),
+      ).toBe(true);
+    }
+    expect(cpCalls).toHaveLength(0);
+  });
+
+  it("rejects a --dir that is absolute or escapes the app", async () => {
+    baseLocalInstall();
+    const cmd = await get();
+    for (const dir of ["/etc", "../outside", "src/../../up"]) {
+      const { ctx, logger } = createContext(
+        { dir, "allow-unverified": true },
+        { args: ["/pkg"], cwd: "/app" },
+      );
+      const res = await cmd.handler(ctx);
+      expect(res.exitCode).toBe(1);
+      expect(
+        logger.error.mock.calls.some((c) => String(c[0]).includes("--dir")),
+      ).toBe(true);
+    }
+    expect(cpCalls).toHaveLength(0);
+  });
+
+  it("refuses unsafe dependency specs before any file is written", async () => {
+    baseLocalInstall({ "/pkg/package.json": true });
+    fsState.readFileMap = {
+      "/app/damat.config.ts": `export default defineConfig({\n  modules: {},\n});\n`,
+      "/app/tsconfig.json": JSON.stringify({}),
+      "/pkg/package.json": JSON.stringify({
+        dependencies: { evil: "file:../../pwn" },
+      }),
+    };
+    const cmd = await get();
+    const { ctx, logger } = createContext(
+      { dir: "src/modules" },
+      { args: ["/pkg"], cwd: "/app" },
+    );
+    // Gate on specs even though the source itself was accepted.
+    ctx.options["allow-unverified"] = false;
+    await withVerifyPolicy("off", async () => {
+      const res = await cmd.handler(ctx);
+      expect(res.exitCode).toBe(1);
+      expect(
+        logger.error.mock.calls.some((c) =>
+          String(c[0]).includes("unsafe package specs"),
+        ),
+      ).toBe(true);
+      expect(cpCalls).toHaveLength(0);
+      expect(spawnSyncCalls.some((c) => c.cmd === "bun")).toBe(false);
+    });
+  });
+
+  it("permits protocol ranges and lifecycle scripts only via the opt-in flags", async () => {
+    baseLocalInstall({ "/pkg/package.json": true });
+    fsState.readFileMap = {
+      "/app/damat.config.ts": `export default defineConfig({\n  modules: {},\n});\n`,
+      "/app/tsconfig.json": JSON.stringify({}),
+      "/pkg/package.json": JSON.stringify({
+        dependencies: { widget: "git+https://github.com/acme/widget.git" },
+      }),
+    };
+    const cmd = await get();
+    const { ctx } = createContext(
+      { dir: "src/modules", "allow-unverified": true, "allow-scripts": true },
+      { args: ["/pkg"], cwd: "/app" },
+    );
+    const res = await cmd.handler(ctx);
+    expect(res.exitCode).toBe(0);
+    const bunAdd = spawnSyncCalls.find((c) => c.cmd === "bun");
+    expect(bunAdd!.args).toContain(
+      "widget@git+https://github.com/acme/widget.git",
+    );
+    expect(bunAdd!.args).not.toContain("--ignore-scripts");
   });
 });
 

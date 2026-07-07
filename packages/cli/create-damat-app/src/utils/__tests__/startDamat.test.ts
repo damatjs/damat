@@ -17,15 +17,15 @@ import ProcessManager from "../commands/manager";
 import * as realChildProcessMod from "child_process";
 const REAL_CHILD_PROCESS = { ...realChildProcessMod };
 
-let lastExecArgs: any[] = [];
+let lastSpawnArgs: any[] = [];
 const stdoutPipe = mock((_dest: any) => {});
 const stderrPipe = mock((_dest: any) => {});
 let childProcessResult: any = {
   stdout: { pipe: stdoutPipe },
   stderr: { pipe: stderrPipe },
 };
-const fakeExec = mock((...args: any[]) => {
-  lastExecArgs = args;
+const fakeSpawn = mock((...args: any[]) => {
+  lastSpawnArgs = args;
   return childProcessResult;
 });
 
@@ -33,7 +33,7 @@ describe("startDamat", () => {
   beforeAll(() => {
     mock.module("child_process", () => ({
       ...REAL_CHILD_PROCESS,
-      exec: fakeExec,
+      spawn: fakeSpawn,
     }));
   });
 
@@ -42,8 +42,8 @@ describe("startDamat", () => {
   });
 
   beforeEach(() => {
-    lastExecArgs = [];
-    fakeExec.mockClear();
+    lastSpawnArgs = [];
+    fakeSpawn.mockClear();
     stdoutPipe.mockClear();
     stderrPipe.mockClear();
     childProcessResult = {
@@ -52,18 +52,33 @@ describe("startDamat", () => {
     };
   });
 
-  it("should exec the package manager's dev command in the given directory", () => {
+  it("should spawn the dev command as an argv array in the given directory", () => {
     const pm = new PackageManager(new ProcessManager());
     const abortController = new AbortController();
 
     startDamat({ directory: "/project/dir", abortController, packageManager: pm });
 
-    expect(fakeExec).toHaveBeenCalledTimes(1);
-    const [command, options] = lastExecArgs;
-    expect(command).toBe(pm.getCommandStr("dev"));
+    expect(fakeSpawn).toHaveBeenCalledTimes(1);
+    const [binary, args, options] = lastSpawnArgs;
+    expect([binary, args]).toEqual(pm.getCommandArgs("dev"));
     expect(options.cwd).toBe("/project/dir");
     expect(options.signal).toBe(abortController.signal);
     expect(options.env.PATH ?? options.env.Path).toBeDefined();
+    // no shell: the directory only travels via cwd, never a command string
+    expect(options.shell).toBeUndefined();
+  });
+
+  it("should handle directories with spaces via cwd (no string interpolation)", () => {
+    const pm = new PackageManager(new ProcessManager());
+    startDamat({
+      directory: "/my projects/damat app",
+      abortController: new AbortController(),
+      packageManager: pm,
+    });
+
+    const [, args, options] = lastSpawnArgs;
+    expect(options.cwd).toBe("/my projects/damat app");
+    expect(args).toEqual(["run", "dev"]);
   });
 
   it("should pipe child stdout and stderr to the process streams", () => {
@@ -82,7 +97,7 @@ describe("startDamat", () => {
     const pm = new PackageManager(new ProcessManager());
     startDamat({ directory: "/dir", packageManager: pm } as any);
 
-    const [, options] = lastExecArgs;
+    const [, , options] = lastSpawnArgs;
     expect(options.signal).toBeUndefined();
   });
 

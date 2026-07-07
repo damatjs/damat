@@ -1,4 +1,4 @@
-import { join, resolve, isAbsolute } from "node:path";
+import { join, resolve, isAbsolute, sep } from "node:path";
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
@@ -104,6 +104,17 @@ export async function resolveModuleSource(
   }
 
   const moduleDir = subDir ? join(tempDir, subDir) : tempDir;
+  // A `..`-laden subpath (e.g. `user/repo/../../etc`) would resolve outside the
+  // temp checkout; refuse anything that escapes it before touching the path.
+  const resolvedTemp = resolve(tempDir);
+  const resolvedModuleDir = resolve(moduleDir);
+  if (
+    resolvedModuleDir !== resolvedTemp &&
+    !resolvedModuleDir.startsWith(resolvedTemp + sep)
+  ) {
+    rmSync(tempDir, { recursive: true, force: true });
+    throw new Error(`Module subpath "${subDir}" escapes the cloned repository`);
+  }
   if (!existsSync(moduleDir)) {
     rmSync(tempDir, { recursive: true, force: true });
     throw new Error(`Path "${subDir}" not found inside ${repoUrl}`);

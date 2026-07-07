@@ -1,4 +1,4 @@
-import { exec } from "child_process"
+import { spawn } from "child_process"
 import PackageManager from "../package/manager"
 
 type StartOptions = {
@@ -12,8 +12,10 @@ export default ({
     abortController,
     packageManager,
 }: StartOptions) => {
-    const command = packageManager.getCommandStr(`dev`)
-    const childProcess = exec(command, {
+    // argv-array spawn (no shell): the directory is passed as cwd and never
+    // interpolated into a command string, so paths with spaces are safe.
+    const [binary, args] = packageManager.getCommandArgs("dev")
+    const childProcess = spawn(binary, args, {
         cwd: directory,
         signal: abortController?.signal,
         env: {
