@@ -17,6 +17,11 @@
   "publishConfig": {
     "access": "public"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/damatjs/damat",
+    "directory": "packages/module"
+  },
   "license": "MIT",
   "author": "Abel Lamesgen",
   "files": [
@@ -26,19 +31,19 @@
     "!dist/**/__mocks__"
   ],
   "dependencies": {
-    "@damatjs/deps": "*",
-    "@damatjs/framework": "*",
-    "@damatjs/logger": "*",
-    "@damatjs/codegen": "*",
-    "@damatjs/orm-connector": "*",
-    "@damatjs/orm-migration": "*",
-    "@damatjs/orm-model": "*",
-    "@damatjs/orm-type": "*",
-    "@damatjs/services": "*",
-    "@damatjs/workflow-engine": "*"
+    "@damatjs/deps": "workspace:*",
+    "@damatjs/framework": "workspace:*",
+    "@damatjs/logger": "workspace:*",
+    "@damatjs/codegen": "workspace:*",
+    "@damatjs/orm-connector": "workspace:*",
+    "@damatjs/orm-migration": "workspace:*",
+    "@damatjs/orm-model": "workspace:*",
+    "@damatjs/orm-type": "workspace:*",
+    "@damatjs/services": "workspace:*",
+    "@damatjs/workflow-engine": "workspace:*"
   },
   "devDependencies": {
-    "@damatjs/typescript-config": "*",
+    "@damatjs/typescript-config": "workspace:*",
     "@types/bun": "1.3.9",
     "typescript": "^5.9.3"
   },

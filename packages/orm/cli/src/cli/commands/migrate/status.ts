@@ -59,10 +59,9 @@ const migrateStatus: Command = {
           ctx.logger.error(`Module '${moduleName}' not found in config`);
           return { exitCode: 1 };
         }
-        const status = await getModuleMigrationStatus(
-          pool,
-          moduleConfig.resolve,
-        );
+        // Pass the full module descriptor: migrations are discovered via
+        // `resolve`, but the tracker table is keyed by module name.
+        const status = await getModuleMigrationStatus(pool, moduleConfig);
         ctx.logger[status.module.pending > 0 ? "info" : "success"](
           `${status.module.name}: ${status.module.applied} applied, ${status.module.pending} pending`,
         );
@@ -70,10 +69,7 @@ const migrateStatus: Command = {
           ctx.logger[m.applied ? "success" : "info"](`${m.name}`);
         }
       } else {
-        const status = await getMigrationStatus(
-          pool,
-          Object.values(modules).map((m) => m.resolve),
-        );
+        const status = await getMigrationStatus(pool, modules);
         for (const mod of status.modules) {
           ctx.logger[mod.pending > 0 ? "info" : "success"](
             `${mod.name}: ${mod.applied} applied, ${mod.pending} pending`,
