@@ -1,5 +1,23 @@
 # @damatjs/damat-cli
 
+## 0.6.0
+
+### Minor Changes
+
+- Major refactor and clean up to improve system and resolve early issues
+
+### Patch Changes
+
+- Updated dependencies
+  - @damatjs/logger@0.6.0
+  - @damatjs/framework@0.6.0
+  - @damatjs/cli@0.6.0
+  - @damatjs/load-env@0.6.0
+  - @damatjs/orm-cli@0.6.0
+  - @damatjs/module@0.6.0
+  - @damatjs/link@0.6.0
+  - @damatjs/codegen@3.0.0
+
 ## 0.5.0
 
 ### Minor Changes

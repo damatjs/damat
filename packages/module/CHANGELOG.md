@@ -1,5 +1,25 @@
 # @damatjs/module
 
+## 0.6.0
+
+### Minor Changes
+
+- Major refactor and clean up to improve system and resolve early issues
+
+### Patch Changes
+
+- Updated dependencies
+  - @damatjs/workflow-engine@0.6.0
+  - @damatjs/orm-connector@0.6.0
+  - @damatjs/orm-migration@0.6.0
+  - @damatjs/logger@0.6.0
+  - @damatjs/framework@0.6.0
+  - @damatjs/orm-model@0.6.0
+  - @damatjs/orm-type@0.6.0
+  - @damatjs/services@0.6.0
+  - @damatjs/deps@0.6.0
+  - @damatjs/codegen@3.0.0
+
 ## 0.5.0
 
 ### Minor Changes
