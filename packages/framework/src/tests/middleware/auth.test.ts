@@ -53,13 +53,46 @@ describe("createAuthMiddleware", () => {
     expect(sessionMw).not.toHaveBeenCalled();
   });
 
-  it("passes through when the auth type has no configured custom middleware", async () => {
+  it("rejects with 401 when the auth type has no configured custom middleware", async () => {
     const app = new Hono();
+    const handler = mock((c: any) => c.text("reached"));
     app.use("*", createAuthMiddleware("flexible"));
+    app.get("/", handler);
+
+    const res = await app.request("/");
+    expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error.code).toBe("UNAUTHORIZED");
+    // Envelope carries the same meta block handleError adds; no requestId set
+    // upstream here, so it falls back to "unknown".
+    expect(body.meta.requestId).toBe("unknown");
+    expect(typeof body.meta.timestamp).toBe("string");
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("includes the upstream requestId in the 401 envelope meta when one is set", async () => {
+    const app = new Hono();
+    app.use("*", async (c, next) => {
+      c.set("requestId", "req-abc");
+      await next();
+    });
+    app.use("*", createAuthMiddleware("session"));
     app.get("/", (c) => c.text("reached"));
 
     const res = await app.request("/");
-    expect(res.status).toBe(200);
-    expect(await res.text()).toBe("reached");
+    expect(res.status).toBe(401);
+    expect((await res.json()).meta.requestId).toBe("req-abc");
+  });
+
+  it("rejects with 401 for every non-none type without a handler", async () => {
+    for (const type of ["session", "apiKey", "flexible"] as const) {
+      const app = new Hono();
+      app.use("*", createAuthMiddleware(type));
+      app.get("/", (c) => c.text("reached"));
+
+      const res = await app.request("/");
+      expect(res.status).toBe(401);
+    }
   });
 });

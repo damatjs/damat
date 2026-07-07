@@ -1,4 +1,9 @@
 [test]
 coverage = true
 coverageThreshold = 1.0
-coveragePathIgnorePatterns = ["**/dist/**", "**/node_modules/**", "**/*.test.ts", "**/tests/**", "**/__tests__/**", "**/__fixtures__/**"]
+# `damat-builder-*` is the router-builder test's runtime scaffold: route fixtures
+# it writes to a temp dir and the scanner imports as real modules. They are test
+# fixtures, not framework source, and one (`secured/route.ts`) is intentionally
+# unreachable behind a 401 now that auth fails closed — so exclude the scaffold
+# from framework-source coverage rather than let a fixture handler skew it.
+coveragePathIgnorePatterns = ["**/dist/**", "**/node_modules/**", "**/*.test.ts", "**/tests/**", "**/__tests__/**", "**/__fixtures__/**", "**/damat-builder-*/**"]

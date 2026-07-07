@@ -112,7 +112,7 @@ interface AuthMiddlewareOptions { session?: MiddlewareHandler; apiKey?: Middlewa
 
 - `type === "none"` → `next()`.
 - If a custom handler for `type` is supplied in `options` → delegate to it.
-- Otherwise → **warn that the auth type is not implemented and pass through.** The framework does **not** ship a built-in session/apiKey verifier; apps provide one (the default backend has its own auth middleware under `src/api/middleware`).
+- Otherwise → **fail closed**: log an error naming the route and auth type, and return a 401 `UNAUTHORIZED` envelope. The framework does **not** ship a built-in session/apiKey verifier; apps provide one (the default backend has its own auth middleware under `src/api/middleware`). A route that declares auth is never served unauthenticated by mistake.
 
 ## Validation — `createValidatorMiddleware(validator)` & `validate` (`validator.ts`)
 
@@ -131,7 +131,7 @@ Re-exports `corsConfig`, `error`, `notFound`, `requestSetup`, `setup`, `rateLimi
 
 ## Gotchas
 
-- **Rate limiting and (built-in) auth are no-ops without their backing.** No Redis → rate limit passes through; no app-provided auth handler → auth passes through (with a warning). Don't assume requests are protected just because `auth`/`rateLimit` is configured.
+- **Rate limiting is a no-op without Redis; auth is not.** No Redis → rate limit passes through (fail-open). No app-provided auth handler → any non-`none` auth type returns 401 (fail-closed), so a misconfigured route is rejected rather than silently exposed.
 - **Validator JSON parsing is lenient.** A malformed/missing JSON body silently degrades to query+params; if you require a body, declare a `body` schema so the "Body is required" check fires.
 - **`validate()` throws `ValidationError`; the validator middleware returns a 400 directly.** Two different paths — pick based on whether you're inside a handler (use `validate`) or wiring per-route validation (use the middleware via `validators`).
 - **Error detail leakage is env-gated.** Generic `Error` messages/stacks are only included when `NODE_ENV === "development"`.

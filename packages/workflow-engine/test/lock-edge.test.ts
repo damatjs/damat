@@ -9,22 +9,30 @@ import { describe, it, expect, mock, beforeEach } from "bun:test";
 
 const state: {
   acquireResults: (string | null)[];
+  acquireThrows: boolean;
   releaseResult: boolean;
+  releaseThrows: boolean;
   redisEvalResult: number;
   redisEvalThrows: boolean;
   redisGetValue: string | null;
 } = {
   acquireResults: [],
+  acquireThrows: false,
   releaseResult: true,
+  releaseThrows: false,
   redisEvalResult: 1,
   redisEvalThrows: false,
   redisGetValue: null,
 };
 
-const acquireLock = mock(async (_key: string, _ttl: number) =>
-  state.acquireResults.length ? state.acquireResults.shift()! : "lock-value",
-);
-const releaseLock = mock(async (_key: string, _value: string) => state.releaseResult);
+const acquireLock = mock(async (_key: string, _ttl: number) => {
+  if (state.acquireThrows) throw new Error("redis connection lost");
+  return state.acquireResults.length ? state.acquireResults.shift()! : "lock-value";
+});
+const releaseLock = mock(async (_key: string, _value: string) => {
+  if (state.releaseThrows) throw new Error("redis connection lost");
+  return state.releaseResult;
+});
 const redisEval = mock(async (..._args: unknown[]) => {
   if (state.redisEvalThrows) throw new Error("redis eval failed");
   return state.redisEvalResult;
@@ -46,7 +54,9 @@ import { StepExecutionError, WorkflowLockError } from "../src/index";
 
 beforeEach(() => {
   state.acquireResults = [];
+  state.acquireThrows = false;
   state.releaseResult = true;
+  state.releaseThrows = false;
   state.redisEvalResult = 1;
   state.redisEvalThrows = false;
   state.redisGetValue = null;
@@ -169,6 +179,31 @@ describe("workflow/executeWithLock: edges", () => {
     expect(releaseLock).not.toHaveBeenCalled();
   });
 
+  it("returns a structured failure (never throws) when the lock backend is down", async () => {
+    // acquireLock throwing (e.g. Redis unreachable) must not escape
+    // executeWithLock as a raw rejection — it resolves to a WorkflowResult.
+    state.acquireThrows = true;
+    let ran = false;
+    const wf = createWorkflow<number, number>("lock-backend-down", (n) => {
+      ran = true;
+      return Effect.succeed(n);
+    });
+    const res = await wf.executeWithLock(1, { lockId: "id" });
+
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(res.error).toBeInstanceOf(Error);
+      // Distinct from WorkflowLockError (contention) — this is an infra outage.
+      expect((res.error as { code?: string }).code).toBe("LOCK_BACKEND_UNAVAILABLE");
+      expect(res.error.message).toContain("redis connection lost");
+      expect((res.error as { cause?: unknown }).cause).toBeInstanceOf(Error);
+      expect(res.durationMs).toBe(0);
+      expect(res.compensated).toBe(false);
+    }
+    expect(ran).toBe(false);
+    expect(releaseLock).not.toHaveBeenCalled();
+  });
+
   it("autoExtend fires the heartbeat (extendLock via redis eval) during a long run", async () => {
     state.acquireResults = ["lv"];
     state.redisEvalResult = 1;
@@ -259,12 +294,36 @@ describe("workflow/executeWithLock: edges", () => {
     expect(releaseLock).toHaveBeenCalledTimes(1);
   });
 
-  it("without autoExtend, the heartbeat never runs (no extend calls)", async () => {
+  it("autoExtend defaults ON: the heartbeat fires with no explicit autoExtend", async () => {
+    state.acquireResults = ["lv"];
+    state.redisEvalResult = 1;
+    const slow = createStep<number, number>(
+      "slow-default-ext",
+      async () => {
+        await new Promise((r) => setTimeout(r, 1200));
+        return 1;
+      },
+      undefined,
+      { timeoutMs: 5000 },
+    );
+    const wf = createWorkflow<number, number>(
+      "default-auto-extend",
+      (input, ctx) => executeStep(slow, input, ctx),
+      { timeoutMs: 5000 },
+    );
+    // No autoExtend in the config — the default keeps the lock alive.
+    await wf.executeWithLock(1, { lockId: "id", ttlMs: 2000 });
+
+    expect(redisEval).toHaveBeenCalled();
+    expect(releaseLock).toHaveBeenCalledTimes(1);
+  });
+
+  it("autoExtend: false disables the heartbeat (no extend calls)", async () => {
     state.acquireResults = ["lv"];
     const slow = createStep<number, number>(
       "slow-no-ext",
       async () => {
-        await new Promise((r) => setTimeout(r, 50));
+        await new Promise((r) => setTimeout(r, 1200));
         return 1;
       },
       undefined,
@@ -275,9 +334,38 @@ describe("workflow/executeWithLock: edges", () => {
       (input, ctx) => executeStep(slow, input, ctx),
       { timeoutMs: 5000 },
     );
-    await wf.executeWithLock(1, { lockId: "id", ttlMs: 2000 });
+    await wf.executeWithLock(1, { lockId: "id", ttlMs: 2000, autoExtend: false });
 
     expect(redisEval).not.toHaveBeenCalled();
+  });
+
+  it("a throwing lock release does NOT discard a successful workflow result", async () => {
+    state.acquireResults = ["lv"];
+    state.releaseThrows = true;
+    const wf = createWorkflow<number, number>("release-throws", (n) =>
+      Effect.succeed(n + 1),
+    );
+    const res = await wf.executeWithLock(1, { lockId: "id" });
+
+    // The release failure is logged and swallowed — the lock expires via TTL.
+    expect(releaseLock).toHaveBeenCalledTimes(1);
+    expect(res.success).toBe(true);
+    if (res.success) expect(res.result).toBe(2);
+  });
+
+  it("a throwing lock release does not mask a workflow FAILURE result either", async () => {
+    state.acquireResults = ["lv"];
+    state.releaseThrows = true;
+    const wf = createWorkflow<number, number>("release-throws-fail", () =>
+      Effect.fail(
+        new StepExecutionError("s", "boom", undefined, "release-throws-fail"),
+      ),
+    );
+    const res = await wf.executeWithLock(1, { lockId: "id" });
+
+    expect(releaseLock).toHaveBeenCalledTimes(1);
+    expect(res.success).toBe(false);
+    if (!res.success) expect(res.error).toBeInstanceOf(StepExecutionError);
   });
 
   it("threads the resolved lockId into workflow metadata", async () => {

@@ -28,16 +28,21 @@ Install a module shadcn-style: fetch it, copy its source into the app, register
 it in config, sync env, install packages. This is the only command that mutates
 the surrounding project.
 
-Options: `--name`/`-n` (override module id), `--dir`/`-d` (target modules dir,
-default `src/modules`), `--force`/`-f` (overwrite existing target).
+Options: `--name`/`-n` (override module id; must be a single kebab-case
+segment), `--dir`/`-d` (target modules dir, default `src/modules`; must be a
+relative path with no `..` segments), `--force`/`-f` (overwrite existing
+target), `--allow-unverified` (opt in to path/git sources, which carry no
+registry verification, and to `file:`/`git`/url dependency ranges),
+`--allow-scripts` (run dependency lifecycle scripts during `bun add`; skipped
+by default).
 
 Examples (from the command's `examples`):
 
 ```bash
 damat module add user-management                         # registry ref
 damat module add damatjs/user-management@0.0.1
-damat module add ./local/path/to/module-package
-damat module add https://github.com/damatjs/modules.git#main
+damat module add ./local/path/to/module-package --allow-unverified
+damat module add https://github.com/damatjs/modules.git#main --allow-unverified
 ```
 
 End-to-end flow:
@@ -47,28 +52,44 @@ End-to-end flow:
 2. **Locate + read manifest**: `locateModuleDir(resolved.dir)` (handles
    package-layout `src/` vs legacy root), then `readModuleManifest(...)` (both
    from `@damatjs/module`).
-3. **Module id**: `--name` override, else `manifest.name`. Target is
-   `<cwd>/<dir>/<id>`; relative target string `./<dir>/<id>`.
-4. **Provenance + verification gate**:
+3. **Module id + path guards** (`helpers/guard.ts`): `--name` override, else
+   `manifest.name`. `moduleIdError` requires a single kebab-case segment
+   (`/^[a-z][a-z0-9-]*$/` — same rule as the manifest) and `modulesDirError`
+   requires a relative `--dir` with no `..` segments, so neither can traverse
+   outside the app. Target is `<cwd>/<dir>/<id>`; relative target string
+   `./<dir>/<id>`.
+4. **Provenance + verification gate** (runs for every source, before any
+   write):
    - Registry source → `evaluateVerification(resolved.registry.verification)`.
      Logs source/owner/status; if `!decision.allowed` → error, return `1`; a
      warning message is logged when present.
-   - Path/git source → logged as `from: path|git` and trusted as-is.
-5. **Dependency check**: for each `manifest.modules` not present under the target
+   - Path/git source → logged as `from: path|git`, then
+     `unverifiedSourceError`: **refused** unless `--allow-unverified` was
+     passed (or `DAMAT_MODULE_VERIFY=off`, the existing "install anything"
+     policy). Accepted sources must additionally pass
+     `validateModuleDir(sourceModuleDir)` — structural errors block the
+     install.
+5. **Package spec gate**: `collectModulePackages(resolved.dir, manifest)` then
+   `invalidPackageSpecs(packages, { allowUnsafeRanges: allowUnverified })` —
+   names must match the npm name grammar and ranges must look like a semver
+   range/dist-tag (no whitespace, `file:`, `git+`, urls, or flag-like strings;
+   protocol ranges are allowed only with `--allow-unverified`). Any offender →
+   error, return `1` before a single file is written.
+6. **Dependency check**: for each `manifest.modules` not present under the target
    dir → `logger.warn` (not a blocker).
-6. **Existing target**: if it exists and not `--force` → error, return `1`; with
+7. **Existing target**: if it exists and not `--force` → error, return `1`; with
    `--force` → `rmSync` it.
-7. **Copy**: `copyModule(sourceModuleDir, targetDir)` — copies only the module
+8. **Copy**: `copyModule(sourceModuleDir, targetDir)` — copies only the module
    source (excludes `.git`/`node_modules`); package scaffolding stays behind.
-8. **Register**: `registerModuleInConfig(<cwd>/damat.config.ts, id,
+9. **Register**: `registerModuleInConfig(<cwd>/damat.config.ts, id,
    relativeTarget, origin)` where `origin = { ...resolved.origin, installedAt:
    now }`. On `false` → warn with the exact snippet to paste manually.
-9. **Env sync**: `syncEnvVars(ctx.cwd, manifest)` → logs vars added to
-   `.env.example` and warns about required vars missing from `.env`.
-10. **Packages**: `collectModulePackages(resolved.dir, manifest)` then
-    `installModulePackages(ctx.cwd, packages)` (`bun add …`). On failure → error
-    with `bun add` output, return `1`.
-11. **Next steps**: prints `bun damat-orm migrate:up` + restart hint. Returns
+10. **Env sync**: `syncEnvVars(ctx.cwd, manifest)` → logs vars added to
+    `.env.example` and warns about required vars missing from `.env`.
+11. **Packages**: `installModulePackages(ctx.cwd, packages, { allowScripts })`
+    (`bun add --ignore-scripts …`; the flag is dropped only with
+    `--allow-scripts`). On failure → error with `bun add` output, return `1`.
+12. **Next steps**: prints `bun damat-orm migrate:up` + restart hint. Returns
     `0`. `resolved.cleanup()` runs in `finally` (removes any temp checkout).
 
 ---
@@ -165,7 +186,7 @@ with warnings → info ("fix the warnings before publishing"). Returns
 ## `add` helpers — `src/command/module/helpers/`
 
 `helpers/index.ts` re-exports `types`, `source`, `copy`, `config`, `env`,
-`packages`, `dependencies`. Key types live in `helpers/types.ts`
+`packages`, `dependencies`, `guard`. Key types live in `helpers/types.ts`
 (`ResolvedModuleSource`, `EnvSyncResult`, `PackageInstallResult`).
 
 ### Source resolution — `helpers/source.ts`
@@ -226,10 +247,24 @@ name in `missingInEnv` when it is `required` (default true) and absent from
 `collectModulePackages(packageRoot, manifest)` (`dependencies.ts`) merges the
 module package's own `dependencies` (skipping the `@damatjs/*` stack the host
 already provides) with `manifest.packages` overrides into a `name -> range` map.
-`installModulePackages(appDir, packages)` (`packages.ts`) turns the map into
-`name@range` specs (bare name when range is empty/`*`) and runs
-`spawnSync("bun", ["add", ...specs], { cwd: appDir })`, returning
-`{ ok, output }`.
+`invalidPackageSpecs(packages, { allowUnsafeRanges? })` (`packages.ts`) vets
+that map: names must match the npm name grammar (≤ 214 chars, optionally
+scoped, lowercase URL-safe — a name can never look like a flag) and ranges must
+be a plausible semver range/dist-tag; `file:`/`git+`/url ranges pass only with
+`allowUnsafeRanges` (wired to `--allow-unverified`), and whitespace/shell
+metacharacters never pass. `installModulePackages(appDir, packages,
+{ allowScripts? })` turns the map into `name@range` specs (bare name when range
+is empty/`*`) and runs `spawnSync("bun", ["add", "--ignore-scripts", ...specs],
+{ cwd: appDir })` — `--ignore-scripts` is dropped only when `allowScripts` is
+set (`--allow-scripts`). Returns `{ ok, output }`.
+
+### Install guards — `helpers/guard.ts`
+
+`moduleIdError(id)` / `modulesDirError(dir)` return a message (or `null`) when
+the module id / `--dir` could be used for path traversal, and
+`unverifiedSourceError(originType, allowUnverified, policy?)` implements the
+non-registry trust gate (`null` when `--allow-unverified` was passed or the
+`DAMAT_MODULE_VERIFY` policy is `off`).
 
 ---
 
@@ -240,9 +275,12 @@ already provides) with `manifest.packages` overrides into a `name -> range` map.
   Config registration is best-effort and falls back to printed instructions; the
   other steps are not transactional, so a failed `bun add` leaves the copied
   files in place (it returns `1` after the copy).
-- **Verification only applies to registry sources.** Path and git installs are
-  trusted; `rejected`/`revoked` registry modules are always blocked regardless of
-  policy.
+- **Every source is gated.** Registry installs go through
+  `evaluateVerification` (`rejected`/`revoked` modules are always blocked
+  regardless of policy); path/git installs are refused unless
+  `--allow-unverified` is passed (or `DAMAT_MODULE_VERIFY=off`) and must pass
+  `validateModuleDir`. Dependency lifecycle scripts are skipped unless
+  `--allow-scripts` is passed.
 - **`migration:create` / `codegen` / `validate` operate on `ctx.cwd`** — they
   must be run from inside the module package, and the heavy lifting is in
   `@damatjs/module`, not here.

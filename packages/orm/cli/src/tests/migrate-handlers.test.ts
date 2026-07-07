@@ -403,8 +403,12 @@ describe("migrate:status", () => {
     const res = await cmd.handler(ctx);
 
     expect(res.exitCode).toBe(0);
-    // getMigrationStatus receives the resolve paths of all modules.
-    expect(state.getMigrationStatusArgs?.resolvers).toEqual([USER, POST]);
+    // getMigrationStatus receives the full module container (discovery uses
+    // `resolve`; the tracker table is keyed by module `name`).
+    expect(state.getMigrationStatusArgs?.resolvers).toEqual({
+      user: { id: "user", resolve: USER, path: USER, name: "user" },
+      post: { id: "post", resolve: POST, path: POST, name: "post" },
+    });
     // 0 pending -> success summary; pending -> info summary.
     expect(hasLog(calls, "success", /user: 2 applied, 0 pending/)).toBe(true);
     expect(hasLog(calls, "info", /post: 1 applied, 1 pending/)).toBe(true);
@@ -431,7 +435,12 @@ describe("migrate:status", () => {
     const res = await cmd.handler(ctx);
 
     expect(res.exitCode).toBe(0);
-    expect(state.getModuleStatusArgs?.resolve).toBe(USER);
+    expect(state.getModuleStatusArgs?.resolve).toEqual({
+      id: "user",
+      resolve: USER,
+      path: USER,
+      name: "user",
+    });
     // pending > 0 -> info-level summary.
     expect(hasLog(calls, "info", /user: 1 applied, 2 pending/)).toBe(true);
     expect(state.poolEndCalls).toBe(1);
@@ -443,7 +452,12 @@ describe("migrate:status", () => {
     const { ctx } = ctxFor(["user"]);
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(0);
-    expect(state.getModuleStatusArgs?.resolve).toBe(USER);
+    expect(state.getModuleStatusArgs?.resolve).toEqual({
+      id: "user",
+      resolve: USER,
+      path: USER,
+      name: "user",
+    });
   });
 
   it("exits 1 (pool still closed) when the selected module is not in config", async () => {

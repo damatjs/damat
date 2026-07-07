@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/framework",
   "description": "Damatjs framework for handling everything",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -54,6 +54,11 @@
   "publishConfig": {
     "access": "public"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/damatjs/damat",
+    "directory": "packages/framework"
+  },
   "files": [
     "dist",
     "!dist/**/__tests__",
@@ -62,19 +67,19 @@
   ],
   "author": "Abel Lamesgen",
   "dependencies": {
-    "@damatjs/logger": "*",
-    "@damatjs/deps": "*",
-    "@damatjs/types": "*",
-    "@damatjs/services": "*",
-    "@damatjs/link": "*",
-    "@damatjs/orm-connector": "*",
-    "@damatjs/orm-type": "*",
-    "@damatjs/workflow-engine": "*",
-    "@damatjs/redis": "*",
+    "@damatjs/logger": "workspace:*",
+    "@damatjs/deps": "workspace:*",
+    "@damatjs/types": "workspace:*",
+    "@damatjs/services": "workspace:*",
+    "@damatjs/link": "workspace:*",
+    "@damatjs/orm-connector": "workspace:*",
+    "@damatjs/orm-type": "workspace:*",
+    "@damatjs/workflow-engine": "workspace:*",
+    "@damatjs/redis": "workspace:*",
     "@hono/node-server": "^1.13.7"
   },
   "devDependencies": {
-    "@damatjs/typescript-config": "*",
+    "@damatjs/typescript-config": "workspace:*",
     "@types/bun": "1.3.9",
     "typescript": "^5.9.3"
   },
@@ -82,6 +87,7 @@
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
     "dev": "bun run build --watch",
     "watch": "tsc --watch",
-    "test": "bun test"
+    "test": "bun test",
+    "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)"
   }
 }

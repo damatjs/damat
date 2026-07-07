@@ -18,7 +18,7 @@ async function resetCounter(key: string, client?: Redis): Promise<void>;
 
 ## Behavior
 
-- **`incrementCounter`** — `INCRBY key amount` (atomic), returns the new value. If `ttlSeconds` is given it then issues `EXPIRE key ttlSeconds`. Note the comment "only set on first increment" is the *intended* use, but the code runs `EXPIRE` on **every** call where `ttlSeconds` is truthy, so the TTL is refreshed each time you pass it. To set TTL once only, pass it on the first call and omit it after.
+- **`incrementCounter`** — without `ttlSeconds`, a plain `INCRBY key amount` (atomic), returning the new value. With `ttlSeconds`, a small Lua script runs `INCRBY` and then `EXPIRE` **only when the key has no TTL yet** (`TTL < 0`), so the expiry is armed on the first increment and never refreshed by later ones — a counter under steady traffic still expires on schedule.
 - **`decrementCounter`** — `DECRBY key amount`, returns the new value. No TTL handling; **allows negative values** (Redis happily goes below zero).
 - **`getCounter`** — `GET key`; returns `parseInt(value, 10)` or **`0`** if the key is missing.
 - **`setCounter`** — `SETEX` when `ttlSeconds` is truthy, else `SET`; stores `value.toString()`.
@@ -41,7 +41,7 @@ await resetCounter("pageviews:home");
 ## Gotchas
 
 - **No prefix** — collisions are the caller's responsibility; choose namespaced keys.
-- **TTL refresh on every increment** — see above; if you don't want a rolling window, only pass `ttlSeconds` on the first call.
+- **TTL is never refreshed by increments** — `ttlSeconds` only takes effect when the key has no expiry (first increment, or a counter that lost its TTL). For a rolling window, re-arm explicitly with `EXPIRE`/`setCounter`.
 - **Negative values are allowed** by `decrementCounter`; enforce a floor in application code if you need one (Redis has no atomic "decrement but not below zero" here).
 - **`getCounter` conflates "missing" and "zero"** — both return `0`. Use `EXISTS`/`getCounter` semantics accordingly if the distinction matters.
 

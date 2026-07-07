@@ -6,7 +6,7 @@ import { describe, it, expect } from "bun:test";
 // surface the handlers touch (`c.req.json/query/param`, `c.json`). No live HTTP
 // server, no DB — the handler LOGIC runs and is counted toward coverage.
 //
-// The auth route (`auth/[auth]/routea.ts`), the auth middleware and the auth
+// The auth route (`auth/[auth]/route.ts`), the auth middleware and the auth
 // util are currently all commented-out source (they require a live Postgres +
 // Better Auth + Redis to run). We still import them so they register as covered
 // (a comment-only module has no executable statements → 100%).
@@ -21,7 +21,7 @@ import {
 } from "@/api/routes/users/[userId]/route";
 
 // Importing these covers the (commented-out) auth source files.
-import * as authRoute from "@/api/routes/auth/[auth]/routea";
+import * as authRoute from "@/api/routes/auth/[auth]/route";
 import * as authMiddleware from "@/api/middleware";
 import * as authMiddlewareAuth from "@/api/middleware/auth";
 import * as authUtil from "@/utils/auth";

@@ -16,8 +16,6 @@ parsed through `@damatjs/cli` (`src/index.ts`) and the `PackageManager`
 - [flow.md](./flow.md) — end-to-end create flow, from argv to a running app.
 - [project-vs-module.md](./project-vs-module.md) — the two creators and how they
   differ.
-- [database-setup.md](./database-setup.md) — the (currently standalone) Postgres
-  helpers.
 - [package-managers.md](./package-managers.md) — the Bun-only `PackageManager`
   and command execution.
 
@@ -92,9 +90,10 @@ Two design patterns carried over from the original design:
   project was created).
 - **`--version` pinning skips `@damatjs/ui`** (it follows a different versioning
   scheme).
-- **Dead-but-present helpers**: `database/*`, `gets/configStore.ts`, and
-  `gets/CurrentOs.ts` are not referenced by the current create flow. They are
-  documented for completeness — see [database-setup.md](./database-setup.md).
+- **Dead-but-present helpers**: `gets/configStore.ts` and `gets/CurrentOs.ts`
+  are not referenced by the current create flow. (The former `database/*`
+  Postgres-provisioning helpers were removed as dead code — the starter ships
+  its own `.env` defaults instead.)
 
 ## Safe-extension guidance
 

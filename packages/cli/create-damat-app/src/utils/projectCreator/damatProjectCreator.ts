@@ -66,20 +66,17 @@ export class damatProjectCreator
     }
 
     private async setupProject(): Promise<void> {
-        try {
-            await prepareProject({
-                isModule: false,
-                projectName: this.projectName,
-                directory: this.projectPath,
-                spinner: this.spinner,
-                processManager: this.processManager,
-                abortController: this.abortController,
-                verbose: this.options.verbose ?? false,
-                packageManager: this.packageManager,
-                version: this.options.version ?? "latest",
-            });
-        } finally {
-        }
+        await prepareProject({
+            isModule: false,
+            projectName: this.projectName,
+            directory: this.projectPath,
+            spinner: this.spinner,
+            processManager: this.processManager,
+            abortController: this.abortController,
+            verbose: this.options.verbose ?? false,
+            packageManager: this.packageManager,
+            version: this.options.version ?? "latest",
+        });
 
         this.spinner.success(pc.green("Project Prepared"));
     }

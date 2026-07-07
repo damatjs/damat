@@ -3,7 +3,12 @@ import { existsSync } from "node:fs";
 import { type Command, reportError } from "@damatjs/cli";
 import { generateBarrels } from "@damatjs/codegen";
 
-import { readModuleManifest, locateModuleDir, evaluateVerification } from "@damatjs/module";
+import {
+  readModuleManifest,
+  locateModuleDir,
+  evaluateVerification,
+  validateModuleDir,
+} from "@damatjs/module";
 import type { ModuleSource } from "@damatjs/framework";
 import {
   resolveModuleSource,
@@ -14,17 +19,22 @@ import {
   syncEnvVars,
   installModulePackages,
   collectModulePackages,
+  invalidPackageSpecs,
+  moduleIdError,
+  modulesDirError,
+  unverifiedSourceError,
 } from "./helpers";
 
 export const moduleAddCommand: Command = {
   name: "add",
   description: "Add a module to this app from the registry, a path, or git (shadcn-style)",
-  usage: "damat module add <source> [--name <id>] [--dir <path>] [--force]",
+  usage:
+    "damat module add <source> [--name <id>] [--dir <path>] [--force] [--allow-unverified] [--allow-scripts]",
   examples: [
     "damat module add user-management            # registry ref (DAMAT_MODULE_REGISTRY)",
     "damat module add damatjs/user-management@0.0.1",
-    "damat module add ./local/path/to/module-package",
-    "damat module add https://github.com/damatjs/modules.git#main",
+    "damat module add ./local/path/to/module-package --allow-unverified",
+    "damat module add https://github.com/damatjs/modules.git#main --allow-unverified",
   ],
   options: [
     {
@@ -45,6 +55,20 @@ export const moduleAddCommand: Command = {
       alias: "f",
       type: "boolean",
       description: "Overwrite if the target module directory already exists",
+      default: false,
+    },
+    {
+      name: "allow-unverified",
+      type: "boolean",
+      description:
+        "Install from a path/git source (no registry verification) and permit file:/git/url dependency ranges",
+      default: false,
+    },
+    {
+      name: "allow-scripts",
+      type: "boolean",
+      description:
+        "Run dependency lifecycle scripts during bun add (skipped by default)",
       default: false,
     },
   ],
@@ -69,6 +93,16 @@ export const moduleAddCommand: Command = {
       const manifest = readModuleManifest(sourceModuleDir);
       const moduleId = (ctx.options.name as string) || manifest.name;
       const modulesDir = ctx.options.dir as string;
+      const allowUnverified = Boolean(ctx.options["allow-unverified"]);
+
+      // The id and target dir become filesystem paths — refuse anything that
+      // could traverse outside the app before a single byte is written.
+      const guardError = moduleIdError(moduleId) ?? modulesDirError(modulesDir);
+      if (guardError) {
+        ctx.logger.error(guardError);
+        return { exitCode: 1 };
+      }
+
       const targetDir = join(ctx.cwd, modulesDir, moduleId);
       const relativeTarget = `./${join(modulesDir, moduleId)}`;
 
@@ -79,7 +113,8 @@ export const moduleAddCommand: Command = {
 
       // Provenance + verification gate. Registry installs carry a verifiable
       // owner and a verification status the registry stamped; path/git sources
-      // are trusted as-is (the user pointed at them directly).
+      // carry none, so they need the explicit --allow-unverified opt-in and
+      // must at least pass the local structural validation.
       if (resolved.registry) {
         const decision = evaluateVerification(resolved.registry.verification);
         ctx.logger.info("Source", {
@@ -98,6 +133,37 @@ export const moduleAddCommand: Command = {
           from: resolved.origin.type,
           ref: resolved.origin.ref,
         });
+        const trustError = unverifiedSourceError(
+          resolved.origin.type,
+          allowUnverified,
+        );
+        if (trustError) {
+          ctx.logger.error(`Refusing to install "${moduleId}": ${trustError}`);
+          return { exitCode: 1 };
+        }
+        const report = validateModuleDir(sourceModuleDir);
+        if (!report.valid) {
+          for (const error of report.errors) ctx.logger.error(error);
+          ctx.logger.error(
+            `Refusing to install "${moduleId}": module failed validation`,
+          );
+          return { exitCode: 1 };
+        }
+      }
+
+      // npm packages the module needs (its own deps + manifest overrides).
+      // Validate the specs before any file is written so a malicious
+      // dependency list aborts the whole install.
+      const packages = collectModulePackages(resolved.dir, manifest);
+      const badSpecs = invalidPackageSpecs(packages, {
+        allowUnsafeRanges: allowUnverified,
+      });
+      if (badSpecs.length > 0) {
+        ctx.logger.error(
+          `Refusing to install "${moduleId}" — unsafe package specs:\n  ` +
+            badSpecs.join("\n  "),
+        );
+        return { exitCode: 1 };
       }
 
       // Unmet module dependencies are a warning, not a blocker
@@ -215,11 +281,13 @@ export const moduleAddCommand: Command = {
         );
       }
 
-      // npm packages: the module package's own deps + manifest overrides
-      const packages = collectModulePackages(resolved.dir, manifest);
+      // npm packages (validated above, before any file was written).
+      // Lifecycle scripts stay off unless --allow-scripts was passed.
       if (Object.keys(packages).length > 0) {
         ctx.logger.info(`Installing packages: ${Object.keys(packages).join(", ")}`);
-        const install = installModulePackages(ctx.cwd, packages);
+        const install = installModulePackages(ctx.cwd, packages, {
+          allowScripts: Boolean(ctx.options["allow-scripts"]),
+        });
         if (install.ok) {
           ctx.logger.success("Packages installed");
         } else {

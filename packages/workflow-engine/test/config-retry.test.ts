@@ -32,10 +32,11 @@ describe("config/retry: DEFAULT_RETRY_POLICY", () => {
 });
 
 describe("config/retry: DEFAULT_STEP_CONFIG", () => {
-  it("uses 30s timeout, default retry policy, non-idempotent, empty description", () => {
+  it("uses 30s timeout, default retry policy, idempotent, empty description", () => {
     expect(DEFAULT_STEP_CONFIG.timeoutMs).toBe(30_000);
     expect(DEFAULT_STEP_CONFIG.retry).toBe(DEFAULT_RETRY_POLICY);
-    expect(DEFAULT_STEP_CONFIG.idempotent).toBe(false);
+    // Idempotent by default: steps stay retryable unless explicitly opted out.
+    expect(DEFAULT_STEP_CONFIG.idempotent).toBe(true);
     expect(DEFAULT_STEP_CONFIG.description).toBe("");
   });
 });

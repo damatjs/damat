@@ -136,6 +136,37 @@ describe("add_module — command building", () => {
     await addModule.handler({ source: "user", force: false });
     expect(lastArgs()).toEqual(["module", "add", "user"]);
   });
+
+  test("appends the security opt-ins only when explicitly true", async () => {
+    await addModule.handler({
+      source: "https://github.com/acme/mod.git",
+      allowUnverified: true,
+      allowScripts: true,
+    });
+    expect(lastArgs()).toEqual([
+      "module",
+      "add",
+      "https://github.com/acme/mod.git",
+      "--allow-unverified",
+      "--allow-scripts",
+    ]);
+  });
+
+  test("omits the security opt-ins by default (unverified installs are refused downstream)", async () => {
+    await addModule.handler({
+      source: "acme/mod",
+      allowUnverified: false,
+      allowScripts: false,
+    });
+    expect(lastArgs()).toEqual(["module", "add", "acme/mod"]);
+  });
+
+  test("declares the opt-ins in the input schema so the model must set them deliberately", () => {
+    const props = (addModule.inputSchema as any).properties;
+    expect(Object.keys(props)).toContain("allowUnverified");
+    expect(Object.keys(props)).toContain("allowScripts");
+    expect(addModule.description).toContain("allowUnverified");
+  });
 });
 
 describe("add_module — result envelopes", () => {

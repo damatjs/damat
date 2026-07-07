@@ -1,5 +1,21 @@
 # @damatjs/orm
 
+## 0.6.0
+
+### Minor Changes
+
+- Major refactor and clean up to improve system and resolve early issues
+
+### Patch Changes
+
+- Updated dependencies
+  - @damatjs/orm-connector@0.6.0
+  - @damatjs/orm-migration@0.6.0
+  - @damatjs/orm-processor@0.6.0
+  - @damatjs/orm-model@0.6.0
+  - @damatjs/orm-pg@0.6.0
+  - @damatjs/deps@0.6.0
+
 ## 0.5.0
 
 ### Minor Changes

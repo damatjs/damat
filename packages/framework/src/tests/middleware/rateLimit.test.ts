@@ -18,9 +18,10 @@ import { createRateLimitMiddleware } from "../../middleware/rateLimit";
 // and would corrupt the real redis service for other test files (e.g.
 // redis.test.ts). Instead we use the REAL redis service (so the real
 // hasRedis/getRedis/checkRateLimit run) and monkey-patch the underlying
-// ioredis client's pipeline()/zrange() to return controllable fakes. No live
-// Redis is needed: lazyConnect means construction never opens a socket and we
-// never await a real network call.
+// ioredis client's eval() to return controllable fakes — checkRateLimit now
+// runs a single atomic Lua script rather than a pipeline. No live Redis is
+// needed: lazyConnect means construction never opens a socket and we never
+// await a real network call.
 //
 // The logger is swapped via the real setGlobalLoggerInstance API (not
 // mock.module) and restored after each test.
@@ -44,25 +45,21 @@ const redisState = {
   oldestTimestamp: Date.now(),
 };
 
+// checkRateLimit calls client.eval(SCRIPT, 1, key, windowStart, maxRequests,
+// now, member, windowMs) and expects the script's [allowed, countBeforeAdd,
+// oldestScore?] tuple back. We stand in for the Lua script here, mirroring its
+// `count < maxRequests` decision. (`.eval` is ioredis's Redis-EVAL method — a
+// Lua-on-the-server call — not JavaScript's eval; nothing is code-evaluated.)
+function fakeEval(args: any[]): [number, number, string?] {
+  const maxRequests = Number(args[4]);
+  const count = redisState.currentCount;
+  if (count < maxRequests) return [1, count];
+  return [0, count, String(redisState.oldestTimestamp)];
+}
+
 function patchRedisClient() {
   const ioredis = getRedisClient().client as any;
-  ioredis.pipeline = () => {
-    const ops = {
-      zremrangebyscore: () => ops,
-      zcard: () => ops,
-      zadd: () => ops,
-      pexpire: () => ops,
-      // checkRateLimit reads results[1][1] as the current count.
-      exec: async () => [
-        [null, 0],
-        [null, redisState.currentCount],
-        [null, 1],
-        [null, 1],
-      ],
-    };
-    return ops;
-  };
-  ioredis.zrange = async () => ["member", String(redisState.oldestTimestamp)];
+  ioredis.eval = async (...args: any[]) => fakeEval(args);
 }
 
 const rl = (
@@ -142,6 +139,9 @@ describe("createRateLimitMiddleware", () => {
       expect(body.error.details.limit).toBe(10);
       expect(body.error.details.window).toBe("1m");
       expect(typeof body.error.details.retryAfter).toBe("number");
+      // Mirrors handleError's envelope; no requestId upstream -> "unknown".
+      expect(body.meta.requestId).toBe("unknown");
+      expect(typeof body.meta.timestamp).toBe("string");
 
       expect(res.headers.get("X-RateLimit-Limit")).toBe("10");
       expect(res.headers.get("X-RateLimit-Remaining")).toBe("0");
@@ -151,10 +151,10 @@ describe("createRateLimitMiddleware", () => {
 
   describe("checkRateLimit throwing", () => {
     it("catches the error, logs it, and bypasses (calls next)", async () => {
-      // Make the pipeline blow up to exercise the catch path.
+      // Make the rate-limit script blow up to exercise the catch path.
       const ioredis = getRedisClient().client as any;
-      ioredis.pipeline = () => {
-        throw new Error("redis pipeline failed");
+      ioredis.eval = () => {
+        throw new Error("redis eval failed");
       };
 
       const app = new Hono();
@@ -170,29 +170,14 @@ describe("createRateLimitMiddleware", () => {
 
   describe("identifier precedence (apiKey > userId > ip)", () => {
     // The identifier is embedded in the rate-limit key passed to checkRateLimit.
-    // We capture it by patching zadd's key indirectly: instead, observe via a
-    // wrapping of checkRateLimit's key. Simplest: patch pipeline to record the
-    // key passed to zcard.
+    // The script receives that key as KEYS[1], i.e. the 3rd positional arg to
+    // eval(script, numKeys, key, ...). Capture it there.
     function captureKey(): { current: string } {
       const captured = { current: "" };
       const ioredis = getRedisClient().client as any;
-      ioredis.pipeline = () => {
-        const ops: any = {
-          zremrangebyscore: () => ops,
-          zcard: (key: string) => {
-            captured.current = key;
-            return ops;
-          },
-          zadd: () => ops,
-          pexpire: () => ops,
-          exec: async () => [
-            [null, 0],
-            [null, redisState.currentCount],
-            [null, 1],
-            [null, 1],
-          ],
-        };
-        return ops;
+      ioredis.eval = async (...args: any[]) => {
+        captured.current = args[2];
+        return fakeEval(args);
       };
       return captured;
     }

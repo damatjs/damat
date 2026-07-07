@@ -14,27 +14,49 @@ import { bootstrapDatabase } from "./bootstrap";
 import { OrmModuleContainer, OrmModule } from "@damatjs/orm-type";
 
 /**
- * Run pending migrations for all or specific modules.
+ * Arbitrary-but-stable app-level advisory lock key so concurrent deploys
+ * running migrations against the same database serialize instead of racing.
+ */
+const MIGRATION_LOCK_KEY = "8123946152146164013";
+
+/**
+ * Run pending migrations for every module in the container.
  *
- * @param pool          - pg connection pool
- * @param modulesDir    - Path to the modules directory
- * @param activeModules - Optional allowlist of module names (empty/omitted = all discovered)
- * @param moduleName    - Optional single module to target
+ * @param pool            - pg connection pool
+ * @param moduleResolvers - Modules keyed by id; migrations are discovered via
+ *                          `resolve` and tracked under the module `name`
  */
 export async function runMigrations(
   pool: Pool,
   moduleResolvers: OrmModuleContainer,
 ): Promise<ModuleMigrationResult[]> {
-  const tracker = new MigrationTracker(pool);
-  await tracker.ensureTable();
-  await bootstrapDatabase(pool);
+  // The lock lives on a dedicated session so Postgres auto-releases it if
+  // this process dies mid-run; it must be taken before ensureTable so even
+  // tracker-table creation is serialized.
+  const lockClient = await pool.connect();
+  try {
+    await lockClient.query(`SELECT pg_advisory_lock(${MIGRATION_LOCK_KEY})`);
 
-  const results: ModuleMigrationResult[] = [];
-  for (const moduleResolver of Object.values(moduleResolvers)) {
-    results.push(await runModuleMigrations(pool, moduleResolver, tracker));
+    const tracker = new MigrationTracker(pool);
+    await tracker.ensureTable();
+    await bootstrapDatabase(pool);
+
+    const results: ModuleMigrationResult[] = [];
+    for (const moduleResolver of Object.values(moduleResolvers)) {
+      results.push(await runModuleMigrations(pool, moduleResolver, tracker));
+    }
+
+    return results;
+  } finally {
+    try {
+      await lockClient.query(
+        `SELECT pg_advisory_unlock(${MIGRATION_LOCK_KEY})`,
+      );
+    } catch {
+      // Session teardown below releases the lock regardless.
+    }
+    lockClient.release();
   }
-
-  return results;
 }
 
 /**

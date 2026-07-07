@@ -6,3 +6,4 @@ export * from "./tsconfig";
 export * from "./env";
 export * from "./packages";
 export * from "./dependencies";
+export * from "./guard";

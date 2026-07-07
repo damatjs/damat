@@ -79,6 +79,7 @@ export function createRateLimitMiddleware(
               window: effectiveConfig.window,
             },
           },
+          meta: { requestId: c.get("requestId") || "unknown", timestamp: new Date().toISOString() },
         }, 429);
       }
 

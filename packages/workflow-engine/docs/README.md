@@ -10,7 +10,11 @@ A *workflow* is a generator that yields *steps*. The engine wraps each step
 with retry + per-attempt timeout, registers compensations as scoped finalizers
 that fire in reverse order on failure, wraps the whole workflow in a timeout,
 and turns the Effect `Exit` into a plain `WorkflowResult` discriminated union.
-There is no persisted journal — a run lives entirely in memory.
+
+**Best-effort, in-process only.** There is no persisted journal — a run lives
+entirely in memory. A crash mid-workflow will **not** run compensations for
+already-completed steps and cannot be resumed; rollback only happens when the
+workflow *fails* inside a live process.
 
 ## Module map
 
@@ -97,6 +101,13 @@ no-ops.
 - **Default no-retry policy.** `DEFAULT_RETRY_POLICY.maxAttempts === 0`, so steps
   don't retry unless configured. The default `while` predicate (when retrying)
   skips errors named `"ValidationError"`.
+- **`idempotent: false` suppresses retries entirely.** Retries re-invoke a step
+  wholesale, so a step explicitly marked non-idempotent is never retried — its
+  first failure goes straight to the failure/compensation path (a warning is
+  logged if a retry policy was configured). Default is `idempotent: true`.
+- **Locks auto-extend by default.** `executeWithLock` heartbeats the lock TTL
+  every `ttlMs/2` unless `autoExtend: false`; a failed *release* is logged and
+  swallowed (the TTL frees the lock) so it never discards the workflow result.
 - **Compensation never masks the original error.** Compensation failures are
   logged, counted in `compensationsFailed`, and swallowed (`Effect.catchAll → Effect.void`).
 - **`compensated` is true only if at least one compensation ran successfully**

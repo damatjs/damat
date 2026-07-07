@@ -195,6 +195,121 @@ describe("step/execute: retry exhaustion records MaxRetriesExceededError", () =>
 });
 
 // =============================================================================
+// step/execute — `idempotent: false` gates automatic retries
+// =============================================================================
+
+describe("step/execute: idempotent gates retries", () => {
+  it("a non-idempotent step is NOT retried — the first failure propagates", async () => {
+    let calls = 0;
+    const step = createStep<number, string>(
+      "non-idem",
+      async () => {
+        calls++;
+        throw new Error("side effect may have happened");
+      },
+      undefined,
+      { idempotent: false, retry: { maxAttempts: 3, initialDelayMs: 1 } },
+    );
+    const exit = await runScoped(executeStep(step, 1, ctx()));
+    const err = squashError(exit);
+
+    expect(calls).toBe(1);
+    expect(err).toBeInstanceOf(StepExecutionError);
+  });
+
+  it("an idempotent (default) step with the same retry policy IS retried", async () => {
+    let calls = 0;
+    const step = createStep<number, string>(
+      "idem-default",
+      async () => {
+        calls++;
+        if (calls < 3) throw new Error("transient");
+        return "ok";
+      },
+      undefined,
+      { retry: { maxAttempts: 3, initialDelayMs: 1 } },
+    );
+    const exit = await runScoped(executeStep(step, 1, ctx()));
+
+    expect(calls).toBe(3);
+    expect(Exit.isSuccess(exit)).toBe(true);
+    if (Exit.isSuccess(exit)) expect(exit.value).toBe("ok");
+  });
+
+  it("suppressed retries never record retriesExceeded on engineState", async () => {
+    const engineState: WorkflowEngineState = {
+      compensationsRun: 0,
+      compensationsFailed: 0,
+    };
+    const c: WorkflowContext = { ...ctx(), engineState };
+    const step = createStep<number, string>(
+      "non-idem-state",
+      async () => {
+        throw new Error("no");
+      },
+      undefined,
+      { idempotent: false, retry: { maxAttempts: 5, initialDelayMs: 1 } },
+    );
+    await runScoped(executeStep(step, 1, c));
+
+    expect(engineState.retriesExceeded).toBeUndefined();
+  });
+
+  it("a per-call override can mark a single invocation non-idempotent", async () => {
+    let calls = 0;
+    const step = createStep<number, string>(
+      "override-non-idem",
+      async () => {
+        calls++;
+        throw new Error("no");
+      },
+      undefined,
+      { retry: { maxAttempts: 2, initialDelayMs: 1 } },
+    );
+    await runScoped(executeStep(step, 1, ctx(), { idempotent: false }));
+
+    expect(calls).toBe(1);
+  });
+
+  it("a non-idempotent failure goes straight to the compensation path", async () => {
+    let invoked = 0;
+    const compensated: string[] = [];
+    const a = createStep<number, number>(
+      "A",
+      async (n) => new StepResponse(n, n),
+      async () => {
+        compensated.push("A");
+      },
+    );
+    const boom = createStep<number, number>(
+      "boom-non-idem",
+      async () => {
+        invoked++;
+        throw new Error("charged the card, maybe");
+      },
+      undefined,
+      { idempotent: false, retry: { maxAttempts: 5, initialDelayMs: 1 } },
+    );
+    const wf = createWorkflow<number, number>("non-idem-comp", (input, wctx) =>
+      Effect.gen(function* () {
+        const x = yield* executeStep(a, input, wctx);
+        return yield* executeStep(boom, x, wctx);
+      }),
+    );
+    const res = await wf.execute(1);
+
+    expect(invoked).toBe(1);
+    expect(compensated).toEqual(["A"]);
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(res.compensated).toBe(true);
+      // Retries were suppressed, not exhausted — the plain step error surfaces.
+      expect(res.error.code).toBe("STEP_EXECUTION_FAILED");
+    }
+  });
+});
+
+// =============================================================================
 // workflow/execute — MAX_RETRIES_EXCEEDED surfaces at the workflow boundary
 // =============================================================================
 

@@ -8,7 +8,12 @@ export interface StepConfig {
   timeoutMs?: number;
   /** Retry policy (default: no retries) */
   retry?: Partial<RetryPolicy>;
-  /** Whether this step is idempotent (safe to retry) */
+  /**
+   * Whether this step is idempotent (safe to retry). When false, the retry
+   * policy is ignored: the first failure goes straight to the workflow
+   * failure/compensation path instead of re-invoking the step.
+   * Default: true
+   */
   idempotent?: boolean;
   /** Custom description for logging */
   description?: string;

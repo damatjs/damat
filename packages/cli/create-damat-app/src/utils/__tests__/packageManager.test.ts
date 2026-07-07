@@ -126,6 +126,13 @@ describe("PackageManager", () => {
     });
   });
 
+  describe("getCommandArgs", () => {
+    it("should return an argv tuple for shell-free spawning", () => {
+      const pm = new PackageManager(processManager);
+      expect(pm.getCommandArgs("dev")).toEqual(["bun", ["run", "dev"]]);
+    });
+  });
+
   describe("getPackageManagerString", () => {
     it("should return undefined when no version is detected", async () => {
       const pm = new PackageManager(processManager);
@@ -222,14 +229,14 @@ describe("PackageManager", () => {
       expect(mockExistsSync).not.toHaveBeenCalled();
     });
 
-    it("should execute `bun install` with the provided exec options", async () => {
+    it("should execute `bun install` (argv form) with the provided exec options", async () => {
       const pm = new PackageManager(processManager);
       const opts = { cwd: "/tmp/project" };
       await pm.installDependencies(opts);
 
       expect(mockExecute).toHaveBeenCalledTimes(1);
       const [commandArg, verboseArg] = mockExecute.mock.calls[0]!;
-      expect(commandArg).toEqual(["bun install", opts]);
+      expect(commandArg).toEqual(["bun", ["install"], opts]);
       expect(verboseArg).toEqual({ verbose: false });
     });
 
@@ -241,18 +248,25 @@ describe("PackageManager", () => {
   });
 
   describe("runCommand", () => {
-    it("should run the resolved command string via execute", async () => {
+    it("should run the command argv via execute", async () => {
       const pm = new PackageManager(processManager);
-      await pm.runCommand("dev", { cwd: "/x" });
+      await pm.runCommand(["dev"], { cwd: "/x" });
 
       expect(mockExecute).toHaveBeenCalledTimes(1);
       const [commandArg] = mockExecute.mock.calls[0]!;
-      expect(commandArg).toEqual(["bun run dev", { cwd: "/x" }]);
+      expect(commandArg).toEqual(["bun", ["run", "dev"], { cwd: "/x" }]);
+    });
+
+    it("should keep flags as separate literal argv entries", async () => {
+      const pm = new PackageManager(processManager);
+      await pm.runCommand(["db:migrate", "--force"], {});
+      const [commandArg] = mockExecute.mock.calls[0]!;
+      expect(commandArg[1]).toEqual(["run", "db:migrate", "--force"]);
     });
 
     it("should merge verboseOptions over the instance verbose flag", async () => {
       const pm = new PackageManager(processManager, { verbose: false });
-      await pm.runCommand("build", {}, { needOutput: true });
+      await pm.runCommand(["build"], {}, { needOutput: true });
       expect(mockExecute.mock.calls[0]![1]).toEqual({
         verbose: false,
         needOutput: true,
@@ -264,23 +278,27 @@ describe("PackageManager", () => {
         Promise.resolve({ stdout: "done", stderr: "" }),
       );
       const pm = new PackageManager(processManager);
-      const result = await pm.runCommand("dev", {});
+      const result = await pm.runCommand(["dev"], {});
       expect(result).toEqual({ stdout: "done", stderr: "" });
     });
   });
 
   describe("rundamatCommand", () => {
-    it("should prefix the command with `bun run damat`", async () => {
+    it("should prefix the argv with `run damat`", async () => {
       const pm = new PackageManager(processManager);
-      await pm.rundamatCommand("db:create", { cwd: "/x" });
+      await pm.rundamatCommand(["db:create"], { cwd: "/x" });
 
       const [commandArg] = mockExecute.mock.calls[0]!;
-      expect(commandArg).toEqual(["bun run damat db:create", { cwd: "/x" }]);
+      expect(commandArg).toEqual([
+        "bun",
+        ["run", "damat", "db:create"],
+        { cwd: "/x" },
+      ]);
     });
 
     it("should merge verbose options", async () => {
       const pm = new PackageManager(processManager, { verbose: true });
-      await pm.rundamatCommand("seed", {}, { needOutput: true });
+      await pm.rundamatCommand(["seed"], {}, { needOutput: true });
       expect(mockExecute.mock.calls[0]![1]).toEqual({
         verbose: true,
         needOutput: true,

@@ -2,10 +2,11 @@
 import { runCli, reportError, getExitCode } from "@damatjs/cli";
 import { Logger } from "@damatjs/logger";
 import { buildCommand, devCommand, startCommand, codegenCommand, barrelCommand, moduleCommand } from './command';
+import { CLI_VERSION } from "./version.generated";
 
 runCli({
   name: "damat",
-  version: "0.3.1",
+  version: CLI_VERSION,
   description: "Damat CLI - Development and build tool for Damat.js",
   commands: [devCommand, startCommand, buildCommand, codegenCommand, barrelCommand, moduleCommand],
   banner: {

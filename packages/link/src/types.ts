@@ -15,7 +15,11 @@ export interface LinkEndpoint {
   module: string;
   /** Key of the model in that module's `models` map (drives the service accessor). */
   model: string;
-  /** Column on the source row that identifies it. Default: `"id"`. */
+  /**
+   * Column on the source row that identifies it. Default: the model's actual
+   * primary key when it is resolvable through the global model registry at
+   * definition time, else `"id"`.
+   */
   primaryKey?: string;
   /** Field name this side is exposed as when querying (graph). Default: `model`. */
   field?: string;
@@ -27,6 +31,13 @@ export interface LinkEndpoint {
 export interface ResolvedEndpoint {
   module: string;
   model: string;
+  /**
+   * The model's real database table name — resolved from the global model
+   * registry when the model is loaded, else derived from the key by the
+   * `collectModels` convention (camelCase key -> snake_case table). Junction
+   * table and column names derive from this, never from the raw key.
+   */
+  table: string;
   primaryKey: string;
   alias: string;
   isList: boolean;
@@ -35,6 +46,8 @@ export interface ResolvedEndpoint {
 export interface LinkOptions {
   /** Override the generated junction table name. */
   pivotTable?: string;
+  /** Override the generated junction column name(s), per side. */
+  pivotColumns?: { left?: string; right?: string };
   /** Prefix used to generate junction-row ids. Default: `"link"`. */
   idPrefix?: string;
   database?: {

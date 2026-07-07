@@ -8,34 +8,22 @@ import type { Pool } from "@damatjs/deps/pg";
 import type { MigrationStatus, ModuleMigrationStatus } from "../types";
 import { discoverModuleMigrations } from "../discovery";
 import { MigrationTracker } from "../tracker";
+import { OrmModuleContainer, OrmModule } from "@damatjs/orm-type";
 
 /**
  * Get migration status for all modules.
  */
 export async function getMigrationStatus(
   pool: Pool,
-  modulesResolvers: string[]
+  moduleResolvers: OrmModuleContainer,
 ): Promise<MigrationStatus> {
   const tracker = new MigrationTracker(pool);
   await tracker.ensureTable();
 
   const result: ModuleMigrationStatus[] = [];
 
-  for (const modulesResolver of modulesResolvers) {
-    const migrations = discoverModuleMigrations(modulesResolver);
-    const applied = await tracker.getApplied(modulesResolver);
-    const appliedNames = new Set(applied.map((a) => a.name));
-
-    for (const m of migrations) {
-      m.applied = appliedNames.has(m.name);
-    }
-
-    result.push({
-      name: modulesResolver,
-      applied: migrations.filter((m) => m.applied).length,
-      pending: migrations.filter((m) => !m.applied).length,
-      migrations,
-    });
+  for (const moduleResolver of Object.values(moduleResolvers)) {
+    result.push(await moduleStatus(tracker, moduleResolver));
   }
 
   return { modules: result };
@@ -46,20 +34,33 @@ export async function getMigrationStatus(
  */
 export async function getModuleMigrationStatus(
   pool: Pool,
-  modulesResolver: string,
+  moduleResolver: OrmModule,
 ): Promise<{ module: ModuleMigrationStatus }> {
   const tracker = new MigrationTracker(pool);
   await tracker.ensureTable();
 
-  const migrations = discoverModuleMigrations(modulesResolver);
+  const migrations = discoverModuleMigrations(moduleResolver.resolve);
 
   if (migrations.length === 0) {
     throw new Error(
-      `Module '${modulesResolver}' not found or has no migrations`,
+      `Module '${moduleResolver.name}' not found or has no migrations`,
     );
   }
 
-  const applied = await tracker.getApplied(modulesResolver);
+  return { module: await moduleStatus(tracker, moduleResolver) };
+}
+
+/**
+ * Cross-reference a module's discovered migrations with the tracker.
+ * Tracker rows are keyed by module NAME (see executor/run.ts), so the filter
+ * must use the same key — never the resolve path.
+ */
+async function moduleStatus(
+  tracker: MigrationTracker,
+  moduleResolver: OrmModule,
+): Promise<ModuleMigrationStatus> {
+  const migrations = discoverModuleMigrations(moduleResolver.resolve);
+  const applied = await tracker.getApplied(moduleResolver.name);
   const appliedNames = new Set(applied.map((a) => a.name));
 
   for (const m of migrations) {
@@ -67,11 +68,9 @@ export async function getModuleMigrationStatus(
   }
 
   return {
-    module: {
-      name: modulesResolver,
-      applied: migrations.filter((m) => m.applied).length,
-      pending: migrations.filter((m) => !m.applied).length,
-      migrations,
-    },
+    name: moduleResolver.name,
+    applied: migrations.filter((m) => m.applied).length,
+    pending: migrations.filter((m) => !m.applied).length,
+    migrations,
   };
 }

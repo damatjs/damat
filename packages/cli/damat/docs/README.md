@@ -96,7 +96,11 @@ Every handler returns `{ exitCode }` and reports through `ctx.logger`.
 - **Verification gate.** Registry installs run `evaluateVerification` before any
   files are copied; `rejected`/`revoked` are always blocked, and policy
   (`DAMAT_MODULE_VERIFY` / `DAMAT_MODULE_REQUIRE_VERIFIED`) governs
-  unverified/pending. Path and git sources are trusted as-is.
+  unverified/pending. Path and git sources carry no verification and are
+  refused unless `--allow-unverified` is passed (or the policy is `off`), and
+  must pass `validateModuleDir`. Module id / `--dir` are validated against
+  path traversal, dependency specs against the npm name/semver grammar, and
+  `bun add` runs with `--ignore-scripts` unless `--allow-scripts` is passed.
 - **Soft dependencies.** Unmet module-to-module dependencies (`manifest.modules`)
   are warnings, not blockers.
 

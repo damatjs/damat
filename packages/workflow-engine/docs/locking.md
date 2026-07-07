@@ -42,6 +42,7 @@ functions below are public.)
 DEFAULT_LOCK_TTL_MS    = 300_000; // 5 min
 DEFAULT_RETRY_DELAY_MS = 100;
 DEFAULT_MAX_RETRIES    = 0;       // fail immediately if locked
+DEFAULT_AUTO_EXTEND    = true;    // heartbeat the TTL while the workflow runs
 ```
 
 ## `WorkflowLockConfig`
@@ -52,7 +53,7 @@ interface WorkflowLockConfig {
   ttlMs?: number;      // lock TTL (default 300000)
   maxRetries?: number; // acquisition retries (default 0)
   retryDelayMs?: number;// delay between acquisition retries (default 100)
-  autoExtend?: boolean; // heartbeat-extend the TTL every ttlMs/2 while running (default false)
+  autoExtend?: boolean; // heartbeat-extend the TTL every ttlMs/2 while running (default true)
 }
 ```
 
@@ -97,15 +98,16 @@ needed).
 ## How `executeWithLock` uses them
 
 `createWorkflow().executeWithLock` (see [workflows.md](./workflows.md)) acquires
-on entry, optionally starts an auto-extend heartbeat, runs the workflow, and
-always releases in `finally`:
+on entry, starts the auto-extend heartbeat (default ON), runs the workflow, and
+always releases in `finally` — a throwing release is logged and swallowed so it
+never discards the workflow result:
 
 ```ts
 const lock = await acquireWorkflowLock(name, lockConfig);
 if (!lock.acquired) return /* WorkflowFailure with WorkflowLockError */;
 
 let heartbeat;
-if (lockConfig.autoExtend && lock.lockValue) {
+if ((lockConfig.autoExtend ?? DEFAULT_AUTO_EXTEND) && lock.lockValue) {
   heartbeat = setInterval(() =>
     extendWorkflowLock(name, lock.lockId, lock.lockValue!, ttlMs).then(/* warn if !extended */),
     Math.max(1000, Math.floor(ttlMs / 2)),
@@ -116,7 +118,13 @@ try {
     { ...metadata, lockId: lock.lockId }, executionId);
 } finally {
   if (heartbeat) clearInterval(heartbeat);
-  if (lock.lockValue) await releaseWorkflowLock(name, lock.lockId, lock.lockValue);
+  if (lock.lockValue) {
+    try {
+      await releaseWorkflowLock(name, lock.lockId, lock.lockValue);
+    } catch (e) {
+      // e.g. Redis outage: log; the lock expires via TTL. Never mask the result.
+    }
+  }
 }
 ```
 
@@ -135,11 +143,16 @@ try {
 
 ## Gotchas
 
-- **TTL must outlast the workflow** or another runner can acquire the lock
-  mid-execution. Use `autoExtend` for runs that may exceed `ttlMs`.
+- **Auto-extend is ON by default**, so runs longer than `ttlMs` keep mutual
+  exclusion. If you pass `autoExtend: false`, the TTL must outlast the workflow
+  or another runner can acquire the lock mid-execution.
 - The heartbeat interval is `max(1000, floor(ttlMs/2))` — i.e. never tighter than
   1s. With a very small `ttlMs` the floor means it could lapse; keep `ttlMs`
-  comfortably above 2s when using `autoExtend`.
+  comfortably above 2s.
+- A **failed release** (e.g. Redis outage) inside `executeWithLock` is logged
+  and swallowed — the workflow result is still returned and the lock expires
+  via its TTL. Manual `releaseWorkflowLock` calls still throw; wrap them
+  yourself.
 - Always pass `lock.lockValue` to release/extend. Without the matching value the
   operation is a no-op (`false`) — this is the fencing-token safety that stops you
   releasing someone else's lock.

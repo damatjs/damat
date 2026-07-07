@@ -61,14 +61,18 @@ interface StepDefinition<I, O, C = undefined> {
 interface StepConfig {
   timeoutMs?: number;          // per-attempt timeout (default 30000)
   retry?: Partial<RetryPolicy>;// default: no retries (maxAttempts 0)
-  idempotent?: boolean;        // metadata only — the engine does not act on it
+  idempotent?: boolean;        // safe to retry? false suppresses retries (default true)
   description?: string;        // used in debug logs
 }
 ```
 
-> `idempotent` is **documentation/intent** today: nothing in the engine reads it
-> to change behavior. Mark steps that are safe to retry for human readers and to
-> signal the author's intent.
+> `idempotent: false` **disables automatic retries** for the step: retries
+> re-invoke `invoke` wholesale, so a step whose side effects must not be
+> duplicated (e.g. a payment charge without an idempotency key) fails straight
+> to the workflow's failure/compensation path on its first error. Any configured
+> retry policy is ignored (with a logged warning). The default (`true`) leaves
+> retry behavior entirely to the `retry` policy. See
+> [retry.md](./retry.md#the-idempotency-gate).
 
 ## `StepResponse`
 
@@ -150,7 +154,9 @@ directly without baking per-site values into the step definition.
      1-based, and the AbortSignal is the one Effect provides.
    - On a thrown error, `catch` wraps it in `StepExecutionError(stepName, message, cause, workflowName)` (the original error is `cause`).
    - On exceeding `timeoutMs`, `onTimeout` produces a `StepTimeoutError`.
-3. **If `maxAttempts > 0`, wrap in `Effect.retry`** with:
+3. **If `maxAttempts > 0` and the step is `idempotent`, wrap in `Effect.retry`**
+   (a non-idempotent step skips retry entirely — a warning is logged when a
+   retry policy was configured anyway) with:
    - `schedule`: `Schedule.exponential(initialDelayMs, backoffMultiplier)` unioned
      with `Schedule.spaced(maxDelayMs)` (the cap) and intersected with
      `Schedule.recurs(maxAttempts)`. See [retry.md](./retry.md).

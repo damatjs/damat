@@ -65,7 +65,7 @@ describe("runScaffoldModule", () => {
 
   const baseSpinner = () => ({ stop: mock(() => {}) }) as any;
 
-  it("should run `bunx @damatjs/damat-cli module init` with the pinned version and cwd", async () => {
+  it("should run `bunx @damatjs/damat-cli module init` (argv form) with the pinned version and cwd", async () => {
     const ac = new AbortController();
     await runScaffoldModule({
       name: "my-mod",
@@ -77,11 +77,15 @@ describe("runScaffoldModule", () => {
 
     expect(mockExecute).toHaveBeenCalledTimes(1);
     const [commandArg] = executeCalls[0]!;
-    expect(commandArg[0]).toBe(
-      "bunx @damatjs/damat-cli@1.2.3 module init my-mod",
-    );
-    expect(commandArg[1].cwd).toBe("/work/dir");
-    expect(commandArg[1].signal).toBe(ac.signal);
+    expect(commandArg[0]).toBe("bunx");
+    expect(commandArg[1]).toEqual([
+      "@damatjs/damat-cli@1.2.3",
+      "module",
+      "init",
+      "my-mod",
+    ]);
+    expect(commandArg[2].cwd).toBe("/work/dir");
+    expect(commandArg[2].signal).toBe(ac.signal);
   });
 
   it("should default the version to `latest` when empty", async () => {
@@ -93,7 +97,7 @@ describe("runScaffoldModule", () => {
       spinner: baseSpinner(),
     });
     const [commandArg] = executeCalls[0]!;
-    expect(commandArg[0]).toContain("@damatjs/damat-cli@latest");
+    expect(commandArg[1]).toContain("@damatjs/damat-cli@latest");
   });
 
   it("should fall back to process.cwd() when directoryPath is empty", async () => {
@@ -104,7 +108,7 @@ describe("runScaffoldModule", () => {
       spinner: baseSpinner(),
     });
     const [commandArg] = executeCalls[0]!;
-    expect(commandArg[1].cwd).toBe(process.cwd());
+    expect(commandArg[2].cwd).toBe(process.cwd());
   });
 
   it("should process.exit on an abort error", async () => {

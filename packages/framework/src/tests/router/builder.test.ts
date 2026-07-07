@@ -132,8 +132,33 @@ describe("createFileRouter", () => {
     expect(route).toBeDefined();
     expect(route!.hasAuth).toBe(true);
 
-    // The built-in "session" auth passes through, so the handler is reached.
-    expect((await fr.router.request("/secured")).status).toBe(200);
+    // No handler is configured for "session", so auth fails closed with 401.
+    expect((await fr.router.request("/secured")).status).toBe(401);
+  });
+
+  it("runs the supplied authHandler for the route's auth type and allows the request", async () => {
+    writeRoute(
+      "session-secured",
+      `export const GET = (c) => c.text("ok");
+       export const config = { method: "GET", auth: { type: "session" } };`,
+    );
+
+    const { logger } = recordingLogger();
+    const fr = await createFileRouter({
+      routesDir: root,
+      logger,
+      authHandlers: {
+        session: async (c, next) => {
+          c.set("userId", "u1");
+          await next();
+        },
+      },
+    });
+
+    // The configured session handler runs and passes the request through.
+    const res = await fr.router.request("/session-secured");
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("ok");
   });
 
   it("applies basePath as a prefix to registered routes", async () => {

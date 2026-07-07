@@ -1,7 +1,7 @@
 {
     "name": "@damatjs/orm",
     "description": "Damat ORM",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -40,7 +40,7 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/damatjs/damat",
-        "directory": "packages/core/types"
+        "directory": "packages/orm/main"
     },
     "files": [
         "dist",
@@ -51,21 +51,22 @@
     "author": "Abel Lamesgen",
     "license": "MIT",
     "dependencies": {
-        "@damatjs/orm-migration": "*",
-        "@damatjs/orm-connector": "*",
-        "@damatjs/orm-model": "*",
-        "@damatjs/orm-processor": "*",
-        "@damatjs/orm-pg": "*",
-        "@damatjs/deps": "*"
+        "@damatjs/orm-migration": "workspace:*",
+        "@damatjs/orm-connector": "workspace:*",
+        "@damatjs/orm-model": "workspace:*",
+        "@damatjs/orm-processor": "workspace:*",
+        "@damatjs/orm-pg": "workspace:*",
+        "@damatjs/deps": "workspace:*"
     },
     "devDependencies": {
-        "@damatjs/typescript-config": "*",
+        "@damatjs/typescript-config": "workspace:*",
         "@types/bun": "1.3.9",
         "typescript": "5.9.2"
     },
     "scripts": {
         "build": "rm -rf dist tsconfig.tsbuildinfo && tsc",
         "watch": "tsc --watch",
-        "test": "bun test ./src"
+        "test": "bun test ./src",
+        "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)"
     }
 }

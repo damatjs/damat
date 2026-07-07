@@ -15,6 +15,15 @@ export function snakeToCamel(name: string): string {
 }
 
 /**
+ * Turn a camelCase model key back into its snake_case table name
+ * (`functionSpaces` -> `function_spaces`). The exact inverse of the
+ * `collectModels` key derivation for convention-named (snake_case) tables.
+ */
+export function camelToSnake(name: string): string {
+  return name.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
+}
+
+/**
  * Deterministically shorten an identifier to Postgres' 63-byte limit, keeping a
  * readable prefix and appending a short stable hash so distinct long names never
  * collapse onto the same truncated value.

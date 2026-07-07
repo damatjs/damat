@@ -19,6 +19,7 @@ const ep = (
 ): ResolvedEndpoint => ({
   module,
   model,
+  table: model,
   primaryKey: "id",
   alias: model,
   isList: true,
@@ -68,6 +69,30 @@ describe("naming — pivotColumns", () => {
     expect(leftColumn).toBe("a_note_id");
     expect(rightColumn).toBe("b_note_id");
   });
+
+  test("true plurals still singularize exactly as before (backward compat)", () => {
+    const { leftColumn, rightColumn } = pivotColumns(
+      ep("u", "users", { table: "users" }),
+      ep("o", "organizations", { table: "organizations" }),
+    );
+    expect(leftColumn).toBe("user_id");
+    expect(rightColumn).toBe("organization_id");
+  });
+
+  test("singular nouns ending in s are no longer mangled (address/class/status)", () => {
+    // Before the guard these became addres_id / clas_id / statu_id.
+    for (const [table, expected] of [
+      ["address", "address_id"], // -ss
+      ["class", "class_id"], //     -ss
+      ["status", "status_id"], //   -us
+    ] as const) {
+      const { leftColumn } = pivotColumns(
+        ep("m", table, { table }),
+        ep("o", "org", { table: "org" }),
+      );
+      expect(leftColumn).toBe(expected);
+    }
+  });
 });
 
 describe("pivot — buildPivotModel", () => {
@@ -112,9 +137,27 @@ describe("pivot — buildPivotModel", () => {
     expect(buildPivotModel(base).toTableSchema().foreignKeys ?? []).toHaveLength(0);
     const withFk = buildPivotModel({
       ...base,
-      foreignKeys: { leftTarget: "users", rightTarget: "orgs" },
+      foreignKeys: {
+        left: { table: "users", reference: "id" },
+        right: { table: "orgs", reference: "id" },
+      },
     });
     expect((withFk.toTableSchema().foreignKeys ?? []).length).toBeGreaterThan(0);
+  });
+
+  test("FK constraints reference the given table/column and cascade on delete", () => {
+    const withFk = buildPivotModel({
+      ...base,
+      foreignKeys: {
+        left: { table: "users", reference: "id" },
+        right: { table: "products", reference: "sku" },
+      },
+    });
+    const fks = withFk.toTableSchema().foreignKeys ?? [];
+    const right = fks.find((f) => f.referencedTable === "products");
+    expect(right?.referencedColumns).toEqual(["sku"]);
+    expect(right?.columns.map((c) => c.name)).toEqual(["org_id"]);
+    expect(fks.every((f) => f.onDelete === "CASCADE")).toBe(true);
   });
 });
 

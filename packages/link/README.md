@@ -44,14 +44,24 @@ src/links/
 import { defineLink } from "@damatjs/framework";
 
 export default defineLink(
-  { module: "user", model: "user", field: "users" },
-  { module: "organization", model: "organization", field: "organizations" },
+  { module: "user", model: "users", field: "users" },
+  { module: "organization", model: "organizations", field: "organizations" },
 );
 ```
 
 `module` is the module id (the `getModule` key); `model` is the **key in that
-module's `models` map** (i.e. its service accessor — `user`, not the table
-`users`). `field` is the name the linked side is exposed as.
+module's `models` map** (i.e. its service accessor — per `collectModels` that
+key is the camelCased table name, so the `users` table registers as `users`).
+`field` is the name the linked side is exposed as.
+
+**Naming derives from the real table, singularized.** `defineLink` resolves
+each side's actual table name (through the global model registry when the
+model is loaded, else from the key by the `collectModels` convention) and
+derives junction names from its logical singular form — the same `removeLastS`
+rule the ORM uses for `mappedBy`. So `users` + `organizations` produce the
+`user_organization` junction with `user_id` / `organization_id`, and a
+camelCase key like `functionSpaces` contributes `function_space_id`. Override
+with `options.pivotTable` and/or `options.pivotColumns: { left, right }`.
 
 > **Import surface.** Links are an **app** concern. Import `defineLink` /
 > `collectLinkModels` / `defineLinkModule` from **`@damatjs/framework`** and put
@@ -62,7 +72,11 @@ This generates a `user_organization` junction table: `id`, `user_id`,
 `organization_id`, timestamps, a soft-delete column, a **unique** index on
 `(user_id, organization_id)`, and an index per foreign-key column. No real
 cross-module DB foreign keys are emitted by default (module isolation); opt in
-with `{ database: { foreignKeys: true } }`.
+with `{ database: { foreignKeys: true } }` — the FKs then reference each
+side's real table and its actual primary key (not a hard-coded `id`) with
+`ON DELETE CASCADE`. When the target models aren't importable at definition
+time and a side's primary key isn't `id`, set `primaryKey` explicitly on that
+endpoint.
 
 ```ts
 // src/links/user/index.ts — the owner's link module (migrations + discovery)
@@ -129,23 +143,29 @@ So `Users` carries `organizations`, `Organizations` carries `users`, and
 import { getModule } from "@damatjs/framework";
 const link = getModule("link");
 
-// Manage links (create is idempotent; dismiss is a soft delete)
-await link.create({ module: "user", model: "user", id: u.id }, { module: "organization", model: "organization", id: o.id });
-await link.dismiss({ module: "user", model: "user", id: u.id }, { module: "organization", model: "organization", id: o.id });
+// Manage links. create is idempotent AND race-safe — one INSERT … ON CONFLICT
+// against the unique pair index (revives a dismissed link); dismiss soft-deletes.
+await link.create({ module: "user", model: "users", id: u.id }, { module: "organization", model: "organizations", id: o.id });
+await link.dismiss({ module: "user", model: "users", id: u.id }, { module: "organization", model: "organizations", id: o.id });
 
 // Fetch the linked module's records (either direction)
-const orgs  = await link.fetch({ module: "user", model: "user", id: u.id }, { module: "organization", model: "organization" });
-const users = await link.fetch({ module: "organization", model: "organization", id: o.id }, { module: "user", model: "user" });
+const orgs  = await link.fetch({ module: "user", model: "users", id: u.id }, { module: "organization", model: "organizations" });
+const users = await link.fetch({ module: "organization", model: "organizations", id: o.id }, { module: "user", model: "users" });
 
 // Nested graph query across modules — Damat's analogue of query.graph
 const { data } = await link.graph({
   module: "user",
-  entity: "user",
+  entity: "users",
   fields: ["id", "email", "organizations.name", "organizations.slug"],
   filters: { id: u.id },
 });
 // data[0].organizations -> [{ name, slug }, …]
 ```
+
+> **Graph scoping.** `graph` only accepts root entities that participate in a
+> registered link (nested hops are limited to declared links and the owning
+> model's own relations), so the link service is not a read path into
+> arbitrary modules' data.
 
 ## API
 

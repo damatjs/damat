@@ -40,13 +40,32 @@ describe("Counters", () => {
       expect(await redis.ttl("test-counter")).toBe(-1);
     });
 
-    it("re-applies TTL on each increment (current behavior)", async () => {
+    it("sets TTL only on the first increment (no refresh)", async () => {
       await incrementCounter("test-counter-ttl", 1, 300, redis);
       redis.advanceTime(100_000);
-      // Second increment with a TTL refreshes the expiry.
+      // Steady increments must NOT re-arm the expiry or the counter never dies.
       await incrementCounter("test-counter-ttl", 1, 300, redis);
       const ttl = await redis.ttl("test-counter-ttl");
-      expect(ttl).toBeGreaterThan(295);
+      expect(ttl).toBeLessThanOrEqual(200);
+      expect(ttl).toBeGreaterThan(195);
+    });
+
+    it("expires under steady increment traffic", async () => {
+      await incrementCounter("test-counter-ttl", 1, 100, redis);
+      redis.advanceTime(60_000);
+      await incrementCounter("test-counter-ttl", 1, 100, redis);
+      redis.advanceTime(60_000);
+      // 120s elapsed > 100s TTL from the FIRST increment: the key is gone.
+      expect(await redis.ttl("test-counter-ttl")).toBe(-2);
+      expect(await getCounter("test-counter-ttl", redis)).toBe(0);
+    });
+
+    it("arms a TTL on an existing counter that has none", async () => {
+      await incrementCounter("test-counter", 1, undefined, redis);
+      expect(await redis.ttl("test-counter")).toBe(-1);
+      // Passing a TTL later applies it because the key had no expiry yet.
+      await incrementCounter("test-counter", 1, 300, redis);
+      expect(await redis.ttl("test-counter")).toBeGreaterThan(295);
     });
   });
 

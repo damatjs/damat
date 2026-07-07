@@ -29,7 +29,7 @@ async function cacheDeletePattern(pattern: string, client?: Redis): Promise<void
 - **`cacheSetRaw`** — if `ttlSeconds` is truthy → `SETEX`; otherwise `SET` (persists with no expiry). Note a `ttlSeconds` of `0` is falsy and therefore takes the no-expiry branch.
 - **`cacheGetRaw`** — `GET cache:<key>`, returning the string or `null`.
 - **`cacheDelete`** — `DEL cache:<key>`; a no-op (no error) for a missing key.
-- **`cacheDeletePattern`** — `KEYS cache:<pattern>` then `DEL` of every match (only if any matched). The pattern is relative to the prefix, e.g. `cacheDeletePattern("user:*")` scans `cache:user:*`.
+- **`cacheDeletePattern`** — cursor-driven `SCAN ... MATCH cache:<pattern> COUNT 100` loop, `DEL`-ing each batch of matches, until the cursor returns to `0`. The pattern is relative to the prefix, e.g. `cacheDeletePattern("user:*")` scans `cache:user:*`.
 
 ## Example
 
@@ -46,7 +46,7 @@ await cacheDeletePattern("user:*");                     // wipe all cached users
 
 ## Gotchas
 
-- **`KEYS` is O(N)** over the keyspace and blocks Redis. `cacheDeletePattern` is fine for occasional invalidation but avoid it on hot paths / huge keyspaces; prefer a `SCAN`-based approach or a known key set for high-frequency use.
+- **`cacheDeletePattern` is incremental, not atomic** — it `SCAN`s in batches (never blocking Redis the way `KEYS` would), so keys written mid-scan may or may not be caught; treat it as best-effort invalidation.
 - **JSON round-trip loses types** — `Date`, `Map`, `BigInt`, `undefined` do not survive `JSON.stringify`/`parse`. Use `cacheSetRaw` with your own encoding when that matters.
 - **Parse errors are silent** — `cacheGet` returns `null` for malformed JSON, indistinguishable from a miss.
 - **TTL `0`** in `cacheSetRaw` means "no expiry", not "expire immediately".

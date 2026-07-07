@@ -9,7 +9,8 @@ export async function bootstrap(options: BootstrapOptions): Promise<BootstrapRes
   const {
     routesDir,
     projectConfig,
-    healthCheck
+    healthCheck,
+    authHandlers
   } = options;
 
   const logger = getLogger();
@@ -30,6 +31,7 @@ export async function bootstrap(options: BootstrapOptions): Promise<BootstrapRes
     logger,
     rateLimit: projectConfig.http.rateLimit,
     auth: projectConfig.http.auth,
+    authHandlers,
   });
 
   const entryPathUrl = projectConfig.http.api?.entryRouter ?? "/api";

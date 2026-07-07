@@ -62,6 +62,9 @@ function resolveStepConfig<I, O, C>(
  *
  * Semantics:
  * - `timeoutMs` applies per attempt; timed-out attempts are retryable.
+ * - `idempotent: false` disables automatic retries entirely: the retry
+ *   policy is ignored (with a warning if one is configured) and the first
+ *   failure propagates straight to the failure/compensation path.
  * - `retry.isRetryable` receives the ORIGINAL error thrown by the step
  *   (or the StepTimeoutError for timeouts), not the engine wrapper.
  * - When all retries are exhausted, the step fails with the LAST
@@ -122,7 +125,15 @@ export function executeStep<I, O, C = undefined>(
     const initialDelayMs = retryPolicy.initialDelayMs ?? 100;
     const backoffMultiplier = retryPolicy.backoffMultiplier ?? 2;
     const maxDelayMs = retryPolicy.maxDelayMs ?? 5000;
-    const shouldRetry = maxAttempts > 0;
+    // Retries re-invoke the step wholesale, so a step explicitly marked
+    // `idempotent: false` is never retried — its first failure goes straight
+    // to the failure/compensation path instead of duplicating side effects.
+    const shouldRetry = maxAttempts > 0 && config.idempotent;
+    if (maxAttempts > 0 && !config.idempotent) {
+      stepLogger.warn(`Retry policy ignored: step is marked idempotent: false`, {
+        maxAttempts,
+      });
+    }
 
     // Tracks how many times invoke actually ran, so ctx.attempt is accurate
     // and we can tell "retries exhausted" apart from "error not retryable".

@@ -13,6 +13,7 @@ import {
   DeleteOptions,
   ExistsOptions,
   FindOptions,
+  MAX_PAGE_SIZE,
   SoftDeleteOptions,
   UpdateOptions,
   UpsertOptions,
@@ -81,6 +82,127 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
     return this._relations;
   }
 
+  /**
+   * Translate a caller's {@link FindOptions} into the option shape the ORM
+   * repository accepts, forwarding ONLY known-safe keys. `whereRaw`,
+   * `allowFullTable`, `distinct` and friends are never passed through from an
+   * (often request-derived) options object, and `take`/`skip` become the
+   * bounded `limit`/`offset` the ORM actually reads.
+   */
+  private buildFindOptions(
+    options: FindOptions,
+    paginate: boolean,
+  ): Record<string, unknown> {
+    const repoOpts: Record<string, unknown> = {};
+
+    if (options.select) repoOpts.select = options.select;
+
+    const where = this.applySoftDeleteFilter(
+      options.where,
+      options.withDeleted,
+      this.model,
+    );
+    if (where !== undefined) repoOpts.where = where;
+
+    if (options.orderBy) {
+      repoOpts.orderBy = options.orderBy.map((o) => this.sanitizeOrderBy(o));
+    }
+
+    if (paginate) {
+      const limit = this.resolveLimit(options.take);
+      if (limit !== undefined) repoOpts.limit = limit;
+      const offset = this.resolvePositiveInt(options.skip, "skip");
+      if (offset !== undefined) repoOpts.offset = offset;
+    }
+
+    return repoOpts;
+  }
+
+  /** Validate an orderBy entry so nothing untrusted is string-interpolated. */
+  private sanitizeOrderBy(o: {
+    column: string;
+    direction?: string;
+    nulls?: string;
+  }): { column: string; direction?: "ASC" | "DESC"; nulls?: string } {
+    const out: { column: string; direction?: "ASC" | "DESC"; nulls?: string } = {
+      column: o.column,
+    };
+    if (o.direction !== undefined) {
+      const dir = String(o.direction).toUpperCase();
+      if (dir !== "ASC" && dir !== "DESC") {
+        throw new Error(`[service:${this.modelName}] orderBy.direction must be ASC or DESC`);
+      }
+      out.direction = dir as "ASC" | "DESC";
+    }
+    if (o.nulls !== undefined) {
+      const nulls = String(o.nulls).toUpperCase();
+      if (nulls !== "NULLS FIRST" && nulls !== "NULLS LAST") {
+        throw new Error(`[service:${this.modelName}] orderBy.nulls must be NULLS FIRST or NULLS LAST`);
+      }
+      out.nulls = nulls;
+    }
+    return out;
+  }
+
+  /** Coerce a `take` to a bounded, non-negative integer limit (or undefined). */
+  private resolveLimit(take: unknown): number | undefined {
+    const n = this.resolvePositiveInt(take, "take");
+    if (n === undefined) return undefined;
+    return Math.min(n, MAX_PAGE_SIZE);
+  }
+
+  /** Parse a pagination value, rejecting anything that isn't a whole count. */
+  private resolvePositiveInt(value: unknown, ctx: string): number | undefined {
+    if (value === undefined || value === null) return undefined;
+    const n = typeof value === "number" ? value : Number(value);
+    if (!Number.isInteger(n) || n < 0) {
+      throw new Error(`[service:${this.modelName}] ${ctx} must be a non-negative integer`);
+    }
+    return n;
+  }
+
+  /** The model's soft-delete column, or null when soft-delete is off/absent. */
+  private softDeleteField(model: ModelDefinition): string | null {
+    if (!model._softDelete) return null;
+    const field = model._deletedAtField ?? "deleted_at";
+    const columns = model.toTableSchema().columns ?? [];
+    return columns.some((c) => c.name === field) ? field : null;
+  }
+
+  /**
+   * Add `deleted_at IS NULL` to a read's where clause unless soft-delete is off,
+   * the caller opted into `withDeleted`, or the caller already filtered on that
+   * column explicitly.
+   */
+  private applySoftDeleteFilter(
+    where: Record<string, unknown> | undefined,
+    withDeleted: boolean | undefined,
+    model: ModelDefinition,
+  ): Record<string, unknown> | undefined {
+    const field = this.softDeleteField(model);
+    if (!field || withDeleted) return where;
+    if (where && Object.prototype.hasOwnProperty.call(where, field)) return where;
+    return { ...(where ?? {}), [field]: { isNull: true } };
+  }
+
+  /** The model's updated-at column name (`updated_at`/`updatedAt`), if any. */
+  private updatedAtColumn(): string | null {
+    const columns = this.model.toTableSchema().columns ?? [];
+    const found = columns.find(
+      (c) => c.name === "updated_at" || c.name === "updatedAt",
+    );
+    return found ? found.name : null;
+  }
+
+  /** Stamp `updated_at` on a write unless the caller set it explicitly. */
+  private withUpdatedAt(
+    data: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const col = this.updatedAtColumn();
+    if (!col || Object.prototype.hasOwnProperty.call(data, col)) return data;
+    return { ...data, [col]: new Date() };
+  }
+
   async create(options: CreateOptions): Promise<T> {
     this._validateData(options.data);
     const repo = this.getRepository();
@@ -118,9 +240,9 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
   async find(
     options: FindOptions = {},
   ): Promise<(T & Record<string, any>) | null> {
-    const { include, ...findOpts } = options;
+    const { include } = options;
     const repo = this.getRepository();
-    const result = await repo.findOne(findOpts as any);
+    const result = await repo.findOne(this.buildFindOptions(options, false) as any);
 
     if (!result) return null;
 
@@ -136,9 +258,9 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
   async findMany(
     options: FindOptions = {},
   ): Promise<(T & Record<string, any>)[]> {
-    const { include, ...findOpts } = options;
+    const { include } = options;
     const repo = this.getRepository();
-    const records = await repo.findMany(findOpts as any);
+    const records = await repo.findMany(this.buildFindOptions(options, true) as any);
 
     // If no relations to load, return as-is
     if (!include || include.length === 0 || records.length === 0) {
@@ -234,7 +356,7 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
     // service-level `data` onto `set` so the payload reaches the SQL builder
     // (the same shape softDelete/restore build by hand).
     return repo.update({
-      set: options.data,
+      set: this.withUpdatedAt(options.data),
       where: options.where,
       returning: options.returning,
     } as any);
@@ -249,7 +371,7 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
     this._validateData(options.data, true);
     const repo = this.getRepository();
     const row = await repo.updateOne(
-      options.data as Record<string, unknown>,
+      this.withUpdatedAt(options.data as Record<string, unknown>),
       options.where,
       options.returning,
     );
@@ -258,9 +380,13 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
 
   async delete(options: DeleteOptions): Promise<number> {
     if (!options.cascade) {
-      const { cascade: _cascade, ...rest } = options;
       const repo = this.getRepository();
-      return repo.delete(rest as any);
+      // Forward only the delete contract — never an untrusted `allowFullTable`
+      // (or other option key) that a request-derived payload might smuggle in.
+      return repo.delete({
+        where: options.where,
+        returning: options.returning,
+      } as any);
     }
 
     return this.withCascadeTransaction(async () => {
@@ -481,12 +607,20 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
 
   async count(options: CountOptions = {}): Promise<number> {
     const repo = this.getRepository();
-    return repo.count(options.where);
+    return repo.count(
+      this.applySoftDeleteFilter(options.where, options.withDeleted, this.model),
+    );
   }
 
   async exists(options: ExistsOptions): Promise<boolean> {
     const repo = this.getRepository();
-    return repo.exists(options.where);
+    return repo.exists(
+      this.applySoftDeleteFilter(
+        options.where,
+        options.withDeleted,
+        this.model,
+      ) ?? {},
+    );
   }
 
   /**

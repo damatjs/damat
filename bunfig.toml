@@ -3,3 +3,16 @@
 # The global ~/.bunfig.toml disables optional installs; re-enable them here so
 # `@turbo/<platform>` and friends are written to node_modules for the build.
 optional = true
+
+# Supply-chain protections (moved here from the old `.bunfig.toml` dotfile,
+# which bun never loads — the config file bun reads is `bunfig.toml`):
+
+# Don't install packages published to the registry in the last 2 days.
+minimumReleaseAge = 172800
+
+# Never run dependency lifecycle scripts (postinstall etc.). None of our
+# dependencies need one: turbo ships its platform binaries as optional
+# dependencies (covered by `optional = true` above), not install scripts.
+# If a future dependency genuinely needs its install script, add it to
+# `trustedDependencies` in the root package.json instead of flipping this.
+enableScripts = false

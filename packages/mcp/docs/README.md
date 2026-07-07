@@ -73,7 +73,7 @@ JSON-RPC errors) so the assistant sees the message and can recover.
 | `search_modules` | `query` | Same, filtered by case-insensitive match on ref/description/keywords. |
 | `module_info` | `ref` | `parseModuleRef` → `lookupEntry` (tries `namespace/name` then bare `name`) → summary. |
 | `list_installed` | `dir?` (default `src/modules`) | Scans `DAMAT_APP_DIR/<dir>` for subdirectories with a `module.json`. |
-| `add_module` | `source`, `name?`, `dir?`, `force?` | Builds `module add` args and runs `runDamat()`. |
+| `add_module` | `source`, `name?`, `dir?`, `force?`, `allowUnverified?`, `allowScripts?` | Builds `module add` args and runs `runDamat()`. `allowUnverified` maps to `--allow-unverified` (required for path/git sources), `allowScripts` to `--allow-scripts` (dependency lifecycle scripts). |
 
 `summarizeEntry()` is the single place that decides which registry fields are
 surfaced to the model — extend it when you add fields to the registry schema.
@@ -90,7 +90,10 @@ assistant → tools/call add_module { source: "damatjs/user" }
 ```
 
 The server adds no policy of its own; the **verification gate** lives in the
-CLI/`@damatjs/module` and is controlled by `DAMAT_MODULE_VERIFY`.
+CLI/`@damatjs/module` and is controlled by `DAMAT_MODULE_VERIFY`. Non-registry
+(path/git) sources are refused by the CLI unless the tool call sets
+`allowUnverified: true` (→ `--allow-unverified`), and dependency lifecycle
+scripts are skipped unless `allowScripts: true` (→ `--allow-scripts`).
 
 ## Extending the server
 
@@ -130,4 +133,5 @@ may arrive out of request order — match them by `id`.
   corrupts the stream. Use `process.stderr` for debugging.
 - **Registry-less mode is valid.** Without `DAMAT_MODULE_REGISTRY`, the
   registry tools return guidance (with `isError: true`) but `add_module` still
-  works for git/path sources.
+  works for git/path sources — those installs require `allowUnverified: true`
+  since no registry vouches for them.

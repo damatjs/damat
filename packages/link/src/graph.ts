@@ -65,14 +65,20 @@ export interface GraphQueryResult<T = Record<string, any>> {
 /**
  * Reduce a fetched row to the columns requested at this node (plus any nested
  * keys already attached). A `"*"` selection keeps everything.
+ *
+ * The model's ACTUAL primary key is always kept (so callers can re-identify /
+ * index the row) — `primaryKey` defaults to `"id"` for the common case, but the
+ * graph resolver threads in each node's real PK so a model keyed on e.g. `sku`
+ * keeps `sku` and is not silently given a stray `id`.
  */
 export function pruneColumns(
   row: Record<string, any>,
   node: FieldNode,
+  primaryKey = "id",
 ): Record<string, any> {
   if (node.columns.has("*") || node.columns.size === 0) return row;
   const keep = new Set<string>(node.columns);
-  keep.add("id");
+  keep.add(primaryKey);
   for (const childName of node.children.keys()) keep.add(childName);
   const out: Record<string, any> = {};
   for (const key of Object.keys(row)) {

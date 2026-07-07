@@ -180,7 +180,7 @@ export class ModelDefinition<Name extends string = string> {
       ) {
         columns.push({
           name: "created_at",
-          type: "date",
+          type: "timestamp with time zone",
           nullable: false,
           default: "now()",
           primaryKey: false,
@@ -192,8 +192,9 @@ export class ModelDefinition<Name extends string = string> {
       ) {
         columns.push({
           name: "updated_at",
-          type: "date",
-          nullable: true,
+          type: "timestamp with time zone",
+          nullable: false,
+          default: "now()",
           primaryKey: false,
           unique: false,
         });
@@ -204,7 +205,7 @@ export class ModelDefinition<Name extends string = string> {
       if (!columns.some((c) => c.name === this._deletedAtField)) {
         columns.push({
           name: this._deletedAtField,
-          type: "date",
+          type: "timestamp with time zone",
           nullable: true,
           primaryKey: false,
           unique: false,

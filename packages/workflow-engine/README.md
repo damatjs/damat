@@ -4,6 +4,14 @@
 
 `@damatjs/workflow-engine` runs multi-step business processes that must succeed as a unit or roll back cleanly. You author each step as a plain `async` function with an optional compensation (undo) function, compose steps inside an Effect generator, and the engine handles retries, per-attempt timeouts, reverse-order rollback on failure, and (optionally) a Redis lock so the same workflow can't run twice concurrently. It is the orchestration primitive used across Damat — module workflows are built on it, and the framework re-exports it.
 
+> **Warning — best-effort, in-process saga.** All workflow state (completed
+> steps, registered compensations) lives in memory for the duration of a run.
+> There is no durable journal and no crash recovery: if the process crashes or
+> is killed mid-workflow, compensations for already-completed steps will **not**
+> run and the run cannot be resumed. The saga gives you rollback on *failure*
+> inside a live process — for crash-safe guarantees, pair it with idempotent
+> steps, reconciliation jobs, or an external saga log.
+
 Part of the [Damat](../../README.md) monorepo · [Full guide](../../docs/GUIDE.md) · [Internals](./docs/README.md)
 
 ## Install

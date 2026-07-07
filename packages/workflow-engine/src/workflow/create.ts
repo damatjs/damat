@@ -16,7 +16,7 @@ import {
   releaseWorkflowLock,
   extendWorkflowLock,
 } from "../lock";
-import { DEFAULT_LOCK_TTL_MS } from "../lock/constants";
+import { DEFAULT_LOCK_TTL_MS, DEFAULT_AUTO_EXTEND } from "../lock/constants";
 import { executeWorkflowInternal } from "./execute";
 
 /**
@@ -129,8 +129,36 @@ export function createWorkflow<I, O>(
     ): Promise<WorkflowResult<O>> => {
       const workflowLogger = createContextLogger({ workflow: name });
 
-      // Acquire lock
-      const lock = await acquireWorkflowLock(name, lockConfig);
+      // Acquire lock. A lock-backend outage (e.g. Redis unreachable) throws from
+      // deep in acquireLock; surface it as a structured failure so executeWithLock
+      // keeps its contract of always resolving to a WorkflowResult — never a raw
+      // rejection — matching the lock-not-acquired path below.
+      let lock: Awaited<ReturnType<typeof acquireWorkflowLock>>;
+      try {
+        lock = await acquireWorkflowLock(name, lockConfig);
+      } catch (e) {
+        const cause = e instanceof Error ? e : new Error(String(e));
+        const error = new WorkflowError(
+          "LOCK_BACKEND_UNAVAILABLE",
+          `Workflow '${name}' could not acquire its lock: ${cause.message}`,
+          name,
+          undefined,
+          cause,
+        );
+        workflowLogger.error(
+          `Workflow lock acquisition failed — lock backend unavailable`,
+          cause,
+          { lockId: lockConfig.lockId },
+        );
+        return {
+          success: false,
+          error,
+          executionId: nanoid(),
+          durationMs: 0,
+          compensated: false,
+          compensationsFailed: 0,
+        };
+      }
 
       if (!lock.acquired) {
         const error = new WorkflowLockError(name, lock.lockId);
@@ -153,11 +181,13 @@ export function createWorkflow<I, O>(
       // separately via workflow metadata.
       const executionId = nanoid();
 
-      // Optionally keep the lock alive while the workflow runs, so executions
-      // longer than the TTL don't silently lose mutual exclusion.
+      // Keep the lock alive while the workflow runs (default ON), so executions
+      // longer than the TTL don't silently lose mutual exclusion. Callers can
+      // opt out with `autoExtend: false`.
       const ttlMs = lockConfig.ttlMs ?? DEFAULT_LOCK_TTL_MS;
+      const autoExtend = lockConfig.autoExtend ?? DEFAULT_AUTO_EXTEND;
       let heartbeat: ReturnType<typeof setInterval> | undefined;
-      if (lockConfig.autoExtend && lock.lockValue) {
+      if (autoExtend && lock.lockValue) {
         heartbeat = setInterval(
           () => {
             extendWorkflowLock(name, lock.lockId, lock.lockValue!, ttlMs).then(
@@ -194,9 +224,19 @@ export function createWorkflow<I, O>(
         if (heartbeat) {
           clearInterval(heartbeat);
         }
-        // Always release lock
+        // Always release the lock, but never let a release failure (e.g. a
+        // Redis outage) mask an already-computed workflow result — the lock
+        // still expires via its TTL.
         if (lock.lockValue) {
-          await releaseWorkflowLock(name, lock.lockId, lock.lockValue);
+          try {
+            await releaseWorkflowLock(name, lock.lockId, lock.lockValue);
+          } catch (e) {
+            workflowLogger.error(
+              `Failed to release workflow lock — it will expire via TTL`,
+              e instanceof Error ? e : new Error(String(e)),
+              { lockId: lock.lockId, executionId },
+            );
+          }
         }
       }
     },

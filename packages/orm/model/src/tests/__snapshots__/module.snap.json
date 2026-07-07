@@ -56,14 +56,15 @@
         },
         {
           "name": "updated_at",
-          "type": "date",
-          "nullable": true,
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
           "primaryKey": false,
           "unique": false
         },
         {
           "name": "deleted_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "nullable": true,
           "primaryKey": false,
           "unique": false
@@ -175,14 +176,15 @@
         },
         {
           "name": "updated_at",
-          "type": "date",
-          "nullable": true,
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
           "primaryKey": false,
           "unique": false
         },
         {
           "name": "deleted_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "nullable": true,
           "primaryKey": false,
           "unique": false
@@ -287,7 +289,7 @@
         },
         {
           "name": "created_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "nullable": false,
           "default": "now()",
           "primaryKey": false,
@@ -295,14 +297,15 @@
         },
         {
           "name": "updated_at",
-          "type": "date",
-          "nullable": true,
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
           "primaryKey": false,
           "unique": false
         },
         {
           "name": "deleted_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "nullable": true,
           "primaryKey": false,
           "unique": false
@@ -382,7 +385,7 @@
         },
         {
           "name": "created_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "nullable": false,
           "default": "now()",
           "primaryKey": false,
@@ -390,14 +393,15 @@
         },
         {
           "name": "updated_at",
-          "type": "date",
-          "nullable": true,
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
           "primaryKey": false,
           "unique": false
         },
         {
           "name": "deleted_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "nullable": true,
           "primaryKey": false,
           "unique": false
@@ -529,7 +533,7 @@
         },
         {
           "name": "deleted_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "nullable": true,
           "primaryKey": false,
           "unique": false

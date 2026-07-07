@@ -24,7 +24,18 @@ export function createAuthMiddleware(
       return customMiddleware(c, next);
     }
 
-    logger.warn(`Auth type "${type}" not implemented, passing through`);
-    return next();
+    // Fail closed: a route that declares auth must never run unauthenticated
+    // just because no handler for its auth type was configured.
+    logger.error(
+      `Auth type "${type}" has no configured handler for ${c.req.method} ${c.req.path}; rejecting request`
+    );
+    return c.json({
+      success: false,
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Authentication required",
+      },
+      meta: { requestId: c.get("requestId") || "unknown", timestamp: new Date().toISOString() },
+    }, 401);
   };
 }

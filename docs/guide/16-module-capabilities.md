@@ -501,7 +501,7 @@ calls so timeouts actually cancel work. `compensate` is
 step succeeds and run (in reverse order) only if a *later* step fails. When `C`
 excludes `undefined`, supplying the payload is required at compile time. `StepConfig`:
 `timeoutMs` (per-attempt, default 30s), `retry` (a `RetryPolicy`), `idempotent`
-(intent metadata only), `description`.
+(default `true`; `false` disables retries for the step), `description`.
 
 ### Retry
 
@@ -510,7 +510,8 @@ excludes `undefined`, supplying the payload is required at compile time. `StepCo
 `standard` / `aggressive` / `patient`, or a custom policy with `initialDelayMs`,
 `maxDelayMs`, `backoffMultiplier`, and an `isRetryable(error)` predicate (receives
 the *original* error). By default everything retries except errors named
-`ValidationError`.
+`ValidationError`. A step marked `idempotent: false` is never retried — its
+first failure goes straight to the failure/compensation path.
 
 ### Workflows, results, control flow
 
@@ -532,7 +533,7 @@ Control-flow helpers compose inside the generator: `runStep` (alias of
 `executeWithLock(input, lockConfig?, metadata?)` acquires a Redis-backed
 distributed lock so two runs sharing a `lockId` cannot run concurrently across
 processes. `WorkflowLockConfig`: `lockId`, `ttlMs` (default 5 min), `maxRetries`,
-`retryDelayMs`, `autoExtend` (heartbeat-extends the TTL while running). On
+`retryDelayMs`, `autoExtend` (heartbeat-extends the TTL while running; default on). On
 contention it returns a `WorkflowFailure` with code `WORKFLOW_LOCKED` (it does not
 throw). Locking requires Redis to be initialized (the framework does this when
 `redisUrl` is configured; the module runtime does it when `REDIS_URL` is set).

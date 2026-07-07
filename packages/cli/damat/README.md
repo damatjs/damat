@@ -42,7 +42,7 @@ bun damat module add user     # install a module
 | `codegen <module>` \| `--all` | Types + zod + registry + scaffold-once CRUD for app modules | `damat codegen user` |
 | `barrel [dir]` | Recursively (re)write `index.ts` barrels so one bare import re-exports a whole tree (default `src/workflows`) | `damat barrel` |
 | `module` (`m`) | Module command group (see below); lists subcommands when run alone | `damat module` |
-| `module add <source>` | Install a module from registry ref, path, or git (splits any shipped link files into `src/links/<moduleId>/`) | `damat module add damatjs/user@0.0.1` |
+| `module add <source>` | Install a module from registry ref, path, or git (splits any shipped link files into `src/links/<moduleId>/`); path/git sources need `--allow-unverified` | `damat module add damatjs/user@0.0.1` |
 | `module list` (`ls`) | List modules installed in the app | `damat module list` |
 | `module init <name>` | Scaffold a new standalone module package | `damat module init user-management` |
 | `module dev` | Run the current module package standalone, hot reload | `damat module dev --port 7654` |
@@ -81,10 +81,13 @@ and `--minify`.
 ### Compose a module into your app
 
 ```bash
-# from a registry ref (needs DAMAT_MODULE_REGISTRY), a local path, or git
+# from a registry ref (needs DAMAT_MODULE_REGISTRY), a local path, or git.
+# path/git sources carry no registry verification, so they require the
+# explicit --allow-unverified opt-in (registry refs go through the
+# verification gate instead)
 bun damat module add user-management
-bun damat module add ./packages/my-module
-bun damat module add https://github.com/damatjs/modules.git#main
+bun damat module add ./packages/my-module --allow-unverified
+bun damat module add https://github.com/damatjs/modules.git#main --allow-unverified
 
 # then:
 bun damat-orm migrate:up      # apply the module's migrations
@@ -99,8 +102,12 @@ migrations → `src/modules/<id>` (overridable with `--dir`/`--name`/`--force`),
 module in `damat.config.ts` with provenance, adds the `@<id>/*` + `@workflows` /
 `@workflows/*` tsconfig aliases, regenerates the workflow barrels, appends required
 env vars to `.env.example` (warning about any missing in `.env`), and `bun add`s the
-npm packages it needs. Registry installs pass through a verification gate before any
-files are written.
+npm packages it needs. Every install is gated before any file is written: registry
+installs pass through the verification gate, path/git installs require
+`--allow-unverified` plus a passing `validateModuleDir` check, the module id and
+`--dir` are rejected if they could traverse outside the app, and dependency specs
+must be plain npm name + semver range (lifecycle scripts are skipped via
+`--ignore-scripts` unless you pass `--allow-scripts`).
 
 ### Author a standalone module
 

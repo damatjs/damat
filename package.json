@@ -10,7 +10,7 @@
     "check-types": "turbo run check-types",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "bun run build && changeset publish"
+    "release": "bun run build && bun scripts/publish-packages.ts"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",

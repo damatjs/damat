@@ -10,6 +10,20 @@ import type { Pool } from "@damatjs/deps/pg";
 const TABLE_NAME = "_damat_migration_logs";
 
 /**
+ * Collision-free value for the `id` PK column.
+ *
+ * A plain `${module}_${name}` join is ambiguous: module `a_b` + name `c` and
+ * module `a` + name `b_c` both collapse to `a_b_c`, so one row could clobber
+ * the other on the `id` PK. Length-prefixing the module makes the boundary
+ * unforgeable, so distinct (module, name) pairs always yield distinct ids.
+ * Correctness never depends on this value — reads and upserts key off the
+ * UNIQUE(module, name) columns — but the column is NOT NULL, so we still fill it.
+ */
+function syntheticId(module: string, name: string): string {
+  return `${module.length}_${module}_${name}`;
+}
+
+/**
  * Record of an applied migration from the database.
  */
 export interface AppliedMigration {
@@ -101,16 +115,17 @@ export class MigrationTracker {
     name: string,
     executionTimeMs: number,
   ): Promise<void> {
-    const id = `${module}_${name}`;
+    // Conflict resolution targets UNIQUE(module, name), never the `id` PK, so
+    // an id collision between two distinct (module, name) pairs can't clobber.
     await this.pool.query(
       `INSERT INTO "${this.tableName}" (id, module, name, execution_time_ms, status)
              VALUES ($1, $2, $3, $4, 'applied')
-             ON CONFLICT (id) DO UPDATE SET
+             ON CONFLICT (module, name) DO UPDATE SET
                  applied_at         = NOW(),
                  reverted_at        = NULL,
                  execution_time_ms  = $4,
                  status             = 'applied'`,
-      [id, module, name, executionTimeMs],
+      [syntheticId(module, name), module, name, executionTimeMs],
     );
   }
 
@@ -118,12 +133,13 @@ export class MigrationTracker {
    * Record a migration as reverted.
    */
   async recordReverted(module: string, name: string): Promise<void> {
-    const id = `${module}_${name}`;
+    // Key off (module, name) so pre-existing rows written with the old
+    // `${module}_${name}` id scheme still match regardless of id format.
     await this.pool.query(
       `UPDATE "${this.tableName}"
              SET reverted_at = NOW(), status = 'reverted'
-             WHERE id = $1`,
-      [id],
+             WHERE module = $1 AND name = $2`,
+      [module, name],
     );
   }
 }

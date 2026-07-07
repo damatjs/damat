@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/orm-model",
   "description": "Damatjs orm model definition",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,6 +17,12 @@
   "publishConfig": {
     "access": "public"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/damatjs/damat",
+    "directory": "packages/orm/model"
+  },
+  "license": "MIT",
   "files": [
     "dist",
     "!dist/tests",
@@ -27,11 +33,11 @@
   ],
   "author": "Abel Lamesgen",
   "dependencies": {
-    "@damatjs/deps": "*",
-    "@damatjs/orm-type": "*"
+    "@damatjs/deps": "workspace:*",
+    "@damatjs/orm-type": "workspace:*"
   },
   "devDependencies": {
-    "@damatjs/typescript-config": "*",
+    "@damatjs/typescript-config": "workspace:*",
     "@types/bun": "1.3.9",
     "tsc-alias": "^1.8.16",
     "typescript": "^5.9.3"
@@ -42,6 +48,7 @@
     "watch": "tsc --watch",
     "snapshot:update": "bun run scripts/generate-snapshots",
     "codegen:update": "bun run scripts/generate-types",
-    "test": "bun test ./src/tests/**.test.ts"
+    "test": "bun test ./src/tests/**.test.ts",
+    "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)"
   }
 }

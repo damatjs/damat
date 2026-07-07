@@ -134,11 +134,13 @@ Flow (`src/workflow/create.ts`):
    doc comment.)
 3. If acquired → fresh `executionId` (the `lockId` repeats; the `executionId` must
    not). Merge `metadata` with `lockId`.
-4. If `autoExtend`, start a `setInterval` heartbeat that calls
-   `extendWorkflowLock` every `max(1000, floor(ttlMs/2))` ms; a failed extend logs
-   a warning (lock expired or taken over).
+4. Unless `autoExtend: false` (it defaults **on**), start a `setInterval`
+   heartbeat that calls `extendWorkflowLock` every `max(1000, floor(ttlMs/2))`
+   ms; a failed extend logs a warning (lock expired or taken over).
 5. Run `executeWorkflowInternal(...)` with `metadata: { ...metadata, lockId }`.
 6. `finally`: clear the heartbeat and `releaseWorkflowLock(name, lockId, lockValue)`.
+   A throwing release (e.g. Redis outage) is logged and swallowed — the
+   already-computed workflow result is still returned; the lock expires via TTL.
 
 See [locking.md](./locking.md) for lock config and primitives.
 
