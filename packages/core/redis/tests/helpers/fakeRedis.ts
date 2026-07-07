@@ -8,9 +8,12 @@
  *  - Generic : del (variadic), expire, pexpire, ttl, keys (glob), scan
  *  - Counter : incrby, decrby
  *  - ZSet    : zadd, zcard, zrange (+WITHSCORES), zrangebyscore (+LIMIT),
- *              zrem, zremrangebyscore
+ *              zrem, zremrangebyscore, zremrangebyrank
  *  - Hash    : hset, hget, hmget, hdel
- *  - Lua     : eval (only the get/del compare-and-delete script used by releaseLock)
+ *  - Lua     : eval (handlers for the lock compare-and-act, queue dequeue,
+ *              single- and multi-window rate-limit, and counter-TTL scripts;
+ *              runs are serialized so each script executes atomically, as on a
+ *              real server)
  *  - pipeline()/multi() : chained command builder + exec()
  *  - ping    : returns "PONG"
  *
@@ -346,6 +349,34 @@ export class FakeRedis {
     return removed;
   }
 
+  /**
+   * zremrangebyrank(key, start, stop) — removes members by ascending-score rank
+   * (0 = lowest score). Mirrors Redis clamping: negative indexes add the length,
+   * start is floored to 0, and start > stop removes nothing. Used to trim the
+   * queue's terminal sets to a bounded size. Returns the removed count.
+   */
+  async zremrangebyrank(
+    key: string,
+    start: number,
+    stop: number,
+  ): Promise<number> {
+    const zset = this.zsetOf(key);
+    if (!zset || zset.length === 0) return 0;
+    const sorted = [...zset].sort(
+      (a, b) => a.score - b.score || (a.member < b.member ? -1 : 1),
+    );
+    const len = sorted.length;
+    let s = start < 0 ? len + start : start;
+    let e = stop < 0 ? len + stop : stop;
+    if (s < 0) s = 0;
+    if (s > e || s >= len) return 0;
+    if (e >= len) e = len - 1;
+    const toRemove = new Set(sorted.slice(s, e + 1).map((m) => m.member));
+    const kept = zset.filter((m) => !toRemove.has(m.member));
+    this.store.get(key)!.zset = kept;
+    return len - kept.length;
+  }
+
   /** Removes members with min <= score <= max. Returns the removed count. */
   async zremrangebyscore(
     key: string,
@@ -402,21 +433,145 @@ export class FakeRedis {
   }
 
   // ---- lua ---------------------------------------------------------------
+  // Scripts run one-at-a-time (like real Redis) via this promise chain, so
+  // concurrent eval() calls cannot interleave their internal command awaits.
+  private evalChain: Promise<unknown> = Promise.resolve();
+
   /**
-   * Two compare-and-act scripts are supported, distinguished by the script body:
-   *   releaseLock: if get(KEYS[1]) == ARGV[1] then return del(KEYS[1]) else 0 end
-   *   extendLock : if get(KEYS[1]) == ARGV[1] then return pexpire(KEYS[1], ARGV[2]) else 0 end
+   * Fake of the Redis EVAL command (ioredis `redis.eval`), NOT JavaScript's
+   * `eval` — the Lua source is never executed; it is only pattern-matched to
+   * pick the matching hand-written handler:
+   *   "#KEYS"            → MULTI_RATE_LIMIT_SCRIPT (all-or-nothing across windows)
+   *   "zremrangebyscore" → RATE_LIMIT_SCRIPT (prune/count/conditionally add)
+   *   "zrangebyscore"    → DEQUEUE_SCRIPT (reclaim stale + claim due jobs)
+   *   "incrby"           → incrementCounter (INCRBY + arm TTL when absent)
+   *   otherwise          → lock compare-and-act (releaseLock / extendLock)
    * Signature mirrors ioredis: eval(script, numKeys, ...keysAndArgs).
    */
-  async eval(_script: string, numKeys: number, ...keysAndArgs: string[]): Promise<unknown> {
-    const keys = keysAndArgs.slice(0, numKeys);
-    const argv = keysAndArgs.slice(numKeys);
-    const key = keys[0]!;
+  async eval(
+    script: string,
+    numKeys: number,
+    ...keysAndArgs: Array<string | number>
+  ): Promise<unknown> {
+    const run = () => this.evalDispatch(script, numKeys, ...keysAndArgs);
+    const result = this.evalChain.then(run, run);
+    this.evalChain = result.catch(() => undefined);
+    return result;
+  }
+
+  private async evalDispatch(
+    script: string,
+    numKeys: number,
+    ...keysAndArgs: Array<string | number>
+  ): Promise<unknown> {
+    const keys = keysAndArgs.slice(0, numKeys).map(String);
+    const argv = keysAndArgs.slice(numKeys).map(String);
+    // The multi-window script is the only one that loops over `#KEYS`; check it
+    // before the single-window one since both call zremrangebyscore.
+    if (script.includes("#KEYS")) {
+      return this.evalMultiRateLimit(keys, argv);
+    }
+    if (script.includes("zremrangebyscore")) {
+      return this.evalRateLimit(keys[0]!, argv);
+    }
+    if (script.includes("zrangebyscore")) {
+      return this.evalDequeue(keys, argv);
+    }
+    if (script.includes("incrby")) {
+      return this.evalIncrementWithTtl(keys[0]!, argv);
+    }
+    return this.evalLockCompareAndAct(script, keys[0]!, argv);
+  }
+
+  /** RATE_LIMIT_SCRIPT: [1, count] when allowed, [0, count, oldestScore?] when not. */
+  private async evalRateLimit(key: string, argv: string[]): Promise<unknown[]> {
+    const [windowStart, maxRequests, now, member, windowMs] = argv;
+    await this.zremrangebyscore(key, 0, Number(windowStart));
+    const count = await this.zcard(key);
+    if (count < Number(maxRequests)) {
+      await this.zadd(key, Number(now), member!);
+      await this.pexpire(key, Number(windowMs));
+      return [1, count];
+    }
+    const oldest = await this.zrange(key, 0, 0, "WITHSCORES");
+    // Lua drops trailing nils; mirror that when the zset is empty.
+    return oldest[1] !== undefined ? [0, count, oldest[1]] : [0, count];
+  }
+
+  /**
+   * MULTI_RATE_LIMIT_SCRIPT: all-or-nothing across N windows. Prunes and counts
+   * every window; on the first over-limit window returns [0, index, count,
+   * oldestScore?] recording nothing. Otherwise records in all and returns [1].
+   */
+  private async evalMultiRateLimit(
+    keys: string[],
+    argv: string[],
+  ): Promise<unknown[]> {
+    const now = Number(argv[0]);
+    const member = argv[1]!;
+    for (let i = 0; i < keys.length; i++) {
+      const base = 2 + i * 3;
+      await this.zremrangebyscore(keys[i]!, 0, Number(argv[base]));
+      const count = await this.zcard(keys[i]!);
+      if (count >= Number(argv[base + 1])) {
+        const oldest = await this.zrange(keys[i]!, 0, 0, "WITHSCORES");
+        // Lua drops trailing nils; mirror that when the window is empty.
+        return oldest[1] !== undefined
+          ? [0, i + 1, count, oldest[1]]
+          : [0, i + 1, count];
+      }
+    }
+    for (let i = 0; i < keys.length; i++) {
+      const base = 2 + i * 3;
+      await this.zadd(keys[i]!, now, member);
+      await this.pexpire(keys[i]!, Number(argv[base + 2]));
+    }
+    return [1];
+  }
+
+  /** DEQUEUE_SCRIPT: reclaim stale processing entries, then claim due ids. */
+  private async evalDequeue(keys: string[], argv: string[]): Promise<string[]> {
+    const [pending, processing] = keys as [string, string];
+    const [now, reclaimBefore, count] = argv.map(Number) as [number, number, number];
+    if (reclaimBefore >= 0) {
+      const stale = await this.zrangebyscore(processing, 0, reclaimBefore);
+      for (const id of stale) {
+        await this.zrem(processing, id);
+        await this.zadd(pending, now, id);
+      }
+    }
+    const ids = await this.zrangebyscore(pending, 0, now, "LIMIT", 0, count);
+    for (const id of ids) {
+      await this.zrem(pending, id);
+      await this.zadd(processing, now, id);
+    }
+    return ids;
+  }
+
+  /** incrementCounter script: INCRBY, then EXPIRE only when no TTL is set. */
+  private async evalIncrementWithTtl(key: string, argv: string[]): Promise<number> {
+    const value = await this.incrby(key, Number(argv[0]));
+    if ((await this.ttl(key)) < 0) {
+      await this.expire(key, Number(argv[1]));
+    }
+    return value;
+  }
+
+  /**
+   * Lock compare-and-act scripts:
+   *   releaseLock: if get(KEYS[1]) == ARGV[1] then return del(KEYS[1]) else 0 end
+   *   extendLock : if get(KEYS[1]) == ARGV[1] then return pexpire(KEYS[1], ARGV[2]) else 0 end
+   */
+  private async evalLockCompareAndAct(
+    script: string,
+    key: string,
+    argv: string[],
+  ): Promise<unknown> {
     const expected = argv[0];
     const current = await this.get(key);
     if (current !== null && current === expected) {
       // The extend script re-arms the TTL via pexpire; everything else deletes.
-      if (_script.includes("pexpire")) {
+      if (script.includes("pexpire")) {
         return this.pexpire(key, Number(argv[1]));
       }
       return this.del(key);
@@ -456,6 +611,9 @@ export class FakePipeline {
   // Only the commands actually chained in the source are exposed here.
   zremrangebyscore(...args: unknown[]): this {
     return this.push("zremrangebyscore", args);
+  }
+  zremrangebyrank(...args: unknown[]): this {
+    return this.push("zremrangebyrank", args);
   }
   zcard(...args: unknown[]): this {
     return this.push("zcard", args);

@@ -1,6 +1,6 @@
 # Rate limiting
 
-Covers `src/rateLimit/` (`constant.ts`, `check.ts`, `checkMulti.ts`) and the rate-limit types in `src/types/rateLimit.ts`.
+Covers `src/rateLimit/` (`constant.ts`, `script.ts`, `check.ts`, `checkMulti.ts`) and the rate-limit types in `src/types/rateLimit.ts`.
 
 ## Responsibility
 
@@ -34,19 +34,19 @@ async function checkRateLimit(
 ): Promise<RateLimitResult>;
 ```
 
-Algorithm (one pipeline = one round-trip), key = `ratelimit:<identifier>`:
+Algorithm (one **atomic Lua script** — `RATE_LIMIT_SCRIPT` in `script.ts` — so concurrent callers can't all read the same count and pass together), key = `ratelimit:<identifier>`:
 
 1. `ZREMRANGEBYSCORE key 0 (now - windowMs)` — drop entries older than the window.
 2. `ZCARD key` — count what remains (`currentCount`). This is the count **before** the current request.
-3. `ZADD key now "<now>:<random>"` — record this request (unique member via `Math.random()` so concurrent same-ms requests don't collide).
-4. `PEXPIRE key windowMs` — keep the key from leaking after inactivity.
+3. **Only if `currentCount < maxRequests`**: `ZADD key now "<now>:<random>"` (unique member via `Math.random()` so concurrent same-ms requests don't collide) + `PEXPIRE key windowMs`. Rejected requests add **nothing** and do not touch the TTL, so a flood of rejections can't stop the window from draining.
+4. When rejected, the script also returns the oldest entry's score (`ZRANGE key 0 0 WITHSCORES`).
 
-Then:
+Back in JS:
 
 - `allowed = currentCount < maxRequests`
 - `remaining = max(0, maxRequests - currentCount - 1)`
 - `resetAt = now + windowMs`
-- If **not** allowed: it does an extra `ZRANGE key 0 0 WITHSCORES` to find the oldest entry and computes `retryAfter = ceil((oldestTs + windowMs - now) / 1000)`, returning `{ allowed:false, remaining:0, resetAt, retryAfter }`.
+- If **not** allowed: `retryAfter = ceil((oldestTs + windowMs - now) / 1000)`, returning `{ allowed:false, remaining:0, resetAt, retryAfter }`.
 
 ## `checkMultiRateLimit` — `src/rateLimit/checkMulti.ts`
 
@@ -58,8 +58,8 @@ async function checkMultiRateLimit(
 ): Promise<MultiRateLimitResult>;
 ```
 
-- Iterates `windows` **in order**, deriving a name from `windowMs`: `>= 86_400_000` → `"day"`, `>= 3_600_000` → `"hour"`, else `"minute"`. The name is appended to the identifier, so each window uses a separate key: `ratelimit:<id>:<name>`.
-- Calls `checkRateLimit(`${id}:${name}`, ...)` for each. The **first** window that blocks short-circuits and returns its result with `limitedBy` set.
+- Derives a name per window from `windowMs`: `>= 86_400_000` → `"day"`, `>= 3_600_000` → `"hour"`, else `"minute"`. The name is appended to the identifier, so each window uses a separate key: `ratelimit:<id>:<name>`.
+- Runs **one atomic Lua script** (`MULTI_RATE_LIMIT_SCRIPT` in `scriptMulti.ts`) across all window keys: it prunes + counts every window first and only records a slot in **all** windows when **every** window is under its limit. If any window would block, it records **nothing** (no `ZADD`, no `PEXPIRE`) and returns that window's result with `limitedBy` set — so a request rejected by the hour window never spends the minute-window budget, and rejected floods don't extend any window's TTL.
 - If all pass it returns `{ allowed: true, remaining: -1, resetAt: Date.now() }` — note `remaining` is **`-1`** here (a sentinel; per-window `remaining` is not aggregated).
 
 ## Example
@@ -78,10 +78,9 @@ if (!m.allowed) logger.warn(`limited by ${m.limitedBy}`);
 
 ## Gotchas
 
-- **The request is counted even when allowed** — step 3 always `ZADD`s. There is no "peek without consuming" variant; calling `checkRateLimit` *is* the request.
+- **An allowed call consumes a slot** — there is no "peek without consuming" variant; calling `checkRateLimit` *is* the request. Rejected calls consume nothing.
 - **Window naming is bucketed, not exact.** Two windows that both fall in the same bucket (e.g. two sub-minute windows) would share the key `ratelimit:<id>:minute` and interfere. Use one window per bucket (minute/hour/day).
 - **`remaining: -1`** from `checkMultiRateLimit` on success means "not computed", not "infinite".
-- **Pipeline, not transaction.** `check.ts` uses `pipeline()` (no `MULTI`/`WATCH`); under heavy concurrency the count can be slightly approximate. That is an accepted trade-off for throughput.
 
 ## Safe extension
 

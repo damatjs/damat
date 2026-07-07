@@ -1,10 +1,10 @@
 # Job queue — `RedisQueue`
 
-Covers `src/queue/` (`types.ts`, `constant.ts`, `queue.ts`).
+Covers `src/queue/` (`types.ts`, `constant.ts`, `scripts.ts`, `queue.ts`).
 
 ## Responsibility
 
-A Redis-backed **priority + delay** job queue. It provides storage and state-transition primitives (enqueue, dequeue a batch, update status, query, cancel, stats, clear). It is **not** a worker runtime — there is no polling loop, retry scheduler, or backoff. Callers (or a higher layer) own the consume loop and retry policy.
+A Redis-backed **priority + delay** job queue. It provides storage and state-transition primitives (enqueue, dequeue a batch, update status, query, cancel, stats, clear) plus an optional **visibility timeout** that redelivers jobs whose worker crashed. It is **not** a worker runtime — there is no polling loop, retry scheduler, or backoff. Callers (or a higher layer) own the consume loop and retry policy.
 
 ## Types — `src/queue/types.ts`
 
@@ -26,6 +26,12 @@ interface QueueJob<TData = unknown> {
 }
 
 interface QueueStats { pending: number; processing: number; completed: number; failed: number; }
+
+interface RedisQueueOptions {
+  visibilityTimeoutMs?: number; // > 0 enables reclaim of stale :processing entries on dequeue
+  maxCompletedEntries?: number; // cap on the :completed zset (default 10000; <= 0 disables trimming)
+  maxFailedEntries?: number;    // cap on the :failed zset (default 10000; <= 0 disables trimming)
+}
 ```
 
 `PRIORITY_SCORES` (`constant.ts`): `{ critical: 4, high: 3, normal: 2, low: 1 }`.
@@ -46,7 +52,7 @@ For a queue named `<name>`, `keyPrefix = "queue:<name>"` and five keys are used:
 
 ```ts
 class RedisQueue<TData = unknown> {
-  constructor(queueName: string, redis?: Redis); // redis ?? getRedis()
+  constructor(queueName: string, redis?: Redis, options?: RedisQueueOptions); // redis ?? getRedis()
   enqueue(job: QueueJob<TData>): Promise<void>;
   dequeue(count: number): Promise<QueueJob<TData>[]>;
   updateStatus(job: QueueJob<TData>): Promise<void>;
@@ -69,12 +75,14 @@ The **score encodes due time and priority**: lower score = dequeued earlier. `de
 
 ### `dequeue(count)`
 
-1. `ZRANGEBYSCORE pending 0 now LIMIT 0 count` — pull up to `count` job ids whose score is **due** (`<= now`). Delayed jobs (future score) are skipped until due.
-2. If none, return `[]`.
-3. Pipeline per id: `ZREM pending id` + `ZADD processing now id` — atomically move them to "processing".
-4. `HMGET jobs ...ids`, filter out `null`s, `JSON.parse` each → `QueueJob[]`.
+The claim runs as a **single Lua script** (`DEQUEUE_SCRIPT` in `scripts.ts`), so concurrent workers can never claim the same job — the read and the move happen atomically server-side:
 
-`dequeue` returns the job **records** but does **not** mutate `status`/`startedAt`/`attempts` on them — the caller updates those fields and calls `updateStatus`.
+1. *(only when `visibilityTimeoutMs` is set)* `ZRANGEBYSCORE processing 0 (now − visibilityTimeoutMs)` — entries claimed longer ago than the timeout are moved back to `pending` with score `now` (immediately due, priority/delay not re-applied), so jobs from crashed workers are redelivered.
+2. `ZRANGEBYSCORE pending 0 now LIMIT 0 count` — pull up to `count` job ids whose score is **due** (`<= now`). Delayed jobs (future score) are skipped until due.
+3. Per claimed id: `ZREM pending id` + `ZADD processing now id` — the score records the **claim timestamp** used by step 1.
+4. Back in JS: if no ids, return `[]`; else `HMGET jobs ...ids`, filter out `null`s, `JSON.parse` each → `QueueJob[]`.
+
+`dequeue` returns the job **records** but does **not** mutate `status`/`startedAt`/`attempts` on them — the caller updates those fields and calls `updateStatus`. **`updateStatus` is the ack**: it removes the job from `processing`; with a visibility timeout enabled, workers must ack before the timeout elapses or the job is redelivered (at-least-once delivery).
 
 ### `updateStatus(job)`
 
@@ -85,9 +93,13 @@ const statusSet = job.status === "completed" ? "completed"
                 : job.status === "failed"    ? "failed"
                 : "pending";   // anything else (incl. "retrying"/"processing") → back to pending
 // pipeline: HSET jobs id JSON(job) ; ZREM processing id ; ZADD <statusSet> Date.now() id
+//   ; when statusSet is completed/failed and the cap > 0:
+//     ZREMRANGEBYRANK <statusSet> 0 -(cap+1)   // keep newest `cap`, drop oldest
 ```
 
 So to retry, set `status` to e.g. `"retrying"` (or `"pending"`) and call `updateStatus` — it lands back in `pending` with score `now` (i.e. immediately due; the requeue does **not** re-apply priority or delay). To finish, set `"completed"`/`"failed"`.
+
+The `:completed`/`:failed` zsets are trimmed to `maxCompletedEntries`/`maxFailedEntries` (default 10000) on each terminal transition — oldest entries drop first — so they can't grow unbounded. Pass `0` (or a negative) to disable trimming and keep the full history.
 
 ### Others
 
@@ -101,7 +113,10 @@ So to retry, set `status` to e.g. `"retrying"` (or `"pending"`) and call `update
 ```ts
 import { RedisQueue, type QueueJob } from "@damatjs/redis";
 
-const queue = new RedisQueue<{ orderId: string }>("orders");
+// Redeliver jobs whose worker died without acking within 60s (optional).
+const queue = new RedisQueue<{ orderId: string }>("orders", undefined, {
+  visibilityTimeoutMs: 60_000,
+});
 
 await queue.enqueue({
   id: crypto.randomUUID(),
@@ -133,7 +148,8 @@ const stats = await queue.getStats();
 
 ## Gotchas
 
-- **No built-in worker / scheduler.** Polling cadence, concurrency, and retry timing are the caller's job. There is no visibility-timeout reaper: a job stuck in `processing` (e.g. worker crashed) is **not** auto-returned to `pending` — you must implement that sweep yourself (scan `processing` by score age).
+- **No built-in worker / scheduler.** Polling cadence, concurrency, and retry timing are the caller's job.
+- **The visibility timeout is opt-in and disabled by default.** Without `visibilityTimeoutMs`, a job stuck in `processing` (e.g. worker crashed) is **never** auto-returned to `pending` — existing callers that track job state externally and never ack rely on this. With it enabled, reclaim only happens *on dequeue* (no background reaper), and a **slow** worker that outlives the timeout gets its job redelivered — pick a timeout comfortably above your worst-case handling time, and ack via `updateStatus`.
 - **Requeue loses priority/delay.** `updateStatus` always scores returned jobs with `Date.now()`. To preserve ordering on retry, `cancelJob` + `enqueue` instead (with backoff via `delay`).
 - **`cancelJob` only affects pending jobs.** In-flight jobs can't be cancelled through it.
 - **`createdAt`/`startedAt`/`completedAt` are `Date`s** but serialize to ISO strings through `JSON.stringify`; after `getJob`/`dequeue` they come back as **strings**, not `Date` objects — re-hydrate if you need `Date` methods.
@@ -141,4 +157,4 @@ const stats = await queue.getStats();
 
 ## Safe extension
 
-Keep the five-key layout consistent if you add operations (e.g. a `requeueStuck()` reaper that scans `processing`). Use pipelines for multi-key atomic-ish transitions as the existing methods do. Score conventions (`due-time − priority*1000` for `pending`, `Date.now()` for the result sets) should be preserved so ordering and stats stay coherent.
+Keep the five-key layout consistent if you add operations. For transitions that must be race-free across workers, use a Lua script in `scripts.ts` (see `DEQUEUE_SCRIPT`); pipelines are fine for single-writer transitions like `updateStatus`. Score conventions (`due-time − priority*1000` for `pending`, claim time for `processing`, `Date.now()` for the result sets) should be preserved so ordering, reclaim, and stats stay coherent.

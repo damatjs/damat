@@ -1,15 +1,24 @@
 import { getRedis } from "../singleton";
 import { Redis } from "@damatjs/deps/ioredis";
-import { PRIORITY_SCORES } from "./constant";
-import { QueueJob, QueueStats } from "./types";
+import { DEFAULT_MAX_TERMINAL_ENTRIES, PRIORITY_SCORES } from "./constant";
+import { DEQUEUE_SCRIPT } from "./scripts";
+import { QueueJob, QueueStats, RedisQueueOptions } from "./types";
 
 export class RedisQueue<TData = unknown> {
   private readonly keyPrefix: string;
   private readonly redis: Redis;
+  private readonly visibilityTimeoutMs: number | undefined;
+  private readonly maxCompletedEntries: number;
+  private readonly maxFailedEntries: number;
 
-  constructor(queueName: string, redis?: Redis) {
+  constructor(queueName: string, redis?: Redis, options?: RedisQueueOptions) {
     this.keyPrefix = `queue:${queueName}`;
     this.redis = redis ?? getRedis();
+    this.visibilityTimeoutMs = options?.visibilityTimeoutMs;
+    this.maxCompletedEntries =
+      options?.maxCompletedEntries ?? DEFAULT_MAX_TERMINAL_ENTRIES;
+    this.maxFailedEntries =
+      options?.maxFailedEntries ?? DEFAULT_MAX_TERMINAL_ENTRIES;
   }
 
   async enqueue(job: QueueJob<TData>): Promise<void> {
@@ -25,24 +34,21 @@ export class RedisQueue<TData = unknown> {
 
   async dequeue(count: number): Promise<QueueJob<TData>[]> {
     const now = Date.now();
+    const reclaimBefore = this.visibilityTimeoutMs
+      ? now - this.visibilityTimeoutMs
+      : -1;
 
-    const jobIds = await this.redis.zrangebyscore(
+    const jobIds = (await this.redis.eval(
+      DEQUEUE_SCRIPT,
+      2,
       `${this.keyPrefix}:pending`,
-      0,
+      `${this.keyPrefix}:processing`,
       now,
-      "LIMIT",
-      0,
+      reclaimBefore,
       count,
-    );
+    )) as string[];
 
     if (jobIds.length === 0) return [];
-
-    const pipeline = this.redis.pipeline();
-    for (const id of jobIds) {
-      pipeline.zrem(`${this.keyPrefix}:pending`, id);
-      pipeline.zadd(`${this.keyPrefix}:processing`, now, id);
-    }
-    await pipeline.exec();
 
     const jobDataArray = await this.redis.hmget(
       `${this.keyPrefix}:jobs`,
@@ -62,12 +68,27 @@ export class RedisQueue<TData = unknown> {
           ? "failed"
           : "pending";
 
-    await this.redis
+    const cap =
+      statusSet === "completed"
+        ? this.maxCompletedEntries
+        : statusSet === "failed"
+          ? this.maxFailedEntries
+          : undefined;
+
+    const pipeline = this.redis
       .pipeline()
       .hset(`${this.keyPrefix}:jobs`, job.id, JSON.stringify(job))
       .zrem(`${this.keyPrefix}:processing`, job.id)
-      .zadd(`${this.keyPrefix}:${statusSet}`, Date.now(), job.id)
-      .exec();
+      .zadd(`${this.keyPrefix}:${statusSet}`, Date.now(), job.id);
+
+    // Trim the terminal set to its cap in the same pipeline as the add, so the
+    // `:completed` / `:failed` sets stay bounded. Rank -cap-1 keeps the newest
+    // `cap` entries (highest scores) and drops the oldest.
+    if (cap !== undefined && cap > 0) {
+      pipeline.zremrangebyrank(`${this.keyPrefix}:${statusSet}`, 0, -cap - 1);
+    }
+
+    await pipeline.exec();
   }
 
   async getJob(jobId: string): Promise<QueueJob<TData> | null> {
