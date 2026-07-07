@@ -1,5 +1,6 @@
 import type { Hono, MiddlewareHandler } from "@damatjs/deps/hono";
 import type { HttpRateLimitConfig, HttpAuthConfig } from "../../config";
+import type { AuthMiddlewareOptions } from "../../middleware/auth";
 
 export interface RegisteredRoute {
   method: string;
@@ -34,6 +35,7 @@ export interface CreateFileRouterOptions extends FileRouterOptions {
   logger: Logger;
   rateLimit?: HttpRateLimitConfig | undefined;
   auth?: HttpAuthConfig | undefined;
+  authHandlers?: AuthMiddlewareOptions | undefined;
 }
 
 export interface Logger {

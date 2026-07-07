@@ -1,6 +1,8 @@
 import { ProjectConfig } from './config';
+import type { AuthMiddlewareOptions } from "./middleware/auth";
 
 export type { Logger, ILogger } from "@damatjs/logger";
+export type { AuthMiddlewareOptions } from "./middleware/auth";
 
 export interface ServerConfig {
   port: number;
@@ -24,6 +26,7 @@ export interface BootstrapOptions {
   routesDir: string;
   projectConfig: ProjectConfig;
   healthCheck?: HealthCheckConfig | undefined;
+  authHandlers?: AuthMiddlewareOptions | undefined;
 }
 
 export interface BootstrapResult {

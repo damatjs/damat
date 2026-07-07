@@ -27,6 +27,7 @@ export async function createFileRouter(
     logger,
     rateLimit: globalRateLimit,
     auth: globalAuth,
+    authHandlers,
   } = options;
 
   const router = new Hono();
@@ -88,7 +89,7 @@ export async function createFileRouter(
             router.on(
               method,
               fullPath,
-              createAuthMiddleware(resolvedConfig.auth.type)
+              createAuthMiddleware(resolvedConfig.auth.type, authHandlers)
             );
             hasMethodMiddleware = true;
           }
