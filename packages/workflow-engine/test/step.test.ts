@@ -42,7 +42,7 @@ describe("step/create: createStep", () => {
 
     expect(step.name).toBe("s");
     expect(step.config.timeoutMs).toBe(DEFAULT_STEP_CONFIG.timeoutMs);
-    expect(step.config.idempotent).toBe(false);
+    expect(step.config.idempotent).toBe(true);
     expect(step.config.description).toBe("");
     expect(step.config.retry).toEqual(DEFAULT_RETRY_POLICY);
     expect(typeof step.invoke).toBe("function");
@@ -67,14 +67,14 @@ describe("step/create: createStep", () => {
       {
         timeoutMs: 1234,
         description: "my step",
-        idempotent: true,
+        idempotent: false,
         retry: { maxAttempts: 3, initialDelayMs: 5 }, // partial override
       },
     );
 
     expect(step.config.timeoutMs).toBe(1234);
     expect(step.config.description).toBe("my step");
-    expect(step.config.idempotent).toBe(true);
+    expect(step.config.idempotent).toBe(false);
     // overridden fields
     expect(step.config.retry.maxAttempts).toBe(3);
     expect(step.config.retry.initialDelayMs).toBe(5);

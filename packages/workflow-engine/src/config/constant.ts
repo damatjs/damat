@@ -7,7 +7,9 @@ import { DEFAULT_RETRY_POLICY } from './retry/default';
 export const DEFAULT_STEP_CONFIG: RequiredStepConfig = {
   timeoutMs: 30_000, // 30 seconds
   retry: DEFAULT_RETRY_POLICY,
-  idempotent: false,
+  // Steps are presumed safe to retry; `idempotent: false` disables retries
+  // for a step so its side effects are never duplicated.
+  idempotent: true,
   description: "",
 };
 

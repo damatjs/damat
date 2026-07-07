@@ -27,8 +27,11 @@ export interface WorkflowLockConfig {
   retryDelayMs?: number;
   /**
    * Keep the lock alive while the workflow runs by re-extending the TTL
-   * every ttlMs/2. Use for workflows that may run longer than the TTL.
-   * Default: false
+   * every ttlMs/2, so runs longer than the TTL don't lose mutual exclusion.
+   * A crashed process stops heartbeating, so its lock still expires via TTL.
+   * Set to false only if a hung-but-alive runner's lock should lapse after
+   * ttlMs so another runner can take over.
+   * Default: true
    */
   autoExtend?: boolean;
 }

@@ -29,7 +29,25 @@ that always fails runs **3 times** (1 initial + 2 retries) and then fails with
 DEFAULT_RETRY_POLICY = { maxAttempts: 0, initialDelayMs: 100, maxDelayMs: 5000, backoffMultiplier: 2 };
 ```
 
-So by default steps **do not retry**. `DEFAULT_STEP_CONFIG.timeoutMs` is `30_000`.
+So by default steps **do not retry**. `DEFAULT_STEP_CONFIG.timeoutMs` is `30_000`
+and `DEFAULT_STEP_CONFIG.idempotent` is `true` (see the idempotency gate below).
+
+## The idempotency gate
+
+Retries only run when the step is idempotent (the default). A step configured
+with `idempotent: false` is **never** automatically retried:
+
+- `maxAttempts` is ignored — a warning is logged when it is `> 0`.
+- The first failure propagates straight to the workflow's
+  failure/compensation path.
+- Since retries were *suppressed*, not *exhausted*, no
+  `MaxRetriesExceededError` is recorded — the plain
+  `StepExecutionError`/`StepTimeoutError` surfaces at the workflow boundary.
+
+Use it for steps whose side effects must not be duplicated (payments, emails,
+non-idempotent external APIs). The gate resolves through the normal config
+layering, so it can also come from a workflow's `defaultStepConfig` or a
+per-call override.
 
 ## Presets — `RetryPolicies`
 
@@ -58,7 +76,8 @@ createStep("call-api", invoke, undefined, {
 
 ## The backoff schedule (`src/step/execute.ts`)
 
-When `maxAttempts > 0`, the engine builds an Effect `Schedule`:
+When `maxAttempts > 0` (and the step is idempotent), the engine builds an
+Effect `Schedule`:
 
 ```ts
 Schedule.exponential(Duration.millis(initialDelayMs), backoffMultiplier)
