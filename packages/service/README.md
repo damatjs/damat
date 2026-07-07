@@ -94,6 +94,32 @@ await svc.user.delete({ where: { id: user.id }, cascade: true });
 
 This package has a single root export (`@damatjs/services`); there are no subpath exports.
 
+## Query safety & conventions
+
+The `ModelMethods` read/write surface enforces a few guarantees so a
+request-derived options object can't reach the SQL layer with more authority
+than intended:
+
+- **Pagination.** `take`/`skip` map to SQL `LIMIT`/`OFFSET`. `take` is a
+  non-negative integer capped at `MAX_PAGE_SIZE` (1000); a fractional or
+  negative `take`/`skip` throws. (Passing no `take` still returns all matching
+  rows — paginate explicitly for large tables.)
+- **Option allow-listing.** `find`/`findMany`/`delete` forward only their known
+  option keys. Raw-SQL (`whereRaw`) and full-table (`allowFullTable`) escape
+  hatches are *not* reachable through the service layer — use the underlying
+  `@damatjs/orm-pg` repository directly when you deliberately need them.
+- **`orderBy` validation.** `direction` is restricted to `ASC`/`DESC` and
+  `nulls` to `NULLS FIRST`/`NULLS LAST` (both string-interpolated in SQL, so
+  they're whitelisted rather than trusted).
+- **Soft-delete filtering.** On a soft-delete model every read
+  (`find`/`findMany`/`count`/`exists`) adds `deleted_at IS NULL` automatically.
+  Pass `withDeleted: true` to include archived rows, or filter on the
+  soft-delete column yourself to override.
+- **`updated_at` maintenance.** `update`/`updateOne` stamp the model's
+  `updated_at`/`updatedAt` column with the current time unless you set it
+  explicitly. Auto-timestamps are `timestamp with time zone` (sub-second),
+  not `date`.
+
 ## How it fits
 
 - **Dependencies:** `@damatjs/orm-pg` (`PgEntityManager`, `PgRepository`, transactions), `@damatjs/orm-model` (`ModelDefinition`), `@damatjs/orm-type`, `@damatjs/orm-connector`, `@damatjs/deps` (zod), `@damatjs/types`, `@damatjs/logger`.

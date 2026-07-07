@@ -8,11 +8,28 @@ export type TypesMap = Record<string, QueryResultRow>;
 export interface FindOptions<Cols extends string = string> {
   select?: Cols[];
   where?: Record<string, unknown>;
-  orderBy?: Array<{ column: Cols; direction?: "ASC" | "DESC" }>;
+  orderBy?: Array<{
+    column: Cols;
+    direction?: "ASC" | "DESC";
+    nulls?: "NULLS FIRST" | "NULLS LAST";
+  }>;
+  /** Rows to skip (maps to SQL OFFSET). Must be a non-negative integer. */
   skip?: number;
+  /** Max rows to return (maps to SQL LIMIT, capped at {@link MAX_PAGE_SIZE}). */
   take?: number;
   include?: string[];
+  /**
+   * Include soft-deleted rows. By default every read on a soft-delete model
+   * filters `deleted_at IS NULL`; set this to see archived rows too.
+   */
+  withDeleted?: boolean;
 }
+
+/**
+ * Hard upper bound on `take`. A caller may request fewer, but never more —
+ * this is the guard against an untrusted `take` triggering a full-table scan.
+ */
+export const MAX_PAGE_SIZE = 1000;
 
 export interface CreateOptions<TData = Record<string, unknown>> {
   data: TData;
@@ -78,10 +95,14 @@ export interface SoftDeleteOptions {
 
 export interface CountOptions {
   where?: Record<string, unknown>;
+  /** Count soft-deleted rows too (default: only `deleted_at IS NULL`). */
+  withDeleted?: boolean;
 }
 
 export interface ExistsOptions {
   where: Record<string, unknown>;
+  /** Consider soft-deleted rows too (default: only `deleted_at IS NULL`). */
+  withDeleted?: boolean;
 }
 
 export interface ModuleServiceConfig<

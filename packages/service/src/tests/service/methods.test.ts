@@ -1,5 +1,6 @@
 import { describe, it, expect, mock } from "bun:test";
 import { ModelMethods } from "../../service/methods";
+import { MAX_PAGE_SIZE } from "../../service/type";
 
 /**
  * Tests for ModelMethods. The PgEntityManager and PgRepository are fakes; the
@@ -578,6 +579,219 @@ describe("ModelMethods", () => {
       const res = await m.exists({ where: { email: "x@y.z" } });
       expect(res).toBe(false);
       expect(repo.exists).toHaveBeenCalledWith({ email: "x@y.z" });
+    });
+  });
+
+  describe("pagination + option sanitization", () => {
+    it("maps take/skip onto the ORM's limit/offset", async () => {
+      const repo = makeRepo();
+      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      await m.findMany({ take: 10, skip: 20 });
+      expect(repo.findMany).toHaveBeenCalledWith({ limit: 10, offset: 20 });
+    });
+
+    it("caps take at MAX_PAGE_SIZE", async () => {
+      const repo = makeRepo();
+      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      await m.findMany({ take: 10_000_000 });
+      expect(repo.findMany.mock.calls[0][0].limit).toBe(MAX_PAGE_SIZE);
+    });
+
+    it("does not paginate a single-row find", async () => {
+      const repo = makeRepo({ findOne: mock(async () => ({ id: 1 })) });
+      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      await m.find({ where: { id: 1 }, take: 5, skip: 5 } as any);
+      expect(repo.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
+    });
+
+    it("rejects a non-integer take", async () => {
+      const m = new ModelMethods(makeModel(), "user", makeEM());
+      expect(m.findMany({ take: 1.5 })).rejects.toThrow(/non-negative integer/);
+    });
+
+    it("rejects a negative skip", async () => {
+      const m = new ModelMethods(makeModel(), "user", makeEM());
+      expect(m.findMany({ skip: -1 })).rejects.toThrow(/non-negative integer/);
+    });
+
+    it("drops whereRaw/allowFullTable smuggled into find options", async () => {
+      const repo = makeRepo();
+      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      await m.findMany({
+        where: { active: true },
+        whereRaw: { sql: "1=1" },
+        allowFullTable: true,
+      } as any);
+      expect(repo.findMany).toHaveBeenCalledWith({ where: { active: true } });
+    });
+
+    it("uppercases and forwards a valid orderBy direction/nulls", async () => {
+      const repo = makeRepo();
+      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      await m.findMany({
+        orderBy: [{ column: "name", direction: "asc", nulls: "nulls last" }],
+      } as any);
+      expect(repo.findMany.mock.calls[0][0].orderBy).toEqual([
+        { column: "name", direction: "ASC", nulls: "NULLS LAST" },
+      ]);
+    });
+
+    it("rejects an invalid orderBy direction (injection guard)", async () => {
+      const m = new ModelMethods(makeModel(), "user", makeEM());
+      expect(
+        m.findMany({ orderBy: [{ column: "name", direction: "; DROP" }] } as any),
+      ).rejects.toThrow(/direction/);
+    });
+
+    it("rejects an invalid orderBy nulls modifier", async () => {
+      const m = new ModelMethods(makeModel(), "user", makeEM());
+      expect(
+        m.findMany({ orderBy: [{ column: "name", nulls: "; DELETE" }] } as any),
+      ).rejects.toThrow(/nulls/);
+    });
+
+    it("delete forwards only where + returning (never allowFullTable)", async () => {
+      const repo = makeRepo({ delete: mock(async () => 1) });
+      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      await m.delete({ where: { id: 1 }, allowFullTable: true } as any);
+      expect(repo.delete).toHaveBeenCalledWith({
+        where: { id: 1 },
+        returning: undefined,
+      });
+    });
+  });
+
+  describe("soft-delete read filtering", () => {
+    function makeSoftDeleteModel(field = "deleted_at") {
+      return {
+        _name: "user",
+        _softDelete: true,
+        _deletedAtField: field,
+        toTableSchema: () => ({
+          relations: [],
+          columns: [{ name: "id" }, { name: field }],
+        }),
+      } as any;
+    }
+
+    it("injects deleted_at IS NULL into findMany", async () => {
+      const repo = makeRepo();
+      const m = new ModelMethods(makeSoftDeleteModel(), "user", makeEM({ primaryRepo: repo }));
+      await m.findMany({ where: { active: true } });
+      expect(repo.findMany.mock.calls[0][0].where).toEqual({
+        active: true,
+        deleted_at: { isNull: true },
+      });
+    });
+
+    it("injects the filter into find, count and exists", async () => {
+      const repo = makeRepo({ findOne: mock(async () => ({ id: 1 })) });
+      const m = new ModelMethods(makeSoftDeleteModel(), "user", makeEM({ primaryRepo: repo }));
+      await m.find({ where: { id: 1 } });
+      expect(repo.findOne.mock.calls[0][0].where).toEqual({
+        id: 1,
+        deleted_at: { isNull: true },
+      });
+      await m.count({ where: { a: 1 } });
+      expect(repo.count.mock.calls[0][0]).toEqual({ a: 1, deleted_at: { isNull: true } });
+      await m.exists({ where: { a: 1 } });
+      expect(repo.exists.mock.calls[0][0]).toEqual({ a: 1, deleted_at: { isNull: true } });
+    });
+
+    it("withDeleted bypasses the filter", async () => {
+      const repo = makeRepo();
+      const m = new ModelMethods(makeSoftDeleteModel(), "user", makeEM({ primaryRepo: repo }));
+      await m.findMany({ withDeleted: true });
+      expect(repo.findMany.mock.calls[0][0].where).toBeUndefined();
+    });
+
+    it("respects an explicit deleted_at filter from the caller", async () => {
+      const repo = makeRepo();
+      const m = new ModelMethods(makeSoftDeleteModel(), "user", makeEM({ primaryRepo: repo }));
+      await m.findMany({ where: { deleted_at: { isNotNull: true } } });
+      expect(repo.findMany.mock.calls[0][0].where).toEqual({
+        deleted_at: { isNotNull: true },
+      });
+    });
+
+    it("honors a custom deletedAt field name", async () => {
+      const repo = makeRepo();
+      const m = new ModelMethods(
+        makeSoftDeleteModel("archived_at"),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
+      await m.findMany({});
+      expect(repo.findMany.mock.calls[0][0].where).toEqual({
+        archived_at: { isNull: true },
+      });
+    });
+
+    it("does not filter when the soft-delete column is absent from the schema", async () => {
+      const repo = makeRepo();
+      const model = {
+        _name: "u",
+        _softDelete: true,
+        _deletedAtField: "deleted_at",
+        toTableSchema: () => ({ relations: [], columns: [{ name: "id" }] }),
+      } as any;
+      const m = new ModelMethods(model, "u", makeEM({ primaryRepo: repo }));
+      await m.findMany({ where: { a: 1 } });
+      expect(repo.findMany.mock.calls[0][0].where).toEqual({ a: 1 });
+    });
+  });
+
+  describe("updated_at maintenance", () => {
+    function makeTsModel(col = "updated_at") {
+      return {
+        _name: "user",
+        toTableSchema: () => ({
+          relations: [],
+          columns: [{ name: "id" }, { name: "name" }, { name: col }],
+        }),
+      } as any;
+    }
+
+    it("stamps updated_at on update", async () => {
+      const repo = makeRepo();
+      const m = new ModelMethods(makeTsModel(), "user", makeEM({ primaryRepo: repo }));
+      await m.update({ where: { id: 1 }, data: { name: "x" } });
+      const set = repo.update.mock.calls[0][0].set;
+      expect(set.name).toBe("x");
+      expect(set.updated_at).toBeInstanceOf(Date);
+    });
+
+    it("does not overwrite an updated_at the caller set explicitly", async () => {
+      const repo = makeRepo();
+      const explicit = new Date(0);
+      const m = new ModelMethods(makeTsModel(), "user", makeEM({ primaryRepo: repo }));
+      await m.update({ where: { id: 1 }, data: { name: "x", updated_at: explicit } });
+      expect(repo.update.mock.calls[0][0].set.updated_at).toBe(explicit);
+    });
+
+    it("stamps updated_at on updateOne", async () => {
+      const repo = makeRepo({ updateOne: mock(async (set: any) => ({ id: 1, ...set })) });
+      const m = new ModelMethods(makeTsModel(), "user", makeEM({ primaryRepo: repo }));
+      await m.updateOne({ where: { id: 1 }, data: { name: "x" } });
+      expect(repo.updateOne.mock.calls[0][0].updated_at).toBeInstanceOf(Date);
+    });
+
+    it("supports the camelCase updatedAt column name", async () => {
+      const repo = makeRepo();
+      const m = new ModelMethods(makeTsModel("updatedAt"), "user", makeEM({ primaryRepo: repo }));
+      await m.update({ where: { id: 1 }, data: { name: "x" } });
+      expect(repo.update.mock.calls[0][0].set.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it("leaves the write untouched when the model has no updated_at column", async () => {
+      const repo = makeRepo();
+      const model = {
+        _name: "u",
+        toTableSchema: () => ({ relations: [], columns: [{ name: "id" }, { name: "name" }] }),
+      } as any;
+      const m = new ModelMethods(model, "u", makeEM({ primaryRepo: repo }));
+      await m.update({ where: { id: 1 }, data: { name: "x" } });
+      expect(repo.update.mock.calls[0][0].set).toEqual({ name: "x" });
     });
   });
 });
