@@ -77,6 +77,26 @@ describe("buildOrderByClause", () => {
       ]),
     ).toBe('ORDER BY "age" ASC, "name"');
   });
+
+  it("uppercases a lowercase direction/nulls before interpolating", () => {
+    expect(
+      buildOrderByClause([
+        { column: "name", direction: "asc" as any, nulls: "nulls first" as any },
+      ]),
+    ).toBe('ORDER BY "name" ASC NULLS FIRST');
+  });
+
+  it("rejects a direction outside the ASC/DESC whitelist (SQL injection guard)", () => {
+    expect(() =>
+      buildOrderByClause([{ column: "name", direction: "; DROP TABLE users" as any }]),
+    ).toThrow(/Invalid direction/);
+  });
+
+  it("rejects a nulls modifier outside the whitelist", () => {
+    expect(() =>
+      buildOrderByClause([{ column: "name", nulls: "; DELETE" as any }]),
+    ).toThrow(/Invalid nulls/);
+  });
 });
 
 describe("buildReturningClause", () => {

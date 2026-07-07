@@ -218,23 +218,27 @@ describe("model auto columns › timestamps + softDelete defaults", () => {
     expect(names).toEqual(["id", "created_at", "updated_at", "deleted_at"]);
   });
 
-  it("created_at is non-null defaulting to now(); updated_at is nullable", () => {
+  it("created_at and updated_at are non-null timestamptz defaulting to now()", () => {
     const cols = model("auto_ts", {
       id: columns.id().primaryKey(),
     }).toTableSchema().columns;
     const created = cols.find((c) => c.name === "created_at")!;
     const updated = cols.find((c) => c.name === "updated_at")!;
+    expect(created.type).toBe("timestamp with time zone");
     expect(created.nullable).toBe(false);
     expect(created.default).toBe("now()");
-    expect(updated.nullable).toBe(true);
-    expect(updated.default).toBeUndefined();
+    // updated_at is maintained on every write (DB default seeds it, the service
+    // layer bumps it on update), so it is NOT NULL rather than perpetually NULL.
+    expect(updated.type).toBe("timestamp with time zone");
+    expect(updated.nullable).toBe(false);
+    expect(updated.default).toBe("now()");
   });
 
-  it("deleted_at is a nullable date with no default", () => {
+  it("deleted_at is a nullable timestamptz with no default", () => {
     const del = model("auto_sd", { id: columns.id().primaryKey() })
       .toTableSchema()
       .columns.find((c) => c.name === "deleted_at")!;
-    expect(del.type).toBe("date");
+    expect(del.type).toBe("timestamp with time zone");
     expect(del.nullable).toBe(true);
     expect(del.default).toBeUndefined();
   });
