@@ -56,7 +56,7 @@ describe("MigrationTracker.ensureTable — auto-create idempotency", () => {
 });
 
 describe("MigrationTracker.recordApplied — UPSERT idempotency", () => {
-  it("applying the same migration twice keeps the same composite id (ON CONFLICT path)", async () => {
+  it("applying the same migration twice keeps the same id (ON CONFLICT path)", async () => {
     const { pool, queries } = makeFakePool();
     const tracker = new MigrationTracker(pool);
 
@@ -64,13 +64,13 @@ describe("MigrationTracker.recordApplied — UPSERT idempotency", () => {
     await tracker.recordApplied("user", "Migration1_Initial", 250);
 
     expect(queries).toHaveLength(2);
-    // Same id both times => the UNIQUE/PK conflict path is exercised on re-apply.
-    expect(queries[0]!.params?.[0]).toBe("user_Migration1_Initial");
-    expect(queries[1]!.params?.[0]).toBe("user_Migration1_Initial");
+    // Same id both times => the UNIQUE(module, name) conflict path is exercised.
+    expect(queries[0]!.params?.[0]).toBe("4_user_Migration1_Initial");
+    expect(queries[1]!.params?.[0]).toBe("4_user_Migration1_Initial");
     // The second call carries the new execution time (used by DO UPDATE SET).
     expect(queries[1]!.params?.[3]).toBe(250);
     const sql = norm(queries[1]!.sql);
-    expect(sql).toContain("ON CONFLICT (id) DO UPDATE SET");
+    expect(sql).toContain("ON CONFLICT (module, name) DO UPDATE SET");
     // On re-apply, reverted_at is cleared and status forced back to 'applied'.
     expect(sql).toContain("reverted_at = NULL");
     expect(sql).toContain("status = 'applied'");
@@ -85,10 +85,23 @@ describe("MigrationTracker.recordApplied — UPSERT idempotency", () => {
     await tracker.recordApplied("user", "Migration2_AddEmail", 10);
 
     expect(queries.map((q) => q.params?.[0])).toEqual([
-      "user_Migration1_Initial",
-      "billing_Migration1_Initial",
-      "user_Migration2_AddEmail",
+      "4_user_Migration1_Initial",
+      "7_billing_Migration1_Initial",
+      "4_user_Migration2_AddEmail",
     ]);
+  });
+
+  it("colliding (module, name) pairs still produce distinct ids (a_b/c vs a/b_c)", async () => {
+    const { pool, queries } = makeFakePool();
+    const tracker = new MigrationTracker(pool);
+
+    // A plain `${module}_${name}` join would make both `a_b_c`.
+    await tracker.recordApplied("a_b", "c", 1);
+    await tracker.recordApplied("a", "b_c", 1);
+
+    expect(queries[0]!.params?.[0]).toBe("3_a_b_c");
+    expect(queries[1]!.params?.[0]).toBe("1_a_b_c");
+    expect(queries[0]!.params?.[0]).not.toBe(queries[1]!.params?.[0]);
   });
 
   it("passes a zero execution time through unchanged", async () => {
@@ -143,7 +156,7 @@ describe("MigrationTracker round-trip: record then read", () => {
 });
 
 describe("MigrationTracker.recordReverted then re-apply", () => {
-  it("recordReverted targets the composite id; a subsequent recordApplied reuses it", async () => {
+  it("recordReverted keys off (module, name); a subsequent recordApplied re-upserts", async () => {
     const { pool, queries } = makeFakePool();
     const tracker = new MigrationTracker(pool);
 
@@ -151,11 +164,13 @@ describe("MigrationTracker.recordReverted then re-apply", () => {
     await tracker.recordReverted("user", "Migration1_Initial");
     await tracker.recordApplied("user", "Migration1_Initial", 20);
 
-    // All three operations key off the identical composite id.
-    expect(queries[0]!.params?.[0]).toBe("user_Migration1_Initial"); // apply
-    expect(queries[1]!.params?.[0]).toBe("user_Migration1_Initial"); // revert
-    expect(queries[2]!.params?.[0]).toBe("user_Migration1_Initial"); // re-apply
+    // apply/re-apply carry the length-prefixed id; revert keys off (module, name).
+    expect(queries[0]!.params?.[0]).toBe("4_user_Migration1_Initial"); // apply
+    expect(queries[1]!.params).toEqual(["user", "Migration1_Initial"]); // revert
+    expect(queries[2]!.params?.[0]).toBe("4_user_Migration1_Initial"); // re-apply
     expect(norm(queries[1]!.sql)).toContain("status = 'reverted'");
-    expect(norm(queries[2]!.sql)).toContain("ON CONFLICT (id) DO UPDATE SET");
+    expect(norm(queries[2]!.sql)).toContain(
+      "ON CONFLICT (module, name) DO UPDATE SET",
+    );
   });
 });

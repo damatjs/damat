@@ -116,6 +116,15 @@ function makeModule(
   return { dir, name };
 }
 
+/** Build an OrmModuleContainer-shaped map (name-keyed, resolve = dir). */
+function container(modules: { dir: string; name: string }[]) {
+  const c: Record<string, { id: string; name: string; path: string; resolve: string }> = {};
+  for (const m of modules) {
+    c[m.name] = { id: m.name, name: m.name, path: m.dir, resolve: m.dir };
+  }
+  return c;
+}
+
 beforeEach(() => {
   tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "orm-mig-exec-"));
 });
@@ -215,14 +224,6 @@ describe("executeMigration", () => {
 });
 
 describe("runMigrations", () => {
-  function container(modules: { dir: string; name: string }[]) {
-    const c: Record<string, { id: string; name: string; path: string; resolve: string }> = {};
-    for (const m of modules) {
-      c[m.name] = { id: m.name, name: m.name, path: m.dir, resolve: m.dir };
-    }
-    return c;
-  }
-
   it("bootstraps, applies all pending migrations in order, and records them", async () => {
     const mod = makeModule([
       { name: "Migration20260101000000_Initial" },
@@ -328,6 +329,34 @@ describe("runMigrations", () => {
     expect(fake.clientQueries.some((q) => q.sql === "SELECT 2;")).toBe(false);
   });
 
+  it("holds pg_advisory_lock for the whole run and always unlocks", async () => {
+    const mod = makeModule([{ name: "Migration20260101000000_Initial" }]);
+    const fake = makeFakePool();
+
+    await runMigrations(fake.pool, container([mod]) as any);
+
+    const sqls = fake.clientQueries.map((q) => q.sql);
+    // Lock is the very first session command (before ensureTable/bootstrap),
+    // unlock the very last, so concurrent deploys fully serialize.
+    expect(sqls[0]).toMatch(/pg_advisory_lock\(\d+\)/);
+    expect(sqls[sqls.length - 1]).toMatch(/pg_advisory_unlock\(\d+\)/);
+    // Lock and unlock use the same key.
+    expect(sqls[0]!.match(/\d+/)![0]).toBe(sqls[sqls.length - 1]!.match(/\d+/)![0]);
+  });
+
+  it("unlocks and releases the lock session even when a migration fails", async () => {
+    const mod = makeModule([{ name: "Migration20260101000000_Bad", sql: "BAD;" }]);
+    const fake = makeFakePool({ failOn: (sql) => sql === "BAD;" });
+
+    const results = await runMigrations(fake.pool, container([mod]) as any);
+
+    expect(results[0]!.success).toBe(false);
+    const sqls = fake.clientQueries.map((q) => q.sql);
+    expect(sqls[sqls.length - 1]).toMatch(/pg_advisory_unlock/);
+    // Every checked-out client (lock, bootstrap, migration) was released.
+    expect(fake.releaseCount).toBe(fake.connectCount);
+  });
+
   it("processes multiple modules, returning one result per module", async () => {
     const a = makeModule([{ name: "Migration20260101000000_A" }]);
     const b = makeModule([{ name: "Migration20260101000000_B" }]);
@@ -352,11 +381,13 @@ describe("getMigrationStatus / getModuleMigrationStatus", () => {
       { name: "Migration20260101000000_Initial" },
       { name: "Migration20260201000000_AddEmail" },
     ]);
+    // Tracker rows are keyed by module NAME (what runMigrations records),
+    // never by the resolve path.
     const fake = makeFakePool({
       applied: {
-        [mod.dir]: [
+        [mod.name]: [
           {
-            module: mod.dir,
+            module: mod.name,
             name: "Migration20260101000000_Initial",
             applied_at: new Date(),
           },
@@ -364,9 +395,10 @@ describe("getMigrationStatus / getModuleMigrationStatus", () => {
       },
     });
 
-    const status = await getMigrationStatus(fake.pool, [mod.dir]);
+    const status = await getMigrationStatus(fake.pool, container([mod]) as any);
     expect(status.modules).toHaveLength(1);
     const m = status.modules[0]!;
+    expect(m.name).toBe(mod.name);
     expect(m.applied).toBe(1);
     expect(m.pending).toBe(1);
     // The applied flag is set on the matching migration only.
@@ -381,7 +413,7 @@ describe("getMigrationStatus / getModuleMigrationStatus", () => {
   it("reports all-pending when nothing is applied", async () => {
     const mod = makeModule([{ name: "Migration20260101000000_Initial" }]);
     const fake = makeFakePool();
-    const status = await getMigrationStatus(fake.pool, [mod.dir]);
+    const status = await getMigrationStatus(fake.pool, container([mod]) as any);
     expect(status.modules[0]!.applied).toBe(0);
     expect(status.modules[0]!.pending).toBe(1);
   });
@@ -391,8 +423,11 @@ describe("getMigrationStatus / getModuleMigrationStatus", () => {
     fs.mkdirSync(emptyDir, { recursive: true });
     const fake = makeFakePool();
     await expect(
-      getModuleMigrationStatus(fake.pool, emptyDir),
-    ).rejects.toThrow("not found or has no migrations");
+      getModuleMigrationStatus(
+        fake.pool,
+        container([{ dir: emptyDir, name: "empty" }]).empty as any,
+      ),
+    ).rejects.toThrow("Module 'empty' not found or has no migrations");
   });
 
   it("getModuleMigrationStatus reports a single module's status", async () => {
@@ -402,9 +437,9 @@ describe("getMigrationStatus / getModuleMigrationStatus", () => {
     ]);
     const fake = makeFakePool({
       applied: {
-        [mod.dir]: [
+        [mod.name]: [
           {
-            module: mod.dir,
+            module: mod.name,
             name: "Migration20260201000000_AddEmail",
             applied_at: new Date(),
           },
@@ -412,7 +447,11 @@ describe("getMigrationStatus / getModuleMigrationStatus", () => {
       },
     });
 
-    const { module } = await getModuleMigrationStatus(fake.pool, mod.dir);
+    const { module } = await getModuleMigrationStatus(
+      fake.pool,
+      container([mod])[mod.name] as any,
+    );
+    expect(module.name).toBe(mod.name);
     expect(module.applied).toBe(1);
     expect(module.pending).toBe(1);
     expect(module.migrations).toHaveLength(2);

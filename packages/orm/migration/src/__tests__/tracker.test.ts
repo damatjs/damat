@@ -79,7 +79,7 @@ describe("MigrationTracker.getApplied", () => {
 });
 
 describe("MigrationTracker.recordApplied", () => {
-  it("UPSERTs with a composite id and the execution time", async () => {
+  it("UPSERTs on UNIQUE(module, name) with a collision-free id and the execution time", async () => {
     const { pool, queries } = makeFakePool();
     await new MigrationTracker(pool).recordApplied(
       "user",
@@ -90,11 +90,13 @@ describe("MigrationTracker.recordApplied", () => {
     expect(queries).toHaveLength(1);
     const sql = norm(queries[0]!.sql);
     expect(sql).toContain('INSERT INTO "_damat_migration_logs"');
-    expect(sql).toContain("ON CONFLICT (id) DO UPDATE SET");
+    // Conflict targets the unique constraint, not the synthetic id.
+    expect(sql).toContain("ON CONFLICT (module, name) DO UPDATE SET");
     expect(sql).toContain("status = 'applied'");
-    // id = `${module}_${name}`, plus module/name/executionTime params.
+    // id is length-prefixed (`${module.length}_${module}_${name}`) so
+    // colliding (module, name) pairs can never share an id.
     expect(queries[0]!.params).toEqual([
-      "user_Migration1_Initial",
+      "4_user_Migration1_Initial",
       "user",
       "Migration1_Initial",
       150,
@@ -103,7 +105,7 @@ describe("MigrationTracker.recordApplied", () => {
 });
 
 describe("MigrationTracker.recordReverted", () => {
-  it("marks the row reverted by composite id", async () => {
+  it("marks the row reverted by (module, name)", async () => {
     const { pool, queries } = makeFakePool();
     await new MigrationTracker(pool).recordReverted(
       "user",
@@ -113,7 +115,7 @@ describe("MigrationTracker.recordReverted", () => {
     const sql = norm(queries[0]!.sql);
     expect(sql).toContain('UPDATE "_damat_migration_logs"');
     expect(sql).toContain("status = 'reverted'");
-    expect(sql).toContain("WHERE id = $1");
-    expect(queries[0]!.params).toEqual(["user_Migration1_Initial"]);
+    expect(sql).toContain("WHERE module = $1 AND name = $2");
+    expect(queries[0]!.params).toEqual(["user", "Migration1_Initial"]);
   });
 });

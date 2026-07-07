@@ -189,6 +189,27 @@ describe("executeMigration — invalid SQL / rollback path", () => {
     expect(fake.releaseCount).toBe(1);
   });
 
+  it("surfaces the original error (not the rollback's) when ROLLBACK also fails", async () => {
+    const dir = makeModule([{ name: "Migration1_Bad", sql: "BAD BODY;" }]);
+    const fake = makeFakePool({
+      failOn: (sql) => sql === "BAD BODY;" || sql === "ROLLBACK",
+    });
+    const tracker = new MigrationTracker(fake.pool);
+
+    const result = await executeMigration(
+      fake.pool,
+      makeMigrationInfo(dir, "Migration1_Bad"),
+      "user",
+      tracker,
+    );
+
+    expect(result.success).toBe(false);
+    // The body's error wins; the rollback failure is swallowed.
+    expect(result.error!.message).toContain("BAD BODY;");
+    expect(result.error!.message).not.toContain("ROLLBACK");
+    expect(fake.releaseCount).toBe(1);
+  });
+
   it("does not re-throw to the caller — returns a failure result instead", async () => {
     const dir = makeModule([{ name: "Migration1_Bad", sql: "BAD;" }]);
     const fake = makeFakePool({ failOn: (sql) => sql === "BAD;" });
@@ -231,6 +252,94 @@ describe("executeMigration — file-not-found", () => {
     ).toBe(false);
     // Node's ENOENT message leaks through.
     expect(result.error!.message).toMatch(/ENOENT|no such file/i);
+  });
+});
+
+describe("executeMigration — statements that can't run in a transaction", () => {
+  it("runs a CREATE INDEX CONCURRENTLY migration WITHOUT BEGIN/COMMIT and records it applied", async () => {
+    const dir = makeModule([
+      {
+        name: "Migration1_Concurrent",
+        sql: 'CREATE INDEX CONCURRENTLY "idx_u" ON users (email);',
+      },
+    ]);
+    const fake = makeFakePool();
+    const tracker = new MigrationTracker(fake.pool);
+
+    const result = await executeMigration(
+      fake.pool,
+      makeMigrationInfo(dir, "Migration1_Concurrent"),
+      "user",
+      tracker,
+    );
+
+    expect(result.success).toBe(true);
+    const sqls = fake.clientQueries.map((q) => q.sql);
+    // Autocommit path: no transaction wrapping, body issued directly.
+    expect(sqls).not.toContain("BEGIN");
+    expect(sqls).not.toContain("COMMIT");
+    expect(sqls).toContain('CREATE INDEX CONCURRENTLY "idx_u" ON users (email);');
+    expect(fake.releaseCount).toBe(1);
+    expect(
+      fake.poolQueries.some((q) =>
+        /INSERT INTO "_damat_migration_logs"/.test(q.sql),
+      ),
+    ).toBe(true);
+  });
+
+  it("runs an ALTER TYPE ... ADD VALUE migration outside a transaction", async () => {
+    const dir = makeModule([
+      {
+        name: "Migration1_Enum",
+        sql: "ALTER TYPE mood ADD VALUE 'excited';",
+      },
+    ]);
+    const fake = makeFakePool();
+    const tracker = new MigrationTracker(fake.pool);
+
+    const result = await executeMigration(
+      fake.pool,
+      makeMigrationInfo(dir, "Migration1_Enum"),
+      "user",
+      tracker,
+    );
+
+    expect(result.success).toBe(true);
+    const sqls = fake.clientQueries.map((q) => q.sql);
+    expect(sqls).toEqual(["ALTER TYPE mood ADD VALUE 'excited';"]);
+  });
+
+  it("does NOT issue ROLLBACK when a non-transactional migration fails", async () => {
+    const dir = makeModule([
+      {
+        name: "Migration1_ConcurrentBad",
+        sql: "CREATE INDEX CONCURRENTLY bad;",
+      },
+    ]);
+    const fake = makeFakePool({
+      failOn: (sql) => sql === "CREATE INDEX CONCURRENTLY bad;",
+    });
+    const tracker = new MigrationTracker(fake.pool);
+
+    const result = await executeMigration(
+      fake.pool,
+      makeMigrationInfo(dir, "Migration1_ConcurrentBad"),
+      "user",
+      tracker,
+    );
+
+    expect(result.success).toBe(false);
+    const sqls = fake.clientQueries.map((q) => q.sql);
+    // No BEGIN means there's no open tx, so no ROLLBACK is attempted.
+    expect(sqls).not.toContain("ROLLBACK");
+    expect(sqls).not.toContain("BEGIN");
+    // Nothing recorded as applied.
+    expect(
+      fake.poolQueries.some((q) =>
+        /INSERT INTO "_damat_migration_logs"/.test(q.sql),
+      ),
+    ).toBe(false);
+    expect(fake.releaseCount).toBe(1);
   });
 });
 
