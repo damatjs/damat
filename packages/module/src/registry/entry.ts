@@ -66,7 +66,7 @@ export interface RegistryOwner {
 export interface RegistryVerification {
   /** Trust state set by the registry backend */
   status: VerificationStatus;
-  /** Authority that performed the check, e.g. "registry.damatjs.dev" */
+  /** Authority that performed the check, e.g. "registry.damatjs.com" */
   verifiedBy?: string;
   /** ISO-8601 timestamp of the check */
   verifiedAt?: string;

@@ -1,46 +1,52 @@
-import Link from 'next/link'
-import { GITHUB_URL } from '@/lib/site'
-import { LogoMark } from './Logo'
-import { GitHubIcon } from './icons'
+import Link from "next/link";
+import { GITHUB_URL } from "@/lib/site";
+import { LogoMark } from "./Logo";
+import { GitHubIcon } from "./icons";
 
-const cols: { title: string; links: { label: string; href: string; external?: boolean }[] }[] = [
+const cols: {
+  title: string;
+  links: { label: string; href: string; external?: boolean }[];
+}[] = [
   {
-    title: 'Guide',
+    title: "Guide",
     links: [
-      { label: 'Introduction', href: '/docs/introduction' },
-      { label: 'Getting started', href: '/docs/getting-started' },
-      { label: 'Concepts', href: '/docs/concepts' },
-      { label: 'Configuration', href: '/docs/configuration' },
+      { label: "Introduction", href: "/docs/introduction" },
+      { label: "Getting started", href: "/docs/getting-started" },
+      { label: "Concepts", href: "/docs/concepts" },
+      { label: "Configuration", href: "/docs/configuration" },
     ],
   },
   {
-    title: 'Build',
+    title: "Build",
     links: [
-      { label: 'Models & ORM', href: '/docs/models' },
-      { label: 'HTTP APIs', href: '/docs/http-apis' },
-      { label: 'Workflows', href: '/docs/workflows' },
-      { label: 'Redis', href: '/docs/redis' },
+      { label: "Models & ORM", href: "/docs/models" },
+      { label: "HTTP APIs", href: "/docs/http-apis" },
+      { label: "Workflows", href: "/docs/workflows" },
+      { label: "Redis", href: "/docs/redis" },
     ],
   },
   {
-    title: 'Modules',
+    title: "Modules",
     links: [
-      { label: 'Authoring a module', href: '/docs/authoring-modules' },
-      { label: 'Installing modules', href: '/docs/installing-modules' },
-      { label: 'With AI (MCP)', href: '/docs/installing-modules-with-ai' },
-      { label: 'Composing & linking', href: '/docs/composing-and-linking-modules' },
+      { label: "Authoring a module", href: "/docs/authoring-modules" },
+      { label: "Installing modules", href: "/docs/installing-modules" },
+      { label: "With AI (MCP)", href: "/docs/installing-modules-with-ai" },
+      {
+        label: "Composing & linking",
+        href: "/docs/composing-and-linking-modules",
+      },
     ],
   },
   {
-    title: 'Reference',
+    title: "Reference",
     links: [
-      { label: 'CLI reference', href: '/docs/cli-reference' },
-      { label: 'Packages', href: '/docs/package-reference' },
-      { label: 'Deployment', href: '/docs/deployment' },
-      { label: 'GitHub', href: GITHUB_URL, external: true },
+      { label: "CLI reference", href: "/docs/cli-reference" },
+      { label: "Packages", href: "/docs/package-reference" },
+      { label: "Deployment", href: "/docs/deployment" },
+      { label: "GitHub", href: GITHUB_URL, external: true },
     ],
   },
-]
+];
 
 export function Footer() {
   return (
@@ -50,11 +56,13 @@ export function Footer() {
           <div className="col-span-2">
             <Link href="/" className="flex items-center gap-2.5">
               <LogoMark />
-              <span className="text-[1.05rem] font-semibold tracking-tight text-ink">Damat</span>
+              <span className="text-[1.05rem] font-semibold tracking-tight text-ink">
+                Damat
+              </span>
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted">
-              A composable backend framework for TypeScript — assemble exactly what your app needs
-              from independent, plug-and-play modules.
+              A composable backend framework for TypeScript — assemble exactly
+              what your app needs from independent, plug-and-play modules.
             </p>
             <a
               href={GITHUB_URL}
@@ -100,10 +108,10 @@ export function Footer() {
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-line pt-6 text-sm text-faint sm:flex-row">
-          <p>Built with Bun, Hono, Effect-TS, Better Auth &amp; PostgreSQL.</p>
+          <p>Built with Bun, Hono, Effect-TS, &amp; PostgreSQL.</p>
           <p>MIT Licensed · © {new Date().getFullYear()} Damat</p>
         </div>
       </div>
     </footer>
-  )
+  );
 }

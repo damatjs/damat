@@ -6,10 +6,15 @@
       "latest": "0.2.0",
       "versions": {
         "0.1.0": "https://github.com/damatjs/modules.git#user-v0.1.0",
-        "0.2.0": { "source": "https://github.com/damatjs/modules.git#user-v0.2.0" }
+        "0.2.0": {
+          "source": "https://github.com/damatjs/modules.git#user-v0.2.0"
+        }
       },
       "owner": { "namespace": "damatjs", "verified": true },
-      "verification": { "status": "verified", "verifiedBy": "registry.damatjs.dev" },
+      "verification": {
+        "status": "verified",
+        "verifiedBy": "registry.damatjs.com"
+      },
       "keywords": ["auth", "users", "sessions", "accounts"],
       "license": "MIT",
       "repository": "https://github.com/damatjs/modules",

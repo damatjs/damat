@@ -18,7 +18,7 @@ This repo ships a ready `.mcp.json`. In your own app, add:
       "command": "bunx",
       "args": ["damat-mcp"],
       "env": {
-        "DAMAT_MODULE_REGISTRY": "https://registry.damatjs.dev/index.json",
+        "DAMAT_MODULE_REGISTRY": "https://registry.damatjs.com/index.json",
         "DAMAT_APP_DIR": ".",
         "DAMAT_CLI": "damat"
       }

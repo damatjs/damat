@@ -21,7 +21,7 @@ A small set of framework-provided routes mounted by `bootstrap` (separate from t
   "name": "Damatjs Backend Infrustcutre",
   "version": "1.0.0",
   "description": "Backend Infrustcutre to build and not repeat.",
-  "documentation": "https://docs.damatjs.dev",
+  "documentation": "https://docs.damatjs.com",
   "defaultEndpoints": {
     "GET /damat": "API information",
     "GET /health": "Health check",
