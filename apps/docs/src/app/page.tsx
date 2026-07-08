@@ -1,8 +1,8 @@
-import Link from 'next/link'
-import { highlightCode } from '@/lib/markdown'
-import { GITHUB_URL } from '@/lib/site'
-import { CopyButton } from '@/components/CopyButton'
-import { CodeCard } from '@/components/CodeCard'
+import Link from "next/link";
+import { highlightCode } from "@/lib/markdown";
+import { GITHUB_URL } from "@/lib/site";
+import { CopyButton } from "@/components/CopyButton";
+import { CodeCard } from "@/components/CodeCard";
 import {
   ArrowRightIcon,
   DatabaseIcon,
@@ -14,9 +14,9 @@ import {
   TerminalIcon,
   WorkflowIcon,
   ZapIcon,
-} from '@/components/icons'
+} from "@/components/icons";
 
-const INSTALL = 'bunx create-damat-app@latest my-app'
+const INSTALL = "bunx create-damat-app@latest my-app";
 
 const CONFIG_SAMPLE = `import { defineConfig } from "@damatjs/framework";
 
@@ -32,67 +32,81 @@ export default defineConfig({
     user:    { resolve: "./src/modules/user", id: "user" },
     billing: { resolve: "@acme/billing",      id: "billing" },
   },
-});`
+});`;
 
 const features = [
   {
     icon: PuzzleIcon,
-    title: 'Composable modules',
-    body: 'Every concern — users, billing, teams — is a self-contained module with its own models, migrations, service, config, and workflows. Author in isolation, install anywhere.',
-    href: '/docs/concepts',
+    title: "Composable modules",
+    body: "Every concern — users, billing, teams — is a self-contained module with its own models, migrations, service, config, and workflows. Author in isolation, install anywhere.",
+    href: "/docs/concepts",
   },
   {
     icon: DatabaseIcon,
-    title: 'Fluent ORM',
-    body: 'A type-safe model DSL over PostgreSQL with a real migration system, service base classes, auto-generated CRUD, transactions, and connection pooling.',
-    href: '/docs/models',
+    title: "Fluent ORM",
+    body: "A type-safe model DSL over PostgreSQL with a real migration system, service base classes, auto-generated CRUD, transactions, and connection pooling.",
+    href: "/docs/models",
   },
   {
     icon: WorkflowIcon,
-    title: 'Saga workflows',
-    body: 'A workflow engine built on Effect-TS with compensation, retries, and distributed locks — orchestrate multi-step operations that fail gracefully.',
-    href: '/docs/workflows',
+    title: "Saga workflows",
+    body: "A workflow engine built on Effect-TS with compensation, retries, and distributed locks — orchestrate multi-step operations that fail gracefully.",
+    href: "/docs/workflows",
   },
   {
     icon: ZapIcon,
-    title: 'Redis utilities',
-    body: 'Batteries-included cache, queues, locks, sessions, and rate limiting — wired up the moment you set a REDIS_URL.',
-    href: '/docs/redis',
+    title: "Redis utilities",
+    body: "Batteries-included cache, queues, locks, sessions, and rate limiting — wired up the moment you set a REDIS_URL.",
+    href: "/docs/redis",
   },
   {
     icon: RouteIcon,
-    title: 'File-based HTTP',
-    body: 'Define endpoints with file-based routing on top of Hono. Handlers, middleware, and validation compose cleanly per module.',
-    href: '/docs/http-apis',
+    title: "File-based HTTP",
+    body: "Define endpoints with file-based routing on top of Hono. Handlers, middleware, and validation compose cleanly per module.",
+    href: "/docs/http-apis",
   },
   {
     icon: TerminalIcon,
-    title: 'Unified CLI',
-    body: 'One `damat` command for dev, build, migrations, codegen, and module management — plus an MCP server so an AI can install modules for you.',
-    href: '/docs/cli-reference',
+    title: "Unified CLI",
+    body: "One `damat` command for dev, build, migrations, codegen, and module management — plus an MCP server so an AI can install modules for you.",
+    href: "/docs/cli-reference",
   },
-]
+];
 
-const builtOn = ['Bun', 'Hono', 'Effect-TS', 'Better Auth', 'PostgreSQL']
+const builtOn = ["Bun", "Hono", "Effect-TS", "PostgreSQL"];
 
 const packageMap = [
-  { group: 'App framework', items: ['framework', 'services', 'module', 'link', 'workflow-engine'] },
-  { group: 'ORM', items: ['orm', 'orm-model', 'orm-pg', 'orm-migration', 'codegen'] },
-  { group: 'Core', items: ['logger', 'redis', 'load-env', 'types', 'cli'] },
-  { group: 'CLIs & AI', items: ['damat-cli', 'orm-cli', 'create-damat-app', 'mcp'] },
-]
+  {
+    group: "App framework",
+    items: ["framework", "services", "module", "link", "workflow-engine"],
+  },
+  {
+    group: "ORM",
+    items: ["orm", "orm-model", "orm-pg", "orm-migration", "codegen"],
+  },
+  { group: "Core", items: ["logger", "redis", "load-env", "types", "cli"] },
+  {
+    group: "CLIs & AI",
+    items: ["damat-cli", "orm-cli", "create-damat-app", "mcp"],
+  },
+];
 
 export default async function HomePage() {
-  const configHtml = await highlightCode(CONFIG_SAMPLE, 'ts')
+  const configHtml = await highlightCode(CONFIG_SAMPLE, "ts");
 
   return (
     <>
       {/* ---- Hero -------------------------------------------------------- */}
       <section className="relative overflow-hidden">
-        <div className="bg-grid pointer-events-none absolute inset-0" aria-hidden="true" />
+        <div
+          className="bg-grid pointer-events-none absolute inset-0"
+          aria-hidden="true"
+        />
         <div
           className="pointer-events-none absolute left-1/2 top-[-10rem] h-[32rem] w-[52rem] -translate-x-1/2 rounded-full opacity-[0.18] blur-3xl"
-          style={{ background: 'radial-gradient(closest-side, #f5900f, transparent)' }}
+          style={{
+            background: "radial-gradient(closest-side, #f5900f, transparent)",
+          }}
           aria-hidden="true"
         />
         <div className="relative mx-auto max-w-[90rem] px-4 pb-20 pt-16 sm:px-6 sm:pt-24 lg:px-8">
@@ -108,14 +122,15 @@ export default async function HomePage() {
 
             <h1 className="mt-7 text-balance text-[2.6rem] font-semibold leading-[1.05] tracking-tight sm:text-6xl">
               Compose your backend
-              <br className="hidden sm:block" /> from{' '}
+              <br className="hidden sm:block" /> from{" "}
               <span className="text-gradient">independent blades</span>.
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-balance text-lg leading-relaxed text-muted">
-              Damat is a composable backend framework for TypeScript, built on Bun. Assemble exactly
-              what your app needs from plug-and-play modules — database, auth, billing, queues,
-              workflows — each self-contained and installable with one command.
+              Damat is a composable backend framework for TypeScript, built on
+              Bun. Assemble exactly what your app needs from plug-and-play
+              modules — database, auth, billing, queues, workflows — each
+              self-contained and installable with one command.
             </p>
 
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -147,7 +162,9 @@ export default async function HomePage() {
           </div>
 
           <div className="mt-14 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
-            <span className="text-xs uppercase tracking-[0.12em] text-faint">Built on</span>
+            <span className="text-xs uppercase tracking-[0.12em] text-faint">
+              Built on
+            </span>
             {builtOn.map((name) => (
               <span key={name} className="text-sm font-medium text-muted">
                 {name}
@@ -164,8 +181,8 @@ export default async function HomePage() {
             Everything a backend needs, nothing it doesn&apos;t
           </h2>
           <p className="mt-4 text-lg text-muted">
-            Instead of fighting a monolith&apos;s opinions, you assemble the building blocks your app
-            actually uses.
+            Instead of fighting a monolith&apos;s opinions, you assemble the
+            building blocks your app actually uses.
           </p>
         </div>
 
@@ -180,7 +197,9 @@ export default async function HomePage() {
                 <f.icon width={20} height={20} />
               </span>
               <h3 className="mt-4 text-lg font-semibold text-ink">{f.title}</h3>
-              <p className="mt-2 flex-1 text-[0.925rem] leading-relaxed text-muted">{f.body}</p>
+              <p className="mt-2 flex-1 text-[0.925rem] leading-relaxed text-muted">
+                {f.body}
+              </p>
               <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-brand opacity-0 transition-opacity group-hover:opacity-100">
                 Learn more
                 <ArrowRightIcon width={14} height={14} />
@@ -201,18 +220,24 @@ export default async function HomePage() {
               Register modules by id. Damat does the wiring.
             </h2>
             <p className="mt-5 text-lg leading-relaxed text-muted">
-              A single <code className="rounded bg-brand/10 px-1.5 py-0.5 font-mono text-[0.85em] text-ink">damat.config.ts</code>{' '}
-              declares your project config and the modules you want. At startup Damat connects each
-              module to the database and HTTP server — models, migrations, services, routes, and
-              workflows included.
+              A single{" "}
+              <code className="rounded bg-brand/10 px-1.5 py-0.5 font-mono text-[0.85em] text-ink">
+                damat.config.ts
+              </code>{" "}
+              declares your project config and the modules you want. At startup
+              Damat connects each module to the database and HTTP server —
+              models, migrations, services, routes, and workflows included.
             </p>
             <ul className="mt-6 space-y-3">
               {[
-                'Modules are portable — author one in isolation, install it into any app.',
-                'Installing a module updates this block for you and syncs its env vars.',
-                'Compose and link modules so one can depend on another’s service.',
+                "Modules are portable — author one in isolation, install it into any app.",
+                "Installing a module updates this block for you and syncs its env vars.",
+                "Compose and link modules so one can depend on another’s service.",
               ].map((point) => (
-                <li key={point} className="flex items-start gap-3 text-[0.95rem] text-muted">
+                <li
+                  key={point}
+                  className="flex items-start gap-3 text-[0.95rem] text-muted"
+                >
                   <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
                     <LayersIcon width={12} height={12} />
                   </span>
@@ -230,7 +255,11 @@ export default async function HomePage() {
           </div>
 
           <div className="lg:pl-6">
-            <CodeCard html={configHtml} code={CONFIG_SAMPLE} filename="damat.config.ts" />
+            <CodeCard
+              html={configHtml}
+              code={CONFIG_SAMPLE}
+              filename="damat.config.ts"
+            />
           </div>
         </div>
       </section>
@@ -238,15 +267,20 @@ export default async function HomePage() {
       {/* ---- Package map ------------------------------------------------- */}
       <section className="mx-auto max-w-[90rem] px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">A tidy package map</h2>
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            A tidy package map
+          </h2>
           <p className="mt-4 text-lg text-muted">
-            Damat is a Bun + Turborepo monorepo. You rarely import most packages directly — but
-            everything is documented.
+            Damat is a Bun + Turborepo monorepo. You rarely import most packages
+            directly — but everything is documented.
           </p>
         </div>
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {packageMap.map((col) => (
-            <div key={col.group} className="rounded-2xl border border-line bg-surface p-5">
+            <div
+              key={col.group}
+              className="rounded-2xl border border-line bg-surface p-5"
+            >
               <p className="text-[0.72rem] font-semibold uppercase tracking-[0.09em] text-faint">
                 {col.group}
               </p>
@@ -279,7 +313,10 @@ export default async function HomePage() {
         <div className="relative overflow-hidden rounded-3xl border border-line bg-surface px-6 py-16 text-center">
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.12] blur-2xl"
-            style={{ background: 'radial-gradient(closest-side at 50% 0%, #f5900f, transparent)' }}
+            style={{
+              background:
+                "radial-gradient(closest-side at 50% 0%, #f5900f, transparent)",
+            }}
             aria-hidden="true"
           />
           <div className="relative">
@@ -287,8 +324,8 @@ export default async function HomePage() {
               Build a modular backend in minutes
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-lg text-muted">
-              Scaffold an app, define a model, install a module, ship. The guide walks you from zero
-              to a running backend.
+              Scaffold an app, define a model, install a module, ship. The guide
+              walks you from zero to a running backend.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
@@ -310,5 +347,5 @@ export default async function HomePage() {
         </div>
       </section>
     </>
-  )
+  );
 }
