@@ -4,7 +4,7 @@
       "command": "bun",
       "args": ["run", "packages/mcp/bin/damat-mcp.ts"],
       "env": {
-        "DAMAT_MODULE_REGISTRY": "packages/mcp/registry.example.json",
+        "DAMAT_MODULE_REGISTRY": "https://registry.damatjs.dev/index.json",
         "DAMAT_APP_DIR": ".",
         "DAMAT_CLI": "damat"
       }

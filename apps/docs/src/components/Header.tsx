@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { NavSection, SearchDoc } from '@/lib/types'
-import { GITHUB_URL } from '@/lib/site'
+import { GITHUB_URL, REGISTRY_URL } from '@/lib/site'
 import { Logo } from './Logo'
 import { ThemeToggle } from './ThemeToggle'
 import { SearchDialog } from './Search'
@@ -78,6 +78,14 @@ export function Header({
             {navLink('/docs', 'Guide')}
             {navLink('/docs/package-reference', 'Packages')}
             {navLink('/docs/cli-reference', 'CLI')}
+            <a
+              href={REGISTRY_URL}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="rounded-lg px-3 py-1.5 text-sm text-muted transition-colors hover:text-ink"
+            >
+              Registry
+            </a>
           </nav>
 
           <div className="ml-auto flex items-center gap-2">

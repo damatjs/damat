@@ -1,0 +1,33 @@
+{
+  "$comment": "Source of truth for the Damat module registry served at registry.damatjs.dev/index.json. Add a module by adding an entry keyed by 'namespace/name' (or a bare 'name'). Consumed by the CLI/MCP via DAMAT_MODULE_REGISTRY.",
+  "modules": {
+    "damatjs/user": {
+      "source": "https://github.com/damatjs/modules.git#main",
+      "description": "Authentication, sessions and accounts built on Better Auth. Drop-in users, credentials, and session management for any Damat app.",
+      "latest": "0.2.0",
+      "versions": {
+        "0.1.0": "https://github.com/damatjs/modules.git#user-v0.1.0",
+        "0.2.0": { "source": "https://github.com/damatjs/modules.git#user-v0.2.0" }
+      },
+      "owner": { "namespace": "damatjs", "verified": true },
+      "verification": { "status": "verified", "verifiedBy": "registry.damatjs.dev" },
+      "keywords": ["auth", "users", "sessions", "accounts"],
+      "license": "MIT",
+      "repository": "https://github.com/damatjs/modules",
+      "homepage": "https://github.com/damatjs/modules/tree/main/user"
+    },
+    "billing": {
+      "source": "https://github.com/acme/damat-modules.git#billing-v0.1.0",
+      "description": "Stripe subscriptions and one-time credits — plans, checkout, webhooks, and a credits ledger.",
+      "latest": "0.1.0",
+      "versions": {
+        "0.1.0": "https://github.com/acme/damat-modules.git#billing-v0.1.0"
+      },
+      "owner": { "namespace": "acme", "verified": false },
+      "verification": { "status": "unverified" },
+      "keywords": ["stripe", "payments", "subscriptions", "credits"],
+      "license": "MIT",
+      "repository": "https://github.com/acme/damat-modules"
+    }
+  }
+}
