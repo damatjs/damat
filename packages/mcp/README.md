@@ -40,7 +40,7 @@ Add an `.mcp.json` to your project root (this repo already ships one):
       "command": "bun",
       "args": ["run", "packages/mcp/bin/damat-mcp.ts"],
       "env": {
-        "DAMAT_MODULE_REGISTRY": "https://registry.damatjs.dev/index.json",
+        "DAMAT_MODULE_REGISTRY": "https://registry.damatjs.com/index.json",
         "DAMAT_APP_DIR": ".",
         "DAMAT_CLI": "damat"
       }

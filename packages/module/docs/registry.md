@@ -85,7 +85,7 @@ interface RegistryOwner {
 
 interface RegistryVerification {
   status: VerificationStatus; // unverified | pending | verified | rejected | revoked
-  verifiedBy?: string;        // e.g. "registry.damatjs.dev"
+  verifiedBy?: string;        // e.g. "registry.damatjs.com"
   verifiedAt?: string;        // ISO-8601
   integrity?: string;         // "sha256-…"
   reason?: string;            // why rejected/revoked — surfaced to installers

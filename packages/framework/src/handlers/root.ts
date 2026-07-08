@@ -18,14 +18,12 @@ export function createRootRoute(fileRouter: FileRouter): Hono {
       "GET /damat/api/routes": "List all registered routes",
     };
 
-
     return c.json({
       name: "Damatjs Backend Infrustcutre",
       version: "1.0.0",
-      description:
-        "Backend Infrustcutre to build and not repeat.",
-      documentation: "https://docs.damatjs.dev",
-      defaultEndpoints: endpoints
+      description: "Backend Infrustcutre to build and not repeat.",
+      documentation: "https://docs.damatjs.com",
+      defaultEndpoints: endpoints,
     });
   });
 

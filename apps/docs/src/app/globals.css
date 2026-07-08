@@ -1,0 +1,256 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --subtle: #faf8f4;
+    --fg: #1a1512;
+    --fg-muted: #6a635b;
+    --fg-faint: #938b81;
+    --border: #ece6dd;
+    --border-strong: #ddd4c8;
+    --accent: #d9640a;
+    --accent-strong: #be590c;
+    --accent-contrast: #ffffff;
+    --accent-soft: rgba(245, 144, 15, 0.12);
+    --accent-ring: rgba(245, 144, 15, 0.4);
+    --grid: rgba(26, 21, 18, 0.045);
+    color-scheme: light;
+  }
+
+  .dark {
+    --bg: #0c0a08;
+    --surface: #141009;
+    --subtle: #12100b;
+    --fg: #f6f1e9;
+    --fg-muted: #a49a8d;
+    --fg-faint: #6f665b;
+    --border: #241d15;
+    --border-strong: #34291d;
+    --accent: #f9ab3b;
+    --accent-strong: #f9ab3b;
+    --accent-contrast: #1a1200;
+    --accent-soft: rgba(249, 171, 59, 0.14);
+    --accent-ring: rgba(249, 171, 59, 0.35);
+    --grid: rgba(255, 250, 240, 0.04);
+    color-scheme: dark;
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5.5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--fg);
+    font-feature-settings: 'cv11', 'ss01';
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+@layer components {
+  /* Warm dotted-grid backdrop used behind the hero. */
+  .bg-grid {
+    background-image: radial-gradient(var(--grid) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .text-gradient {
+    background: linear-gradient(115deg, var(--fg) 30%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .accent-gradient {
+    background: linear-gradient(120deg, #f9ab3b, #e5760a 55%, #d9640a);
+  }
+
+  /* Heading anchors injected by rehype-autolink-headings. */
+  .prose .heading-anchor {
+    margin-left: 0.4em;
+    color: var(--accent);
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    font-weight: 400;
+  }
+  .prose :is(h2, h3, h4):hover .heading-anchor {
+    opacity: 1;
+  }
+}
+
+/* ---- Shiki dual-theme code blocks ------------------------------------ */
+.shiki {
+  background-color: var(--shiki-light-bg);
+  color: var(--shiki-light);
+}
+.shiki span {
+  color: var(--shiki-light);
+}
+.dark .shiki {
+  background-color: var(--shiki-dark-bg) !important;
+  color: var(--shiki-dark) !important;
+}
+.dark .shiki span {
+  color: var(--shiki-dark) !important;
+}
+
+/* Our own chrome around the highlighted <pre>. */
+.code-block {
+  position: relative;
+  margin: 1.5rem 0;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: var(--subtle);
+}
+.code-block .shiki {
+  margin: 0;
+  padding: 1rem 1.15rem;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.code-block__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.5rem 0.35rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.code-block__lang {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+.code-block__copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.28rem 0.55rem;
+  border-radius: 0.45rem;
+  font-size: 0.72rem;
+  color: var(--fg-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.code-block__copy:hover {
+  color: var(--fg);
+  background: var(--subtle);
+  border-color: var(--border);
+}
+
+/* ---- Prose tuning ---------------------------------------------------- */
+.prose {
+  --tw-prose-body: var(--fg-muted);
+  --tw-prose-headings: var(--fg);
+  --tw-prose-links: var(--accent);
+  --tw-prose-bold: var(--fg);
+  --tw-prose-counters: var(--fg-faint);
+  --tw-prose-bullets: var(--border-strong);
+  --tw-prose-hr: var(--border);
+  --tw-prose-quotes: var(--fg-muted);
+  --tw-prose-quote-borders: var(--accent);
+  --tw-prose-captions: var(--fg-faint);
+  --tw-prose-code: var(--fg);
+  --tw-prose-th-borders: var(--border-strong);
+  --tw-prose-td-borders: var(--border);
+  max-width: none;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+.prose h1 {
+  font-size: clamp(1.9rem, 1.4rem + 1.8vw, 2.5rem);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 1.25rem;
+}
+.prose h2 {
+  scroll-margin-top: 5.5rem;
+  letter-spacing: -0.01em;
+  margin-top: 2.75rem;
+  padding-top: 0.4rem;
+  font-size: 1.4rem;
+}
+.prose h3 {
+  scroll-margin-top: 5.5rem;
+  margin-top: 2rem;
+  font-size: 1.12rem;
+}
+.prose a {
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px solid var(--accent-ring);
+  transition: border-color 0.15s ease;
+}
+.prose a:hover {
+  border-bottom-color: var(--accent);
+}
+.prose a.heading-anchor {
+  border-bottom: none;
+}
+/* Inline code (not inside a highlighted block). */
+.prose :not(pre) > code {
+  background: var(--accent-soft);
+  color: var(--fg);
+  padding: 0.15em 0.4em;
+  border-radius: 0.35rem;
+  font-size: 0.85em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.prose :not(pre) > code::before,
+.prose :not(pre) > code::after {
+  content: none;
+}
+.prose blockquote {
+  font-style: normal;
+  font-weight: 400;
+  background: var(--accent-soft);
+  border-left-width: 3px;
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding: 0.4rem 1rem;
+}
+.prose blockquote p:first-of-type::before,
+.prose blockquote p:last-of-type::after {
+  content: none;
+}
+.prose table {
+  font-size: 0.9rem;
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.prose thead th {
+  font-weight: 600;
+  color: var(--fg);
+}
+.prose :where(h1, h2, h3) + * {
+  margin-top: 0;
+}
