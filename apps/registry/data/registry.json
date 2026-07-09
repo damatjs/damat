@@ -11,7 +11,7 @@
           "source": "https://github.com/damatjs/modules.git#user-v0.2.0"
         }
       },
-      "owner": { "namespace": "damatjs", "verified": true },
+      "owner": { "namespace": "damatjs", "verified": false },
       "verification": {
         "status": "verified",
         "verifiedBy": "registry.damatjs.com"
