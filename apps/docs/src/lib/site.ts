@@ -13,3 +13,6 @@ export const GITHUB_URL = `https://github.com/${GITHUB_REPO}`;
 
 /** The module registry lives on its own subdomain (see apps/registry). */
 export const REGISTRY_URL = "https://registry.damatjs.com";
+
+/** The marketing site (apps/web) — this docs app is proxied under its /docs. */
+export const WEB_URL = "https://damatjs.com";

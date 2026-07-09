@@ -59,7 +59,7 @@ export default async function ModulePage({ params }: { params: Promise<{ slug: s
 
       {/* Header */}
       <div className="mt-6 flex items-start gap-4">
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-brand/25 bg-brand/10 text-brand">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-brand/25 bg-brand/10 text-brand">
           <BoxIcon width={26} height={26} />
         </span>
         <div className="min-w-0 flex-1">

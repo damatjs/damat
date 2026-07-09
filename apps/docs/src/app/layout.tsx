@@ -1,19 +1,20 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { inter, jetbrainsMono } from '@/assets/fonts'
 import { getNav, getSearchIndex } from '@/lib/content'
 import { SITE } from '@/lib/site'
-import { Header } from '@/components/Header'
-import { Footer } from '@/components/Footer'
+import { Footer } from '@/modules/layout/components/footer'
+import { Header } from '@/modules/layout/components/header'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: {
-    default: `${SITE.name} — ${SITE.tagline}`,
+    default: `${SITE.name} docs — ${SITE.tagline}`,
     template: `%s · ${SITE.name} docs`,
   },
   description: SITE.description,
   openGraph: {
-    title: `${SITE.name} — ${SITE.tagline}`,
+    title: `${SITE.name} docs — ${SITE.tagline}`,
     description: SITE.description,
     type: 'website',
     siteName: `${SITE.name} docs`,
@@ -31,7 +32,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const searchIndex = getSearchIndex()
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${jetbrainsMono.variable}`}
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

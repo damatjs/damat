@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { inter, jetbrainsMono } from '@/assets/fonts'
 import { SITE } from '@/lib/site'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
@@ -26,7 +27,11 @@ const themeScript = `(function(){try{var t=localStorage.getItem('theme');var m=w
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${jetbrainsMono.variable}`}
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

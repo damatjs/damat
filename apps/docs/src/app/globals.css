@@ -6,36 +6,47 @@
   :root {
     --bg: #ffffff;
     --surface: #ffffff;
-    --subtle: #faf8f4;
-    --fg: #1a1512;
-    --fg-muted: #6a635b;
-    --fg-faint: #938b81;
-    --border: #ece6dd;
-    --border-strong: #ddd4c8;
+    --subtle: #fafafa;
+    --fg: #0a0a0a;
+    --fg-muted: #52525b;
+    --fg-faint: #a1a1aa;
+    --border: #e5e5e5;
+    --border-strong: #d4d4d8;
     --accent: #d9640a;
-    --accent-strong: #be590c;
+    --accent-strong: #b34f08;
     --accent-contrast: #ffffff;
-    --accent-soft: rgba(245, 144, 15, 0.12);
-    --accent-ring: rgba(245, 144, 15, 0.4);
-    --grid: rgba(26, 21, 18, 0.045);
+    --accent-soft: rgba(217, 100, 10, 0.09);
+    --accent-ring: rgba(217, 100, 10, 0.35);
+    --inline-code-bg: #f4f4f5;
+    --stripe: rgba(10, 10, 10, 0.045);
+    /* Code panels are always dark, in both themes. */
+    --code-bg: #0d0d0d;
+    --code-surface: #161616;
+    --code-border: rgba(255, 255, 255, 0.09);
+    --code-faint: #7c7c82;
     color-scheme: light;
   }
 
   .dark {
-    --bg: #0c0a08;
-    --surface: #141009;
-    --subtle: #12100b;
-    --fg: #f6f1e9;
-    --fg-muted: #a49a8d;
-    --fg-faint: #6f665b;
-    --border: #241d15;
-    --border-strong: #34291d;
+    --bg: #0a0a0a;
+    --surface: #101010;
+    --subtle: #141414;
+    --fg: #f5f5f5;
+    --fg-muted: #a1a1aa;
+    --fg-faint: #6b6b70;
+    --border: rgba(255, 255, 255, 0.09);
+    --border-strong: rgba(255, 255, 255, 0.17);
     --accent: #f9ab3b;
     --accent-strong: #f9ab3b;
     --accent-contrast: #1a1200;
-    --accent-soft: rgba(249, 171, 59, 0.14);
+    --accent-soft: rgba(249, 171, 59, 0.12);
     --accent-ring: rgba(249, 171, 59, 0.35);
-    --grid: rgba(255, 250, 240, 0.04);
+    --inline-code-bg: #1e1e21;
+    --stripe: rgba(255, 255, 255, 0.05);
+    --code-bg: #0d0d0d;
+    --code-surface: #161616;
+    --code-border: rgba(255, 255, 255, 0.09);
+    --code-faint: #7c7c82;
     color-scheme: dark;
   }
 
@@ -45,7 +56,7 @@
 
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: 5.5rem;
+    scroll-padding-top: 5rem;
     -webkit-text-size-adjust: 100%;
   }
 
@@ -69,21 +80,43 @@
 }
 
 @layer components {
-  /* Warm dotted-grid backdrop used behind the hero. */
-  .bg-grid {
-    background-image: radial-gradient(var(--grid) 1px, transparent 1px);
-    background-size: 22px 22px;
+  /* Mono uppercase eyebrow above chapter titles (Tailwind-docs style). */
+  .eyebrow {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
   }
 
-  .text-gradient {
-    background: linear-gradient(115deg, var(--fg) 30%, var(--accent) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+  /* Diagonal candy-stripe gutters flanking the docs shell. */
+  .stripes {
+    background-image: repeating-linear-gradient(
+      315deg,
+      var(--stripe) 0,
+      var(--stripe) 1px,
+      transparent 0,
+      transparent 50%
+    );
+    background-size: 10px 10px;
   }
 
-  .accent-gradient {
-    background: linear-gradient(120deg, #f9ab3b, #e5760a 55%, #d9640a);
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.5rem;
+    padding: 0 1.1rem;
+    border-radius: 0.5rem;
+    background: var(--fg);
+    color: var(--bg);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: opacity 0.15s ease;
+  }
+  .btn-primary:hover {
+    opacity: 0.88;
   }
 
   /* Heading anchors injected by rehype-autolink-headings. */
@@ -100,30 +133,23 @@
   }
 }
 
-/* ---- Shiki dual-theme code blocks ------------------------------------ */
-.shiki {
-  background-color: var(--shiki-light-bg);
-  color: var(--shiki-light);
+/* ---- Code blocks — always dark, in both themes ------------------------ */
+.prose .shiki {
+  background-color: var(--code-bg) !important;
 }
-.shiki span {
-  color: var(--shiki-light);
-}
-.dark .shiki {
-  background-color: var(--shiki-dark-bg) !important;
-  color: var(--shiki-dark) !important;
-}
-.dark .shiki span {
+.prose .shiki,
+.prose .shiki span {
   color: var(--shiki-dark) !important;
 }
 
-/* Our own chrome around the highlighted <pre>. */
+/* Chrome added around each highlighted <pre> by the code enhancer. */
 .code-block {
   position: relative;
   margin: 1.5rem 0;
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border: 1px solid var(--code-border);
+  border-radius: 0.6rem;
   overflow: hidden;
-  background: var(--subtle);
+  background: var(--code-bg);
 }
 .code-block .shiki {
   margin: 0;
@@ -136,16 +162,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.35rem 0.5rem 0.35rem 0.9rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  padding: 0.4rem 0.5rem 0.4rem 1rem;
+  border-bottom: 1px solid var(--code-border);
+  background: var(--code-surface);
 }
 .code-block__lang {
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 0.68rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--fg-faint);
+  color: var(--code-faint);
 }
 .code-block__copy {
   display: inline-flex;
@@ -154,19 +180,18 @@
   padding: 0.28rem 0.55rem;
   border-radius: 0.45rem;
   font-size: 0.72rem;
-  color: var(--fg-muted);
+  color: var(--code-faint);
   background: transparent;
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .code-block__copy:hover {
-  color: var(--fg);
-  background: var(--subtle);
-  border-color: var(--border);
+  color: #f5f5f5;
+  border-color: var(--code-border);
 }
 
-/* ---- Prose tuning ---------------------------------------------------- */
+/* ---- Prose tuning ------------------------------------------------------ */
 .prose {
   --tw-prose-body: var(--fg-muted);
   --tw-prose-headings: var(--fg);
@@ -185,21 +210,28 @@
   font-size: 1rem;
   line-height: 1.75;
 }
+
+/* The chapter header (eyebrow + title + lede) is rendered by the template,
+ * so the markdown's own leading H1 is hidden. */
+.prose > h1:first-child {
+  display: none;
+}
+
 .prose h1 {
-  font-size: clamp(1.9rem, 1.4rem + 1.8vw, 2.5rem);
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  font-size: clamp(1.9rem, 1.4rem + 1.8vw, 2.4rem);
+  letter-spacing: -0.025em;
+  line-height: 1.15;
   margin-bottom: 1.25rem;
 }
 .prose h2 {
-  scroll-margin-top: 5.5rem;
-  letter-spacing: -0.01em;
+  scroll-margin-top: 5rem;
+  letter-spacing: -0.015em;
   margin-top: 2.75rem;
   padding-top: 0.4rem;
-  font-size: 1.4rem;
+  font-size: 1.45rem;
 }
 .prose h3 {
-  scroll-margin-top: 5.5rem;
+  scroll-margin-top: 5rem;
   margin-top: 2rem;
   font-size: 1.12rem;
 }
@@ -217,11 +249,12 @@
 }
 /* Inline code (not inside a highlighted block). */
 .prose :not(pre) > code {
-  background: var(--accent-soft);
+  background: var(--inline-code-bg);
+  border: 1px solid var(--border);
   color: var(--fg);
-  padding: 0.15em 0.4em;
-  border-radius: 0.35rem;
-  font-size: 0.85em;
+  padding: 0.1em 0.35em;
+  border-radius: 0.3rem;
+  font-size: 0.84em;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -232,10 +265,11 @@
 .prose blockquote {
   font-style: normal;
   font-weight: 400;
-  background: var(--accent-soft);
-  border-left-width: 3px;
+  background: var(--subtle);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent);
   border-radius: 0 0.5rem 0.5rem 0;
-  padding: 0.4rem 1rem;
+  padding: 0.6rem 1rem;
 }
 .prose blockquote p:first-of-type::before,
 .prose blockquote p:last-of-type::after {

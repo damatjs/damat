@@ -7,20 +7,6 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Signature "ember" accent — warm amber → orange. Modules are the
-        // "blades" you forge your backend from, so the palette leans warm.
-        accent: {
-          50: '#fff8ed',
-          100: '#fef0d5',
-          200: '#fddfa9',
-          300: '#fbc873',
-          400: '#f9ab3b',
-          500: '#f5900f',
-          600: '#e5760a',
-          700: '#be590c',
-          800: '#974710',
-          900: '#7a3b11',
-        },
         // Semantic tokens — driven by CSS variables so light/dark share markup.
         canvas: 'var(--bg)',
         surface: 'var(--surface)',
@@ -32,9 +18,15 @@ export default {
         'line-strong': 'var(--border-strong)',
         brand: 'var(--accent)',
         'brand-fg': 'var(--accent-contrast)',
+        // Always-dark code panel chrome.
+        'code-panel': 'var(--code-bg)',
+        'code-panel-surface': 'var(--code-surface)',
+        'code-panel-line': 'var(--code-border)',
+        'code-panel-faint': 'var(--code-faint)',
       },
       fontFamily: {
         sans: [
+          'var(--font-sans)',
           'ui-sans-serif',
           'system-ui',
           '-apple-system',
@@ -45,6 +37,7 @@ export default {
           'sans-serif',
         ],
         mono: [
+          'var(--font-mono)',
           'ui-monospace',
           'SFMono-Regular',
           'Menlo',
@@ -55,8 +48,14 @@ export default {
           'monospace',
         ],
       },
+      fontSize: {
+        '2xs': ['0.72rem', { lineHeight: '1.4' }],
+        code: ['0.8rem', { lineHeight: '1.65' }],
+        md: ['0.95rem', { lineHeight: '1.6' }],
+      },
       maxWidth: {
         content: '46rem',
+        shell: '90rem',
       },
       keyframes: {
         'fade-in': {

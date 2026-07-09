@@ -32,6 +32,7 @@ export default {
       },
       fontFamily: {
         sans: [
+          'var(--font-sans)',
           'ui-sans-serif',
           'system-ui',
           '-apple-system',
@@ -42,6 +43,7 @@ export default {
           'sans-serif',
         ],
         mono: [
+          'var(--font-mono)',
           'ui-monospace',
           'SFMono-Regular',
           'Menlo',
@@ -51,6 +53,10 @@ export default {
           'Courier New',
           'monospace',
         ],
+      },
+      fontSize: {
+        '2xs': ['0.72rem', { lineHeight: '1.4' }],
+        md: ['0.95rem', { lineHeight: '1.6' }],
       },
       keyframes: {
         'fade-in': {

@@ -1,0 +1,7 @@
+import { iconBase, type IconProps } from './base'
+
+export const ArrowLeftIcon = (p: IconProps) => (
+  <svg {...iconBase(p)}>
+    <path d="M19 12H5M11 18l-6-6 6-6" />
+  </svg>
+)

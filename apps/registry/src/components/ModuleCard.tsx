@@ -7,15 +7,15 @@ export function ModuleCard({ module }: { module: Module }) {
   return (
     <Link
       href={`/modules/${module.key}`}
-      className="group flex flex-col rounded-2xl border border-line bg-surface p-5 transition-all hover:-translate-y-0.5 hover:border-line-strong hover:shadow-lg"
+      className="group flex flex-col rounded-xl border border-line bg-surface p-5 transition-colors hover:bg-subtle"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-brand/25 bg-brand/10 text-brand">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-brand/25 bg-brand/10 text-brand">
             <BoxIcon width={19} height={19} />
           </span>
           <div className="min-w-0">
-            <p className="truncate font-mono text-[0.95rem] font-medium text-ink">
+            <p className="truncate font-mono text-md font-medium text-ink">
               {module.namespace && <span className="text-faint">{module.namespace}/</span>}
               {module.name}
             </p>
@@ -38,7 +38,7 @@ export function ModuleCard({ module }: { module: Module }) {
           {module.keywords.slice(0, 4).map((kw) => (
             <span
               key={kw}
-              className="rounded-md border border-line bg-subtle px-2 py-0.5 text-[0.7rem] text-muted"
+              className="rounded border border-line bg-subtle px-2 py-0.5 text-2xs text-muted"
             >
               {kw}
             </span>

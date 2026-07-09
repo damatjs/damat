@@ -1,14 +1,16 @@
 import { getNav } from '@/lib/content'
-import { Sidebar } from '@/components/Sidebar'
-import { CodeEnhancer } from '@/components/CodeEnhancer'
+import { CodeEnhancer } from '@/modules/docs/components/codeEnhancer'
+import { Sidebar } from '@/modules/docs/components/sidebar'
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
   const sections = getNav()
 
   return (
-    <div className="mx-auto flex max-w-[90rem] gap-8 px-4 sm:px-6 lg:px-8">
+    <div className="mx-auto flex max-w-shell px-4 sm:px-6 lg:px-8">
+      <div className="stripes hidden w-5 shrink-0 border-x border-line xl:block" aria-hidden="true" />
       <Sidebar sections={sections} />
-      <div className="min-w-0 flex-1">{children}</div>
+      <div className="min-w-0 flex-1 lg:pl-10">{children}</div>
+      <div className="stripes hidden w-5 shrink-0 border-x border-line xl:block" aria-hidden="true" />
       <CodeEnhancer />
     </div>
   )

@@ -15,35 +15,29 @@ export default function HomePage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="bg-grid pointer-events-none absolute inset-0" aria-hidden="true" />
-        <div
-          className="pointer-events-none absolute left-1/2 top-[-8rem] h-[26rem] w-[44rem] -translate-x-1/2 rounded-full opacity-[0.18] blur-3xl"
-          style={{ background: 'radial-gradient(closest-side, #f5900f, transparent)' }}
-          aria-hidden="true"
-        />
-        <div className="relative mx-auto max-w-6xl px-4 pb-12 pt-16 text-center sm:px-6 sm:pt-20 lg:px-8">
-          <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface/60 px-3.5 py-1.5 text-sm text-muted shadow-sm backdrop-blur">
+      <section className="border-b border-line">
+        <div className="mx-auto max-w-6xl px-4 pb-12 pt-14 sm:px-6 lg:px-8">
+          <span className="inline-flex items-center gap-2 text-sm text-muted">
             <ShieldCheckIcon width={14} height={14} className="text-brand" />
             Owner &amp; verification on every module
           </span>
 
-          <h1 className="mx-auto mt-6 max-w-3xl text-balance text-[2.4rem] font-semibold leading-[1.08] tracking-tight sm:text-5xl">
-            The <span className="text-gradient">module registry</span> for Damat
+          <h1 className="mt-5 max-w-3xl text-4xl font-medium leading-tight tracking-tight text-ink sm:text-5xl">
+            The module registry for Damat
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-balance text-lg leading-relaxed text-muted">
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
             Discover self-contained backend building blocks — auth, billing, teams, webhooks — and
             install any of them into your app with one command.
           </p>
 
           {/* Endpoint */}
-          <div className="mx-auto mt-8 flex max-w-lg items-center justify-between gap-3 rounded-xl border border-line bg-surface/80 py-1 pl-4 pr-1 font-mono text-sm shadow-sm backdrop-blur">
+          <div className="mt-8 flex max-w-lg items-center justify-between gap-3 rounded-lg border border-line bg-subtle py-0.5 pl-4 pr-1 font-mono text-sm">
             <a href="/index.json" className="truncate text-muted hover:text-ink">
               {INDEX_URL}
             </a>
             <CopyButton text={INDEX_URL} />
           </div>
-          <div className="mt-4 flex items-center justify-center gap-5 text-sm text-faint">
+          <div className="mt-4 flex items-center gap-5 text-sm text-faint">
             <span>
               <strong className="text-ink">{modules.length}</strong> module
               {modules.length === 1 ? '' : 's'}
@@ -57,15 +51,16 @@ export default function HomePage() {
       </section>
 
       {/* Modules */}
-      <section id="modules" className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <section id="modules" className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
         <ModuleGrid modules={modules} />
       </section>
 
       {/* How it works */}
       <section className="mx-auto mt-12 max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl border border-line bg-subtle/40 p-8 sm:p-12">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+        <div className="rounded-xl border border-line bg-subtle/60 p-8 sm:p-12">
+          <div className="max-w-2xl">
+            <p className="eyebrow">How it works</p>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
               Point the CLI at the registry, then install
             </h2>
             <p className="mt-3 text-muted">
@@ -74,7 +69,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="mx-auto mt-8 grid max-w-3xl gap-4">
+          <div className="mt-8 grid max-w-3xl gap-4">
             <div>
               <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-faint">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand/15 font-mono text-[0.7rem] text-brand">
@@ -106,7 +101,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="mx-auto mt-8 flex max-w-3xl flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <a
               href={`${DOCS_URL}/docs/installing-modules`}
               target="_blank"

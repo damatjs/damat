@@ -29,13 +29,13 @@ export function ModuleGrid({ modules }: { modules: Module[] }) {
 
   return (
     <div>
-      <div className="mx-auto flex max-w-xl items-center gap-3 rounded-xl border border-line bg-surface px-4 shadow-sm focus-within:border-brand/50">
+      <div className="flex max-w-xl items-center gap-3 rounded-lg border border-line bg-surface px-4 focus-within:border-brand/50">
         <SearchIcon className="shrink-0 text-faint" width={18} height={18} />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={`Search ${modules.length} module${modules.length === 1 ? '' : 's'}…`}
-          className="w-full bg-transparent py-3 text-[0.95rem] text-ink outline-none placeholder:text-faint"
+          className="w-full bg-transparent py-2.5 text-md text-ink outline-none placeholder:text-faint"
           aria-label="Search modules"
         />
         {query && (
