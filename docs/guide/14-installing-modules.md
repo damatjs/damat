@@ -68,4 +68,4 @@ Prefer to drive this from an AI assistant? See the
 
 ---
 
-Prev: [← Authoring a module](./13-authoring-modules.md) · [Guide home](../GUIDE.md) · Next: [Installing modules with AI →](./15-installing-modules-with-ai.md)
+Prev: [← Authoring a module](./13-authoring-modules.md) · [Guide home](../GUIDE.md) · Next: [Publishing modules →](./14b-publishing-modules.md)

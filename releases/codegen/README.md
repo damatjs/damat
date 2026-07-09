@@ -10,6 +10,12 @@ Change history for this package. For how it works **now**, read the
 
 | Version | Summary | Upgrade notes |
 |---------|---------|---------------|
+| 2.1.0 | Dependency realignment onto the workspace 0.6.0 line + cleanup — no change to generated output | — |
+| 2.0.3 | Self-referential tables no longer emit a self-import — fixes TS2440 on tree-shaped schemas | [2.0.3 →](./2.0.3.md) |
+| 2.0.2 | Lockstep-era bump with the 0.5.0 audit — generator test coverage added; no output change | — |
+| 2.0.1 | Dependency bump (ORM packages → 0.4.1) — no output change | — |
+| 2.0.0 | Major realignment: dependencies move to the workspace 0.4.0 line; regenerate after upgrading the ORM packages — no template change in this package | — |
+| 1.0.9 | Generated step templates drop verbose comments — no behavioral change | — |
 | 1.0.8 | Generated CRUD steps return `StepResponse(output, compensateInput?)` and use the engine's `(compensateInput, ctx)` compensation; `delete` output becomes `boolean` | [1.0.8 →](./1.0.8.md) |
 | 1.0.6 | Generates a per-table `<Pascal>ParamsSchema` and scaffolds routes that validate `params`/`query`/`body` through the framework's validation middleware (read via `getValidated`) instead of hand-checking `:id` in the handler. | [1.0.6 →](./1.0.6.md) |
 | 0.1.4 | Codegen graduates from types-only to the engine behind the codegen-first module workflow: alongside row types + zod it now writes the typed `registry.ts` and **scaffolds-once** a per-table CRUD slice (steps, workflows, and split `api/routes`). Existing files are never overwritten (`writeOnce`). | [0.1.4 →](./0.1.4.md) |

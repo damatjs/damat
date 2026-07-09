@@ -1,60 +1,98 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---- Theme variables ---------------------------------------------------
+ * Semantic tokens drive every color. Light is the default; `.dark` flips
+ * the page. Tailwind utilities consume them through @theme inline below.
+ */
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --subtle: #fafafa;
+  --fg: #0a0a0a;
+  --fg-muted: #52525b;
+  --fg-faint: #a1a1aa;
+  --border: #e5e5e5;
+  --border-strong: #d4d4d8;
+  --accent: #d9640a;
+  --accent-strong: #b34f08;
+  --accent-contrast: #ffffff;
+  --accent-soft: rgba(217, 100, 10, 0.09);
+  --accent-ring: rgba(217, 100, 10, 0.35);
+  --stripe: rgba(10, 10, 10, 0.045);
+  --inline-code-bg: #f4f4f5;
+  --ok: #1a7f52;
+  --ok-soft: rgba(26, 127, 82, 0.12);
+  --danger: #b3261e;
+  --danger-soft: rgba(179, 38, 30, 0.1);
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #0a0a0a;
+  --surface: #101010;
+  --subtle: #141414;
+  --fg: #f5f5f5;
+  --fg-muted: #a1a1aa;
+  --fg-faint: #6b6b70;
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.17);
+  --accent: #f9ab3b;
+  --accent-strong: #f9ab3b;
+  --accent-contrast: #1a1200;
+  --accent-soft: rgba(249, 171, 59, 0.12);
+  --accent-ring: rgba(249, 171, 59, 0.35);
+  --stripe: rgba(255, 255, 255, 0.05);
+  --inline-code-bg: #1e1e21;
+  --ok: #4ac48a;
+  --ok-soft: rgba(74, 196, 138, 0.14);
+  --danger: #ff6a5f;
+  --danger-soft: rgba(255, 106, 95, 0.12);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-canvas: var(--bg);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-ink: var(--fg);
+  --color-muted: var(--fg-muted);
+  --color-faint: var(--fg-faint);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-brand: var(--accent);
+  --color-brand-fg: var(--accent-contrast);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --text-2xs: 0.72rem;
+  --text-2xs--line-height: 1.4;
+  --text-code: 0.8rem;
+  --text-code--line-height: 1.65;
+  --text-md: 0.95rem;
+  --text-md--line-height: 1.6;
+
+  --container-shell: 84rem;
+}
 
 @layer base {
-  :root {
-    --bg: #ffffff;
-    --surface: #ffffff;
-    --subtle: #faf8f4;
-    --fg: #1a1512;
-    --fg-muted: #6a635b;
-    --fg-faint: #938b81;
-    --border: #ece6dd;
-    --border-strong: #ddd4c8;
-    --accent: #d9640a;
-    --accent-strong: #be590c;
-    --accent-contrast: #ffffff;
-    --accent-soft: rgba(245, 144, 15, 0.12);
-    --accent-ring: rgba(245, 144, 15, 0.4);
-    --grid: rgba(26, 21, 18, 0.045);
-    --ok: #1a7f52;
-    --ok-soft: rgba(26, 127, 82, 0.12);
-    color-scheme: light;
-  }
-
-  .dark {
-    --bg: #0c0a08;
-    --surface: #141009;
-    --subtle: #12100b;
-    --fg: #f6f1e9;
-    --fg-muted: #a49a8d;
-    --fg-faint: #6f665b;
-    --border: #241d15;
-    --border-strong: #34291d;
-    --accent: #f9ab3b;
-    --accent-strong: #f9ab3b;
-    --accent-contrast: #1a1200;
-    --accent-soft: rgba(249, 171, 59, 0.14);
-    --accent-ring: rgba(249, 171, 59, 0.35);
-    --grid: rgba(255, 250, 240, 0.04);
-    --ok: #4ac48a;
-    --ok-soft: rgba(74, 196, 138, 0.14);
-    color-scheme: dark;
-  }
-
   * {
     border-color: var(--border);
   }
 
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: 4.5rem;
     -webkit-text-size-adjust: 100%;
   }
 
   body {
     background-color: var(--bg);
     color: var(--fg);
+    font-feature-settings: "cv11", "ss01";
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
   }
@@ -71,20 +109,38 @@
 }
 
 @layer components {
-  .bg-grid {
-    background-image: radial-gradient(var(--grid) 1px, transparent 1px);
-    background-size: 22px 22px;
+  /* Mono uppercase eyebrow (docs-site language). */
+  .eyebrow {
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
   }
 
-  .text-gradient {
-    background: linear-gradient(115deg, var(--fg) 30%, var(--accent) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+  /* Diagonal candy-stripe gutters flanking the shell. */
+  .stripes {
+    background-image: repeating-linear-gradient(
+      315deg,
+      var(--stripe) 0,
+      var(--stripe) 1px,
+      transparent 0,
+      transparent 50%
+    );
+    background-size: 10px 10px;
   }
 
-  .accent-gradient {
-    background: linear-gradient(120deg, #f9ab3b, #e5760a 55%, #d9640a);
+  /* Verified / blocked pills — status tones from the tokens. */
+  .badge-ok {
+    color: var(--ok);
+    border-color: color-mix(in srgb, var(--ok) 35%, transparent);
+    background: var(--ok-soft);
+  }
+  .badge-danger {
+    color: var(--danger);
+    border-color: color-mix(in srgb, var(--danger) 35%, transparent);
+    background: var(--danger-soft);
   }
 
   /* Terminal-style command block. */
@@ -94,10 +150,27 @@
     justify-content: space-between;
     gap: 0.75rem;
     border: 1px solid var(--border);
-    border-radius: 0.75rem;
+    border-radius: 0.5rem;
     background: var(--subtle);
-    padding: 0.5rem 0.5rem 0.5rem 1rem;
-    font-family: var(--font-mono, ui-monospace, monospace);
+    padding: 0.35rem 0.35rem 0.35rem 1rem;
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: 0.85rem;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.5rem;
+    padding: 0 1.1rem;
+    border-radius: 0.5rem;
+    background: var(--fg);
+    color: var(--bg);
     font-size: 0.875rem;
+    font-weight: 500;
+    transition: opacity 0.15s ease;
+  }
+  .btn-primary:hover {
+    opacity: 0.88;
   }
 }

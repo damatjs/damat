@@ -1,8 +1,12 @@
 [Damat Guide](../GUIDE.md) › Package reference
 
-# 18. Package reference
+# 20. Package reference
 
 Every package has its own **README** (overview) and **`docs/`** (internals).
+The links below open the source docs on GitHub — if you've installed the
+packages from a registry instead, the same files ship inside each package
+(`node_modules/@damatjs/<pkg>/README.md`).
+
 Start from the [package map](./01-introduction.md#the-package-map), or jump in:
 
 - **Framework & app:** [framework](../../packages/framework/README.md) ·

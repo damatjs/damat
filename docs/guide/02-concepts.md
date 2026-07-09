@@ -111,6 +111,18 @@ A multi-step operation that must roll back on failure goes through a workflow:
 `route → workflow → steps → module services`, with the engine running
 compensations in reverse if a step throws.
 
+## When to reach for what
+
+| You want to… | Use |
+|--------------|-----|
+| Add a table | a [model](./05-models.md) in a module's `models/` |
+| Add reusable data logic | a method on the module's [service](./07-modules-and-services.md) |
+| Expose an endpoint | a [route file](./08-http-apis.md) |
+| Coordinate steps that must roll back | a [workflow](./09-workflows.md) |
+| Cache / rate-limit / queue / lock | [`@damatjs/redis`](./10-redis.md) |
+| Package a feature for reuse | a [module](./13-authoring-modules.md) + `module.json` |
+| Pull in someone else's feature | [install a module](./14-installing-modules.md) |
+
 ## How modules compose
 
 Modules stay decoupled, but real apps need them to work together. Damat offers
@@ -157,18 +169,6 @@ self-verify). At install time a policy (`DAMAT_MODULE_VERIFY`: `off` / `warn` /
 `revoked` modules are always blocked. This is what makes "install a module by
 name" safe. Full model: [MODULES.md](../../MODULES.md) and
 [the AI install chapter](./15-installing-modules-with-ai.md).
-
-## When to reach for what
-
-| You want to… | Use |
-|--------------|-----|
-| Add a table | a [model](./05-models.md) in a module's `models/` |
-| Add reusable data logic | a method on the module's [service](./07-modules-and-services.md) |
-| Expose an endpoint | a [route file](./08-http-apis.md) |
-| Coordinate steps that must roll back | a [workflow](./09-workflows.md) |
-| Cache / rate-limit / queue / lock | [`@damatjs/redis`](./10-redis.md) |
-| Package a feature for reuse | a [module](./13-authoring-modules.md) + `module.json` |
-| Pull in someone else's feature | [install a module](./14-installing-modules.md) |
 
 ---
 

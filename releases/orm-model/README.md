@@ -6,6 +6,8 @@ Change history for this package. For how it works **now**, read the
 
 | Version | Summary | Upgrade notes |
 |---------|---------|---------------|
+| 0.6.0 | `created_at`/`updated_at` become `timestamp with time zone` (were `date`); `updated_at` is `NOT NULL DEFAULT now()` | [0.6.0 →](./0.6.0.md) |
+| 0.1.4 – 0.5.0 | Lockstep bumps — no change to this package's own schema output | — |
 | 0.1.3 | Dependency bump (`@damatjs/orm-type`, `@damatjs/deps`) — picks up the cross-module links work in `@damatjs/link`; no change to this package's API | — |
 | 0.1.2 | Relation targets can be a plain table-name string; FKs inferred by convention | [0.1.2 →](./0.1.2.md) |
 | 0.1.1 | Maintenance — CI and test cleanup, dependency bumps | — |

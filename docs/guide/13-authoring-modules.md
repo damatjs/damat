@@ -226,15 +226,25 @@ Each endpoint is `{ module, model, field?, primaryKey?, isList? }`:
 
 `defineLink` comes from **`@damatjs/framework`** (the dep your module already has) — it is
 deliberately **not** in the `@damatjs/module` surface, because a link is normally the app's
-call. The file still **imports nothing from the other module and creates nothing**: it names
-the target by module id + accessor key, and is **dormant** until the backend owner activates
-it. On `damat module add` it is split into the app's `src/links/<moduleId>/models/`, the
-owner index + top-level aggregator are regenerated, and `links: "./src/links"` is ensured —
-but the module ships **no link migration**, so the owner turns it on with
-`damat-orm migrate:create link:<id>` → `migrate:up` → `damat codegen` (and the link is inert
-until queried, even if the target module isn't installed). This complements `pairsWith`:
-`pairsWith` *names* a module to pair with, a shipped link *describes the exact connection* —
-both non-binding, both deletable. Full activation flow:
+call. The file **imports nothing from the other module and creates nothing**: it names the
+target by module id + accessor key, nothing more.
+
+The template's life, in three stages:
+
+1. **You ship it (dormant).** It sits in `src/links/models/` and does nothing —
+   your module still builds, tests, and validates with no knowledge of the
+   other module.
+2. **Install splits it out.** `damat module add` copies it into the app's
+   `src/links/<moduleId>/models/`, regenerates the owner index + top-level
+   aggregator, and ensures `links: "./src/links"` in `damat.config.ts`. Still
+   dormant — you ship **no link migration**.
+3. **The backend owner activates it** — `damat-orm migrate:create link:<id>` →
+   `migrate:up` → `damat codegen`. Until then the link is inert, and it stays
+   harmless even if the target module isn't installed.
+
+This complements `pairsWith`: `pairsWith` *names* a module to pair with, a
+shipped link *describes the exact connection* — both non-binding, both
+deletable by the app owner. Full activation flow:
 [ch. 17.3 — Links shipped by a module](./17-composing-and-linking-modules.md#links-shipped-by-a-module).
 
 ### Config: credentials loader + schema

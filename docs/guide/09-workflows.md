@@ -10,11 +10,13 @@ compensations of completed steps in reverse.
 
 ## A step (with compensation)
 
-The forward action returns a `StepResponse(output, compensateInput?)`: `output`
-flows downstream to the next steps, while `compensateInput` is the payload handed
-to the compensation. The compensation receives **only** that payload (plus the
-context) — capture whatever rollback needs. The third generic `C` is the payload
-type; when it excludes `undefined`, supplying it is required at compile time.
+A step takes three type parameters — `createStep<Input, Output, CompensateInput>`:
+`Input` is what callers pass in, `Output` is what flows downstream to the next
+steps, and `CompensateInput` is the rollback payload. The forward action
+returns a `StepResponse(output, compensateInput?)`; the compensation receives
+**only** that payload (plus the context) — capture whatever rollback needs.
+When `CompensateInput` excludes `undefined`, supplying it is required at
+compile time.
 
 ```ts
 import { createStep, StepResponse } from "@damatjs/workflow-engine";
@@ -86,9 +88,29 @@ if (result.success) {
 }
 ```
 
-Retry policies, control flow (`parallel` / `when` / `ifElse`), distributed
-locking, and the error classes are all covered in the
-[workflow-engine internals](../../packages/workflow-engine/docs/README.md).
+## Retries, timeouts, and failures
+
+Defaults: steps time out after **30s** and workflows after **5 minutes**;
+override either per definition or per call. For retries, either write a policy
+inline (`{ maxAttempts, initialDelayMs, maxDelayMs, backoffMultiplier }`) or
+use a preset from `RetryPolicies`:
+
+| Preset | Behavior |
+|--------|----------|
+| `none` | no retries |
+| `once` | one immediate retry |
+| `standard` | 3 attempts, 100ms → 5s exponential backoff |
+| `aggressive` | 5 attempts, 50ms → 10s |
+| `patient` | 3 attempts, 1s → 30s, ×3 backoff |
+
+On failure the result's `error` is a typed `WorkflowError` — look at
+`error.code` (`STEP_TIMEOUT`, `MAX_RETRIES_EXCEEDED`, …) plus `compensated` and
+`compensationsFailed` to see how the rollback went. The error subclasses
+(`StepExecutionError`, `StepTimeoutError`, `MaxRetriesExceededError`,
+`CompensationError`, `WorkflowLockError`) are exported for `instanceof` checks.
+
+Control flow (`parallel` / `when` / `ifElse`) and locking internals are covered
+in the [workflow-engine internals](../../packages/workflow-engine/docs/README.md).
 Distributed locks are backed by [`@damatjs/redis`](./10-redis.md).
 
 ---

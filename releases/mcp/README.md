@@ -6,6 +6,9 @@ Change history for this package. For how it works **now**, read the
 
 | Version | Summary | Upgrade notes |
 |---------|---------|---------------|
+| 0.6.0 | `add_module` exposes the CLI security gates (`allowUnverified`, `allowScripts`); flags forwarded only when explicitly true | [0.6.0 →](./0.6.0.md) |
+| 0.5.0 | Test coverage to 100%; `readServerVersion(url)` extracted for testability — no tool-surface change | — |
+| 0.2.0 – 0.4.1 | Lockstep bumps — no change to the MCP server | — |
 | 0.1.4 | `SERVER_VERSION` now derives from package.json (no more drift). | [0.1.4 →](./0.1.4.md) |
 | 0.1.3 | Dependency/version bump only — no change to the MCP server (monorepo-wide bump alongside `@damatjs/link`). | — |
 | 0.1.2 | Dependency/version bump only — no change to the MCP server (monorepo-wide bump). | — |

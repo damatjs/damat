@@ -5,11 +5,11 @@
 [`@damatjs/mcp`](../../packages/mcp/README.md) is a Model Context Protocol server
 that lets an AI assistant (Claude Code, Claude Desktop, Cursor, …) discover and
 install modules for you. It wraps the registry and the `damat module add` flow
-in safe tools.
+in safe tools — the assistant can never do more than the CLI would let you do.
 
 ## Wire it up
 
-This repo ships a ready `.mcp.json`. In your own app, add:
+Add the server to your assistant's MCP config (e.g. `.mcp.json` in your app):
 
 ```json
 {
@@ -27,26 +27,43 @@ This repo ships a ready `.mcp.json`. In your own app, add:
 }
 ```
 
-(Inside this monorepo, point `args` at the source:
-`"command": "bun", "args": ["run", "packages/mcp/bin/damat-mcp.ts"]`.)
+The three env vars:
 
-## What the assistant can do
+| Variable | Meaning | Default |
+|----------|---------|---------|
+| `DAMAT_MODULE_REGISTRY` | Registry index — a URL, a `registry.json` path, or a directory | *(unset — discovery tools report no registry)* |
+| `DAMAT_APP_DIR` | The app the assistant installs into | current directory |
+| `DAMAT_CLI` | How to invoke the CLI | `damat` |
 
-| Tool | Purpose |
-|------|---------|
-| `search_modules` / `list_modules` | find modules in the registry |
-| `module_info` | inspect a module before installing |
-| `add_module` | install it (runs `damat module add`) |
-| `list_installed` | see what's already in the app |
+## The tools
 
-Then just ask: *"Find a Damat auth module and install it."* The assistant calls
-`search_modules → module_info → add_module`, and tells you to run migrations.
-Claude Code users also get two skills —
-[`damat-modules`](../../.claude/skills/damat-modules/SKILL.md) (install/author
-flows) and [`damat-backend`](../../.claude/skills/damat-backend/SKILL.md)
-(general backend development). See the
-[MCP internals](../../packages/mcp/docs/README.md) to extend the server.
+| Tool | Purpose | Key inputs |
+|------|---------|-----------|
+| `list_modules` | List everything in the registry | — |
+| `search_modules` | Find modules by keyword | `query` |
+| `module_info` | Inspect one module — versions, owner, verification | `ref` |
+| `list_installed` | What's already in the app | — |
+| `add_module` | Install (runs `damat module add`) | `source`, plus optional `name`, `dir`, `force`, `allowUnverified`, `allowScripts` |
+
+`add_module` honors the same trust gate as the CLI: unverified path/git sources
+need an explicit `allowUnverified: true`, and registry verification follows
+your `DAMAT_MODULE_VERIFY` policy (see
+[Installing modules](./14-installing-modules.md)).
+
+## Using it
+
+Just ask: *"Find a Damat auth module and install it."* The assistant chains
+`search_modules → module_info → add_module`, reports what changed
+(`damat.config.ts` entry, synced env keys), and reminds you to apply
+migrations:
+
+```bash
+bun damat-orm migrate:up
+```
+
+To extend the server with your own tools, see the
+[MCP internals](../../packages/mcp/docs/README.md).
 
 ---
 
-Prev: [← Installing existing modules](./14-installing-modules.md) · [Guide home](../GUIDE.md) · Next: [Module capabilities →](./16-module-capabilities.md)
+Prev: [← Publishing modules](./14b-publishing-modules.md) · [Guide home](../GUIDE.md) · Next: [Module capabilities →](./16-module-capabilities.md)
