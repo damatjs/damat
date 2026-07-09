@@ -11,6 +11,18 @@ export function Footer() {
           className="flex flex-wrap items-center gap-x-5 gap-y-2"
           aria-label="Footer"
         >
+          <Link href="/security" className="transition-colors hover:text-ink">
+            Security
+          </Link>
+          <Link href="/hosting" className="transition-colors hover:text-ink">
+            Hosting
+          </Link>
+          <Link href="/agents" className="transition-colors hover:text-ink">
+            Agents
+          </Link>
+          <Link href="/modules" className="transition-colors hover:text-ink">
+            Browse modules
+          </Link>
           <a
             href="/index.json"
             className="font-mono text-code transition-colors hover:text-ink"

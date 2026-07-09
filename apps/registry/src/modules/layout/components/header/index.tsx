@@ -11,7 +11,7 @@ export function Header() {
   const pathname = usePathname();
 
   const navLink = (href: string, label: string) => {
-    const active = pathname === href;
+    const active = pathname === href || pathname.startsWith(`${href}/`);
     return (
       <Link
         href={href}
@@ -30,7 +30,10 @@ export function Header() {
         <Logo />
 
         <nav className="ml-3 hidden items-center sm:flex" aria-label="Main">
-          {navLink("/", "Browse")}
+          {navLink("/modules", "Modules")}
+          {navLink("/security", "Security")}
+          {navLink("/hosting", "Hosting")}
+          {navLink("/agents", "Agents")}
           {navLink("/publish", "Publish")}
           <a
             href={`${DOCS_URL}/docs/installing-modules`}

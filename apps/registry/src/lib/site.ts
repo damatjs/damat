@@ -8,19 +8,22 @@ const url = (
 export const SITE = {
   name: "Damat Registry",
   short: "Registry",
-  tagline: "The module registry for Damat",
+  tagline: "No mystery code in your node_modules",
   description:
-    "Discover and install Damat modules — self-contained backend building blocks. Each entry carries an owner and verification status, and installs with a single command.",
+    "A package registry with a safety layer: every version is owner-verified, statically and AI-scanned, and given a trust verdict before it reaches your tree. Host packages with us, proxy npm through us, and install as npm dependencies or vendored source.",
   url,
   /** Default social card, generated on demand by the /og route. */
-  ogImage: `${url}/og?title=${encodeURIComponent("The module registry for Damat")}`,
+  ogImage: `${url}/og?title=${encodeURIComponent("No mystery code in your node_modules")}`,
   locale: "en_US",
   keywords: [
     "Damat modules",
-    "backend modules",
+    "package registry",
+    "npm proxy",
+    "supply chain security",
+    "trust verdicts",
+    "AI code scanning",
+    "source-copy installs",
     "TypeScript backend",
-    "module registry",
-    "composable backend",
     "damat module add",
   ],
 } as const;
