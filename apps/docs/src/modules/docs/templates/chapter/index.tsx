@@ -1,12 +1,12 @@
-import { GitHubIcon } from '@/assets/icons/gitHub'
-import type { Doc } from '@/lib/content'
-import { GITHUB_BLOB } from '@/lib/repo'
-import { Pager } from '@/modules/docs/components/pager'
-import { TocRail } from '@/modules/docs/components/tocRail'
+import { GitHubIcon } from "@/assets/icons/gitHub";
+import type { Doc } from "@/lib/content";
+import { GITHUB_BLOB } from "@/lib/repo";
+import { Pager } from "@/modules/docs/components/pager";
+import { TocRail } from "@/modules/docs/components/tocRail";
 
 /** One doc chapter: eyebrow + title + lede header, prose body, pager, TOC. */
 export function ChapterTemplate({ doc }: { doc: Doc }) {
-  const { chapter, prev, next, html, toc } = doc
+  const { chapter, prev, next, html, toc } = doc;
 
   return (
     <div className="flex gap-10">
@@ -17,12 +17,14 @@ export function ChapterTemplate({ doc }: { doc: Doc }) {
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-ink">
               {chapter.title}
             </h1>
-            <p className="mt-4 text-lg leading-relaxed text-muted">{chapter.summary}</p>
+            <p className="mt-4 text-lg leading-relaxed text-muted">
+              {chapter.summary}
+            </p>
           </header>
 
           <article
             className="prose mt-8"
-            // Trusted HTML produced by our own markdown pipeline (lib/markdown).
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: trusted HTML from our own markdown pipeline over repo-controlled content
             dangerouslySetInnerHTML={{ __html: html }}
           />
 
@@ -44,5 +46,5 @@ export function ChapterTemplate({ doc }: { doc: Doc }) {
 
       <TocRail toc={toc} />
     </div>
-  )
+  );
 }

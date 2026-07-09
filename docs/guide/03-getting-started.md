@@ -11,10 +11,31 @@
 - **Redis 7+** *(optional)* — only needed for cache, queues, distributed locks,
   sessions, and rate limiting.
 
-The fastest way to get Postgres + Redis locally is the `docker-compose.yml` that
-ships with the default backend (see [Deployment](./19-deployment.md)).
+No Postgres or Redis on your machine yet? This minimal `docker-compose.yml`
+gives you both:
 
-## Option A — scaffold a new app
+```yaml
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: damat
+      POSTGRES_PASSWORD: damat
+      POSTGRES_DB: damat
+    ports: ["5432:5432"]
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+```
+
+```bash
+docker compose up -d
+# then in .env:
+# DATABASE_URL=postgres://damat:damat@localhost:5432/damat
+# REDIS_URL=redis://localhost:6379
+```
+
+## Option A — scaffold a new app (recommended)
 
 ```bash
 bunx create-damat-app@latest my-app
@@ -25,12 +46,19 @@ bun run db:migrate          # apply migrations
 bun run dev                 # start the dev server (hot reload)
 ```
 
-`create-damat-app` clones a starter, prepares the project, and can optionally
-create a Postgres database for you. See
+`create-damat-app` scaffolds a working app — a `damat.config.ts`, an example
+`user` module (models, service, config, migrations), file-based routes under
+`src/api/routes/`, and `package.json` scripts wired to the `damat` and
+`damat-orm` CLIs — and can optionally create a Postgres database for you. See
 [its docs](../../packages/cli/create-damat-app/README.md) for flags
 (`--module`, `--use-bun`, `--directory-path`, …).
 
-## Option B — run this monorepo's reference backend
+## Option B — run the reference backend (requires cloning the repo)
+
+> **Contributors & the curious.** This path runs the framework's own reference
+> app from a clone of the [`damatjs/damat`](https://github.com/damatjs/damat)
+> monorepo. If you just want to build your own app, use Option A — you don't
+> need the monorepo for anything.
 
 ```bash
 git clone https://github.com/damatjs/damat.git

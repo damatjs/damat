@@ -122,4 +122,4 @@ Authoring a link, wiring `damat.config.ts`, and migrating it are covered in the
 
 ---
 
-Prev: [← Migrations](./06-migrations.md) · [Guide home](../GUIDE.md) · Next: [Building HTTP APIs →](./08-http-apis.md)
+Prev: [← Migrations](./06-migrations.md) · [Guide home](../GUIDE.md) · Next: [Querying & CRUD →](./07b-crud-reference.md)

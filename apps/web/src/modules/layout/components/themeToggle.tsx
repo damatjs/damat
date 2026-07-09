@@ -1,27 +1,27 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { MoonIcon } from '@/assets/icons/moon'
-import { SunIcon } from '@/assets/icons/sun'
+import { useEffect, useState } from "react";
+import { MoonIcon } from "@/assets/icons/moon";
+import { SunIcon } from "@/assets/icons/sun";
 
 export function ThemeToggle() {
-  const [mounted, setMounted] = useState(false)
-  const [dark, setDark] = useState(false)
+  const [mounted, setMounted] = useState(false);
+  const [dark, setDark] = useState(false);
 
   useEffect(() => {
-    setMounted(true)
-    setDark(document.documentElement.classList.contains('dark'))
-  }, [])
+    setMounted(true);
+    setDark(document.documentElement.classList.contains("dark"));
+  }, []);
 
   function toggle() {
-    const next = !document.documentElement.classList.contains('dark')
-    document.documentElement.classList.toggle('dark', next)
+    const next = !document.documentElement.classList.contains("dark");
+    document.documentElement.classList.toggle("dark", next);
     try {
-      localStorage.setItem('theme', next ? 'dark' : 'light')
+      localStorage.setItem("theme", next ? "dark" : "light");
     } catch {
       /* ignore */
     }
-    setDark(next)
+    setDark(next);
   }
 
   return (
@@ -33,5 +33,5 @@ export function ThemeToggle() {
     >
       {mounted && dark ? <SunIcon /> : <MoonIcon />}
     </button>
-  )
+  );
 }

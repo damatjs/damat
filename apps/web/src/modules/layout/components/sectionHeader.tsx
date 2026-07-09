@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from "react";
 
 /** Section header — eyebrow + headline left, supporting text right. */
 export function SectionHeader({
@@ -6,9 +6,9 @@ export function SectionHeader({
   title,
   children,
 }: {
-  eyebrow: string
-  title: string
-  children: ReactNode
+  eyebrow: string;
+  title: string;
+  children: ReactNode;
 }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_0.8fr] lg:items-end lg:gap-16">
@@ -20,5 +20,5 @@ export function SectionHeader({
       </div>
       <p className="text-base leading-relaxed text-muted lg:pb-1">{children}</p>
     </div>
-  )
+  );
 }

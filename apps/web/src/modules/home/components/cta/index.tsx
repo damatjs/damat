@@ -1,7 +1,7 @@
-import Link from 'next/link'
-import { ArrowRightIcon } from '@/assets/icons/arrowRight'
-import { DOCS_PATH } from '@/lib/constants'
-import { InstallCommand } from '@/modules/common/components/installCommand'
+import Link from "next/link";
+import { ArrowRightIcon } from "@/assets/icons/arrowRight";
+import { docsUrl } from "@/lib/constants";
+import { InstallCommand } from "@/modules/common/components/installCommand";
 
 export function Cta() {
   return (
@@ -18,7 +18,7 @@ export function Cta() {
       <div className="flex flex-col items-start gap-3 lg:items-end">
         <InstallCommand className="w-full max-w-md justify-between" />
         <Link
-          href={`${DOCS_PATH}/introduction`}
+          href={docsUrl("introduction")}
           className="inline-flex h-10 items-center gap-2 rounded-lg bg-ink px-4 text-sm font-medium text-canvas transition-opacity hover:opacity-85"
         >
           Read the guide
@@ -26,5 +26,5 @@ export function Cta() {
         </Link>
       </div>
     </section>
-  )
+  );
 }

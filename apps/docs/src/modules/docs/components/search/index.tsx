@@ -1,57 +1,58 @@
-'use client'
+"use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import type { SearchDoc } from '@/lib/types'
-import { CornerDownLeftIcon } from '@/assets/icons/cornerDownLeft'
-import { HashIcon } from '@/assets/icons/hash'
-import { SearchIcon } from '@/assets/icons/search'
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { CornerDownLeftIcon } from "@/assets/icons/cornerDownLeft";
+import { HashIcon } from "@/assets/icons/hash";
+import { SearchIcon } from "@/assets/icons/search";
+import type { SearchDoc } from "@/lib/types";
 
 interface Hit {
-  doc: SearchDoc
-  score: number
-  snippet: string
+  doc: SearchDoc;
+  score: number;
+  snippet: string;
 }
 
 function scoreDoc(doc: SearchDoc, terms: string[]): Hit | null {
-  const title = doc.title.toLowerCase()
-  const section = doc.section.toLowerCase()
-  const headings = doc.headings.join(' • ').toLowerCase()
-  const text = doc.text.toLowerCase()
-  let score = 0
+  const title = doc.title.toLowerCase();
+  const section = doc.section.toLowerCase();
+  const headings = doc.headings.join(" • ").toLowerCase();
+  const text = doc.text.toLowerCase();
+  let score = 0;
 
   for (const t of terms) {
-    if (!t) continue
-    let matched = false
+    if (!t) continue;
+    let matched = false;
     if (title.includes(t)) {
-      score += title.startsWith(t) ? 12 : 8
-      matched = true
+      score += title.startsWith(t) ? 12 : 8;
+      matched = true;
     }
     if (section.includes(t)) {
-      score += 3
-      matched = true
+      score += 3;
+      matched = true;
     }
     if (headings.includes(t)) {
-      score += 5
-      matched = true
+      score += 5;
+      matched = true;
     }
     if (text.includes(t)) {
-      score += 2
-      matched = true
+      score += 2;
+      matched = true;
     }
-    if (!matched) return null // every term must appear somewhere
+    if (!matched) return null; // every term must appear somewhere
   }
 
   // Build a snippet around the first matching term in the body text.
-  let snippet = doc.summary
-  const first = terms.find((t) => text.includes(t))
+  let snippet = doc.summary;
+  const first = terms.find((t) => text.includes(t));
   if (first) {
-    const idx = text.indexOf(first)
-    const start = Math.max(0, idx - 32)
-    snippet = (start > 0 ? '…' : '') + doc.text.slice(start, start + 120).trim() + '…'
+    const idx = text.indexOf(first);
+    const start = Math.max(0, idx - 32);
+    snippet = `${start > 0 ? "…" : ""}${doc.text.slice(start, start + 120).trim()}…`;
   }
 
-  return { doc, score, snippet }
+  return { doc, score, snippet };
 }
 
 export function SearchDialog({
@@ -59,94 +60,97 @@ export function SearchDialog({
   open,
   onClose,
 }: {
-  index: SearchDoc[]
-  open: boolean
-  onClose: () => void
+  index: SearchDoc[];
+  open: boolean;
+  onClose: () => void;
 }) {
-  const router = useRouter()
-  const [query, setQuery] = useState('')
-  const [active, setActive] = useState(0)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const listRef = useRef<HTMLDivElement>(null)
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const [active, setActive] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const hits = useMemo(() => {
-    const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean)
+    const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
     if (terms.length === 0) {
-      return index.slice(0, 8).map((doc) => ({ doc, score: 0, snippet: doc.summary }))
+      return index
+        .slice(0, 8)
+        .map((doc) => ({ doc, score: 0, snippet: doc.summary }));
     }
     return index
       .map((doc) => scoreDoc(doc, terms))
       .filter((h): h is Hit => h !== null)
       .sort((a, b) => b.score - a.score)
-      .slice(0, 12)
-  }, [query, index])
+      .slice(0, 12);
+  }, [query, index]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: query intentionally resets the highlighted result
   useEffect(() => {
-    setActive(0)
-  }, [query])
+    setActive(0);
+  }, [query]);
 
   useEffect(() => {
     if (open) {
-      setQuery('')
+      setQuery("");
       // focus after the dialog paints
-      const id = requestAnimationFrame(() => inputRef.current?.focus())
-      return () => cancelAnimationFrame(id)
+      const id = requestAnimationFrame(() => inputRef.current?.focus());
+      return () => cancelAnimationFrame(id);
     }
-    return undefined
-  }, [open])
+    return undefined;
+  }, [open]);
 
   useEffect(() => {
-    if (!open) return
-    document.body.classList.add('overflow-hidden')
+    if (!open) return;
+    document.body.classList.add("overflow-hidden");
     return () => {
-      document.body.classList.remove('overflow-hidden')
-    }
-  }, [open])
+      document.body.classList.remove("overflow-hidden");
+    };
+  }, [open]);
 
   function go(hit: Hit | undefined) {
-    if (!hit) return
-    onClose()
-    router.push(`/docs/${hit.doc.slug}`)
+    if (!hit) return;
+    onClose();
+    router.push(`/docs/${hit.doc.slug}`);
   }
 
   function onKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setActive((a) => Math.min(a + 1, hits.length - 1))
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setActive((a) => Math.max(a - 1, 0))
-    } else if (e.key === 'Enter') {
-      e.preventDefault()
-      go(hits[active])
-    } else if (e.key === 'Escape') {
-      onClose()
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActive((a) => Math.min(a + 1, hits.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActive((a) => Math.max(a - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      go(hits[active]);
+    } else if (e.key === "Escape") {
+      onClose();
     }
   }
 
   useEffect(() => {
-    const el = listRef.current?.querySelector(`[data-idx="${active}"]`)
-    el?.scrollIntoView({ block: 'nearest' })
-  }, [active])
+    const el = listRef.current?.querySelector(`[data-idx="${active}"]`);
+    el?.scrollIntoView({ block: "nearest" });
+  }, [active]);
 
-  if (!open) return null
+  if (!open) return null;
 
-  return (
+  // Portaled to <body>: the header's backdrop-blur would otherwise trap this
+  // fixed overlay inside the header bar.
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-start justify-center px-4 pt-[12vh]"
       role="dialog"
       aria-modal="true"
       aria-label="Search documentation"
+      onKeyDown={onKeyDown}
     >
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
-      <div
-        className="relative w-full max-w-xl overflow-hidden rounded-xl border border-line bg-surface shadow-2xl animate-fade-in"
-        onKeyDown={onKeyDown}
-      >
+      <div className="relative w-full max-w-xl overflow-hidden rounded-xl border border-line bg-surface shadow-2xl animate-fade-in">
         <div className="flex items-center gap-3 border-b border-line px-4">
           <SearchIcon className="shrink-0 text-faint" width={18} height={18} />
           <input
@@ -170,18 +174,19 @@ export function SearchDialog({
             hits.map((hit, i) => (
               <button
                 key={hit.doc.slug}
+                type="button"
                 data-idx={i}
                 onClick={() => go(hit)}
                 onMouseMove={() => setActive(i)}
                 className={`flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
-                  i === active ? 'bg-subtle' : ''
+                  i === active ? "bg-subtle" : ""
                 }`}
               >
                 <span
                   className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${
                     i === active
-                      ? 'border-brand/40 bg-brand/10 text-brand'
-                      : 'border-line text-faint'
+                      ? "border-brand/40 bg-brand/10 text-brand"
+                      : "border-line text-faint"
                   }`}
                 >
                   <HashIcon width={14} height={14} />
@@ -226,6 +231,7 @@ export function SearchDialog({
           <span>Damat docs</span>
         </div>
       </div>
-    </div>
-  )
+    </div>,
+    document.body,
+  );
 }

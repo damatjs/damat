@@ -14,7 +14,7 @@ export const UserModel = model("users", {
   sessions: columns.hasMany("sessions"),
 })
   .indexes([columns.indexes().columns(["email"]).unique()])
-  .timestamps(); // adds createdAt / updatedAt`
+  .timestamps(); // adds createdAt / updatedAt`;
 
 export const SERVICE_SAMPLE = `import { ModuleService } from "@damatjs/framework";
 import { UserModel, AccountModel, SessionModel } from "./models";
@@ -34,7 +34,7 @@ export class UserModuleService extends ModuleService({ models }) {
       return user;
     });
   }
-}`
+}`;
 
 export const ROUTE_SAMPLE = `// file-based: this path becomes  GET /api/users/:userId
 import { defineRoute } from "@damatjs/framework/router";
@@ -48,7 +48,7 @@ export const GET = defineRoute<{ userId: string }>(
     });
     return c.json({ success: true, data: user });
   },
-);`
+);`;
 
 export const WORKFLOW_SAMPLE = `import {
   createWorkflow, createStep, StepResponse, Effect,
@@ -74,4 +74,4 @@ export const onboarding = createWorkflow<NewUser, { user: User }>(
       yield* sendWelcomeEmail(user, ctx, { retry: { maxAttempts: 3 } });
       return { user };
     }),
-);`
+);`;

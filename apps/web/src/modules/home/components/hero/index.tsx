@@ -1,8 +1,8 @@
-import Link from 'next/link'
-import { ArrowRightIcon } from '@/assets/icons/arrowRight'
-import { GitHubIcon } from '@/assets/icons/gitHub'
-import { DOCS_PATH, GITHUB_URL, REGISTRY_URL } from '@/lib/constants'
-import { InstallCommand } from '@/modules/common/components/installCommand'
+import Link from "next/link";
+import { ArrowRightIcon } from "@/assets/icons/arrowRight";
+import { GitHubIcon } from "@/assets/icons/gitHub";
+import { docsUrl, GITHUB_URL, REGISTRY_URL } from "@/lib/constants";
+import { InstallCommand } from "@/modules/common/components/installCommand";
 
 export function Hero() {
   return (
@@ -13,7 +13,10 @@ export function Hero() {
         rel="noreferrer noopener"
         className="land inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-ink"
       >
-        <span className="h-1.5 w-1.5 rounded-full bg-brand" aria-hidden="true" />
+        <span
+          className="h-1.5 w-1.5 rounded-full bg-brand"
+          aria-hidden="true"
+        />
         The module registry is live
         <ArrowRightIcon width={13} height={13} />
       </a>
@@ -28,13 +31,13 @@ export function Hero() {
 
       <p className="land mt-6 max-w-2xl text-lg leading-relaxed text-muted">
         Open source, built on Bun. Assemble models, services, routes, and
-        workflows from plug-and-play modules — installed with one command,
-        wired to your database and HTTP server at startup.
+        workflows from plug-and-play modules — installed with one command, wired
+        to your database and HTTP server at startup.
       </p>
 
       <div className="land mt-8 flex flex-wrap items-center gap-3">
         <Link
-          href={`${DOCS_PATH}/getting-started`}
+          href={docsUrl("getting-started")}
           className="inline-flex h-10 items-center gap-2 rounded-lg bg-ink px-4 text-sm font-medium text-canvas transition-opacity hover:opacity-85"
         >
           Start building
@@ -52,5 +55,5 @@ export function Hero() {
         <InstallCommand />
       </div>
     </section>
-  )
+  );
 }

@@ -25,6 +25,7 @@ the whole thing (chapters + packages) lives in
 5. [Defining models (the ORM DSL)](./guide/05-models.md)
 6. [Migrations](./guide/06-migrations.md)
 7. [Modules & services](./guide/07-modules-and-services.md)
+   - 7b. [Querying & CRUD](./guide/07b-crud-reference.md) — the generated service methods, where operators, transactions
 8. [Building HTTP APIs](./guide/08-http-apis.md)
 9. [Workflows (the saga engine)](./guide/09-workflows.md)
 10. [Redis: cache, queue, locks, rate limiting](./guide/10-redis.md)
@@ -34,6 +35,7 @@ the whole thing (chapters + packages) lives in
 ### Modules & sharing
 13. [Authoring a module](./guide/13-authoring-modules.md) — build one self-contained module (the blade)
 14. [Installing existing modules](./guide/14-installing-modules.md)
+    - 14b. [Publishing modules](./guide/14b-publishing-modules.md) — list a module in a registry, verification, run your own
 15. [Installing modules with AI (MCP)](./guide/15-installing-modules-with-ai.md)
 16. [Module capabilities](./guide/16-module-capabilities.md) — everything one module can do
 17. [Composing & linking modules](./guide/17-composing-and-linking-modules.md) — the backend owner assembles the blades

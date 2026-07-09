@@ -23,20 +23,35 @@ All Damat packages are released **in lockstep** — a release moves *every*
 published package to the same version, whether or not its own code changed. So
 there is a single version to care about, not one per package.
 
-**Current version: `0.3.0`** — every published `@damatjs/*` package, with one
-exception: **`@damatjs/codegen` is at `1.0.0`**. It was published to npm at
+**Current version: `0.6.0`** — every published `@damatjs/*` package, with one
+exception: **`@damatjs/codegen` is at `2.1.0`**. It was published to npm at
 `1.0.0` independently, so it cannot be renumbered down to the shared line; it
-stays on its own version until the lockstep line catches up past `1.0.0`.
+stays on its own version until the lockstep line catches up past it.
 
 A package's folder only carries a `<version>.md` (and a detailed index row) for
 versions where *its own* code changed; for a lockstep bump with no change of its
 own, the package simply moves to the shared version with no new note. That is why
-a package can sit at `0.3.0` while the newest version it actually links is older.
+a package can sit at `0.6.0` while the newest version it actually links is older.
 
-What changed in `0.3.0`: [`services`](./services/0.3.0.md) gained `upsert` /
-`upsertMany`, cascade delete, and row-returning `updateOne` / `findById` /
-`findOne`; [`orm-pg`](./orm-pg/0.3.0.md) gained a bulk-upsert execution path.
-Every other published package moved to `0.3.0` unchanged.
+What changed in `0.6.0` — a hardening release across the line:
+[`redis`](./redis/0.6.0.md) made its hot paths atomic and non-blocking;
+[`framework`](./framework/0.6.0.md) auth middleware fails closed;
+[`services`](./services/0.6.0.md) sanitizes request-derived query options and
+filters soft-deleted rows by default;
+[`workflow-engine`](./workflow-engine/0.6.0.md) ties retries to step idempotency;
+[`orm-migration`](./orm-migration/0.6.0.md) serializes concurrent runs behind an
+advisory lock and supports non-transactional statements;
+[`orm-model`](./orm-model/0.6.0.md) fixes timestamp column types;
+[`orm-pg`](./orm-pg/0.6.0.md) whitelists `ORDER BY` inputs;
+[`link`](./link/0.6.0.md) resolves junctions against real tables and primary keys;
+[`damat-cli`](./damat-cli/0.6.0.md) gates unverified module sources and lifecycle
+scripts behind explicit flags, with [`mcp`](./mcp/0.6.0.md) exposing the same
+gates and [`create-damat-app`](./create-damat-app/0.6.0.md) dropping shell-string
+execution. Recent history: `0.5.0` was a codebase audit (full test coverage, two
+latent bugs fixed — [`framework`](./framework/0.5.0.md),
+[`orm-migration`](./orm-migration/0.5.0.md)); `0.4.1` fixed cascade deletes on
+snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
+[`services`](./services/0.4.1.md)).
 
 ## Packages
 

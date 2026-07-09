@@ -1,5 +1,5 @@
-import Link from 'next/link'
-import { ArrowRightIcon } from '@/assets/icons/arrowRight'
+import Link from "next/link";
+import { ArrowRightIcon } from "@/assets/icons/arrowRight";
 
 export default function NotFound() {
   return (
@@ -17,5 +17,5 @@ export default function NotFound() {
         <ArrowRightIcon width={15} height={15} />
       </Link>
     </div>
-  )
+  );
 }

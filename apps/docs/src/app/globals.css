@@ -1,6 +1,50 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin '@tailwindcss/typography';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-canvas: var(--bg);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-ink: var(--fg);
+  --color-muted: var(--fg-muted);
+  --color-faint: var(--fg-faint);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-brand: var(--accent);
+  --color-brand-fg: var(--accent-contrast);
+  --color-code-panel: var(--code-bg);
+  --color-code-panel-surface: var(--code-surface);
+  --color-code-panel-line: var(--code-border);
+  --color-code-panel-faint: var(--code-faint);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --text-2xs: 0.72rem;
+  --text-2xs--line-height: 1.4;
+  --text-code: 0.8rem;
+  --text-code--line-height: 1.65;
+  --text-md: 0.95rem;
+  --text-md--line-height: 1.6;
+
+  --container-content: 48rem;
+  --container-shell: 90rem;
+
+  --animate-fade-in: fade-in 0.4s ease-out both;
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
 
 @layer base {
   :root {
@@ -63,7 +107,7 @@
   body {
     background-color: var(--bg);
     color: var(--fg);
-    font-feature-settings: 'cv11', 'ss01';
+    font-feature-settings: "cv11", "ss01";
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
   }
@@ -82,12 +126,58 @@
 @layer components {
   /* Mono uppercase eyebrow above chapter titles (Tailwind-docs style). */
   .eyebrow {
-    font-family: var(--font-mono, ui-monospace, monospace);
+    font-family: var(--font-jetbrains-mono, ui-monospace, monospace);
     font-size: 0.72rem;
     font-weight: 500;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--accent);
+  }
+
+  /* The sliding rail indicator — position driven by CSS variables that
+   * useRailThumb writes onto the (relative) container. */
+  .rail-thumb {
+    position: absolute;
+    top: 0;
+    left: calc(var(--rail-thumb-left, 0px) - 2px);
+    width: 2px;
+    height: var(--rail-thumb-height, 0px);
+    border-radius: 9999px;
+    background: var(--accent);
+    opacity: var(--rail-thumb-opacity, 0);
+    transform: translateY(var(--rail-thumb-top, 0px));
+    transition:
+      transform var(--rail-thumb-dur, 0.22s) cubic-bezier(0.22, 1, 0.36, 1),
+      height var(--rail-thumb-dur, 0.22s) cubic-bezier(0.22, 1, 0.36, 1),
+      left var(--rail-thumb-dur, 0.22s) cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.15s ease;
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rail-thumb {
+      transition: none;
+    }
+  }
+
+  /* The TOC's bent rail (SVG). The active stroke's visible stretch is set via
+   * --toc-dash (dasharray: 0, lead gap, segment, tail gap) from useTocFlow. */
+  .toc-rail-line {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 2;
+  }
+  .toc-rail-active {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-dasharray: var(--toc-dash, 0 0 0 99999);
+    transition: stroke-dasharray 0.3s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .toc-rail-active {
+      transition: none;
+    }
   }
 
   /* Diagonal candy-stripe gutters flanking the docs shell. */
@@ -167,7 +257,7 @@
   background: var(--code-surface);
 }
 .code-block__lang {
-  font-family: var(--font-mono, ui-monospace, monospace);
+  font-family: var(--font-jetbrains-mono, ui-monospace, monospace);
   font-size: 0.68rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;

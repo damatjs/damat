@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { CheckIcon } from '@/assets/icons/check'
-import { CopyIcon } from '@/assets/icons/copy'
+import { useState } from "react";
+import { CheckIcon } from "@/assets/icons/check";
+import { CopyIcon } from "@/assets/icons/copy";
 
 /** Copies `text` to the clipboard with a brief confirmation state. */
 export function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState(false);
 
   async function copy() {
     try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch {
       /* clipboard unavailable — ignore */
     }
@@ -22,10 +22,14 @@ export function CopyButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={copy}
-      aria-label={copied ? 'Copied' : 'Copy to clipboard'}
+      aria-label={copied ? "Copied" : "Copy to clipboard"}
       className="flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-subtle hover:text-ink"
     >
-      {copied ? <CheckIcon width={14} height={14} className="text-code-ok" /> : <CopyIcon width={14} height={14} />}
+      {copied ? (
+        <CheckIcon width={14} height={14} className="text-code-ok" />
+      ) : (
+        <CopyIcon width={14} height={14} />
+      )}
     </button>
-  )
+  );
 }

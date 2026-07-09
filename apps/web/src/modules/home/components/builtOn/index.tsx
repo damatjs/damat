@@ -1,6 +1,6 @@
-import { cn } from '@/lib/utils'
+import { cn } from "@/lib/utils";
 
-const STACK = ['Bun', 'Hono', 'Effect-TS', 'PostgreSQL', 'Redis', 'TypeScript']
+const STACK = ["Bun", "Hono", "Effect-TS", "PostgreSQL", "Redis", "TypeScript"];
 
 /** Hairline-divided wall of the stack Damat is built on. */
 export function BuiltOn() {
@@ -10,17 +10,17 @@ export function BuiltOn() {
         <div
           key={name}
           className={cn(
-            'flex h-20 items-center justify-center border-line text-md font-medium text-faint',
-            i % 2 === 1 && 'border-l sm:border-l-0',
-            i % 3 !== 0 && 'sm:border-l',
-            i >= 2 && 'border-t sm:border-t-0',
-            i >= 3 && 'sm:border-t lg:border-t-0',
-            i > 0 && 'lg:border-l',
+            "flex h-20 items-center justify-center border-line text-md font-medium text-faint",
+            i % 2 === 1 && "border-l sm:border-l-0",
+            i % 3 !== 0 && "sm:border-l",
+            i >= 2 && "border-t sm:border-t-0",
+            i >= 3 && "sm:border-t lg:border-t-0",
+            i > 0 && "lg:border-l",
           )}
         >
           {name}
         </div>
       ))}
     </section>
-  )
+  );
 }

@@ -6,6 +6,10 @@ Change history for this package. For how it works **now**, read the
 
 | Version | Summary | Upgrade notes |
 |---------|---------|---------------|
+| 0.6.0 | Request-derived options sanitized (`buildFindOptions`), whitelist-validated `orderBy`, bounded pagination (`take` ≤ 1000), soft-delete-aware reads (`withDeleted`), auto `updated_at` stamping, narrowed delete contract | [0.6.0 →](./0.6.0.md) |
+| 0.5.0 | Lockstep bump with the 0.5.0 codebase audit — no change to this package's own API | — |
+| 0.4.1 | `resolveModel` falls back to table-name lookup — cross-module cascade deletes resolve snake_case child tables | [0.4.1 →](./0.4.1.md) |
+| 0.3.6 – 0.4.0 | Lockstep bumps — no change to this package's own API | — |
 | 0.3.0 | `ModelMethods` gains `upsert`/`upsertMany`, cascade delete (`delete`/`softDelete` with `cascade: true`), and row-returning `updateOne` / `findById` / `findOne` | [0.3.0 →](./0.3.0.md) |
 | 0.1.3 | Maintenance / dependency bumps — picks up cross-module links via `@damatjs/link`/`@damatjs/framework`; no change to this package's own API | — |
 | 0.1.2 | Maintenance / dependency bumps — relation-by-table-name lands in the ORM packages; no change to this package's own API | — |

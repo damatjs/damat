@@ -6,6 +6,8 @@ Change history for this package. For how it works **now**, read the
 
 | Version | Summary | Upgrade notes |
 |---------|---------|---------------|
+| 0.6.0 | `migrate:status` passes full module descriptors — status tracked by module name, discovery by resolve path | [0.6.0 →](./0.6.0.md) |
+| 0.1.4 – 0.5.0 | Lockstep bumps — no CLI surface change | — |
 | 0.1.3 | Cross-module link support: `link:<owner>` migration modules + `generate:types` link augmentation | [0.1.3 →](./0.1.3.md) |
 | 0.1.2 | Table-name `hasOne`/`belongsTo` relations land via the ORM deps (no CLI surface change) | — |
 | 0.1.1 | CI / test cleanup + dependency bumps | — |

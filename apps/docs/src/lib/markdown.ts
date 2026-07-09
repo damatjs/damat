@@ -1,69 +1,69 @@
-import path from 'node:path'
-import { unified } from 'unified'
-import remarkParse from 'remark-parse'
-import remarkGfm from 'remark-gfm'
-import remarkRehype from 'remark-rehype'
-import rehypeRaw from 'rehype-raw'
-import rehypeSlug from 'rehype-slug'
-import rehypeAutolinkHeadings from 'rehype-autolink-headings'
-import rehypeStringify from 'rehype-stringify'
-import { visit, SKIP } from 'unist-util-visit'
-import type { Root, Element, ElementContent, Nodes } from 'hast'
-import { createHighlighterCore, type HighlighterCore } from 'shiki/core'
-import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
-import githubLight from 'shiki/themes/github-light.mjs'
-import githubDark from 'shiki/themes/github-dark-dimmed.mjs'
-import tsLang from 'shiki/langs/typescript.mjs'
-import tsxLang from 'shiki/langs/tsx.mjs'
-import jsLang from 'shiki/langs/javascript.mjs'
-import jsxLang from 'shiki/langs/jsx.mjs'
-import jsonLang from 'shiki/langs/json.mjs'
-import bashLang from 'shiki/langs/bash.mjs'
-import sqlLang from 'shiki/langs/sql.mjs'
-import yamlLang from 'shiki/langs/yaml.mjs'
-import mdLang from 'shiki/langs/markdown.mjs'
-import diffLang from 'shiki/langs/diff.mjs'
+import path from "node:path";
+import type { Element, ElementContent, Nodes, Root } from "hast";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypeRaw from "rehype-raw";
+import rehypeSlug from "rehype-slug";
+import rehypeStringify from "rehype-stringify";
+import remarkGfm from "remark-gfm";
+import remarkParse from "remark-parse";
+import remarkRehype from "remark-rehype";
+import { createHighlighterCore, type HighlighterCore } from "shiki/core";
+import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
+import bashLang from "shiki/langs/bash.mjs";
+import diffLang from "shiki/langs/diff.mjs";
+import jsLang from "shiki/langs/javascript.mjs";
+import jsonLang from "shiki/langs/json.mjs";
+import jsxLang from "shiki/langs/jsx.mjs";
+import mdLang from "shiki/langs/markdown.mjs";
+import sqlLang from "shiki/langs/sql.mjs";
+import tsxLang from "shiki/langs/tsx.mjs";
+import tsLang from "shiki/langs/typescript.mjs";
+import yamlLang from "shiki/langs/yaml.mjs";
+import githubDark from "shiki/themes/github-dark-dimmed.mjs";
+import githubLight from "shiki/themes/github-light.mjs";
+import { unified } from "unified";
+import { SKIP, visit } from "unist-util-visit";
 
-import { GITHUB_BLOB } from './repo'
-import type { TocEntry } from './types'
+import { GITHUB_BLOB } from "./repo";
+import type { TocEntry } from "./types";
 
-export type { TocEntry }
+export type { TocEntry };
 
 export interface RenderContext {
   /** Repo-relative path of the source file, e.g. `docs/guide/01-introduction.md`. */
-  sourcePath: string
+  sourcePath: string;
   /** Map of source-file basename → in-site route, e.g. `02-concepts.md` → `/docs/concepts`. */
-  slugMap: Record<string, string>
+  slugMap: Record<string, string>;
 }
 
 const LANG_ALIASES: Record<string, string> = {
-  ts: 'typescript',
-  typescript: 'typescript',
-  tsx: 'tsx',
-  js: 'javascript',
-  javascript: 'javascript',
-  jsx: 'jsx',
-  json: 'json',
-  jsonc: 'json',
-  json5: 'json',
-  bash: 'bash',
-  sh: 'bash',
-  shell: 'bash',
-  zsh: 'bash',
-  console: 'bash',
-  sql: 'sql',
-  yaml: 'yaml',
-  yml: 'yaml',
-  md: 'markdown',
-  markdown: 'markdown',
-  mdx: 'markdown',
-  diff: 'diff',
-  text: 'text',
-  txt: 'text',
-  plaintext: 'text',
-}
+  ts: "typescript",
+  typescript: "typescript",
+  tsx: "tsx",
+  js: "javascript",
+  javascript: "javascript",
+  jsx: "jsx",
+  json: "json",
+  jsonc: "json",
+  json5: "json",
+  bash: "bash",
+  sh: "bash",
+  shell: "bash",
+  zsh: "bash",
+  console: "bash",
+  sql: "sql",
+  yaml: "yaml",
+  yml: "yaml",
+  md: "markdown",
+  markdown: "markdown",
+  mdx: "markdown",
+  diff: "diff",
+  text: "text",
+  txt: "text",
+  plaintext: "text",
+};
 
-let highlighterPromise: Promise<HighlighterCore> | null = null
+let highlighterPromise: Promise<HighlighterCore> | null = null;
 
 function getHighlighter(): Promise<HighlighterCore> {
   if (!highlighterPromise) {
@@ -82,135 +82,152 @@ function getHighlighter(): Promise<HighlighterCore> {
         diffLang,
       ],
       engine: createJavaScriptRegexEngine({ forgiving: true }),
-    })
+    });
   }
-  return highlighterPromise
+  return highlighterPromise;
 }
 
 /** Collect the visible text of a hast node, skipping injected heading anchors. */
 function textOf(node: Nodes): string {
-  if (node.type === 'text') return node.value
-  if (node.type === 'element') {
-    const classes = node.properties?.className
-    if (Array.isArray(classes) && classes.includes('heading-anchor')) return ''
-    return node.children.map(textOf).join('')
+  if (node.type === "text") return node.value;
+  if (node.type === "element") {
+    const classes = node.properties?.className;
+    if (Array.isArray(classes) && classes.includes("heading-anchor")) return "";
+    return node.children.map(textOf).join("");
   }
-  if (node.type === 'root') return node.children.map(textOf).join('')
-  return ''
+  if (node.type === "root") return node.children.map(textOf).join("");
+  return "";
 }
 
 /** Rewrite relative `.md` links to in-site routes, and other repo links to GitHub. */
 function rehypeRewriteLinks(ctx: RenderContext) {
   return (tree: Root) => {
-    visit(tree, 'element', (node: Element) => {
-      if (node.tagName !== 'a') return
-      const href = node.properties?.href
-      if (typeof href !== 'string') return
-      if (/^(https?:)?\/\//.test(href) || href.startsWith('#') || href.startsWith('mailto:')) {
+    visit(tree, "element", (node: Element) => {
+      if (node.tagName !== "a") return;
+      const href = node.properties?.href;
+      if (typeof href !== "string") return;
+      if (
+        /^(https?:)?\/\//.test(href) ||
+        href.startsWith("#") ||
+        href.startsWith("mailto:")
+      ) {
         // External or in-page — leave as-is, but mark external links.
         if (/^https?:\/\//.test(href)) {
-          node.properties.target = '_blank'
-          node.properties.rel = 'noreferrer noopener'
+          node.properties.target = "_blank";
+          node.properties.rel = "noreferrer noopener";
         }
-        return
+        return;
       }
 
-      const [rawPath, hash] = href.split('#')
-      const cleanHash = hash ? `#${hash}` : ''
-      const base = path.posix.basename(rawPath ?? '')
+      const [rawPath, hash] = href.split("#");
+      const cleanHash = hash ? `#${hash}` : "";
+      const base = path.posix.basename(rawPath ?? "");
 
-      if (base === 'GUIDE.md') {
-        node.properties.href = `/docs${cleanHash}`
-        return
+      if (base === "GUIDE.md") {
+        node.properties.href = `/docs${cleanHash}`;
+        return;
       }
-      const mapped = ctx.slugMap[base]
+      const mapped = ctx.slugMap[base];
       if (mapped) {
-        node.properties.href = `${mapped}${cleanHash}`
-        return
+        node.properties.href = `${mapped}${cleanHash}`;
+        return;
       }
 
       // Anything else points at a repo file we don't render — send to GitHub.
-      const dir = path.posix.dirname(ctx.sourcePath)
-      const resolved = path.posix.normalize(path.posix.join(dir, rawPath ?? ''))
-      node.properties.href = `${GITHUB_BLOB}/${resolved}${cleanHash}`
-      node.properties.target = '_blank'
-      node.properties.rel = 'noreferrer noopener'
-    })
-  }
+      const dir = path.posix.dirname(ctx.sourcePath);
+      const resolved = path.posix.normalize(
+        path.posix.join(dir, rawPath ?? ""),
+      );
+      node.properties.href = `${GITHUB_BLOB}/${resolved}${cleanHash}`;
+      node.properties.target = "_blank";
+      node.properties.rel = "noreferrer noopener";
+    });
+  };
 }
 
 /** Pull the h2/h3 headings (with ids) into `toc` for the "On this page" rail. */
 function rehypeCollectToc(toc: TocEntry[]) {
   return (tree: Root) => {
-    visit(tree, 'element', (node: Element) => {
-      if (node.tagName !== 'h2' && node.tagName !== 'h3') return
-      const id = node.properties?.id
-      if (typeof id !== 'string') return
-      toc.push({ depth: node.tagName === 'h2' ? 2 : 3, id, text: textOf(node).trim() })
-    })
-  }
+    visit(tree, "element", (node: Element) => {
+      if (node.tagName !== "h2" && node.tagName !== "h3") return;
+      const id = node.properties?.id;
+      if (typeof id !== "string") return;
+      toc.push({
+        depth: node.tagName === "h2" ? 2 : 3,
+        id,
+        text: textOf(node).trim(),
+      });
+    });
+  };
 }
 
 /** Replace fenced code blocks with Shiki-highlighted, dual-theme markup. */
 function rehypeShiki(highlighter: HighlighterCore) {
   return (tree: Root) => {
-    visit(tree, 'element', (node: Element, index, parent) => {
-      if (node.tagName !== 'pre' || !parent || typeof index !== 'number') return
+    visit(tree, "element", (node: Element, index, parent) => {
+      if (node.tagName !== "pre" || !parent || typeof index !== "number")
+        return;
       const code = node.children.find(
-        (c): c is Element => c.type === 'element' && c.tagName === 'code',
-      )
-      if (!code) return
+        (c): c is Element => c.type === "element" && c.tagName === "code",
+      );
+      if (!code) return;
 
-      const classes = code.properties?.className
+      const classes = code.properties?.className;
       const langClass = Array.isArray(classes)
-        ? classes.map(String).find((c) => c.startsWith('language-'))
-        : undefined
-      const rawLang = langClass ? langClass.slice('language-'.length) : 'text'
-      const lang = LANG_ALIASES[rawLang.toLowerCase()] ?? 'text'
-      const value = textOf(code).replace(/\n$/, '')
+        ? classes.map(String).find((c) => c.startsWith("language-"))
+        : undefined;
+      const rawLang = langClass ? langClass.slice("language-".length) : "text";
+      const lang = LANG_ALIASES[rawLang.toLowerCase()] ?? "text";
+      const value = textOf(code).replace(/\n$/, "");
 
-      let result: Root
+      let result: Root;
       try {
         result = highlighter.codeToHast(value, {
           lang,
-          themes: { light: 'github-light', dark: 'github-dark-dimmed' },
+          themes: { light: "github-light", dark: "github-dark-dimmed" },
           defaultColor: false,
-        }) as Root
+        }) as Root;
       } catch {
-        return
+        return;
       }
 
-      const pre = result.children[0]
-      if (pre && pre.type === 'element') {
+      const pre = result.children[0];
+      if (pre && pre.type === "element") {
         // Preserve the language so the client can render a label.
-        pre.properties = { ...pre.properties, 'data-lang': rawLang }
-        parent.children[index] = pre as ElementContent
-        return [SKIP]
+        pre.properties = { ...pre.properties, "data-lang": rawLang };
+        parent.children[index] = pre as ElementContent;
+        return [SKIP];
       }
-      return
-    })
-  }
+      return;
+    });
+  };
 }
 
 export interface RenderResult {
-  html: string
-  toc: TocEntry[]
+  html: string;
+  toc: TocEntry[];
 }
 
 /** Highlight a standalone code string to dual-theme HTML (for landing samples). */
-export async function highlightCode(code: string, lang: string): Promise<string> {
-  const highlighter = await getHighlighter()
-  const target = LANG_ALIASES[lang.toLowerCase()] ?? 'text'
+export async function highlightCode(
+  code: string,
+  lang: string,
+): Promise<string> {
+  const highlighter = await getHighlighter();
+  const target = LANG_ALIASES[lang.toLowerCase()] ?? "text";
   return highlighter.codeToHtml(code, {
     lang: target,
-    themes: { light: 'github-light', dark: 'github-dark-dimmed' },
+    themes: { light: "github-light", dark: "github-dark-dimmed" },
     defaultColor: false,
-  })
+  });
 }
 
-export async function renderMarkdown(raw: string, ctx: RenderContext): Promise<RenderResult> {
-  const highlighter = await getHighlighter()
-  const toc: TocEntry[] = []
+export async function renderMarkdown(
+  raw: string,
+  ctx: RenderContext,
+): Promise<RenderResult> {
+  const highlighter = await getHighlighter();
+  const toc: TocEntry[] = [];
 
   const file = await unified()
     .use(remarkParse)
@@ -220,14 +237,18 @@ export async function renderMarkdown(raw: string, ctx: RenderContext): Promise<R
     .use(rehypeSlug)
     .use(rehypeCollectToc, toc)
     .use(rehypeAutolinkHeadings, {
-      behavior: 'append',
-      properties: { className: ['heading-anchor'], ariaHidden: 'true', tabIndex: -1 },
-      content: { type: 'text', value: '#' },
+      behavior: "append",
+      properties: {
+        className: ["heading-anchor"],
+        ariaHidden: "true",
+        tabIndex: -1,
+      },
+      content: { type: "text", value: "#" },
     })
     .use(rehypeRewriteLinks, ctx)
     .use(rehypeShiki, highlighter)
     .use(rehypeStringify, { allowDangerousHtml: true })
-    .process(raw)
+    .process(raw);
 
-  return { html: String(file), toc }
+  return { html: String(file), toc };
 }

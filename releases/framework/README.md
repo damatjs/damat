@@ -6,6 +6,9 @@ Change history for this package. For how it works **now**, read the
 
 | Version | Summary | Upgrade notes |
 |---------|---------|---------------|
+| 0.6.0 | Auth middleware fails closed — routes declaring an unimplemented auth type return a structured 401 instead of executing | [0.6.0 →](./0.6.0.md) |
+| 0.5.0 | Non-`Error` throws are stringified, logged, and surfaced (previously silently dropped); config loader uses Node's `pathToFileURL` | [0.5.0 →](./0.5.0.md) |
+| 0.3.7 – 0.4.1 | Lockstep bumps — no change to this package's own behavior | — |
 | 0.3.6 | Route validator middleware stores its parsed + coerced result; new `getValidated(c, target)` helper lets handlers read validated `body`/`query`/`params`/`json` instead of re-parsing. | [0.3.6 →](./0.3.6.md) |
 | 0.1.3 | Cross-module links: new top-level `links` field in `damat.config.ts`, link directories wired as a `link` module at boot, and the `@damatjs/link` authoring surface (`defineLink`/`defineLinkModule`/`collectLinkModels`) re-exported from the barrel. | [0.1.3 →](./0.1.3.md) |
 | 0.1.2 | Dependency bump (relation-by-table-name lands in the ORM packages; no framework API change). | — |

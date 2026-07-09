@@ -1,6 +1,6 @@
-import Link from 'next/link'
-import type { ReactNode } from 'react'
-import { ArrowRightIcon } from '@/assets/icons/arrowRight'
+import Link from "next/link";
+import type { ReactNode } from "react";
+import { ArrowRightIcon } from "@/assets/icons/arrowRight";
 
 /** One capability cell in the shared-hairline grid. */
 export function Cell({
@@ -9,10 +9,10 @@ export function Cell({
   body,
   visual,
 }: {
-  href: string
-  title: string
-  body: string
-  visual: ReactNode
+  href: string;
+  title: string;
+  body: string;
+  visual: ReactNode;
 }) {
   return (
     <Link
@@ -27,5 +27,5 @@ export function Cell({
         <ArrowRightIcon width={13} height={13} />
       </span>
     </Link>
-  )
+  );
 }

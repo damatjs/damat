@@ -1,4 +1,4 @@
-import { GITHUB_URL, REGISTRY_URL, WEB_URL } from '@/lib/site'
+import { GITHUB_URL, REGISTRY_URL, WEB_URL } from "@/lib/site";
 
 /** Slim docs footer — the full sitemap footer lives on the marketing site. */
 export function Footer() {
@@ -29,5 +29,5 @@ export function Footer() {
         </nav>
       </div>
     </footer>
-  )
+  );
 }

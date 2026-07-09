@@ -1,18 +1,24 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { CheckIcon } from '@/assets/icons/check'
-import { CopyIcon } from '@/assets/icons/copy'
+import { useState } from "react";
+import { CheckIcon } from "@/assets/icons/check";
+import { CopyIcon } from "@/assets/icons/copy";
 
 /** Copies `text` to the clipboard with a brief confirmation state. */
-export function CopyButton({ text, className = '' }: { text: string; className?: string }) {
-  const [copied, setCopied] = useState(false)
+export function CopyButton({
+  text,
+  className = "",
+}: {
+  text: string;
+  className?: string;
+}) {
+  const [copied, setCopied] = useState(false);
 
   async function copy() {
     try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1600)
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
     } catch {
       /* clipboard unavailable — ignore */
     }
@@ -22,7 +28,7 @@ export function CopyButton({ text, className = '' }: { text: string; className?:
     <button
       type="button"
       onClick={copy}
-      aria-label={copied ? 'Copied' : 'Copy to clipboard'}
+      aria-label={copied ? "Copied" : "Copy to clipboard"}
       className={`flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-subtle hover:text-ink ${className}`}
     >
       {copied ? (
@@ -31,5 +37,5 @@ export function CopyButton({ text, className = '' }: { text: string; className?:
         <CopyIcon width={15} height={15} />
       )}
     </button>
-  )
+  );
 }

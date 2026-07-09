@@ -1,53 +1,53 @@
-'use client'
+"use client";
 
-import { useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import type { NavSection, SearchDoc } from '@/lib/types'
-import { GitHubIcon } from '@/assets/icons/gitHub'
-import { SearchIcon } from '@/assets/icons/search'
-import { GITHUB_URL, REGISTRY_URL, WEB_URL } from '@/lib/site'
-import { SearchDialog } from '@/modules/docs/components/search'
-import { MobileNav } from '@/modules/docs/components/sidebar'
-import { Logo } from '@/modules/layout/components/logo'
-import { ThemeToggle } from '@/modules/layout/components/themeToggle'
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { GitHubIcon } from "@/assets/icons/gitHub";
+import { SearchIcon } from "@/assets/icons/search";
+import { GITHUB_URL, REGISTRY_URL, WEB_URL } from "@/lib/site";
+import type { NavSection, SearchDoc } from "@/lib/types";
+import { SearchDialog } from "@/modules/docs/components/search";
+import { MobileNav } from "@/modules/docs/components/sidebar";
+import { Logo } from "@/modules/layout/components/logo";
+import { ThemeToggle } from "@/modules/layout/components/themeToggle";
 
 export function Header({
   sections,
   searchIndex,
 }: {
-  sections: NavSection[]
-  searchIndex: SearchDoc[]
+  sections: NavSection[];
+  searchIndex: SearchDoc[];
 }) {
-  const pathname = usePathname()
-  const [searchOpen, setSearchOpen] = useState(false)
+  const pathname = usePathname();
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        setSearchOpen((o) => !o)
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchOpen((o) => !o);
       }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
-  const closeSearch = useCallback(() => setSearchOpen(false), [])
+  const closeSearch = useCallback(() => setSearchOpen(false), []);
 
   const navLink = (href: string, label: string) => {
-    const active = pathname === href
+    const active = pathname === href;
     return (
       <Link
         href={href}
         className={`px-2.5 py-1.5 text-sm transition-colors ${
-          active ? 'text-ink' : 'text-muted hover:text-ink'
+          active ? "text-ink" : "text-muted hover:text-ink"
         }`}
       >
         {label}
       </Link>
-    )
-  }
+    );
+  };
 
   return (
     <>
@@ -74,9 +74,12 @@ export function Header({
             </kbd>
           </button>
 
-          <nav className="hidden items-center md:ml-auto md:flex" aria-label="Site">
-            {navLink('/docs/package-reference', 'Packages')}
-            {navLink('/docs/cli-reference', 'CLI')}
+          <nav
+            className="hidden items-center md:ml-auto md:flex"
+            aria-label="Site"
+          >
+            {navLink("/docs/package-reference", "Packages")}
+            {navLink("/docs/cli-reference", "CLI")}
             <a
               href={REGISTRY_URL}
               target="_blank"
@@ -108,7 +111,11 @@ export function Header({
         </div>
       </header>
 
-      <SearchDialog index={searchIndex} open={searchOpen} onClose={closeSearch} />
+      <SearchDialog
+        index={searchIndex}
+        open={searchOpen}
+        onClose={closeSearch}
+      />
     </>
-  )
+  );
 }

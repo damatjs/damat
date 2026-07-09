@@ -1,9 +1,9 @@
-import Link from 'next/link'
-import type { Section } from '@/lib/content'
+import Link from "next/link";
+import type { Section } from "@/lib/content";
 
 /** Guide index — chapters grouped by section, numbered in reading order. */
 export function ChapterList({ sections }: { sections: Section[] }) {
-  let counter = 0
+  let counter = 0;
 
   return (
     <div className="flex flex-col gap-12">
@@ -14,7 +14,7 @@ export function ChapterList({ sections }: { sections: Section[] }) {
           </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {section.chapters.map((chapter) => {
-              counter += 1
+              counter += 1;
               return (
                 <Link
                   key={chapter.slug}
@@ -33,11 +33,11 @@ export function ChapterList({ sections }: { sections: Section[] }) {
                     </span>
                   </span>
                 </Link>
-              )
+              );
             })}
           </div>
         </section>
       ))}
     </div>
-  )
+  );
 }

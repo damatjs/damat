@@ -1,49 +1,43 @@
-import Link from 'next/link'
-import { GitHubIcon } from '@/assets/icons/gitHub'
-import { DOCS_PATH, GITHUB_URL, REGISTRY_URL } from '@/lib/constants'
-import { Logo } from '@/modules/layout/components/logo'
-import { ThemeToggle } from '@/modules/layout/components/themeToggle'
+import Link from "next/link";
+import { GitHubIcon } from "@/assets/icons/gitHub";
+import { DOCS_URL, docsUrl, GITHUB_URL } from "@/lib/constants";
+import { getCurrentVersion } from "@/lib/data/releases";
+import { Logo } from "@/modules/layout/components/logo";
+import { ThemeToggle } from "@/modules/layout/components/themeToggle";
 
 const NAV_LINKS = [
-  { label: 'Docs', href: DOCS_PATH },
-  { label: 'Packages', href: `${DOCS_PATH}/package-reference` },
-  { label: 'CLI', href: `${DOCS_PATH}/cli-reference` },
-  { label: 'Registry', href: REGISTRY_URL, external: true },
-]
+  { label: "Docs", href: DOCS_URL },
+  { label: "Modules", href: "/modules" },
+  { label: "Releases", href: "/releases" },
+  { label: "Community", href: "/community" },
+];
 
 export function Header() {
+  const version = getCurrentVersion();
+
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-canvas/85 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 border-line px-4 sm:px-6 lg:border-x lg:px-10">
         <div className="flex items-center gap-2">
           <Logo />
-          <span className="ml-1.5 hidden rounded-full border border-line px-2 py-0.5 font-mono text-2xs font-medium text-faint sm:inline">
-            v0.6
-          </span>
+          <Link
+            href="/releases"
+            className="ml-1.5 hidden rounded-full border border-line px-2 py-0.5 font-mono text-2xs font-medium text-faint transition-colors hover:text-ink sm:inline"
+          >
+            v{version}
+          </Link>
         </div>
 
         <nav className="ml-3 hidden items-center md:flex" aria-label="Main">
-          {NAV_LINKS.map((link) =>
-            link.external ? (
-              <a
-                key={link.label}
-                href={link.href}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="px-2.5 py-1.5 text-sm text-muted transition-colors hover:text-ink"
-              >
-                {link.label}
-              </a>
-            ) : (
-              <Link
-                key={link.label}
-                href={link.href}
-                className="px-2.5 py-1.5 text-sm text-muted transition-colors hover:text-ink"
-              >
-                {link.label}
-              </Link>
-            ),
-          )}
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.label}
+              href={link.href}
+              className="px-2.5 py-1.5 text-sm text-muted transition-colors hover:text-ink"
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
@@ -58,7 +52,7 @@ export function Header() {
           </a>
           <ThemeToggle />
           <Link
-            href={`${DOCS_PATH}/getting-started`}
+            href={docsUrl("getting-started")}
             className="hidden h-8 items-center gap-1.5 rounded-lg bg-ink px-3 text-xs font-medium text-canvas transition-opacity hover:opacity-85 md:flex"
           >
             Start building
@@ -66,5 +60,5 @@ export function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }

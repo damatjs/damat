@@ -1,7 +1,7 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
-  "concurrency": 24,
+  // "concurrency": 1,
   "tasks": {
     "build": {
       "dependsOn": [

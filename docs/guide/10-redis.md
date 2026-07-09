@@ -3,35 +3,98 @@
 # 10. Redis: cache, queue, locks, rate limiting
 
 [`@damatjs/redis`](../../packages/core/redis/README.md) provides batteries-included
-Redis helpers. Initialize the client once (the framework does this when
-`redisUrl` is set), then use the helpers.
+Redis helpers. Initialize the client once (the framework does this for you when
+`projectConfig.redisUrl` is set), then use the helpers anywhere.
 
 ```ts
-import {
-  initRedis, cacheGet, cacheSet,
-  checkRateLimit, withLock, RedisQueue,
-} from "@damatjs/redis";
+import { initRedis } from "@damatjs/redis";
 
-initRedis(process.env.REDIS_URL!);
-
-// cache with TTL
-await cacheSet("user:1", user, 60);
-const cached = await cacheGet("user:1");
-
-// sliding-window rate limit
-const { allowed } = await checkRateLimit("ip:1.2.3.4", { limit: 100, windowMs: 60_000 });
-
-// distributed lock
-await withLock("import-job", { ttlMs: 30_000 }, async () => { /* critical section */ });
-
-// background queue
-const queue = new RedisQueue("emails");
-await queue.enqueue({ to: "a@b.co" });
+initRedis(process.env.REDIS_URL!); // only needed outside a framework app
 ```
 
-It also covers sessions and counters. See the
-[redis internals](../../packages/core/redis/docs/README.md) for every helper and
-its options.
+## Cache
+
+```ts
+import { cacheGet, cacheSet } from "@damatjs/redis";
+
+await cacheSet("user:1", user, 60);        // (key, value, ttlSeconds — default 300)
+const cached = await cacheGet<User>("user:1"); // typed read; null on miss
+```
+
+Values are JSON-serialized for you.
+
+## Rate limiting
+
+```ts
+import { checkRateLimit } from "@damatjs/redis";
+
+const result = await checkRateLimit("ip:1.2.3.4", 60_000, 100);
+// (identifier, windowMs, maxRequests)
+if (!result.allowed) {
+  // result: { allowed, remaining, resetAt, retryAfter? }
+}
+```
+
+The HTTP layer can also rate-limit for you — see `http.rateLimit` in
+[Configuration](./04-configuration.md).
+
+## Distributed locks
+
+```ts
+import { withLock, acquireLock, releaseLock } from "@damatjs/redis";
+
+// run a critical section under a lock (ttlMs default 10_000)
+await withLock("import-job", async () => {
+  /* only one process runs this at a time */
+}, 30_000);
+
+// or manage the lock yourself
+const token = await acquireLock("import-job", 30_000); // null if already held
+if (token) {
+  try { /* ... */ } finally { await releaseLock("import-job", token); }
+}
+```
+
+Locks are value-checked: `releaseLock` only releases if you still hold it.
+Workflows build on the same primitive via
+[`executeWithLock`](./09-workflows.md).
+
+## Job queue
+
+`RedisQueue` is a typed job queue with status tracking, priorities, and retry
+accounting:
+
+```ts
+import { RedisQueue, type QueueJob } from "@damatjs/redis";
+
+const queue = new RedisQueue<{ to: string }>("emails");
+
+const job: QueueJob<{ to: string }> = {
+  id: crypto.randomUUID(),
+  queue: "emails",
+  data: { to: "a@b.co" },
+  status: "pending",
+  priority: "normal",     // "low" | "normal" | "high" | "critical"
+  attempts: 0,
+  maxAttempts: 3,
+  createdAt: new Date(),
+};
+await queue.enqueue(job);
+
+// in a worker:
+const jobs = await queue.dequeue(10);
+// plus: getJob(id), updateStatus(job), cancelJob(id), getStats(), clear()
+```
+
+## Sessions and counters
+
+- `SessionManager<T>` — token → session data with TTL and optional
+  extend-on-access (`get`, `set`, `delete`, `touch`, `refresh`).
+- Counters — `incrementCounter(key, amount?, ttlSeconds?)`, `getCounter(key)`,
+  plus decrement/reset/set.
+
+See the [redis internals](../../packages/core/redis/docs/README.md) for every
+helper and its options.
 
 ---
 

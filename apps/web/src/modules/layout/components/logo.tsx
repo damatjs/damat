@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from "next/link";
 
 /** The "blade" mark — two forged blades meeting at a spark. */
 export function LogoMark({ className }: { className?: string }) {
@@ -25,14 +25,16 @@ export function LogoMark({ className }: { className?: string }) {
         fillOpacity="0.95"
       />
     </svg>
-  )
+  );
 }
 
 export function Logo() {
   return (
     <Link href="/" className="group flex items-center gap-2.5">
       <LogoMark className="shrink-0 transition-transform duration-200 group-hover:scale-105" />
-      <span className="text-base font-semibold tracking-tight text-ink">Damat</span>
+      <span className="text-base font-semibold tracking-tight text-ink">
+        Damat
+      </span>
     </Link>
-  )
+  );
 }

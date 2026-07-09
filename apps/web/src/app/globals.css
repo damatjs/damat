@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -83,7 +83,8 @@
   --color-iron-800: #1e1e1e;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono:
+    var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Custom type sizes used by the code panes and micro-labels. */
   --text-code: 0.8rem;
@@ -111,7 +112,7 @@
   body {
     background-color: var(--bg);
     color: var(--fg);
-    font-feature-settings: 'cv11', 'ss01';
+    font-feature-settings: "cv11", "ss01";
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
   }

@@ -1,35 +1,35 @@
-import Link from 'next/link'
-import { ArrowRightIcon } from '@/assets/icons/arrowRight'
-import { DOCS_PATH } from '@/lib/constants'
-import { cn } from '@/lib/utils'
+import Link from "next/link";
+import { ArrowRightIcon } from "@/assets/icons/arrowRight";
+import { docsUrl } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 const PILLARS = [
   {
-    title: 'Modules',
-    body: 'Self-contained features you author in isolation and install anywhere.',
-    href: `${DOCS_PATH}/concepts`,
+    title: "Modules",
+    body: "Self-contained features you author in isolation and install anywhere.",
+    href: docsUrl("concepts"),
   },
   {
-    title: 'ORM',
-    body: 'Typed models over PostgreSQL with real migrations and generated CRUD.',
-    href: `${DOCS_PATH}/models`,
+    title: "ORM",
+    body: "Typed models over PostgreSQL with real migrations and generated CRUD.",
+    href: docsUrl("models"),
   },
   {
-    title: 'HTTP',
-    body: 'File-based routes on Hono with per-route validation and middleware.',
-    href: `${DOCS_PATH}/http-apis`,
+    title: "HTTP",
+    body: "File-based routes on Hono with per-route validation and middleware.",
+    href: docsUrl("http-apis"),
   },
   {
-    title: 'Workflows',
-    body: 'Multi-step sagas with retries, timeouts, and compensation.',
-    href: `${DOCS_PATH}/workflows`,
+    title: "Workflows",
+    body: "Multi-step sagas with retries, timeouts, and compensation.",
+    href: docsUrl("workflows"),
   },
   {
-    title: 'Agent tools',
-    body: 'One CLI for everything — exposed to AI agents over MCP.',
-    href: `${DOCS_PATH}/cli-reference`,
+    title: "Agent tools",
+    body: "One CLI for everything — exposed to AI agents over MCP.",
+    href: docsUrl("cli-reference"),
   },
-]
+];
 
 /** The five product pillars as a hairline-divided strip. */
 export function Pillars() {
@@ -40,10 +40,10 @@ export function Pillars() {
           key={pillar.title}
           href={pillar.href}
           className={cn(
-            'group border-line px-6 py-8 transition-colors hover:bg-subtle lg:px-7',
-            i > 0 && 'border-t sm:border-t-0 lg:border-l',
-            i % 2 === 1 && 'sm:border-l',
-            i >= 2 && 'sm:border-t lg:border-t-0',
+            "group border-line px-6 py-8 transition-colors hover:bg-subtle lg:px-7",
+            i > 0 && "border-t sm:border-t-0 lg:border-l",
+            i % 2 === 1 && "sm:border-l",
+            i >= 2 && "sm:border-t lg:border-t-0",
           )}
         >
           <h3 className="flex items-center gap-2 text-md font-semibold text-ink">
@@ -54,9 +54,11 @@ export function Pillars() {
               className="text-faint opacity-0 transition-opacity group-hover:opacity-100"
             />
           </h3>
-          <p className="mt-2 text-sm leading-relaxed text-muted">{pillar.body}</p>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            {pillar.body}
+          </p>
         </Link>
       ))}
     </section>
-  )
+  );
 }

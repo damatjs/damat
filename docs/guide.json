@@ -149,6 +149,14 @@
           "slug": "default-backend",
           "path": "docs/guide/12-default-backend.md",
           "summary": "The reference app as a worked example."
+        },
+        {
+          "id": "crud-reference",
+          "order": 7.5,
+          "title": "Querying & CRUD",
+          "slug": "crud-reference",
+          "path": "docs/guide/07b-crud-reference.md",
+          "summary": "The generated CRUD methods, where operators, pagination, returning, soft deletes, and transactions."
         }
       ]
     },
@@ -195,6 +203,14 @@
           "slug": "composing-and-linking-modules",
           "path": "docs/guide/17-composing-and-linking-modules.md",
           "summary": "The backend owner's job: getModule, cross-module links, pairsWith hints, and wiring modules into the app."
+        },
+        {
+          "id": "publishing-modules",
+          "order": 14.5,
+          "title": "Publishing modules",
+          "slug": "publishing-modules",
+          "path": "docs/guide/14b-publishing-modules.md",
+          "summary": "List a module in a registry, understand verification statuses, and run your own registry."
         }
       ]
     },

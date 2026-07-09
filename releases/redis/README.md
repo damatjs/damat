@@ -6,6 +6,8 @@ Change history for this package. For how it works **now**, read the
 
 | Version | Summary | Upgrade notes |
 |---------|---------|---------------|
+| 0.6.0 | `SCAN`-based pattern deletion, atomic Lua rate-limit/dequeue scripts, TTL only on first counter increment, capped queue terminal sets (`RedisQueueOptions`) | [0.6.0 →](./0.6.0.md) |
+| 0.1.4 – 0.5.0 | Lockstep bumps — no change to this package's own behavior | — |
 | 0.1.3 | Dependency bump (`@damatjs/logger`, `@damatjs/deps`) — picks up the cross-module links work elsewhere in the workspace; no change to this package's API or behavior | — |
 | 0.1.2 | Dependency bump (`@damatjs/logger`, `@damatjs/deps`); version sync | — |
 | 0.1.1 | Maintenance — CI and test cleanup, dependency bumps | — |

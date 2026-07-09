@@ -69,11 +69,24 @@ export const PATCH: RouteHandler = async (c) => {
 };
 ```
 
+The framework only mounts what `route.ts` exports, so the third file simply
+re-exports the pieces:
+
+```ts
+// src/api/routes/posts/[id]/route.ts — what the framework mounts
+export { GET, PATCH, DELETE } from "./api";
+export { validators } from "./validator";
+// export { middleware } from "./middleware";   // optional, per-route
+```
+
+(For a simple endpoint you can keep handlers and `validators` directly in
+`route.ts` — the split into `api.ts` + `validator.ts` is just the convention
+codegen uses to keep files small.)
+
 `codegen` scaffolds exactly this shape for every table — the `*ParamsSchema` /
 `new*Schema` / `update*Schema` / `*QuerySchema` it generates into `@<module>/types`
 are wired into the route's `validators`, and the handlers read them with
-`getValidated`. `route.ts` re-exports the handlers, `validators`, and `middleware`
-so the framework can mount them.
+`getValidated`.
 
 Combine routes with module services via `getModule` and add cross-cutting
 middleware in `src/api/middleware/`. Routing, the scanner, and middleware are
@@ -82,4 +95,4 @@ documented in
 
 ---
 
-Prev: [← Modules & services](./07-modules-and-services.md) · [Guide home](../GUIDE.md) · Next: [Workflows →](./09-workflows.md)
+Prev: [← Querying & CRUD](./07b-crud-reference.md) · [Guide home](../GUIDE.md) · Next: [Workflows →](./09-workflows.md)

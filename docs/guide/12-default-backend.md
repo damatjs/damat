@@ -2,17 +2,33 @@
 
 # 12. The default backend, end to end
 
+> **Heads-up:** this chapter is a guided tour of the framework's reference app,
+> which lives in the [`damatjs/damat`](https://github.com/damatjs/damat)
+> monorepo. You don't need it to build your own app — but reading it is the
+> fastest way to see every pattern in this guide working together in one place.
+
 [`@damatjs/default`](../../backend/default/README.md) is a complete reference app
-demonstrating the whole framework: a `user` module (Better Auth models),
+demonstrating the whole framework: a `user` module,
 file-based routes under `/api` (`/api/posts`, `/api/users/:userId`, `/api/workflows`) plus a top-level `/health`,
 cross-module `links/`, a `user-onboarding` saga workflow, Redis usage, and a
-Docker setup. Read it alongside this guide as a worked example — most patterns
-here are taken directly from it. Its README has the full route and feature list.
+Docker setup. Most patterns in this guide are taken directly from it. Its
+README has the full route and feature list.
 
-A good way to learn Damat: open `backend/default/src/` next to these chapters and
-trace one feature end to end — its [model](./05-models.md), its
-[service](./07-modules-and-services.md), its [route](./08-http-apis.md), and (for
-onboarding) its [workflow](./09-workflows.md).
+To explore it, clone the repo (see
+[Getting started → Option B](./03-getting-started.md)) and open
+`backend/default/src/`. Then trace **one feature end to end** across the code
+and the matching chapter:
+
+| What to trace | Where it lives | Chapter |
+| --- | --- | --- |
+| The `users` table definition | `src/modules/user/models/` | [Defining models](./05-models.md) |
+| The user service & generated CRUD | `src/modules/user/service.ts` | [Modules & services](./07-modules-and-services.md) |
+| `GET /api/users/:userId` | `src/api/routes/users/[userId]/` | [Building HTTP APIs](./08-http-apis.md) |
+| The `user-onboarding` saga | `src/workflows/` | [Workflows](./09-workflows.md) |
+| The cross-module link | `src/links/` | [Composing & linking](./17-composing-and-linking-modules.md) |
+
+If you can follow one row of that table through the code, you understand the
+framework — everything else is more of the same.
 
 ---
 
