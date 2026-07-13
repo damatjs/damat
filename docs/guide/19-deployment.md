@@ -26,7 +26,7 @@ Set these in the production environment:
 
 ## A minimal Dockerfile
 
-This works for any app scaffolded with `create-damat-app`:
+This works for any app scaffolded with `damat create`:
 
 ```dockerfile
 FROM oven/bun:1 AS build

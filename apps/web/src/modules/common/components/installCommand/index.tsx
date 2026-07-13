@@ -15,7 +15,7 @@ export function InstallCommand({ className }: { className?: string }) {
       <span className="hidden truncate text-ink sm:inline">
         {INSTALL_COMMAND}
       </span>
-      <span className="truncate text-ink sm:hidden">create-damat-app</span>
+      <span className="truncate text-ink sm:hidden">damat create</span>
       <CopyButton text={INSTALL_COMMAND} />
     </span>
   );

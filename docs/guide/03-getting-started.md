@@ -38,20 +38,17 @@ docker compose up -d
 ## Option A — scaffold a new app (recommended)
 
 ```bash
-bunx create-damat-app@latest my-app
-cd my-app
-bun install
-cp .env.example .env        # then edit DATABASE_URL etc.
+bunx @damatjs/damat-cli@latest create my-app
+cd my-app                   # then edit .env: DATABASE_URL etc.
 bun run db:migrate          # apply migrations
 bun run dev                 # start the dev server (hot reload)
 ```
 
-`create-damat-app` scaffolds a working app — a `damat.config.ts`, an example
-`user` module (models, service, config, migrations), file-based routes under
-`src/api/routes/`, and `package.json` scripts wired to the `damat` and
-`damat-orm` CLIs — and can optionally create a Postgres database for you. See
-[its docs](../../packages/cli/create-damat-app/README.md) for flags
-(`--module`, `--use-bun`, `--directory-path`, …).
+`damat create` scaffolds a working app — a `damat.config.ts`, file-based routes
+under `src/api/routes/`, and `package.json` scripts wired to the `damat` and
+`damat-orm` CLIs. It also writes a `.env` with generated secrets, initializes a
+git repository, and runs `bun install` for you, so there is nothing to copy or
+install by hand. See [its docs](../../packages/cli/damat/README.md) for flags.
 
 ## Option B — run the reference backend (requires cloning the repo)
 

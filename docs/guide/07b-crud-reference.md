@@ -119,6 +119,37 @@ await this.transaction(async () => {
 generated from your models (`damat codegen`) before touching the database —
 invalid payloads throw a validation error instead of producing a DB error.
 
+## Opt-in read caching, events & query logging
+
+Three service-level features are off by default; you enable each on the service
+config (and, for caching, per call). Full detail in the
+[`@damatjs/services` README](../../packages/service/README.md).
+
+```ts
+class UserService extends ModuleService({
+  models,
+  cache: { defaultTtl: 60, prefix: "user" }, // enable the read-cache machinery
+  events: true,                              // emit model CRUD events
+  logQueries: true,                          // debug-log each CRUD call's duration
+}) {}
+```
+
+- **Read caching (Redis-backed, Next.js `fetch`-cache model).** Nothing is
+  cached until a read opts in: `findMany({ where, cache: true })` uses the
+  service's `defaultTtl`; `cache: { ttl: 300, tags: ["homepage"] }` sets a
+  time-based TTL plus custom invalidation tags. Every write
+  (`create`/`update`/`delete`/…) then **invalidates the model's cached reads
+  automatically**, and `invalidateCacheTags(["homepage"])` (from
+  `@damatjs/redis`, re-exported by `@damatjs/framework`) is the manual reset.
+  Fail-open: if Redis is missing or down the read just hits the database;
+  reads inside a `transaction()` always hit the database; `null` results are
+  never cached.
+- **Model events (`events: true`).** After each successful write the service
+  emits `<model>.created|updated|deleted` on the `@damatjs/events` bus with
+  `{ model, method, result }` — see [Events & background jobs](./10b-events-and-jobs.md).
+- **Query logging (`logQueries: true`).** One debug-level `query` log per CRUD
+  call (`{ model, method, durationMs }`) — never SQL text or parameter values.
+
 ---
 
 Prev: [← Modules & services](./07-modules-and-services.md) · [Guide home](../GUIDE.md) · Next: [Building HTTP APIs →](./08-http-apis.md)

@@ -21,7 +21,11 @@ await cacheSet("user:1", user, 60);        // (key, value, ttlSeconds — defaul
 const cached = await cacheGet<User>("user:1"); // typed read; null on miss
 ```
 
-Values are JSON-serialized for you.
+Values are JSON-serialized for you. For group invalidation, `cacheSetTagged(key,
+value, ttl, tags)` indexes an entry under invalidation tags and
+`invalidateCacheTags(tags)` drops every entry in a tag at once — the model the
+service layer's opt-in read cache is built on (see
+[Querying & CRUD → read caching](./07b-crud-reference.md#opt-in-read-caching-events--query-logging)).
 
 ## Rate limiting
 
@@ -61,8 +65,12 @@ Workflows build on the same primitive via
 
 ## Job queue
 
-`RedisQueue` is a typed job queue with status tracking, priorities, and retry
-accounting:
+`RedisQueue` is the **low-level** typed queue with status tracking, priorities,
+and retry accounting. Most apps want the higher-level
+[`@damatjs/jobs`](./10b-events-and-jobs.md#background-jobs) layer built on it —
+`defineJob` / `enqueueJob` / `JobWorker`, which adds a worker loop, exponential
+backoff, and dead-lettering. Reach for `RedisQueue` directly only when you need
+raw control:
 
 ```ts
 import { RedisQueue, type QueueJob } from "@damatjs/redis";

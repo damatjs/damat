@@ -44,4 +44,4 @@ export function docsUrl(slug = ""): string {
 export const REGISTRY_URL =
   process.env.NEXT_PUBLIC_REGISTRY_URL ?? "https://registry.damatjs.com";
 
-export const INSTALL_COMMAND = "bunx create-damat-app@latest my-app";
+export const INSTALL_COMMAND = "bunx @damatjs/damat-cli@latest create my-app";

@@ -13,7 +13,20 @@ import { join } from "node:path";
 const ROOT = join(import.meta.dir, "..");
 
 // --- Guide chapters (order + metadata is the source of truth for a site) ----
-const sections = [
+// Most chapters are auto-numbered (01, 02, …). A chapter inserted between two
+// existing ones declares an explicit `file` (the NNb-*.md on disk) and a
+// fractional `order` so the surrounding numbering never shifts.
+interface ChapterDef {
+  id: string;
+  title: string;
+  summary: string;
+  /** Explicit filename under docs/guide/ for inserted (NNb-*) chapters. */
+  file?: string;
+  /** Fractional sort order for inserted chapters (e.g. 7.5 for 07b). */
+  order?: number;
+}
+
+const sections: Array<{ id: string; title: string; chapters: ChapterDef[] }> = [
   {
     id: "start-here",
     title: "Start here",
@@ -31,9 +44,12 @@ const sections = [
       { id: "models", title: "Defining models (the ORM DSL)", summary: "The fluent, type-safe model/columns DSL." },
       { id: "migrations", title: "Migrations", summary: "The module-aware migration system and the damat-orm CLI." },
       { id: "modules-and-services", title: "Modules & services", summary: "ModuleService auto-CRUD, credentials, and defineModule." },
+      { id: "crud-reference", title: "Querying & the CRUD service", summary: "The generated service methods, where operators, read caching, and transactions.", file: "07b-crud-reference.md", order: 7.5 },
       { id: "http-apis", title: "Building HTTP APIs", summary: "File-based routing with Hono." },
+      { id: "authentication", title: "Authentication", summary: "Integrate Better Auth, Clerk, Auth0 — or your own provider — via services.auth; typed c.get('user').", file: "08b-authentication.md", order: 8.5 },
       { id: "workflows", title: "Workflows (the saga engine)", summary: "Steps with compensation and saga orchestration on Effect-TS." },
       { id: "redis", title: "Redis: cache, queue, locks, rate limiting", summary: "Batteries-included Redis helpers." },
+      { id: "events-and-jobs", title: "Events & background jobs", summary: "The typed event bus (model CRUD events, Redis broadcast) and Redis-backed background jobs with retries and dead-lettering.", file: "10b-events-and-jobs.md", order: 10.5 },
       { id: "logging", title: "Logging", summary: "Structured logging with levels, formats, and file transport." },
       { id: "default-backend", title: "The default backend, end to end", summary: "The reference app as a worked example." },
     ],
@@ -43,7 +59,8 @@ const sections = [
     title: "Modules & sharing",
     chapters: [
       { id: "authoring-modules", title: "Authoring a module", summary: "Build one self-contained, single-purpose module (the blade) and test it in isolation." },
-      { id: "installing-modules", title: "Installing existing modules", summary: "damat module add from a registry ref, path, or git." },
+      { id: "installing-modules", title: "Installing existing modules", summary: "damat module add / remove / update from a registry ref, path, or git." },
+      { id: "publishing-modules", title: "Publishing modules", summary: "List a module in a registry — damat module publish, verification, running your own registry.", file: "14b-publishing-modules.md", order: 14.5 },
       { id: "installing-modules-with-ai", title: "Installing modules with AI (MCP)", summary: "Discover and install modules through the MCP server." },
       { id: "module-capabilities", title: "Module capabilities", summary: "Everything one module can do — the full model/service/config/migration/codegen/workflow/test/packaging surface." },
       { id: "composing-and-linking-modules", title: "Composing & linking modules", summary: "The backend owner's job: getModule, cross-module links, pairsWith hints, and wiring modules into the app." },
@@ -53,28 +70,35 @@ const sections = [
     id: "operate-and-reference",
     title: "Operate & reference",
     chapters: [
-      { id: "cli-reference", title: "CLI reference", summary: "damat, damat-orm, and create-damat-app." },
+      { id: "cli-reference", title: "CLI reference", summary: "damat and damat-orm." },
       { id: "deployment", title: "Deployment", summary: "Docker and production release flow." },
       { id: "package-reference", title: "Package reference", summary: "Links to every package's README and internals." },
       { id: "troubleshooting", title: "Troubleshooting", summary: "Common symptoms and fixes." },
     ],
   },
-] as const;
+];
 
-// Number the chapter files (01-introduction.md, …) by global order.
+// Number the chapter files (01-introduction.md, …) by global order. Chapters
+// with an explicit `file`/`order` keep it and do not advance the counter.
 let n = 0;
 const guide = sections.map((section) => ({
   id: section.id,
   title: section.title,
   chapters: section.chapters.map((ch) => {
-    n += 1;
-    const num = String(n).padStart(2, "0");
-    const slug = ch.id;
-    const file = `guide/${num}-${slug}.md`;
+    let order: number;
+    let file: string;
+    if (ch.file !== undefined && ch.order !== undefined) {
+      order = ch.order;
+      file = `guide/${ch.file}`;
+    } else {
+      n += 1;
+      order = n;
+      file = `guide/${String(n).padStart(2, "0")}-${ch.id}.md`;
+    }
     if (!existsSync(join(ROOT, "docs", file))) {
       throw new Error(`Missing chapter file: docs/${file}`);
     }
-    return { id: ch.id, order: n, title: ch.title, slug, path: `docs/${file}`, summary: ch.summary };
+    return { id: ch.id, order, title: ch.title, slug: ch.id, path: `docs/${file}`, summary: ch.summary };
   }),
 }));
 
@@ -96,6 +120,12 @@ const packageList: Array<{ dir: string; group: string }> = [
   { dir: "packages/orm/type", group: "ORM" },
   { dir: "packages/core/logger", group: "Core" },
   { dir: "packages/core/redis", group: "Core" },
+  { dir: "packages/core/events", group: "Core" },
+  { dir: "packages/core/jobs", group: "Core" },
+  { dir: "packages/auth/core", group: "Auth" },
+  { dir: "packages/auth/better-auth", group: "Auth" },
+  { dir: "packages/auth/clerk", group: "Auth" },
+  { dir: "packages/auth/auth0", group: "Auth" },
   { dir: "packages/core/env", group: "Core" },
   { dir: "packages/core/types", group: "Core" },
   { dir: "packages/core/cli", group: "Core" },
@@ -103,7 +133,6 @@ const packageList: Array<{ dir: string; group: string }> = [
   { dir: "packages/typescript-config", group: "Core" },
   { dir: "packages/cli/damat", group: "CLIs & AI" },
   { dir: "packages/orm/cli", group: "CLIs & AI" },
-  { dir: "packages/cli/create-damat-app", group: "CLIs & AI" },
   { dir: "packages/mcp", group: "CLIs & AI" },
 ];
 

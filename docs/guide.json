@@ -111,12 +111,28 @@
           "summary": "ModuleService auto-CRUD, credentials, and defineModule."
         },
         {
+          "id": "crud-reference",
+          "order": 7.5,
+          "title": "Querying & the CRUD service",
+          "slug": "crud-reference",
+          "path": "docs/guide/07b-crud-reference.md",
+          "summary": "The generated service methods, where operators, read caching, and transactions."
+        },
+        {
           "id": "http-apis",
           "order": 8,
           "title": "Building HTTP APIs",
           "slug": "http-apis",
           "path": "docs/guide/08-http-apis.md",
           "summary": "File-based routing with Hono."
+        },
+        {
+          "id": "authentication",
+          "order": 8.5,
+          "title": "Authentication",
+          "slug": "authentication",
+          "path": "docs/guide/08b-authentication.md",
+          "summary": "Integrate Better Auth, Clerk, Auth0 — or your own provider — via services.auth; typed c.get('user')."
         },
         {
           "id": "workflows",
@@ -135,6 +151,14 @@
           "summary": "Batteries-included Redis helpers."
         },
         {
+          "id": "events-and-jobs",
+          "order": 10.5,
+          "title": "Events & background jobs",
+          "slug": "events-and-jobs",
+          "path": "docs/guide/10b-events-and-jobs.md",
+          "summary": "The typed event bus (model CRUD events, Redis broadcast) and Redis-backed background jobs with retries and dead-lettering."
+        },
+        {
           "id": "logging",
           "order": 11,
           "title": "Logging",
@@ -149,14 +173,6 @@
           "slug": "default-backend",
           "path": "docs/guide/12-default-backend.md",
           "summary": "The reference app as a worked example."
-        },
-        {
-          "id": "crud-reference",
-          "order": 7.5,
-          "title": "Querying & CRUD",
-          "slug": "crud-reference",
-          "path": "docs/guide/07b-crud-reference.md",
-          "summary": "The generated CRUD methods, where operators, pagination, returning, soft deletes, and transactions."
         }
       ]
     },
@@ -178,7 +194,15 @@
           "title": "Installing existing modules",
           "slug": "installing-modules",
           "path": "docs/guide/14-installing-modules.md",
-          "summary": "damat module add from a registry ref, path, or git."
+          "summary": "damat module add / remove / update from a registry ref, path, or git."
+        },
+        {
+          "id": "publishing-modules",
+          "order": 14.5,
+          "title": "Publishing modules",
+          "slug": "publishing-modules",
+          "path": "docs/guide/14b-publishing-modules.md",
+          "summary": "List a module in a registry — damat module publish, verification, running your own registry."
         },
         {
           "id": "installing-modules-with-ai",
@@ -203,14 +227,6 @@
           "slug": "composing-and-linking-modules",
           "path": "docs/guide/17-composing-and-linking-modules.md",
           "summary": "The backend owner's job: getModule, cross-module links, pairsWith hints, and wiring modules into the app."
-        },
-        {
-          "id": "publishing-modules",
-          "order": 14.5,
-          "title": "Publishing modules",
-          "slug": "publishing-modules",
-          "path": "docs/guide/14b-publishing-modules.md",
-          "summary": "List a module in a registry, understand verification statuses, and run your own registry."
         }
       ]
     },
@@ -224,7 +240,7 @@
           "title": "CLI reference",
           "slug": "cli-reference",
           "path": "docs/guide/18-cli-reference.md",
-          "summary": "damat, damat-orm, and create-damat-app."
+          "summary": "damat and damat-orm."
         },
         {
           "id": "deployment",
@@ -491,6 +507,26 @@
           ]
         },
         {
+          "name": "@damatjs/events",
+          "description": "Typed subscription/event bus for Damat apps — local by default, Redis pub/sub broadcast opt-in",
+          "dir": "packages/core/events",
+          "readme": "packages/core/events/README.md",
+          "docsIndex": "packages/core/events/docs/README.md",
+          "docs": [
+            "packages/core/events/docs/README.md"
+          ]
+        },
+        {
+          "name": "@damatjs/jobs",
+          "description": "Background job & worker layer for Damat apps, on the Redis-backed queue",
+          "dir": "packages/core/jobs",
+          "readme": "packages/core/jobs/README.md",
+          "docsIndex": "packages/core/jobs/docs/README.md",
+          "docs": [
+            "packages/core/jobs/docs/README.md"
+          ]
+        },
+        {
           "name": "@damatjs/load-env",
           "description": "Damatjs load env",
           "dir": "packages/core/env",
@@ -552,6 +588,43 @@
       ]
     },
     {
+      "group": "Auth",
+      "packages": [
+        {
+          "name": "@damatjs/auth",
+          "description": "Provider-agnostic auth contract for Damat: verify sessions/tokens from Better Auth, Clerk, or Auth0 and populate the request principal",
+          "dir": "packages/auth/core",
+          "readme": "packages/auth/core/README.md",
+          "docsIndex": null,
+          "docs": []
+        },
+        {
+          "name": "@damatjs/auth-better-auth",
+          "description": "Better Auth provider adapter for Damat — in-backend auth, wired into the framework's auth middleware",
+          "dir": "packages/auth/better-auth",
+          "readme": "packages/auth/better-auth/README.md",
+          "docsIndex": null,
+          "docs": []
+        },
+        {
+          "name": "@damatjs/auth-clerk",
+          "description": "Clerk provider adapter for Damat — verify Clerk sessions and populate the request principal",
+          "dir": "packages/auth/clerk",
+          "readme": "packages/auth/clerk/README.md",
+          "docsIndex": null,
+          "docs": []
+        },
+        {
+          "name": "@damatjs/auth-auth0",
+          "description": "Auth0 provider adapter for Damat — verify Auth0 access tokens via JWKS and populate the request principal",
+          "dir": "packages/auth/auth0",
+          "readme": "packages/auth/auth0/README.md",
+          "docsIndex": null,
+          "docs": []
+        }
+      ]
+    },
+    {
       "group": "CLIs & AI",
       "packages": [
         {
@@ -563,6 +636,7 @@
           "docs": [
             "packages/cli/damat/docs/README.md",
             "packages/cli/damat/docs/commands.md",
+            "packages/cli/damat/docs/kit-commands.md",
             "packages/cli/damat/docs/module-commands.md",
             "packages/cli/damat/docs/scaffolding.md"
           ]
@@ -578,20 +652,6 @@
             "packages/orm/cli/docs/config-and-paths.md",
             "packages/orm/cli/docs/generate-commands.md",
             "packages/orm/cli/docs/migrate-commands.md"
-          ]
-        },
-        {
-          "name": "@damatjs/create-damat-app",
-          "description": "Create a damat project using a single command.",
-          "dir": "packages/cli/create-damat-app",
-          "readme": "packages/cli/create-damat-app/README.md",
-          "docsIndex": "packages/cli/create-damat-app/docs/README.md",
-          "docs": [
-            "packages/cli/create-damat-app/docs/README.md",
-            "packages/cli/create-damat-app/docs/database-setup.md",
-            "packages/cli/create-damat-app/docs/flow.md",
-            "packages/cli/create-damat-app/docs/package-managers.md",
-            "packages/cli/create-damat-app/docs/project-vs-module.md"
           ]
         },
         {

@@ -33,7 +33,7 @@ const WITH_PROVENANCE = process.env.GITHUB_ACTIONS === "true";
 
 // Workspace globs from the root package.json that live under packages/.
 // (backend/* and modules/* workspaces are app/dev-only and never published.)
-const PACKAGE_GLOBS = ["packages/*", "packages/cli/*", "packages/core/*", "packages/orm/*"];
+const PACKAGE_GLOBS = ["packages/*", "packages/auth/*", "packages/cli/*", "packages/core/*", "packages/orm/*"];
 
 interface Pkg {
   dir: string;

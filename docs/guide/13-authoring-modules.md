@@ -40,16 +40,12 @@ app.
 
 ## Scaffold and develop
 
-Start a fresh module package one of two ways — the same shape comes out either
-way:
+Start a fresh module package with `damat module init` — an offline local
+scaffold, generated from built-in templates:
 
 ```bash
-# A) create-damat-app with --module: scaffolds the module LOCALLY (no clone) by
-#    running `damat module init` under the hood, then installs deps. Pass
-#    --repo-url <git> to clone a custom starter repo instead.
-bunx create-damat-app@latest my-module --module
-
-# B) Offline local scaffold — no network, generated from built-in templates.
+bunx @damatjs/damat-cli@latest module init my-module
+# or, with the CLI already installed:
 damat module init my-module
 ```
 

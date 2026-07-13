@@ -36,10 +36,9 @@ version only** — the per-version change history and upgrade steps live in
 ## Quick start
 
 ```bash
-# scaffold a new app
-bunx create-damat-app@latest my-app
-cd my-app && bun install
-cp .env.example .env          # set DATABASE_URL, etc.
+# scaffold a new app (writes .env with generated secrets, git-inits, installs deps)
+bunx @damatjs/damat-cli@latest create my-app
+cd my-app
 bun run db:migrate
 bun run dev
 ```
@@ -109,11 +108,22 @@ version history.
 |---------|-------------|
 | [`@damatjs/logger`](./packages/core/logger/README.md) | Structured logging (levels, formats, file transport) |
 | [`@damatjs/redis`](./packages/core/redis/README.md) | Cache, queue, locks, sessions, rate limiting |
+| [`@damatjs/events`](./packages/core/events/README.md) | Typed event bus: subscriptions, model CRUD events, Redis broadcast |
+| [`@damatjs/jobs`](./packages/core/jobs/README.md) | Background jobs: workers, retries/backoff, dead-lettering |
 | [`@damatjs/load-env`](./packages/core/env/README.md) | `.env` cascade loader |
 | [`@damatjs/types`](./packages/core/types/README.md) | Error classes & shared types |
 | [`@damatjs/cli`](./packages/core/cli/README.md) | General CLI framework (powers the CLIs below) |
 | [`@damatjs/deps`](./packages/deps/README.md) | Pinned external dependency re-exports |
 | [`@damatjs/typescript-config`](./packages/typescript-config/README.md) | Shared tsconfig presets |
+
+### Auth
+
+| Package | Description |
+|---------|-------------|
+| [`@damatjs/auth`](./packages/auth/core/README.md) | Provider-agnostic auth contract + middleware; build your own provider on it |
+| [`@damatjs/auth-better-auth`](./packages/auth/better-auth/README.md) | Better Auth adapter (runs in your backend) |
+| [`@damatjs/auth-clerk`](./packages/auth/clerk/README.md) | Clerk adapter (hosted, verify-only) |
+| [`@damatjs/auth-auth0`](./packages/auth/auth0/README.md) | Auth0 adapter (JWKS verify-only) |
 
 ### CLIs & AI
 
@@ -121,7 +131,6 @@ version history.
 |---------|--------|-------------|
 | [`@damatjs/damat-cli`](./packages/cli/damat/README.md) | `damat` | Dev/build + the `module` command group |
 | [`@damatjs/orm-cli`](./packages/orm/cli/README.md) | `damat-orm` | Migrations & codegen |
-| [`@damatjs/create-damat-app`](./packages/cli/create-damat-app/README.md) | `create-damat-app` | Project / module scaffolding |
 | [`@damatjs/mcp`](./packages/mcp/README.md) | `damat-mcp` | MCP server: discover & install modules with AI |
 
 ### Reference app

@@ -72,7 +72,14 @@ damat/
     │   ├── env/               # @damatjs/load-env — .env cascade loader
     │   ├── logger/            # @damatjs/logger — structured logging
     │   ├── redis/             # @damatjs/redis — cache/queue/lock/session/rate-limit
+    │   ├── events/            # @damatjs/events — typed event bus (+ model CRUD events, Redis broadcast)
+    │   ├── jobs/              # @damatjs/jobs — background jobs & worker on the Redis queue
     │   └── types/             # @damatjs/types — error classes & shared types
+    ├── auth/
+    │   ├── core/              # @damatjs/auth — provider-agnostic auth contract + middleware
+    │   ├── better-auth/       # @damatjs/auth-better-auth — Better Auth adapter (in-backend)
+    │   ├── clerk/             # @damatjs/auth-clerk — Clerk adapter (hosted, verify-only)
+    │   └── auth0/             # @damatjs/auth-auth0 — Auth0 adapter (JWKS verify-only)
     ├── orm/
     │   ├── main/              # @damatjs/orm — umbrella re-export
     │   ├── model/             # @damatjs/orm-model — fluent model DSL
@@ -84,8 +91,7 @@ damat/
     │   ├── type/              # @damatjs/orm-type — shared ORM types
     │   └── cli/               # @damatjs/orm-cli — `damat-orm` migrations/codegen
     └── cli/
-        ├── damat/             # @damatjs/damat-cli — `damat` dev/build/module CLI
-        └── create-damat-app/  # @damatjs/create-damat-app — scaffolding
+        └── damat/             # @damatjs/damat-cli — `damat` dev/build/module CLI
 ```
 
 Each package's `docs/README.md` is the internals index — go there before

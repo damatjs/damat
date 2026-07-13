@@ -1,0 +1,11 @@
+[mcp_servers.damat-modules]
+command = "bun"
+args = [
+    "run",
+    "packages/mcp/bin/damat-mcp.ts",
+]
+
+[mcp_servers.damat-modules.env]
+DAMAT_MODULE_REGISTRY = "https://registry.damatjs.com/index.json"
+DAMAT_APP_DIR = "."
+DAMAT_CLI = "damat"

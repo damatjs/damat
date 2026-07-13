@@ -24,13 +24,14 @@ Start from the [package map](./01-introduction.md#the-package-map), or jump in:
   [type](../../packages/orm/type/README.md)
 - **Core:** [logger](../../packages/core/logger/README.md) ·
   [redis](../../packages/core/redis/README.md) ·
+  [events](../../packages/core/events/README.md) ·
+  [jobs](../../packages/core/jobs/README.md) ·
   [load-env](../../packages/core/env/README.md) ·
   [types](../../packages/core/types/README.md) ·
   [cli](../../packages/core/cli/README.md) ·
   [deps](../../packages/deps/README.md)
 - **CLIs & AI:** [damat-cli](../../packages/cli/damat/README.md) ·
   [orm-cli](../../packages/orm/cli/README.md) ·
-  [create-damat-app](../../packages/cli/create-damat-app/README.md) ·
   [mcp](../../packages/mcp/README.md)
 - **Reference app:** [@damatjs/default](../../backend/default/README.md)
 - [Module manifest reference (MODULES.md)](../../MODULES.md)
