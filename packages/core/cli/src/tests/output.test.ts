@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, afterEach, mock } from "bun:test";
+import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import {
   formatCommandHelp,
   printError,
@@ -21,9 +21,11 @@ function createLoggerSpy() {
     warn: [],
     debug: [],
   };
-  const record = (name: string) => (...args: unknown[]) => {
-    calls[name]!.push(args);
-  };
+  const record =
+    (name: string) =>
+    (...args: unknown[]) => {
+      calls[name]!.push(args);
+    };
   const logger = {
     debug: record("debug"),
     info: record("info"),
@@ -55,7 +57,11 @@ describe("formatCommandHelp", () => {
   });
 
   test("appends an indented usage line when usage is provided", () => {
-    const result = formatCommandHelp("build", "Build the project", "cli build [opts]");
+    const result = formatCommandHelp(
+      "build",
+      "Build the project",
+      "cli build [opts]",
+    );
     const lines = result.split("\n");
     expect(lines).toHaveLength(2);
     expect(lines[1]).toBe(" ".repeat(20) + "Usage: cli build [opts]");

@@ -48,6 +48,7 @@
     "test": "bun test",
     "dev": "bun run build --watch",
     "postinstall": "chmod +x dist/cli.js || true",
-    "prepublishOnly": "test -f dist/cli.js && test -f dist/command/module/scaffold/agents.generated.js || (echo 'Error: build artifacts missing (dist/cli.js or embedded AGENTS guide). Run bun run build first.' && exit 1)"
+    "prepublishOnly": "test -f dist/cli.js && test -f dist/command/module/scaffold/agents.generated.js || (echo 'Error: build artifacts missing (dist/cli.js or embedded AGENTS guide). Run bun run build first.' && exit 1)",
+    "lint": "oxlint src"
   }
 }

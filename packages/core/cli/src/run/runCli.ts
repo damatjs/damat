@@ -61,7 +61,7 @@ export async function runCli(config: CliConfig): Promise<void> {
     if (!cmd) {
       // The first token isn't a known command. If a default command is
       // configured, treat the whole arg list as that command's arguments
-      // (e.g. `create-damat-app my-app` -> `create my-app`). Aliases are
+      // (e.g. `create-tool my-app` -> `create my-app`). Aliases are
       // registered as commands, so this only ever catches genuine arguments.
       const fallback = config.defaultCommand
         ? getRegistry().get(config.defaultCommand)

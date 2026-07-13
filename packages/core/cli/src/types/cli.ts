@@ -30,7 +30,7 @@ export interface CliConfig {
   /**
    * Name (or alias) of a command to fall back to when the first argument is not
    * a known command — so `mytool <arg>` behaves like `mytool <defaultCommand>
-   * <arg>`. Used by single-purpose CLIs (e.g. `create-damat-app my-app`).
+   * <arg>`. Used by single-purpose CLIs (e.g. `create-tool my-app`).
    * The whole argument list is passed to the default command.
    */
   defaultCommand?: string;

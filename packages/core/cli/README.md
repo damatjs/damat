@@ -144,7 +144,6 @@ All exports come from the single entry point `@damatjs/cli` (no subpath exports)
 
 - `@damatjs/damat-cli` (`packages/cli/damat`) — the user-facing `damat` CLI; re-exports this package and defines `dev`/`build`/`start`/`module` commands.
 - `@damatjs/orm-cli` (`packages/orm/cli`) — migration/generate commands.
-- `@damatjs/create-damat-app` (`packages/cli/create-damat-app`).
 
 ## Documentation
 

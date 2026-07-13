@@ -1,5 +1,10 @@
 import { describe, test, expect } from "bun:test";
-import { validateOptions, applyDefaults, coerceOptions, coerceOptionValue } from "../utils/validate";
+import {
+  validateOptions,
+  applyDefaults,
+  coerceOptions,
+  coerceOptionValue,
+} from "../utils/validate";
 import type { CommandOption } from "../types";
 import { MissingRequiredOptionError } from "../errors";
 
@@ -13,7 +18,7 @@ describe("validateOptions", () => {
     try {
       validateOptions(options, optionDefs, "test");
       expect(true).toBe(true);
-    } catch (e) {
+    } catch {
       expect(true).toBe(false);
     }
   });
@@ -24,7 +29,9 @@ describe("validateOptions", () => {
       { name: "name", description: "Name", required: true },
     ];
 
-    expect(() => validateOptions(options, optionDefs, "test")).toThrow(MissingRequiredOptionError);
+    expect(() => validateOptions(options, optionDefs, "test")).toThrow(
+      MissingRequiredOptionError,
+    );
   });
 
   test("should pass when required option has default value", () => {
@@ -36,7 +43,7 @@ describe("validateOptions", () => {
     try {
       validateOptions(options, optionDefs, "test");
       expect(true).toBe(true);
-    } catch (e) {
+    } catch {
       expect(true).toBe(false);
     }
   });
@@ -46,7 +53,7 @@ describe("validateOptions", () => {
     try {
       validateOptions(options, undefined, "test");
       expect(true).toBe(true);
-    } catch (e) {
+    } catch {
       expect(true).toBe(false);
     }
   });

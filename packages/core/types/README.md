@@ -3,8 +3,8 @@
 > Shared error classes and utility types for the Damat framework.
 
 `@damatjs/types` is the lowest-level package in the Damat stack: a zero-dependency
-collection of HTTP-aware error classes (`AppError` and its subclasses) plus a small
-utility export. Almost every other Damat package depends on it so that errors thrown
+collection of HTTP-aware error classes (`AppError` and its subclasses) plus one
+deprecated legacy helper. Almost every other Damat package depends on it so that errors thrown
 deep in the ORM, services, or workflow layers carry a consistent `statusCode` and
 machine-readable `code` all the way up to the HTTP boundary. If you are building on
 Damat, throw these errors instead of bare `Error`s and your HTTP handlers can map them
@@ -94,7 +94,7 @@ All exports come from the single entry point `@damatjs/types`.
 | `AuthorizationError`  | class | `extends AppError` → 403, code `FORBIDDEN`. Default message.                |
 | `NotFoundError`       | class | `extends AppError` → 404, code `NOT_FOUND`. Default message `"Not found"`.  |
 | `RateLimitError`      | class | `extends AppError` → 429, code `RATE_LIMITED`. `details.retryAfter?`.       |
-| `initFramework`       | fn    | Legacy no-op: logs `"Framework initialized"` and returns `true`.           |
+| `initFramework`       | fn    | **`@deprecated`** no-op: logs `"Framework initialized"` and returns `true`. Removal planned for 0.7 — drop the call. |
 
 ### Error class reference
 

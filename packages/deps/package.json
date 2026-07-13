@@ -59,7 +59,8 @@
   "scripts": {
     "build": "rm -rf dist tsconfig.tsbuildinfo && tsc --build",
     "test": "bun test",
-    "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)"
+    "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)",
+    "lint": "oxlint src"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",

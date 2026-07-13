@@ -62,4 +62,82 @@ describe("generateBarrels", () => {
     const { written } = generateBarrels(join(tmpdir(), "cg-barrel-does-not-exist-xyz"));
     expect(written).toEqual([]);
   });
+
+  it("is idempotent: a second run rewrites byte-identical barrels", () => {
+    const { root } = makeTree();
+    const first = generateBarrels(root);
+    const snapshot = new Map(
+      first.written.map((p) => [p, readFileSync(p, "utf-8")]),
+    );
+
+    const second = generateBarrels(root);
+
+    // Same barrels, same order, same bytes.
+    expect(second.written).toEqual(first.written);
+    for (const path of second.written) {
+      expect(readFileSync(path, "utf-8")).toBe(snapshot.get(path)!);
+    }
+  });
+
+  it("writes a single empty barrel for an empty root directory", () => {
+    const root = mkdtempSync(join(tmpdir(), "cg-barrel-empty-root-"));
+    const { written } = generateBarrels(root);
+    expect(written).toEqual([join(root, "index.ts")]);
+    expect(readFileSync(join(root, "index.ts"), "utf-8")).toContain("export {};");
+  });
+
+  it("barrels a deeply nested tree so the root re-exports transitively", () => {
+    const root = mkdtempSync(join(tmpdir(), "cg-barrel-deep-"));
+    const leaf = join(root, "a", "b", "c");
+    mkdirSync(leaf, { recursive: true });
+    writeFileSync(join(leaf, "deep.ts"), "export const deep = 1;\n");
+
+    const { written } = generateBarrels(root);
+
+    // Every level gets a barrel, each re-exporting the next level down.
+    expect(readFileSync(join(root, "index.ts"), "utf-8")).toContain('export * from "./a";');
+    expect(readFileSync(join(root, "a", "index.ts"), "utf-8")).toContain('export * from "./b";');
+    expect(readFileSync(join(root, "a", "b", "index.ts"), "utf-8")).toContain('export * from "./c";');
+    expect(readFileSync(join(leaf, "index.ts"), "utf-8")).toContain('export * from "./deep";');
+
+    // Depth-first walk: a child's barrel is written before its parent's.
+    expect(written).toEqual([
+      join(leaf, "index.ts"),
+      join(root, "a", "b", "index.ts"),
+      join(root, "a", "index.ts"),
+      join(root, "index.ts"),
+    ]);
+  });
+
+  it("orders exports stably: sorted folders first, then sorted files", () => {
+    const root = mkdtempSync(join(tmpdir(), "cg-barrel-order-"));
+    // Create children in deliberately non-alphabetical order.
+    writeFileSync(join(root, "zebra.ts"), "export const zebra = 1;\n");
+    mkdirSync(join(root, "beta"));
+    writeFileSync(join(root, "alpha.ts"), "export const alpha = 1;\n");
+    mkdirSync(join(root, "acme"));
+    writeFileSync(join(root, "middle.tsx"), "export const middle = 1;\n");
+
+    generateBarrels(root);
+
+    const lines = readFileSync(join(root, "index.ts"), "utf-8")
+      .split("\n")
+      .filter((l) => l.startsWith("export * from"));
+
+    // Directories (sorted) precede files (sorted); .tsx loses its extension too.
+    expect(lines).toEqual([
+      'export * from "./acme";',
+      'export * from "./beta";',
+      'export * from "./alpha";',
+      'export * from "./middle";',
+      'export * from "./zebra";',
+    ]);
+
+    // Ordering is stable across runs.
+    generateBarrels(root);
+    const again = readFileSync(join(root, "index.ts"), "utf-8")
+      .split("\n")
+      .filter((l) => l.startsWith("export * from"));
+    expect(again).toEqual(lines);
+  });
 });

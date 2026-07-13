@@ -23,7 +23,9 @@ export function parseCommandArgs(
   const findDef = (token: string): CommandOption | undefined => {
     const isLong = token.startsWith("--");
     const name = token.replace(/^--?/, "");
-    return optionDefs.find((d) => (isLong ? d.name === name : d.alias === name));
+    return optionDefs.find((d) =>
+      isLong ? d.name === name : d.alias === name,
+    );
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -54,7 +56,8 @@ export function parseCommandArgs(
       if (!def) continue; // unknown flag — ignore rather than fail
 
       if (def.type === "boolean") {
-        options[def.name] = inlineValue !== undefined ? inlineValue !== "false" : true;
+        options[def.name] =
+          inlineValue !== undefined ? inlineValue !== "false" : true;
       } else {
         const value = inlineValue ?? args[++i];
         if (value === undefined) continue;
@@ -72,9 +75,11 @@ export function buildCommandContext(
   commandName: string,
   options: Record<string, unknown>,
   logger: Logger,
-  config: CliConfig
+  _config: CliConfig,
 ): CommandContext {
-  const positionalArgs = extractPositionalArgs(process.argv.slice(2).filter(a => a !== commandName));
+  const positionalArgs = extractPositionalArgs(
+    process.argv.slice(2).filter((a) => a !== commandName),
+  );
 
   return {
     command: commandName,

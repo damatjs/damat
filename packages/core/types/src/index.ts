@@ -54,7 +54,10 @@ export class AuthorizationError extends AppError {
   }
 }
 
-// Re-export initFramework for backwards compatibility if needed
+/**
+ * @deprecated No-op retained for backwards compatibility only; it does not
+ * initialize anything. Will be removed in 0.7 — drop the call instead.
+ */
 export const initFramework = () => {
   console.log("Framework initialized");
   return true;

@@ -17,6 +17,17 @@ describe("buildOptionFlag", () => {
   test("treats an empty-string alias as falsy and uses the long flag only", () => {
     expect(buildOptionFlag({ name: "force", alias: "" })).toBe("--force");
   });
+
+  test("string options get a <value> placeholder so cac consumes the next token", () => {
+    expect(buildOptionFlag({ name: "name", type: "string" })).toBe("--name <value>");
+    expect(buildOptionFlag({ name: "port", alias: "p", type: "number" })).toBe(
+      "-p, --port <value>",
+    );
+  });
+
+  test("boolean options stay bare flags (cac --no-x negation keeps working)", () => {
+    expect(buildOptionFlag({ name: "install", type: "boolean" })).toBe("--install");
+  });
 });
 
 describe("resolveCommandName", () => {
