@@ -56,12 +56,12 @@ describe("module snapshots", () => {
   });
 
   it("product_status enum has correct values", () => {
-    const e = snapshot.enums?.find((e) => e.name === "product_status")!;
+    const e = snapshot.enums?.find((e) => e.name === "product_status");
     expect(e.values).toEqual(["draft", "active", "archived"]);
   });
 
   it("orders enum has correct values", () => {
-    const e = snapshot.enums?.find((e) => e.name === "orders")!;
+    const e = snapshot.enums?.find((e) => e.name === "orders");
     expect(e.values).toEqual([
       "pending",
       "confirmed",

@@ -6,11 +6,11 @@ import type { CommandContext } from "@damatjs/cli";
 
 function createMockLogger() {
   return {
-    error: (...args: any[]) => {},
-    info: (...args: any[]) => {},
-    success: (...args: any[]) => {},
-    warn: (...args: any[]) => {},
-    skip: (...args: any[]) => {},
+    error: () => {},
+    info: () => {},
+    success: () => {},
+    warn: () => {},
+    skip: () => {},
   };
 }
 

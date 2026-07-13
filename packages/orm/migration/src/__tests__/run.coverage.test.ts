@@ -21,7 +21,7 @@ interface FakePoolOptions {
 
 function makeFakePool(opts: FakePoolOptions = {}) {
   const pool = {
-    query: async (sql: string, params?: unknown[]) => {
+    query: async (sql: string, _params?: unknown[]) => {
       if (opts.poolFailOn?.(sql)) {
         throw new Error("pool-boom: " + sql.slice(0, 20));
       }

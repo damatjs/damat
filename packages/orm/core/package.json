@@ -44,6 +44,7 @@
     "build": "rm -rf dist tsconfig.tsbuildinfo && tsc",
     "watch": "tsc --watch",
     "test": "bun test",
-    "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)"
+    "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)",
+    "lint": "oxlint src"
   }
 }

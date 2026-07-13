@@ -1,11 +1,4 @@
-import {
-  describe,
-  it,
-  expect,
-  mock,
-  beforeEach,
-  afterEach,
-} from "bun:test";
+import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -182,7 +175,9 @@ function writeConfig(opts: {
   databaseUrl?: string | null;
 }) {
   const moduleEntries = Object.entries(opts.modules ?? {})
-    .map(([name, resolve]) => `${name}: { resolve: ${JSON.stringify(resolve)} }`)
+    .map(
+      ([name, resolve]) => `${name}: { resolve: ${JSON.stringify(resolve)} }`,
+    )
     .join(",\n");
   const project =
     opts.databaseUrl === undefined
@@ -241,7 +236,6 @@ const loadList = async () =>
   (await import("../cli/commands/migrate/list")).default;
 const loadCreate = async () =>
   (await import("../cli/commands/migrate/create")).default;
-
 
 // ---------------------------------------------------------------------------
 // migrate:up
@@ -308,9 +302,11 @@ describe("migrate:up", () => {
     expect(state.poolConnectionStrings).toEqual(["postgres://u:p@h:5432/db"]);
     expect(state.runMigrationsArgs?.pool).toBeInstanceOf(FakePool);
     // modules map is keyed by name; the user module resolves to USER.
-    expect((state.runMigrationsArgs?.modules as any).user.resolve).toBe(USER);
+    expect((state.runMigrationsArgs!.modules as any).user.resolve).toBe(USER);
     expect(state.poolEndCalls).toBe(1);
-    expect(hasLog(calls, "success", /Migration completed successfully/)).toBe(true);
+    expect(hasLog(calls, "success", /Migration completed successfully/)).toBe(
+      true,
+    );
   });
 
   it("exits 1 and still closes the pool when any migration fails", async () => {
@@ -467,7 +463,9 @@ describe("migrate:status", () => {
     const res = await cmd.handler(ctx);
 
     expect(res.exitCode).toBe(1);
-    expect(hasLog(calls, "error", /Module 'ghost' not found in config/)).toBe(true);
+    expect(hasLog(calls, "error", /Module 'ghost' not found in config/)).toBe(
+      true,
+    );
     // not-found returns inside the try -> finally still ends the pool.
     expect(state.poolEndCalls).toBe(1);
   });
@@ -503,7 +501,9 @@ describe("migrate:list", () => {
 
     expect(res.exitCode).toBe(0);
     expect(state.discoverAllArgs).toEqual([USER]);
-    expect(hasLog(calls, "skip", /No modules with migrations found/)).toBe(true);
+    expect(hasLog(calls, "skip", /No modules with migrations found/)).toBe(
+      true,
+    );
   });
 
   it("counts migrations per module, sorts alphabetically, and pluralizes", async () => {
@@ -563,7 +563,9 @@ describe("migrate:create", () => {
     const { ctx, calls } = ctxFor(["user"]);
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
-    expect(hasLog(calls, "error", /Module 'user' not found in config/)).toBe(true);
+    expect(hasLog(calls, "error", /Module 'user' not found in config/)).toBe(
+      true,
+    );
   });
 
   it("creates an initial migration when no snapshot exists", async () => {
@@ -608,7 +610,11 @@ describe("migrate:create", () => {
   it("skips (exit 0) when a diff has no changes", async () => {
     writeConfig({ modules: { user: USER } });
     state.snapshotExists = true;
-    state.createDiffResult = { hasChanges: false, filePath: "", warnings: undefined };
+    state.createDiffResult = {
+      hasChanges: false,
+      filePath: "",
+      warnings: undefined,
+    };
     const cmd = await loadCreate();
     const { ctx, calls } = ctxFor(["user"]);
     const res = await cmd.handler(ctx);

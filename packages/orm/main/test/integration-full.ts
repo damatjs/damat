@@ -12,12 +12,13 @@ console.log("ORM FULL INTEGRATION TEST - REAL DATABASE");
 console.log("=".repeat(80));
 console.log("");
 
-const DATABASE_URL = "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable";
+const DATABASE_URL =
+  "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable";
 
 const results = {
   passed: [] as string[],
   failed: [] as string[],
-  errors: [] as Error[]
+  errors: [] as Error[],
 };
 
 function test(name: string, fn: () => Promise<void> | void) {
@@ -30,11 +31,15 @@ function test(name: string, fn: () => Promise<void> | void) {
         console.log(`  ✅ ${name}`);
       } catch (error) {
         results.failed.push(name);
-        results.errors.push(error instanceof Error ? error : new Error(String(error)));
+        results.errors.push(
+          error instanceof Error ? error : new Error(String(error)),
+        );
         console.log(`  ❌ ${name}`);
-        console.log(`     Error: ${error instanceof Error ? error.message : error}`);
+        console.log(
+          `     Error: ${error instanceof Error ? error.message : error}`,
+        );
       }
-    }
+    },
   };
 }
 
@@ -54,9 +59,7 @@ const UserSchema = model("user", {
   verified: columns.boolean().default(false),
   createdAt: columns.timestamp({ withTimezone: true }).defaultNow(),
   updatedAt: columns.timestamp({ withTimezone: true }).defaultNow(),
-}).indexes([
-  columns.indexes("idx_users_email").columns(["email"]).unique(),
-]);
+}).indexes([columns.indexes("idx_users_email").columns(["email"]).unique()]);
 
 console.log("  ✓ UserSchema");
 
@@ -88,12 +91,18 @@ const CommentSchema = model("comment", {
 console.log("  ✓ CommentSchema");
 console.log("");
 
-const blogModule = toModuleSchema("blog", [UserSchema, PostSchema, CommentSchema]);
+const blogModule = toModuleSchema("blog", [
+  UserSchema,
+  PostSchema,
+  CommentSchema,
+]);
 
 console.log("📦 MODULE SCHEMA CREATED");
 console.log("-".repeat(80));
 console.log(`  moduleName: ${blogModule.moduleName}`);
-console.log(`  tables: ${blogModule.tables.map((t: any) => t.name).join(", ")}`);
+console.log(
+  `  tables: ${blogModule.tables.map((t: any) => t.name).join(", ")}`,
+);
 console.log(`  schema: ${blogModule.schema}`);
 console.log("");
 
@@ -118,17 +127,20 @@ const tests = [
 
   test("2.1 Can generate initial migration SQL", async () => {
     const migration = generateMigration.generateFromSnapshot(blogModule);
-    if (migration.upStatements.length === 0) throw new Error("No SQL generated");
-    if (!migration.upStatements.some(s => s.includes("CREATE TABLE"))) {
+    if (migration.upStatements.length === 0)
+      throw new Error("No SQL generated");
+    if (!migration.upStatements.some((s) => s.includes("CREATE TABLE"))) {
       throw new Error("No CREATE TABLE statements");
     }
-    console.log(`     Generated ${migration.upStatements.length} SQL statements`);
+    console.log(
+      `     Generated ${migration.upStatements.length} SQL statements`,
+    );
   }),
 
   test("2.2 Migration SQL is valid PostgreSQL", async () => {
     const migration = generateMigration.generateFromSnapshot(blogModule);
     const sql = migration.upStatements
-      .map(s => s.replace(/public\./g, "blog_test."))
+      .map((s) => s.replace(/public\./g, "blog_test."))
       .join(";\n");
 
     await pool.query("BEGIN");
@@ -145,7 +157,7 @@ const tests = [
   test("3.1 Can execute migration against database", async () => {
     const migration = generateMigration.generateFromSnapshot(blogModule);
     const sql = migration.upStatements
-      .map(s => s.replace(/public\./g, "blog_test."))
+      .map((s) => s.replace(/public\./g, "blog_test."))
       .join(";\n");
 
     await pool.query(sql);
@@ -157,10 +169,11 @@ const tests = [
       ORDER BY table_name
     `);
 
-    const tables = result.rows.map(r => r.table_name);
+    const tables = result.rows.map((r) => r.table_name);
     if (!tables.includes("user")) throw new Error("user table not created");
     if (!tables.includes("post")) throw new Error("post table not created");
-    if (!tables.includes("comment")) throw new Error("comment table not created");
+    if (!tables.includes("comment"))
+      throw new Error("comment table not created");
     console.log(`     Created tables: ${tables.join(", ")}`);
   }),
 
@@ -173,7 +186,7 @@ const tests = [
     `);
 
     if (result.rows.length === 0) throw new Error("No columns found");
-    const cols = result.rows.map(r => `${r.column_name}:${r.data_type}`);
+    const cols = result.rows.map((r) => `${r.column_name}:${r.data_type}`);
     console.log(`     User columns: ${cols.slice(0, 3).join(", ")}...`);
   }),
 
@@ -223,7 +236,8 @@ const tests = [
       select: ["id", "email", "name", "verified"],
     });
 
-    if (result.rows.length < 2) throw new Error(`Expected at least 2 rows, got ${result.rows.length}`);
+    if (result.rows.length < 2)
+      throw new Error(`Expected at least 2 rows, got ${result.rows.length}`);
     console.log(`     Found ${result.rows.length} users`);
   }),
 
@@ -237,7 +251,7 @@ const tests = [
     });
 
     if (result.rows.length === 0) throw new Error("No verified users found");
-    if (!result.rows.every(r => r.verified === true)) {
+    if (!result.rows.every((r) => r.verified === true)) {
       throw new Error("WHERE clause not working");
     }
     console.log(`     Found ${result.rows.length} verified users`);
@@ -252,7 +266,8 @@ const tests = [
     });
 
     if (result.rows.length !== 1) throw new Error("Expected exactly 1 row");
-    if (result.rows[0].email !== "test1@example.com") throw new Error("Wrong user returned");
+    if (result.rows[0].email !== "test1@example.com")
+      throw new Error("Wrong user returned");
     console.log(`     Found: ${result.rows[0].name}`);
   }),
 
@@ -267,8 +282,10 @@ const tests = [
     });
 
     if (result.rows.length !== 1) throw new Error("No rows returned");
-    if (result.rows[0].verified !== true) throw new Error("verified not updated");
-    if (result.rows[0].name !== "Test User 1 Updated") throw new Error("name not updated");
+    if (result.rows[0].verified !== true)
+      throw new Error("verified not updated");
+    if (result.rows[0].name !== "Test User 1 Updated")
+      throw new Error("name not updated");
     console.log(`     Updated: ${result.rows[0].name}`);
   }),
 
@@ -293,7 +310,8 @@ const tests = [
       returning: ["id"],
     });
 
-    if (result.rows.length !== 1) throw new Error("No rows returned from delete");
+    if (result.rows.length !== 1)
+      throw new Error("No rows returned from delete");
 
     const check = await userClient.findOne({ where: { id: "usr_temp" } });
     if (check.rows.length !== 0) throw new Error("User was not deleted");
@@ -388,12 +406,13 @@ const tests = [
 
         throw new Error("Intentional error");
       });
-    } catch (error) {
+    } catch {
       // Expected
     }
 
     const check = await userClient.findOne({ where: { id: "usr_rollback" } });
-    if (check.rows.length !== 0) throw new Error("Transaction did not rollback");
+    if (check.rows.length !== 0)
+      throw new Error("Transaction did not rollback");
     console.log(`     Rollback prevented partial commit`);
   }),
 
@@ -471,7 +490,8 @@ const tests = [
     });
 
     if (result.rows.length !== 1) throw new Error("Post not created");
-    if (result.rows[0].authorId !== "usr_test1") throw new Error("Wrong authorId");
+    if (result.rows[0].authorId !== "usr_test1")
+      throw new Error("Wrong authorId");
     console.log(`     Created post: ${result.rows[0].title}`);
   }),
 
@@ -485,9 +505,13 @@ const tests = [
       WHERE p.id = 'pst_test1'
     `);
 
-    if (result.rows.length === 0) throw new Error("Join query returned no results");
-    if (!result.rows[0].author_name) throw new Error("Join did not include author data");
-    console.log(`     Join query: ${result.rows[0].title} by ${result.rows[0].author_name}`);
+    if (result.rows.length === 0)
+      throw new Error("Join query returned no results");
+    if (!result.rows[0].author_name)
+      throw new Error("Join did not include author data");
+    console.log(
+      `     Join query: ${result.rows[0].title} by ${result.rows[0].author_name}`,
+    );
   }),
 
   test("9.1 Can drop test schema", async () => {

@@ -13,7 +13,7 @@ export function fetchPoolStats(pool: Pool | null): PoolStats {
 
 export async function performHealthCheck(
   pool: Pool | null,
-  updateStatus: (connected: boolean) => void
+  updateStatus: (connected: boolean) => void,
 ): Promise<ConnectionStatus> {
   const poolStats = fetchPoolStats(pool);
   const now = new Date();
@@ -37,7 +37,7 @@ export async function performHealthCheck(
       poolStats: fetchPoolStats(pool),
       lastChecked: now,
     };
-  } catch (error) {
+  } catch {
     updateStatus(false);
     return {
       connected: false,

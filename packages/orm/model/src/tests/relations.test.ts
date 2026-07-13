@@ -83,7 +83,7 @@ describe("transform › relations (module level)", () => {
     });
     const rel = Post.toTableSchema().relations?.find(
       (r) => r.type === "hasMany",
-    )!;
+    );
     expect(rel.to).toBe("comments_str");
     expect(rel.mappedBy).toEqual(["post"]);
   });
@@ -96,7 +96,7 @@ describe("transform › relations (module level)", () => {
     });
     const rel = Account.toTableSchema().relations?.find(
       (r) => r.type === "hasOne",
-    )!;
+    );
     expect(rel.to).toBe("profiles_str");
     expect(rel.mappedBy).toEqual(["account"]);
   });
@@ -141,7 +141,7 @@ describe("transform › hasOne string target", () => {
     });
     const rel = Account.toTableSchema().relations?.find(
       (r) => r.type === "hasOne",
-    )!;
+    );
     expect(rel.to).toBe("profiles_str");
     expect(rel.mappedBy).toBeUndefined();
   });
