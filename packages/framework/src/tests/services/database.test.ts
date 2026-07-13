@@ -33,7 +33,11 @@ class FakeConnectionManager {
   }
   async healthCheck() {
     healthCalls++;
-    return { connected: true, poolStats: { totalCount: 1, idleCount: 1, waitingCount: 0 }, lastChecked: new Date() };
+    return {
+      connected: true,
+      poolStats: { totalCount: 1, idleCount: 1, waitingCount: 0 },
+      lastChecked: new Date(),
+    };
   }
 }
 
@@ -68,9 +72,8 @@ mock.module("@damatjs/services", () => ({
   },
 }));
 
-const { initDatabase, getConnectionManager, checkHealth, closeDatabase } = await import(
-  "../../services/database"
-);
+const { initDatabase, getConnectionManager, checkHealth, closeDatabase } =
+  await import("../../services/database");
 
 const createLogger = () => ({
   info: mock(() => {}),
@@ -79,7 +82,13 @@ const createLogger = () => ({
   debug: mock(() => {}),
 });
 
-const baseDbConfig = { host: "localhost", port: 5432, user: "u", password: "p", database: "d" };
+const baseDbConfig = {
+  host: "localhost",
+  port: 5432,
+  user: "u",
+  password: "p",
+  database: "d",
+};
 
 beforeEach(() => {
   constructedConfigs = [];
@@ -99,13 +108,19 @@ afterEach(async () => {
 describe("initDatabase", () => {
   it("connects, wires the PoolManager, logs, and returns the pool", async () => {
     const logger = createLogger();
-    const pool = await initDatabase(baseDbConfig as never, logger as never, "development");
+    const pool = await initDatabase(
+      baseDbConfig as never,
+      logger as never,
+      "development",
+    );
 
     expect(connectCalls).toBe(1);
     expect(pool).toEqual({ __fakePool: true } as never);
     expect(setupCalls).toHaveLength(1);
     expect(setupCalls[0]!.pool).toEqual({ __fakePool: true });
-    expect(setupCalls[0]!.connectionManager).toBeInstanceOf(FakeConnectionManager);
+    expect(setupCalls[0]!.connectionManager).toBeInstanceOf(
+      FakeConnectionManager,
+    );
     expect(logger.info).toHaveBeenCalled();
   });
 
@@ -131,13 +146,21 @@ describe("initDatabase", () => {
 
   it("falls back to development defaults for an unrecognized env", async () => {
     const logger = createLogger();
-    await initDatabase(baseDbConfig as never, logger as never, "staging" as never);
+    await initDatabase(
+      baseDbConfig as never,
+      logger as never,
+      "staging" as never,
+    );
     expect(constructedConfigs[0]!.__preset).toBe("dev");
   });
 
   it("does NOT merge env defaults when advanced pool settings are supplied", async () => {
     const logger = createLogger();
-    const advanced = { ...baseDbConfig, max: 99, connectionTimeoutMillis: 1000 };
+    const advanced = {
+      ...baseDbConfig,
+      max: 99,
+      connectionTimeoutMillis: 1000,
+    };
     await initDatabase(advanced as never, logger as never, "production");
     const cfg = constructedConfigs[0]!;
     // The caller's explicit config is used verbatim — no preset merged in.
@@ -157,16 +180,20 @@ describe("initDatabase", () => {
   it("propagates a connection failure to the caller", async () => {
     const logger = createLogger();
     connectShouldThrow = new Error("ECONNREFUSED");
-    await expect(initDatabase(baseDbConfig as never, logger as never, "development")).rejects.toThrow(
-      "ECONNREFUSED",
-    );
+    await expect(
+      initDatabase(baseDbConfig as never, logger as never, "development"),
+    ).rejects.toThrow("ECONNREFUSED");
   });
 });
 
 describe("getConnectionManager", () => {
   it("returns null before init and the manager after init", async () => {
     expect(getConnectionManager()).toBeNull();
-    await initDatabase(baseDbConfig as never, createLogger() as never, "development");
+    await initDatabase(
+      baseDbConfig as never,
+      createLogger() as never,
+      "development",
+    );
     expect(getConnectionManager()).toBeInstanceOf(FakeConnectionManager);
   });
 });
@@ -177,7 +204,11 @@ describe("checkHealth", () => {
   });
 
   it("delegates to the connection manager once initialized", async () => {
-    await initDatabase(baseDbConfig as never, createLogger() as never, "development");
+    await initDatabase(
+      baseDbConfig as never,
+      createLogger() as never,
+      "development",
+    );
     const status = await checkHealth();
     expect(healthCalls).toBe(1);
     expect(status?.connected).toBe(true);
@@ -186,7 +217,11 @@ describe("checkHealth", () => {
 
 describe("closeDatabase", () => {
   it("disconnects, clears the singleton, and resets the PoolManager", async () => {
-    await initDatabase(baseDbConfig as never, createLogger() as never, "development");
+    await initDatabase(
+      baseDbConfig as never,
+      createLogger() as never,
+      "development",
+    );
     await closeDatabase();
     expect(disconnectCalls).toBe(1);
     expect(resetCalls).toBeGreaterThanOrEqual(1);

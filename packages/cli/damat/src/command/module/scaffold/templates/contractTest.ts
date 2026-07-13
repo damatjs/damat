@@ -1,4 +1,3 @@
-
 export function contractTestTemplate(name: string): string {
   return `import { describe, expect, test } from "bun:test";
 import { join } from "node:path";

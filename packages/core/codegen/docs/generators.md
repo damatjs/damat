@@ -14,8 +14,8 @@ Compose the per-column primitives (`columnToTsType`, `columnToZodSchema`) plus e
 ```ts
 // src/utils/typeOptions.ts
 interface GenerateTypesOptions {
-  autoFields?: string[];     // extra column names to omit from New* types
-  banner?: string | false;   // leading comment; false = none; default = "// This file is auto-generated..."
+  autoFields?: string[]; // extra column names to omit from New* types
+  banner?: string | false; // leading comment; false = none; default = "// This file is auto-generated..."
 }
 type GeneratedFilesMap = Map<string, string>; // filename → file contents
 ```

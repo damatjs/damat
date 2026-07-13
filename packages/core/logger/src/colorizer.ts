@@ -63,7 +63,11 @@ export class Colorizer {
     return this.dim(JSON.stringify(context));
   }
 
-  errorInfo(error: { name: string; message: string; stack: string | undefined }): string {
+  errorInfo(error: {
+    name: string;
+    message: string;
+    stack: string | undefined;
+  }): string {
     const name = this.colorize(error.name, COLORS.red + COLORS.bold);
     const message = this.colorize(error.message, COLORS.red);
     let output = `\n${name}: ${message}`;

@@ -207,7 +207,10 @@ describe("damat codegen command", () => {
     cg.modules = { user: { resolve: "/app/src/modules/user" } };
     fsState.existsMap = { "/app/src/modules/user/models": true };
     const cmd = await getCmd();
-    const { ctx } = createContext({ flat: true }, { args: ["user"], cwd: "/app" });
+    const { ctx } = createContext(
+      { flat: true },
+      { args: ["user"], cwd: "/app" },
+    );
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(0);
     expect(cg.runArgs).toMatchObject({
@@ -257,7 +260,10 @@ describe("damat codegen command", () => {
     };
     cg.runThrows = new Error("explode");
     const cmd = await getCmd();
-    const { ctx, logger } = createContext({ all: true }, { args: [], cwd: "/app" });
+    const { ctx, logger } = createContext(
+      { all: true },
+      { args: [], cwd: "/app" },
+    );
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(logger.error).toHaveBeenCalled();
@@ -282,7 +288,10 @@ describe("damat barrel command", () => {
   it("reports the number of barrels written", async () => {
     cg.barrelWritten = ["a/index.ts", "b/index.ts"];
     const cmd = await getBarrel();
-    const { ctx, logger } = createContext({}, { args: ["src/foo"], cwd: "/app" });
+    const { ctx, logger } = createContext(
+      {},
+      { args: ["src/foo"], cwd: "/app" },
+    );
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(0);
     expect(cg.barrelCalls.at(-1)![0]).toBe("/app/src/foo");
@@ -292,7 +301,10 @@ describe("damat barrel command", () => {
   it("warns when nothing was barreled", async () => {
     cg.barrelWritten = [];
     const cmd = await getBarrel();
-    const { ctx, logger } = createContext({}, { args: ["missing"], cwd: "/app" });
+    const { ctx, logger } = createContext(
+      {},
+      { args: ["missing"], cwd: "/app" },
+    );
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(0);
     expect(logger.warn).toHaveBeenCalled();

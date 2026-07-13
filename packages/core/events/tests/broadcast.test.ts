@@ -88,7 +88,12 @@ function deliver(raw: string, channel = "damat-events") {
 }
 
 /** The envelope emit() published last (to learn our own instanceId). */
-function lastEnvelope(): { instanceId: string; event: string; payload: unknown; emittedAt: string } {
+function lastEnvelope(): {
+  instanceId: string;
+  event: string;
+  payload: unknown;
+  emittedAt: string;
+} {
   const call = fakePublisher.publishCalls.at(-1);
   if (!call) throw new Error("nothing was published");
   return JSON.parse(call.message);
@@ -126,7 +131,10 @@ describe("connectEventBroadcast", () => {
     expect(fakePublisher.duplicateCalls).toBe(1);
     expect(getEventBus().broadcasting).toBe(true);
     expect(isEventBroadcastConnected()).toBe(true);
-    expect(logCalls).toContainEqual({ level: "info", message: "Event broadcast connected" });
+    expect(logCalls).toContainEqual({
+      level: "info",
+      message: "Event broadcast connected",
+    });
   });
 
   it("subscribes to a custom channel and publishes there", async () => {

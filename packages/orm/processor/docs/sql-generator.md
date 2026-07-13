@@ -12,14 +12,14 @@ Turn abstract `SchemaChange` records (or a whole `ModuleSchema`) into PostgreSQL
 // src/types/diff/generator.ts
 interface MigrationGeneratorOptions {
   cascadeDrops?: boolean; // add CASCADE to DROP statements (default false)
-  safeMode?: boolean;     // emit IF EXISTS / IF NOT EXISTS guards (default true)
-  schema?: string;        // target PostgreSQL schema (default "public")
+  safeMode?: boolean; // emit IF EXISTS / IF NOT EXISTS guards (default true)
+  schema?: string; // target PostgreSQL schema (default "public")
 }
 
 interface GeneratedMigration {
   upStatements: string[]; // ordered UP statements (no trailing ';')
-  description: string;    // human-readable summary
-  warnings: string[];     // carried through from the diff
+  description: string; // human-readable summary
+  warnings: string[]; // carried through from the diff
 }
 ```
 
@@ -31,7 +31,10 @@ Both top-level generators resolve options against `{ cascadeDrops: false, safeMo
 
 ```ts
 // generateFromDiff.ts
-export function generateFromDiff(diff: SchemaDiff, options?: MigrationGeneratorOptions): GeneratedMigration
+export function generateFromDiff(
+  diff: SchemaDiff,
+  options?: MigrationGeneratorOptions,
+): GeneratedMigration;
 ```
 
 Iterates `diff.changes` (already priority-sorted) and concatenates `generateChangeSQL(change, opts)` for each. `description` comes from `generateDescription(diff)`; `warnings` are passed through from the diff. Use this for **incremental** migrations.
@@ -40,7 +43,10 @@ Iterates `diff.changes` (already priority-sorted) and concatenates `generateChan
 
 ```ts
 // generateFromSnapshot.ts
-export function generateFromSnapshot(snapshot: ModuleSchema, options?: MigrationGeneratorOptions): GeneratedMigration
+export function generateFromSnapshot(
+  snapshot: ModuleSchema,
+  options?: MigrationGeneratorOptions,
+): GeneratedMigration;
 ```
 
 Builds a **baseline** migration that creates the whole schema from scratch, with no diff:
@@ -55,8 +61,11 @@ This is why `create_table` does **not** inline indexes/FKs: both the diff path a
 ## Dispatch — `sqlGenerator/changeSql.ts`
 
 ```ts
-export function generateChangeSQL(change: SchemaChange, options: MigrationGeneratorOptions): string[]
-export function generateDescription(diff: SchemaDiff): string
+export function generateChangeSQL(
+  change: SchemaChange,
+  options: MigrationGeneratorOptions,
+): string[];
+export function generateDescription(diff: SchemaDiff): string;
 ```
 
 `generateChangeSQL` is an exhaustive `switch` over `change.type` that delegates to a per-concern emitter and always returns an array (most emitters return one statement; `alter_column` and `alter_enum` may return several). `generateDescription` tallies change types into a sentence like `"1 table created, 3 columns added, 1 enum altered"` (or `"No changes"`).
@@ -84,7 +93,7 @@ export function generateDescription(diff: SchemaDiff): string
 - `generateDropColumn` — `ALTER TABLE ... DROP COLUMN[ IF EXISTS] "col"[ CASCADE]`.
 - `generateAlterColumn` → **`string[]`** — one statement per attribute, because PostgreSQL requires them separately:
   - `type` → `ALTER COLUMN "c" TYPE NEWTYPE USING "c"::NEWTYPE`.
-  - `length` *without* a `type` change → `ALTER COLUMN "c" TYPE VARCHAR(len)`.
+  - `length` _without_ a `type` change → `ALTER COLUMN "c" TYPE VARCHAR(len)`.
   - `nullable` → `DROP NOT NULL` (→ nullable) or `SET NOT NULL`.
   - `default` → `SET DEFAULT <expr>` or `DROP DEFAULT`.
   - `unique` → `ADD UNIQUE ("c")` when set true; dropping a unique constraint emits a **`--` comment placeholder** because the constraint name isn't known here.

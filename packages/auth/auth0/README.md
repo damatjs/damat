@@ -34,12 +34,12 @@ populate `c.get("user")` (`{ id: sub, email, orgId, …claims }`).
 
 ## Options (`Auth0AdapterOptions`)
 
-| Option | Purpose |
-| --- | --- |
-| `domain` | Auth0 tenant domain (falls back to `AUTH0_DOMAIN`). |
-| `audience` | API identifier the access token must target (falls back to `AUTH0_AUDIENCE`). |
-| `issuer` | Token issuer (default `https://<domain>/`). |
-| `jwksUri` | JWKS endpoint (default `https://<domain>/.well-known/jwks.json`). |
+| Option                    | Purpose                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------ |
+| `domain`                  | Auth0 tenant domain (falls back to `AUTH0_DOMAIN`).                                              |
+| `audience`                | API identifier the access token must target (falls back to `AUTH0_AUDIENCE`).                    |
+| `issuer`                  | Token issuer (default `https://<domain>/`).                                                      |
+| `jwksUri`                 | JWKS endpoint (default `https://<domain>/.well-known/jwks.json`).                                |
 | `emailClaim` / `orgClaim` | Claim names for email / org — set these for namespaced custom claims (e.g. `https://app/email`). |
 
 ## License

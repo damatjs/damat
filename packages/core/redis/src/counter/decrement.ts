@@ -1,8 +1,6 @@
 import type { Redis } from "../types";
 import { getRedis } from "../singleton";
 
-
-
 /**
  * Decrement a counter atomically.
  *

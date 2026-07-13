@@ -12,20 +12,20 @@ Source: `src/module/define.ts`, `src/module/type.ts`.
 export function defineModule<TService extends object>(
   name: string,
   definition: ModuleDefinition<TService>,
-): ModuleInstance<TService>
+): ModuleInstance<TService>;
 ```
 
 ```ts
 interface ModuleDefinition<TService> {
-  service: new (credentials: any) => TService;          // the service class (e.g. ModuleService subclass)
-  credentials: (env: NodeJS.ProcessEnv) => any;          // loads credentials from env
+  service: new (credentials: any) => TService; // the service class (e.g. ModuleService subclass)
+  credentials: (env: NodeJS.ProcessEnv) => any; // loads credentials from env
 }
 
 interface ModuleInstance<TService> {
   readonly name: string;
-  readonly service: TService;        // a Proxy (see below)
-  readonly credentials: unknown;     // the parsed credentials object
-  init(): TService;                  // (re)construct the service against the current pool
+  readonly service: TService; // a Proxy (see below)
+  readonly credentials: unknown; // the parsed credentials object
+  init(): TService; // (re)construct the service against the current pool
 }
 ```
 
@@ -37,11 +37,11 @@ interface ModuleInstance<TService> {
 export function defineModule<TService extends object>(name, definition) {
   let instance: TService | null = null;
 
-  const parseCredentials = definition.credentials(process.env);  // eager: load creds now
+  const parseCredentials = definition.credentials(process.env); // eager: load creds now
 
   const init = () => {
-    getLogger().debug("instance setup", { module: name });        // one debug line per (re)construction
-    instance = new definition.service(parseCredentials);          // construct against CURRENT pool
+    getLogger().debug("instance setup", { module: name }); // one debug line per (re)construction
+    instance = new definition.service(parseCredentials); // construct against CURRENT pool
     return instance;
   };
 
@@ -54,7 +54,7 @@ export function defineModule<TService extends object>(name, definition) {
     get(_, prop) {
       const svc = getService();
       const val = (svc as any)[prop];
-      return typeof val === "function" ? val.bind(svc) : val;     // bind methods to the instance
+      return typeof val === "function" ? val.bind(svc) : val; // bind methods to the instance
     },
     set(_, prop, val) {
       (getService() as any)[prop] = val;
@@ -78,8 +78,11 @@ Key points:
 `@damatjs/framework` (`services/moduleService.ts`):
 
 ```ts
-export function registerModule(name: string, module: ModuleInstance<any>): void {
-  module.init();                 // construct against the now-initialized pool
+export function registerModule(
+  name: string,
+  module: ModuleInstance<any>,
+): void {
+  module.init(); // construct against the now-initialized pool
   moduleRegistry.set(name, module);
 }
 // getModule(name) returns moduleRegistry.get(name)?.service ?? null
@@ -90,9 +93,9 @@ export function registerModule(name: string, module: ModuleInstance<any>): void 
 A module folder's `index.ts` looks like:
 
 ```ts
-import { defineModule } from "@damatjs/framework";   // re-exported from @damatjs/services
+import { defineModule } from "@damatjs/framework"; // re-exported from @damatjs/services
 import { UserModuleService } from "./service";
-import credentials from "./config";                  // { schema, load }
+import credentials from "./config"; // { schema, load }
 
 export default defineModule("user", {
   service: UserModuleService,
@@ -125,6 +128,6 @@ Without augmentation, pass the type explicitly: `getModule<UserModuleService>("u
 ## Gotchas
 
 - **Eager credentials, lazy service.** If `definition.credentials(process.env)` throws (e.g. a zod loader that validates), it throws at `defineModule` time / import time — not at first use. Keep the loader pure and defensive.
-- **First property access constructs the service.** Merely *reading* a property (even a getter like `service.credentials` in tests) triggers construction, which requires `PoolManager.isInitialized()`. Don't touch the proxy before the pool is up unless you intend to construct.
+- **First property access constructs the service.** Merely _reading_ a property (even a getter like `service.credentials` in tests) triggers construction, which requires `PoolManager.isInitialized()`. Don't touch the proxy before the pool is up unless you intend to construct.
 - **`init()` is re-entrant by design.** Calling it again replaces the instance. This is intentional for test/harness reboots; it is also why the framework calls `init()` in `registerModule`.
 - **The default export must be the `defineModule` result.** `initModules` checks for `typeof moduleInstance.init === "function"` and throws otherwise.

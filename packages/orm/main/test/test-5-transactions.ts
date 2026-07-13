@@ -16,8 +16,12 @@ export async function test5_Transactions(pool: Pool) {
 
   // Commit
   await client.transaction(async (tx) => {
-    await tx.create({ data: { id: "tx1", email: "tx1@test.com", name: "TX1" } });
-    await tx.create({ data: { id: "tx2", email: "tx2@test.com", name: "TX2" } });
+    await tx.create({
+      data: { id: "tx1", email: "tx1@test.com", name: "TX1" },
+    });
+    await tx.create({
+      data: { id: "tx2", email: "tx2@test.com", name: "TX2" },
+    });
   });
 
   const checkTx = await client.findOne({ where: { id: "tx1" } });
@@ -30,7 +34,7 @@ export async function test5_Transactions(pool: Pool) {
       await tx.create({ data: { id: "rb", email: "rb@test.com", name: "RB" } });
       throw new Error("Intentional error");
     });
-  } catch { }
+  } catch {}
 
   const checkRollback = await client.findOne({ where: { id: "rb" } });
   if (checkRollback.rows.length !== 0) throw new Error("Rollback failed");

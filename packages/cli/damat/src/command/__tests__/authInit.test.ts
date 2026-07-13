@@ -16,7 +16,8 @@ const run = (args: string[], options: Record<string, unknown> = {}) => {
   return { result: authInitCommand.handler(ctx), logger };
 };
 
-const written = (suffix: string) => writeCalls.find((c) => c.path.endsWith(suffix));
+const written = (suffix: string) =>
+  writeCalls.find((c) => c.path.endsWith(suffix));
 
 describe("damat auth init — validation", () => {
   test("requires a provider", async () => {
@@ -66,21 +67,32 @@ describe("damat auth init better-auth — scaffold", () => {
       expect(writeCalls.some((c) => c.path === file)).toBe(true);
     }
     // migrations dir created
-    expect(mockMkdirSync.mock.calls.some((c) => String(c[0]).endsWith("/auth/migrations"))).toBe(
-      true,
-    );
+    expect(
+      mockMkdirSync.mock.calls.some((c) =>
+        String(c[0]).endsWith("/auth/migrations"),
+      ),
+    ).toBe(true);
     // config gained the auth entry
     const config = writeCalls.find((c) => c.path === "/app/damat.config.ts");
     expect(config!.content).toContain("auth:");
     expect(config!.content).toContain('resolve: "./src/modules/auth"');
-    expect(logger.success.mock.calls.some((c) => String(c[0]).includes("Registered"))).toBe(true);
+    expect(
+      logger.success.mock.calls.some((c) =>
+        String(c[0]).includes("Registered"),
+      ),
+    ).toBe(true);
   });
 
   test("the scaffolded models are valid Damat model source with the Better Auth tables", async () => {
     state.existsDefault = false;
     await run(["better-auth"]).result;
     const models = written("src/modules/auth/models/index.ts")!.content;
-    for (const table of ['model("user"', 'model("session"', 'model("account"', 'model("verification"']) {
+    for (const table of [
+      'model("user"',
+      'model("session"',
+      'model("account"',
+      'model("verification"',
+    ]) {
       expect(models).toContain(table);
     }
     // session/account belong to user
@@ -107,14 +119,19 @@ describe("damat auth init better-auth — scaffold", () => {
     const { result, logger } = run(["better-auth"]);
     expect((await result).exitCode).toBe(0);
     expect(
-      logger.warn.mock.calls.some((c) => String(c[0]).includes("Could not update damat.config.ts")),
+      logger.warn.mock.calls.some((c) =>
+        String(c[0]).includes("Could not update damat.config.ts"),
+      ),
     ).toBe(true);
   });
 });
 
 describe("auth command group", () => {
   test("the parent prints a provider cheat-sheet", async () => {
-    const { ctx, logger } = createContext({}, { args: [], cwd: "/app" } as never);
+    const { ctx, logger } = createContext({}, {
+      args: [],
+      cwd: "/app",
+    } as never);
     expect((await authCommand.handler(ctx)).exitCode).toBe(0);
     const info = logger.info.mock.calls.map((c) => String(c[0])).join("\n");
     expect(info).toContain("services.auth");

@@ -36,12 +36,12 @@ damat-orm <command> [args] [options]
 Two top-level command groups, each with subcommands. Running a group with no
 subcommand prints the available subcommands.
 
-| Command | Description | Example |
-|---|---|---|
-| `migrate:up` | Run all pending migrations across every module | `damat-orm migrate:up` |
+| Command                   | Description                                             | Example                         |
+| ------------------------- | ------------------------------------------------------- | ------------------------------- |
+| `migrate:up`              | Run all pending migrations across every module          | `damat-orm migrate:up`          |
 | `migrate:status [module]` | Show applied/pending counts (optionally for one module) | `damat-orm migrate:status user` |
-| `migrate:list` | List modules that have migrations, with counts | `damat-orm migrate:list` |
-| `migrate:create <module>` | Create an initial or diff migration for a module | `damat-orm migrate:create user` |
+| `migrate:list`            | List modules that have migrations, with counts          | `damat-orm migrate:list`        |
+| `migrate:create <module>` | Create an initial or diff migration for a module        | `damat-orm migrate:create user` |
 
 > `migrate:status` also accepts `--module <name>` / `-m <name>` as an
 > alternative to the positional argument.

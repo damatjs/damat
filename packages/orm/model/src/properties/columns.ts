@@ -27,12 +27,10 @@ import {
 import { UuidColumnBuilder } from "./column/uuid";
 import { VectorColumnBuilder } from "./column/vector";
 import { EnumBuilder } from "./enum/base";
-import {
-  RelationOptions
-} from "@damatjs/orm-type";
+import { RelationOptions } from "@damatjs/orm-type";
 import { IndexBuilder } from "./indexes";
 import { ConstraintBuilder } from "./constraints";
-import { ModelTarget } from '@/utils';
+import { ModelTarget } from "@/utils";
 
 // Column and relation builders
 export const columns = {

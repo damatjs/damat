@@ -44,7 +44,10 @@ describe("list_installed tool", () => {
   test("honors a custom dir argument", async () => {
     const moduleDir = join(tmp, "mods/alpha");
     mkdirSync(moduleDir, { recursive: true });
-    writeFileSync(join(moduleDir, "module.json"), JSON.stringify({ version: "2" }));
+    writeFileSync(
+      join(moduleDir, "module.json"),
+      JSON.stringify({ version: "2" }),
+    );
 
     const res = await listInstalledTool.handler({ dir: "mods" });
     const payload = JSON.parse(res.text);

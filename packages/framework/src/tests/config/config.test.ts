@@ -3,7 +3,11 @@ import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { defineConfig } from "../../config/define";
-import { loadConfig, loadConfigAsync, clearConfigCache } from "../../config/loader";
+import {
+  loadConfig,
+  loadConfigAsync,
+  clearConfigCache,
+} from "../../config/loader";
 import type { AppConfig } from "../../config/types";
 
 const baseConfig: AppConfig = {
@@ -63,7 +67,10 @@ describe("loadConfigAsync", () => {
   });
 
   it("rejects with a wrapped error when projectConfig is missing", async () => {
-    writeFileSync(join(cwd, "damat.config.ts"), `export default { nope: true };`);
+    writeFileSync(
+      join(cwd, "damat.config.ts"),
+      `export default { nope: true };`,
+    );
     await expect(loadConfigAsync(cwd)).rejects.toThrow(
       "Failed to load config: Invalid config: missing projectConfig",
     );
@@ -98,10 +105,16 @@ describe("loadConfig (sync) cache short-circuit", () => {
 
 describe("loadConfigAsync win32 path handling", () => {
   it("normalises backslashes and prefixes a slash when building the file URL on win32", async () => {
-    writeFileSync(join(cwd, "damat.config.ts"), `export default { projectConfig: {} };`);
+    writeFileSync(
+      join(cwd, "damat.config.ts"),
+      `export default { projectConfig: {} };`,
+    );
 
     const original = Object.getOwnPropertyDescriptor(process, "platform");
-    Object.defineProperty(process, "platform", { value: "win32", configurable: true });
+    Object.defineProperty(process, "platform", {
+      value: "win32",
+      configurable: true,
+    });
     try {
       // The win32 branch runs while building the file URL (before import).
       // The import itself may then fail, which is wrapped — either way the

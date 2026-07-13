@@ -3,13 +3,19 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 import { type Command, reportError } from "@damatjs/cli";
-import { locateModuleDir, readModuleManifest, validateModuleDir } from "@damatjs/module";
+import {
+  locateModuleDir,
+  readModuleManifest,
+  validateModuleDir,
+} from "@damatjs/module";
 import { runTypeCheck } from "../shared/typecheck";
 
 // ---------------------------------------------------------------------------
 // Gateway URL helper — mirrors the MCP's registry/load.ts logic.
 // ---------------------------------------------------------------------------
-function gatewayBaseFromRegistryUrl(location: string | undefined): string | null {
+function gatewayBaseFromRegistryUrl(
+  location: string | undefined,
+): string | null {
   if (!location || !/^https?:\/\//.test(location)) return null;
   const u = new URL(location);
   let base = location
@@ -52,7 +58,10 @@ async function publishToGateway(opts: {
 
   const status = response.status;
   if (status === 201) {
-    return (await response.json()) as { success: boolean; package?: { name: string; version: string } };
+    return (await response.json()) as {
+      success: boolean;
+      package?: { name: string; version: string };
+    };
   }
 
   const bodyText = await response.text().catch(() => "(no body)");
@@ -74,9 +83,11 @@ async function publishToGateway(opts: {
 // ---------------------------------------------------------------------------
 export const modulePublishCommand: Command = {
   name: "publish",
-  description: "Validate, build, pack, and publish this module to the registry gateway",
+  description:
+    "Validate, build, pack, and publish this module to the registry gateway",
   aliases: ["pub"],
-  usage: "damat module publish [--no-typecheck] [--no-validate] [--dry-run] [--registry <url>] [--token <token>]",
+  usage:
+    "damat module publish [--no-typecheck] [--no-validate] [--dry-run] [--registry <url>] [--token <token>]",
   options: [
     {
       name: "typecheck",
@@ -87,13 +98,15 @@ export const modulePublishCommand: Command = {
     {
       name: "validate",
       type: "boolean",
-      description: "Contract-validate before building (use --no-validate to skip)",
+      description:
+        "Contract-validate before building (use --no-validate to skip)",
       default: true,
     },
     {
       name: "dry-run",
       type: "boolean",
-      description: "Validate + build + pack but do NOT publish — print what would be sent",
+      description:
+        "Validate + build + pack but do NOT publish — print what would be sent",
       default: false,
     },
     {
@@ -168,7 +181,10 @@ export const modulePublishCommand: Command = {
     let manifest: Record<string, unknown>;
     try {
       const moduleDir = locateModuleDir(ctx.cwd);
-      manifest = readModuleManifest(moduleDir) as unknown as Record<string, unknown>;
+      manifest = readModuleManifest(moduleDir) as unknown as Record<
+        string,
+        unknown
+      >;
     } catch (e) {
       reportError(ctx.logger, e, { prefix: "Could not read module manifest" });
       return { exitCode: 1 };
@@ -181,7 +197,8 @@ export const modulePublishCommand: Command = {
       gatewayBaseFromRegistryUrl(process.env.DAMAT_MODULE_REGISTRY);
 
     const publishToken =
-      (ctx.options.token as string | undefined) ?? process.env.DAMAT_PUBLISH_TOKEN;
+      (ctx.options.token as string | undefined) ??
+      process.env.DAMAT_PUBLISH_TOKEN;
 
     // 6. --dry-run: print plan and exit.
     if (ctx.options["dry-run"]) {
@@ -238,7 +255,9 @@ export const modulePublishCommand: Command = {
       const tarballBytes = readFileSync(tarballPath);
 
       // 9. Publish to gateway.
-      ctx.logger.info(`Publishing ${pkgName}@${pkgVersion} to ${gatewayBase}...`);
+      ctx.logger.info(
+        `Publishing ${pkgName}@${pkgVersion} to ${gatewayBase}...`,
+      );
       const result = await publishToGateway({
         gatewayBase,
         name: pkgName,

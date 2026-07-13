@@ -3,7 +3,11 @@ import type { CliConfig, Command, CommandResult } from "../types";
 import { Logger } from "@damatjs/logger";
 import { CliError } from "../errors";
 import { reportError, getExitCode } from "../utils/output";
-import { validateOptions, applyDefaults, coerceOptions } from "../utils/validate";
+import {
+  validateOptions,
+  applyDefaults,
+  coerceOptions,
+} from "../utils/validate";
 import { loadConfig } from "../config";
 import { buildCommandContext } from "./buildCommand";
 import { buildOptionFlag } from "./buildOption";
@@ -12,7 +16,7 @@ export function registerSingleCommand(
   cli: CAC,
   cmd: Command,
   config: CliConfig,
-  logger: Logger
+  logger: Logger,
 ): void {
   if (cmd.subcommands) {
     return;
@@ -28,11 +32,9 @@ export function registerSingleCommand(
 
   if (cmd.options) {
     for (const opt of cmd.options) {
-      cacCmd.option(
-        buildOptionFlag(opt),
-        opt.description,
-        { default: opt.default }
-      );
+      cacCmd.option(buildOptionFlag(opt), opt.description, {
+        default: opt.default,
+      });
     }
   }
 
@@ -78,7 +80,10 @@ export function registerSingleCommand(
     } catch (error) {
       reportError(logger, error, { prefix: "Command failed" });
       if (config.onError) {
-        config.onError(error instanceof Error ? error : new Error(String(error)), ctx);
+        config.onError(
+          error instanceof Error ? error : new Error(String(error)),
+          ctx,
+        );
       }
       process.exit(getExitCode(error));
     }

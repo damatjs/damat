@@ -14,13 +14,13 @@ describe("PoolManager", () => {
 
     it("throws error when getting pool before setup", () => {
       expect(() => PoolManager.getPool()).toThrow(
-        "Pool not initialized. Call PoolManager.setup(pool) first."
+        "Pool not initialized. Call PoolManager.setup(pool) first.",
       );
     });
 
     it("throws error when getting entity manager before setup", () => {
       expect(() => PoolManager.getPgEntityManager()).toThrow(
-        "EntityManager not initialized. Call PoolManager.setup(pool) first."
+        "EntityManager not initialized. Call PoolManager.setup(pool) first.",
       );
     });
   });

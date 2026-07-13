@@ -20,7 +20,10 @@ export const moduleInfo: ToolDef = {
   inputSchema: {
     type: "object",
     properties: {
-      ref: { type: "string", description: "Module ref: name, namespace/name, optionally @version" },
+      ref: {
+        type: "string",
+        description: "Module ref: name, namespace/name, optionally @version",
+      },
     },
     required: ["ref"],
     additionalProperties: false,
@@ -29,11 +32,15 @@ export const moduleInfo: ToolDef = {
     const loc = registryLocation();
     if (!loc) return { text: NO_REGISTRY_MSG, isError: true };
     const parsed = parseModuleRef(String(ref));
-    if (!parsed) return { text: `"${ref}" is not a valid module ref`, isError: true };
+    if (!parsed)
+      return { text: `"${ref}" is not a valid module ref`, isError: true };
     const index = await loadRegistryIndex(loc);
     const found = lookupEntry(index, parsed);
     if (!found) {
-      return { text: `Registry has no module "${formatModuleRef(parsed)}"`, isError: true };
+      return {
+        text: `Registry has no module "${formatModuleRef(parsed)}"`,
+        isError: true,
+      };
     }
 
     // Resolve which version to fetch the verdict for: explicit ref version,
@@ -46,7 +53,11 @@ export const moduleInfo: ToolDef = {
     const liveVerdict = await fetchVerdict(loc, found.key, version);
 
     return {
-      text: JSON.stringify(summarizeEntry(found.key, found.entry, liveVerdict), null, 2),
+      text: JSON.stringify(
+        summarizeEntry(found.key, found.entry, liveVerdict),
+        null,
+        2,
+      ),
     };
   },
 };

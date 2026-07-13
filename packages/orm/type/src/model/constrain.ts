@@ -64,7 +64,4 @@ export interface ExcludeConstraint extends Constraint {
  * Union type for all constraint types
  */
 export type ConstraintSchema =
-  | UniqueConstraint
-  | PrimaryKeyConstraint
-  | CheckConstraint
-  | ExcludeConstraint;
+  UniqueConstraint | PrimaryKeyConstraint | CheckConstraint | ExcludeConstraint;

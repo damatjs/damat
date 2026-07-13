@@ -11,7 +11,7 @@ export function clearConfigCache(): void {
 
 export async function loadConfig<T = unknown>(
   loaderConfig: ConfigLoader | undefined,
-  cwd: string = process.cwd()
+  cwd: string = process.cwd(),
 ): Promise<T | null> {
   if (cachedConfig !== null) {
     return cachedConfig as T;
@@ -47,15 +47,20 @@ export async function loadConfig<T = unknown>(
 
       return cachedConfig as T;
     } catch (error) {
-      throw new ConfigLoadError(filePath, error instanceof Error ? error : undefined);
+      throw new ConfigLoadError(
+        filePath,
+        error instanceof Error ? error : undefined,
+      );
     }
   }
 
   return null;
 }
 
-export function withConfig<T extends Record<string, unknown> = Record<string, unknown>>(
-  configLoader: ConfigLoader | undefined
+export function withConfig<
+  T extends Record<string, unknown> = Record<string, unknown>,
+>(
+  configLoader: ConfigLoader | undefined,
 ): {
   get: () => Promise<T | null>;
   clear: () => void;

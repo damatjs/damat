@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from "node:fs";
+import {
+  mkdtempSync,
+  mkdirSync,
+  writeFileSync,
+  readFileSync,
+  existsSync,
+  rmSync,
+} from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import type { ModuleSchema } from "@damatjs/orm-type";
@@ -82,7 +89,9 @@ describe("runModuleCodegen", () => {
     // CRUD scaffold created files under the workflow/route roots.
     expect(result.scaffolded.length).toBeGreaterThan(0);
     expect(
-      existsSync(join(d.workflowsRoot, "aiSessions", "steps", "createAiSessions.ts")),
+      existsSync(
+        join(d.workflowsRoot, "aiSessions", "steps", "createAiSessions.ts"),
+      ),
     ).toBe(true);
   });
 
@@ -158,7 +167,9 @@ describe("runModuleCodegen", () => {
     // Let the scaffold succeed, but plant a directory named `index.ts` inside the
     // workflow tree so generateBarrels' writeFileSync(index.ts) throws (EISDIR),
     // which runModuleCodegen must catch and log without failing the run.
-    mkdirSync(join(d.workflowsRoot, "ai_planted", "index.ts"), { recursive: true });
+    mkdirSync(join(d.workflowsRoot, "ai_planted", "index.ts"), {
+      recursive: true,
+    });
     const result = await runModuleCodegen(
       { schema, moduleId: "shop", ...d },
       quietLogger,

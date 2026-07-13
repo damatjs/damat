@@ -14,7 +14,8 @@ console.log("=".repeat(80));
 async function run() {
   try {
     const pool = new Pool({
-      connectionString: "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable"
+      connectionString:
+        "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable",
     });
 
     await test1_Connection();
@@ -35,7 +36,6 @@ async function run() {
     console.log("\n" + "=".repeat(80));
     console.log("✅ ALL TESTS PASSED!");
     console.log("=".repeat(80));
-
   } catch (error: any) {
     console.error("\n❌ TEST FAILED:", error.message);
     process.exit(1);

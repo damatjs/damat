@@ -5,7 +5,10 @@ import type { ModuleInstance, ModuleRegistry } from "@damatjs/services";
 
 const moduleRegistry = new Map<string, ModuleInstance<any>>();
 
-export function registerModule(name: string, module: ModuleInstance<any>): void {
+export function registerModule(
+  name: string,
+  module: ModuleInstance<any>,
+): void {
   module.init();
   moduleRegistry.set(name, module);
 }
@@ -43,7 +46,10 @@ export function getAllModules(): Map<string, ModuleInstance<any>> {
   return moduleRegistry;
 }
 
-export async function initModules(modules: ModuleConfig[], cwd: string): Promise<void> {
+export async function initModules(
+  modules: ModuleConfig[],
+  cwd: string,
+): Promise<void> {
   for (const moduleConfig of modules) {
     const modulePath = path.resolve(cwd, moduleConfig.resolve);
     const moduleUrl = pathToFileURL(modulePath).href;

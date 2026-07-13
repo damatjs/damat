@@ -20,7 +20,9 @@ export async function loadModuleConfig(
     const exports = await import(pathToFileURL(configPath).href);
     const config = exports.default ?? exports.config;
     if (!config || typeof config !== "object") {
-      throw new Error(`${filename} must default-export defineModuleConfig({...})`);
+      throw new Error(
+        `${filename} must default-export defineModuleConfig({...})`,
+      );
     }
     return config as ModuleAppConfig;
   }

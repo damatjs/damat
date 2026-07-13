@@ -28,7 +28,8 @@ import {
 
 export const moduleAddCommand: Command = {
   name: "add",
-  description: "Add a module to this app from the registry, a path, or git (shadcn-style)",
+  description:
+    "Add a module to this app from the registry, a path, or git (shadcn-style)",
   usage:
     "damat module add <source> [--name <id>] [--dir <path>] [--force] [--allow-unverified] [--allow-scripts] [--dry-run]",
   examples: [
@@ -75,7 +76,8 @@ export const moduleAddCommand: Command = {
     {
       name: "dry-run",
       type: "boolean",
-      description: "Resolve and validate the module, then print what would be installed without writing anything",
+      description:
+        "Resolve and validate the module, then print what would be installed without writing anything",
       default: false,
     },
   ],
@@ -131,7 +133,9 @@ export const moduleAddCommand: Command = {
           verification: decision.status,
         });
         if (!decision.allowed) {
-          ctx.logger.error(`Refusing to install "${moduleId}": ${decision.message}`);
+          ctx.logger.error(
+            `Refusing to install "${moduleId}": ${decision.message}`,
+          );
           return { exitCode: 1 };
         }
         if (decision.message) ctx.logger.warn(decision.message);
@@ -200,7 +204,9 @@ export const moduleAddCommand: Command = {
             ? [`install routes to ${relative(ctx.cwd, layout.apiTarget)}/`]
             : []),
           ...(existsSync(join(sourceModuleDir, "workflows"))
-            ? [`install workflows to ${relative(ctx.cwd, layout.workflowsTarget)}/ and rebuild barrels`]
+            ? [
+                `install workflows to ${relative(ctx.cwd, layout.workflowsTarget)}/ and rebuild barrels`,
+              ]
             : []),
           ...(existsSync(join(sourceModuleDir, "links"))
             ? [`install links to ${relative(ctx.cwd, layout.linksTarget)}/`]
@@ -208,14 +214,19 @@ export const moduleAddCommand: Command = {
           `register "${moduleId}" in damat.config.ts (resolve: "${relativeTarget}")`,
           `ensure "@${moduleId}/*" + "@workflows" aliases in tsconfig.json`,
           ...((manifest.env ?? []).length > 0
-            ? [`sync env vars into .env.example: ${(manifest.env ?? []).map((v) => v.name).join(", ")}`]
+            ? [
+                `sync env vars into .env.example: ${(manifest.env ?? []).map((v) => v.name).join(", ")}`,
+              ]
             : []),
           ...(Object.keys(packages).length > 0
             ? [`bun add ${Object.keys(packages).join(" ")}`]
             : []),
         ];
         ctx.logger.info(
-          [`Dry run — adding "${moduleId}" would:`, ...plannedActions.map((a) => `  - ${a}`)].join("\n"),
+          [
+            `Dry run — adding "${moduleId}" would:`,
+            ...plannedActions.map((a) => `  - ${a}`),
+          ].join("\n"),
         );
         return { exitCode: 0 };
       }
@@ -272,7 +283,7 @@ export const moduleAddCommand: Command = {
       } else {
         ctx.logger.warn(
           `Could not update damat.config.ts automatically — add this to your modules block:\n` +
-          `  "${moduleId}": { resolve: "${relativeTarget}", id: "${moduleId}" },`,
+            `  "${moduleId}": { resolve: "${relativeTarget}", id: "${moduleId}" },`,
         );
       }
 
@@ -301,9 +312,9 @@ export const moduleAddCommand: Command = {
       } else if (tsResult === "skipped") {
         ctx.logger.warn(
           `Could not update tsconfig.json automatically — add to compilerOptions.paths:\n` +
-          `  "@${moduleId}/*": ["./src/modules/${moduleId}/*"]\n` +
-          `  "@workflows": ["./src/workflows"]        (app-level; add once)\n` +
-          `  "@workflows/*": ["./src/workflows/*"]    (app-level; add once)`,
+            `  "@${moduleId}/*": ["./src/modules/${moduleId}/*"]\n` +
+            `  "@workflows": ["./src/workflows"]        (app-level; add once)\n` +
+            `  "@workflows/*": ["./src/workflows/*"]    (app-level; add once)`,
         );
       }
 
@@ -321,7 +332,9 @@ export const moduleAddCommand: Command = {
       // npm packages (validated above, before any file was written).
       // Lifecycle scripts stay off unless --allow-scripts was passed.
       if (Object.keys(packages).length > 0) {
-        ctx.logger.info(`Installing packages: ${Object.keys(packages).join(", ")}`);
+        ctx.logger.info(
+          `Installing packages: ${Object.keys(packages).join(", ")}`,
+        );
         const install = installModulePackages(ctx.cwd, packages, {
           allowScripts: Boolean(ctx.options["allow-scripts"]),
         });

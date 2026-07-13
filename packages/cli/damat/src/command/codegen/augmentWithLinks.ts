@@ -4,7 +4,6 @@ import { renderLinkAugmentations, type ResolvedLinkField } from "@damatjs/link";
 type ModuleEntry = { resolve: string; kind?: string };
 type ModuleContainer = Record<string, ModuleEntry>;
 
-
 /**
  * Weave cross-module link fields into a module's generated types: for each link
  * this module participates in, add the linked entity as an optional field on its
@@ -25,7 +24,9 @@ export async function augmentWithLinks(
 
   try {
     const modelsCache = new Map<string, Record<string, any>>();
-    const loadModels = async (resolve: string): Promise<Record<string, any>> => {
+    const loadModels = async (
+      resolve: string,
+    ): Promise<Record<string, any>> => {
       const cached = modelsCache.get(resolve);
       if (cached) return cached;
       const mod = await import(pathToFileURL(resolve).href);
@@ -99,4 +100,3 @@ export async function augmentWithLinks(
     );
   }
 }
-

@@ -16,7 +16,10 @@ class FakeRedis {
   }
   async quit() {}
 }
-mock.module("@damatjs/deps/ioredis", () => ({ Redis: FakeRedis, default: FakeRedis }));
+mock.module("@damatjs/deps/ioredis", () => ({
+  Redis: FakeRedis,
+  default: FakeRedis,
+}));
 
 // Use the REAL @damatjs/auth core (createAuthHandlers works fine) and a
 // UNIQUELY-named fake adapter so this file's mocks never collide with
@@ -38,7 +41,8 @@ mock.module("@damatjs/auth-wire", () => ({
 
 const { initializeServices } = await import("../../services/index");
 const { clearModules } = await import("../../services/moduleService");
-const { setGlobalLoggerInstance, clearGlobalLogger } = await import("../../services/logger");
+const { setGlobalLoggerInstance, clearGlobalLogger } =
+  await import("../../services/logger");
 const { setLinkModuleResolver } = await import("@damatjs/link");
 
 import type { AppConfig } from "../../config";
@@ -84,7 +88,9 @@ describe("initializeServices — auth", () => {
   it("does not build auth when services.auth is unset", async () => {
     const instances = await initializeServices(config());
     expect(instances.auth).toBeUndefined();
-    expect(instances.shutdownHandlers.some((h) => h.name === "auth")).toBe(false);
+    expect(instances.shutdownHandlers.some((h) => h.name === "auth")).toBe(
+      false,
+    );
   });
 
   it("builds the auth runtime and registers an auth shutdown handler that shuts the provider down", async () => {
@@ -92,7 +98,9 @@ describe("initializeServices — auth", () => {
     expect(instances.auth).toBeDefined();
     expect(typeof instances.auth!.handlers.session).toBe("function");
 
-    const authHandler = instances.shutdownHandlers.find((h) => h.name === "auth");
+    const authHandler = instances.shutdownHandlers.find(
+      (h) => h.name === "auth",
+    );
     expect(authHandler).toBeDefined();
     await authHandler!.handler();
     expect(adapterState.shutdownCalls).toBe(1);
@@ -102,6 +110,8 @@ describe("initializeServices — auth", () => {
     adapterState.hasShutdown = false;
     const instances = await initializeServices(config({ provider: "wire" }));
     expect(instances.auth).toBeDefined();
-    expect(instances.shutdownHandlers.some((h) => h.name === "auth")).toBe(false);
+    expect(instances.shutdownHandlers.some((h) => h.name === "auth")).toBe(
+      false,
+    );
   });
 });

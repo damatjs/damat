@@ -1,4 +1,3 @@
-
 export function entryTemplate(name: string, serviceClass: string): string {
   return `import { defineModule } from "@damatjs/services";
 import { ${serviceClass}, models } from "./service";

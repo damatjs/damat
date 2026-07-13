@@ -13,8 +13,7 @@ import { scanDirectory, sortRoutes } from "./scanner";
 import { createValidatorMiddleware } from "../middleware/validator";
 import { createRateLimitMiddleware } from "../middleware/rateLimit";
 import { createAuthMiddleware } from "../middleware/auth";
-import { resolveMethodConfig } from './resolveMethodConfig';
-
+import { resolveMethodConfig } from "./resolveMethodConfig";
 
 export async function createFileRouter(
   options: CreateFileRouterOptions,
@@ -71,7 +70,7 @@ export async function createFileRouter(
             module.config,
             module.configs,
             globalRateLimit,
-            globalAuth
+            globalAuth,
           );
 
           let hasMethodMiddleware = false;
@@ -80,7 +79,10 @@ export async function createFileRouter(
             router.on(
               method,
               fullPath,
-              createRateLimitMiddleware(resolvedConfig.rateLimit, resolvedConfig.globalRateLimit)
+              createRateLimitMiddleware(
+                resolvedConfig.rateLimit,
+                resolvedConfig.globalRateLimit,
+              ),
             );
             hasMethodMiddleware = true;
           }
@@ -89,12 +91,12 @@ export async function createFileRouter(
             router.on(
               method,
               fullPath,
-              createAuthMiddleware(resolvedConfig.auth.type, authHandlers)
+              createAuthMiddleware(resolvedConfig.auth.type, authHandlers),
             );
             hasMethodMiddleware = true;
           }
 
-          const validator = module.validators?.find(v => v.method === method);
+          const validator = module.validators?.find((v) => v.method === method);
           if (validator) {
             router.on(method, fullPath, createValidatorMiddleware(validator));
             hasMethodMiddleware = true;

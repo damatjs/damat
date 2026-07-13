@@ -1,4 +1,3 @@
-
 export function indexTemplate(): string {
   return `import { defineModule } from "@damatjs/framework";
 import { AuthStorageService } from "./service";

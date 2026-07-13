@@ -27,6 +27,7 @@ skill's job — the backend owner assembles blades into the app.
 You're in **your own** module package with the `@damatjs/*` packages installed
 (not the Damat monorepo). For detail, read each package's README (in
 `node_modules/@damatjs/<pkg>/README.md` or on npm):
+
 - `@damatjs/module` — the authoring surface, the `module.json` contract, and the
   standalone dev/test harness.
 - `@damatjs/orm-model` — the model DSL.
@@ -48,11 +49,12 @@ CRUD: model the data, run `bun run codegen`, and it generates the whole basic
 slice (types + zod + `registry.ts`, and **scaffold-once** per-operation
 `workflows/<table>` + `api/routes/<table>`, both flat by table — `damat module add`
 adds the `<moduleId>/` segment on install). That generated slice carries
-the module — your job is to add only the custom logic *on top of it*. So: **models
+the module — your job is to add only the custom logic _on top of it_. So: **models
 → codegen → extend.** **Extend the generated files in place; never rebuild, fork,
 or write a parallel route/step that competes with the generated one.**
 
 **Hard rules — non-negotiable; they keep every module small, readable, and free of duplication:**
+
 - Layering is one-way: **route → workflow → step → service**. A route ONLY calls a
   workflow (`workflow.execute(input)`) and shapes the response — never the
   service, never business logic. Only steps touch the service via
@@ -92,17 +94,17 @@ or write a parallel route/step that competes with the generated one.**
     `damat module add` adds the `<moduleId>/` segment. Your module ships them **flat**
     (`workflows/<table>`), so you never write a deep workflow path: route→workflow imports go
     through the recursive `index.ts` barrel root (`import { createWidgetsWorkflow } from
-    "@workflows"`), and workflow→step is a relative sibling (`../steps/createWidgets`).
+"@workflows"`), and workflow→step is a relative sibling (`../steps/createWidgets`).
     `@workflows` resolves to `src/workflows/index` identically before and after install (a
     non-wildcard `"@workflows": ["./src/workflows"]` tsconfig entry, written by the scaffold
     and `damat module add`). Barrels are auto-generated (codegen / `damat module add` /
     `damat barrel`) — never hand-edit one.
-  - **Never use `@/` in module code** — the host binds `@/` → the *app* root, so a moved-out
+  - **Never use `@/` in module code** — the host binds `@/` → the _app_ root, so a moved-out
     file importing `@/types` would silently hit the app's `src/types`. Sibling re-exports
     (`./api`, `./create<Pascal>`, `./validator`, `../steps/<op>`) stay relative — they move together.
-  The only cross-module specifier you'll ever see is in codegen-generated link augmentation
-  (`<table>.links.ts`), which imports the linked module's types via `@<other>/types` — you
-  never hand-write it. When you hand-write a file, mirror codegen's specifiers exactly.
+    The only cross-module specifier you'll ever see is in codegen-generated link augmentation
+    (`<table>.links.ts`), which imports the linked module's types via `@<other>/types` — you
+    never hand-write it. When you hand-write a file, mirror codegen's specifiers exactly.
 - **Plain-CRUD ⇒ empty service body, no `lib/gateway`.** `ModuleService({ models })` already
   exposes the entire per-table surface, so a CRUD-only module's `service.ts` is just
   `class XService extends ModuleService({ models, credentialsSchema: schema }) {}` — the empty
@@ -129,7 +131,12 @@ or write a parallel route/step that competes with the generated one.**
    import { defineModule, ModuleService } from "@damatjs/services";
    import { getModule } from "@damatjs/framework";
    import { model, columns, collectModels } from "@damatjs/orm-model";
-   import { createStep, createWorkflow, executeStep, Effect } from "@damatjs/workflow-engine";
+   import {
+     createStep,
+     createWorkflow,
+     executeStep,
+     Effect,
+   } from "@damatjs/workflow-engine";
    import { z } from "@damatjs/deps/zod";
    ```
    - `src/models/` — model definitions (the `@damatjs/orm-model` DSL). Reference
@@ -138,7 +145,7 @@ or write a parallel route/step that competes with the generated one.**
      tables — that's a cross-module link, which the app declares, not you.
    - `src/service.ts` — `export const models = collectModels([ModelA, ModelB])`
      (keys derived from each table name), then `export class XService extends
-     ModuleService({ models, credentialsSchema })`. The generated CRUD is already
+ModuleService({ models, credentialsSchema })`. The generated CRUD is already
      there — add **only** new model-specific integrations (in `src/lib/`), never a
      method that re-exports `find`/`create`/etc. Business logic lives in the
      generated steps/workflows, not the service. **For plain CRUD the body stays

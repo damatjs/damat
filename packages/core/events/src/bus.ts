@@ -33,7 +33,10 @@ export class EventBus {
   // the package's 100% function-coverage gate unreachable.
   constructor() {}
 
-  on<K extends EventName>(event: K, handler: EventHandler<EventPayload<K>>): Unsubscribe {
+  on<K extends EventName>(
+    event: K,
+    handler: EventHandler<EventPayload<K>>,
+  ): Unsubscribe {
     let set = this.handlers.get(event);
     if (!set) {
       set = new Set();
@@ -43,7 +46,10 @@ export class EventBus {
     return () => this.off(event, handler);
   }
 
-  once<K extends EventName>(event: K, handler: EventHandler<EventPayload<K>>): Unsubscribe {
+  once<K extends EventName>(
+    event: K,
+    handler: EventHandler<EventPayload<K>>,
+  ): Unsubscribe {
     const wrapped: EventHandler<EventPayload<K>> = async (payload, context) => {
       this.off(event, wrapped);
       await handler(payload, context);
@@ -51,7 +57,10 @@ export class EventBus {
     return this.on(event, wrapped);
   }
 
-  off<K extends EventName>(event: K, handler: EventHandler<EventPayload<K>>): void {
+  off<K extends EventName>(
+    event: K,
+    handler: EventHandler<EventPayload<K>>,
+  ): void {
     const set = this.handlers.get(event);
     if (!set) return;
     set.delete(handler as EventHandler);
@@ -64,7 +73,10 @@ export class EventBus {
   }
 
   listenerCount(event: string): number {
-    return (this.handlers.get(event)?.size ?? 0) + (this.handlers.get("*")?.size ?? 0);
+    return (
+      (this.handlers.get(event)?.size ?? 0) +
+      (this.handlers.get("*")?.size ?? 0)
+    );
   }
 
   /**
@@ -72,7 +84,10 @@ export class EventBus {
    * when a broadcast transport is connected, publish for other processes.
    * Resolves after all local handlers settled; returns how many ran.
    */
-  async emit<K extends EventName>(event: K, payload: EventPayload<K>): Promise<number> {
+  async emit<K extends EventName>(
+    event: K,
+    payload: EventPayload<K>,
+  ): Promise<number> {
     const delivered = await this.dispatch(event, payload, "local");
     if (this.broadcaster) {
       try {
@@ -88,19 +103,27 @@ export class EventBus {
   }
 
   /** Local-only delivery — used by the broadcast transport for remote events. */
-  async dispatch(event: string, payload: unknown, source: EventContext["source"]): Promise<number> {
+  async dispatch(
+    event: string,
+    payload: unknown,
+    source: EventContext["source"],
+  ): Promise<number> {
     const direct = this.handlers.get(event);
     const wildcard = event === "*" ? undefined : this.handlers.get("*");
     const targets = [...(direct ?? []), ...(wildcard ?? [])];
     if (targets.length === 0) return 0;
 
     const context: EventContext = { event, emittedAt: new Date(), source };
-    const results = await Promise.allSettled(targets.map((h) => h(payload, context)));
+    const results = await Promise.allSettled(
+      targets.map((h) => h(payload, context)),
+    );
     for (const result of results) {
       if (result.status === "rejected") {
         getLogger().error(
           `Event subscriber for "${event}" failed`,
-          result.reason instanceof Error ? result.reason : new Error(String(result.reason)),
+          result.reason instanceof Error
+            ? result.reason
+            : new Error(String(result.reason)),
         );
       }
     }

@@ -19,19 +19,19 @@ const TAG_SET_MIN_TTL_SECONDS = 24 * 60 * 60;
  * {@link invalidateCacheTags} — the Next.js `revalidateTag` model.
  */
 export async function cacheSetTagged<T>(
-    key: string,
-    value: T,
-    ttlSeconds: number = 300,
-    tags: string[] = [],
-    client?: Redis,
+  key: string,
+  value: T,
+  ttlSeconds: number = 300,
+  tags: string[] = [],
+  client?: Redis,
 ): Promise<void> {
-    const redis = client || getRedis();
-    await redis.setex(CACHE_PREFIX + key, ttlSeconds, JSON.stringify(value));
-    for (const tag of tags) {
-        const tagKey = CACHE_TAG_PREFIX + tag;
-        await redis.sadd(tagKey, key);
-        await redis.expire(tagKey, Math.max(ttlSeconds, TAG_SET_MIN_TTL_SECONDS));
-    }
+  const redis = client || getRedis();
+  await redis.setex(CACHE_PREFIX + key, ttlSeconds, JSON.stringify(value));
+  for (const tag of tags) {
+    const tagKey = CACHE_TAG_PREFIX + tag;
+    await redis.sadd(tagKey, key);
+    await redis.expire(tagKey, Math.max(ttlSeconds, TAG_SET_MIN_TTL_SECONDS));
+  }
 }
 
 /**
@@ -41,18 +41,18 @@ export async function cacheSetTagged<T>(
  * is a no-op).
  */
 export async function invalidateCacheTags(
-    tags: string[],
-    client?: Redis,
+  tags: string[],
+  client?: Redis,
 ): Promise<number> {
-    const redis = client || getRedis();
-    let removed = 0;
-    for (const tag of tags) {
-        const tagKey = CACHE_TAG_PREFIX + tag;
-        const members = await redis.smembers(tagKey);
-        if (members.length > 0) {
-            removed += await redis.del(...members.map((m) => CACHE_PREFIX + m));
-        }
-        await redis.del(tagKey);
+  const redis = client || getRedis();
+  let removed = 0;
+  for (const tag of tags) {
+    const tagKey = CACHE_TAG_PREFIX + tag;
+    const members = await redis.smembers(tagKey);
+    if (members.length > 0) {
+      removed += await redis.del(...members.map((m) => CACHE_PREFIX + m));
     }
-    return removed;
+    await redis.del(tagKey);
+  }
+  return removed;
 }

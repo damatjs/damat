@@ -18,15 +18,19 @@ import { defineModule, ModuleService } from "@damatjs/services";
 import { getModule } from "@damatjs/framework";
 import { model, columns } from "@damatjs/orm-model";
 import {
-  createStep, createWorkflow, executeStep, RetryPolicies, Effect,
+  createStep,
+  createWorkflow,
+  executeStep,
+  RetryPolicies,
+  Effect,
 } from "@damatjs/workflow-engine";
 import type { RouteHandler, RouteValidator } from "@damatjs/framework/router";
 import { z } from "@damatjs/deps/zod";
 ```
 
-> **Scope of this chapter.** Everything here lives *inside one module*. What a
+> **Scope of this chapter.** Everything here lives _inside one module_. What a
 > module deliberately **cannot** do — import other modules, form model relations
-> across modules, or activate a connection itself (it may only *ship* a dormant link
+> across modules, or activate a connection itself (it may only _ship_ a dormant link
 > file) — is covered in
 > ["Out of scope for a module"](#out-of-scope-for-a-module) and in
 > [Composing & linking modules](./17-composing-and-linking-modules.md).
@@ -70,9 +74,9 @@ export const UserModel = model(
     email: columns.text().unique(),
     emailVerified: columns.boolean().default(false),
     name: columns.text().nullable(),
-    accounts: columns.hasMany("accounts"),     // intra-module inverse
+    accounts: columns.hasMany("accounts"), // intra-module inverse
   },
-  { schema: "public", name: "User" },          // options (both optional)
+  { schema: "public", name: "User" }, // options (both optional)
 ).indexes([columns.indexes().columns(["email"]).unique()]);
 ```
 
@@ -84,28 +88,28 @@ defaults to the table name). Property values may be a `ColumnBuilder`, a
 
 Every method on the `columns` factory returns a fresh builder. The full set:
 
-| Builder | Factory | SQL type / behavior |
-| --- | --- | --- |
-| Id | `columns.id({ prefix })` | `text` PK, **not null** by default; with a prefix emits a `generate_id('<prefix>')` DB default |
-| Boolean | `columns.boolean()` | `boolean` |
-| Integer | `columns.integer()` | `integer`; chain `.bigInt()` / `.smallInt()` / `.serial()` / `.bigSerial()` / `.smallSerial()` |
-| Numeric | `columns.numeric(p?, s?)` | decimal; `p`→length, `s`→scale; also `.precision(p)` / `.scale(s)` |
-| Real | `columns.real()` | `real` |
-| Double precision | `columns.doublePrecision()` | `double precision` |
-| Money | `columns.money()` | `money` (driver returns it as a `string`) |
-| Text | `columns.text()` | `text` |
-| Varchar | `columns.varchar(n?)` | `character varying`; passing `n` applies `.length(n)` |
-| Char | `columns.char(n?)` | `character`; passing `n` applies `.length(n)` |
-| Timestamp | `columns.timestamp({ withTimezone? })` | `timestamp`; `.withTimezone()` / `.withoutTimezone()` / `.defaultNow()` → `now()` |
-| Date | `columns.date()` | `date`; `.defaultNow()` → `CURRENT_DATE` |
-| Time | `columns.time()` | `time`; tz toggle |
-| Interval | `columns.interval()` | `interval` |
-| JSON | `columns.json({ binary? })` | `json`; `.binary()` switches to `jsonb` |
-| JSONB | `columns.jsonb()` | `jsonb` |
-| UUID | `columns.uuid()` | `uuid`; `.defaultGenerate()` → `gen_random_uuid()` |
-| Bytea | `columns.bytea()` | `bytea` (driver returns a `Buffer`) |
-| Enum | `columns.enum(EnumBuilder)` | references a named PG enum (see below) |
-| Vector | `columns.vector(dims)` | `real[]` with fixed dimensions for embeddings; `.dimensions(d)` resizes |
+| Builder          | Factory                                | SQL type / behavior                                                                            |
+| ---------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Id               | `columns.id({ prefix })`               | `text` PK, **not null** by default; with a prefix emits a `generate_id('<prefix>')` DB default |
+| Boolean          | `columns.boolean()`                    | `boolean`                                                                                      |
+| Integer          | `columns.integer()`                    | `integer`; chain `.bigInt()` / `.smallInt()` / `.serial()` / `.bigSerial()` / `.smallSerial()` |
+| Numeric          | `columns.numeric(p?, s?)`              | decimal; `p`→length, `s`→scale; also `.precision(p)` / `.scale(s)`                             |
+| Real             | `columns.real()`                       | `real`                                                                                         |
+| Double precision | `columns.doublePrecision()`            | `double precision`                                                                             |
+| Money            | `columns.money()`                      | `money` (driver returns it as a `string`)                                                      |
+| Text             | `columns.text()`                       | `text`                                                                                         |
+| Varchar          | `columns.varchar(n?)`                  | `character varying`; passing `n` applies `.length(n)`                                          |
+| Char             | `columns.char(n?)`                     | `character`; passing `n` applies `.length(n)`                                                  |
+| Timestamp        | `columns.timestamp({ withTimezone? })` | `timestamp`; `.withTimezone()` / `.withoutTimezone()` / `.defaultNow()` → `now()`              |
+| Date             | `columns.date()`                       | `date`; `.defaultNow()` → `CURRENT_DATE`                                                       |
+| Time             | `columns.time()`                       | `time`; tz toggle                                                                              |
+| Interval         | `columns.interval()`                   | `interval`                                                                                     |
+| JSON             | `columns.json({ binary? })`            | `json`; `.binary()` switches to `jsonb`                                                        |
+| JSONB            | `columns.jsonb()`                      | `jsonb`                                                                                        |
+| UUID             | `columns.uuid()`                       | `uuid`; `.defaultGenerate()` → `gen_random_uuid()`                                             |
+| Bytea            | `columns.bytea()`                      | `bytea` (driver returns a `Buffer`)                                                            |
+| Enum             | `columns.enum(EnumBuilder)`            | references a named PG enum (see below)                                                         |
+| Vector           | `columns.vector(dims)`                 | `real[]` with fixed dimensions for embeddings; `.dimensions(d)` resizes                        |
 
 > There is no first-class geometric / network / range column factory even though
 > the underlying `ColumnType` supports those SQL types — most apps never need them.
@@ -114,15 +118,15 @@ Every method on the `columns` factory returns a fresh builder. The full set:
 
 Every column builder shares the base modifier set:
 
-| Modifier | Effect |
-| --- | --- |
-| `.primaryKey()` | mark column as primary key |
-| `.unique()` | UNIQUE column |
-| `.nullable()` | allow NULL (columns are NOT NULL by default) |
-| `.default(value)` | literal default; **strings are auto single-quoted**, numbers/booleans bare |
-| `.defaultRaw(expr)` | raw SQL default, no quoting (e.g. `now()`, `gen_random_uuid()`) |
-| `.array()` | wrap as an array column |
-| `.fieldName(name)` | DB column name when it differs from the property name |
+| Modifier            | Effect                                                                     |
+| ------------------- | -------------------------------------------------------------------------- |
+| `.primaryKey()`     | mark column as primary key                                                 |
+| `.unique()`         | UNIQUE column                                                              |
+| `.nullable()`       | allow NULL (columns are NOT NULL by default)                               |
+| `.default(value)`   | literal default; **strings are auto single-quoted**, numbers/booleans bare |
+| `.defaultRaw(expr)` | raw SQL default, no quoting (e.g. `now()`, `gen_random_uuid()`)            |
+| `.array()`          | wrap as an array column                                                    |
+| `.fieldName(name)`  | DB column name when it differs from the property name                      |
 
 Type-specific helpers extend these: `.defaultNow()` (timestamp/date),
 `.defaultGenerate()` (uuid), `.length(n)` (varchar/char), `.precision()`/`.scale()`
@@ -139,7 +143,9 @@ columns. Register the enum at module level so its `CREATE TYPE` is described:
 ```ts
 import { EnumBuilder } from "@damatjs/orm-model";
 
-const OrderStatus = new EnumBuilder(["pending", "shipped", "delivered"]).name("order_status");
+const OrderStatus = new EnumBuilder(["pending", "shipped", "delivered"]).name(
+  "order_status",
+);
 
 const Order = model("orders", {
   id: columns.id({ prefix: "ord" }).primaryKey(),
@@ -209,14 +215,14 @@ the resolved name, so pass the base name.
 A relation has two sides:
 
 - **Owning side — `belongsTo(target)`.** The only relation that creates DB
-  artifacts: it adds the FK column(s) and a foreign-key constraint to *this* table.
+  artifacts: it adds the FK column(s) and a foreign-key constraint to _this_ table.
 - **Inverse side — `hasMany(target)` (1:N) / `hasOne(target)` (1:1).** Pure ORM
   metadata; no column, no FK.
 
 ```ts
 const Category = model("categories", {
   id: columns.id({ prefix: "cat" }).primaryKey(),
-  products: columns.hasMany("products").mappedBy("category"),  // inverse, no column
+  products: columns.hasMany("products").mappedBy("category"), // inverse, no column
 });
 
 const Product = model("products", {
@@ -243,14 +249,14 @@ copy-pasteable fixes:
 
 ```ts
 import { assertValidRelations } from "@damatjs/orm-model";
-assertValidRelations([Category, Product]);  // throws RelationValidationError on a bad graph
+assertValidRelations([Category, Product]); // throws RelationValidationError on a bad graph
 ```
 
 > **Relations stay within one module.** A module models its own tables and the
 > relationships among them. It does **not** reference another module's tables in a
-> model relation — a cross-module connection is a separate *link*, activated by the
+> model relation — a cross-module connection is a separate _link_, activated by the
 > backend owner (ch. 17). `@damatjs/module` exposes no `defineLink`; a module that
-> *ships* a dormant link imports it from `@damatjs/framework`.
+> _ships_ a dormant link imports it from `@damatjs/framework`.
 
 ### Generated types
 
@@ -309,24 +315,24 @@ keys that read as JS identifiers (`account`, `apiKey`).
 
 Each accessor exposes the full surface:
 
-| Method | Signature (abridged) | Behavior |
-| --- | --- | --- |
-| `create` | `({ data, returning? }) => Promise<T>` | insert one row |
-| `createMany` | `({ data: T[], returning? }) => Promise<T[]>` | insert many |
-| `upsert` | `({ data, onConflict, updateColumns?, set?, returning? }) => Promise<T>` | insert, or update on conflict |
-| `upsertMany` | `({ data: T[], onConflict, … }) => Promise<T[]>` | bulk insert-or-update |
-| `find` | `(opts?) => Promise<T \| null>` | one row (`select`, `where`, `orderBy`, `include`) |
-| `findById` | `(id, opts?) => Promise<T \| null>` | one row by primary key |
-| `findOne` | `(where, opts?) => Promise<T \| null>` | one row by filter |
-| `findMany` | `(opts?) => Promise<T[]>` | many rows (+ `skip`, `take`, `include`) |
-| `update` | `({ where, data, returning? }) => Promise<T[]>` | update matching rows |
-| `updateOne` | `({ where, data, returning? }) => Promise<T \| null>` | update and return the single affected row |
-| `delete` | `({ where, returning?, cascade? }) => Promise<number>` | hard delete; `cascade: true` removes related rows in a transaction |
-| `softDelete` | `({ where, returning?, cascade? }) => Promise<T[]>` | set the model's deleted-at column to `now`; `cascade: true` recurses |
-| `restore` | `({ where, returning? }) => Promise<T[]>` | clear the deleted-at column (set to `null`) |
-| `count` | `({ where? }) => Promise<number>` | row count |
-| `exists` | `({ where }) => Promise<boolean>` | existence check |
-| `getModelDefinition` | `() => ModelDefinition` | introspection |
+| Method               | Signature (abridged)                                                     | Behavior                                                             |
+| -------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| `create`             | `({ data, returning? }) => Promise<T>`                                   | insert one row                                                       |
+| `createMany`         | `({ data: T[], returning? }) => Promise<T[]>`                            | insert many                                                          |
+| `upsert`             | `({ data, onConflict, updateColumns?, set?, returning? }) => Promise<T>` | insert, or update on conflict                                        |
+| `upsertMany`         | `({ data: T[], onConflict, … }) => Promise<T[]>`                         | bulk insert-or-update                                                |
+| `find`               | `(opts?) => Promise<T \| null>`                                          | one row (`select`, `where`, `orderBy`, `include`)                    |
+| `findById`           | `(id, opts?) => Promise<T \| null>`                                      | one row by primary key                                               |
+| `findOne`            | `(where, opts?) => Promise<T \| null>`                                   | one row by filter                                                    |
+| `findMany`           | `(opts?) => Promise<T[]>`                                                | many rows (+ `skip`, `take`, `include`)                              |
+| `update`             | `({ where, data, returning? }) => Promise<T[]>`                          | update matching rows                                                 |
+| `updateOne`          | `({ where, data, returning? }) => Promise<T \| null>`                    | update and return the single affected row                            |
+| `delete`             | `({ where, returning?, cascade? }) => Promise<number>`                   | hard delete; `cascade: true` removes related rows in a transaction   |
+| `softDelete`         | `({ where, returning?, cascade? }) => Promise<T[]>`                      | set the model's deleted-at column to `now`; `cascade: true` recurses |
+| `restore`            | `({ where, returning? }) => Promise<T[]>`                                | clear the deleted-at column (set to `null`)                          |
+| `count`              | `({ where? }) => Promise<number>`                                        | row count                                                            |
+| `exists`             | `({ where }) => Promise<boolean>`                                        | existence check                                                      |
+| `getModelDefinition` | `() => ModelDefinition`                                                  | introspection                                                        |
 
 With `cascade: true`, `delete` / `softDelete` walk the model's `hasMany` /
 `hasOne` relations depth-first inside one transaction, honouring each relation's
@@ -403,7 +409,7 @@ import { load } from "./config/load";
 
 export default defineModule("user", {
   service: UserModuleService,
-  credentials: load,           // (env) => creds
+  credentials: load, // (env) => creds
 });
 ```
 
@@ -462,15 +468,24 @@ resume-after-crash) — skip workflows when a single function with `try/catch` c
 the need.
 
 ```ts
-import { createStep, createWorkflow, executeStep, StepResponse, RetryPolicies, Effect } from "@damatjs/module";
+import {
+  createStep,
+  createWorkflow,
+  executeStep,
+  StepResponse,
+  RetryPolicies,
+  Effect,
+} from "@damatjs/module";
 
 const createOrder = createStep<{ items: string[] }, Order, string>(
   "create-order",
   async (input, ctx, signal) => {
     const order = await orderService.create(input, { signal });
-    return new StepResponse(order, order.id);   // output downstream; id is the rollback payload
+    return new StepResponse(order, order.id); // output downstream; id is the rollback payload
   },
-  async (orderId, ctx) => { await orderService.cancel(orderId); },  // compensation (undo)
+  async (orderId, ctx) => {
+    await orderService.cancel(orderId);
+  }, // compensation (undo)
   { retry: RetryPolicies.standard, timeoutMs: 10_000 },
 );
 
@@ -479,15 +494,22 @@ const placeOrder = createWorkflow(
   (input: { items: string[] }, ctx) =>
     Effect.gen(function* () {
       const order = yield* executeStep(createOrder, input, ctx);
-      const payment = yield* executeStep(chargeCard, { orderId: order.id }, ctx);
+      const payment = yield* executeStep(
+        chargeCard,
+        { orderId: order.id },
+        ctx,
+      );
       return { order, payment };
     }),
   { timeoutMs: 60_000 },
 );
 
 const result = await placeOrder.execute({ items: ["sku-1"] });
-if (result.success) { /* result.result, result.durationMs */ }
-else { /* result.error.code, result.compensated */ }
+if (result.success) {
+  /* result.result, result.durationMs */
+} else {
+  /* result.error.code, result.compensated */
+}
 ```
 
 ### Steps
@@ -498,7 +520,7 @@ else { /* result.error.code, result.compensated */ }
 calls so timeouts actually cancel work. `compensate` is
 `(compensateInput, ctx) => Promise<void>` — it gets **only** the payload from the
 `StepResponse` (or `undefined`), not the input or output — registered **after** the
-step succeeds and run (in reverse order) only if a *later* step fails. When `C`
+step succeeds and run (in reverse order) only if a _later_ step fails. When `C`
 excludes `undefined`, supplying the payload is required at compile time. `StepConfig`:
 `timeoutMs` (per-attempt, default 30s), `retry` (a `RetryPolicy`), `idempotent`
 (default `true`; `false` disables retries for the step), `description`.
@@ -509,7 +531,7 @@ excludes `undefined`, supplying the payload is required at compile time. `StepCo
 3 times). Default is **no retries**. Presets: `RetryPolicies.none` / `once` /
 `standard` / `aggressive` / `patient`, or a custom policy with `initialDelayMs`,
 `maxDelayMs`, `backoffMultiplier`, and an `isRetryable(error)` predicate (receives
-the *original* error). By default everything retries except errors named
+the _original_ error). By default everything retries except errors named
 `ValidationError`. A step marked `idempotent: false` is never retried — its
 first failure goes straight to the failure/compensation path.
 
@@ -613,10 +635,16 @@ tests:
 import { withModule } from "@damatjs/module";
 import userModule from "./index";
 
-await withModule(userModule, { moduleDir: import.meta.dir }, async ({ service }) => {
-  const user = await service.user.create({ data: { email: "a@b.co" } });
-  expect(await service.user.exists({ where: { email: "a@b.co" } })).toBe(true);
-});
+await withModule(
+  userModule,
+  { moduleDir: import.meta.dir },
+  async ({ service }) => {
+    const user = await service.user.create({ data: { email: "a@b.co" } });
+    expect(await service.user.exists({ where: { email: "a@b.co" } })).toBe(
+      true,
+    );
+  },
+);
 ```
 
 `BootModuleOptions`: `databaseUrl` (default `process.env.DATABASE_URL`), `database`
@@ -638,9 +666,9 @@ in-process API tests start with `port: 0`:
 ```ts
 import { startModuleApp } from "@damatjs/module";
 
-const app = await startModuleApp({ port: 0 });  // ephemeral port for tests
+const app = await startModuleApp({ port: 0 }); // ephemeral port for tests
 // app.app (Hono), app.server, app.port, app.manifest
-await app.stop();                                // stop server + run shutdown handlers
+await app.stop(); // stop server + run shutdown handlers
 ```
 
 It reads `module.json` (from `src/` or the package root) and the author's
@@ -662,43 +690,56 @@ module in, register it, sync env vars, and install npm packages. It sits next to
 
 ```jsonc
 {
-  "name": "user",                 // required: module id, registry key, default dir name (kebab-case)
-  "version": "0.2.0",             // semver (required to publish)
+  "name": "user", // required: module id, registry key, default dir name (kebab-case)
+  "version": "0.2.0", // semver (required to publish)
   "description": "Auth, sessions and accounts.",
-  "author": "Abel <a@b.co>",      // string OR { name, email?, url? } — declared, not the verified owner
+  "author": "Abel <a@b.co>", // string OR { name, email?, url? } — declared, not the verified owner
 
-  "env": [                        // env vars the credentials loader reads; drives .env.example sync
-    { "name": "BETTER_AUTH_SECRET", "required": true,
-      "description": "Min 32-char secret", "example": "change-me-min-32-characters-long" }
+  "env": [
+    // env vars the credentials loader reads; drives .env.example sync
+    {
+      "name": "BETTER_AUTH_SECRET",
+      "required": true,
+      "description": "Min 32-char secret",
+      "example": "change-me-min-32-characters-long",
+    },
   ],
-  "packages": { "better-auth": "^1.4.18" },   // npm deps the host app installs (name -> semver range)
+  "packages": { "better-auth": "^1.4.18" }, // npm deps the host app installs (name -> semver range)
 
-  "pairsWith": ["organization"],  // NON-BINDING hint: modules this pairs well with (never enforced)
+  "pairsWith": ["organization"], // NON-BINDING hint: modules this pairs well with (never enforced)
   // "modules": ["organization"], // RARE: a hard dependency — prefer pairsWith
 
-  "paths": {                      // layout overrides (omit for the standard layout)
-    "entry": "./index.ts", "models": "./models", "migrations": "./migrations",
-    "workflows": "./workflows", "types": "./types"
+  "paths": {
+    // layout overrides (omit for the standard layout)
+    "entry": "./index.ts",
+    "models": "./models",
+    "migrations": "./migrations",
+    "workflows": "./workflows",
+    "types": "./types",
   },
-  "registry": {                   // publishing metadata (optional today)
-    "namespace": "damatjs", "keywords": ["auth", "users"],
-    "license": "MIT", "repository": "…", "homepage": "…"
-  }
+  "registry": {
+    // publishing metadata (optional today)
+    "namespace": "damatjs",
+    "keywords": ["auth", "users"],
+    "license": "MIT",
+    "repository": "…",
+    "homepage": "…",
+  },
 }
 ```
 
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `name` | string | ✅ | Module id; registry key, default install dir, **and** migration namespace; kebab-case (`/^[a-z][a-z0-9-]*$/`) |
-| `version` | string | — | Semver; required to publish |
-| `description` | string | — | Shown on install and in the registry |
-| `author` | string \| object | — | `"Name <email> (url)"` or `{ name, email?, url? }`; declared provenance, not the verified owner |
-| `env` | `ModuleEnvVar[]` | — | Each `{ name, required?, description?, example? }`; drives `.env.example` |
-| `packages` | `Record<string,string>` | — | npm deps → semver range, installed into the host app on `add` |
-| `pairsWith` | `string[]` | — | **Non-binding** hint — a comment to the backend owner; never enforced or installed. **Prefer this** to express relationships |
-| `modules` | `string[]` | — | **Rare.** Hard dependency on other modules (install only *warns* if missing). Reach for `pairsWith` instead |
-| `paths` | object | — | Overrides for `entry`/`models`/`migrations`/`workflows`/`types` |
-| `registry` | object | — | `namespace`, `keywords`, `license`, `repository`, `homepage` |
+| Field         | Type                    | Required | Notes                                                                                                                        |
+| ------------- | ----------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | string                  | ✅       | Module id; registry key, default install dir, **and** migration namespace; kebab-case (`/^[a-z][a-z0-9-]*$/`)                |
+| `version`     | string                  | —        | Semver; required to publish                                                                                                  |
+| `description` | string                  | —        | Shown on install and in the registry                                                                                         |
+| `author`      | string \| object        | —        | `"Name <email> (url)"` or `{ name, email?, url? }`; declared provenance, not the verified owner                              |
+| `env`         | `ModuleEnvVar[]`        | —        | Each `{ name, required?, description?, example? }`; drives `.env.example`                                                    |
+| `packages`    | `Record<string,string>` | —        | npm deps → semver range, installed into the host app on `add`                                                                |
+| `pairsWith`   | `string[]`              | —        | **Non-binding** hint — a comment to the backend owner; never enforced or installed. **Prefer this** to express relationships |
+| `modules`     | `string[]`              | —        | **Rare.** Hard dependency on other modules (install only _warns_ if missing). Reach for `pairsWith` instead                  |
+| `paths`       | object                  | —        | Overrides for `entry`/`models`/`migrations`/`workflows`/`types`                                                              |
+| `registry`    | object                  | —        | `namespace`, `keywords`, `license`, `repository`, `homepage`                                                                 |
 
 Validation is hand-rolled (CLI-friendly errors) and permissive about unknown keys.
 `damat module validate` runs both tiers: **errors** block installing (missing
@@ -715,12 +756,12 @@ Full field reference: [MODULES.md](../../MODULES.md),
 ## Out of scope for a module
 
 A module is a **single-purpose unit; it does not decide what it is plugged into.**
-The following are deliberately *not* a module's job — they belong to the backend
+The following are deliberately _not_ a module's job — they belong to the backend
 owner (see [Composing & linking modules](./17-composing-and-linking-modules.md)):
 
 - **No model-level cross-module relations.** A module never forms a real, validated
   model relationship to another module's tables. Relations are intra-module only, by
-  table name. A module *may* ship a **dormant** `defineLink` file under `links/`
+  table name. A module _may_ ship a **dormant** `defineLink` file under `links/`
   (imported from `@damatjs/framework`) for the owner to activate by migrating — but
   that creates nothing on its own and `@damatjs/module` itself omits link helpers.
 - **No importing other modules.** A module stays self-contained; it does not import

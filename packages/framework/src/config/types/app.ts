@@ -1,7 +1,7 @@
-import { ModuleConfigObject } from './module';
+import { ModuleConfigObject } from "./module";
 import type { ProjectConfig } from "./project";
-import { ServicesConfig } from './services';
-import type { LifecycleHooks } from './hooks';
+import { ServicesConfig } from "./services";
+import type { LifecycleHooks } from "./hooks";
 
 export interface AppConfig {
   projectConfig: ProjectConfig;

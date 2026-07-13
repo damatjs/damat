@@ -66,19 +66,19 @@ for (const [name, contents] of files) {
 
 ## API
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `columnToTsType(col)` | function | `ColumnSchema` → TS type string (handles enum alias, array, nullable). |
-| `columnToZodSchema(col)` | function | `ColumnSchema` → Zod schema string (no `.optional()`/`.nullable()`). |
-| `DEFAULT_AUTO_FIELDS` | const `Set<string>` | Columns omitted from `New*` types: `id`, `createdAt`, `created_at`, `updatedAt`, `updated_at`. |
-| `generateTypes(schema, opts?)` | function | One combined `.ts` string: enums + per-table interface/`New`/`Update`. |
-| `generateZodTypes(schema, opts?)` | function | One combined `.ts` string of all Zod schemas. |
-| `generateTableFile(table, schema, autoFields, banner)` | function | Single table's `.ts` (with enum/relation imports). |
-| `generateZodFile(table, schema, banner)` | function | Single table's Zod `.ts`. |
-| `generateFilesMap(schema, opts?, logger?)` | function | `Map<filename, contents>` for the file-per-table layout. |
-| `buildRelationMap(relationships)` | function | Group `RelationSchema[]` by source table. |
-| `relationFields(relations)` | function | Optional loaded-relation interface fields. |
-| `GenerateTypesOptions`, `GeneratedFilesMap` | types | Options (`autoFields`, `banner`) and the files-map result type. |
+| Export                                                 | Kind                | Summary                                                                                        |
+| ------------------------------------------------------ | ------------------- | ---------------------------------------------------------------------------------------------- |
+| `columnToTsType(col)`                                  | function            | `ColumnSchema` → TS type string (handles enum alias, array, nullable).                         |
+| `columnToZodSchema(col)`                               | function            | `ColumnSchema` → Zod schema string (no `.optional()`/`.nullable()`).                           |
+| `DEFAULT_AUTO_FIELDS`                                  | const `Set<string>` | Columns omitted from `New*` types: `id`, `createdAt`, `created_at`, `updatedAt`, `updated_at`. |
+| `generateTypes(schema, opts?)`                         | function            | One combined `.ts` string: enums + per-table interface/`New`/`Update`.                         |
+| `generateZodTypes(schema, opts?)`                      | function            | One combined `.ts` string of all Zod schemas.                                                  |
+| `generateTableFile(table, schema, autoFields, banner)` | function            | Single table's `.ts` (with enum/relation imports).                                             |
+| `generateZodFile(table, schema, banner)`               | function            | Single table's Zod `.ts`.                                                                      |
+| `generateFilesMap(schema, opts?, logger?)`             | function            | `Map<filename, contents>` for the file-per-table layout.                                       |
+| `buildRelationMap(relationships)`                      | function            | Group `RelationSchema[]` by source table.                                                      |
+| `relationFields(relations)`                            | function            | Optional loaded-relation interface fields.                                                     |
+| `GenerateTypesOptions`, `GeneratedFilesMap`            | types               | Options (`autoFields`, `banner`) and the files-map result type.                                |
 
 **Subpath exports:** `@damatjs/codegen/types` is declared in `package.json` (maps to `dist/types/index.js`). It is a build-output subpath; the public, source-backed surface is the root `.` export above.
 

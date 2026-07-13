@@ -1,8 +1,4 @@
-import {
-  OrderDirection,
-  RawWhereClause,
-  WhereClause,
-} from "../../types";
+import { OrderDirection, RawWhereClause, WhereClause } from "../../types";
 import { RelationIncludeMap } from "../../relations";
 
 /**

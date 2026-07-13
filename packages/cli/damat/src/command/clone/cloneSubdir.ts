@@ -1,11 +1,15 @@
 import { join, resolve, sep } from "node:path";
-import { cpSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { gitOrThrow } from './gitOrThrow';
-
+import { cpSync, existsSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { gitOrThrow } from "./gitOrThrow";
 
 /** Shallow-clone to a temp dir and copy `subDir` out (minus VCS/deps dirs). */
-export function cloneSubdir(repoUrl: string, subDir: string, targetDir: string, ref: string): void {
+export function cloneSubdir(
+  repoUrl: string,
+  subDir: string,
+  targetDir: string,
+  ref: string,
+): void {
   const tempDir = mkdtempSync(join(tmpdir(), "damat-clone-"));
   try {
     const args = ["clone", "--depth", "1"];
@@ -16,7 +20,10 @@ export function cloneSubdir(repoUrl: string, subDir: string, targetDir: string, 
     // A `..`-laden subpath would resolve outside the checkout — refuse it.
     const resolvedTemp = resolve(tempDir);
     const resolvedSub = resolve(join(tempDir, subDir));
-    if (resolvedSub !== resolvedTemp && !resolvedSub.startsWith(resolvedTemp + sep)) {
+    if (
+      resolvedSub !== resolvedTemp &&
+      !resolvedSub.startsWith(resolvedTemp + sep)
+    ) {
       throw new Error(`Subdirectory "${subDir}" escapes the cloned repository`);
     }
     if (!existsSync(resolvedSub)) {

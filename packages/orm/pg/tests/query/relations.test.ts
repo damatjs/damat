@@ -100,9 +100,9 @@ describe("assertValidRelationMap", () => {
   });
 
   it("throws RelationGuardError for unknown relation keys", () => {
-    expect(() =>
-      assertValidRelationMap(UserModel, { ghost: true }),
-    ).toThrow(RelationGuardError);
+    expect(() => assertValidRelationMap(UserModel, { ghost: true })).toThrow(
+      RelationGuardError,
+    );
   });
 });
 
@@ -140,9 +140,9 @@ describe("compileRelCondition (lateral relation conditions)", () => {
 
   it("operator object with multiple ops ANDed", () => {
     const params: unknown[] = [];
-    expect(
-      compileRelCondition('"_t"."x"', { gte: 1, lte: 9 }, params),
-    ).toBe('"_t"."x" >= $1 AND "_t"."x" <= $2');
+    expect(compileRelCondition('"_t"."x"', { gte: 1, lte: 9 }, params)).toBe(
+      '"_t"."x" >= $1 AND "_t"."x" <= $2',
+    );
     expect(params).toEqual([1, 9]);
   });
 
@@ -155,9 +155,9 @@ describe("compileRelCondition (lateral relation conditions)", () => {
 
   it("between produces two params", () => {
     const params: unknown[] = [];
-    expect(
-      compileRelCondition('"_t"."x"', { between: [1, 2] }, params),
-    ).toBe('"_t"."x" BETWEEN $1 AND $2');
+    expect(compileRelCondition('"_t"."x"', { between: [1, 2] }, params)).toBe(
+      '"_t"."x" BETWEEN $1 AND $2',
+    );
     expect(params).toEqual([1, 2]);
   });
 

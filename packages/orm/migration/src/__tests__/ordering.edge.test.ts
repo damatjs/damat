@@ -165,7 +165,9 @@ describe("generateTimestamp — formatting corners", () => {
 
 describe("getMigrationTemplateWithSQL — formatting corners", () => {
   const created = new Date("2026-03-16T10:30:00.000Z");
-  const base = (over: Partial<GeneratedMigration> = {}): GeneratedMigration => ({
+  const base = (
+    over: Partial<GeneratedMigration> = {},
+  ): GeneratedMigration => ({
     upStatements: [],
     description: "No changes",
     warnings: [],

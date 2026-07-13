@@ -8,5 +8,5 @@ export { UserModuleService, models };
 
 export default defineModule(USER_MODULE, {
   service: UserModuleService,
-  credentials: credentials.load
+  credentials: credentials.load,
 });

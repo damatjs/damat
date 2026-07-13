@@ -2,7 +2,6 @@ export interface ModuleConfigObject {
   [x: string]: ModuleConfig;
 }
 
-
 export interface ModuleConfig {
   id?: string;
   resolve: string;

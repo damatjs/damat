@@ -33,19 +33,25 @@ export function ModuleService<
       this.models = Object.values(models);
 
       if (!PoolManager.isInitialized()) {
-        throw new Error("PoolManager not initialized. Call PoolManager.setup(pool) before creating service instances.");
+        throw new Error(
+          "PoolManager not initialized. Call PoolManager.setup(pool) before creating service instances.",
+        );
       }
-
 
       const entityManager = PoolManager.getPgEntityManager();
 
       for (const [modelName, model] of Object.entries(models)) {
         entityManager.registerModel(modelName, model as ModelDefinition);
-        let methods = new ModelMethods(model as ModelDefinition, modelName, entityManager);
+        let methods = new ModelMethods(
+          model as ModelDefinition,
+          modelName,
+          entityManager,
+        );
         // Layering: cache innermost (so events fire after invalidation and a
         // query-log line covers hits and misses alike), then events, logging
         // outermost.
-        if (config.cache) methods = withTaggedCache(methods, modelName, config.cache);
+        if (config.cache)
+          methods = withTaggedCache(methods, modelName, config.cache);
         if (config.events) methods = withModelEvents(methods, modelName);
         if (config.logQueries) methods = withQueryLogging(methods, modelName);
         modelMethodsMap.set(modelName, methods);
@@ -56,14 +62,13 @@ export function ModuleService<
       return PoolManager.getPgEntityManager();
     }
 
-
     get getModels() {
       return this.models;
     }
 
     async transaction<R>(
       callback: () => Promise<R>,
-      options?: TransactionOptions
+      options?: TransactionOptions,
     ): Promise<R> {
       if (this.inTransaction) {
         return callback();
@@ -99,7 +104,9 @@ export function ModuleService<
   }
 
   type ModelAccessors = {
-    [K in keyof TModels as K extends string ? ToCamelCase<K> : never]: ModelMethods;
+    [
+      K in keyof TModels as K extends string ? ToCamelCase<K> : never
+    ]: ModelMethods;
   };
 
   for (const [modelName, modelDef] of Object.entries(models)) {
@@ -125,6 +132,8 @@ export function ModuleService<
   }
 
   return GeneratedModuleService as abstract new (
-    credentials?: TCredentialsSchema extends z.ZodObject<z.ZodRawShape> ? z.infer<TCredentialsSchema> : undefined
+    credentials?: TCredentialsSchema extends z.ZodObject<z.ZodRawShape>
+      ? z.infer<TCredentialsSchema>
+      : undefined,
   ) => GeneratedModuleService & ModelAccessors;
 }

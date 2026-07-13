@@ -13,7 +13,12 @@ three small pieces.
 ```ts
 // src/modules/user/service.ts
 import { ModuleService } from "@damatjs/framework";
-import { UserModel, AccountModel, SessionModel, VerificationModel } from "./models";
+import {
+  UserModel,
+  AccountModel,
+  SessionModel,
+  VerificationModel,
+} from "./models";
 import { schema } from "./config/schema";
 
 export const models = {
@@ -78,7 +83,7 @@ export const load = (env: NodeJS.ProcessEnv) => ({
 // src/modules/user/index.ts
 import { defineModule } from "@damatjs/framework";
 import { UserModuleService, models } from "./service";
-import credentials from "./config";   // { schema, load }
+import credentials from "./config"; // { schema, load }
 
 export const USER_MODULE = "user";
 export { UserModuleService, models };
@@ -103,7 +108,7 @@ await users.user.create({ data: { email: "a@b.co" } });
 
 ## 7.4 Relating modules
 
-`getModule(id)` is how one module *calls* another. To declare a **data
+`getModule(id)` is how one module _calls_ another. To declare a **data
 relationship** between two independent modules without either importing the
 other, use a **cross-module link** (`@damatjs/link`). Links live at the app level
 under `src/links/`, generate a junction table, and surface the related records on
@@ -112,8 +117,9 @@ each module's own entity type:
 ```ts
 const link = getModule("link");
 const { data } = await link.graph({
-  module: "user", entity: "user",
-  fields: ["*", "organizations.*"],   // follows the link to the other module
+  module: "user",
+  entity: "user",
+  fields: ["*", "organizations.*"], // follows the link to the other module
 });
 ```
 

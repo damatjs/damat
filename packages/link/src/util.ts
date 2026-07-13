@@ -31,7 +31,8 @@ export function camelToSnake(name: string): string {
 export function clampIdentifier(name: string, max = 63): string {
   if (name.length <= max) return name;
   let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) | 0;
+  for (let i = 0; i < name.length; i++)
+    hash = (hash * 31 + name.charCodeAt(i)) | 0;
   const suffix = `_${(hash >>> 0).toString(36)}`;
   return name.slice(0, max - suffix.length) + suffix;
 }

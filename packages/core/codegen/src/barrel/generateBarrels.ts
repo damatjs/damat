@@ -37,7 +37,10 @@ export function generateBarrels(
     return { written };
   }
   walk(rootDir, written);
-  logger.info("generateBarrels completed", { rootDir, written: written.length });
+  logger.info("generateBarrels completed", {
+    rootDir,
+    written: written.length,
+  });
   return { written };
 }
 

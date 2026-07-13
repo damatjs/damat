@@ -9,11 +9,11 @@ and no subpath exports.
 
 ## Module map
 
-| File                       | Responsibility                                                                 |
-| -------------------------- | ------------------------------------------------------------------------------ |
-| `src/index.ts`             | The entire public API: all error classes        |
-| `package.json`             | Name `@damatjs/types`, version, `exports` map (`.` → `dist/index.js`).          |
-| `tsconfig.json`            | Extends `@damatjs/typescript-config/base.json`; `rootDir: src`, `outDir: dist`. |
+| File            | Responsibility                                                                  |
+| --------------- | ------------------------------------------------------------------------------- |
+| `src/index.ts`  | The entire public API: all error classes                                        |
+| `package.json`  | Name `@damatjs/types`, version, `exports` map (`.` → `dist/index.js`).          |
+| `tsconfig.json` | Extends `@damatjs/typescript-config/base.json`; `rootDir: src`, `outDir: dist`. |
 
 There is exactly one module of substance. Everything documented here lives in
 [`src/index.ts`](../src/index.ts).

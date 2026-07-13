@@ -46,7 +46,11 @@ Runs the `CREATE TABLE IF NOT EXISTS` + index DDL above. Safe to call repeatedly
 ### `getApplied(moduleName?): Promise<AppliedMigration[]>`
 
 ```ts
-interface AppliedMigration { module: string; name: string; applied_at: Date; }
+interface AppliedMigration {
+  module: string;
+  name: string;
+  applied_at: Date;
+}
 ```
 
 Returns rows with `status = 'applied'`, ordered by `applied_at` ascending. With a `moduleName`, filters to that module (`WHERE status = 'applied' AND module = $1`); without it, returns applied migrations across **all** modules. The executor turns the result into a `Set` of `name`s to compute the pending set.

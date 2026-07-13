@@ -2,11 +2,18 @@ import { ModelDefinition } from "@damatjs/orm-model";
 import { BuiltQuery, SelectDescriptor } from "../types";
 import { assembleQuery, quoteIdent } from "../helpers";
 import { QueryBase } from "../base";
-import { RelationIncludeMap, RelationIncludeOptions, assertValidRelationMap, resolveModelRelations } from "../relations";
+import {
+  RelationIncludeMap,
+  RelationIncludeOptions,
+  assertValidRelationMap,
+  resolveModelRelations,
+} from "../relations";
 import { buildLateralJoin } from "./lateral";
 import { buildSelectJson } from "./json";
 
-export class SelectBuilder<Cols extends string = string> extends QueryBase<Cols> {
+export class SelectBuilder<
+  Cols extends string = string,
+> extends QueryBase<Cols> {
   _cols: string[] = [];
   _distinct = false;
   _limit?: number;
@@ -31,13 +38,19 @@ export class SelectBuilder<Cols extends string = string> extends QueryBase<Cols>
   }
 
   limit(n: number): this {
-    if (!Number.isInteger(n) || n < 0) throw new Error(`[query:select.limit] Expected non-negative integer, got ${n}`);
+    if (!Number.isInteger(n) || n < 0)
+      throw new Error(
+        `[query:select.limit] Expected non-negative integer, got ${n}`,
+      );
     this._limit = n;
     return this;
   }
 
   offset(n: number): this {
-    if (!Number.isInteger(n) || n < 0) throw new Error(`[query:select.offset] Expected non-negative integer, got ${n}`);
+    if (!Number.isInteger(n) || n < 0)
+      throw new Error(
+        `[query:select.offset] Expected non-negative integer, got ${n}`,
+      );
     this._offset = n;
     return this;
   }
@@ -55,16 +68,28 @@ export class SelectBuilder<Cols extends string = string> extends QueryBase<Cols>
     const params: unknown[] = [];
     const hasRelations = this._withRelations.size > 0;
     const parentAlias = `_p`;
-    const parentRef = hasRelations ? `${this._table()} ${quoteIdent(parentAlias)}` : this._table();
+    const parentRef = hasRelations
+      ? `${this._table()} ${quoteIdent(parentAlias)}`
+      : this._table();
 
     let colList: string;
-    const plainCols = this._cols.map((c) => hasRelations ? `${quoteIdent(parentAlias)}.${quoteIdent(c)}` : quoteIdent(c));
-    const relCols = [...this._withRelations.keys()].map((name) => `${quoteIdent(`_rel_${name}`)}.${quoteIdent(name)}`);
+    const plainCols = this._cols.map((c) =>
+      hasRelations
+        ? `${quoteIdent(parentAlias)}.${quoteIdent(c)}`
+        : quoteIdent(c),
+    );
+    const relCols = [...this._withRelations.keys()].map(
+      (name) => `${quoteIdent(`_rel_${name}`)}.${quoteIdent(name)}`,
+    );
 
     if (this._cols.length > 0) {
-      colList = (hasRelations ? [...plainCols, ...relCols] : plainCols).join(", ");
+      colList = (hasRelations ? [...plainCols, ...relCols] : plainCols).join(
+        ", ",
+      );
     } else {
-      colList = hasRelations ? [`${quoteIdent(parentAlias)}.*`, ...relCols].join(", ") : "*";
+      colList = hasRelations
+        ? [`${quoteIdent(parentAlias)}.*`, ...relCols].join(", ")
+        : "*";
     }
 
     const lateralJoins: string[] = [];
@@ -72,7 +97,10 @@ export class SelectBuilder<Cols extends string = string> extends QueryBase<Cols>
       const resolved = resolveModelRelations(this._model);
       for (const [relName, relOpts] of this._withRelations) {
         const res = resolved.get(relName);
-        if (res) lateralJoins.push(buildLateralJoin(relName, res, relOpts, parentAlias, params));
+        if (res)
+          lateralJoins.push(
+            buildLateralJoin(relName, res, relOpts, parentAlias, params),
+          );
       }
     }
 

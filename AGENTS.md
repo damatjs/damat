@@ -125,6 +125,7 @@ is roughly: `types`/`deps` → `orm-type` → `orm-model` → `orm-core`/`orm-pg
 ## How to do common tasks
 
 ### Add a column / model to a module
+
 1. Edit/add a model in `src/modules/<m>/models/` using the
    [orm-model DSL](./packages/orm/model/README.md).
 2. Export it from the module's `service.ts` `models` map.
@@ -133,24 +134,28 @@ is roughly: `types`/`deps` → `orm-type` → `orm-model` → `orm-core`/`orm-pg
 4. `damat-orm migrate:up`. Optionally `damat codegen <module>` (or `--all`).
 
 ### Add an HTTP route
+
 Create `src/api/routes/<path>/route.ts` exporting `GET`/`POST`/… as
 `RouteHandler` or `defineRoute<Params>` from `@damatjs/framework/router`.
 Dynamic segments use `[param]` folders. See
 [framework → router](./packages/framework/docs/router.md).
 
 ### Create a new module
+
 `damat module init <name>`, implement `index.ts`/`service.ts`/`models/`, add a
 `module.json` ([MODULES.md](./MODULES.md)), then `damat module validate`. Develop
 and test it standalone with the [`@damatjs/module`](./packages/module/README.md)
 harness (`withModule`/`bootModule`).
 
 ### Install an existing module
+
 Prefer the MCP tools (below) or the CLI:
 `damat module add <registry-ref | path | github | git-url>` →
 `damat-orm migrate:up` → restart. See
 [the guide](./docs/guide/14-installing-modules.md).
 
 ### Add a workflow
+
 Define steps with `createStep` (forward + compensation) and compose them with
 `createWorkflow`. Steps are directly callable: `(input, ctx) => myStep(input, ctx)`
 for one step, or `yield* myStep(input, ctx)` inside `Effect.gen` for several. Pass
@@ -159,9 +164,11 @@ an optional third arg to override retry/timeout per call —
 [workflow-engine](./packages/workflow-engine/README.md).
 
 ### Link two modules (cross-module relationship)
+
 Modules can't FK into each other, so a many-to-many relationship lives **outside**
 both modules in `src/links/<owner>/` (mirroring a module: `models/`, `index.ts`,
 `migrations/`). The junction table is auto-generated; neither module imports the other.
+
 1. `src/links/<owner>/models/<a>-<b>.ts`: `export default defineLink({ module, model, field }, { module, model, field })`.
 2. `src/links/<owner>/index.ts`: `export const links = [...]; export const models = collectLinkModels(links);`.
 3. `src/links/index.ts`: aggregate every owner and `export default defineLinkModule(links)`.
@@ -169,9 +176,9 @@ both modules in `src/links/<owner>/` (mirroring a module: `models/`, `index.ts`,
 5. `damat-orm migrate:create link:<owner>` → `damat-orm migrate:up`, then
    `damat codegen <module>` so each side gains the linked field.
 6. At runtime use `getModule("link")` → `create` / `dismiss` / `fetch` / `graph`.
-Import `defineLink` / `collectLinkModels` / `defineLinkModule` from
-`@damatjs/framework`. Links are an **app / backend-owner** concern — a module
-never defines them. Full guide: [`@damatjs/link`](./packages/link/README.md).
+   Import `defineLink` / `collectLinkModels` / `defineLinkModule` from
+   `@damatjs/framework`. Links are an **app / backend-owner** concern — a module
+   never defines them. Full guide: [`@damatjs/link`](./packages/link/README.md).
 
 ---
 
@@ -180,12 +187,12 @@ never defines them. Full guide: [`@damatjs/link`](./packages/link/README.md).
 The [`@damatjs/mcp`](./packages/mcp/README.md) server (wired in `.mcp.json`)
 exposes safe tools so you can install modules without hand-editing files:
 
-| Tool | Use it to |
-|------|-----------|
-| `search_modules` / `list_modules` | discover modules in the registry |
-| `module_info` | inspect a module before installing |
-| `add_module` | install it (runs the audited `damat module add`) |
-| `list_installed` | see what's already installed |
+| Tool                              | Use it to                                        |
+| --------------------------------- | ------------------------------------------------ |
+| `search_modules` / `list_modules` | discover modules in the registry                 |
+| `module_info`                     | inspect a module before installing               |
+| `add_module`                      | install it (runs the audited `damat module add`) |
+| `list_installed`                  | see what's already installed                     |
 
 Recommended flow: **search → module_info → add_module → tell the user to run
 `damat-orm migrate:up` and restart.** Respect the verification gate
@@ -194,6 +201,7 @@ Recommended flow: **search → module_info → add_module → tell the user to r
 path or git URL.
 
 Two Claude Code skills encode the workflows:
+
 - **`damat-backend`** ([.claude/skills/damat-backend](./.claude/skills/damat-backend/SKILL.md))
   — backend work **and assembling the app**: models, services, routes, workflows,
   migrations, run/debug, and installing / linking / composing modules.
@@ -238,7 +246,7 @@ Two separate tiers — keep them apart. Full rules:
   `<version>.md` per version with package-relevant changes (before → after +
   action required). Pure dependency/CI bumps are noted in the index, no file.
 
-**When you change a package**, in the *same* change: (1) update its living docs to
+**When you change a package**, in the _same_ change: (1) update its living docs to
 the new behavior, (2) add `releases/<package>/<new-version>.md`, (3) update
 `releases/<package>/README.md`. A change isn't done until both tiers are updated —
 living docs that mention a version, or a behavior change with no `releases/` entry,

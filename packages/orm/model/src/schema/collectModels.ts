@@ -35,7 +35,12 @@ function camelizeTable(name: string): string {
  */
 export function collectModels<const T extends readonly ModelDefinition[]>(
   models: T,
-): { [Name in T[number]["_tableName"] as CamelizeTable<Name>]: Extract<T[number], ModelDefinition<Name>> } {
+): {
+  [Name in T[number]["_tableName"] as CamelizeTable<Name>]: Extract<
+    T[number],
+    ModelDefinition<Name>
+  >;
+} {
   const out: Record<string, ModelDefinition> = {};
   for (const model of models) {
     out[camelizeTable(model._tableName)] = model;

@@ -3,7 +3,19 @@ import type { WhereConditionValue, WhereOperators } from "../../types";
 export function isOperatorObject(v: WhereConditionValue): v is WhereOperators {
   if (v === null || typeof v !== "object" || Array.isArray(v)) return false;
   const validOps = new Set([
-    "eq", "neq", "gt", "gte", "lt", "lte", "like", "ilike", "in", "notIn", "isNull", "isNotNull", "between"
+    "eq",
+    "neq",
+    "gt",
+    "gte",
+    "lt",
+    "lte",
+    "like",
+    "ilike",
+    "in",
+    "notIn",
+    "isNull",
+    "isNotNull",
+    "between",
   ]);
   const keys = Object.keys(v as object);
   return keys.length > 0 && keys.every((k) => validOps.has(k));
@@ -25,24 +37,51 @@ export function compileCondition(
 
   if ("eq" in op) {
     if (op.eq === null) parts.push(`${col} IS NULL`);
-    else { params.push(op.eq); parts.push(`${col} = $${params.length}`); }
+    else {
+      params.push(op.eq);
+      parts.push(`${col} = $${params.length}`);
+    }
   }
   if ("neq" in op) {
     if (op.neq === null) parts.push(`${col} IS NOT NULL`);
-    else { params.push(op.neq); parts.push(`${col} <> $${params.length}`); }
+    else {
+      params.push(op.neq);
+      parts.push(`${col} <> $${params.length}`);
+    }
   }
-  if ("gt" in op) { params.push(op.gt); parts.push(`${col} > $${params.length}`); }
-  if ("gte" in op) { params.push(op.gte); parts.push(`${col} >= $${params.length}`); }
-  if ("lt" in op) { params.push(op.lt); parts.push(`${col} < $${params.length}`); }
-  if ("lte" in op) { params.push(op.lte); parts.push(`${col} <= $${params.length}`); }
-  if ("like" in op) { params.push(op.like); parts.push(`${col} LIKE $${params.length}`); }
-  if ("ilike" in op) { params.push(op.ilike); parts.push(`${col} ILIKE $${params.length}`); }
+  if ("gt" in op) {
+    params.push(op.gt);
+    parts.push(`${col} > $${params.length}`);
+  }
+  if ("gte" in op) {
+    params.push(op.gte);
+    parts.push(`${col} >= $${params.length}`);
+  }
+  if ("lt" in op) {
+    params.push(op.lt);
+    parts.push(`${col} < $${params.length}`);
+  }
+  if ("lte" in op) {
+    params.push(op.lte);
+    parts.push(`${col} <= $${params.length}`);
+  }
+  if ("like" in op) {
+    params.push(op.like);
+    parts.push(`${col} LIKE $${params.length}`);
+  }
+  if ("ilike" in op) {
+    params.push(op.ilike);
+    parts.push(`${col} ILIKE $${params.length}`);
+  }
 
   if ("in" in op) {
     const arr = op.in as unknown[];
     if (arr.length === 0) parts.push("FALSE");
     else {
-      const ph = arr.map((v) => { params.push(v); return `$${params.length}`; });
+      const ph = arr.map((v) => {
+        params.push(v);
+        return `$${params.length}`;
+      });
       parts.push(`${col} IN (${ph.join(", ")})`);
     }
   }
@@ -50,7 +89,10 @@ export function compileCondition(
     const arr = op.notIn as unknown[];
     if (arr.length === 0) parts.push("TRUE");
     else {
-      const ph = arr.map((v) => { params.push(v); return `$${params.length}`; });
+      const ph = arr.map((v) => {
+        params.push(v);
+        return `$${params.length}`;
+      });
       parts.push(`${col} NOT IN (${ph.join(", ")})`);
     }
   }
@@ -59,8 +101,10 @@ export function compileCondition(
 
   if ("between" in op) {
     const [lo, hi] = op.between as [unknown, unknown];
-    params.push(lo); const loIdx = params.length;
-    params.push(hi); const hiIdx = params.length;
+    params.push(lo);
+    const loIdx = params.length;
+    params.push(hi);
+    const hiIdx = params.length;
     parts.push(`${col} BETWEEN $${loIdx} AND $${hiIdx}`);
   }
 

@@ -1,7 +1,7 @@
 # Damat modules — the `module.json` contract
 
 A **module** is a self-contained vertical slice of a backend: its own models,
-migrations, service, config, and workflows. What makes a module *portable* —
+migrations, service, config, and workflows. What makes a module _portable_ —
 installable into any Damat app with `damat module add` and, in future,
 discoverable through the module registry — is a small manifest file,
 **`module.json`**, that ships next to the module's `index.ts`.
@@ -50,26 +50,28 @@ my-module/
 ```jsonc
 {
   // Required ----------------------------------------------------------------
-  "name": "user",                 // module id: registry key + default dir name (kebab-case)
+  "name": "user", // module id: registry key + default dir name (kebab-case)
 
   // Identity ----------------------------------------------------------------
-  "version": "0.2.0",             // semver
+  "version": "0.2.0", // semver
   "description": "Auth, sessions and accounts.",
-  "author": "Abel <a@b.co> (https://…)",   // string OR { name, email?, url? }
+  "author": "Abel <a@b.co> (https://…)", // string OR { name, email?, url? }
 
   // Wiring ------------------------------------------------------------------
-  "env": [                        // env vars the credentials loader reads
+  "env": [
+    // env vars the credentials loader reads
     {
       "name": "BETTER_AUTH_SECRET",
-      "required": true,           // default true; fails to start without it
+      "required": true, // default true; fails to start without it
       "description": "Min 32-char secret for Better Auth",
-      "example": "change-me-min-32-characters-long"   // written to .env.example
-    }
+      "example": "change-me-min-32-characters-long", // written to .env.example
+    },
   ],
-  "packages": {                   // npm packages the host app must install
-    "better-auth": "^1.4.18"      //   name -> semver range
+  "packages": {
+    // npm packages the host app must install
+    "better-auth": "^1.4.18", //   name -> semver range
   },
-  "pairsWith": ["organization"],  // non-binding hint: modules this pairs well with
+  "pairsWith": ["organization"], // non-binding hint: modules this pairs well with
   // "modules": ["organization"], // rare: a HARD dependency — prefer pairsWith
 
   // Layout overrides (omit to use the standard layout) ----------------------
@@ -78,34 +80,34 @@ my-module/
     "models": "./models",
     "migrations": "./migrations",
     "workflows": "./workflows",
-    "types": "./types"
+    "types": "./types",
   },
 
   // Registry publishing metadata (optional today) ---------------------------
   "registry": {
-    "namespace": "damatjs",       // publisher/org
+    "namespace": "damatjs", // publisher/org
     "keywords": ["auth", "users"],
     "license": "MIT",
     "repository": "https://github.com/damatjs/modules",
-    "homepage": "https://github.com/damatjs/modules/tree/main/user"
-  }
+    "homepage": "https://github.com/damatjs/modules/tree/main/user",
+  },
 }
 ```
 
 ### Field summary
 
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `name` | string | ✅ | Module id; registry key and default install directory. |
-| `version` | string | — | Semver. Required to publish to the registry. |
-| `description` | string | — | Shown on install and in the registry. |
-| `author` | string \| object | — | `"Name <email> (url)"` or `{ name, email?, url? }`. Mirrored by the registry; **not** the verified owner. |
-| `env` | `ModuleEnvVar[]` | — | Each: `{ name, required?, description?, example? }`. Drives `.env.example` sync. |
-| `packages` | `Record<string,string>` | — | npm deps installed into the host app on `add`. |
-| `pairsWith` | `string[]` | — | Non-binding hint: modules this one pairs well with. A comment for the backend owner — never enforced or installed. **Prefer this** to express relationships. |
-| `modules` | `string[]` | — | **Rare.** A hard dependency on other modules (install only *warns* if missing). A module should stay self-contained — reach for `pairsWith` instead. |
-| `paths` | object | — | Overrides for `entry`/`models`/`migrations`/`workflows`/`types`. |
-| `registry` | object | — | `namespace`, `keywords`, `license`, `repository`, `homepage`. |
+| Field         | Type                    | Required | Notes                                                                                                                                                        |
+| ------------- | ----------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`        | string                  | ✅       | Module id; registry key and default install directory.                                                                                                       |
+| `version`     | string                  | —        | Semver. Required to publish to the registry.                                                                                                                 |
+| `description` | string                  | —        | Shown on install and in the registry.                                                                                                                        |
+| `author`      | string \| object        | —        | `"Name <email> (url)"` or `{ name, email?, url? }`. Mirrored by the registry; **not** the verified owner.                                                    |
+| `env`         | `ModuleEnvVar[]`        | —        | Each: `{ name, required?, description?, example? }`. Drives `.env.example` sync.                                                                             |
+| `packages`    | `Record<string,string>` | —        | npm deps installed into the host app on `add`.                                                                                                               |
+| `pairsWith`   | `string[]`              | —        | Non-binding hint: modules this one pairs well with. A comment for the backend owner — never enforced or installed. **Prefer this** to express relationships. |
+| `modules`     | `string[]`              | —        | **Rare.** A hard dependency on other modules (install only _warns_ if missing). A module should stay self-contained — reach for `pairsWith` instead.         |
+| `paths`       | object                  | —        | Overrides for `entry`/`models`/`migrations`/`workflows`/`types`.                                                                                             |
+| `registry`    | object                  | —        | `namespace`, `keywords`, `license`, `repository`, `homepage`.                                                                                                |
 
 **Standard layout** (used when `paths` is omitted): `entry ./index.ts`,
 `models ./models`, `migrations ./migrations`, `workflows ./workflows`,
@@ -113,7 +115,7 @@ my-module/
 
 > **Composition is the backend owner's job.** A module is a single-purpose unit;
 > it should not decide what it is plugged into. Use `pairsWith` (or `description`)
-> to *suggest* pairings, and leave wiring to the app. `modules` is an escape hatch
+> to _suggest_ pairings, and leave wiring to the app. `modules` is an escape hatch
 > for genuine hard dependencies only.
 >
 > A module **may** ship a **dormant link file** under `links/models/` (a real
@@ -139,7 +141,7 @@ const report = validateModuleDir("./src/modules/user");
 ```
 
 `damat module validate` runs the same check from the CLI. Author your module
-*registry-ready* (no warnings) even before the hosted registry exists.
+_registry-ready_ (no warnings) even before the hosted registry exists.
 
 ---
 
@@ -159,11 +161,11 @@ The registry index maps each ref to a fetchable **source** plus trust metadata
 stamps — an author cannot self-verify. At install time the **verification
 gate** applies a policy from the environment:
 
-| `DAMAT_MODULE_VERIFY` | Behavior |
-|-----------------------|----------|
-| `off` | install anything, say nothing |
-| `warn` *(default)* | install anything, warn when not verified |
-| `require` | only install `verified` modules |
+| `DAMAT_MODULE_VERIFY` | Behavior                                 |
+| --------------------- | ---------------------------------------- |
+| `off`                 | install anything, say nothing            |
+| `warn` _(default)_    | install anything, warn when not verified |
+| `require`             | only install `verified` modules          |
 
 A `rejected` or `revoked` module is **always** blocked, regardless of policy.
 Configure the registry location with `DAMAT_MODULE_REGISTRY` (an index URL, a

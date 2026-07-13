@@ -10,11 +10,10 @@ function repeat(char: string, count: number): string {
 
 export function printBanner(
   config: CliConfig,
-  bannerConfig: BannerConfig = {}
+  bannerConfig: BannerConfig = {},
 ): void {
   const style = bannerConfig.style ?? "boxed";
-  const title =
-    bannerConfig.title ?? config.name ?? "CLI";
+  const title = bannerConfig.title ?? config.name ?? "CLI";
   const subtitle = bannerConfig.subtitle ?? config.description ?? "";
 
   if (style === "none") return;

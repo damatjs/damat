@@ -14,7 +14,10 @@ import {
 const QUEUES_KEY = Symbol.for("damatjs.jobs.queues");
 
 function queues(): Map<string, RedisQueue<JobEnvelope>> {
-  const g = globalThis as Record<symbol, Map<string, RedisQueue<JobEnvelope>> | undefined>;
+  const g = globalThis as Record<
+    symbol,
+    Map<string, RedisQueue<JobEnvelope>> | undefined
+  >;
   if (!g[QUEUES_KEY]) g[QUEUES_KEY] = new Map();
   return g[QUEUES_KEY];
 }
@@ -28,7 +31,9 @@ export interface JobQueueOptions {
 }
 
 /** The shared queue for a name (created on first use). */
-export function getJobQueue(options: JobQueueOptions = {}): RedisQueue<JobEnvelope> {
+export function getJobQueue(
+  options: JobQueueOptions = {},
+): RedisQueue<JobEnvelope> {
   const name = options.queueName ?? DEFAULT_JOB_QUEUE;
   let queue = queues().get(name);
   if (!queue) {
@@ -69,10 +74,15 @@ export async function enqueueJob<K extends JobName>(
     queue: options.queueName ?? DEFAULT_JOB_QUEUE,
     data: { job: name, payload },
     status: "pending",
-    priority: options.priority ?? definition?.options.priority ?? DEFAULT_JOB_OPTIONS.priority,
+    priority:
+      options.priority ??
+      definition?.options.priority ??
+      DEFAULT_JOB_OPTIONS.priority,
     attempts: 0,
     maxAttempts:
-      options.maxAttempts ?? definition?.options.maxAttempts ?? DEFAULT_JOB_OPTIONS.maxAttempts,
+      options.maxAttempts ??
+      definition?.options.maxAttempts ??
+      DEFAULT_JOB_OPTIONS.maxAttempts,
     createdAt: new Date(),
     ...(options.delayMs !== undefined ? { delay: options.delayMs } : {}),
   };

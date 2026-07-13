@@ -1,13 +1,16 @@
 import { describe, it, expect } from "bun:test";
 import { ColumnType } from "@damatjs/orm-type";
-import {
-  pgTypeToTsBase,
-  enumTypeToTsBase,
-} from "../../utils/pgTypeToTsBase";
+import { pgTypeToTsBase, enumTypeToTsBase } from "../../utils/pgTypeToTsBase";
 
 describe("pgTypeToTsBase › scalar mappings", () => {
   it("maps integer-family types to number", () => {
-    for (const t of ["smallint", "integer", "smallserial", "serial", "oid"] as const) {
+    for (const t of [
+      "smallint",
+      "integer",
+      "smallserial",
+      "serial",
+      "oid",
+    ] as const) {
       expect(pgTypeToTsBase(t)).toBe("number");
     }
   });
@@ -18,13 +21,23 @@ describe("pgTypeToTsBase › scalar mappings", () => {
   });
 
   it("maps real/double/numeric/decimal to number", () => {
-    for (const t of ["real", "double precision", "numeric", "decimal"] as const) {
+    for (const t of [
+      "real",
+      "double precision",
+      "numeric",
+      "decimal",
+    ] as const) {
       expect(pgTypeToTsBase(t)).toBe("number");
     }
   });
 
   it("maps character types and money to string", () => {
-    for (const t of ["text", "character", "character varying", "money"] as const) {
+    for (const t of [
+      "text",
+      "character",
+      "character varying",
+      "money",
+    ] as const) {
       expect(pgTypeToTsBase(t)).toBe("string");
     }
   });

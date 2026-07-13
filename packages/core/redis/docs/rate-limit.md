@@ -11,15 +11,18 @@ Sliding-window rate limiting backed by a Redis sorted set per identifier, with a
 ```ts
 interface RateLimitResult {
   allowed: boolean;
-  remaining: number;     // requests left in the window
-  resetAt: number;       // epoch ms when the window resets (now + windowMs)
-  retryAfter?: number;   // seconds to wait, only set when !allowed
+  remaining: number; // requests left in the window
+  resetAt: number; // epoch ms when the window resets (now + windowMs)
+  retryAfter?: number; // seconds to wait, only set when !allowed
 }
 
-interface RateLimitWindow { windowMs: number; maxRequests: number; }
+interface RateLimitWindow {
+  windowMs: number;
+  maxRequests: number;
+}
 
 interface MultiRateLimitResult extends RateLimitResult {
-  limitedBy?: string;    // "minute" | "hour" | "day" — which window blocked
+  limitedBy?: string; // "minute" | "hour" | "day" — which window blocked
 }
 ```
 
@@ -69,16 +72,16 @@ const r = await checkRateLimit(`user:${userId}`, 60_000, 100);
 if (!r.allowed) throw new Error(`Rate limited, retry in ${r.retryAfter}s`);
 
 const m = await checkMultiRateLimit(`user:${userId}`, [
-  { windowMs: 60_000,    maxRequests: 60 },    // → ratelimit:user:<id>:minute
-  { windowMs: 3_600_000, maxRequests: 1000 },  // → ratelimit:user:<id>:hour
-  { windowMs: 86_400_000, maxRequests: 10000 },// → ratelimit:user:<id>:day
+  { windowMs: 60_000, maxRequests: 60 }, // → ratelimit:user:<id>:minute
+  { windowMs: 3_600_000, maxRequests: 1000 }, // → ratelimit:user:<id>:hour
+  { windowMs: 86_400_000, maxRequests: 10000 }, // → ratelimit:user:<id>:day
 ]);
 if (!m.allowed) logger.warn(`limited by ${m.limitedBy}`);
 ```
 
 ## Gotchas
 
-- **An allowed call consumes a slot** — there is no "peek without consuming" variant; calling `checkRateLimit` *is* the request. Rejected calls consume nothing.
+- **An allowed call consumes a slot** — there is no "peek without consuming" variant; calling `checkRateLimit` _is_ the request. Rejected calls consume nothing.
 - **Window naming is bucketed, not exact.** Two windows that both fall in the same bucket (e.g. two sub-minute windows) would share the key `ratelimit:<id>:minute` and interfere. Use one window per bucket (minute/hour/day).
 - **`remaining: -1`** from `checkMultiRateLimit` on success means "not computed", not "infinite".
 

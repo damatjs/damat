@@ -1,8 +1,4 @@
-import {
-  RawWhereClause,
-  ValuesMap,
-  WhereClause,
-} from "../../types";
+import { RawWhereClause, ValuesMap, WhereClause } from "../../types";
 
 /**
  * Options for `update`.

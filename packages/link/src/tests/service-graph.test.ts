@@ -133,7 +133,9 @@ function makeModule(
   >,
 ) {
   const accessors: Record<string, any> = {};
-  for (const [model, { rows, relations, primaryKey }] of Object.entries(tables)) {
+  for (const [model, { rows, relations, primaryKey }] of Object.entries(
+    tables,
+  )) {
     accessors[model] = {
       lastFindMany: undefined as any,
       async findMany(opts: any = {}) {
@@ -179,7 +181,9 @@ describe("LinkService.graph — cross-module resolution", () => {
     const svc = buildService([link], { [link.pivotName]: pivot });
 
     const registry: Record<string, any> = {
-      blog: makeModule({ author: { rows: [{ id: "a1", name: "Tolkien", secret: "s" }] } }),
+      blog: makeModule({
+        author: { rows: [{ id: "a1", name: "Tolkien", secret: "s" }] },
+      }),
       store: makeModule({
         book: {
           rows: [
@@ -203,7 +207,10 @@ describe("LinkService.graph — cross-module resolution", () => {
     // root pruned to name + id (+ child key books)
     expect(row.name).toBe("Tolkien");
     expect(row.secret).toBeUndefined();
-    expect(row.books.map((b: any) => b.title).sort()).toEqual(["Hobbit", "LOTR"]);
+    expect(row.books.map((b: any) => b.title).sort()).toEqual([
+      "Hobbit",
+      "LOTR",
+    ]);
     // child pruned to title + id (isbn dropped)
     expect(row.books[0].isbn).toBeUndefined();
     expect(row.books[0].id).toBeDefined();
@@ -214,7 +221,12 @@ describe("LinkService.graph — cross-module resolution", () => {
     // thread that PK into pruning so `sku` survives and the stray `id` on the
     // row is dropped rather than force-kept.
     const skuLink = defineLink(
-      { module: "store", model: "product", field: "products", primaryKey: "sku" },
+      {
+        module: "store",
+        model: "product",
+        field: "products",
+        primaryKey: "sku",
+      },
       { module: "warehouse", model: "bin", field: "bins" },
     );
     const pivot = makePivot([]);
@@ -252,16 +264,19 @@ describe("LinkService.graph — cross-module resolution", () => {
     // The blog/author model declares an intra-module relation "profile"; the
     // graph must classify it as a relation (not a cross-module link) by reading
     // the model definition's relations list.
-    setLinkModuleResolver((id) =>
-      ({
-        blog: makeModule({
-          author: {
-            rows: [{ id: "a1", name: "Tolkien", profile: { bio: "writer" } }],
-            relations: [{ from: "profile" }],
-          },
-        }),
-        store: makeModule({ book: { rows: [{ id: "b1", title: "Hobbit" }] } }),
-      })[id] ?? null,
+    setLinkModuleResolver(
+      (id) =>
+        ({
+          blog: makeModule({
+            author: {
+              rows: [{ id: "a1", name: "Tolkien", profile: { bio: "writer" } }],
+              relations: [{ from: "profile" }],
+            },
+          }),
+          store: makeModule({
+            book: { rows: [{ id: "b1", title: "Hobbit" }] },
+          }),
+        })[id] ?? null,
     );
 
     const res = await svc.graph({
@@ -283,11 +298,14 @@ describe("LinkService.graph — cross-module resolution", () => {
     // building the linked-row index (the otherRows map runs over an empty set).
     const pivot = makePivot([]);
     const svc = buildService([link], { [link.pivotName]: pivot });
-    setLinkModuleResolver((id) =>
-      ({
-        blog: makeModule({ author: { rows: [{ id: "a1", name: "Solo" }] } }),
-        store: makeModule({ book: { rows: [{ id: "b1", title: "Hobbit" }] } }),
-      })[id] ?? null,
+    setLinkModuleResolver(
+      (id) =>
+        ({
+          blog: makeModule({ author: { rows: [{ id: "a1", name: "Solo" }] } }),
+          store: makeModule({
+            book: { rows: [{ id: "b1", title: "Hobbit" }] },
+          }),
+        })[id] ?? null,
     );
 
     const res = await svc.graph({
@@ -306,11 +324,12 @@ describe("LinkService.graph — cross-module resolution", () => {
   test("uses the field alias as the output key, not the model name", async () => {
     const pivot = makePivot([{ author_id: "a1", book_id: "b1" }]);
     const svc = buildService([link], { [link.pivotName]: pivot });
-    setLinkModuleResolver((id) =>
-      ({
-        blog: makeModule({ author: { rows: [{ id: "a1", name: "x" }] } }),
-        store: makeModule({ book: { rows: [{ id: "b1", title: "t" }] } }),
-      })[id] ?? null,
+    setLinkModuleResolver(
+      (id) =>
+        ({
+          blog: makeModule({ author: { rows: [{ id: "a1", name: "x" }] } }),
+          store: makeModule({ book: { rows: [{ id: "b1", title: "t" }] } }),
+        })[id] ?? null,
     );
 
     const res = await svc.graph({
@@ -330,13 +349,19 @@ describe("LinkService.graph — cross-module resolution", () => {
       { author_id: "a1", book_id: "b2", deleted_at: new Date() },
     ]);
     const svc = buildService([link], { [link.pivotName]: pivot });
-    setLinkModuleResolver((id) =>
-      ({
-        blog: makeModule({ author: { rows: [{ id: "a1", name: "x" }] } }),
-        store: makeModule({
-          book: { rows: [{ id: "b1", title: "live" }, { id: "b2", title: "dead" }] },
-        }),
-      })[id] ?? null,
+    setLinkModuleResolver(
+      (id) =>
+        ({
+          blog: makeModule({ author: { rows: [{ id: "a1", name: "x" }] } }),
+          store: makeModule({
+            book: {
+              rows: [
+                { id: "b1", title: "live" },
+                { id: "b2", title: "dead" },
+              ],
+            },
+          }),
+        })[id] ?? null,
     );
 
     const res = await svc.graph({
@@ -351,11 +376,12 @@ describe("LinkService.graph — cross-module resolution", () => {
   test("unknown child fields are ignored, not thrown", async () => {
     const pivot = makePivot([{ author_id: "a1", book_id: "b1" }]);
     const svc = buildService([link], { [link.pivotName]: pivot });
-    setLinkModuleResolver((id) =>
-      ({
-        blog: makeModule({ author: { rows: [{ id: "a1", name: "x" }] } }),
-        store: makeModule({ book: { rows: [{ id: "b1", title: "t" }] } }),
-      })[id] ?? null,
+    setLinkModuleResolver(
+      (id) =>
+        ({
+          blog: makeModule({ author: { rows: [{ id: "a1", name: "x" }] } }),
+          store: makeModule({ book: { rows: [{ id: "b1", title: "t" }] } }),
+        })[id] ?? null,
     );
 
     const res = await svc.graph({
@@ -375,11 +401,12 @@ describe("LinkService.graph — cross-module resolution", () => {
     );
     const pivot = makePivot([{ cart_id: "c1", customer_id: "u1" }]);
     const svc = buildService([single], { [single.pivotName]: pivot });
-    setLinkModuleResolver((id) =>
-      ({
-        store: makeModule({ cart: { rows: [{ id: "c1" }, { id: "c2" }] } }),
-        cust: makeModule({ customer: { rows: [{ id: "u1", name: "joe" }] } }),
-      })[id] ?? null,
+    setLinkModuleResolver(
+      (id) =>
+        ({
+          store: makeModule({ cart: { rows: [{ id: "c1" }, { id: "c2" }] } }),
+          cust: makeModule({ customer: { rows: [{ id: "u1", name: "joe" }] } }),
+        })[id] ?? null,
     );
 
     const res = await svc.graph({
@@ -397,11 +424,12 @@ describe("LinkService.graph — cross-module resolution", () => {
   test("empty root result set short-circuits link hydration", async () => {
     const pivot = makePivot([{ author_id: "a1", book_id: "b1" }]);
     const svc = buildService([link], { [link.pivotName]: pivot });
-    setLinkModuleResolver((id) =>
-      ({
-        blog: makeModule({ author: { rows: [] } }),
-        store: makeModule({ book: { rows: [{ id: "b1", title: "t" }] } }),
-      })[id] ?? null,
+    setLinkModuleResolver(
+      (id) =>
+        ({
+          blog: makeModule({ author: { rows: [] } }),
+          store: makeModule({ book: { rows: [{ id: "b1", title: "t" }] } }),
+        })[id] ?? null,
     );
     const res = await svc.graph({
       module: "blog",
@@ -417,7 +445,12 @@ describe("LinkService.graph — cross-module resolution", () => {
     const svc = buildService([link], { [link.pivotName]: pivot });
     setLinkModuleResolver(() => null); // nothing resolves
     expect(
-      svc.graph({ module: "blog", entity: "author", fields: ["name"], filters: {} }),
+      svc.graph({
+        module: "blog",
+        entity: "author",
+        fields: ["name"],
+        filters: {},
+      }),
     ).rejects.toThrow(/not registered/);
   });
 
@@ -425,9 +458,16 @@ describe("LinkService.graph — cross-module resolution", () => {
     const pivot = makePivot([]);
     const svc = buildService([link], { [link.pivotName]: pivot });
     // "author" participates in the link, but the module exposes no accessor.
-    setLinkModuleResolver((id) => (id === "blog" ? { somethingElse: {} } : null));
+    setLinkModuleResolver((id) =>
+      id === "blog" ? { somethingElse: {} } : null,
+    );
     expect(
-      svc.graph({ module: "blog", entity: "author", fields: ["name"], filters: {} }),
+      svc.graph({
+        module: "blog",
+        entity: "author",
+        fields: ["name"],
+        filters: {},
+      }),
     ).rejects.toThrow(/no model accessor/);
   });
 
@@ -442,7 +482,12 @@ describe("LinkService.graph — cross-module resolution", () => {
         : null,
     );
     expect(
-      svc.graph({ module: "blog", entity: "secretModel", fields: ["*"], filters: {} }),
+      svc.graph({
+        module: "blog",
+        entity: "secretModel",
+        fields: ["*"],
+        filters: {},
+      }),
     ).rejects.toThrow(/not part of any registered link/);
   });
 });
@@ -629,7 +674,10 @@ describe("LinkService.create / dismiss / list / fetch", () => {
     await svc.create(from, { module: "store", model: "book", id: "b3" });
     await svc.dismiss(from, { module: "store", model: "book", id: "b3" });
 
-    const ids = await svc.listLinkedIds(from, { module: "store", model: "book" });
+    const ids = await svc.listLinkedIds(from, {
+      module: "store",
+      model: "book",
+    });
     expect(ids.sort()).toEqual(["b1", "b2"]);
   });
 
@@ -698,7 +746,3 @@ describe("LinkService.create / dismiss / list / fetch", () => {
     ).toThrow(/No link defined/);
   });
 });
-
-
-
-

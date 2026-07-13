@@ -27,7 +27,9 @@ const state: {
 
 const acquireLock = mock(async (_key: string, _ttl: number) => {
   if (state.acquireThrows) throw new Error("redis connection lost");
-  return state.acquireResults.length ? state.acquireResults.shift()! : "lock-value";
+  return state.acquireResults.length
+    ? state.acquireResults.shift()!
+    : "lock-value";
 });
 const releaseLock = mock(async (_key: string, _value: string) => {
   if (state.releaseThrows) throw new Error("redis connection lost");
@@ -75,7 +77,10 @@ beforeEach(() => {
 describe("lock/acquire: contention edges", () => {
   it("maxRetries = 0 attempts exactly once and gives up immediately", async () => {
     state.acquireResults = [null];
-    const res = await acquireWorkflowLock("wf", { lockId: "id", maxRetries: 0 });
+    const res = await acquireWorkflowLock("wf", {
+      lockId: "id",
+      maxRetries: 0,
+    });
 
     expect(res.acquired).toBe(false);
     expect(res.lockValue).toBeUndefined();
@@ -97,7 +102,11 @@ describe("lock/acquire: contention edges", () => {
 
   it("does NOT call acquireLock again after success (short-circuits remaining retries)", async () => {
     state.acquireResults = ["immediate"];
-    await acquireWorkflowLock("wf", { lockId: "id", maxRetries: 5, retryDelayMs: 0 });
+    await acquireWorkflowLock("wf", {
+      lockId: "id",
+      maxRetries: 5,
+      retryDelayMs: 0,
+    });
     expect(acquireLock).toHaveBeenCalledTimes(1);
   });
 
@@ -176,7 +185,9 @@ describe("workflow/executeWithLock: edges", () => {
   it("releases the lock even when the workflow body throws", async () => {
     state.acquireResults = ["lv"];
     const wf = createWorkflow<number, number>("locked-throw", () =>
-      Effect.fail(new StepExecutionError("s", "boom", undefined, "locked-throw")),
+      Effect.fail(
+        new StepExecutionError("s", "boom", undefined, "locked-throw"),
+      ),
     );
     const res = await wf.executeWithLock(1, { lockId: "id" });
 
@@ -217,7 +228,9 @@ describe("workflow/executeWithLock: edges", () => {
     if (!res.success) {
       expect(res.error).toBeInstanceOf(Error);
       // Distinct from WorkflowLockError (contention) — this is an infra outage.
-      expect((res.error as { code?: string }).code).toBe("LOCK_BACKEND_UNAVAILABLE");
+      expect((res.error as { code?: string }).code).toBe(
+        "LOCK_BACKEND_UNAVAILABLE",
+      );
       expect(res.error.message).toContain("redis connection lost");
       expect((res.error as { cause?: unknown }).cause).toBeInstanceOf(Error);
       expect(res.durationMs).toBe(0);
@@ -247,7 +260,11 @@ describe("workflow/executeWithLock: edges", () => {
       (input, ctx) => executeStep(slow, input, ctx),
       { timeoutMs: 5000 },
     );
-    await wf.executeWithLock(1, { lockId: "id", ttlMs: 2000, autoExtend: true });
+    await wf.executeWithLock(1, {
+      lockId: "id",
+      ttlMs: 2000,
+      autoExtend: true,
+    });
 
     // Heartbeat at ttl/2 = 1000ms fires at least once during the 1.2s run.
     expect(redisEval).toHaveBeenCalled();
@@ -357,7 +374,11 @@ describe("workflow/executeWithLock: edges", () => {
       (input, ctx) => executeStep(slow, input, ctx),
       { timeoutMs: 5000 },
     );
-    await wf.executeWithLock(1, { lockId: "id", ttlMs: 2000, autoExtend: false });
+    await wf.executeWithLock(1, {
+      lockId: "id",
+      ttlMs: 2000,
+      autoExtend: false,
+    });
 
     expect(redisEval).not.toHaveBeenCalled();
   });

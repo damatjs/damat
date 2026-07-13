@@ -44,10 +44,10 @@ The variables `requestSetup` (and app auth middleware) put on the Hono context a
 ```ts
 declare module "hono" {
   interface ContextVariableMap {
-    requestId: string;      // set by requestSetup
-    startTime: number;      // set by requestSetup
-    logger: ILogger;        // set by requestSetup (request-scoped child logger)
-    user?: AuthUser;        // set by the app's auth middleware, so optional
+    requestId: string; // set by requestSetup
+    startTime: number; // set by requestSetup
+    logger: ILogger; // set by requestSetup (request-scoped child logger)
+    user?: AuthUser; // set by the app's auth middleware, so optional
     team?: AuthTeam;
     userId?: string;
   }
@@ -62,7 +62,7 @@ declare module "hono" {
 ## CORS — `corsConfigSetter` (`corsConfig.ts`)
 
 ```ts
-function corsConfigSetter(config?: string | CorsConfigType): CorsConfigType
+function corsConfigSetter(config?: string | CorsConfigType): CorsConfigType;
 ```
 
 - `undefined` or `"*"` → permissive defaults (`origin: "*"`).
@@ -74,9 +74,11 @@ Defaults when given a string/empty: methods `GET,POST,PUT,PATCH,DELETE,OPTIONS`;
 ```ts
 interface CorsConfigType {
   origin: string | string[];
-  allowMethods: ("GET"|"POST"|"PUT"|"PATCH"|"DELETE"|"OPTIONS")[];
-  allowHeaders: string[]; exposeHeaders: string[];
-  credentials: boolean; maxAge: number;
+  allowMethods: ("GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS")[];
+  allowHeaders: string[];
+  exposeHeaders: string[];
+  credentials: boolean;
+  maxAge: number;
 }
 ```
 
@@ -86,7 +88,11 @@ interface CorsConfigType {
 
 ```ts
 const errorHandler = (logger) => async (c, next) => {
-  try { await next(); } catch (error) { return handleError(c, error, logger); }
+  try {
+    await next();
+  } catch (error) {
+    return handleError(c, error, logger);
+  }
 };
 ```
 
@@ -96,12 +102,12 @@ Catches errors thrown by downstream **middleware**. Handler-thrown errors are ha
 
 Maps an error to the standard error envelope and logs it. `parseError` classifies:
 
-| Error | status | code | message / details |
-| --- | --- | --- | --- |
-| `AppError` (from `@damatjs/types`) | `error.statusCode` | `error.code` | `error.message` / `error.details` |
-| `ZodError` | 400 | `VALIDATION_ERROR` | "Request validation failed" / mapped issues (`path`, `message`) |
-| `HTTPException` (Hono) | `error.status` | `getErrorCodeFromStatus(status)` | `error.message` |
-| other `Error` | 500 | `INTERNAL_ERROR` | generic; in `NODE_ENV=development`, the real message + stack are included |
+| Error                              | status             | code                             | message / details                                                         |
+| ---------------------------------- | ------------------ | -------------------------------- | ------------------------------------------------------------------------- |
+| `AppError` (from `@damatjs/types`) | `error.statusCode` | `error.code`                     | `error.message` / `error.details`                                         |
+| `ZodError`                         | 400                | `VALIDATION_ERROR`               | "Request validation failed" / mapped issues (`path`, `message`)           |
+| `HTTPException` (Hono)             | `error.status`     | `getErrorCodeFromStatus(status)` | `error.message`                                                           |
+| other `Error`                      | 500                | `INTERNAL_ERROR`                 | generic; in `NODE_ENV=development`, the real message + stack are included |
 
 Response: `{ success: false, error: { code, message, details }, meta: { requestId, timestamp } }`.
 
@@ -131,7 +137,11 @@ Window format (`utils/windowParser.ts`): `^(\d+)(s|m|h|d)$` → ms. Invalid form
 
 ```ts
 type AuthType = "session" | "apiKey" | "flexible" | "none";
-interface AuthMiddlewareOptions { session?: MiddlewareHandler; apiKey?: MiddlewareHandler; flexible?: MiddlewareHandler; }
+interface AuthMiddlewareOptions {
+  session?: MiddlewareHandler;
+  apiKey?: MiddlewareHandler;
+  flexible?: MiddlewareHandler;
+}
 ```
 
 - `type === "none"` → `next()`.

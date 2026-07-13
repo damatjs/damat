@@ -1,3 +1,3 @@
-export * from "./folderToUrlPath"
-export * from "./scanDirectory"
-export * from "./sortRoutes"
+export * from "./folderToUrlPath";
+export * from "./scanDirectory";
+export * from "./sortRoutes";

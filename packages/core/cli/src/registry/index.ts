@@ -1,5 +1,5 @@
 import type { Command, CommandRegistry } from "../types";
-import { CommandRegistryImpl } from './command';
+import { CommandRegistryImpl } from "./command";
 
 let registryInstance: CommandRegistryImpl | null = null;
 

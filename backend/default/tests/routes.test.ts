@@ -65,7 +65,10 @@ describe("routes › GET /posts", () => {
     expect(r._status).toBe(200);
     expect(r._data.success).toBe(true);
     expect(r._data.data.posts).toHaveLength(2);
-    expect(r._data.data.posts[0]).toMatchObject({ id: "1", title: "First Post" });
+    expect(r._data.data.posts[0]).toMatchObject({
+      id: "1",
+      title: "First Post",
+    });
   });
 });
 
@@ -92,7 +95,9 @@ describe("routes › /users collection", () => {
 
 describe("routes › /users/:userId item", () => {
   it("GET reflects the userId param", async () => {
-    const r: JsonResult = await UserGET(makeCtx({ param: { userId: "usr_7" } }));
+    const r: JsonResult = await UserGET(
+      makeCtx({ param: { userId: "usr_7" } }),
+    );
     expect(r._status).toBe(200);
     expect(r._data.data.id).toBe("usr_7");
     expect(r._data.data.email).toBe("john@example.com");

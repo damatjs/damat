@@ -1,5 +1,5 @@
-import type { DbPoolConfig } from '@damatjs/orm-type';
-import type { RedisConfig } from '../../services/redis';
+import type { DbPoolConfig } from "@damatjs/orm-type";
+import type { RedisConfig } from "../../services/redis";
 
 /**
  * Authentication via a pluggable provider (Better Auth / Clerk / Auth0). Fully
@@ -25,7 +25,7 @@ export interface AuthServiceConfig {
 
 export interface ServicesConfig {
   redis?: RedisConfig;
-  database?: DbPoolConfig
+  database?: DbPoolConfig;
   workflowLock?: boolean;
   /** Pluggable authentication provider — see {@link AuthServiceConfig}. Optional. */
   auth?: AuthServiceConfig;

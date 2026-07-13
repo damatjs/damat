@@ -73,7 +73,9 @@ describe("registerModule / getModule / hasModule", () => {
         throw boom;
       },
     };
-    expect(() => registerModule("broken", broken as never)).toThrow("init exploded");
+    expect(() => registerModule("broken", broken as never)).toThrow(
+      "init exploded",
+    );
     // registration aborted before the map was populated
     expect(hasModule("broken")).toBe(false);
   });
@@ -101,7 +103,9 @@ describe("initModules", () => {
 
     // basename of "userModule.ts" is "userModule.ts"
     expect(hasModule("userModule.ts")).toBe(true);
-    expect(getModule("userModule.ts")).toEqual({ name: "user-service" } as never);
+    expect(getModule("userModule.ts")).toEqual({
+      name: "user-service",
+    } as never);
   });
 
   it("registers under the explicit id when provided (id overrides basename)", async () => {
@@ -133,9 +137,9 @@ describe("initModules", () => {
   it("throws when there is no default export", async () => {
     writeModuleFile("noDefault.ts", `export const foo = 1;`);
 
-    await expect(initModules([{ resolve: "noDefault.ts" }], cwd)).rejects.toThrow(
-      /must default-export the result of defineModule/,
-    );
+    await expect(
+      initModules([{ resolve: "noDefault.ts" }], cwd),
+    ).rejects.toThrow(/must default-export the result of defineModule/);
   });
 
   it("propagates an error thrown during the module's init()", async () => {
@@ -147,14 +151,20 @@ describe("initModules", () => {
        };`,
     );
 
-    await expect(initModules([{ resolve: "throwingInit.ts" }], cwd)).rejects.toThrow(
-      "module init failed",
-    );
+    await expect(
+      initModules([{ resolve: "throwingInit.ts" }], cwd),
+    ).rejects.toThrow("module init failed");
   });
 
   it("registers multiple modules in order", async () => {
-    writeModuleFile("m1.ts", `export default { service: { id: 1 }, init() { return this.service; } };`);
-    writeModuleFile("m2.ts", `export default { service: { id: 2 }, init() { return this.service; } };`);
+    writeModuleFile(
+      "m1.ts",
+      `export default { service: { id: 1 }, init() { return this.service; } };`,
+    );
+    writeModuleFile(
+      "m2.ts",
+      `export default { service: { id: 2 }, init() { return this.service; } };`,
+    );
 
     await initModules(
       [

@@ -24,9 +24,9 @@ describe("resolveBasePath", () => {
   });
 
   it("falls back to configPath (absolute) when cliPath is undefined", () => {
-    expect(
-      resolveBasePath(undefined, "/abs/config", "default", cwd),
-    ).toBe("/abs/config");
+    expect(resolveBasePath(undefined, "/abs/config", "default", cwd)).toBe(
+      "/abs/config",
+    );
   });
 
   it("joins a relative configPath with cwd when cliPath is undefined", () => {

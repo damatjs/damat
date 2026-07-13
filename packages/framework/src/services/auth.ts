@@ -39,7 +39,9 @@ export async function initAuth(
   let adapter: { default?: (o: Record<string, unknown>) => unknown };
   try {
     core = (await import("@damatjs/auth")) as typeof import("@damatjs/auth");
-    adapter = (await import(pkg)) as { default?: (o: Record<string, unknown>) => unknown };
+    adapter = (await import(pkg)) as {
+      default?: (o: Record<string, unknown>) => unknown;
+    };
   } catch (e) {
     throw new Error(
       `Auth provider "${authConfig.provider}" could not be loaded — install its packages ` +
@@ -50,7 +52,9 @@ export async function initAuth(
 
   const factory = adapter.default;
   if (typeof factory !== "function") {
-    throw new Error(`Auth adapter "${pkg}" has no default export (the provider factory)`);
+    throw new Error(
+      `Auth adapter "${pkg}" has no default export (the provider factory)`,
+    );
   }
 
   // Inject the app's pool for providers that persist; harmless to the ones that

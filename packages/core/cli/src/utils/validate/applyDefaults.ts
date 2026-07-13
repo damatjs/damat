@@ -2,7 +2,7 @@ import type { CommandOption } from "../../types";
 
 export function applyDefaults(
   options: Record<string, unknown>,
-  optionDefs: CommandOption[] | undefined
+  optionDefs: CommandOption[] | undefined,
 ): Record<string, unknown> {
   if (!optionDefs) return options;
 

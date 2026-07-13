@@ -5,9 +5,13 @@ Source: `src/server/index.ts`, `src/shutdown/index.ts`.
 ## Server — `startServer(app, config, logger)` (`server/index.ts`)
 
 ```ts
-import { serve } from "@damatjs/deps/hono";   // re-exports @hono/node-server's serve
+import { serve } from "@damatjs/deps/hono"; // re-exports @hono/node-server's serve
 
-export function startServer(app: Hono, config: ServerConfig, logger: Logger | ILogger): void {
+export function startServer(
+  app: Hono,
+  config: ServerConfig,
+  logger: Logger | ILogger,
+): void {
   serve({ fetch: app.fetch, port: config.port }, (info) => {
     logger.info("Server running", { url: `http://localhost:${info.port}` });
   });
@@ -27,12 +31,15 @@ A module-level registry plus signal handlers for graceful teardown.
 ```ts
 const handlers: ShutdownHandler[] = [];
 
-export function registerShutdown(handler: ShutdownHandler): void;          // append a handler
-export function setupShutdownHandlers(logger: Logger | ILogger): void;     // install process listeners
+export function registerShutdown(handler: ShutdownHandler): void; // append a handler
+export function setupShutdownHandlers(logger: Logger | ILogger): void; // install process listeners
 ```
 
 ```ts
-interface ShutdownHandler { name: string; handler: () => Promise<void> | void; }
+interface ShutdownHandler {
+  name: string;
+  handler: () => Promise<void> | void;
+}
 ```
 
 ### `setupShutdownHandlers(logger)`

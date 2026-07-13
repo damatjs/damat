@@ -9,14 +9,14 @@ no subpath exports.
 
 ## Module map
 
-| File | Responsibility |
-| --- | --- |
-| `src/index.ts` | Barrel re-exporting everything below. |
-| `src/types.ts` | `EventMap` (declaration-merge target), `EventName`, `EventPayload`, `EventContext`, `EventHandler`, `Unsubscribe`. |
-| `src/bus.ts` | `EventBus` class + the `Broadcaster` function type. All delivery semantics live here. |
-| `src/global.ts` | The `globalThis` singleton: `getEventBus` / `setEventBus` / `resetEventBus`. |
-| `src/broadcast.ts` | Redis pub/sub transport: `connectEventBroadcast` / `disconnectEventBroadcast` / `isEventBroadcastConnected`. |
-| `tests/` | `bun:test` suites — `bus.test.ts` and `global.test.ts` are pure in-process; `broadcast.test.ts` needs a live Redis. |
+| File               | Responsibility                                                                                                      |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `src/index.ts`     | Barrel re-exporting everything below.                                                                               |
+| `src/types.ts`     | `EventMap` (declaration-merge target), `EventName`, `EventPayload`, `EventContext`, `EventHandler`, `Unsubscribe`.  |
+| `src/bus.ts`       | `EventBus` class + the `Broadcaster` function type. All delivery semantics live here.                               |
+| `src/global.ts`    | The `globalThis` singleton: `getEventBus` / `setEventBus` / `resetEventBus`.                                        |
+| `src/broadcast.ts` | Redis pub/sub transport: `connectEventBroadcast` / `disconnectEventBroadcast` / `isEventBroadcastConnected`.        |
+| `tests/`           | `bun:test` suites — `bus.test.ts` and `global.test.ts` are pure in-process; `broadcast.test.ts` needs a live Redis. |
 
 ## Architecture overview
 
@@ -37,22 +37,22 @@ no subpath exports.
 ### `EventBus` delivery semantics (`bus.ts`)
 
 - **`emit` = local dispatch, then broadcast.** `emit()` awaits `dispatch(event, payload,
-  "local")` first, then (if a broadcaster is attached) awaits the broadcaster. It
+"local")` first, then (if a broadcaster is attached) awaits the broadcaster. It
   resolves after all local handlers settled and returns how many ran.
 - **Error isolation via `Promise.allSettled`.** `dispatch()` runs every target handler
   and `allSettled`s the results; a rejecting handler never blocks the others and never
   throws back at the emitter. Rejections are logged through `getLogger().error(...)`
   with the event name. A broadcaster failure is likewise caught and logged (`"local
-  subscribers already ran"`) — `emit` itself never throws.
+subscribers already ran"`) — `emit` itself never throws.
 - **Delivery order is subscription order** per event: handlers live in a `Set` (insertion
   order), and `dispatch` builds its target list as `[...direct, ...wildcard]` — so all
   direct subscribers run "before" `"*"` subscribers in the array, though they are all
   awaited together in one `allSettled`.
 - **`"*"` wildcard** subscribes to every event. `dispatch` adds the `"*"` set unless the
-  event being emitted *is* `"*"` (guarding against double delivery). `listenerCount(event)`
+  event being emitted _is_ `"*"` (guarding against double delivery). `listenerCount(event)`
   counts direct + wildcard handlers.
 - **`once` is a self-removing wrapper**: it registers a wrapped handler that calls
-  `off(event, wrapped)` *before* awaiting the real handler, so a re-emit from inside the
+  `off(event, wrapped)` _before_ awaiting the real handler, so a re-emit from inside the
   handler cannot re-trigger it. Note the returned unsubscribe (and `off`) must target the
   wrapper — `on`'s returned closure does this for you; you cannot `off` a `once` by
   passing the original handler.
@@ -86,7 +86,7 @@ any ad-hoc string remains accepted (its payload types as `unknown` via `EventPay
   no per-event channels are needed.
 - **Duplicated subscriber connection.** A subscribed ioredis connection cannot run other
   commands, so the transport keeps the singleton client (`getRedisClient().client`) as
-  the *publisher* and `duplicate()`s it for the dedicated *subscriber* connection.
+  the _publisher_ and `duplicate()`s it for the dedicated _subscriber_ connection.
 - **Self-message dedupe.** Redis delivers your own publishes back to you; since local
   subscribers already ran in `emit`, incoming envelopes whose `instanceId` matches this
   process's random UUID are skipped — otherwise every event would double-deliver.
@@ -98,7 +98,7 @@ any ad-hoc string remains accepted (its payload types as `unknown` via `EventPay
   immediately if already connected (`state !== null`). `disconnectEventBroadcast()`
   detaches the broadcaster first (so no new publishes), then unsubscribes and `quit()`s
   the subscriber, swallowing close errors at `debug` level. Note this connection state is
-  module-level, *not* on `globalThis` — duplicate package copies would each hold their
+  module-level, _not_ on `globalThis` — duplicate package copies would each hold their
   own transport (acceptable: each still dedupes its own `instanceId`).
 
 ### Framework wiring
@@ -112,7 +112,7 @@ disconnects it. `@damatjs/services` emits model CRUD events on this bus when
 ## Invariants & design decisions
 
 - **The bus has no Redis knowledge.** `Broadcaster` is a narrow `(event, payload) =>
-  Promise<void>` function type; `bus.ts` imports nothing from `@damatjs/redis`. Any
+Promise<void>` function type; `bus.ts` imports nothing from `@damatjs/redis`. Any
   transport that can implement that function (and call `dispatch` for inbound messages)
   can replace the Redis one.
 - **Emitters can't be broken by subscribers.** All failure paths (handler rejection,

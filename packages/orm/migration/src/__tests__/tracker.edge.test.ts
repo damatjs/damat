@@ -14,7 +14,9 @@ interface RecordedQuery {
   params?: unknown[];
 }
 
-function makeFakePool(rowsFor?: (sql: string, params?: unknown[]) => Record<string, unknown>[]) {
+function makeFakePool(
+  rowsFor?: (sql: string, params?: unknown[]) => Record<string, unknown>[],
+) {
   const queries: RecordedQuery[] = [];
   const pool = {
     query: async (sql: string, params?: unknown[]) => {
@@ -40,7 +42,9 @@ describe("MigrationTracker.ensureTable — auto-create idempotency", () => {
     expect(queries).toHaveLength(2);
     for (const q of queries) {
       const sql = norm(q.sql);
-      expect(sql).toContain('CREATE TABLE IF NOT EXISTS "_damat_migration_logs"');
+      expect(sql).toContain(
+        'CREATE TABLE IF NOT EXISTS "_damat_migration_logs"',
+      );
       expect(sql).toContain(
         'CREATE INDEX IF NOT EXISTS "idx__damat_migration_logs_module"',
       );
@@ -48,7 +52,7 @@ describe("MigrationTracker.ensureTable — auto-create idempotency", () => {
         'CREATE INDEX IF NOT EXISTS "idx__damat_migration_logs_status"',
       );
       // status defaults to 'applied' so freshly-inserted rows are visible.
-      expect(sql).toContain('"status" TEXT NOT NULL DEFAULT \'applied\'');
+      expect(sql).toContain("\"status\" TEXT NOT NULL DEFAULT 'applied'");
     }
     // Identical DDL both times (no per-call drift).
     expect(queries[0]!.sql).toBe(queries[1]!.sql);

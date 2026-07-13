@@ -25,10 +25,14 @@ export const barrelCommand: Command = {
     try {
       const { written } = generateBarrels(target, ctx.logger);
       if (written.length === 0) {
-        ctx.logger.warn(`Nothing to barrel — ${dir} is missing or not a directory`);
+        ctx.logger.warn(
+          `Nothing to barrel — ${dir} is missing or not a directory`,
+        );
         return { exitCode: 0 };
       }
-      ctx.logger.success(`Wrote ${written.length} index.ts barrel(s) under ${dir}`);
+      ctx.logger.success(
+        `Wrote ${written.length} index.ts barrel(s) under ${dir}`,
+      );
       return { exitCode: 0 };
     } catch (e) {
       reportError(ctx.logger, e, { prefix: "Barrel generation failed" });

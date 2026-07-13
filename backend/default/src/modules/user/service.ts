@@ -18,4 +18,4 @@ export const models = collectModels([
 export class UserModuleService extends ModuleService({
   models,
   credentialsSchema: schema,
-}) { }
+}) {}

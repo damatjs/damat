@@ -131,7 +131,9 @@ describe("buildLateralJoin — via SelectBuilder.with()", () => {
           select: ["id", "title"],
           where: { published: true, title: { like: "Hi%" } },
           whereRaw: { sql: '"body" IS NOT NULL OR $1 = $1', params: ["x"] },
-          orderBy: [{ column: "title", direction: "DESC", nulls: "NULLS LAST" }],
+          orderBy: [
+            { column: "title", direction: "DESC", nulls: "NULLS LAST" },
+          ],
           limit: 5,
           offset: 2,
         },
@@ -170,9 +172,7 @@ describe("buildLateralJoin — via SelectBuilder.with()", () => {
   });
 
   it("relation with no select uses * for the inner columns", () => {
-    const q = new SelectBuilder(PostModel)
-      .with({ author: true })
-      .generateSql();
+    const q = new SelectBuilder(PostModel).with({ author: true }).generateSql();
     expect(q.sql).toContain("SELECT *");
   });
 
@@ -182,7 +182,7 @@ describe("buildLateralJoin — via SelectBuilder.with()", () => {
         author: {
           whereRaw: [
             { sql: '"email" IS NOT NULL', params: [] },
-            { sql: '$1 = $1', params: ["y"] },
+            { sql: "$1 = $1", params: ["y"] },
           ],
         },
       })

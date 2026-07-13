@@ -1,4 +1,3 @@
-
 /** snake_case / kebab-case / spaced → PascalCase (mirrors orm-codegen). */
 export function toPascalCase(str: string): string {
   return str

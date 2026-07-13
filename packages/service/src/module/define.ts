@@ -3,9 +3,8 @@ import { ModuleDefinition, ModuleInstance } from "./type";
 
 export function defineModule<TService extends object>(
   name: string,
-  definition: ModuleDefinition<TService>
+  definition: ModuleDefinition<TService>,
 ): ModuleInstance<TService> {
-
   let instance: TService | null = null;
 
   const parseCredentials = definition.credentials(process.env);

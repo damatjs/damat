@@ -22,50 +22,50 @@ Algorithm:
 
 Verified examples (from `tests/columnToTsType.test.ts`):
 
-| `ColumnSchema` | result |
-| --- | --- |
-| `{ type: "uuid" }` | `string` |
-| `{ type: "integer" }` | `number` |
-| `{ type: "jsonb" }` | `unknown` |
-| `{ type: "text", nullable: true }` | `string \| null` |
-| `{ type: "text", array: true }` | `Array<string>` |
-| `{ type: "integer", nullable: true, array: true }` | `Array<number> \| null` |
-| `{ type: "enum", enum: "status_type" }` | `StatusTypeEnum` |
+| `ColumnSchema`                                                       | result                          |
+| -------------------------------------------------------------------- | ------------------------------- |
+| `{ type: "uuid" }`                                                   | `string`                        |
+| `{ type: "integer" }`                                                | `number`                        |
+| `{ type: "jsonb" }`                                                  | `unknown`                       |
+| `{ type: "text", nullable: true }`                                   | `string \| null`                |
+| `{ type: "text", array: true }`                                      | `Array<string>`                 |
+| `{ type: "integer", nullable: true, array: true }`                   | `Array<number> \| null`         |
+| `{ type: "enum", enum: "status_type" }`                              | `StatusTypeEnum`                |
 | `{ type: "enum", enum: "status_type", nullable: true, array: true }` | `Array<StatusTypeEnum> \| null` |
 
 ## Base mapping: `pgTypeToTsBase`
 
 ```ts
-export function pgTypeToTsBase(type: ColumnType): string
-export function enumTypeToTsBase(enumValues?: string[]): string
+export function pgTypeToTsBase(type: ColumnType): string;
+export function enumTypeToTsBase(enumValues?: string[]): string;
 ```
 
 A `switch` over every `ColumnType` returning the **base** TS string the `pg` driver materializes at runtime. Highlights (not exhaustive — see the source for all cases):
 
-| pg type(s) | TS base |
-| --- | --- |
-| `smallint`, `integer`, `smallserial`, `serial`, `oid` | `number` |
-| `bigint`, `bigserial` | `bigint` |
-| `real`, `double precision`, `numeric`, `decimal` | `number` |
-| `money` | `string` (pg returns a locale string) |
-| `text`, `character`, `character varying` | `string` |
-| `bytea` | `Buffer` |
-| `timestamp ...`, `date` | `Date` |
-| `time ...` | `string` |
-| `interval` | `{ years: number; months: number; days: number; hours: number; minutes: number; seconds: number; milliseconds: number }` |
-| `boolean` | `boolean` |
-| `enum` (unresolved fallback) | `string` |
-| `json`, `jsonb` | `unknown` |
-| `uuid`, `xml`, `bit`, `bit varying`, `cidr`, `inet`, `macaddr`, `macaddr8` | `string` |
-| `point` | `{ x: number; y: number }` |
-| `lseg`, `box` | `{ x1: number; y1: number; x2: number; y2: number }` |
-| `circle` | `{ x: number; y: number; radius: number }` |
-| `line`, `path`, `polygon` | `string` |
-| `int4range`, `numrange` | `{ lower: number \| null; upper: number \| null; isLowerBoundClosed: boolean; isUpperBoundClosed: boolean; isEmpty: boolean }` |
-| `int8range` | same shape with `bigint` bounds |
-| `tsrange`, `tstzrange`, `daterange` | same shape with `Date` bounds |
-| `*multirange` | `Array<...>` of the corresponding range object |
-| `pg_lsn`, `pg_snapshot` | `string` |
+| pg type(s)                                                                 | TS base                                                                                                                        |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `smallint`, `integer`, `smallserial`, `serial`, `oid`                      | `number`                                                                                                                       |
+| `bigint`, `bigserial`                                                      | `bigint`                                                                                                                       |
+| `real`, `double precision`, `numeric`, `decimal`                           | `number`                                                                                                                       |
+| `money`                                                                    | `string` (pg returns a locale string)                                                                                          |
+| `text`, `character`, `character varying`                                   | `string`                                                                                                                       |
+| `bytea`                                                                    | `Buffer`                                                                                                                       |
+| `timestamp ...`, `date`                                                    | `Date`                                                                                                                         |
+| `time ...`                                                                 | `string`                                                                                                                       |
+| `interval`                                                                 | `{ years: number; months: number; days: number; hours: number; minutes: number; seconds: number; milliseconds: number }`       |
+| `boolean`                                                                  | `boolean`                                                                                                                      |
+| `enum` (unresolved fallback)                                               | `string`                                                                                                                       |
+| `json`, `jsonb`                                                            | `unknown`                                                                                                                      |
+| `uuid`, `xml`, `bit`, `bit varying`, `cidr`, `inet`, `macaddr`, `macaddr8` | `string`                                                                                                                       |
+| `point`                                                                    | `{ x: number; y: number }`                                                                                                     |
+| `lseg`, `box`                                                              | `{ x1: number; y1: number; x2: number; y2: number }`                                                                           |
+| `circle`                                                                   | `{ x: number; y: number; radius: number }`                                                                                     |
+| `line`, `path`, `polygon`                                                  | `string`                                                                                                                       |
+| `int4range`, `numrange`                                                    | `{ lower: number \| null; upper: number \| null; isLowerBoundClosed: boolean; isUpperBoundClosed: boolean; isEmpty: boolean }` |
+| `int8range`                                                                | same shape with `bigint` bounds                                                                                                |
+| `tsrange`, `tstzrange`, `daterange`                                        | same shape with `Date` bounds                                                                                                  |
+| `*multirange`                                                              | `Array<...>` of the corresponding range object                                                                                 |
+| `pg_lsn`, `pg_snapshot`                                                    | `string`                                                                                                                       |
 
 `enumTypeToTsBase(values)` builds a string-literal union (`'a' | 'b'`) from values, falling back to `string` when none are given. It is a standalone helper for when you have raw enum values rather than a named alias.
 
@@ -79,21 +79,21 @@ export const columnToZodSchema = (col: ColumnSchema): string
 
 Calls an internal `getZodBaseType(type, col)` switch, then wraps in `z.array(...)` if `col.array`. It does **not** add `.optional()` or `.nullable()` — the schema generators add those based on column nullability/defaults. Notable mappings:
 
-| pg type(s) | Zod base |
-| --- | --- |
-| `smallint`, `integer`, `smallserial`, `serial` | `z.number().int()` |
-| `bigint`, `bigserial` | `z.bigint()` |
-| `real`, `double precision`, `numeric`, `decimal` | `z.number()` |
-| `text`/`character`/`character varying` | `z.string()`, or `z.string().max(length)` when `col.length` is set |
-| `money`, `time ...`, `jsonpath`, `xml`, `bit*`, network, `line`/`path`/`polygon`, text-search, `pg_lsn`/`pg_snapshot` | `z.string()` |
-| `bytea`, `json`, `jsonb` | `z.unknown()` |
-| `timestamp ...`, `date` | `z.coerce.date()` |
-| `interval` | `z.object({ years, months, days, hours, minutes, seconds, milliseconds })` |
-| `boolean` | `z.boolean()` |
-| `uuid` | `z.string().uuid()` |
-| `enum` | `z.string()` (the schema generators replace this with `z.enum([...])` when values are known) |
-| `point`/`lseg`/`box`/`circle`, ranges, multiranges | structured `z.object(...)` / `z.array(z.object(...))` mirroring the TS shapes |
-| `oid` | `z.number().int()` |
+| pg type(s)                                                                                                            | Zod base                                                                                     |
+| --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `smallint`, `integer`, `smallserial`, `serial`                                                                        | `z.number().int()`                                                                           |
+| `bigint`, `bigserial`                                                                                                 | `z.bigint()`                                                                                 |
+| `real`, `double precision`, `numeric`, `decimal`                                                                      | `z.number()`                                                                                 |
+| `text`/`character`/`character varying`                                                                                | `z.string()`, or `z.string().max(length)` when `col.length` is set                           |
+| `money`, `time ...`, `jsonpath`, `xml`, `bit*`, network, `line`/`path`/`polygon`, text-search, `pg_lsn`/`pg_snapshot` | `z.string()`                                                                                 |
+| `bytea`, `json`, `jsonb`                                                                                              | `z.unknown()`                                                                                |
+| `timestamp ...`, `date`                                                                                               | `z.coerce.date()`                                                                            |
+| `interval`                                                                                                            | `z.object({ years, months, days, hours, minutes, seconds, milliseconds })`                   |
+| `boolean`                                                                                                             | `z.boolean()`                                                                                |
+| `uuid`                                                                                                                | `z.string().uuid()`                                                                          |
+| `enum`                                                                                                                | `z.string()` (the schema generators replace this with `z.enum([...])` when values are known) |
+| `point`/`lseg`/`box`/`circle`, ranges, multiranges                                                                    | structured `z.object(...)` / `z.array(z.object(...))` mirroring the TS shapes                |
+| `oid`                                                                                                                 | `z.number().int()`                                                                           |
 
 ## Edge cases & gotchas
 

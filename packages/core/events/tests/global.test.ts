@@ -1,5 +1,10 @@
 import { describe, it, expect, afterEach } from "bun:test";
-import { EventBus, getEventBus, setEventBus, resetEventBus } from "../src/index";
+import {
+  EventBus,
+  getEventBus,
+  setEventBus,
+  resetEventBus,
+} from "../src/index";
 
 // The bus lives on globalThis, so always leave a clean slate for other suites.
 afterEach(() => {

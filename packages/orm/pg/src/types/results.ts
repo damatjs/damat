@@ -40,7 +40,4 @@ export interface PgDeleteResult<
 }
 
 export type PgQueryResult<T extends QueryResultRow = Record<string, unknown>> =
-  | PgSelectResult<T>
-  | PgInsertResult<T>
-  | PgUpdateResult<T>
-  | PgDeleteResult<T>;
+  PgSelectResult<T> | PgInsertResult<T> | PgUpdateResult<T> | PgDeleteResult<T>;

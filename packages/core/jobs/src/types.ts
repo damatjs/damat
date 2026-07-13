@@ -18,7 +18,9 @@ export interface JobMap {}
 
 export type JobName = (keyof JobMap & string) | (string & {});
 
-export type JobPayload<K extends string> = K extends keyof JobMap ? JobMap[K] : unknown;
+export type JobPayload<K extends string> = K extends keyof JobMap
+  ? JobMap[K]
+  : unknown;
 
 /** What travels through the queue: which job to run, with what payload. */
 export interface JobEnvelope {

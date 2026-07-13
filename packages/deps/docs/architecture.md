@@ -103,16 +103,16 @@ export * from "uuid";
 
 From `package.json` `dependencies`:
 
-| Library | Range | Notes |
-| --- | --- | --- |
-| `hono` | `^4.12.0` | Core HTTP framework. |
-| `@hono/node-server` | `^1.13.7` | `serve` adapter (re-exported from the `hono` subpath). |
-| `zod` | `4.3.6` | **Exact pin** (no caret) for validator/error stability. |
-| `effect` | `^3.19.18` | Effect-TS. |
-| `pg` | `^8.21.0` | node-postgres. |
-| `ioredis` | `^5.9.3` | Redis client. |
-| `nanoid` | `^5.1.6` | ID generation. |
-| `uuid` | `^13.0.0` | UUID generation. |
+| Library             | Range      | Notes                                                   |
+| ------------------- | ---------- | ------------------------------------------------------- |
+| `hono`              | `^4.12.0`  | Core HTTP framework.                                    |
+| `@hono/node-server` | `^1.13.7`  | `serve` adapter (re-exported from the `hono` subpath).  |
+| `zod`               | `4.3.6`    | **Exact pin** (no caret) for validator/error stability. |
+| `effect`            | `^3.19.18` | Effect-TS.                                              |
+| `pg`                | `^8.21.0`  | node-postgres.                                          |
+| `ioredis`           | `^5.9.3`   | Redis client.                                           |
+| `nanoid`            | `^5.1.6`   | ID generation.                                          |
+| `uuid`              | `^13.0.0`  | UUID generation.                                        |
 
 `devDependencies` include `@types/pg`, `@types/bun`, `@damatjs/typescript-config`, and `typescript`.
 

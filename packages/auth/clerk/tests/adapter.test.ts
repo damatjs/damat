@@ -5,7 +5,11 @@ import { describe, it, expect, mock, beforeEach } from "bun:test";
 const state = {
   builtWith: null as unknown,
   isSignedIn: false,
-  auth: null as { userId: string | null; orgId?: string | null; sessionClaims?: Record<string, unknown> | null } | null,
+  auth: null as {
+    userId: string | null;
+    orgId?: string | null;
+    sessionClaims?: Record<string, unknown> | null;
+  } | null,
   lastRequest: null as Request | null,
   lastOptions: undefined as unknown,
 };
@@ -52,12 +56,20 @@ describe("createClerkAuthProvider — build", () => {
 
   it("builds the client from CLERK_SECRET_KEY", () => {
     createClerkAuthProvider();
-    expect((state.builtWith as { secretKey: string }).secretKey).toBe("sk_test_123");
+    expect((state.builtWith as { secretKey: string }).secretKey).toBe(
+      "sk_test_123",
+    );
   });
 
   it("passes an explicit secret + publishable key through", () => {
-    createClerkAuthProvider({ secretKey: "sk_live", publishableKey: "pk_live" });
-    expect(state.builtWith).toEqual({ secretKey: "sk_live", publishableKey: "pk_live" });
+    createClerkAuthProvider({
+      secretKey: "sk_live",
+      publishableKey: "pk_live",
+    });
+    expect(state.builtWith).toEqual({
+      secretKey: "sk_live",
+      publishableKey: "pk_live",
+    });
   });
 
   it("throws a clear error when no secret key is available", () => {
@@ -69,7 +81,12 @@ describe("createClerkAuthProvider — build", () => {
   it("uses a pre-built client verbatim", async () => {
     state.builtWith = "SENTINEL";
     const provider = createClerkAuthProvider({
-      client: { authenticateRequest: async () => ({ isSignedIn: false, toAuth: () => null }) },
+      client: {
+        authenticateRequest: async () => ({
+          isSignedIn: false,
+          toAuth: () => null,
+        }),
+      },
     });
     await provider.authenticate(ctxFor());
     expect(state.builtWith).toBe("SENTINEL"); // createClerkClient never called
@@ -79,9 +96,18 @@ describe("createClerkAuthProvider — build", () => {
 describe("createClerkAuthProvider — authenticate", () => {
   it("maps a signed-in auth object to the principal (userId → id, orgId → team, claims kept)", async () => {
     state.isSignedIn = true;
-    state.auth = { userId: "user_1", orgId: "org_1", sessionClaims: { email: "a@b.co", role: "member" } };
+    state.auth = {
+      userId: "user_1",
+      orgId: "org_1",
+      sessionClaims: { email: "a@b.co", role: "member" },
+    };
     const principal = await createClerkAuthProvider().authenticate(ctxFor());
-    expect(principal).toMatchObject({ id: "user_1", orgId: "org_1", email: "a@b.co", role: "member" });
+    expect(principal).toMatchObject({
+      id: "user_1",
+      orgId: "org_1",
+      email: "a@b.co",
+      role: "member",
+    });
   });
 
   it("returns null when the request is not signed in", async () => {
@@ -105,8 +131,12 @@ describe("createClerkAuthProvider — authenticate", () => {
   it("forwards authorizedParties to authenticateRequest", async () => {
     state.isSignedIn = true;
     state.auth = { userId: "u" };
-    await createClerkAuthProvider({ authorizedParties: ["https://app.example.com"] }).authenticate(ctxFor());
-    expect(state.lastOptions).toEqual({ authorizedParties: ["https://app.example.com"] });
+    await createClerkAuthProvider({
+      authorizedParties: ["https://app.example.com"],
+    }).authenticate(ctxFor());
+    expect(state.lastOptions).toEqual({
+      authorizedParties: ["https://app.example.com"],
+    });
   });
 
   it("omits options when no authorizedParties given", async () => {

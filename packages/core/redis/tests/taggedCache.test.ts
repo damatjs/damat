@@ -11,10 +11,18 @@ describe("Tagged cache", () => {
 
   describe("cacheSetTagged", () => {
     it("stores the value like cacheSet and indexes it under each tag", async () => {
-      await cacheSetTagged("users:list", [{ id: 1 }], 60, ["model:user", "lists"], redis);
+      await cacheSetTagged(
+        "users:list",
+        [{ id: 1 }],
+        60,
+        ["model:user", "lists"],
+        redis,
+      );
 
       expect(await cacheGet("users:list", redis)).toEqual([{ id: 1 }]);
-      expect(await redis.smembers("cache-tag:model:user")).toEqual(["users:list"]);
+      expect(await redis.smembers("cache-tag:model:user")).toEqual([
+        "users:list",
+      ]);
       expect(await redis.smembers("cache-tag:lists")).toEqual(["users:list"]);
     });
 

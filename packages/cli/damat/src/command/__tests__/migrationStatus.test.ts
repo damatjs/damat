@@ -23,7 +23,8 @@ mock.module("@damatjs/module", () => ({
 }));
 
 async function getCmd() {
-  return (await import("../module/migrationStatus")).moduleMigrationStatusCommand;
+  return (await import("../module/migrationStatus"))
+    .moduleMigrationStatusCommand;
 }
 
 const ORIGINAL_DB_URL = process.env.DATABASE_URL;

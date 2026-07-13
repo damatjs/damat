@@ -72,7 +72,9 @@ describe("augmentWithLinks", () => {
       },
       filesMap,
     );
-    expect([...filesMap.keys()].some((k) => k.endsWith(".links.ts"))).toBe(true);
+    expect([...filesMap.keys()].some((k) => k.endsWith(".links.ts"))).toBe(
+      true,
+    );
     expect(filesMap.get("index.ts")).toContain("export * from");
   });
 
@@ -133,9 +135,9 @@ describe("augmentWithLinks", () => {
       filesMap,
     );
     // The bad link is skipped with a warning; nothing is woven.
-    expect(logger.warnings.some((w) => w.includes("Could not load links"))).toBe(
-      true,
-    );
+    expect(
+      logger.warnings.some((w) => w.includes("Could not load links")),
+    ).toBe(true);
     expect(filesMap.size).toBe(0);
   });
 });

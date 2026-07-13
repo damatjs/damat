@@ -3,7 +3,11 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { clearRegistryCache, loadRegistryIndex, lookupEntry } from "../registry/load";
+import {
+  clearRegistryCache,
+  loadRegistryIndex,
+  lookupEntry,
+} from "../registry/load";
 import type { RegistryIndex } from "../registry/types";
 
 let tmp: string;
@@ -175,7 +179,10 @@ describe("loadRegistryIndex — URL", () => {
 
 describe("lookupEntry", () => {
   test("finds an entry by namespace/name key", () => {
-    const found = lookupEntry(sampleIndex, { namespace: "damatjs", name: "user" });
+    const found = lookupEntry(sampleIndex, {
+      namespace: "damatjs",
+      name: "user",
+    });
     expect(found?.key).toBe("damatjs/user");
   });
 

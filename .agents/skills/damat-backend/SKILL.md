@@ -19,6 +19,7 @@ workflows) registered in `damat.config.ts`, with **file-based routes** under
 `src/api/routes/`. The framework wires it all at startup.
 
 References in the repo (read when you need detail):
+
 - `docs/GUIDE.md` and `docs/guide/` — the full step-by-step guide.
 - `docs/guide/02-concepts.md` — the mental model (read this first if unsure).
 - `AGENTS.md` — repo map, conventions, common-task recipes.
@@ -40,7 +41,7 @@ References in the repo (read when you need detail):
   link helpers (`defineLink`, `collectLinkModels`, `defineLinkModule`) also come
   from `@damatjs/framework`.
 - **Cross-module relationships are links, not relations.** A `columns.hasMany(...)`
-  relation is for tables *within one module*; to relate models across modules use
+  relation is for tables _within one module_; to relate models across modules use
   a **link** in `src/links/` (see the task below).
 - **`modules` in `damat.config.ts` is a keyed object** `{ id: { resolve, id } }`,
   not an array.
@@ -62,15 +63,17 @@ References in the repo (read when you need detail):
 ## Common tasks
 
 ### Add / change a model (table)
+
 1. Edit or add a model in `src/modules/<m>/models/` using the orm-model DSL:
    `model("table", { col: columns.text()... }).indexes([...]).timestamps()`.
    Relations reference the **target table name** (`columns.hasMany("accounts")`).
 2. Register it in the module's `service.ts` `models` map.
 3. `damat-orm migrate:create <name>` → review the SQL → `damat-orm migrate:up`.
 4. Optionally `damat codegen <module>` (or `--all`) to refresh row types.
-Guide: `docs/guide/05-models.md`, `docs/guide/06-migrations.md`.
+   Guide: `docs/guide/05-models.md`, `docs/guide/06-migrations.md`.
 
 ### Add business logic (service method)
+
 Add a method to the module's `ModuleService` subclass **only when it does something
 the generated CRUD can't** — never a passthrough that re-exports `find`/`create`/etc.
 Inside, use the generated per-model CRUD (`this.<model>.create/find/update/...`) and
@@ -79,12 +82,14 @@ Inside, use the generated per-model CRUD (`this.<model>.create/find/update/...`)
 `docs/guide/07-modules-and-services.md`.
 
 ### Add an HTTP endpoint
+
 Create `src/api/routes/<path>/route.ts` exporting `GET`/`POST`/… as
 `RouteHandler`, or `defineRoute<Params>` for typed dynamic segments
 (`[param]` folders → `:param`). Reach data via `getModule("<id>")`. Put
 cross-cutting concerns in `src/api/middleware/`. Guide: `docs/guide/08-http-apis.md`.
 
 ### Add a workflow (multi-step, must roll back)
+
 Define steps with `createStep<I,O,C>(name, forward, compensation?, config?)`. The
 `forward` returns `new StepResponse(output, compensateInput?)` (output flows
 downstream; `compensateInput` is the rollback payload `C`), and `compensation`
@@ -93,10 +98,12 @@ receives `(compensateInput, ctx)`. Compose them with `createWorkflow` +
 `.executeWithLock(input, { lockId, ttlMs })`. Guide: `docs/guide/09-workflows.md`.
 
 ### Relate two modules (cross-module link)
+
 Modules stay decoupled and can't foreign-key into each other, so a many-to-many
 relationship lives **outside** both modules under `src/links/<owner>/` (same shape
 as a module: `models/`, `index.ts`, `migrations/`). An auto-generated junction
 table stores it.
+
 1. `src/links/<owner>/models/<a>-<b>.ts`:
    `export default defineLink({ module:"user", model:"user", field:"users" }, { module:"organization", model:"organization", field:"organizations" })`.
 2. `src/links/<owner>/index.ts`: `export const links=[...]; export const models=collectLinkModels(links);`.
@@ -104,10 +111,11 @@ table stores it.
 4. `damat.config.ts`: add `links: "./src/links"`.
 5. `damat-orm migrate:create link:<owner>` → `damat-orm migrate:up` → `damat codegen <module>`.
 6. Query at runtime via `getModule("link")`: `.create / .dismiss / .fetch / .graph`.
-`defineLink`, `collectLinkModels`, `defineLinkModule` import from `@damatjs/framework`.
-Details: `packages/link/README.md`.
+   `defineLink`, `collectLinkModels`, `defineLinkModule` import from `@damatjs/framework`.
+   Details: `packages/link/README.md`.
 
 ### Install & compose modules (assemble the app)
+
 You build the app by composing modules — installing and wiring is the backend
 owner's job (a module never decides this for you). Prefer the MCP tools if the
 `@damatjs/mcp` server is connected (`search_modules`, `module_info`, `add_module`,
@@ -120,17 +128,20 @@ hint — you decide what's actually installed and linked. Guide:
 `docs/guide/14-installing-modules.md`.
 
 ### Set up module install for AI (MCP)
+
 `bun add -D @damatjs/mcp`, then add a `damat-modules` server to `.mcp.json` with
 `DAMAT_MODULE_REGISTRY`, `DAMAT_APP_DIR`, and `DAMAT_CLI` in its `env`. Smoke-test
 the installed bin: `printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{}}}' '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' | bunx damat-mcp`.
 Guide: `docs/guide/15-installing-modules-with-ai.md`.
 
 ### Use Redis (cache / rate limit / lock / queue)
+
 `initRedis(REDIS_URL)` once (the framework does this when `redisUrl` is set),
 then `cacheGet/cacheSet`, `checkRateLimit`, `withLock`, `RedisQueue`, etc.
 Guide: `docs/guide/10-redis.md`.
 
 ### Configure the app
+
 Edit `damat.config.ts` (`projectConfig` + `modules`). New env vars go in `.env`
 and `.env.example`. Guide: `docs/guide/04-configuration.md`.
 
@@ -154,7 +165,7 @@ no-ops, check `REDIS_URL`.
 Switch to the **`damat-modules`** skill — it covers building one self-contained
 module (`damat module init/dev/migration:create/codegen/validate`, the
 `module.json` contract, the isolation harness). Installing, linking, and composing
-modules into *this* app stay here.
+modules into _this_ app stay here.
 
 ## Guardrails
 

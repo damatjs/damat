@@ -23,8 +23,14 @@ The leaf-dispatch pipeline (`registerCommand.ts`) runs these in order: **coerce 
 ### `coerceOptions` / `coerceOptionValue` — `coerceOptions.ts`
 
 ```ts
-function coerceOptionValue(value: unknown, type: CommandOption["type"]): unknown;
-function coerceOptions(options: Record<string, unknown>, optionDefs?: CommandOption[]): Record<string, unknown>;
+function coerceOptionValue(
+  value: unknown,
+  type: CommandOption["type"],
+): unknown;
+function coerceOptions(
+  options: Record<string, unknown>,
+  optionDefs?: CommandOption[],
+): Record<string, unknown>;
 ```
 
 `coerceOptionValue` maps a value to its declared `type`:

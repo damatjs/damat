@@ -3,7 +3,12 @@ import { existsSync } from "node:fs";
 import type { ILogger } from "@damatjs/logger";
 import { runCodegen } from "@damatjs/codegen";
 import { augmentWithLinks } from "./augmentWithLinks";
-import { ModuleContainer, ModuleEntry, modelsPath, typesPath } from "./constant";
+import {
+  ModuleContainer,
+  ModuleEntry,
+  modelsPath,
+  typesPath,
+} from "./constant";
 
 /**
  * Result of attempting codegen for a single module:

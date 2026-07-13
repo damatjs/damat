@@ -39,7 +39,9 @@ describe("runCli", () => {
     }) as never);
     // runCli constructs its own internal Logger; silence its error output so the
     // unknown-command test does not leak to stderr. (We assert via exit code.)
-    loggerErrorSpy = spyOn(Logger.prototype, "error").mockImplementation(() => {});
+    loggerErrorSpy = spyOn(Logger.prototype, "error").mockImplementation(
+      () => {},
+    );
     consoleOutput = [];
     originalLog = console.log;
     console.log = (...args: unknown[]) => {
@@ -68,13 +70,13 @@ describe("runCli", () => {
 
   test("throws when config has no name", async () => {
     await expect(
-      runCli({ version: "1.0.0", commands: [] } as unknown as CliConfig)
+      runCli({ version: "1.0.0", commands: [] } as unknown as CliConfig),
     ).rejects.toThrow("CLI config must have a 'name' property");
   });
 
   test("throws when config has no version", async () => {
     await expect(
-      runCli({ name: "cli", commands: [] } as unknown as CliConfig)
+      runCli({ name: "cli", commands: [] } as unknown as CliConfig),
     ).rejects.toThrow("CLI config must have a 'version' property");
   });
 
@@ -200,15 +202,26 @@ describe("runCli", () => {
   });
 
   test("falls back to the default command, forwarding the unknown token as an arg", async () => {
-    let received:
-      | { args: string[]; command: string; options: Record<string, unknown> }
-      | null = null;
+    let received: {
+      args: string[];
+      command: string;
+      options: Record<string, unknown>;
+    } | null = null;
     const create = makeCmd("create", {
       options: [
-        { name: "module", type: "boolean", description: "module", default: false },
+        {
+          name: "module",
+          type: "boolean",
+          description: "module",
+          default: false,
+        },
       ],
       handler: async (ctx) => {
-        received = { args: ctx.args, command: ctx.command, options: ctx.options };
+        received = {
+          args: ctx.args,
+          command: ctx.command,
+          options: ctx.options,
+        };
         return { exitCode: 0 };
       },
     });

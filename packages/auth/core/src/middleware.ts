@@ -25,9 +25,14 @@ export function createAuthHandlers(
   provider: AuthProvider,
   options: AuthHandlersOptions = {},
 ): AuthHandlers {
-  const session = makeHandler((c) => provider.authenticate(c), provider, options);
+  const session = makeHandler(
+    (c) => provider.authenticate(c),
+    provider,
+    options,
+  );
   const apiKey = makeHandler(
-    (c) => (provider.authenticateApiKey ?? provider.authenticate).call(provider, c),
+    (c) =>
+      (provider.authenticateApiKey ?? provider.authenticate).call(provider, c),
     provider,
     options,
   );

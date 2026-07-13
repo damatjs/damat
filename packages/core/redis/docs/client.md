@@ -10,16 +10,16 @@ Own the connection to Redis and hand a `Redis` (ioredis) instance to everything 
 
 ```ts
 interface RedisConfig {
-  url: string;                       // e.g. "redis://localhost:6379"
-  maxRetriesPerRequest?: number;     // default 3
-  lazyConnect?: boolean;             // default true
-  options?: Partial<RedisOptions>;   // spread onto the ioredis constructor
+  url: string; // e.g. "redis://localhost:6379"
+  maxRetriesPerRequest?: number; // default 3
+  lazyConnect?: boolean; // default true
+  options?: Partial<RedisOptions>; // spread onto the ioredis constructor
 }
 
 interface RedisClientConfig extends RedisConfig {
-  logger?: ILogger;                  // defaults to console
-  name?: string;                     // connection label for logs, default "default"
-  debug?: boolean;                   // log "reconnecting" events, default false
+  logger?: ILogger; // defaults to console
+  name?: string; // connection label for logs, default "default"
+  debug?: boolean; // log "reconnecting" events, default false
 }
 ```
 
@@ -40,14 +40,14 @@ new Redis(config.url, {
   maxRetriesPerRequest: config.maxRetriesPerRequest ?? 3,
   retryStrategy: createRetryStrategy,
   lazyConnect: config.lazyConnect ?? true,
-  ...config.options,             // caller options win (spread last)
+  ...config.options, // caller options win (spread last)
 });
 ```
 
 `src/client/index.ts` adds the public, singleton-free helpers:
 
 ```ts
-function createRedis(config: RedisConfig): Redis;        // alias of createRedisConnection
+function createRedis(config: RedisConfig): Redis; // alias of createRedisConnection
 async function disconnect(client: Redis): Promise<void>; // client.quit()
 ```
 
@@ -60,11 +60,11 @@ Class wrapper used by the singleton. It does **not** add caching/locking logic â
 ```ts
 class RedisClient {
   constructor(config: RedisClientConfig);
-  get client(): Redis;          // underlying ioredis instance
-  get isConnected(): boolean;   // tracked via connect/close events
-  connect(): Promise<void>;     // redis.connect()
-  disconnect(): Promise<void>;  // redis.quit() + connected = false
-  ping(): Promise<boolean>;     // true iff reply === "PONG", never throws
+  get client(): Redis; // underlying ioredis instance
+  get isConnected(): boolean; // tracked via connect/close events
+  connect(): Promise<void>; // redis.connect()
+  disconnect(): Promise<void>; // redis.quit() + connected = false
+  ping(): Promise<boolean>; // true iff reply === "PONG", never throws
 }
 ```
 
@@ -83,7 +83,10 @@ Behavior:
 A module-level `globalClient: RedisClient | null`.
 
 ```ts
-function initRedis(config?: RedisClientConfig, logger?: ILogger): RedisClient | null;
+function initRedis(
+  config?: RedisClientConfig,
+  logger?: ILogger,
+): RedisClient | null;
 async function connectRedis(): Promise<Redis>;
 function getRedis(): Redis;
 function getRedisClient(): RedisClient;
@@ -99,7 +102,9 @@ async function disconnectRedis(): Promise<void>;
 ## Errors â€” `src/errors/index.ts`
 
 ```ts
-class RedisConnectionError extends Error { constructor(message, cause?: Error) }
+class RedisConnectionError extends Error {
+  constructor(message, cause?: Error);
+}
 class RedisNotInitializedError extends Error {
   // default message: "Redis not initialized. Call initRedis() first."
 }

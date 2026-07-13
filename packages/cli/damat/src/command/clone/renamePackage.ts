@@ -1,6 +1,5 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
 /** Rewrite package.json's name; false when the file is missing/unparseable. */
 export function renamePackage(targetDir: string, name: string): boolean {

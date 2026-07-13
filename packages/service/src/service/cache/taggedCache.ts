@@ -1,15 +1,24 @@
 import { getLogger } from "@damatjs/logger";
-import { cacheGet, cacheSetTagged, hasRedis, invalidateCacheTags } from "@damatjs/redis";
+import {
+  cacheGet,
+  cacheSetTagged,
+  hasRedis,
+  invalidateCacheTags,
+} from "@damatjs/redis";
 import type { QueryResultRow } from "@damatjs/orm-type";
 import type { ModelMethods } from "../methods";
 import type { CacheReadOptions, ServiceCacheConfig } from "../type";
-import { modelCacheTag } from './tag';
-import { DEFAULT_TTL_SECONDS, READ_OPTIONS_ARG, WRITE_METHODS } from './constant';
-import { buildCacheKey } from './buildCacheKey';
+import { modelCacheTag } from "./tag";
+import {
+  DEFAULT_TTL_SECONDS,
+  READ_OPTIONS_ARG,
+  WRITE_METHODS,
+} from "./constant";
+import { buildCacheKey } from "./buildCacheKey";
 
 /**
  * Redis-backed, opt-in read cache for ModelMethods
- * 
+ *
  *   - a read is cached ONLY when the call passes `cache: true | { ttl, tags }`
  *     (nothing is cached by default);
  *   - every entry carries the implicit `model:<name>` tag;
@@ -44,8 +53,10 @@ export function withTaggedCache<T extends QueryResultRow>(
       if (prop in READ_OPTIONS_ARG) {
         return async (...args: unknown[]) => {
           const optIndex = READ_OPTIONS_ARG[prop]!;
-          const options = args[optIndex] as { cache?: boolean | CacheReadOptions } | undefined;
-          const cacheOpt = options && typeof options === "object" ? options.cache : undefined;
+          const options = args[optIndex] as
+            { cache?: boolean | CacheReadOptions } | undefined;
+          const cacheOpt =
+            options && typeof options === "object" ? options.cache : undefined;
 
           // The cache option is ours, not the repository's — strip it before
           // the underlying method sees the options.
@@ -57,7 +68,8 @@ export function withTaggedCache<T extends QueryResultRow>(
 
           // In-transaction reads must see the transaction's own writes.
           const inTransaction =
-            (target as unknown as { transactionalEm?: unknown }).transactionalEm != null;
+            (target as unknown as { transactionalEm?: unknown })
+              .transactionalEm != null;
           if (!cacheOpt || inTransaction || !hasRedis()) {
             return (value as (...a: unknown[]) => unknown).apply(target, args);
           }
@@ -69,14 +81,20 @@ export function withTaggedCache<T extends QueryResultRow>(
             const hit = await cacheGet(key);
             if (hit !== null) return hit;
           } catch (e) {
-            getLogger().debug("cache read failed — falling through to the database", {
-              model: modelName,
-              method: prop,
-              error: e instanceof Error ? e.message : String(e),
-            });
+            getLogger().debug(
+              "cache read failed — falling through to the database",
+              {
+                model: modelName,
+                method: prop,
+                error: e instanceof Error ? e.message : String(e),
+              },
+            );
           }
 
-          const result = await (value as (...a: unknown[]) => unknown).apply(target, args);
+          const result = await (value as (...a: unknown[]) => unknown).apply(
+            target,
+            args,
+          );
 
           // null/undefined are not cached: cacheGet can't tell a cached null
           // from a miss, so negative results always recompute.
@@ -87,11 +105,14 @@ export function withTaggedCache<T extends QueryResultRow>(
                 ...(read.tags ?? []),
               ]);
             } catch (e) {
-              getLogger().debug("cache write failed — result served from the database", {
-                model: modelName,
-                method: prop,
-                error: e instanceof Error ? e.message : String(e),
-              });
+              getLogger().debug(
+                "cache write failed — result served from the database",
+                {
+                  model: modelName,
+                  method: prop,
+                  error: e instanceof Error ? e.message : String(e),
+                },
+              );
             }
           }
           return result;
@@ -100,16 +121,22 @@ export function withTaggedCache<T extends QueryResultRow>(
 
       if (WRITE_METHODS.has(prop)) {
         return async (...args: unknown[]) => {
-          const result = await (value as (...a: unknown[]) => unknown).apply(target, args);
+          const result = await (value as (...a: unknown[]) => unknown).apply(
+            target,
+            args,
+          );
           if (hasRedis()) {
             try {
               await invalidateCacheTags([modelCacheTag(modelName)]);
             } catch (e) {
-              getLogger().debug("cache invalidation failed — entries expire by TTL", {
-                model: modelName,
-                method: prop,
-                error: e instanceof Error ? e.message : String(e),
-              });
+              getLogger().debug(
+                "cache invalidation failed — entries expire by TTL",
+                {
+                  model: modelName,
+                  method: prop,
+                  error: e instanceof Error ? e.message : String(e),
+                },
+              );
             }
           }
           return result;
@@ -120,4 +147,3 @@ export function withTaggedCache<T extends QueryResultRow>(
     },
   });
 }
-

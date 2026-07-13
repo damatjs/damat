@@ -1,6 +1,8 @@
 import type { DbPoolConfigWithExtras } from "@damatjs/orm-type";
 
-export function productionPoolConfig(overrides: Partial<DbPoolConfigWithExtras> = {}): DbPoolConfigWithExtras {
+export function productionPoolConfig(
+  overrides: Partial<DbPoolConfigWithExtras> = {},
+): DbPoolConfigWithExtras {
   return {
     min: 2,
     max: 20,
@@ -11,7 +13,9 @@ export function productionPoolConfig(overrides: Partial<DbPoolConfigWithExtras> 
   };
 }
 
-export function developmentPoolConfig(overrides: Partial<DbPoolConfigWithExtras> = {}): DbPoolConfigWithExtras {
+export function developmentPoolConfig(
+  overrides: Partial<DbPoolConfigWithExtras> = {},
+): DbPoolConfigWithExtras {
   return {
     min: 1,
     max: 5,
@@ -21,7 +25,9 @@ export function developmentPoolConfig(overrides: Partial<DbPoolConfigWithExtras>
   };
 }
 
-export function testPoolConfig(overrides: Partial<DbPoolConfigWithExtras> = {}): DbPoolConfigWithExtras {
+export function testPoolConfig(
+  overrides: Partial<DbPoolConfigWithExtras> = {},
+): DbPoolConfigWithExtras {
   return {
     min: 0,
     max: 2,

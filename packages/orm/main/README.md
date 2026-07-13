@@ -23,7 +23,11 @@ bun add @damatjs/orm
 
 ```ts
 // the root export pulls in model + connector + migration + processor + pg
-import { ConnectionManager, PgEntityManager, runMigrations } from "@damatjs/orm";
+import {
+  ConnectionManager,
+  PgEntityManager,
+  runMigrations,
+} from "@damatjs/orm";
 
 // or import just the slice you need via a subpath
 import { columns, toModuleSchema } from "@damatjs/orm/model";
@@ -35,14 +39,14 @@ import { PgEntityManager } from "@damatjs/orm/pg";
 `@damatjs/orm` has no source of its own beyond `export *` lines. Each entry below
 re-exports the named sub-package verbatim.
 
-| Import path | Re-exports | Provides |
-|---|---|---|
-| `@damatjs/orm` | all five below | the entire ORM surface in one import |
-| `@damatjs/orm/model` | `@damatjs/orm-model` | column/property DSL, schema builders, `toModuleSchema`, model types/utils |
-| `@damatjs/orm/connector` | `@damatjs/orm-connector` | `ConnectionManager` — pooled PostgreSQL connection lifecycle + health checks |
+| Import path              | Re-exports               | Provides                                                                                                                |
+| ------------------------ | ------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `@damatjs/orm`           | all five below           | the entire ORM surface in one import                                                                                    |
+| `@damatjs/orm/model`     | `@damatjs/orm-model`     | column/property DSL, schema builders, `toModuleSchema`, model types/utils                                               |
+| `@damatjs/orm/connector` | `@damatjs/orm-connector` | `ConnectionManager` — pooled PostgreSQL connection lifecycle + health checks                                            |
 | `@damatjs/orm/migration` | `@damatjs/orm-migration` | migration discovery, executor, generator, tracker (`runMigrations`, `createInitialMigration`, `createDiffMigration`, …) |
-| `@damatjs/orm/processor` | `@damatjs/orm-processor` | schema diffing, SQL generation, snapshots (`diff`, `sqlGenerator`, `snapshotExist`) |
-| `@damatjs/orm/pg` | `@damatjs/orm-pg` | `EntityManager`/`PgEntityManager`, repository pattern, transactions, query executor |
+| `@damatjs/orm/processor` | `@damatjs/orm-processor` | schema diffing, SQL generation, snapshots (`diff`, `sqlGenerator`, `snapshotExist`)                                     |
+| `@damatjs/orm/pg`        | `@damatjs/orm-pg`        | `EntityManager`/`PgEntityManager`, repository pattern, transactions, query executor                                     |
 
 > The root `.` export is `export * from` all five sub-packages, so any symbol
 > reachable through a subpath is also reachable through the bare `@damatjs/orm`

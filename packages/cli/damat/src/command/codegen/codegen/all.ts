@@ -4,9 +4,11 @@ import { generateBarrels } from "@damatjs/codegen";
 import { ModuleContainer } from "../constant";
 import { runModuleCodegen } from "../runModule";
 
-
 /** Generate for every module in the config, soft-skipping links and missing models. */
-export async function codegenAll(ctx: CommandContext, modules: ModuleContainer) {
+export async function codegenAll(
+  ctx: CommandContext,
+  modules: ModuleContainer,
+) {
   const flat = Boolean(ctx.options.flat);
   let generated = 0;
   let failed = 0;
@@ -44,4 +46,3 @@ export async function codegenAll(ctx: CommandContext, modules: ModuleContainer) 
   ctx.logger.success(`Codegen completed for ${generated} module(s)`);
   return { exitCode: 0 };
 }
-

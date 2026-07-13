@@ -1,6 +1,10 @@
 import { describe, it, expect } from "bun:test";
 import { ModuleSchema } from "@damatjs/orm-type";
-import { generateEnumTypes, generateEnumsFile, getTableEnums } from "../../utils/enum";
+import {
+  generateEnumTypes,
+  generateEnumsFile,
+  getTableEnums,
+} from "../../utils/enum";
 
 describe("generateEnumTypes", () => {
   it("generates enum type lines", () => {
@@ -14,7 +18,9 @@ describe("generateEnumTypes", () => {
     };
 
     const lines = generateEnumTypes(schema);
-    expect(lines).toContain("export type StatusEnum = 'draft' | 'published' | 'archived';");
+    expect(lines).toContain(
+      "export type StatusEnum = 'draft' | 'published' | 'archived';",
+    );
     expect(lines).toContain("export type RoleEnum = 'admin' | 'user';");
   });
 

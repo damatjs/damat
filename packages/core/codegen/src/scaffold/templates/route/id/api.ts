@@ -1,8 +1,12 @@
 import type { CrudNames } from "../../../naming";
-import { SCAFFOLD_NOTE } from '../../constant';
+import { SCAFFOLD_NOTE } from "../../constant";
 
 /** Single-resource route (`[id]`): GET one, PATCH update, DELETE. */
-export function routeIdApi(n: CrudNames, wfDirSpec: string, typesSpec: string): string {
+export function routeIdApi(
+  n: CrudNames,
+  wfDirSpec: string,
+  typesSpec: string,
+): string {
   return `${SCAFFOLD_NOTE}
 import { getValidated, type RouteHandler } from "@damatjs/framework/router";
 import { find${n.pascal}Workflow, update${n.pascal}Workflow, delete${n.pascal}Workflow } from "${wfDirSpec}";

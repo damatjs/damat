@@ -88,13 +88,13 @@ export default defineConfig({
   },
   // Bootstrap lifecycle hooks — each awaited; a throwing hook fails startup.
   hooks: {
-    beforeServices: ({ config, logger }) => {},        // after config load, before db/redis/modules
-    afterServices: ({ config, logger }) => {},         // services up, routes not built yet
-    beforeRoutes: ({ app, config, logger }) => {},     // Hono app exists, no routes yet
-    afterRoutes: ({ app, config, logger }) => {},      // all routes registered, before the 404 handler
+    beforeServices: ({ config, logger }) => {}, // after config load, before db/redis/modules
+    afterServices: ({ config, logger }) => {}, // services up, routes not built yet
+    beforeRoutes: ({ app, config, logger }) => {}, // Hono app exists, no routes yet
+    afterRoutes: ({ app, config, logger }) => {}, // all routes registered, before the 404 handler
   },
   services: {
-    events: { broadcast: true },        // cross-process event delivery via Redis pub/sub (needs redisUrl)
+    events: { broadcast: true }, // cross-process event delivery via Redis pub/sub (needs redisUrl)
     jobs: { worker: true, concurrency: 4 }, // run the background job worker in this process (needs redisUrl)
   },
 });
@@ -106,8 +106,8 @@ Inside a route, request context is typed with no casts (`ContextVariableMap` is 
 import { getRequestLogger, getUser } from "@damatjs/framework";
 
 export const GET = defineRoute(async (c) => {
-  getRequestLogger(c).info("hit");   // the request-scoped child logger
-  const user = getUser(c);           // AuthUser | undefined (set by your auth middleware)
+  getRequestLogger(c).info("hit"); // the request-scoped child logger
+  const user = getUser(c); // AuthUser | undefined (set by your auth middleware)
   return c.json({ success: true, data: { userId: user?.id } });
 });
 ```
@@ -118,18 +118,18 @@ Route-handler throws are turned into the framework's JSON error envelope automat
 
 The package has many subpath exports. Import the narrowest one you need.
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `@damatjs/framework` | barrel | Re-exports `bootstrap`, `config`, `context` (typed Hono context: `getRequestLogger`, `getUser`, `getTeam`, `AuthUser`/`AuthTeam`), `server`, `shutdown`, `entry`, `services/redis`, the module registry helpers (`getModule`, `hasModule`, `clearModules`, `getAllModules`, `initModules`, `registerModule`), framework types, **all of `@damatjs/services`**, **the link authoring surface from `@damatjs/link`** (`defineLink`, `defineLinkModule`, `collectLinkModels`, ...), **all of `@damatjs/events`**, and **all of `@damatjs/jobs`**. |
-| `@damatjs/framework/entry` | module | `start(cwd?)` — full boot pipeline; `runEntry()` — `start()` with top-level error handling + `process.exit(1)`. |
-| `@damatjs/framework/config` | module | `defineConfig(config)`, `loadConfigAsync(cwd?)`, `loadConfig` (throws — use async), `clearConfigCache()`, and all config types (`AppConfig`, `ProjectConfig`, `HttpConfig`, `HttpRateLimitConfig`, `HttpAuthConfig`, `ModuleConfig`, `ServicesConfig`, `LifecycleHooks`). |
-| `@damatjs/framework/bootstrap` | module | `bootstrap(options) => { app, config }` — builds the Hono app (middleware + file router + handlers) without starting it. |
-| `@damatjs/framework/router` | module | `createFileRouter(options)`, `defineRoute(handler)`, `response` helpers, `resolveMethodConfig`, the scanner (`scanDirectory`, `sortRoutes`, `folderToUrlPath`), and all router types (`RouteHandler`, `RouteModule`, `RouteModuleConfig`, `RouteValidator`, `AuthType`, `HttpMethod`, `FileRouter`, ...). |
-| `@damatjs/framework/middleware` | module | `setupMiddleware`, `errorHandler`, `notFoundHandler`, `requestSetup`, `createRateLimitMiddleware`, `createAuthMiddleware`, `corsConfigSetter`, `getErrorCodeFromStatus`, and `CorsConfigType`. (`validate`/`createValidatorMiddleware` live in `middleware/validator.ts` and are wired internally by the route builder, not re-exported.) |
-| `@damatjs/framework/handlers` | module | `createRootRoute`, `createApiRoutesRoute`, `createHealthRoute`, plus `HealthCheckOptions`/`HealthCheckFn`. |
-| `@damatjs/framework/server` | module | `startServer(app, config, logger)` — runs the Hono app via `@hono/node-server`. |
-| `@damatjs/framework/shutdown` | module | `setupShutdownHandlers(logger)`, `registerShutdown(handler)`, `runShutdownHandlers(logger)` — SIGINT/SIGTERM/uncaught handling. |
-| `@damatjs/framework/services` | module | Service wiring: `initializeServices(config, cwd?)`, logger (`initLogger`, `getLogger`, ...), database (`initDatabase`, `closeDatabase`, `getConnectionManager`), redis (re-export of `@damatjs/redis`), and module registry helpers. |
+| Export                          | Kind   | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@damatjs/framework`            | barrel | Re-exports `bootstrap`, `config`, `context` (typed Hono context: `getRequestLogger`, `getUser`, `getTeam`, `AuthUser`/`AuthTeam`), `server`, `shutdown`, `entry`, `services/redis`, the module registry helpers (`getModule`, `hasModule`, `clearModules`, `getAllModules`, `initModules`, `registerModule`), framework types, **all of `@damatjs/services`**, **the link authoring surface from `@damatjs/link`** (`defineLink`, `defineLinkModule`, `collectLinkModels`, ...), **all of `@damatjs/events`**, and **all of `@damatjs/jobs`**. |
+| `@damatjs/framework/entry`      | module | `start(cwd?)` — full boot pipeline; `runEntry()` — `start()` with top-level error handling + `process.exit(1)`.                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `@damatjs/framework/config`     | module | `defineConfig(config)`, `loadConfigAsync(cwd?)`, `loadConfig` (throws — use async), `clearConfigCache()`, and all config types (`AppConfig`, `ProjectConfig`, `HttpConfig`, `HttpRateLimitConfig`, `HttpAuthConfig`, `ModuleConfig`, `ServicesConfig`, `LifecycleHooks`).                                                                                                                                                                                                                                                                      |
+| `@damatjs/framework/bootstrap`  | module | `bootstrap(options) => { app, config }` — builds the Hono app (middleware + file router + handlers) without starting it.                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `@damatjs/framework/router`     | module | `createFileRouter(options)`, `defineRoute(handler)`, `response` helpers, `resolveMethodConfig`, the scanner (`scanDirectory`, `sortRoutes`, `folderToUrlPath`), and all router types (`RouteHandler`, `RouteModule`, `RouteModuleConfig`, `RouteValidator`, `AuthType`, `HttpMethod`, `FileRouter`, ...).                                                                                                                                                                                                                                      |
+| `@damatjs/framework/middleware` | module | `setupMiddleware`, `errorHandler`, `notFoundHandler`, `requestSetup`, `createRateLimitMiddleware`, `createAuthMiddleware`, `corsConfigSetter`, `getErrorCodeFromStatus`, and `CorsConfigType`. (`validate`/`createValidatorMiddleware` live in `middleware/validator.ts` and are wired internally by the route builder, not re-exported.)                                                                                                                                                                                                      |
+| `@damatjs/framework/handlers`   | module | `createRootRoute`, `createApiRoutesRoute`, `createHealthRoute`, plus `HealthCheckOptions`/`HealthCheckFn`.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `@damatjs/framework/server`     | module | `startServer(app, config, logger)` — runs the Hono app via `@hono/node-server`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `@damatjs/framework/shutdown`   | module | `setupShutdownHandlers(logger)`, `registerShutdown(handler)`, `runShutdownHandlers(logger)` — SIGINT/SIGTERM/uncaught handling.                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `@damatjs/framework/services`   | module | Service wiring: `initializeServices(config, cwd?)`, logger (`initLogger`, `getLogger`, ...), database (`initDatabase`, `closeDatabase`, `getConnectionManager`), redis (re-export of `@damatjs/redis`), and module registry helpers.                                                                                                                                                                                                                                                                                                           |
 
 Key types: `AppConfig`, `ProjectConfig`, `HttpConfig`, `LifecycleHooks`, `BootstrapOptions`, `BootstrapResult`, `ServerConfig`, `HealthCheckConfig`, `ShutdownHandler`, `RouteModule`, `RouteValidator`, `AuthType`, `AuthUser`, `AuthTeam`.
 

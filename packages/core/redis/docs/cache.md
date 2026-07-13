@@ -10,20 +10,42 @@ Key/value caching with TTL. Two flavors: **JSON** (serialize/parse objects) and 
 
 ```ts
 // JSON
-async function cacheSet<T>(key: string, value: T, ttlSeconds = 300, client?: Redis): Promise<void>;
+async function cacheSet<T>(
+  key: string,
+  value: T,
+  ttlSeconds = 300,
+  client?: Redis,
+): Promise<void>;
 async function cacheGet<T>(key: string, client?: Redis): Promise<T | null>;
 
 // Raw string (no serialization)
-async function cacheSetRaw(key: string, value: string, ttlSeconds?: number, client?: Redis): Promise<void>;
+async function cacheSetRaw(
+  key: string,
+  value: string,
+  ttlSeconds?: number,
+  client?: Redis,
+): Promise<void>;
 async function cacheGetRaw(key: string, client?: Redis): Promise<string | null>;
 
 // Delete
 async function cacheDelete(key: string, client?: Redis): Promise<void>;
-async function cacheDeletePattern(pattern: string, client?: Redis): Promise<void>;
+async function cacheDeletePattern(
+  pattern: string,
+  client?: Redis,
+): Promise<void>;
 
 // Tagged (group invalidation)
-async function cacheSetTagged<T>(key: string, value: T, ttlSeconds = 300, tags: string[] = [], client?: Redis): Promise<void>;
-async function invalidateCacheTags(tags: string[], client?: Redis): Promise<number>;
+async function cacheSetTagged<T>(
+  key: string,
+  value: T,
+  ttlSeconds = 300,
+  tags: string[] = [],
+  client?: Redis,
+): Promise<void>;
+async function invalidateCacheTags(
+  tags: string[],
+  client?: Redis,
+): Promise<number>;
 ```
 
 ## Behavior
@@ -40,17 +62,17 @@ async function invalidateCacheTags(tags: string[], client?: Redis): Promise<numb
 ## Example
 
 ```ts
-await cacheSet("user:123", { name: "Ada" });          // 5-min TTL
+await cacheSet("user:123", { name: "Ada" }); // 5-min TTL
 const u = await cacheGet<{ name: string }>("user:123"); // { name: "Ada" }
 
-await cacheSetRaw("html:home", "<h1>Hi</h1>", 60);     // pre-rendered string
-await cacheGetRaw("html:home");                         // "<h1>Hi</h1>"
+await cacheSetRaw("html:home", "<h1>Hi</h1>", 60); // pre-rendered string
+await cacheGetRaw("html:home"); // "<h1>Hi</h1>"
 
 await cacheDelete("user:123");
-await cacheDeletePattern("user:*");                     // wipe all cached users
+await cacheDeletePattern("user:*"); // wipe all cached users
 
 await cacheSetTagged("user:123", { name: "Ada" }, 300, ["users"]);
-await invalidateCacheTags(["users"]);                   // deletes every entry tagged "users"
+await invalidateCacheTags(["users"]); // deletes every entry tagged "users"
 ```
 
 ## Gotchas

@@ -1,5 +1,11 @@
 import { describe, it, expect } from "bun:test";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
+import {
+  mkdtempSync,
+  mkdirSync,
+  writeFileSync,
+  readFileSync,
+  existsSync,
+} from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { generateBarrels } from "../barrel";
@@ -11,8 +17,14 @@ function makeTree() {
   const workflows = join(root, "widgets", "workflows");
   mkdirSync(steps, { recursive: true });
   mkdirSync(workflows, { recursive: true });
-  writeFileSync(join(steps, "createWidgets.ts"), "export const createWidgetsStep = 1;\n");
-  writeFileSync(join(workflows, "createWidgets.ts"), "export const createWidgetsWorkflow = 1;\n");
+  writeFileSync(
+    join(steps, "createWidgets.ts"),
+    "export const createWidgetsStep = 1;\n",
+  );
+  writeFileSync(
+    join(workflows, "createWidgets.ts"),
+    "export const createWidgetsWorkflow = 1;\n",
+  );
   const read = (rel: string) => readFileSync(join(root, rel), "utf-8");
   return { root, read, workflows };
 }
@@ -24,7 +36,9 @@ describe("generateBarrels", () => {
     expect(existsSync(join(root, "index.ts"))).toBe(true);
     expect(existsSync(join(root, "widgets", "index.ts"))).toBe(true);
     expect(existsSync(join(root, "widgets", "steps", "index.ts"))).toBe(true);
-    expect(existsSync(join(root, "widgets", "workflows", "index.ts"))).toBe(true);
+    expect(existsSync(join(root, "widgets", "workflows", "index.ts"))).toBe(
+      true,
+    );
   });
 
   it("re-exports child folders and sibling files; excludes index.ts itself", () => {
@@ -46,20 +60,29 @@ describe("generateBarrels", () => {
   it("picks up a hand-added file on re-run (barrels overwrite)", () => {
     const { root, read, workflows } = makeTree();
     generateBarrels(root);
-    writeFileSync(join(workflows, "archiveWidgets.ts"), "export const archiveWidgetsWorkflow = 1;\n");
+    writeFileSync(
+      join(workflows, "archiveWidgets.ts"),
+      "export const archiveWidgetsWorkflow = 1;\n",
+    );
     generateBarrels(root);
-    expect(read("widgets/workflows/index.ts")).toContain('export * from "./archiveWidgets";');
+    expect(read("widgets/workflows/index.ts")).toContain(
+      'export * from "./archiveWidgets";',
+    );
   });
 
   it("writes an empty barrel for a folder with no exportable children", () => {
     const root = mkdtempSync(join(tmpdir(), "cg-barrel-empty-"));
     mkdirSync(join(root, "blank"));
     generateBarrels(root);
-    expect(readFileSync(join(root, "blank", "index.ts"), "utf-8")).toContain("export {};");
+    expect(readFileSync(join(root, "blank", "index.ts"), "utf-8")).toContain(
+      "export {};",
+    );
   });
 
   it("no-ops on a missing directory", () => {
-    const { written } = generateBarrels(join(tmpdir(), "cg-barrel-does-not-exist-xyz"));
+    const { written } = generateBarrels(
+      join(tmpdir(), "cg-barrel-does-not-exist-xyz"),
+    );
     expect(written).toEqual([]);
   });
 
@@ -83,7 +106,9 @@ describe("generateBarrels", () => {
     const root = mkdtempSync(join(tmpdir(), "cg-barrel-empty-root-"));
     const { written } = generateBarrels(root);
     expect(written).toEqual([join(root, "index.ts")]);
-    expect(readFileSync(join(root, "index.ts"), "utf-8")).toContain("export {};");
+    expect(readFileSync(join(root, "index.ts"), "utf-8")).toContain(
+      "export {};",
+    );
   });
 
   it("barrels a deeply nested tree so the root re-exports transitively", () => {
@@ -95,10 +120,18 @@ describe("generateBarrels", () => {
     const { written } = generateBarrels(root);
 
     // Every level gets a barrel, each re-exporting the next level down.
-    expect(readFileSync(join(root, "index.ts"), "utf-8")).toContain('export * from "./a";');
-    expect(readFileSync(join(root, "a", "index.ts"), "utf-8")).toContain('export * from "./b";');
-    expect(readFileSync(join(root, "a", "b", "index.ts"), "utf-8")).toContain('export * from "./c";');
-    expect(readFileSync(join(leaf, "index.ts"), "utf-8")).toContain('export * from "./deep";');
+    expect(readFileSync(join(root, "index.ts"), "utf-8")).toContain(
+      'export * from "./a";',
+    );
+    expect(readFileSync(join(root, "a", "index.ts"), "utf-8")).toContain(
+      'export * from "./b";',
+    );
+    expect(readFileSync(join(root, "a", "b", "index.ts"), "utf-8")).toContain(
+      'export * from "./c";',
+    );
+    expect(readFileSync(join(leaf, "index.ts"), "utf-8")).toContain(
+      'export * from "./deep";',
+    );
 
     // Depth-first walk: a child's barrel is written before its parent's.
     expect(written).toEqual([

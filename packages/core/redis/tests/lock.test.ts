@@ -165,7 +165,12 @@ describe("Distributed Locks", () => {
 
     it("returns false when the lock value does not match", async () => {
       await acquireLock("test-lock", 10000, redis);
-      const extended = await extendLock("test-lock", "wrong-value", 10000, redis);
+      const extended = await extendLock(
+        "test-lock",
+        "wrong-value",
+        10000,
+        redis,
+      );
       expect(extended).toBe(false);
     });
 

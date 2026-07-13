@@ -46,7 +46,9 @@ describe("TransactionManager.begin — options", () => {
 
   it("emits READ ONLY / READ WRITE for the readOnly option", async () => {
     const ro = new FakePool();
-    await new TransactionManager(ro as any, noopLogger).begin({ readOnly: true });
+    await new TransactionManager(ro as any, noopLogger).begin({
+      readOnly: true,
+    });
     expect(ro.client.sqlLog).toEqual(["BEGIN", "SET TRANSACTION READ ONLY"]);
 
     const rw = new FakePool();

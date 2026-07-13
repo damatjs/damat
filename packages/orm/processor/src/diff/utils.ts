@@ -69,6 +69,6 @@ export function nativeEnumsEqual(a: EnumSchema, b: EnumSchema): boolean {
   return (
     a.schema === b.schema &&
     JSON.stringify(a.values.slice().sort()) ===
-    JSON.stringify(b.values.slice().sort())
+      JSON.stringify(b.values.slice().sort())
   );
 }

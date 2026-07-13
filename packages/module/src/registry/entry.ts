@@ -22,11 +22,7 @@
 
 /** Trust state a module can be in, as stamped by the registry backend. */
 export type VerificationStatus =
-  | "unverified"
-  | "pending"
-  | "verified"
-  | "rejected"
-  | "revoked";
+  "unverified" | "pending" | "verified" | "rejected" | "revoked";
 
 export const VERIFICATION_STATUSES: readonly VerificationStatus[] = [
   "unverified",

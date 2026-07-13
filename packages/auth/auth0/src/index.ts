@@ -1,6 +1,10 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import type { Context } from "@damatjs/deps/hono";
-import { defineAuthAdapter, type AuthPrincipal, type AuthProvider } from "@damatjs/auth";
+import {
+  defineAuthAdapter,
+  type AuthPrincipal,
+  type AuthProvider,
+} from "@damatjs/auth";
 
 export interface Auth0AdapterOptions {
   /** Auth0 tenant domain, e.g. `myapp.us.auth0.com` (falls back to `AUTH0_DOMAIN`). */
@@ -26,10 +30,14 @@ export interface Auth0AdapterOptions {
  * and reads its claims. Bearer-token only — no cookie session, no provider
  * routes, no local storage. `sub` becomes the principal id, `org_id` the team.
  */
-export function createAuth0AuthProvider(options: Auth0AdapterOptions = {}): AuthProvider {
+export function createAuth0AuthProvider(
+  options: Auth0AdapterOptions = {},
+): AuthProvider {
   const domain = options.domain ?? process.env.AUTH0_DOMAIN;
   if (!domain) {
-    throw new Error("Auth0 requires a domain — set AUTH0_DOMAIN or pass options.domain");
+    throw new Error(
+      "Auth0 requires a domain — set AUTH0_DOMAIN or pass options.domain",
+    );
   }
   const audience = options.audience ?? process.env.AUTH0_AUDIENCE;
   const issuer = options.issuer ?? `https://${domain}/`;
@@ -66,8 +74,14 @@ function toPrincipal(
   emailClaim: string,
   orgClaim: string,
 ): AuthPrincipal {
-  const email = typeof payload[emailClaim] === "string" ? (payload[emailClaim] as string) : undefined;
-  const orgId = typeof payload[orgClaim] === "string" ? (payload[orgClaim] as string) : undefined;
+  const email =
+    typeof payload[emailClaim] === "string"
+      ? (payload[emailClaim] as string)
+      : undefined;
+  const orgId =
+    typeof payload[orgClaim] === "string"
+      ? (payload[orgClaim] as string)
+      : undefined;
   return {
     ...payload,
     id: String(payload.sub),

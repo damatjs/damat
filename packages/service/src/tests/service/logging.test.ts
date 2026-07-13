@@ -3,7 +3,10 @@ import { setGlobalLogger, closeLogger, type ILogger } from "@damatjs/logger";
 import { withQueryLogging } from "../../service/logging";
 import type { ModelMethods } from "../../service/methods";
 
-const debugCalls: Array<{ message: string; context?: Record<string, unknown> }> = [];
+const debugCalls: Array<{
+  message: string;
+  context?: Record<string, unknown>;
+}> = [];
 
 const recordingLogger = {
   debug: (message: string, context?: Record<string, unknown>) =>
@@ -56,13 +59,18 @@ describe("withQueryLogging", () => {
     const stub = makeStub();
     const wrapped = withQueryLogging(stub as unknown as ModelMethods, "user");
 
-    const rows = await (wrapped as unknown as typeof stub).findMany({ where: {} });
+    const rows = await (wrapped as unknown as typeof stub).findMany({
+      where: {},
+    });
 
     expect(rows).toHaveLength(1);
     expect(stub.calls).toEqual(["findMany"]);
     expect(debugCalls).toHaveLength(1);
     expect(debugCalls[0]!.message).toBe("query");
-    expect(debugCalls[0]!.context).toMatchObject({ model: "user", method: "findMany" });
+    expect(debugCalls[0]!.context).toMatchObject({
+      model: "user",
+      method: "findMany",
+    });
     expect(typeof debugCalls[0]!.context!.durationMs).toBe("number");
     // No SQL or option payloads in the log context.
     expect(Object.keys(debugCalls[0]!.context!).sort()).toEqual([
@@ -76,9 +84,14 @@ describe("withQueryLogging", () => {
     const stub = makeStub();
     const wrapped = withQueryLogging(stub as unknown as ModelMethods, "user");
 
-    await expect((wrapped as unknown as typeof stub).create()).rejects.toThrow("insert failed");
+    await expect((wrapped as unknown as typeof stub).create()).rejects.toThrow(
+      "insert failed",
+    );
     expect(debugCalls).toHaveLength(1);
-    expect(debugCalls[0]!.context).toMatchObject({ model: "user", method: "create" });
+    expect(debugCalls[0]!.context).toMatchObject({
+      model: "user",
+      method: "create",
+    });
   });
 
   it("leaves non-CRUD members untouched", async () => {

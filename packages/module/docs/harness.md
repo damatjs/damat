@@ -50,10 +50,14 @@ Boot → run `fn(booted)` → `finally` teardown. The convenience wrapper for te
 and scripts; `fn`'s return value is returned.
 
 ```ts
-await withModule(userModule, { moduleDir: import.meta.dir }, async ({ service }) => {
-  const user = await service.user.create({ data: { email: "a@b.co" } });
-  expect(user.id).toBeTruthy();
-});
+await withModule(
+  userModule,
+  { moduleDir: import.meta.dir },
+  async ({ service }) => {
+    const user = await service.user.create({ data: { email: "a@b.co" } });
+    expect(user.id).toBeTruthy();
+  },
+);
 ```
 
 ## Types
@@ -75,10 +79,10 @@ to a specific `@damatjs/services` version.
 
 ```ts
 interface BootModuleOptions {
-  databaseUrl?: string;               // default: process.env.DATABASE_URL
-  database?: DbPoolConfigWithExtras;  // full pool config; takes precedence over databaseUrl
-  moduleDir?: string;                 // abs path to dir with module.json + migrations
-  migrate?: boolean;                  // apply migrations on boot; default: true when moduleDir set
+  databaseUrl?: string; // default: process.env.DATABASE_URL
+  database?: DbPoolConfigWithExtras; // full pool config; takes precedence over databaseUrl
+  moduleDir?: string; // abs path to dir with module.json + migrations
+  migrate?: boolean; // apply migrations on boot; default: true when moduleDir set
   logger?: ILogger;
 }
 ```
@@ -87,18 +91,20 @@ interface BootModuleOptions {
 
 ```ts
 interface BootedModule<TService> {
-  service: TService;                  // call your model/methods on it
+  service: TService; // call your model/methods on it
   pool: Pool;
   connection: ConnectionManager;
-  manifest: ModuleManifest | null;    // parsed module.json when moduleDir was given
-  teardown(): Promise<void>;          // close db + reset shared state — always call
+  manifest: ModuleManifest | null; // parsed module.json when moduleDir was given
+  teardown(): Promise<void>; // close db + reset shared state — always call
 }
 ```
 
 ## Database resolution (`database.ts`)
 
 ```ts
-function resolveDatabaseConfig(options: BootModuleOptions): DbPoolConfigWithExtras;
+function resolveDatabaseConfig(
+  options: BootModuleOptions,
+): DbPoolConfigWithExtras;
 ```
 
 Precedence: `options.database` → `options.databaseUrl` → `process.env.DATABASE_URL`.
@@ -112,7 +118,11 @@ With a connection string it returns `{ ...testPoolConfig(), connectionString }`
 
 ```ts
 function applyModuleMigrations(
-  pool, moduleDir, manifest, logger, force?,
+  pool,
+  moduleDir,
+  manifest,
+  logger,
+  force?,
 ): Promise<void>;
 ```
 

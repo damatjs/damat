@@ -27,16 +27,24 @@ declare module "@damatjs/jobs" {
 }
 
 // 1. Define (in the code the worker process imports):
-defineJob("send-welcome-email", async ({ userId }) => {
-  await mailer.sendWelcome(userId);
-}, { maxAttempts: 5, backoffMs: 2000 });
+defineJob(
+  "send-welcome-email",
+  async ({ userId }) => {
+    await mailer.sendWelcome(userId);
+  },
+  { maxAttempts: 5, backoffMs: 2000 },
+);
 
 // 2. Enqueue (from any process — API, workflow step, cron):
 await enqueueJob("send-welcome-email", { userId: "u1" });
-await enqueueJob("send-welcome-email", { userId: "u2" }, {
-  priority: "high",
-  delayMs: 60_000,          // deliver in a minute
-});
+await enqueueJob(
+  "send-welcome-email",
+  { userId: "u2" },
+  {
+    priority: "high",
+    delayMs: 60_000, // deliver in a minute
+  },
+);
 
 // 3. Work (framework apps set services.jobs.worker instead):
 const worker = new JobWorker({ concurrency: 4 });
@@ -69,15 +77,15 @@ services: { jobs: { worker: true, concurrency: 4 } }
 
 ## API
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `defineJob(name, handler, options?)` | function | Register a job (unique name). Options: `maxAttempts` (3), `backoffMs` (1000), `backoffMultiplier` (2), `priority` ("normal"). |
-| `enqueueJob(name, payload, options?)` | function | Queue a run: `priority`, `delayMs`, `maxAttempts`, `queueName`, `client`. Returns the queued job. |
-| `JobWorker` | class | `start()`, `stop()` (graceful), `isRunning`, `process(job)`. Options: `concurrency`, `pollIntervalMs`, `queueName`, `visibilityTimeoutMs`, `client`. |
-| `getJobQueue(options?)` / `clearJobQueues()` | function | The shared per-name `RedisQueue` instances. |
-| `getJobDefinition` / `getAllJobDefinitions` / `clearJobDefinitions` | function | Registry access (state on `globalThis`). |
-| `JobMap` | interface | Augment to type job payloads. |
-| `JobHandler`, `JobOptions`, `JobDefinition`, `JobEnvelope`, `DEFAULT_JOB_QUEUE`, `DEFAULT_JOB_OPTIONS` | types/consts | Shapes and defaults. |
+| Export                                                                                                 | Kind         | Summary                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defineJob(name, handler, options?)`                                                                   | function     | Register a job (unique name). Options: `maxAttempts` (3), `backoffMs` (1000), `backoffMultiplier` (2), `priority` ("normal").                        |
+| `enqueueJob(name, payload, options?)`                                                                  | function     | Queue a run: `priority`, `delayMs`, `maxAttempts`, `queueName`, `client`. Returns the queued job.                                                    |
+| `JobWorker`                                                                                            | class        | `start()`, `stop()` (graceful), `isRunning`, `process(job)`. Options: `concurrency`, `pollIntervalMs`, `queueName`, `visibilityTimeoutMs`, `client`. |
+| `getJobQueue(options?)` / `clearJobQueues()`                                                           | function     | The shared per-name `RedisQueue` instances.                                                                                                          |
+| `getJobDefinition` / `getAllJobDefinitions` / `clearJobDefinitions`                                    | function     | Registry access (state on `globalThis`).                                                                                                             |
+| `JobMap`                                                                                               | interface    | Augment to type job payloads.                                                                                                                        |
+| `JobHandler`, `JobOptions`, `JobDefinition`, `JobEnvelope`, `DEFAULT_JOB_QUEUE`, `DEFAULT_JOB_OPTIONS` | types/consts | Shapes and defaults.                                                                                                                                 |
 
 ## How it fits
 

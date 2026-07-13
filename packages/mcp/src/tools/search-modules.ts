@@ -10,7 +10,9 @@ export const searchModules: ToolDef = {
     "ref, description and keywords. Use this to find a module to install.",
   inputSchema: {
     type: "object",
-    properties: { query: { type: "string", description: "Search text (case-insensitive)" } },
+    properties: {
+      query: { type: "string", description: "Search text (case-insensitive)" },
+    },
     required: ["query"],
     additionalProperties: false,
   },
@@ -21,12 +23,18 @@ export const searchModules: ToolDef = {
     const index = await loadRegistryIndex(loc);
     const modules = Object.entries(index.modules)
       .filter(([key, entry]) => {
-        const hay = [key, entry.description ?? "", (entry.keywords ?? []).join(" ")]
+        const hay = [
+          key,
+          entry.description ?? "",
+          (entry.keywords ?? []).join(" "),
+        ]
           .join(" ")
           .toLowerCase();
         return hay.includes(q);
       })
       .map(([key, entry]) => summarizeEntry(key, entry));
-    return { text: JSON.stringify({ query, count: modules.length, modules }, null, 2) };
+    return {
+      text: JSON.stringify({ query, count: modules.length, modules }, null, 2),
+    };
   },
 };

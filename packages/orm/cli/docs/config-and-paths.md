@@ -10,7 +10,7 @@ migration, and types directories. Sources: `src/cli/utils/load.ts`,
 async function loadModules<T = Record<string, { resolve: string }>>(
   configPath: string,
   cwd: string = process.cwd(),
-): Promise<T>
+): Promise<T>;
 ```
 
 Loads the `modules` map from a config file and normalizes it.
@@ -29,9 +29,9 @@ Steps:
 4. For each key in `config.modules`:
    - `id = module.id ?? moduleName` (falls back to the object key).
    - `resolvedPath = isAbsolute(module.resolve) ? module.resolve :
-     path.resolve(configDir, module.resolve)`.
+path.resolve(configDir, module.resolve)`.
    - Store `modules[id] = { id, resolve: resolvedPath, path: module.resolve,
-     name: moduleName }`.
+name: moduleName }`.
 5. For each link migration module from
    `resolveLinkMigrationModules(config.links, configDir)` (one `link:<owner>` per
    `src/links/<owner>` directory): store
@@ -50,8 +50,10 @@ failure is wrapped as `Failed to load config from '<path>': <message>`.
 ## `loadDatabaseUrl(configPath, cwd?)` — `src/cli/utils/load.ts`
 
 ```ts
-interface DatabaseConfig { databaseUrl: string }
-async function loadDatabaseUrl(configPath, cwd?): Promise<DatabaseConfig>
+interface DatabaseConfig {
+  databaseUrl: string;
+}
+async function loadDatabaseUrl(configPath, cwd?): Promise<DatabaseConfig>;
 ```
 
 Resolution order:
@@ -70,7 +72,7 @@ cache-busting import + error-wrapping as `loadModules`.
 ## `requireDatabaseUrl(logger)` — `src/cli/config/index.ts`
 
 ```ts
-function requireDatabaseUrl(logger: ILogger): string
+function requireDatabaseUrl(logger: ILogger): string;
 ```
 
 Reads `process.env.DATABASE_URL`. If missing, prints a helpful hint
@@ -86,15 +88,15 @@ the package root for programmatic use.
 All resolvers take an absolute `moduleResolver` (a module's `resolve` path) and
 join a conventional subfolder.
 
-| Function | Returns | File |
-|---|---|---|
-| `resolveModelsPath(resolver)` | `<resolver>/models` | `paths/models.ts` |
-| `resolveMigrationsPath(resolver)` | `<resolver>/migrations` | `paths/migrations.ts` |
-| `resolveTypesPath(resolver)` | `<resolver>/types` | `paths/types.ts` |
-| `resolvePaths(resolver)` | `{ modulesDir, modelsDir, migrationsDir, typesDir }` | `paths/index.ts` |
-| `resolveBasePath(cliPath, configPath, defaultPath, cwd)` | first defined of cli/config/default, made absolute against `cwd` | `paths/base.ts` |
-| `getModulesDir(configModulesDir, cwd)` | configured modules dir or `<cwd>/src/modules` | `paths/base.ts` |
-| `DEFAULT_MODULES_DIR` | `"src/modules"` | `paths/base.ts` |
+| Function                                                 | Returns                                                          | File                  |
+| -------------------------------------------------------- | ---------------------------------------------------------------- | --------------------- |
+| `resolveModelsPath(resolver)`                            | `<resolver>/models`                                              | `paths/models.ts`     |
+| `resolveMigrationsPath(resolver)`                        | `<resolver>/migrations`                                          | `paths/migrations.ts` |
+| `resolveTypesPath(resolver)`                             | `<resolver>/types`                                               | `paths/types.ts`      |
+| `resolvePaths(resolver)`                                 | `{ modulesDir, modelsDir, migrationsDir, typesDir }`             | `paths/index.ts`      |
+| `resolveBasePath(cliPath, configPath, defaultPath, cwd)` | first defined of cli/config/default, made absolute against `cwd` | `paths/base.ts`       |
+| `getModulesDir(configModulesDir, cwd)`                   | configured modules dir or `<cwd>/src/modules`                    | `paths/base.ts`       |
+| `DEFAULT_MODULES_DIR`                                    | `"src/modules"`                                                  | `paths/base.ts`       |
 
 Layout convention enforced by these helpers:
 

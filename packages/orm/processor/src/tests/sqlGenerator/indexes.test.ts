@@ -52,7 +52,9 @@ describe("generateCreateIndex", () => {
 
   it("omits USING for a btree index (default)", () => {
     const idx: IndexSchema = { name: "i", columns: ["a"], type: "btree" };
-    expect(generateCreateIndex(idx, "t", "public", opts)).not.toContain("USING");
+    expect(generateCreateIndex(idx, "t", "public", opts)).not.toContain(
+      "USING",
+    );
   });
 
   it("appends a partial WHERE clause", () => {
@@ -112,7 +114,12 @@ describe("generateAddIndex", () => {
 describe("generateDropIndex", () => {
   it("emits DROP INDEX IF EXISTS, schema-qualifying the index name", () => {
     const sql = generateDropIndex(
-      { type: "drop_index", tableName: "t", indexName: "user_email_idx", priority: 110 },
+      {
+        type: "drop_index",
+        tableName: "t",
+        indexName: "user_email_idx",
+        priority: 110,
+      },
       opts,
     );
     expect(sql).toBe('DROP INDEX IF EXISTS "public"."user_email_idx"');

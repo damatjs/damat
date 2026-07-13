@@ -1,11 +1,6 @@
 // Import the shared setup FIRST so runTypeCheck snapshots the spawn dispatcher
 // + node:fs mock instead of the real ones.
-import {
-  state,
-  spawnCalls,
-  resetMocks,
-  setSpawnHandler,
-} from "./setup";
+import { state, spawnCalls, resetMocks, setSpawnHandler } from "./setup";
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { createMockLogger, fakeSpawnResult } from "./helpers";
 import type { ILogger } from "@damatjs/logger";
@@ -23,10 +18,11 @@ afterEach(() => {
   });
 });
 
-const logger = () => createMockLogger() as unknown as ILogger & {
-  info: ReturnType<typeof createMockLogger>["info"];
-  error: ReturnType<typeof createMockLogger>["error"];
-};
+const logger = () =>
+  createMockLogger() as unknown as ILogger & {
+    info: ReturnType<typeof createMockLogger>["info"];
+    error: ReturnType<typeof createMockLogger>["error"];
+  };
 
 describe("runTypeCheck", () => {
   it("returns 0 immediately when skipped", async () => {
@@ -63,7 +59,9 @@ describe("runTypeCheck", () => {
     const log = logger();
     const code = await runTypeCheck({ cwd: "/p", logger: log });
     expect(code).toBe(2);
-    expect(log.error).toHaveBeenCalledWith("Type check failed — aborting build");
+    expect(log.error).toHaveBeenCalledWith(
+      "Type check failed — aborting build",
+    );
   });
 
   it("returns 1 with a helpful message when the type-checker cannot launch", async () => {

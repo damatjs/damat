@@ -10,7 +10,10 @@ describe("loadConfig - error and edge paths", () => {
 
   beforeEach(() => {
     clearConfigCache();
-    testDir = join(tmpdir(), `damat-cli-config-extra-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    testDir = join(
+      tmpdir(),
+      `damat-cli-config-extra-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
     mkdirSync(testDir, { recursive: true });
   });
 
@@ -32,7 +35,7 @@ describe("loadConfig - error and edge paths", () => {
           throw new Error("loader exploded");
         },
       },
-      testDir
+      testDir,
     );
 
     const err = (await promise.catch((e) => e)) as Error & { cause?: Error };
@@ -47,14 +50,14 @@ describe("loadConfig - error and edge paths", () => {
     writeFileSync(configPath, "throw new Error('module side-effect failure');");
 
     await expect(
-      loadConfig({ file: "throws.config.ts" }, testDir)
+      loadConfig({ file: "throws.config.ts" }, testDir),
     ).rejects.toBeInstanceOf(ConfigLoadError);
   });
 
   test("returns null when none of multiple candidate files exist", async () => {
     const result = await loadConfig(
       { file: ["a.config.ts", "b.config.ts"] },
-      testDir
+      testDir,
     );
     expect(result).toBeNull();
   });
@@ -67,10 +70,7 @@ describe("loadConfig - error and edge paths", () => {
     expect(first).toEqual({ first: true });
 
     // Cache short-circuits before touching the loader, so this returns the cached object.
-    const second = await loadConfig(
-      { file: "nonexistent.config.ts" },
-      testDir
-    );
+    const second = await loadConfig({ file: "nonexistent.config.ts" }, testDir);
     expect(second).toBe(first as object);
   });
 
@@ -78,7 +78,7 @@ describe("loadConfig - error and edge paths", () => {
     const configPath = join(testDir, "async.config.ts");
     writeFileSync(
       configPath,
-      "export default async () => ({ async: true, n: 7 });"
+      "export default async () => ({ async: true, n: 7 });",
     );
 
     const result = await loadConfig({ file: "async.config.ts" }, testDir);
@@ -91,7 +91,10 @@ describe("withConfig", () => {
 
   beforeEach(() => {
     clearConfigCache();
-    testDir = join(tmpdir(), `damat-cli-withconfig-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    testDir = join(
+      tmpdir(),
+      `damat-cli-withconfig-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
     mkdirSync(testDir, { recursive: true });
   });
 

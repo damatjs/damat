@@ -9,14 +9,14 @@ one flat barrel — no subpath exports.
 
 ## Module map
 
-| File | Responsibility |
-| --- | --- |
-| `src/index.ts` | Barrel re-exporting everything below. |
-| `src/types.ts` | `JobMap` (declaration-merge target), `JobName`/`JobPayload`, `JobEnvelope`, `JobHandler`, `JobOptions`/`JobDefinition`, `DEFAULT_JOB_OPTIONS`, `DEFAULT_JOB_QUEUE`. |
-| `src/registry.ts` | `defineJob` + the `globalThis` definition registry (`getJobDefinition`, `getAllJobDefinitions`, `clearJobDefinitions`). |
-| `src/enqueue.ts` | `enqueueJob`, plus the per-queue-name `RedisQueue` cache (`getJobQueue`, `clearJobQueues`). |
-| `src/worker.ts` | `JobWorker` — poll loop, concurrency, retry math, dead-lettering, graceful stop. |
-| `tests/` | `bun:test` suites — `registry.test.ts` is pure; `enqueue.test.ts` / `worker.test.ts` need a live Redis. |
+| File              | Responsibility                                                                                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/index.ts`    | Barrel re-exporting everything below.                                                                                                                               |
+| `src/types.ts`    | `JobMap` (declaration-merge target), `JobName`/`JobPayload`, `JobEnvelope`, `JobHandler`, `JobOptions`/`JobDefinition`, `DEFAULT_JOB_OPTIONS`, `DEFAULT_JOB_QUEUE`. |
+| `src/registry.ts` | `defineJob` + the `globalThis` definition registry (`getJobDefinition`, `getAllJobDefinitions`, `clearJobDefinitions`).                                             |
+| `src/enqueue.ts`  | `enqueueJob`, plus the per-queue-name `RedisQueue` cache (`getJobQueue`, `clearJobQueues`).                                                                         |
+| `src/worker.ts`   | `JobWorker` — poll loop, concurrency, retry math, dead-lettering, graceful stop.                                                                                    |
+| `tests/`          | `bun:test` suites — `registry.test.ts` is pure; `enqueue.test.ts` / `worker.test.ts` need a live Redis.                                                             |
 
 ## Architecture overview
 
@@ -54,9 +54,9 @@ Definitions live in a `Map` on `globalThis` under `Symbol.for("damatjs.jobs.regi
 — same pattern (and same rationale) as the event bus and `PoolManager`: a linked dev
 copy of the package next to an installed copy must still see one registry, because a
 worker can only execute jobs whose definitions it can look up. **Definitions are code,
-not data**: the worker process must *import* the modules that call `defineJob` — the
+not data**: the worker process must _import_ the modules that call `defineJob` — the
 framework's module init does this for installed modules, which is why the framework
-starts the worker *after* module init. `defineJob` throws on duplicate names.
+starts the worker _after_ module init. `defineJob` throws on duplicate names.
 
 ### Enqueue resolution order (`enqueue.ts`)
 
@@ -116,8 +116,8 @@ descriptive error — the fix is deploying the defining code, not retrying.
   keys, for the duplicate-package-copy reason above.
 - **The worker owns no queue mechanics.** Scoring, priority, delay, visibility timeout,
   and the pending/processing/completed/failed sets all live in
-  [`RedisQueue`](../../redis/docs/queue.md); this package only decides *status
-  transitions* via `updateStatus`.
+  [`RedisQueue`](../../redis/docs/queue.md); this package only decides _status
+  transitions_ via `updateStatus`.
 
 ## Safe extension (quick reference)
 
@@ -131,7 +131,7 @@ it through `defineJob`'s merge, and honor it in `enqueueJob` and/or `JobWorker.p
   still running — raise `visibilityTimeoutMs` (on both enqueuer and worker options if
   they construct the queue independently, since the first `getJobQueue()` call for a
   name wins and caches).
-- `enqueueJob`'s returned `QueueJob` is the *submitted* snapshot; later status changes
+- `enqueueJob`'s returned `QueueJob` is the _submitted_ snapshot; later status changes
   live in Redis (`getJobQueue().getJob(id)`).
 - `worker.process()` reads `backoffMs`/`backoffMultiplier` from the **definition** only —
   there is no per-enqueue backoff override (unlike `maxAttempts`/`priority`).

@@ -101,26 +101,45 @@ describe("initAuth", () => {
   it("passes onAuthenticated through to the core handlers", async () => {
     const hook = () => {};
     await initAuth(config({ provider: "fake", onAuthenticated: hook }), logger);
-    expect((coreState.options as { onAuthenticated: unknown }).onAuthenticated).toBe(hook);
+    expect(
+      (coreState.options as { onAuthenticated: unknown }).onAuthenticated,
+    ).toBe(hook);
   });
 
   it("injects the app pool into options when the database is initialized", async () => {
     const fakePool = { query: async () => ({ rows: [] }) };
-    PoolManager.setup({ pool: fakePool as never, logger, connectionManager: {} as never });
+    PoolManager.setup({
+      pool: fakePool as never,
+      logger,
+      connectionManager: {} as never,
+    });
     await initAuth(config({ provider: "fake" }), logger);
-    expect((adapterState.builtWith as { database: unknown }).database).toBe(fakePool);
+    expect((adapterState.builtWith as { database: unknown }).database).toBe(
+      fakePool,
+    );
   });
 
   it("does not inject a pool when the database is not initialized", async () => {
     await initAuth(config({ provider: "fake" }), logger);
-    expect((adapterState.builtWith as { database?: unknown }).database).toBeUndefined();
+    expect(
+      (adapterState.builtWith as { database?: unknown }).database,
+    ).toBeUndefined();
   });
 
   it("does not override an explicit database option", async () => {
     const fakePool = { query: async () => ({ rows: [] }) };
-    PoolManager.setup({ pool: fakePool as never, logger, connectionManager: {} as never });
-    await initAuth(config({ provider: "fake", options: { database: "EXPLICIT" } }), logger);
-    expect((adapterState.builtWith as { database: unknown }).database).toBe("EXPLICIT");
+    PoolManager.setup({
+      pool: fakePool as never,
+      logger,
+      connectionManager: {} as never,
+    });
+    await initAuth(
+      config({ provider: "fake", options: { database: "EXPLICIT" } }),
+      logger,
+    );
+    expect((adapterState.builtWith as { database: unknown }).database).toBe(
+      "EXPLICIT",
+    );
   });
 
   it("exposes mountRoutes only when the provider has routes", async () => {
@@ -132,7 +151,9 @@ describe("initAuth", () => {
     expect(typeof withRoutes!.mountRoutes).toBe("function");
     // mounting calls app.all for the base + wildcard
     const calls: string[] = [];
-    withRoutes!.mountRoutes!({ all: (path: string) => calls.push(path) } as never);
+    withRoutes!.mountRoutes!({
+      all: (path: string) => calls.push(path),
+    } as never);
     expect(calls).toEqual(["/api/auth/*", "/api/auth"]);
   });
 
@@ -149,7 +170,9 @@ describe("initAuth", () => {
   });
 
   it("throws a clear install error when the adapter package is missing", async () => {
-    await expect(initAuth(config({ provider: "ghost" }), logger)).rejects.toThrow(
+    await expect(
+      initAuth(config({ provider: "ghost" }), logger),
+    ).rejects.toThrow(
       /Auth provider "ghost" could not be loaded.*@damatjs\/auth-ghost/s,
     );
   });

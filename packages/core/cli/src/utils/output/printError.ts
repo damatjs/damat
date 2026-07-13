@@ -3,7 +3,7 @@ import type { ILogger } from "@damatjs/logger";
 export function printError(
   logger: ILogger,
   message: string,
-  suggestion?: string
+  suggestion?: string,
 ): void {
   console.log("");
   logger.error(message);

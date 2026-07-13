@@ -10,8 +10,12 @@ export async function executeTransaction<
   client: PgModelClientLike<T, Cols>,
   callback: (tx: PgModelClientLike<T, Cols>) => Promise<R>,
 ): Promise<R> {
-  return pgTransaction(client._pool, async (conn: PoolClient) => {
-    const tx = client.withClient(conn);
-    return callback(tx);
-  }, client._logger);
+  return pgTransaction(
+    client._pool,
+    async (conn: PoolClient) => {
+      const tx = client.withClient(conn);
+      return callback(tx);
+    },
+    client._logger,
+  );
 }

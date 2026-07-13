@@ -20,16 +20,16 @@ Every file under `src/` is one line:
 
 ```ts
 // src/index.ts
-export * from "@damatjs/orm-migration"
-export * from "@damatjs/orm-connector"
-export * from "@damatjs/orm-model"
-export * from "@damatjs/orm-processor"
-export * from "@damatjs/orm-pg"
+export * from "@damatjs/orm-migration";
+export * from "@damatjs/orm-connector";
+export * from "@damatjs/orm-model";
+export * from "@damatjs/orm-processor";
+export * from "@damatjs/orm-pg";
 ```
 
 ```ts
 // src/pg.ts
-export * from "@damatjs/orm-pg"
+export * from "@damatjs/orm-pg";
 ```
 
 `tsc` (see `package.json` `build`: `rm -rf dist tsconfig.tsbuildinfo && tsc`)
@@ -38,14 +38,14 @@ emits a `dist/<name>.js` + `dist/<name>.d.ts` per source file, and
 
 ## Subpath map (source of truth: `package.json#exports`)
 
-| Subpath | Source file | Re-exported package | What you get |
-|---|---|---|---|
-| `.` | `src/index.ts` | all five | the full ORM surface |
-| `./model` | `src/model.ts` | `@damatjs/orm-model` | column/property DSL, `schema`, `toModuleSchema`, types, utils |
-| `./connector` | `src/connector.ts` | `@damatjs/orm-connector` | `ConnectionManager` (pool lifecycle, health checks, stats) |
-| `./migration` | `src/migration.ts` | `@damatjs/orm-migration` | discovery / executor / generator / tracker + log helpers |
-| `./processor` | `src/processor.ts` | `@damatjs/orm-processor` | schema `diff`, `sqlGenerator`, snapshot helpers |
-| `./pg` | `src/pg.ts` | `@damatjs/orm-pg` | `EntityManager` (`= PgEntityManager`), repository, transaction, executor, client |
+| Subpath       | Source file        | Re-exported package      | What you get                                                                     |
+| ------------- | ------------------ | ------------------------ | -------------------------------------------------------------------------------- |
+| `.`           | `src/index.ts`     | all five                 | the full ORM surface                                                             |
+| `./model`     | `src/model.ts`     | `@damatjs/orm-model`     | column/property DSL, `schema`, `toModuleSchema`, types, utils                    |
+| `./connector` | `src/connector.ts` | `@damatjs/orm-connector` | `ConnectionManager` (pool lifecycle, health checks, stats)                       |
+| `./migration` | `src/migration.ts` | `@damatjs/orm-migration` | discovery / executor / generator / tracker + log helpers                         |
+| `./processor` | `src/processor.ts` | `@damatjs/orm-processor` | schema `diff`, `sqlGenerator`, snapshot helpers                                  |
+| `./pg`        | `src/pg.ts`        | `@damatjs/orm-pg`        | `EntityManager` (`= PgEntityManager`), repository, transaction, executor, client |
 
 ### What each re-exported package contributes
 
@@ -71,7 +71,7 @@ emits a `dist/<name>.js` + `dist/<name>.d.ts` per source file, and
 ## Why a meta-package
 
 - **One dependency, one name.** Apps and modules can `import { … } from
-  "@damatjs/orm"` without tracking five separate package names/versions.
+"@damatjs/orm"` without tracking five separate package names/versions.
 - **Slices stay independent.** Tools that need only one concern (the ORM CLI's
   migration code, a standalone type generator) depend on the precise
   sub-package, so the dependency graph stays minimal.

@@ -72,18 +72,26 @@ everything you need to author a module from one place, so your code imports
 
 ```ts
 import {
-  defineModule,        // define the module + its service
-  ModuleService,       // service base with generated model accessors
-  model, columns,      // the ORM model DSL
-  z,                   // zod, for credential + request validation
-  createWorkflow, createStep, parallel, when, ifElse, RetryPolicies, Effect, // workflows
-  type RouteHandler, type RouteValidator, // HTTP route contracts
+  defineModule, // define the module + its service
+  ModuleService, // service base with generated model accessors
+  model,
+  columns, // the ORM model DSL
+  z, // zod, for credential + request validation
+  createWorkflow,
+  createStep,
+  parallel,
+  when,
+  ifElse,
+  RetryPolicies,
+  Effect, // workflows
+  type RouteHandler,
+  type RouteValidator, // HTTP route contracts
 } from "@damatjs/module";
 ```
 
 What is **deliberately not** in this surface: **link helpers**. `@damatjs/module`
 has no `defineLink`, and a module's **models** never declare a relationship to
-another module's tables. A module may still *ship* a **dormant** link file under
+another module's tables. A module may still _ship_ a **dormant** link file under
 `src/links/models/` (a `defineLink` imported from `@damatjs/framework`) that the backend
 owner activates by migrating — but it never imports the other module and never creates the
 connection itself (see [Ship a cross-module link template](#ship-a-cross-module-link-template-dormant)
@@ -204,7 +212,7 @@ it. Drop a real `defineLink` file under **`src/links/models/<from>-<to>.ts`**:
 import { defineLink } from "@damatjs/framework";
 
 export default defineLink(
-  { module: "check", model: "checks", field: "checks" },                       // → customer.checks: Checks[]
+  { module: "check", model: "checks", field: "checks" }, // → customer.checks: Checks[]
   { module: "customer", model: "customer", field: "customer", isList: false }, // → check.customer: Customer
 );
 ```
@@ -238,8 +246,8 @@ The template's life, in three stages:
    `migrate:up` → `damat codegen`. Until then the link is inert, and it stays
    harmless even if the target module isn't installed.
 
-This complements `pairsWith`: `pairsWith` *names* a module to pair with, a
-shipped link *describes the exact connection* — both non-binding, both
+This complements `pairsWith`: `pairsWith` _names_ a module to pair with, a
+shipped link _describes the exact connection_ — both non-binding, both
 deletable by the app owner. Full activation flow:
 [ch. 17.3 — Links shipped by a module](./17-composing-and-linking-modules.md#links-shipped-by-a-module).
 
@@ -293,17 +301,27 @@ applies the module's own migrations, calls `init()`, and hands you the
 import { withModule } from "@damatjs/module";
 import userModule from "./index";
 
-await withModule(userModule, { moduleDir: import.meta.dir }, async ({ service }) => {
-  await service.user.create({ data: { email: "a@b.co" } });
-  expect(await service.user.exists({ where: { email: "a@b.co" } })).toBe(true);
-});
+await withModule(
+  userModule,
+  { moduleDir: import.meta.dir },
+  async ({ service }) => {
+    await service.user.create({ data: { email: "a@b.co" } });
+    expect(await service.user.exists({ where: { email: "a@b.co" } })).toBe(
+      true,
+    );
+  },
+);
 ```
 
 In a test file, gate database-backed tests so they skip cleanly where there's no
 Postgres, and validate the manifest itself with `validateModuleDir`:
 
 ```ts
-import { bootModule, validateModuleDir, type BootedModule } from "@damatjs/module";
+import {
+  bootModule,
+  validateModuleDir,
+  type BootedModule,
+} from "@damatjs/module";
 import type { UserModuleService } from "../service";
 
 const MODULE_DIR = join(import.meta.dir, "..");
@@ -317,19 +335,30 @@ test("module directory passes registry validation", () => {
   expect(report.valid).toBe(true);
 });
 
-describe.skipIf(!process.env.DATABASE_URL)("user module (standalone boot)", () => {
-  let booted: BootedModule<UserModuleService>;
-  beforeAll(async () => {
-    const { default: userModule } = await import("../index");
-    booted = await bootModule(userModule, { moduleDir: MODULE_DIR });
-  });
-  afterAll(async () => { await booted?.teardown(); });
+describe.skipIf(!process.env.DATABASE_URL)(
+  "user module (standalone boot)",
+  () => {
+    let booted: BootedModule<UserModuleService>;
+    beforeAll(async () => {
+      const { default: userModule } = await import("../index");
+      booted = await bootModule(userModule, { moduleDir: MODULE_DIR });
+    });
+    afterAll(async () => {
+      await booted?.teardown();
+    });
 
-  test("creates and finds a user", async () => {
-    await booted.service.user.create({ data: { email: "harness@example.test" } });
-    expect(await booted.service.user.exists({ where: { email: "harness@example.test" } })).toBe(true);
-  });
-});
+    test("creates and finds a user", async () => {
+      await booted.service.user.create({
+        data: { email: "harness@example.test" },
+      });
+      expect(
+        await booted.service.user.exists({
+          where: { email: "harness@example.test" },
+        }),
+      ).toBe(true);
+    });
+  },
+);
 ```
 
 Notes that matter:
@@ -353,30 +382,33 @@ on what it should be wired to.
 
 ```jsonc
 {
-  "name": "user",                 // module id: registry key + default dir name (kebab-case)
-  "version": "0.2.0",             // semver
+  "name": "user", // module id: registry key + default dir name (kebab-case)
+  "version": "0.2.0", // semver
   "description": "Auth, sessions and accounts.",
-  "author": "Abel <a@b.co>",      // string OR { name, email?, url? }
+  "author": "Abel <a@b.co>", // string OR { name, email?, url? }
 
-  "env": [                        // every env var the credentials loader reads
+  "env": [
+    // every env var the credentials loader reads
     {
       "name": "BETTER_AUTH_SECRET",
       "required": true,
       "description": "Min 32-char secret for Better Auth",
-      "example": "change-me-min-32-characters-long"   // written to .env.example
-    }
+      "example": "change-me-min-32-characters-long", // written to .env.example
+    },
   ],
-  "packages": {                   // npm packages the host app must install
-    "better-auth": "^1.4.18"      //   name -> semver range
+  "packages": {
+    // npm packages the host app must install
+    "better-auth": "^1.4.18", //   name -> semver range
   },
 
-  "pairsWith": ["organization"],  // NON-BINDING hint: a comment for the backend owner
+  "pairsWith": ["organization"], // NON-BINDING hint: a comment for the backend owner
 
-  "registry": {                   // publishing metadata
+  "registry": {
+    // publishing metadata
     "namespace": "damatjs",
     "keywords": ["auth", "users"],
-    "license": "MIT"
-  }
+    "license": "MIT",
+  },
 }
 ```
 
@@ -432,7 +464,7 @@ The module author's job ends at the package boundary. A module is a single,
 self-contained blade:
 
 - **No model-level links.** Your models reference only your own tables; cross-module
-  references are plain id columns, not foreign keys. (You *may* ship a **dormant**
+  references are plain id columns, not foreign keys. (You _may_ ship a **dormant**
   `defineLink` template under `src/links/models/` for the owner to activate — it imports
   nothing from the other module and creates nothing until migrated. See the
   [link-template section](#ship-a-cross-module-link-template-dormant) above and ch. 17.)
@@ -443,7 +475,7 @@ self-contained blade:
 - **Do leave a `pairsWith` hint** when a pairing is natural — a suggestion, not a
   requirement.
 
-For the full surface a module *can* express on its own (models, services,
+For the full surface a module _can_ express on its own (models, services,
 workflows, routes, config), see
 [ch. 16 — Module capabilities](./16-module-capabilities.md). For installing,
 wiring, and linking modules together in an app, see

@@ -1,6 +1,6 @@
 import { ColumnSchema, ColumnType } from "@damatjs/orm-type";
-import { pgTypeToTsBase } from './utils/pgTypeToTsBase';
-import { toEnumTypeName } from './utils/stringConvertor';
+import { pgTypeToTsBase } from "./utils/pgTypeToTsBase";
+import { toEnumTypeName } from "./utils/stringConvertor";
 
 /**
  * Resolve the TypeScript type string for a single `ColumnSchema`.

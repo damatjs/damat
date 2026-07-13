@@ -73,7 +73,7 @@ A production-ready reference backend that wires the whole Damat framework togeth
 
 1. **Team-Centric Model**: All billing and API keys belong to teams, not users. Users can be members of multiple teams.
 
-2. **Dual Authentication**: 
+2. **Dual Authentication**:
    - Session-based auth for web dashboard (cookie)
    - API key auth for programmatic access (MCP, Figma, external)
 
@@ -216,24 +216,24 @@ src/
 
 ### Team Roles
 
-| Role | Permissions |
-|------|-------------|
-| `owner` | Full access, can delete team, transfer ownership |
-| `admin` | Manage members, API keys, webhooks |
+| Role      | Permissions                                         |
+| --------- | --------------------------------------------------- |
+| `owner`   | Full access, can delete team, transfer ownership    |
+| `admin`   | Manage members, API keys, webhooks                  |
 | `billing` | View billing, purchase credits, manage subscription |
-| `member` | Use API keys, view team info |
-| `viewer` | Read-only access |
+| `member`  | Use API keys, view team info                        |
+| `viewer`  | Read-only access                                    |
 
 ### API Key Scopes
 
-| Scope | Access |
-|-------|--------|
-| `all` | Full API access |
-| `sections_read` | GET /sections/* |
-| `sections_search` | POST /sections/search |
-| `embed` | POST /sections/embed |
-| `images` | GET /sections/:id/image |
-| `team_read` | Read team info via API |
+| Scope             | Access                  |
+| ----------------- | ----------------------- |
+| `all`             | Full API access         |
+| `sections_read`   | GET /sections/*         |
+| `sections_search` | POST /sections/search   |
+| `embed`           | POST /sections/embed    |
+| `images`          | GET /sections/:id/image |
+| `team_read`       | Read team info via API  |
 
 ---
 
@@ -354,25 +354,25 @@ POST /api/v1/api-keys/:teamId
 
 ```typescript
 interface UsageLog {
-  requestId: string;      // Unique request identifier
-  teamId: string;         // For billing
-  apiKeyId: string;       // Which key was used
-  
+  requestId: string; // Unique request identifier
+  teamId: string; // For billing
+  apiKeyId: string; // Which key was used
+
   // Request info
-  endpoint: string;       // "/api/v1/sections/search"
-  method: string;         // "POST"
-  action: UsageAction;    // "SEARCH_SECTIONS"
-  
+  endpoint: string; // "/api/v1/sections/search"
+  method: string; // "POST"
+  action: UsageAction; // "SEARCH_SECTIONS"
+
   // Results
   responseStatus: number; // 200
-  resultCount: number;    // 5
+  resultCount: number; // 5
   creditsCharged: number; // 2
   responseTimeMs: number; // 234
-  
+
   // Client info
   ipAddress: string;
   userAgent: string;
-  
+
   // Timestamp
   createdAt: Date;
 }
@@ -384,22 +384,22 @@ interface UsageLog {
 
 ### Credit Costs
 
-| Operation | Credits |
-|-----------|---------|
-| `SEARCH_SECTIONS` | 2 |
-| `EMBED_TEXT` | 1 |
-| `FETCH_IMAGE` | 1 |
-| `GET_SECTION` | 1 |
-| `LIST_SECTIONS` | 1 |
+| Operation         | Credits |
+| ----------------- | ------- |
+| `SEARCH_SECTIONS` | 2       |
+| `EMBED_TEXT`      | 1       |
+| `FETCH_IMAGE`     | 1       |
+| `GET_SECTION`     | 1       |
+| `LIST_SECTIONS`   | 1       |
 
 ### Plan Tiers
 
-| Plan | Credits | Rate Limit (per min) | API Keys | Members |
-|------|---------|---------------------|----------|---------|
-| Free | 1,000 | 20 | 2 | 1 |
-| Starter | 10,000 | 60 | 5 | 5 |
-| Pro | 100,000 | 120 | 20 | 20 |
-| Enterprise | Unlimited | 500 | Unlimited | Unlimited |
+| Plan       | Credits   | Rate Limit (per min) | API Keys  | Members   |
+| ---------- | --------- | -------------------- | --------- | --------- |
+| Free       | 1,000     | 20                   | 2         | 1         |
+| Starter    | 10,000    | 60                   | 5         | 5         |
+| Pro        | 100,000   | 120                  | 20        | 20        |
+| Enterprise | Unlimited | 500                  | Unlimited | Unlimited |
 
 ### Stripe Integration
 
@@ -464,19 +464,19 @@ Retry-After: 45
 
 ### Available Events
 
-| Event | Trigger |
-|-------|---------|
-| `credits_low` | Credits below threshold (default: 100) |
-| `credits_depleted` | Credits exhausted |
-| `credits_purchased` | Credits added via purchase |
-| `invoice_paid` | Stripe invoice paid |
-| `invoice_failed` | Payment failed |
-| `subscription_created` | New subscription |
-| `subscription_cancelled` | Subscription cancelled |
-| `member_joined` | New member accepted invite |
-| `member_removed` | Member removed from team |
-| `api_key_created` | New API key created |
-| `api_key_revoked` | API key revoked |
+| Event                    | Trigger                                |
+| ------------------------ | -------------------------------------- |
+| `credits_low`            | Credits below threshold (default: 100) |
+| `credits_depleted`       | Credits exhausted                      |
+| `credits_purchased`      | Credits added via purchase             |
+| `invoice_paid`           | Stripe invoice paid                    |
+| `invoice_failed`         | Payment failed                         |
+| `subscription_created`   | New subscription                       |
+| `subscription_cancelled` | Subscription cancelled                 |
+| `member_joined`          | New member accepted invite             |
+| `member_removed`         | Member removed from team               |
+| `api_key_created`        | New API key created                    |
+| `api_key_revoked`        | API key revoked                        |
 
 ### Webhook Payload
 
@@ -513,12 +513,12 @@ const signature = crypto
 
 ### What's Cached
 
-| Data | TTL | Invalidation |
-|------|-----|--------------|
-| Sessions | Until expiry | On logout, password change |
-| API key validation | 5 min | On key update/revoke |
-| Team info | 5 min | On team update |
-| Rate limit counters | Window duration | Automatic |
+| Data                | TTL             | Invalidation               |
+| ------------------- | --------------- | -------------------------- |
+| Sessions            | Until expiry    | On logout, password change |
+| API key validation  | 5 min           | On key update/revoke       |
+| Team info           | 5 min           | On team update             |
+| Rate limit counters | Window duration | Automatic                  |
 
 ### Cache Keys
 
@@ -556,15 +556,15 @@ lock:<resource>           - Distributed locks
 
 ### Error Codes
 
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| `VALIDATION_ERROR` | 400 | Invalid request body |
-| `AUTHENTICATION_ERROR` | 401 | Missing or invalid auth |
-| `AUTHORIZATION_ERROR` | 403 | Insufficient permissions |
-| `NOT_FOUND` | 404 | Resource not found |
-| `RATE_LIMIT_EXCEEDED` | 429 | Too many requests |
-| `INSUFFICIENT_CREDITS` | 402 | Not enough credits |
-| `INTERNAL_ERROR` | 500 | Server error |
+| Code                   | HTTP Status | Description              |
+| ---------------------- | ----------- | ------------------------ |
+| `VALIDATION_ERROR`     | 400         | Invalid request body     |
+| `AUTHENTICATION_ERROR` | 401         | Missing or invalid auth  |
+| `AUTHORIZATION_ERROR`  | 403         | Insufficient permissions |
+| `NOT_FOUND`            | 404         | Resource not found       |
+| `RATE_LIMIT_EXCEEDED`  | 429         | Too many requests        |
+| `INSUFFICIENT_CREDITS` | 402         | Not enough credits       |
+| `INTERNAL_ERROR`       | 500         | Server error             |
 
 ---
 
@@ -588,12 +588,12 @@ npm test -- --watch
 
 ```typescript
 // tests/auth.test.ts
-describe('Auth Service', () => {
-  describe('Password hashing', () => {
-    it('should hash and verify passwords', async () => {
-      const hash = await hashPassword('test123');
-      expect(await verifyPassword('test123', hash)).toBe(true);
-      expect(await verifyPassword('wrong', hash)).toBe(false);
+describe("Auth Service", () => {
+  describe("Password hashing", () => {
+    it("should hash and verify passwords", async () => {
+      const hash = await hashPassword("test123");
+      expect(await verifyPassword("test123", hash)).toBe(true);
+      expect(await verifyPassword("wrong", hash)).toBe(false);
     });
   });
 });

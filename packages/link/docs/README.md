@@ -7,19 +7,19 @@ and codegen need **no** special-casing.
 
 ## Module map
 
-| File | Responsibility |
-|------|----------------|
-| `types.ts` | `LinkEndpoint`, `ResolvedEndpoint` (incl. the resolved `table`), `LinkOptions`, `LinkDefinition`, row/model refs. |
-| `naming.ts` | `defaultPivotTable` + `pivotColumns` — derive names from each side's REAL table, singularized via the ORM's `removeLastS` rule (segment-collapsing, collision-safe columns, 63-byte clamp). |
-| `pivot.ts` | `buildPivotModel` — constructs the junction `ModelDefinition` with the orm-model DSL (id + 2 FK columns + unique/per-column indexes; timestamps & soft-delete on by default; opt-in FKs reference the real table/PK with `ON DELETE CASCADE`). |
-| `defineLink.ts` | `defineLink(left, right, options?)` — resolves endpoints (real table + primary key through the global model registry, with a deterministic key-derived fallback) and assembles a `LinkDefinition`. |
-| `registry.ts` | `LinkRegistry` (resolve a pair in either direction, list outgoing links) + `collectLinkModels`. |
-| `resolver.ts` | `setLinkModuleResolver` / `resolveLinkedModule` — dependency inversion so the link service can call other modules without importing `@damatjs/framework`. |
-| `service.ts` | `createLinkService(links)` → `LinkService extends ModuleService({models})` with `create`/`dismiss`/`list`/`listLinkedIds`/`fetch`/`graph`. |
-| `graph.ts` | `parseFields` (dotted paths → tree), `pruneColumns`, graph config/result types. |
-| `defineLinkModule.ts` | `defineLinkModule(links)` → a `ModuleInstance` registered as the `link` module. |
-| `codegen.ts` | `renderLinkAugmentations(fields)` — emits the `<table>.links.ts` files that extend each module's entity type with its linked entities. |
-| `config.ts` | `resolveLinkModuleEntries` (top-level `link` for runtime) + `resolveLinkMigrationModules` (per-owner `link:<owner>` for migrations). |
+| File                  | Responsibility                                                                                                                                                                                                                                 |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `types.ts`            | `LinkEndpoint`, `ResolvedEndpoint` (incl. the resolved `table`), `LinkOptions`, `LinkDefinition`, row/model refs.                                                                                                                              |
+| `naming.ts`           | `defaultPivotTable` + `pivotColumns` — derive names from each side's REAL table, singularized via the ORM's `removeLastS` rule (segment-collapsing, collision-safe columns, 63-byte clamp).                                                    |
+| `pivot.ts`            | `buildPivotModel` — constructs the junction `ModelDefinition` with the orm-model DSL (id + 2 FK columns + unique/per-column indexes; timestamps & soft-delete on by default; opt-in FKs reference the real table/PK with `ON DELETE CASCADE`). |
+| `defineLink.ts`       | `defineLink(left, right, options?)` — resolves endpoints (real table + primary key through the global model registry, with a deterministic key-derived fallback) and assembles a `LinkDefinition`.                                             |
+| `registry.ts`         | `LinkRegistry` (resolve a pair in either direction, list outgoing links) + `collectLinkModels`.                                                                                                                                                |
+| `resolver.ts`         | `setLinkModuleResolver` / `resolveLinkedModule` — dependency inversion so the link service can call other modules without importing `@damatjs/framework`.                                                                                      |
+| `service.ts`          | `createLinkService(links)` → `LinkService extends ModuleService({models})` with `create`/`dismiss`/`list`/`listLinkedIds`/`fetch`/`graph`.                                                                                                     |
+| `graph.ts`            | `parseFields` (dotted paths → tree), `pruneColumns`, graph config/result types.                                                                                                                                                                |
+| `defineLinkModule.ts` | `defineLinkModule(links)` → a `ModuleInstance` registered as the `link` module.                                                                                                                                                                |
+| `codegen.ts`          | `renderLinkAugmentations(fields)` — emits the `<table>.links.ts` files that extend each module's entity type with its linked entities.                                                                                                         |
+| `config.ts`           | `resolveLinkModuleEntries` (top-level `link` for runtime) + `resolveLinkMigrationModules` (per-owner `link:<owner>` for migrations).                                                                                                           |
 
 ## Folder layout — links mirror modules
 
@@ -82,7 +82,7 @@ CREATE INDEX "user_organization_organization_id_idx" ON "public"."user_organizat
   on collision). Override with `options.pivotTable` / `options.pivotColumns`.
   Names are clamped to Postgres' 63-byte limit with a stable hash suffix.
 - **Idempotency.** `create` is a single `INSERT … ON CONFLICT (left, right)
-  DO UPDATE SET deleted_at = NULL` against the unique pair index — atomic
+DO UPDATE SET deleted_at = NULL` against the unique pair index — atomic
   (no check-then-insert race), and re-creating a dismissed (soft-deleted)
   link revives it.
 - **Soft delete.** `dismiss` sets `deleted_at`; every link read filters

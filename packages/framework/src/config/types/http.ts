@@ -1,5 +1,5 @@
-import { CorsConfigType } from '../../middleware/corsConfig';
-import type { AuthType, } from '../../router/types';
+import { CorsConfigType } from "../../middleware/corsConfig";
+import type { AuthType } from "../../router/types";
 
 export interface HttpConfig {
   port: number;
@@ -23,8 +23,10 @@ export interface HttpRateLimitConfig {
    * unreachable. Defaults to false (fail-open: the request proceeds unlimited).
    */
   failClosed?: boolean | undefined;
-  getUserTier?: ((userId: string) => Promise<HttpRateLimitConfig | null>) | undefined;
-  getApiKeyTier?: ((apiKey: string) => Promise<HttpRateLimitConfig | null>) | undefined;
+  getUserTier?:
+    ((userId: string) => Promise<HttpRateLimitConfig | null>) | undefined;
+  getApiKeyTier?:
+    ((apiKey: string) => Promise<HttpRateLimitConfig | null>) | undefined;
 }
 
 export interface HttpAuthConfig {

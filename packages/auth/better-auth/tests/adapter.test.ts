@@ -98,10 +98,17 @@ describe("createBetterAuthProvider — build", () => {
 
 describe("createBetterAuthProvider — authenticate", () => {
   it("maps a Better Auth session user to the principal (email split out, extras kept)", async () => {
-    state.session = { user: { id: "u1", email: "a@b.co", name: "Ada", role: "admin" } };
+    state.session = {
+      user: { id: "u1", email: "a@b.co", name: "Ada", role: "admin" },
+    };
     const provider = createBetterAuthProvider();
     const principal = await provider.authenticate(ctxFor());
-    expect(principal).toEqual({ id: "u1", email: "a@b.co", name: "Ada", role: "admin" });
+    expect(principal).toEqual({
+      id: "u1",
+      email: "a@b.co",
+      name: "Ada",
+      role: "admin",
+    });
   });
 
   it("returns null when there is no session", async () => {
@@ -119,7 +126,9 @@ describe("createBetterAuthProvider — authenticate", () => {
 
 describe("createBetterAuthProvider — routes", () => {
   it("forwards the raw request to Better Auth's handler and returns its response", async () => {
-    state.handlerResponse = new Response(JSON.stringify({ ok: true }), { status: 201 });
+    state.handlerResponse = new Response(JSON.stringify({ ok: true }), {
+      status: 201,
+    });
     const provider = createBetterAuthProvider();
     const app = new Hono();
     app.all("/api/auth/*", provider.routes!.handler);

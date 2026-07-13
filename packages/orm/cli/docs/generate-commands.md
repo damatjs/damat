@@ -28,9 +28,9 @@ Pipeline:
 2. **Link short-circuit**: if `moduleConfig.kind === "link"` (a `link:<owner>`
    module discovered from `config.links`), log a notice that link modules don't
    emit their own types and return `0`. Link relationships surface as fields on
-   the *linked* modules' types instead (step 6).
+   the _linked_ modules' types instead (step 6).
 3. **Verify models dir**: `resolvedModelsDir = resolveModelsPath(
-   moduleConfig.resolve)` (= `<resolve>/models`); error if it does not exist.
+moduleConfig.resolve)` (= `<resolve>/models`); error if it does not exist.
 4. **Discover models**: `models = await discoverModels(moduleConfig.resolve)`
    (from `@damatjs/orm-migration`).
 5. **Build schema**: `schema = toModuleSchema(moduleName, models)` (from
@@ -59,13 +59,13 @@ bun damat codegen user
 
 ## Inputs and outputs
 
-| Concern | Source / target | Resolver |
-|---|---|---|
-| Models read from | `<module.resolve>/models` | `resolveModelsPath` |
-| Types written to | `<module.resolve>/types` | `resolveTypesPath` |
-| Schema name | the CLI `<module>` arg | passed straight to `toModuleSchema` |
-| Link defs read from | each `link:<owner>` module's `index.ts` (`links` export) | `loadModules` (via `config.links`) |
-| Link fields rendered by | `renderLinkAugmentations` | `@damatjs/link` |
+| Concern                 | Source / target                                          | Resolver                            |
+| ----------------------- | -------------------------------------------------------- | ----------------------------------- |
+| Models read from        | `<module.resolve>/models`                                | `resolveModelsPath`                 |
+| Types written to        | `<module.resolve>/types`                                 | `resolveTypesPath`                  |
+| Schema name             | the CLI `<module>` arg                                   | passed straight to `toModuleSchema` |
+| Link defs read from     | each `link:<owner>` module's `index.ts` (`links` export) | `loadModules` (via `config.links`)  |
+| Link fields rendered by | `renderLinkAugmentations`                                | `@damatjs/link`                     |
 
 ## Gotchas
 

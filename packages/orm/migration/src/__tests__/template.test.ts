@@ -2,7 +2,9 @@ import { describe, it, expect } from "bun:test";
 import { getMigrationTemplateWithSQL } from "../utils/template";
 import type { GeneratedMigration } from "@damatjs/orm-processor";
 
-const baseMigration = (over: Partial<GeneratedMigration> = {}): GeneratedMigration => ({
+const baseMigration = (
+  over: Partial<GeneratedMigration> = {},
+): GeneratedMigration => ({
   upStatements: [],
   description: "No changes",
   warnings: [],
@@ -18,7 +20,10 @@ describe("getMigrationTemplateWithSQL", () => {
       "User",
       "user",
       created,
-      baseMigration({ upStatements: ["CREATE TABLE x (id text)"], description: "1 table created" }),
+      baseMigration({
+        upStatements: ["CREATE TABLE x (id text)"],
+        description: "1 table created",
+      }),
     );
     expect(out).toContain("-- Migration: User");
     expect(out).toContain("-- Module: user");
@@ -38,9 +43,13 @@ describe("getMigrationTemplateWithSQL", () => {
       "User",
       "user",
       created,
-      baseMigration({ upStatements: ["CREATE TABLE a (id text)", "CREATE TABLE b (id text)"] }),
+      baseMigration({
+        upStatements: ["CREATE TABLE a (id text)", "CREATE TABLE b (id text)"],
+      }),
     );
-    expect(out).toContain("CREATE TABLE a (id text);\n\nCREATE TABLE b (id text);");
+    expect(out).toContain(
+      "CREATE TABLE a (id text);\n\nCREATE TABLE b (id text);",
+    );
   });
 
   it("appends a trailing semicolon when a statement lacks one", () => {
@@ -99,10 +108,15 @@ describe("getMigrationTemplateWithSQL", () => {
       created,
       baseMigration({
         upStatements: ["DROP TABLE users"],
-        warnings: ["Dropping table 'users' will delete all data in it", "second warning"],
+        warnings: [
+          "Dropping table 'users' will delete all data in it",
+          "second warning",
+        ],
       }),
     );
-    expect(out).toContain("-- WARNING: Dropping table 'users' will delete all data in it");
+    expect(out).toContain(
+      "-- WARNING: Dropping table 'users' will delete all data in it",
+    );
     expect(out).toContain("-- WARNING: second warning");
     // The warning block should appear before the auto-generated note.
     const warnIdx = out.indexOf("-- WARNING:");
@@ -117,7 +131,10 @@ describe("getMigrationTemplateWithSQL", () => {
       "User",
       "user",
       created,
-      baseMigration({ upStatements: ["CREATE TABLE x (id text)"], warnings: [] }),
+      baseMigration({
+        upStatements: ["CREATE TABLE x (id text)"],
+        warnings: [],
+      }),
     );
     expect(out).not.toContain("-- WARNING:");
   });

@@ -47,7 +47,10 @@ class FakeJobWorker {
   }
 }
 
-mock.module("@damatjs/deps/ioredis", () => ({ Redis: FakeRedis, default: FakeRedis }));
+mock.module("@damatjs/deps/ioredis", () => ({
+  Redis: FakeRedis,
+  default: FakeRedis,
+}));
 
 // Other packages (e.g. @damatjs/service) import more from these modules than
 // the wiring under test — keep the real surface and override only what the
@@ -68,7 +71,8 @@ mock.module("@damatjs/jobs", () => ({ ...realJobs, JobWorker: FakeJobWorker }));
 const { initializeServices } = await import("../../services/index");
 const { disconnectRedis, hasRedis } = await import("../../services/redis");
 const { clearModules } = await import("../../services/moduleService");
-const { setGlobalLoggerInstance, clearGlobalLogger } = await import("../../services/logger");
+const { setGlobalLoggerInstance, clearGlobalLogger } =
+  await import("../../services/logger");
 const { setLinkModuleResolver } = await import("@damatjs/link");
 
 import type { AppConfig } from "../../config";
@@ -97,7 +101,8 @@ const recordingLogger = {
   close: () => {},
 };
 
-const warns = () => logCalls.filter((c) => c.level === "warn").map((c) => c.message);
+const warns = () =>
+  logCalls.filter((c) => c.level === "warn").map((c) => c.message);
 
 function config(project: Partial<AppConfig["projectConfig"]> = {}): AppConfig {
   return {
@@ -144,9 +149,14 @@ describe("initializeServices — services.events.broadcast", () => {
     ]);
 
     // The shutdown handler disconnects the transport.
-    await instances.shutdownHandlers.find((h) => h.name === "event-broadcast")!.handler();
+    await instances.shutdownHandlers
+      .find((h) => h.name === "event-broadcast")!
+      .handler();
     expect(broadcastState.disconnectCalls).toBe(1);
-    expect(logCalls).toContainEqual({ level: "info", message: "Event broadcast disconnected" });
+    expect(logCalls).toContainEqual({
+      level: "info",
+      message: "Event broadcast disconnected",
+    });
   });
 
   it("passes a custom channel through to connectEventBroadcast", async () => {
@@ -175,7 +185,10 @@ describe("initializeServices — services.events.broadcast", () => {
     const instances = await initializeServices(config(REDIS), SCRATCH);
 
     expect(broadcastState.connectCalls).toHaveLength(0);
-    expect(instances.shutdownHandlers.map((h) => h.name)).toEqual(["redis", "logger"]);
+    expect(instances.shutdownHandlers.map((h) => h.name)).toEqual([
+      "redis",
+      "logger",
+    ]);
   });
 });
 
@@ -183,7 +196,12 @@ describe("initializeServices — services.jobs.worker", () => {
   it("constructs, starts, and registers a 'job-worker' shutdown handler (with redisUrl)", async () => {
     const cfg = config(REDIS);
     cfg.services = {
-      jobs: { worker: true, queueName: "mailers", concurrency: 3, pollIntervalMs: 25 },
+      jobs: {
+        worker: true,
+        queueName: "mailers",
+        concurrency: 3,
+        pollIntervalMs: 25,
+      },
     };
 
     const instances = await initializeServices(cfg, SCRATCH);
@@ -200,7 +218,9 @@ describe("initializeServices — services.jobs.worker", () => {
     ]);
 
     // The shutdown handler stops the worker.
-    await instances.shutdownHandlers.find((h) => h.name === "job-worker")!.handler();
+    await instances.shutdownHandlers
+      .find((h) => h.name === "job-worker")!
+      .handler();
     expect(workerState.stopCalls).toBe(1);
   });
 

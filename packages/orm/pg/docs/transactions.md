@@ -7,18 +7,21 @@ Sources: [`src/transaction/manager.ts`](../src/transaction/manager.ts),
 This is the dedicated transaction layer used by `PgEntityManager.transaction(...)`. It is distinct from
 the client-level transaction (`PgModelClient.transaction` → `pgTransaction`, see [executor.md](./executor.md)):
 
-| Path | Driver | Savepoints? | Isolation options? |
-| --- | --- | --- | --- |
-| `em.transaction(cb)` / `tx.*` | `TransactionManager` + `TransactionContext` | yes | yes (`TransactionOptions`) |
-| `client.transaction(cb)` | `pgTransaction` (executor) | no | no |
+| Path                          | Driver                                      | Savepoints? | Isolation options?         |
+| ----------------------------- | ------------------------------------------- | ----------- | -------------------------- |
+| `em.transaction(cb)` / `tx.*` | `TransactionManager` + `TransactionContext` | yes         | yes (`TransactionOptions`) |
+| `client.transaction(cb)`      | `pgTransaction` (executor)                  | no          | no                         |
 
 ## `TransactionManager`
 
 ```ts
 class TransactionManager {
-  constructor(pool: Pool, logger?: ILogger)
-  begin(options?: TransactionOptions): Promise<TransactionContext>
-  run<R>(callback: (ctx) => Promise<R>, options?: TransactionOptions): Promise<R>
+  constructor(pool: Pool, logger?: ILogger);
+  begin(options?: TransactionOptions): Promise<TransactionContext>;
+  run<R>(
+    callback: (ctx) => Promise<R>,
+    options?: TransactionOptions,
+  ): Promise<R>;
 }
 ```
 
@@ -63,14 +66,17 @@ callback receives `tx.<model>` accessors bound to this transaction (see [entity-
 
 ```ts
 const VALID_ISOLATION_LEVELS = new Set([
-  "READ UNCOMMITTED", "READ COMMITTED", "REPEATABLE READ", "SERIALIZABLE",
+  "READ UNCOMMITTED",
+  "READ COMMITTED",
+  "REPEATABLE READ",
+  "SERIALIZABLE",
 ]);
 ```
 
 `TransactionOptions` (`@damatjs/orm-type`) is `{ isolationLevel?, readOnly?, deferrable? }`. The method:
 
 1. If `isolationLevel` is set, **validate against the allow-list** (throws `Invalid transaction
-   isolation level: "…"` otherwise) and queue `SET TRANSACTION ISOLATION LEVEL <level>`.
+isolation level: "…"` otherwise) and queue `SET TRANSACTION ISOLATION LEVEL <level>`.
 2. If `readOnly` is set, queue `SET TRANSACTION READ ONLY|READ WRITE`.
 3. If only `deferrable` is set (and neither `readOnly` nor `isolationLevel`), queue
    `SET TRANSACTION [NOT ]DEFERRABLE`.
@@ -88,30 +94,30 @@ const VALID_ISOLATION_LEVELS = new Set([
 
 ```ts
 class TransactionContext {
-  constructor(client: PoolClient, logger?: ILogger)
-  query<T>(sql, params?): Promise<{ rows: T[]; rowCount: number }>
-  commit(): Promise<void>
-  rollback(): Promise<void>
-  getClient(): PoolClient
-  createSavepoint(name): Promise<void>
-  rollbackToSavepoint(name): Promise<void>
-  releaseSavepoint(name): Promise<void>
-  release(): void
-  isActive(): boolean
+  constructor(client: PoolClient, logger?: ILogger);
+  query<T>(sql, params?): Promise<{ rows: T[]; rowCount: number }>;
+  commit(): Promise<void>;
+  rollback(): Promise<void>;
+  getClient(): PoolClient;
+  createSavepoint(name): Promise<void>;
+  rollbackToSavepoint(name): Promise<void>;
+  releaseSavepoint(name): Promise<void>;
+  release(): void;
+  isActive(): boolean;
 }
 ```
 
 Internal flags: `_isActive` (set false after commit/rollback) and `isReleased` (set true after `release`).
 
-| Method | Behaviour |
-| --- | --- |
-| `query` | Runs SQL on the client; wraps failures in `TransactionError("Query failed: …")` (logs first 100 chars of SQL); throws `TransactionError("Transaction is not active")` if inactive. |
-| `commit` | `COMMIT`; sets `_isActive=false`; throws `TransactionError("Commit failed: …")` on failure; throws if already inactive. |
-| `rollback` | `ROLLBACK`; sets `_isActive=false`. **No-op if already inactive** (so a manager-driven rollback after a failed commit is safe); throws `TransactionError("Rollback failed: …")` on driver failure. |
-| `getClient` | Returns the client; throws if inactive. |
-| `createSavepoint` / `rollbackToSavepoint` / `releaseSavepoint` | Issue `SAVEPOINT` / `ROLLBACK TO SAVEPOINT` / `RELEASE SAVEPOINT` via `_savepointOp`. |
-| `release` | Releases the client back to the pool once (idempotent via `isReleased`). |
-| `isActive` | `_isActive && !isReleased`. |
+| Method                                                         | Behaviour                                                                                                                                                                                          |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `query`                                                        | Runs SQL on the client; wraps failures in `TransactionError("Query failed: …")` (logs first 100 chars of SQL); throws `TransactionError("Transaction is not active")` if inactive.                 |
+| `commit`                                                       | `COMMIT`; sets `_isActive=false`; throws `TransactionError("Commit failed: …")` on failure; throws if already inactive.                                                                            |
+| `rollback`                                                     | `ROLLBACK`; sets `_isActive=false`. **No-op if already inactive** (so a manager-driven rollback after a failed commit is safe); throws `TransactionError("Rollback failed: …")` on driver failure. |
+| `getClient`                                                    | Returns the client; throws if inactive.                                                                                                                                                            |
+| `createSavepoint` / `rollbackToSavepoint` / `releaseSavepoint` | Issue `SAVEPOINT` / `ROLLBACK TO SAVEPOINT` / `RELEASE SAVEPOINT` via `_savepointOp`.                                                                                                              |
+| `release`                                                      | Releases the client back to the pool once (idempotent via `isReleased`).                                                                                                                           |
+| `isActive`                                                     | `_isActive && !isReleased`.                                                                                                                                                                        |
 
 ### Savepoint name sanitisation
 

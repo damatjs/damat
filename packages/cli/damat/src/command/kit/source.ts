@@ -19,7 +19,10 @@ export interface ResolvedKitSource {
  * subdirectory grammar as `damat clone`, checked out shallow to a temp dir
  * with the user's system git (clear error when git is missing — no fallback).
  */
-export function resolveKitSource(source: string, cwd: string): ResolvedKitSource {
+export function resolveKitSource(
+  source: string,
+  cwd: string,
+): ResolvedKitSource {
   const localPath = isAbsolute(source) ? source : resolve(cwd, source);
   if (existsSync(localPath)) {
     return {
@@ -49,13 +52,20 @@ export function resolveKitSource(source: string, cwd: string): ResolvedKitSource
   let kitDir = tempDir;
   if (parsed.subDir) {
     const resolvedSub = resolve(join(tempDir, parsed.subDir));
-    if (resolvedSub !== resolve(tempDir) && !resolvedSub.startsWith(resolve(tempDir) + sep)) {
+    if (
+      resolvedSub !== resolve(tempDir) &&
+      !resolvedSub.startsWith(resolve(tempDir) + sep)
+    ) {
       rmSync(tempDir, { recursive: true, force: true });
-      throw new Error(`Subdirectory "${parsed.subDir}" escapes the cloned repository`);
+      throw new Error(
+        `Subdirectory "${parsed.subDir}" escapes the cloned repository`,
+      );
     }
     if (!existsSync(resolvedSub)) {
       rmSync(tempDir, { recursive: true, force: true });
-      throw new Error(`Path "${parsed.subDir}" not found inside ${parsed.repoUrl}`);
+      throw new Error(
+        `Path "${parsed.subDir}" not found inside ${parsed.repoUrl}`,
+      );
     }
     kitDir = resolvedSub;
   }

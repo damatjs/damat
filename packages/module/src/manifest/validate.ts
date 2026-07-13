@@ -55,7 +55,9 @@ export function validateModuleManifest(raw: unknown): ModuleManifest {
       typeof manifest.packages !== "object" ||
       Array.isArray(manifest.packages))
   ) {
-    throw new Error('module.json "packages" must be an object of name -> range');
+    throw new Error(
+      'module.json "packages" must be an object of name -> range',
+    );
   }
   if (manifest.modules !== undefined && !Array.isArray(manifest.modules)) {
     throw new Error('module.json "modules" must be an array of module ids');

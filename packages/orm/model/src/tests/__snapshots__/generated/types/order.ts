@@ -20,4 +20,4 @@ export type NewOrder = {
   placedAt?: Date;
 };
 
-export type UpdateOrder = Partial<Omit<Order, 'id'>>;
+export type UpdateOrder = Partial<Omit<Order, "id">>;

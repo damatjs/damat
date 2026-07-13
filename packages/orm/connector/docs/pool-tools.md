@@ -7,7 +7,10 @@ the connection-error type and the pool-config presets. Each is independently uni
 
 ```ts
 export class ConnectionError extends Error {
-  constructor(message: string, public readonly cause?: Error) {
+  constructor(
+    message: string,
+    public readonly cause?: Error,
+  ) {
     super(message);
     this.name = "ConnectionError";
   }
@@ -25,18 +28,18 @@ failure), and `getPool()` (used before `connect()`).
 ## `tools/listeners.ts` — `setupPoolListeners`
 
 ```ts
-export function setupPoolListeners(pool: Pool, logger: ILogger): void
+export function setupPoolListeners(pool: Pool, logger: ILogger): void;
 ```
 
 Registers five listeners on the pool:
 
-| Event | Level | Message |
-| --- | --- | --- |
-| `error` | `error` | `"PostgreSQL pool error"` with `{ error: err.message }` |
-| `connect` | `debug` | `"New client connected to pool"` |
-| `acquire` | `debug` | `"Client acquired from pool"` |
-| `release` | `debug` | `"Client released back to pool"` |
-| `remove` | `debug` | `"Client removed from pool"` |
+| Event     | Level   | Message                                                 |
+| --------- | ------- | ------------------------------------------------------- |
+| `error`   | `error` | `"PostgreSQL pool error"` with `{ error: err.message }` |
+| `connect` | `debug` | `"New client connected to pool"`                        |
+| `acquire` | `debug` | `"Client acquired from pool"`                           |
+| `release` | `debug` | `"Client released back to pool"`                        |
+| `remove`  | `debug` | `"Client removed from pool"`                            |
 
 Notes / gotchas:
 
@@ -51,7 +54,9 @@ Notes / gotchas:
 ### `fetchPoolStats(pool: Pool | null): PoolStats`
 
 ```ts
-{ totalCount, idleCount, waitingCount }   // all default to 0
+{
+  (totalCount, idleCount, waitingCount);
+} // all default to 0
 ```
 
 Returns `{ 0, 0, 0 }` when `pool` is `null`, and coalesces any `undefined` counters to `0`
@@ -67,7 +72,7 @@ Returns `{ 0, 0, 0 }` when `pool` is `null`, and coalesces any `undefined` count
 async function performHealthCheck(
   pool: Pool | null,
   updateStatus: (connected: boolean) => void,
-): Promise<ConnectionStatus>
+): Promise<ConnectionStatus>;
 ```
 
 Behaviour:
@@ -82,18 +87,18 @@ Key contract: **never throws.** Connectivity failures are reported as `connected
 makes it safe to wire into a readiness/liveness probe. `ConnectionManager.healthCheck()` passes a
 callback that writes `connected` back into `isConnectedFlag`, keeping the manager's state honest.
 
-> **Gotcha:** on the `null`-pool path `updateStatus` is *not* invoked, so the manager's flag is left
+> **Gotcha:** on the `null`-pool path `updateStatus` is _not_ invoked, so the manager's flag is left
 > untouched (it is already false in that scenario). On the live-pool paths it is always invoked.
 
 ## `tools/config.ts` — pool-config presets
 
 Three factory functions returning `DbPoolConfigWithExtras`; each merges caller `overrides` last:
 
-| Preset | `min` | `max` | `connectionTimeoutMillis` | `idleTimeoutMillis` | extra |
-| --- | --- | --- | --- | --- | --- |
-| `productionPoolConfig` | 2 | 20 | 5000 | 30000 | `allowExitOnIdle: false` |
-| `developmentPoolConfig` | 1 | 5 | 5000 | 10000 | — |
-| `testPoolConfig` | 0 | 2 | 2000 | 1000 | — |
+| Preset                  | `min` | `max` | `connectionTimeoutMillis` | `idleTimeoutMillis` | extra                    |
+| ----------------------- | ----- | ----- | ------------------------- | ------------------- | ------------------------ |
+| `productionPoolConfig`  | 2     | 20    | 5000                      | 30000               | `allowExitOnIdle: false` |
+| `developmentPoolConfig` | 1     | 5     | 5000                      | 10000               | —                        |
+| `testPoolConfig`        | 0     | 2     | 2000                      | 1000                | —                        |
 
 ```ts
 productionPoolConfig({ host, port, user, password, database });

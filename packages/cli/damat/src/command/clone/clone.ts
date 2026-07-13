@@ -3,12 +3,12 @@ import { existsSync, rmSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { type Command, reportError } from "@damatjs/cli";
 import { requireGit } from "../shared/git";
-import { parseCloneSource } from './parseCloneSource';
-import { repoBasename } from './repoBasename';
-import { cloneSubdir } from './cloneSubdir';
-import { gitOrThrow } from './gitOrThrow';
-import { runGit } from './runGit';
-import { renamePackage } from './renamePackage';
+import { parseCloneSource } from "./parseCloneSource";
+import { repoBasename } from "./repoBasename";
+import { cloneSubdir } from "./cloneSubdir";
+import { gitOrThrow } from "./gitOrThrow";
+import { runGit } from "./runGit";
+import { renamePackage } from "./renamePackage";
 
 /**
  * `damat clone` — git clone with extras:
@@ -24,8 +24,10 @@ import { renamePackage } from './renamePackage';
  */
 export const cloneCommand: Command = {
   name: "clone",
-  description: "Clone a git repo (URL or github shorthand) with optional fresh history, rename, and install",
-  usage: "damat clone <source> [dir] [--branch <ref>] [--depth <n>] [--fresh] [--name <pkg>] [--install]",
+  description:
+    "Clone a git repo (URL or github shorthand) with optional fresh history, rename, and install",
+  usage:
+    "damat clone <source> [dir] [--branch <ref>] [--depth <n>] [--fresh] [--name <pkg>] [--install]",
   examples: [
     "damat clone https://github.com/acme/service.git",
     "damat clone acme/service my-service --fresh --install",
@@ -36,18 +38,21 @@ export const cloneCommand: Command = {
       name: "branch",
       alias: "b",
       type: "string",
-      description: "Branch or tag to clone (overrides a #ref suffix on the source)",
+      description:
+        "Branch or tag to clone (overrides a #ref suffix on the source)",
     },
     {
       name: "depth",
       type: "number",
-      description: "Shallow-clone depth (default: full history, like git clone)",
+      description:
+        "Shallow-clone depth (default: full history, like git clone)",
     },
     {
       name: "fresh",
       alias: "f",
       type: "boolean",
-      description: "Start a new git history: strip .git/.github, git init -b main, bootstrap commit",
+      description:
+        "Start a new git history: strip .git/.github, git init -b main, bootstrap commit",
       default: false,
     },
     {
@@ -127,11 +132,16 @@ export const cloneCommand: Command = {
         const ok =
           runGit(["init", "-b", "main"], targetDir) &&
           runGit(["add", "."], targetDir) &&
-          runGit(["commit", "-m", `chore: bootstrap from ${source}`], targetDir);
+          runGit(
+            ["commit", "-m", `chore: bootstrap from ${source}`],
+            targetDir,
+          );
         if (ok) {
           ctx.logger.success("Started a fresh git history on main");
         } else {
-          ctx.logger.warn("Could not initialize the fresh git history — run `git init` yourself");
+          ctx.logger.warn(
+            "Could not initialize the fresh git history — run `git init` yourself",
+          );
         }
       }
 
@@ -154,7 +164,9 @@ export const cloneCommand: Command = {
         if (result.status === 0) {
           ctx.logger.success("Dependencies installed");
         } else {
-          ctx.logger.warn(`bun install failed — run it manually in ${targetName}/`);
+          ctx.logger.warn(
+            `bun install failed — run it manually in ${targetName}/`,
+          );
         }
       }
 

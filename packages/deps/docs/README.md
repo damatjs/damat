@@ -4,18 +4,18 @@ Maintainer notes for the dependency re-export package. It is intentionally tiny:
 
 ## Module map
 
-| File | Responsibility |
-| --- | --- |
-| `src/index.ts` | Root entry. Namespace re-exports (`export * as hono`, `export * as zod`, ...) so the root import works without collisions. |
-| `src/hono.ts` | Curated Hono surface: core `hono` + `http-status`, `http-exception`, `secure-headers`, `timing`, `cors`, and `serve` from `@hono/node-server`. |
-| `src/zod.ts` | `export * from "zod"` + a `z` alias for v3-style usage. |
-| `src/effect.ts` | `export * from "effect"`. |
-| `src/pg.ts` | `export * from "pg"`. |
-| `src/ioredis.ts` | `export * from "ioredis"`. |
-| `src/nanoid.ts` | `export * from "nanoid"`. |
-| `src/uuid.ts` | `export * from "uuid"`. Reachable via the `./uuid` subpath and the root namespace. |
-| `package.json` | The real contract: pinned dependency versions + the `exports` map mapping each subpath to its built `dist/*.js` / `*.d.ts`. |
-| `tsconfig.json` | Extends `@damatjs/typescript-config/base.json`, adds `types: ["bun"]`, `rootDir: src`, `outDir: dist`. |
+| File             | Responsibility                                                                                                                                 |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/index.ts`   | Root entry. Namespace re-exports (`export * as hono`, `export * as zod`, ...) so the root import works without collisions.                     |
+| `src/hono.ts`    | Curated Hono surface: core `hono` + `http-status`, `http-exception`, `secure-headers`, `timing`, `cors`, and `serve` from `@hono/node-server`. |
+| `src/zod.ts`     | `export * from "zod"` + a `z` alias for v3-style usage.                                                                                        |
+| `src/effect.ts`  | `export * from "effect"`.                                                                                                                      |
+| `src/pg.ts`      | `export * from "pg"`.                                                                                                                          |
+| `src/ioredis.ts` | `export * from "ioredis"`.                                                                                                                     |
+| `src/nanoid.ts`  | `export * from "nanoid"`.                                                                                                                      |
+| `src/uuid.ts`    | `export * from "uuid"`. Reachable via the `./uuid` subpath and the root namespace.                                                             |
+| `package.json`   | The real contract: pinned dependency versions + the `exports` map mapping each subpath to its built `dist/*.js` / `*.d.ts`.                    |
+| `tsconfig.json`  | Extends `@damatjs/typescript-config/base.json`, adds `types: ["bun"]`, `rootDir: src`, `outDir: dist`.                                         |
 
 ## Architecture overview
 

@@ -52,7 +52,7 @@ Three properties make this powerful:
 > A useful analogy: modules are to a Damat backend what components are to a
 > frontend — a standard unit you compose, reuse, and share.
 
-## How the backend is a *framework*
+## How the backend is a _framework_
 
 You write modules and route files; the framework does the wiring. When your app
 starts ([`@damatjs/framework`](../../packages/framework/README.md) drives this),
@@ -74,8 +74,8 @@ it:
 5. **starts & guards the server** — listens via `@hono/node-server` and installs
    graceful SIGINT/SIGTERM shutdown.
 
-You never write that bootstrap. You declare *what* (modules + routes); the
-framework decides *how* and *when*.
+You never write that bootstrap. You declare _what_ (modules + routes); the
+framework decides _how_ and _when_.
 
 ## The four layers you compose
 
@@ -113,15 +113,15 @@ compensations in reverse if a step throws.
 
 ## When to reach for what
 
-| You want to… | Use |
-|--------------|-----|
-| Add a table | a [model](./05-models.md) in a module's `models/` |
-| Add reusable data logic | a method on the module's [service](./07-modules-and-services.md) |
-| Expose an endpoint | a [route file](./08-http-apis.md) |
-| Coordinate steps that must roll back | a [workflow](./09-workflows.md) |
-| Cache / rate-limit / queue / lock | [`@damatjs/redis`](./10-redis.md) |
-| Package a feature for reuse | a [module](./13-authoring-modules.md) + `module.json` |
-| Pull in someone else's feature | [install a module](./14-installing-modules.md) |
+| You want to…                         | Use                                                              |
+| ------------------------------------ | ---------------------------------------------------------------- |
+| Add a table                          | a [model](./05-models.md) in a module's `models/`                |
+| Add reusable data logic              | a method on the module's [service](./07-modules-and-services.md) |
+| Expose an endpoint                   | a [route file](./08-http-apis.md)                                |
+| Coordinate steps that must roll back | a [workflow](./09-workflows.md)                                  |
+| Cache / rate-limit / queue / lock    | [`@damatjs/redis`](./10-redis.md)                                |
+| Package a feature for reuse          | a [module](./13-authoring-modules.md) + `module.json`            |
+| Pull in someone else's feature       | [install a module](./14-installing-modules.md)                   |
 
 ## How modules compose
 
@@ -130,7 +130,7 @@ three mechanisms:
 
 - **`getModule(id)`** — at runtime, any route, step, or service can fetch another
   module's service by id. This is the everyday way modules call each other.
-- **Links** (`src/links/`) — declare cross-module relationships *outside* the
+- **Links** (`src/links/`) — declare cross-module relationships _outside_ the
   modules themselves, so neither module hard-depends on the other's tables. A
   link generates a junction table and a `getModule("link")` service to create,
   dismiss, fetch, and graph-query across modules. See

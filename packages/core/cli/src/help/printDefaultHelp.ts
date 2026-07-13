@@ -1,10 +1,7 @@
 import type { CliConfig, Command } from "../types";
 import { formatCommandLine } from "./formatCommandLine";
 
-export function printDefaultHelp(
-  config: CliConfig,
-  commands: Command[]
-): void {
+export function printDefaultHelp(config: CliConfig, commands: Command[]): void {
   const cliName = config.name;
 
   console.log(`\nUsage: ${cliName} [command] [options]\n`);

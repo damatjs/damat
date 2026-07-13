@@ -12,7 +12,9 @@ type ModuleResolver = (id: string) => unknown;
 let _resolver: ModuleResolver | null = null;
 
 /** Called once by the framework during boot: `setLinkModuleResolver(getModule)`. */
-export function setLinkModuleResolver(fn: ModuleResolver | null | undefined): void {
+export function setLinkModuleResolver(
+  fn: ModuleResolver | null | undefined,
+): void {
   _resolver = fn ?? null;
 }
 
@@ -30,7 +32,9 @@ export function resolveLinkedModule(id: string): any {
   }
   const svc = _resolver(id);
   if (!svc) {
-    throw new Error(`Module "${id}" is not registered; cannot load linked records.`);
+    throw new Error(
+      `Module "${id}" is not registered; cannot load linked records.`,
+    );
   }
   return svc;
 }

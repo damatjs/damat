@@ -9,39 +9,39 @@ generated). This chapter is the reference for those methods and their options.
 
 ## The methods
 
-| Method | Returns | Notes |
-|--------|---------|-------|
-| `find(options)` | `T \| null` | first match |
-| `findMany(options)` | `T[]` | list with paging/sorting |
-| `findById(id, options?)` | `T \| null` | shorthand for a primary-key lookup |
-| `findOne(where, options?)` | `T \| null` | shorthand for `find({ where })` |
-| `create({ data, returning? })` | `T` | validates against the generated zod schema |
-| `createMany({ data: [...], returning? })` | `T[]` | bulk insert |
-| `upsert({ data, onConflict, updateColumns?, set?, returning? })` | `T` | insert-or-update on a conflict target |
-| `upsertMany({ data: [...], onConflict, ... })` | `T[]` | bulk upsert |
-| `update({ where, data, returning? })` | `T[]` | updates **all** matches |
-| `updateOne({ where, data, returning? })` | `T \| null` | updates the first match |
-| `delete({ where, returning?, cascade? })` | `number` | hard delete; returns row count |
-| `softDelete({ where, returning?, cascade? })` | `T[]` | sets `deleted_at` (needs `.softDelete()` on the model) |
-| `restore({ where, returning? })` | `T[]` | clears `deleted_at` |
-| `count({ where?, withDeleted? })` | `number` | |
-| `exists({ where, withDeleted? })` | `boolean` | |
+| Method                                                           | Returns     | Notes                                                  |
+| ---------------------------------------------------------------- | ----------- | ------------------------------------------------------ |
+| `find(options)`                                                  | `T \| null` | first match                                            |
+| `findMany(options)`                                              | `T[]`       | list with paging/sorting                               |
+| `findById(id, options?)`                                         | `T \| null` | shorthand for a primary-key lookup                     |
+| `findOne(where, options?)`                                       | `T \| null` | shorthand for `find({ where })`                        |
+| `create({ data, returning? })`                                   | `T`         | validates against the generated zod schema             |
+| `createMany({ data: [...], returning? })`                        | `T[]`       | bulk insert                                            |
+| `upsert({ data, onConflict, updateColumns?, set?, returning? })` | `T`         | insert-or-update on a conflict target                  |
+| `upsertMany({ data: [...], onConflict, ... })`                   | `T[]`       | bulk upsert                                            |
+| `update({ where, data, returning? })`                            | `T[]`       | updates **all** matches                                |
+| `updateOne({ where, data, returning? })`                         | `T \| null` | updates the first match                                |
+| `delete({ where, returning?, cascade? })`                        | `number`    | hard delete; returns row count                         |
+| `softDelete({ where, returning?, cascade? })`                    | `T[]`       | sets `deleted_at` (needs `.softDelete()` on the model) |
+| `restore({ where, returning? })`                                 | `T[]`       | clears `deleted_at`                                    |
+| `count({ where?, withDeleted? })`                                | `number`    |                                                        |
+| `exists({ where, withDeleted? })`                                | `boolean`   |                                                        |
 
 ## Find options
 
 ```ts
 interface FindOptions {
-  select?: string[];       // project specific columns
-  where?: WhereClause;     // filters (see below)
+  select?: string[]; // project specific columns
+  where?: WhereClause; // filters (see below)
   orderBy?: Array<{
     column: string;
     direction?: "ASC" | "DESC";
     nulls?: "NULLS FIRST" | "NULLS LAST";
   }>;
-  skip?: number;           // offset
-  take?: number;           // limit — capped at 1000 (MAX_PAGE_SIZE)
-  include?: string[];      // eager-load relations declared on the model
-  withDeleted?: boolean;   // include soft-deleted rows
+  skip?: number; // offset
+  take?: number; // limit — capped at 1000 (MAX_PAGE_SIZE)
+  include?: string[]; // eager-load relations declared on the model
+  withDeleted?: boolean; // include soft-deleted rows
 }
 ```
 
@@ -58,14 +58,14 @@ const admins = await users.user.findMany({
 
 A `where` value is either a plain value (equality) or an operator object:
 
-| Operator | Meaning |
-|----------|---------|
-| `eq` / `neq` | equals / not equals |
-| `gt` / `gte` / `lt` / `lte` | comparisons |
-| `like` / `ilike` | SQL LIKE (case-sensitive / insensitive) |
-| `in` / `notIn` | value in list |
-| `isNull: true` / `isNotNull: true` | null checks |
-| `between: [a, b]` | inclusive range |
+| Operator                           | Meaning                                 |
+| ---------------------------------- | --------------------------------------- |
+| `eq` / `neq`                       | equals / not equals                     |
+| `gt` / `gte` / `lt` / `lte`        | comparisons                             |
+| `like` / `ilike`                   | SQL LIKE (case-sensitive / insensitive) |
+| `in` / `notIn`                     | value in list                           |
+| `isNull: true` / `isNotNull: true` | null checks                             |
+| `between: [a, b]`                  | inclusive range                         |
 
 ```ts
 await posts.post.findMany({
@@ -102,11 +102,14 @@ follows the model's relations.
 Any sequence of service calls can run atomically:
 
 ```ts
-await this.transaction(async () => {
-  const user = await this.user.create({ data: { email } });
-  await this.account.create({ data: { userId: user.id, provider } });
-  return user;
-}, { isolationLevel: "SERIALIZABLE" });   // options are optional
+await this.transaction(
+  async () => {
+    const user = await this.user.create({ data: { email } });
+    await this.account.create({ data: { userId: user.id, provider } });
+    return user;
+  },
+  { isolationLevel: "SERIALIZABLE" },
+); // options are optional
 ```
 
 `TransactionOptions` supports `isolationLevel` (`"READ UNCOMMITTED"`,
@@ -129,8 +132,8 @@ config (and, for caching, per call). Full detail in the
 class UserService extends ModuleService({
   models,
   cache: { defaultTtl: 60, prefix: "user" }, // enable the read-cache machinery
-  events: true,                              // emit model CRUD events
-  logQueries: true,                          // debug-log each CRUD call's duration
+  events: true, // emit model CRUD events
+  logQueries: true, // debug-log each CRUD call's duration
 }) {}
 ```
 

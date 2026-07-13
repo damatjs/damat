@@ -42,12 +42,17 @@ export function envTemplate(
   name: string,
   secrets: { jwtSecret: string; cookieSecret: string },
 ): string {
-  return envExampleTemplate(name)
-    .replace('JWT_SECRET=""', `JWT_SECRET="${secrets.jwtSecret}"`)
-    .replace('COOKIE_SECRET=""', `COOKIE_SECRET="${secrets.cookieSecret}"`)
-    // Redis is optional and a wrong localhost instance (e.g. one requiring
-    // auth) would fail the very first boot — ship it commented out.
-    .replace('REDIS_URL="redis://localhost:6379"', '# REDIS_URL="redis://localhost:6379"');
+  return (
+    envExampleTemplate(name)
+      .replace('JWT_SECRET=""', `JWT_SECRET="${secrets.jwtSecret}"`)
+      .replace('COOKIE_SECRET=""', `COOKIE_SECRET="${secrets.cookieSecret}"`)
+      // Redis is optional and a wrong localhost instance (e.g. one requiring
+      // auth) would fail the very first boot — ship it commented out.
+      .replace(
+        'REDIS_URL="redis://localhost:6379"',
+        '# REDIS_URL="redis://localhost:6379"',
+      )
+  );
 }
 
 /** App name → a safe postgres database name (kebab → snake). */

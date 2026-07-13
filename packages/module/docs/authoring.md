@@ -25,8 +25,16 @@ export { model, columns };
 
 // Workflow engine — from @damatjs/workflow-engine
 export {
-  createStep, createWorkflow, executeStep, runStep, skipStep,
-  parallel, when, ifElse, RetryPolicies, Effect,
+  createStep,
+  createWorkflow,
+  executeStep,
+  runStep,
+  skipStep,
+  parallel,
+  when,
+  ifElse,
+  RetryPolicies,
+  Effect,
 };
 
 // HTTP route contracts — from @damatjs/framework/router
@@ -59,7 +67,10 @@ const models = {
 
 const credentialsSchema = z.object({ apiKey: z.string() });
 
-export class UserModuleService extends ModuleService({ models, credentialsSchema }) {
+export class UserModuleService extends ModuleService({
+  models,
+  credentialsSchema,
+}) {
   // custom methods on top of the generated model accessors
 }
 

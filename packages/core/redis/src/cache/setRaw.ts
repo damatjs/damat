@@ -1,6 +1,6 @@
 import type { Redis } from "../types";
 import { getRedis } from "../singleton";
-import { CACHE_PREFIX } from './constant';
+import { CACHE_PREFIX } from "./constant";
 
 // =============================================================================
 // RAW STRING CACHE (no JSON serialization)
@@ -16,15 +16,15 @@ import { CACHE_PREFIX } from './constant';
  * @param ttlSeconds - Time to live in seconds (optional, no expiry if not provided)
  */
 export async function cacheSetRaw(
-    key: string,
-    value: string,
-    ttlSeconds?: number,
-    client?: Redis,
+  key: string,
+  value: string,
+  ttlSeconds?: number,
+  client?: Redis,
 ): Promise<void> {
-    const redis = client || getRedis();
-    if (ttlSeconds) {
-        await redis.setex(CACHE_PREFIX + key, ttlSeconds, value);
-    } else {
-        await redis.set(CACHE_PREFIX + key, value);
-    }
+  const redis = client || getRedis();
+  if (ttlSeconds) {
+    await redis.setex(CACHE_PREFIX + key, ttlSeconds, value);
+  } else {
+    await redis.set(CACHE_PREFIX + key, value);
+  }
 }

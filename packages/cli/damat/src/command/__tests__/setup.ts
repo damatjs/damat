@@ -136,7 +136,9 @@ export const mockUnlinkSync = mock((p: string) => {
 export const mockRmSync = mock((p: string, opts?: unknown) => {
   rmCalls.push({ path: p, opts });
 });
-export const mockReaddirSync = mock((_p: string, _o?: unknown) => state.readdirResult);
+export const mockReaddirSync = mock(
+  (_p: string, _o?: unknown) => state.readdirResult,
+);
 export const mockReadFileSync = mock(
   (p: string, _enc?: unknown) => state.readFileMap[p as string] ?? "",
 );
@@ -190,7 +192,11 @@ mock.module("node:fs", () => ({
 // ---------------------------------------------------------------------------
 import * as nodeChildProcess from "node:child_process";
 const realChildProcess = { ...nodeChildProcess };
-export const spawnSyncCalls: Array<{ cmd: string; args: string[]; opts?: unknown }> = [];
+export const spawnSyncCalls: Array<{
+  cmd: string;
+  args: string[];
+  opts?: unknown;
+}> = [];
 export const mockSpawnSync = mock(
   (cmd: string, args: string[], opts?: unknown) => {
     spawnSyncCalls.push({ cmd, args, opts });
@@ -249,7 +255,9 @@ export function resetMocks() {
   mockRmSync.mockClear();
   mockReaddirSync.mockClear();
   mockReaddirSync.mockReset();
-  mockReaddirSync.mockImplementation((_p: string, _o?: unknown) => state.readdirResult);
+  mockReaddirSync.mockImplementation(
+    (_p: string, _o?: unknown) => state.readdirResult,
+  );
   mockReadFileSync.mockClear();
   mockReadFileSync.mockReset();
   mockReadFileSync.mockImplementation(

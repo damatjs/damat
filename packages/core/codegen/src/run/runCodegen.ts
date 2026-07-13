@@ -13,8 +13,10 @@ import {
  * schema, then runs the shared codegen. Still agnostic — the caller resolves the
  * `moduleResolver` and output paths from whatever manifest/config it uses.
  */
-export interface RunCodegenOptions
-  extends Omit<RunModuleCodegenOptions, "schema"> {
+export interface RunCodegenOptions extends Omit<
+  RunModuleCodegenOptions,
+  "schema"
+> {
   /**
    * Path that exports `models` (a module dir whose `index.ts` re-exports it, or
    * the entry file). Passed straight to `discoverModels`.

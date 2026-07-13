@@ -55,21 +55,21 @@ In a published app, point `args` at the installed bin instead:
 { "command": "bunx", "args": ["damat-mcp"] }
 ```
 
-Then ask your assistant: *"Find a Damat auth module and install it."* It will
+Then ask your assistant: _"Find a Damat auth module and install it."_ It will
 call `search_modules` → `module_info` → `add_module`, then tell you to run
 migrations.
 
 ## Tools
 
-| Tool | What it does |
-|------|--------------|
-| `list_modules` | List every module in the configured registry (ref, description, latest version, verification, owner). |
-| `search_modules` | Filter the registry by a query matched against ref, description and keywords. |
-| `module_info` | Full registry details for one ref (e.g. `damatjs/user@0.2.0`) — read before installing. |
-| `list_installed` | Scan the app's `src/modules` for installed modules (via their `module.json`). |
-| `add_module` | Install a module by running `damat module add <source>` (registry ref, path, github shorthand, or git URL). Path/git sources are refused unless `allowUnverified: true` is passed; dependency lifecycle scripts stay off unless `allowScripts: true`. |
-| `remove_module` | Remove an installed module by running `damat module remove <id>` — deletes its files, deregisters it from `damat.config.ts`, drops its tsconfig alias. Refused while other modules depend on it unless `force: true`; use `dryRun: true` first to show what would be deleted. |
-| `update_module` | Update an installed module by running `damat module update <id>` — re-fetches from the recorded source, shows a version/file diff, and force-reinstalls with `yes: true` (overwrites local edits; get user approval first). |
+| Tool             | What it does                                                                                                                                                                                                                                                                  |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `list_modules`   | List every module in the configured registry (ref, description, latest version, verification, owner).                                                                                                                                                                         |
+| `search_modules` | Filter the registry by a query matched against ref, description and keywords.                                                                                                                                                                                                 |
+| `module_info`    | Full registry details for one ref (e.g. `damatjs/user@0.2.0`) — read before installing.                                                                                                                                                                                       |
+| `list_installed` | Scan the app's `src/modules` for installed modules (via their `module.json`).                                                                                                                                                                                                 |
+| `add_module`     | Install a module by running `damat module add <source>` (registry ref, path, github shorthand, or git URL). Path/git sources are refused unless `allowUnverified: true` is passed; dependency lifecycle scripts stay off unless `allowScripts: true`.                         |
+| `remove_module`  | Remove an installed module by running `damat module remove <id>` — deletes its files, deregisters it from `damat.config.ts`, drops its tsconfig alias. Refused while other modules depend on it unless `force: true`; use `dryRun: true` first to show what would be deleted. |
+| `update_module`  | Update an installed module by running `damat module update <id>` — re-fetches from the recorded source, shows a version/file diff, and force-reinstalls with `yes: true` (overwrites local edits; get user approval first).                                                   |
 
 Installs are default-deny for anything a registry has not verified: the
 assistant must set `allowUnverified` explicitly (after the user approved that
@@ -80,12 +80,12 @@ exact source) before a git/path install proceeds, and `bun add` runs with
 
 All configuration is via environment variables (set them in `.mcp.json` → `env`):
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DAMAT_MODULE_REGISTRY` | — | Registry index location: an http(s) URL to the index JSON, a path to a `registry.json`, or a directory containing one. Without it, registry tools return guidance and you can still install from git/local paths. |
-| `DAMAT_APP_DIR` | `process.cwd()` | Working directory of the target app. Installs and "installed" scans run here. |
-| `DAMAT_CLI` | `damat` | Command used to invoke the CLI. May include args, e.g. `bun /abs/packages/cli/damat/src/cli.ts`. |
-| `DAMAT_MODULE_VERIFY` | `warn` | Forwarded to the CLI: `off` \| `warn` \| `require` — the install-time verification policy. |
+| Variable                | Default         | Description                                                                                                                                                                                                       |
+| ----------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DAMAT_MODULE_REGISTRY` | —               | Registry index location: an http(s) URL to the index JSON, a path to a `registry.json`, or a directory containing one. Without it, registry tools return guidance and you can still install from git/local paths. |
+| `DAMAT_APP_DIR`         | `process.cwd()` | Working directory of the target app. Installs and "installed" scans run here.                                                                                                                                     |
+| `DAMAT_CLI`             | `damat`         | Command used to invoke the CLI. May include args, e.g. `bun /abs/packages/cli/damat/src/cli.ts`.                                                                                                                  |
+| `DAMAT_MODULE_VERIFY`   | `warn`          | Forwarded to the CLI: `off` \| `warn` \| `require` — the install-time verification policy.                                                                                                                        |
 
 A sample registry index is provided in
 [`registry.example.json`](./registry.example.json). The registry schema matches

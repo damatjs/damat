@@ -20,46 +20,46 @@ Everything is re-exported from `src/index.ts` via the concern barrels.
 
 ## Module map
 
-| Path | Responsibility |
-| --- | --- |
-| `src/index.ts` | Root barrel: re-exports every concern (`authoring`, `manifest`, `config`, `runtime`, `harness`, `tooling`, `registry`). |
+| Path               | Responsibility                                                                                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/index.ts`     | Root barrel: re-exports every concern (`authoring`, `manifest`, `config`, `runtime`, `harness`, `tooling`, `registry`).                                                        |
 | `src/authoring.ts` | The authoring surface — re-exports `defineModule`/`ModuleService`/`model`/`columns`/workflow engine/route types/`z` from sibling packages. See [authoring.md](./authoring.md). |
-| `src/manifest/` | The `module.json` contract: `types`, `read`, `validate`, `constants`. See [manifest.md](./manifest.md). |
-| `src/config/` | `module.config.ts`: `defineModuleConfig`, `loadModuleConfig`, `ModuleAppConfig`. See [config.md](./config.md). |
-| `src/harness/` | Standalone dev/test: `bootModule`, `withModule`, db resolution, migration apply. See [harness.md](./harness.md). |
-| `src/runtime/` | Module-as-app: `startModuleApp`, `runModuleEntry`, app-config build, module-dir location. See [runtime.md](./runtime.md). |
-| `src/tooling/` | `createModuleMigration`, `generateModuleTypes` — no `damat.config.ts` needed. See [tooling.md](./tooling.md). |
-| `src/registry/` | Refs, readiness, resolution, verification. See [registry.md](./registry.md). |
+| `src/manifest/`    | The `module.json` contract: `types`, `read`, `validate`, `constants`. See [manifest.md](./manifest.md).                                                                        |
+| `src/config/`      | `module.config.ts`: `defineModuleConfig`, `loadModuleConfig`, `ModuleAppConfig`. See [config.md](./config.md).                                                                 |
+| `src/harness/`     | Standalone dev/test: `bootModule`, `withModule`, db resolution, migration apply. See [harness.md](./harness.md).                                                               |
+| `src/runtime/`     | Module-as-app: `startModuleApp`, `runModuleEntry`, app-config build, module-dir location. See [runtime.md](./runtime.md).                                                      |
+| `src/tooling/`     | `createModuleMigration`, `generateModuleTypes` — no `damat.config.ts` needed. See [tooling.md](./tooling.md).                                                                  |
+| `src/registry/`    | Refs, readiness, resolution, verification. See [registry.md](./registry.md).                                                                                                   |
 
 ### Per-concern file map
 
-| File | Role |
-| --- | --- |
-| `manifest/types.ts` | `ModuleManifest` & friends, `DEFAULT_MODULE_PATHS`. |
-| `manifest/validate.ts` | `validateModuleManifest` (throws CLI-friendly errors). |
-| `manifest/read.ts` | `readModuleManifest` (read + validate `module.json`). |
-| `manifest/constants.ts` | `MODULE_MANIFEST_FILENAME = "module.json"`. |
-| `config/types.ts` | `ModuleAppConfig`. |
-| `config/define.ts` | `defineModuleConfig` (identity helper). |
-| `config/load.ts` | `loadModuleConfig` (dynamic import of the config file). |
-| `harness/boot.ts` | `bootModule` — wire infra, migrate, init, return `BootedModule`. |
-| `harness/with.ts` | `withModule` — boot + run + always teardown. |
-| `harness/database.ts` | `resolveDatabaseConfig` (internal — not exported from the barrel). |
-| `harness/migrate.ts` | `applyModuleMigrations` (internal — used by harness & runtime). |
-| `harness/types.ts` | `BootableModule`, `BootModuleOptions`, `BootedModule`. |
-| `runtime/start.ts` | `startModuleApp` — full HTTP stack for one module. |
-| `runtime/entry.ts` | `runModuleEntry` — `damat module dev` entry. |
-| `runtime/appConfig.ts` | `buildModuleAppConfig`, `DEFAULT_MODULE_PORT`. |
-| `runtime/locate.ts` | `locateModuleDir` — find `module.json` (src/ or package root). |
-| `runtime/types.ts` | `StartModuleAppOptions`, `RunningModuleApp`. |
-| `tooling/migration.ts` | `createModuleMigration`. |
-| `tooling/codegen.ts` | `generateModuleTypes`. |
-| `registry/types.ts` | `ModuleRef`, `ModuleValidationReport`. |
-| `registry/parse.ts` / `format.ts` | `parseModuleRef` / `formatModuleRef`. |
-| `registry/entry.ts` | `RegistryIndex`/`RegistryModuleEntry` schema + verification types + `normalizeVersionEntry`. |
-| `registry/verify.ts` | `verificationPolicy`, `evaluateVerification` — the trust gate. |
-| `registry/readiness.ts` | `validateModuleDir` — registry-readiness report. |
-| `registry/resolve.ts` | `resolveRegistryEntry`, `resolveRegistryRef`, `ResolvedRegistryModule`. |
+| File                              | Role                                                                                         |
+| --------------------------------- | -------------------------------------------------------------------------------------------- |
+| `manifest/types.ts`               | `ModuleManifest` & friends, `DEFAULT_MODULE_PATHS`.                                          |
+| `manifest/validate.ts`            | `validateModuleManifest` (throws CLI-friendly errors).                                       |
+| `manifest/read.ts`                | `readModuleManifest` (read + validate `module.json`).                                        |
+| `manifest/constants.ts`           | `MODULE_MANIFEST_FILENAME = "module.json"`.                                                  |
+| `config/types.ts`                 | `ModuleAppConfig`.                                                                           |
+| `config/define.ts`                | `defineModuleConfig` (identity helper).                                                      |
+| `config/load.ts`                  | `loadModuleConfig` (dynamic import of the config file).                                      |
+| `harness/boot.ts`                 | `bootModule` — wire infra, migrate, init, return `BootedModule`.                             |
+| `harness/with.ts`                 | `withModule` — boot + run + always teardown.                                                 |
+| `harness/database.ts`             | `resolveDatabaseConfig` (internal — not exported from the barrel).                           |
+| `harness/migrate.ts`              | `applyModuleMigrations` (internal — used by harness & runtime).                              |
+| `harness/types.ts`                | `BootableModule`, `BootModuleOptions`, `BootedModule`.                                       |
+| `runtime/start.ts`                | `startModuleApp` — full HTTP stack for one module.                                           |
+| `runtime/entry.ts`                | `runModuleEntry` — `damat module dev` entry.                                                 |
+| `runtime/appConfig.ts`            | `buildModuleAppConfig`, `DEFAULT_MODULE_PORT`.                                               |
+| `runtime/locate.ts`               | `locateModuleDir` — find `module.json` (src/ or package root).                               |
+| `runtime/types.ts`                | `StartModuleAppOptions`, `RunningModuleApp`.                                                 |
+| `tooling/migration.ts`            | `createModuleMigration`.                                                                     |
+| `tooling/codegen.ts`              | `generateModuleTypes`.                                                                       |
+| `registry/types.ts`               | `ModuleRef`, `ModuleValidationReport`.                                                       |
+| `registry/parse.ts` / `format.ts` | `parseModuleRef` / `formatModuleRef`.                                                        |
+| `registry/entry.ts`               | `RegistryIndex`/`RegistryModuleEntry` schema + verification types + `normalizeVersionEntry`. |
+| `registry/verify.ts`              | `verificationPolicy`, `evaluateVerification` — the trust gate.                               |
+| `registry/readiness.ts`           | `validateModuleDir` — registry-readiness report.                                             |
+| `registry/resolve.ts`             | `resolveRegistryEntry`, `resolveRegistryRef`, `ResolvedRegistryModule`.                      |
 
 ## Split docs
 
@@ -137,18 +137,18 @@ registry   ─ parseModuleRef → resolveRegistryEntry(DAMAT_MODULE_REGISTRY)
   `index.ts` / `models` / `migrations` / `workflows` / `types` apply.
 - **Module dir lives in `src/`** for package layout; `locateModuleDir` also
   accepts the package root (legacy in-app layout).
-- **Errors vs warnings** (`validateModuleDir`): errors block *install*
+- **Errors vs warnings** (`validateModuleDir`): errors block _install_
   (missing entry, broken manifest, declared-but-missing dirs); warnings block
-  *publishing* (missing version/description/author/license/namespace; models
+  _publishing_ (missing version/description/author/license/namespace; models
   without migrations).
-- **Two planes of trust** (registry): the author *declares*
+- **Two planes of trust** (registry): the author _declares_
   name/version/author/license/keywords/repository in `module.json`; the registry
-  *backend* assigns `owner` and stamps `verification`. An author cannot
+  _backend_ assigns `owner` and stamps `verification`. An author cannot
   self-verify. `rejected`/`revoked` is always blocked regardless of policy.
 - **The harness owns the process.** `bootModule` calls `PoolManager.reset()`
   before `setup` and on `teardown` — it assumes a single module per process.
 - **`applyModuleMigrations` / `resolveDatabaseConfig` are internal.** They live
-  under `harness/` but are *not* re-exported from `harness/index.ts`; the runtime
+  under `harness/` but are _not_ re-exported from `harness/index.ts`; the runtime
   imports `applyModuleMigrations` directly.
 
 ## Safe-extension guidance

@@ -48,10 +48,13 @@ import { defineAuthProvider } from "@damatjs/auth";
 
 export const myProvider = defineAuthProvider({
   name: "my-idp",
-  async authenticate(c) {                     // verify the request → principal | null
+  async authenticate(c) {
+    // verify the request → principal | null
     const token = c.req.header("authorization")?.replace(/^Bearer /, "");
     const claims = token ? await verifyWithMyIdp(token) : null;
-    return claims ? { id: claims.sub, email: claims.email, orgId: claims.org } : null;
+    return claims
+      ? { id: claims.sub, email: claims.email, orgId: claims.org }
+      : null;
   },
   // optional: authenticateApiKey(c), routes: { basePath, handler }, shutdown()
 });
@@ -67,7 +70,9 @@ import { defineAuthAdapter, defineAuthProvider } from "@damatjs/auth";
 export default defineAuthAdapter((options) =>
   defineAuthProvider({
     name: "my-idp",
-    authenticate: async (c) => { /* use options.* to verify */ },
+    authenticate: async (c) => {
+      /* use options.* to verify */
+    },
   }),
 );
 ```
@@ -84,15 +89,15 @@ context keys, or the router.
 
 ## The contract
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `AuthProvider` | interface | `authenticate(c) → principal \| null`, optional `authenticateApiKey`, `routes` (provider-owned endpoints, e.g. Better Auth), `shutdown`. |
-| `AuthPrincipal` | interface | `{ id, email?, orgId?, …claims }` — structurally the framework's `AuthUser`; `orgId` becomes the request team. |
-| `defineAuthProvider(provider)` | function | Identity helper: type-checks a provider object against the contract. |
-| `defineAuthAdapter(factory)` | function | Identity helper for an adapter's default export (`(options) => AuthProvider`). |
-| `createAuthHandlers(provider, options?)` | function | Build `{ session, apiKey, flexible }` middleware from a provider (used by the framework; also usable standalone). |
-| `setPrincipal(c, principal)` | function | Put a principal on the request context (`user`/`userId`/`team`). |
-| `AuthServiceConfig`, `AuthAdapterFactory`, `OnAuthenticated` | types | Config + factory shapes. |
+| Export                                                       | Kind      | Summary                                                                                                                                  |
+| ------------------------------------------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `AuthProvider`                                               | interface | `authenticate(c) → principal \| null`, optional `authenticateApiKey`, `routes` (provider-owned endpoints, e.g. Better Auth), `shutdown`. |
+| `AuthPrincipal`                                              | interface | `{ id, email?, orgId?, …claims }` — structurally the framework's `AuthUser`; `orgId` becomes the request team.                           |
+| `defineAuthProvider(provider)`                               | function  | Identity helper: type-checks a provider object against the contract.                                                                     |
+| `defineAuthAdapter(factory)`                                 | function  | Identity helper for an adapter's default export (`(options) => AuthProvider`).                                                           |
+| `createAuthHandlers(provider, options?)`                     | function  | Build `{ session, apiKey, flexible }` middleware from a provider (used by the framework; also usable standalone).                        |
+| `setPrincipal(c, principal)`                                 | function  | Put a principal on the request context (`user`/`userId`/`team`).                                                                         |
+| `AuthServiceConfig`, `AuthAdapterFactory`, `OnAuthenticated` | types     | Config + factory shapes.                                                                                                                 |
 
 ## Semantics
 

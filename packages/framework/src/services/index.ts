@@ -3,7 +3,10 @@ import { initLogger, closeLogger } from "./logger";
 import { initDatabase, closeDatabase, getConnectionManager } from "./database";
 import { AppConfig } from "../config";
 import { disconnectRedis, getRedis, initRedis, connectRedis } from "./redis";
-import { connectEventBroadcast, disconnectEventBroadcast } from "@damatjs/events";
+import {
+  connectEventBroadcast,
+  disconnectEventBroadcast,
+} from "@damatjs/events";
 import { JobWorker } from "@damatjs/jobs";
 import { initAuth } from "./auth";
 import { initModules, getAllModules, getModule } from "./moduleService";
@@ -138,8 +141,12 @@ export async function initializeServices(
   if (jobsConfig?.worker) {
     if (config.projectConfig.redisUrl) {
       const worker = new JobWorker({
-        ...(jobsConfig.queueName !== undefined ? { queueName: jobsConfig.queueName } : {}),
-        ...(jobsConfig.concurrency !== undefined ? { concurrency: jobsConfig.concurrency } : {}),
+        ...(jobsConfig.queueName !== undefined
+          ? { queueName: jobsConfig.queueName }
+          : {}),
+        ...(jobsConfig.concurrency !== undefined
+          ? { concurrency: jobsConfig.concurrency }
+          : {}),
         ...(jobsConfig.pollIntervalMs !== undefined
           ? { pollIntervalMs: jobsConfig.pollIntervalMs }
           : {}),

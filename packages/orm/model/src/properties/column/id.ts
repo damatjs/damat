@@ -1,4 +1,4 @@
-import { ColumnBuilder } from './base';
+import { ColumnBuilder } from "./base";
 import { ColumnSchema } from "@/types";
 /**
  * ID column builder with prefix support

@@ -11,8 +11,8 @@ import {
   startCommand,
   codegenCommand,
   barrelCommand,
-  moduleCommand
-} from './command';
+  moduleCommand,
+} from "./command";
 import { CLI_VERSION } from "./version.generated";
 
 runCli({
@@ -29,7 +29,8 @@ runCli({
     barrelCommand,
     moduleCommand,
     kitCommand,
-    authCommand],
+    authCommand,
+  ],
   banner: {
     title: "Damat CLI",
     subtitle: "Development and build tool for Damat.js",
@@ -38,6 +39,8 @@ runCli({
 }).catch((error) => {
   // Last-resort net so setup/dispatch failures surface a readable error
   // instead of a raw unhandled-rejection dump.
-  reportError(new Logger({ timestamp: false }), error, { prefix: "Fatal error" });
+  reportError(new Logger({ timestamp: false }), error, {
+    prefix: "Fatal error",
+  });
   process.exit(getExitCode(error));
 });

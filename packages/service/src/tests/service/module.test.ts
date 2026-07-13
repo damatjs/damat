@@ -197,7 +197,9 @@ describe("ModuleService factory", () => {
       const Base = ModuleService({ models: { User: fakeModel("user") } });
       const svc: any = new (Base as any)();
 
-      await svc.transaction(async () => null, { isolationLevel: "SERIALIZABLE" });
+      await svc.transaction(async () => null, {
+        isolationLevel: "SERIALIZABLE",
+      });
 
       expect(em.txOptions).toEqual({ isolationLevel: "SERIALIZABLE" });
     });

@@ -2,7 +2,7 @@ import { Redis } from "@damatjs/deps/ioredis";
 import type { RedisClientConfig } from "./types";
 import { createRedisConnection } from "./client/factory";
 import { CONSOLE_LOGGER } from "./client/consoleLogger";
-import { ILogger } from '@damatjs/logger';
+import { ILogger } from "@damatjs/logger";
 
 export class RedisClient {
   private readonly redis: Redis;

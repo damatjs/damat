@@ -7,10 +7,7 @@ import { createRootRoute } from "../handlers";
 import { errorHandler } from "../middleware/error";
 import type { FileRouter } from "../router";
 import type { ProjectConfig } from "../config";
-import {
-  setGlobalLoggerInstance,
-  clearGlobalLogger,
-} from "../services/logger";
+import { setGlobalLoggerInstance, clearGlobalLogger } from "../services/logger";
 
 const recordingLogger = {
   info: () => {},
@@ -85,12 +82,17 @@ describe("bootstrap lifecycle hooks", () => {
 
     const info = await app.request("/damat");
     expect(info.status).toBe(200);
-    const infoBody = (await info.json()) as { defaultEndpoints: Record<string, string> };
+    const infoBody = (await info.json()) as {
+      defaultEndpoints: Record<string, string>;
+    };
     expect(infoBody.defaultEndpoints["GET /damat"]).toBe("API information");
 
     const routes = await app.request("/damat/api/routes");
     expect(routes.status).toBe(200);
-    const routesBody = (await routes.json()) as { success: boolean; data: { count: number } };
+    const routesBody = (await routes.json()) as {
+      success: boolean;
+      data: { count: number };
+    };
     expect(routesBody.success).toBe(true);
     expect(routesBody.data.count).toBe(0); // empty routesDir
 

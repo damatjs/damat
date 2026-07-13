@@ -14,8 +14,14 @@ export const removeModule: ToolDef = {
   inputSchema: {
     type: "object",
     properties: {
-      id: { type: "string", description: "The installed module id (single kebab-case segment)" },
-      dir: { type: "string", description: "Modules directory (default: src/modules)" },
+      id: {
+        type: "string",
+        description: "The installed module id (single kebab-case segment)",
+      },
+      dir: {
+        type: "string",
+        description: "Modules directory (default: src/modules)",
+      },
       force: {
         type: "boolean",
         description:

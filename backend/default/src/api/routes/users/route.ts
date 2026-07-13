@@ -15,12 +15,15 @@ export const GET: RouteHandler = async (c) => {
 export const POST: RouteHandler = async (c) => {
   const body = await c.req.json();
 
-  return c.json({
-    success: true,
-    data: {
-      id: "3",
-      ...body,
-      createdAt: new Date().toISOString(),
+  return c.json(
+    {
+      success: true,
+      data: {
+        id: "3",
+        ...body,
+        createdAt: new Date().toISOString(),
+      },
     },
-  }, 201);
+    201,
+  );
 };

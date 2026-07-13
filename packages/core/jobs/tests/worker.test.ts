@@ -1,4 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, setSystemTime } from "bun:test";
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  setSystemTime,
+} from "bun:test";
 import { setGlobalLogger, closeLogger } from "@damatjs/logger";
 import {
   JobWorker,
@@ -10,7 +17,10 @@ import {
 } from "../src/index";
 // The same FakeRedis the @damatjs/redis suite runs RedisQueue against: the
 // worker exercises the REAL queue (scores, retry re-queues, dead-lettering).
-import { createFakeRedis, FakeRedis } from "../../redis/tests/helpers/fakeRedis";
+import {
+  createFakeRedis,
+  FakeRedis,
+} from "../../redis/tests/helpers/fakeRedis";
 
 // ---------------------------------------------------------------------------
 // Recording logger: the worker reports lifecycle + failures through the global
@@ -43,7 +53,10 @@ const logged = (level: string, prefix: string) =>
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Poll (real timers, bounded) until the condition holds. */
-async function waitFor(condition: () => boolean | Promise<boolean>, label = "condition") {
+async function waitFor(
+  condition: () => boolean | Promise<boolean>,
+  label = "condition",
+) {
   for (let i = 0; i < 400; i++) {
     if (await condition()) return;
     await sleep(5);
@@ -186,7 +199,10 @@ describe("JobWorker.process — retry and dead-letter", () => {
       { backoffMs: 60_000 },
     );
 
-    const enqueued = await enqueueJob("throws-string", null, { client, maxAttempts: 1 });
+    const enqueued = await enqueueJob("throws-string", null, {
+      client,
+      maxAttempts: 1,
+    });
     const queue = getJobQueue({ client });
     const [claimed] = await queue.dequeue(1);
 
@@ -209,9 +225,14 @@ describe("JobWorker.process — unknown job", () => {
     const stored = await queue.getJob(enqueued.id);
     expect(stored?.status).toBe("failed");
     expect(stored?.attempts).toBe(0); // never executed
-    expect(stored?.error).toBe('Unknown job "ghost" — no defineJob() in this process');
+    expect(stored?.error).toBe(
+      'Unknown job "ghost" — no defineJob() in this process',
+    );
     expect(
-      logged("error", 'Unknown job "ghost" — dead-lettered (define it before enqueueing)'),
+      logged(
+        "error",
+        'Unknown job "ghost" — dead-lettered (define it before enqueueing)',
+      ),
     ).toHaveLength(1);
     expect((await queue.getStats()).failed).toBe(1);
   });
@@ -298,14 +319,22 @@ describe("JobWorker — start/stop loop", () => {
     const flaky = new FlakyRedis() as never;
 
     defineJob("task", () => {});
-    const enqueued = await enqueueJob("task", null, { client: flaky, queueName: "flaky-q" });
+    const enqueued = await enqueueJob("task", null, {
+      client: flaky,
+      queueName: "flaky-q",
+    });
     const queue = getJobQueue({ client: flaky, queueName: "flaky-q" });
 
-    const worker = makeWorker({ client: flaky, queueName: "flaky-q", pollIntervalMs: 5 });
+    const worker = makeWorker({
+      client: flaky,
+      queueName: "flaky-q",
+      pollIntervalMs: 5,
+    });
     worker.start();
 
     await waitFor(
-      () => logged("error", "Job dequeue failed — retrying next poll").length > 0,
+      () =>
+        logged("error", "Job dequeue failed — retrying next poll").length > 0,
       "dequeue failure log",
     );
     // The loop survived the failure and completed the job on a later poll.

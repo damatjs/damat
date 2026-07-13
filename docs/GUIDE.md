@@ -16,12 +16,14 @@ the whole thing (chapters + packages) lives in
 ## Chapters
 
 ### Start here
+
 1. [Introduction](./guide/01-introduction.md) — what Damat is and the package map
 2. [Concepts — modules & the framework](./guide/02-concepts.md) — the idea and mental model
 3. [Getting started](./guide/03-getting-started.md) — install, scaffold, project structure
 4. [Configuration & environment](./guide/04-configuration.md) — `damat.config.ts` and env vars
 
 ### Build
+
 5. [Defining models (the ORM DSL)](./guide/05-models.md)
 6. [Migrations](./guide/06-migrations.md)
 7. [Modules & services](./guide/07-modules-and-services.md)
@@ -33,6 +35,7 @@ the whole thing (chapters + packages) lives in
 12. [The default backend, end to end](./guide/12-default-backend.md)
 
 ### Modules & sharing
+
 13. [Authoring a module](./guide/13-authoring-modules.md) — build one self-contained module (the blade)
 14. [Installing existing modules](./guide/14-installing-modules.md)
     - 14b. [Publishing modules](./guide/14b-publishing-modules.md) — list a module in a registry, verification, run your own
@@ -41,6 +44,7 @@ the whole thing (chapters + packages) lives in
 17. [Composing & linking modules](./guide/17-composing-and-linking-modules.md) — the backend owner assembles the blades
 
 ### Operate & reference
+
 18. [CLI reference](./guide/18-cli-reference.md)
 19. [Deployment](./guide/19-deployment.md)
 20. [Package reference](./guide/20-package-reference.md)
@@ -53,7 +57,7 @@ the whole thing (chapters + packages) lives in
 - This page is the **index**. Each chapter is a standalone page under
   [`docs/guide/`](./guide/) with prev/next navigation.
 - **Usage** lives here. For the **internals** of any package (if you're changing
-  its code), follow the *Internals* links into each package's `docs/` folder, or
+  its code), follow the _Internals_ links into each package's `docs/` folder, or
   see the [Package reference](./guide/20-package-reference.md).
 - Related top-level docs: the [module manifest contract (MODULES.md)](../MODULES.md)
   and the [AI contributor guide (AGENTS.md)](../AGENTS.md).

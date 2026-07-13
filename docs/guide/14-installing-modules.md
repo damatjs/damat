@@ -14,13 +14,13 @@ A module is authored **flat** (`workflows/<table>`, `api/routes/<table>`,
 `links/models/`, `tests/`); on install a `<moduleId>/` segment is added so two
 modules never collide:
 
-| In the module package | Lands in the app |
-| --- | --- |
-| models, service, config, types, migrations, `lib/` | `src/modules/<moduleId>/` |
-| `api/routes/<table>/` | `src/api/routes/<moduleId>/<table>/` (URL `/<moduleId>/<table>`) |
-| `workflows/<table>/` | `src/workflows/<moduleId>/<table>/` |
-| `links/models/<x>.ts` | `src/links/<moduleId>/models/<x>.ts` |
-| `tests/` | `tests/<moduleId>/` |
+| In the module package                              | Lands in the app                                                 |
+| -------------------------------------------------- | ---------------------------------------------------------------- |
+| models, service, config, types, migrations, `lib/` | `src/modules/<moduleId>/`                                        |
+| `api/routes/<table>/`                              | `src/api/routes/<moduleId>/<table>/` (URL `/<moduleId>/<table>`) |
+| `workflows/<table>/`                               | `src/workflows/<moduleId>/<table>/`                              |
+| `links/models/<x>.ts`                              | `src/links/<moduleId>/models/<x>.ts`                             |
+| `tests/`                                           | `tests/<moduleId>/`                                              |
 
 Generated routes import workflows from the bare `@workflows` barrel, which the
 install wires up via the `@workflows` / `@workflows/*` and `@<moduleId>/*` tsconfig
@@ -61,7 +61,7 @@ damat module update <id>          # re-fetch from the recorded source, diff, rei
   it from `damat.config.ts`, and drops its tsconfig alias. It **refuses** while
   another installed module depends on it (unless `--force`); `--dry-run` previews
   the deletion and `--clean-env` also strips the module's block from
-  `.env.example` (never `.env`). Database tables and applied migrations are *not*
+  `.env.example` (never `.env`). Database tables and applied migrations are _not_
   rolled back.
 - **`update`** re-resolves the source `add` recorded in `damat.config.ts`, shows a
   version + file diff (flagging any locally edited files it would overwrite), and
@@ -71,13 +71,14 @@ damat module update <id>          # re-fetch from the recorded source, diff, rei
 
 A module can ship cross-module link files (a real `defineLink`) under
 `links/models/`. On `add` they split into `src/links/<moduleId>/`, the owner index
-+ top-level aggregator are regenerated, and `links: "./src/links"` is ensured in
-`damat.config.ts`. The link is **dormant** until you run
-`damat-orm migrate:create link:<moduleId>` + `migrate:up`, and harmless if its
-target module isn't installed. The copied files are yours to edit (e.g. to point
-at a target installed under a different id) — a re-install won't clobber them
-unless you pass `--force`. See
-[§17.3 → Links shipped by a module](./17-composing-and-linking-modules.md#links-shipped-by-a-module).
+
+- top-level aggregator are regenerated, and `links: "./src/links"` is ensured in
+  `damat.config.ts`. The link is **dormant** until you run
+  `damat-orm migrate:create link:<moduleId>` + `migrate:up`, and harmless if its
+  target module isn't installed. The copied files are yours to edit (e.g. to point
+  at a target installed under a different id) — a re-install won't clobber them
+  unless you pass `--force`. See
+  [§17.3 → Links shipped by a module](./17-composing-and-linking-modules.md#links-shipped-by-a-module).
 
 ## Trust & verification
 

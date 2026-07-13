@@ -3,18 +3,18 @@
 Maintainer-facing documentation for `@damatjs/load-env`. For the user-facing overview
 see the [package README](../README.md).
 
-This is a two-file package: a loader that decides *which* file to read and how to merge
+This is a two-file package: a loader that decides _which_ file to read and how to merge
 it into `process.env`, and a parser that turns `.env` text into key/value pairs. There
 are no runtime dependencies.
 
 ## Module map
 
-| File                   | Responsibility                                                                       |
-| ---------------------- | ----------------------------------------------------------------------------------- |
-| `src/index.ts`         | `loadEnv()` — builds the file cascade, reads every existing file, merges them.       |
-| `src/parseEnvFile.ts`  | `parseEnvFile()` — line-by-line parser (comments, quotes, inline comments).          |
-| `package.json`         | Name `@damatjs/load-env`, version, `exports` map (`.` → `dist/index.js`).            |
-| `tsconfig.json`        | Extends `@damatjs/typescript-config/base.json`; `@/*` path alias → `src/*` (resolved at build by `tsc-alias`). |
+| File                  | Responsibility                                                                                                 |
+| --------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `src/index.ts`        | `loadEnv()` — builds the file cascade, reads every existing file, merges them.                                 |
+| `src/parseEnvFile.ts` | `parseEnvFile()` — line-by-line parser (comments, quotes, inline comments).                                    |
+| `package.json`        | Name `@damatjs/load-env`, version, `exports` map (`.` → `dist/index.js`).                                      |
+| `tsconfig.json`       | Extends `@damatjs/typescript-config/base.json`; `@/*` path alias → `src/*` (resolved at build by `tsc-alias`). |
 
 `src/index.ts` is the package entry point and exports `loadEnv`. It imports
 `parseEnvFile` from `src/parseEnvFile.ts` for internal use; `parseEnvFile` is **not**
@@ -52,7 +52,7 @@ documented in [architecture.md](./architecture.md).
 3. It iterates **every** candidate in order; each file that exists is read, parsed, and
    merged. Lower-priority files (`.env`) are merged first, higher-priority files
    (`.env.{env}.local`) last, so the last writer of a shared key wins among the files.
-4. Merge respects the snapshot: a key is written only if it has a truthy value *and* it
+4. Merge respects the snapshot: a key is written only if it has a truthy value _and_ it
    was **not** in `preexisting`. Pre-existing (system) variables therefore win, and a key
    first set by an earlier file can still be overridden by a later file (because the
    snapshot is frozen before the loop and does not grow as keys are added).
@@ -65,14 +65,14 @@ documented in [architecture.md](./architecture.md).
   the bottom of the dependency graph.
 - **All matching files are merged; later files override earlier.** The loop reads every
   existing file in cascade order. The effective precedence is
-  `.env.{env}.local` > `.env.{env}` > `.env.local` > `.env`, realized by *layering* (each
+  `.env.{env}.local` > `.env.{env}` > `.env.local` > `.env`, realized by _layering_ (each
   file overwrites shared keys set by lower-priority files). See
   [architecture.md](./architecture.md).
 - **System env always wins.** Keys present in `process.env` before the call are captured
   in a snapshot and never overwritten, so exported shell variables and platform-injected
   vars are preserved.
 - **Falsy values are skipped.** The merge guard is `if (value && ...)`, so empty-string
-  values parsed from a file are *not* written.
+  values parsed from a file are _not_ written.
 - **Failures are non-fatal.** A failed read/parse warns and is skipped, never throws.
 
 ## Gotchas
@@ -82,7 +82,7 @@ documented in [architecture.md](./architecture.md).
   higher-priority file's value for a shared key wins.
 - The "system env wins" guard uses a snapshot taken **before** the loop, not a live
   `process.env` check. A key first written by `.env` is therefore still overridable by a
-  later file in the same call — only keys that existed *before* `loadEnv` ran are locked.
+  later file in the same call — only keys that existed _before_ `loadEnv` ran are locked.
 - The parser supports neither variable expansion (`${VAR}`) nor multiline values nor
   `export ` prefixes. See [architecture.md](./architecture.md) for the exact rules.
 

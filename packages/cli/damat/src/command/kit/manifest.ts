@@ -66,7 +66,9 @@ export function readKitManifest(kitDir: string): KitManifest {
   }
   const errors = kitManifestErrors(raw);
   if (errors.length > 0) {
-    throw new Error(`${KIT_MANIFEST_FILENAME} is invalid:\n  - ${errors.join("\n  - ")}`);
+    throw new Error(
+      `${KIT_MANIFEST_FILENAME} is invalid:\n  - ${errors.join("\n  - ")}`,
+    );
   }
   return raw as KitManifest;
 }
@@ -90,20 +92,29 @@ export function kitManifestErrors(raw: unknown): string[] {
       if (typeof mapping?.from !== "string" || mapping.from.length === 0) {
         errors.push(`mappings[${i}].from must be a non-empty glob`);
       }
-      if (typeof mapping?.to !== "string" || targetPathError(mapping.to as string)) {
+      if (
+        typeof mapping?.to !== "string" ||
+        targetPathError(mapping.to as string)
+      ) {
         errors.push(
           `mappings[${i}].to must be a relative path inside the project (got ${JSON.stringify(mapping?.to)})`,
         );
       }
     });
   }
-  if (m.fallback !== undefined && (typeof m.fallback !== "string" || targetPathError(m.fallback))) {
+  if (
+    m.fallback !== undefined &&
+    (typeof m.fallback !== "string" || targetPathError(m.fallback))
+  ) {
     errors.push("`fallback` must be a relative path inside the project");
   }
   if (m.ignore !== undefined && !Array.isArray(m.ignore)) {
     errors.push("`ignore` must be an array of globs");
   }
-  if (m.packages !== undefined && (typeof m.packages !== "object" || m.packages === null)) {
+  if (
+    m.packages !== undefined &&
+    (typeof m.packages !== "object" || m.packages === null)
+  ) {
     errors.push("`packages` must be an object of name → range");
   }
   return errors;
@@ -118,10 +129,15 @@ export function kitManifestErrors(raw: unknown): string[] {
  */
 export function targetPathError(target: string): string | null {
   if (!target) return "must be non-empty";
-  if (target.startsWith("/") || target.startsWith("\\") || /^[A-Za-z]:/.test(target)) {
+  if (
+    target.startsWith("/") ||
+    target.startsWith("\\") ||
+    /^[A-Za-z]:/.test(target)
+  ) {
     return "must be relative";
   }
   const segments = target.split(/[\\/]+/);
-  if (segments.some((s) => s === ".." || s === ".")) return "must not contain .. or .";
+  if (segments.some((s) => s === ".." || s === "."))
+    return "must not contain .. or .";
   return null;
 }

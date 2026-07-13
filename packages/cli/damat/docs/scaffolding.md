@@ -8,9 +8,9 @@ only fills in models, service logic, and `module.config.ts` — everything else
 
 ## Naming helpers
 
-| Function | Behaviour |
-|---|---|
-| `toCamel(name)` | `user-management` → `userManagement` |
+| Function         | Behaviour                            |
+| ---------------- | ------------------------------------ |
+| `toCamel(name)`  | `user-management` → `userManagement` |
 | `toPascal(name)` | `user-management` → `UserManagement` |
 
 `init` derives `serviceClass = ${toPascal(name)}Service` and the accessor name
@@ -23,21 +23,21 @@ only fills in models, service logic, and `module.config.ts` — everything else
 `src/config/schema`, `tests`. Then it writes the file map below (each parent dir
 is `mkdir -p`'d).
 
-| File | Template fn | Purpose |
-|---|---|---|
-| `package.json` | `packageJsonTemplate(name)` | `@modules/<name>`, private, scripts wired to `damat module …` |
-| `tsconfig.json` | `tsconfigTemplate()` | strict ES2023 (`module: ESNext`, `moduleResolution: bundler`), `types: ["bun"]`, `noEmit`, includes src/tests/module.config |
-| `module.config.ts` | `moduleConfigTemplate()` | `defineModuleConfig({ projectConfig: { … } })` |
-| `.env.example` | `envExampleTemplate()` | `DATABASE_URL=postgres://localhost:5432/postgres` |
-| `.gitignore` | `gitignoreTemplate()` | `node_modules`, `.damat`, `.env`, `*.tsbuildinfo` |
-| `src/module.json` | `manifestTemplate(name)` | the module manifest (name/version/registry/env/modules/paths) |
-| `src/index.ts` | `entryTemplate(name, serviceClass)` | `defineModule(MODULE_ID, { service, credentials })` + `ModuleRegistry` augmentation |
-| `src/service.ts` | `serviceTemplate(serviceClass)` | `class … extends ModuleService({ models, credentialsSchema })` |
-| `src/accessor.ts` | `accessorTemplate(name, serviceClass)` | typed `getModule(name)` accessor |
-| `src/config/schema/index.ts` | `configSchemaTemplate()` | `z.object({})` credentials schema |
-| `src/config/load.ts` | `configLoadTemplate()` | `load(env)` credential loader |
-| `src/config/index.ts` | `configIndexTemplate()` | default-exports `{ schema, load }` |
-| `tests/contract.test.ts` | `contractTestTemplate(name)` | asserts `validateModuleDir(../src)` passes |
+| File                         | Template fn                            | Purpose                                                                                                                     |
+| ---------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `package.json`               | `packageJsonTemplate(name)`            | `@modules/<name>`, private, scripts wired to `damat module …`                                                               |
+| `tsconfig.json`              | `tsconfigTemplate()`                   | strict ES2023 (`module: ESNext`, `moduleResolution: bundler`), `types: ["bun"]`, `noEmit`, includes src/tests/module.config |
+| `module.config.ts`           | `moduleConfigTemplate()`               | `defineModuleConfig({ projectConfig: { … } })`                                                                              |
+| `.env.example`               | `envExampleTemplate()`                 | `DATABASE_URL=postgres://localhost:5432/postgres`                                                                           |
+| `.gitignore`                 | `gitignoreTemplate()`                  | `node_modules`, `.damat`, `.env`, `*.tsbuildinfo`                                                                           |
+| `src/module.json`            | `manifestTemplate(name)`               | the module manifest (name/version/registry/env/modules/paths)                                                               |
+| `src/index.ts`               | `entryTemplate(name, serviceClass)`    | `defineModule(MODULE_ID, { service, credentials })` + `ModuleRegistry` augmentation                                         |
+| `src/service.ts`             | `serviceTemplate(serviceClass)`        | `class … extends ModuleService({ models, credentialsSchema })`                                                              |
+| `src/accessor.ts`            | `accessorTemplate(name, serviceClass)` | typed `getModule(name)` accessor                                                                                            |
+| `src/config/schema/index.ts` | `configSchemaTemplate()`               | `z.object({})` credentials schema                                                                                           |
+| `src/config/load.ts`         | `configLoadTemplate()`                 | `load(env)` credential loader                                                                                               |
+| `src/config/index.ts`        | `configIndexTemplate()`                | default-exports `{ schema, load }`                                                                                          |
+| `tests/contract.test.ts`     | `contractTestTemplate(name)`           | asserts `validateModuleDir(../src)` passes                                                                                  |
 
 ## What the key templates wire up
 
@@ -55,10 +55,14 @@ is `mkdir -p`'d).
     "typecheck": "tsc --noEmit",
     "migration:create": "damat module migration:create",
     "codegen": "damat module codegen",
-    "validate": "damat module validate"
+    "validate": "damat module validate",
   },
   "dependencies": { "@damatjs/module": "latest" },
-  "devDependencies": { "@damatjs/damat-cli": "latest", "@types/bun": "latest", "typescript": "^5.7.2" }
+  "devDependencies": {
+    "@damatjs/damat-cli": "latest",
+    "@types/bun": "latest",
+    "typescript": "^5.7.2",
+  },
 }
 ```
 

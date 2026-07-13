@@ -2,7 +2,7 @@
 
 > The Damat module system in one package: authoring surface, the portable `module.json` contract, a standalone dev/test harness, module-as-app runtime, and registry tooling.
 
-A Damat *module* is a self-contained vertical slice — models + migrations +
+A Damat _module_ is a self-contained vertical slice — models + migrations +
 service + config + workflows + routes. This package is the heart of Damat's
 composability: it lets you **author, run, and test a module on its own** (no
 backend app), ship it with a `module.json` manifest, and install it into any
@@ -72,21 +72,31 @@ const user = await booted.service.user.create({ data: { email: "a@b.co" } });
 await booted.teardown();
 
 // tests — boot, run, always tear down
-await withModule(userModule, { moduleDir: import.meta.dir }, async ({ service }) => {
-  expect(await service.user.exists({ where: { email: "a@b.co" } })).toBe(true);
-});
+await withModule(
+  userModule,
+  { moduleDir: import.meta.dir },
+  async ({ service }) => {
+    expect(await service.user.exists({ where: { email: "a@b.co" } })).toBe(
+      true,
+    );
+  },
+);
 ```
 
 Run it as a live app, or address it for a registry:
 
 ```ts
-import { startModuleApp, parseModuleRef, validateModuleDir } from "@damatjs/module";
+import {
+  startModuleApp,
+  parseModuleRef,
+  validateModuleDir,
+} from "@damatjs/module";
 
-const app = await startModuleApp({ port: 0 });   // full HTTP stack, this module only
+const app = await startModuleApp({ port: 0 }); // full HTTP stack, this module only
 await app.stop();
 
 parseModuleRef("damatjs/user@0.2.0"); // → { namespace: "damatjs", name: "user", version: "0.2.0" }
-validateModuleDir("./src");           // → { valid, errors, warnings, manifest }
+validateModuleDir("./src"); // → { valid, errors, warnings, manifest }
 ```
 
 Requires Postgres (`DATABASE_URL`, or `{ databaseUrl }` / `{ database }`) for the
@@ -95,27 +105,27 @@ harness and for the runtime when serving. In test suites gate DB tests with
 
 ## API
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `defineModule`, `ModuleService` | re-export | Define a module and its service base (from `@damatjs/services`). |
-| `model`, `columns` | re-export | ORM model DSL (from `@damatjs/orm-model`). |
-| `createStep`, `createWorkflow`, `executeStep`, `parallel`, `when`, `ifElse`, `RetryPolicies`, `Effect`, … | re-export | Workflow engine (from `@damatjs/workflow-engine`). |
-| `getModule`, `hasModule`, `registerModule` | re-export | App-side registry access (from `@damatjs/framework`). |
-| `defineLink`, `collectLinkModels`, `defineLinkModule` | re-export | Cross-module [links](../link/README.md): relate this module to another through a junction table; `getModule("link")` exposes create/dismiss/fetch/graph. |
-| `z` | re-export | Zod validation. |
-| `defineModuleConfig` | function | Type-safe helper for `module.config.ts`. |
-| `loadModuleConfig` | function | Load a package's `module.config.ts` (empty config if absent). |
-| `readModuleManifest`, `validateModuleManifest` | function | Read / validate a `module.json` into a `ModuleManifest`. |
-| `bootModule`, `withModule` | function | Boot a module standalone (with migrations) for dev/test; auto-teardown variant. |
-| `startModuleApp`, `runModuleEntry` | function | Run one module as a live HTTP app; `damat module dev` entry. |
-| `createModuleMigration`, `generateModuleTypes` | function | Diff-migration & codegen for a standalone module package. |
-| `runModuleMigration`, `runModuleMigrationStatus` | function | Apply / report a standalone module's own migrations against `DATABASE_URL`. |
-| `parseModuleRef`, `formatModuleRef` | function | Parse / format refs like `damatjs/user@0.2.0`. |
-| `validateModuleDir` | function | Registry-readiness report (errors block install, warnings block publish). |
-| `resolveRegistryEntry`, `resolveRegistryRef` | function | Resolve a ref against a registry index → source + owner + verification. |
-| `evaluateVerification`, `verificationPolicy` | function | Install-time trust gate (`DAMAT_MODULE_VERIFY` / `DAMAT_MODULE_REGISTRY`). |
-| `normalizeVersionEntry` | function | Coerce a registry version value (string or object) to `RegistryVersionEntry`. |
-| `MODULE_MANIFEST_FILENAME`, `DEFAULT_MODULE_PATHS`, `DEFAULT_MODULE_PORT`, `VERIFICATION_STATUSES` | const | Constants for the contract / runtime / registry. |
+| Export                                                                                                    | Kind      | Summary                                                                                                                                                  |
+| --------------------------------------------------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defineModule`, `ModuleService`                                                                           | re-export | Define a module and its service base (from `@damatjs/services`).                                                                                         |
+| `model`, `columns`                                                                                        | re-export | ORM model DSL (from `@damatjs/orm-model`).                                                                                                               |
+| `createStep`, `createWorkflow`, `executeStep`, `parallel`, `when`, `ifElse`, `RetryPolicies`, `Effect`, … | re-export | Workflow engine (from `@damatjs/workflow-engine`).                                                                                                       |
+| `getModule`, `hasModule`, `registerModule`                                                                | re-export | App-side registry access (from `@damatjs/framework`).                                                                                                    |
+| `defineLink`, `collectLinkModels`, `defineLinkModule`                                                     | re-export | Cross-module [links](../link/README.md): relate this module to another through a junction table; `getModule("link")` exposes create/dismiss/fetch/graph. |
+| `z`                                                                                                       | re-export | Zod validation.                                                                                                                                          |
+| `defineModuleConfig`                                                                                      | function  | Type-safe helper for `module.config.ts`.                                                                                                                 |
+| `loadModuleConfig`                                                                                        | function  | Load a package's `module.config.ts` (empty config if absent).                                                                                            |
+| `readModuleManifest`, `validateModuleManifest`                                                            | function  | Read / validate a `module.json` into a `ModuleManifest`.                                                                                                 |
+| `bootModule`, `withModule`                                                                                | function  | Boot a module standalone (with migrations) for dev/test; auto-teardown variant.                                                                          |
+| `startModuleApp`, `runModuleEntry`                                                                        | function  | Run one module as a live HTTP app; `damat module dev` entry.                                                                                             |
+| `createModuleMigration`, `generateModuleTypes`                                                            | function  | Diff-migration & codegen for a standalone module package.                                                                                                |
+| `runModuleMigration`, `runModuleMigrationStatus`                                                          | function  | Apply / report a standalone module's own migrations against `DATABASE_URL`.                                                                              |
+| `parseModuleRef`, `formatModuleRef`                                                                       | function  | Parse / format refs like `damatjs/user@0.2.0`.                                                                                                           |
+| `validateModuleDir`                                                                                       | function  | Registry-readiness report (errors block install, warnings block publish).                                                                                |
+| `resolveRegistryEntry`, `resolveRegistryRef`                                                              | function  | Resolve a ref against a registry index → source + owner + verification.                                                                                  |
+| `evaluateVerification`, `verificationPolicy`                                                              | function  | Install-time trust gate (`DAMAT_MODULE_VERIFY` / `DAMAT_MODULE_REGISTRY`).                                                                               |
+| `normalizeVersionEntry`                                                                                   | function  | Coerce a registry version value (string or object) to `RegistryVersionEntry`.                                                                            |
+| `MODULE_MANIFEST_FILENAME`, `DEFAULT_MODULE_PATHS`, `DEFAULT_MODULE_PORT`, `VERIFICATION_STATUSES`        | const     | Constants for the contract / runtime / registry.                                                                                                         |
 
 Key types: `ModuleManifest` (+ `ModuleEnvVar`, `ModuleAuthor`, `ModuleManifestPaths`, `ModuleRegistryMeta`), `ModuleAppConfig`, `BootModuleOptions` / `BootedModule`, `StartModuleAppOptions` / `RunningModuleApp`, `ModuleRef`, `ModuleValidationReport`, `RegistryIndex` / `RegistryModuleEntry` (back-compat alias `RegistryIndexEntry`) / `RegistryVersionEntry` / `RegistryOwner` / `RegistryAuthor` / `RegistryVerification`, `ResolvedRegistryModule`, `VerificationStatus` / `VerificationPolicy`, `LinkService` / `LinkDefinition` / `LinkEndpoint` / `LinkOptions` / `LinkRowRef` / `LinkModelRef`.
 

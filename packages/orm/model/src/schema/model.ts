@@ -297,7 +297,10 @@ export class ModelDefinition<Name extends string = string> {
  *   ]);
  * ```
  */
-export function model<Name extends string, T extends Record<string, PropertyValue>>(
+export function model<
+  Name extends string,
+  T extends Record<string, PropertyValue>,
+>(
   tableName: Name,
   properties: T,
   options?: { schema?: string; name?: string },

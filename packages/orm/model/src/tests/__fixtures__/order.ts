@@ -18,9 +18,9 @@
 //  *   - Category  hasMany   Product       (inverse, no FK column)
 //  */
 
-import { model } from '@/schema';
+import { model } from "@/schema";
 import { EnumBuilder } from "../../properties/enum/base";
-import { columns } from '@/properties';
+import { columns } from "@/properties";
 
 // ---------------------------------------------------------------------------
 // Order
@@ -43,20 +43,13 @@ export const OrderSchema = model("order", {
   // User relation will be added after UserSchema is defined to avoid circular dependency
 })
   .constrain([
-    columns
-      .constrains()
-      .check("total > 0")
-      .columns(["total"]),
+    columns.constrains().check("total > 0").columns(["total"]),
     // columns
     //   .constrains()
     //   .exclude([{ column: "total", operator: "< 0" }])
     //   .columns(["total"]).indexType("gist")
   ])
-  .indexes([
-    columns.indexes()
-      .columns(["total"])
-      .type("btree")
-  ]);
+  .indexes([columns.indexes().columns(["total"]).type("btree")]);
 
 export function getOrderTableSchema() {
   return OrderSchema.toTableSchema();

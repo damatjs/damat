@@ -26,7 +26,12 @@ describe("config/retry: DEFAULT_RETRY_POLICY", () => {
   it("has a fully-populated (Required) shape — every RetryPolicy field present", () => {
     const keys = Object.keys(DEFAULT_RETRY_POLICY).sort();
     expect(keys).toEqual(
-      ["backoffMultiplier", "initialDelayMs", "maxAttempts", "maxDelayMs"].sort(),
+      [
+        "backoffMultiplier",
+        "initialDelayMs",
+        "maxAttempts",
+        "maxDelayMs",
+      ].sort(),
     );
   });
 });

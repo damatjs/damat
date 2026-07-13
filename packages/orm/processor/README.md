@@ -54,7 +54,12 @@ const current: ModuleSchema = {
       name: "product",
       columns: [
         { name: "id", type: "uuid", nullable: false, primaryKey: true },
-        { name: "title", type: "character varying", length: 200, nullable: false },
+        {
+          name: "title",
+          type: "character varying",
+          length: 200,
+          nullable: false,
+        },
       ],
     },
   ],
@@ -65,8 +70,8 @@ const current: ModuleSchema = {
 const diff = diffSchemas.diffSchemas(previous, current);
 if (diff.hasChanges) {
   const migration = generateMigration.generateFromDiff(diff);
-  console.log(migration.description);    // e.g. "1 table created"
-  console.log(migration.upStatements);   // ['CREATE TABLE IF NOT EXISTS "public"."product" ( ... )']
+  console.log(migration.description); // e.g. "1 table created"
+  console.log(migration.upStatements); // ['CREATE TABLE IF NOT EXISTS "public"."product" ( ... )']
 
   // 4. Persist the new state so the next diff is incremental
   saveSnapshot(migrationsDir, current);
@@ -77,22 +82,22 @@ if (diff.hasChanges) {
 
 The root export (`.`) re-exports the type definitions, the `diff`, `sqlGenerator`, and `snapshot` modules. Many sub-modules are exposed under **namespaces** (e.g. `diffSchemas`, `generateMigration`); the table notes the call site.
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `loadSnapshot(dir, moduleName)` | function | Read `schema-snapshot.json` from a migrations dir; returns an empty baseline `ModuleSchema` if absent. |
-| `saveSnapshot(dir, schema)` | function | Write a `ModuleSchema` to `schema-snapshot.json` (creates the dir if needed). |
-| `snapshotExist(dir)` | function | `true` if `schema-snapshot.json` exists in `dir`. |
-| `diffSchemas.diffSchemas(prev, curr)` | function | Compare two `ModuleSchema`s → priority-sorted `SchemaDiff`. Primary diff entry point. |
-| `reverseDiff.reverseDiff(diff)` | function | Invert a forward diff for `down` migrations (drops are intentionally skipped). |
-| `tablesDiff`, `columnsDiff`, `indexesDiff`, `foreignKeysDiff`, `enumsDiff`, `utilsDiff`, `priorityDiff` | namespaces | Per-concern diff helpers and equality checks. |
-| `generateMigration.generateFromDiff(diff, opts?)` | function | Emit ordered `up` SQL from a `SchemaDiff`. |
-| `generateMigration.generateFromSnapshot(snapshot, opts?)` | function | Emit a full baseline `up` migration from a single `ModuleSchema`. |
-| `changeSqlGenerator.generateChangeSQL(change, opts)` | function | Dispatch one `SchemaChange` to its SQL generator. |
-| `changeSqlGenerator.generateDescription(diff)` | function | Human-readable summary string of a diff. |
-| `tablesSqlGenerator`, `columnsSqlGenerator`, `indexesSqlGenerator`, `foreignKeysSqlGenerator`, `enumsSqlGenerator`, `utilsSqlGenerator` | namespaces | Per-concern SQL emitters and identifier helpers. |
-| `SchemaDiff`, `SchemaChange` | types | The diff result and the union of all change records. |
-| `MigrationGeneratorOptions`, `GeneratedMigration` | types | SQL-generation options and output. |
-| `CreateDiffMigrationOptions`, `DiffMigrationResult` | types | Shapes consumed by the migration package's diff workflow. |
+| Export                                                                                                                                  | Kind       | Summary                                                                                                |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------ |
+| `loadSnapshot(dir, moduleName)`                                                                                                         | function   | Read `schema-snapshot.json` from a migrations dir; returns an empty baseline `ModuleSchema` if absent. |
+| `saveSnapshot(dir, schema)`                                                                                                             | function   | Write a `ModuleSchema` to `schema-snapshot.json` (creates the dir if needed).                          |
+| `snapshotExist(dir)`                                                                                                                    | function   | `true` if `schema-snapshot.json` exists in `dir`.                                                      |
+| `diffSchemas.diffSchemas(prev, curr)`                                                                                                   | function   | Compare two `ModuleSchema`s → priority-sorted `SchemaDiff`. Primary diff entry point.                  |
+| `reverseDiff.reverseDiff(diff)`                                                                                                         | function   | Invert a forward diff for `down` migrations (drops are intentionally skipped).                         |
+| `tablesDiff`, `columnsDiff`, `indexesDiff`, `foreignKeysDiff`, `enumsDiff`, `utilsDiff`, `priorityDiff`                                 | namespaces | Per-concern diff helpers and equality checks.                                                          |
+| `generateMigration.generateFromDiff(diff, opts?)`                                                                                       | function   | Emit ordered `up` SQL from a `SchemaDiff`.                                                             |
+| `generateMigration.generateFromSnapshot(snapshot, opts?)`                                                                               | function   | Emit a full baseline `up` migration from a single `ModuleSchema`.                                      |
+| `changeSqlGenerator.generateChangeSQL(change, opts)`                                                                                    | function   | Dispatch one `SchemaChange` to its SQL generator.                                                      |
+| `changeSqlGenerator.generateDescription(diff)`                                                                                          | function   | Human-readable summary string of a diff.                                                               |
+| `tablesSqlGenerator`, `columnsSqlGenerator`, `indexesSqlGenerator`, `foreignKeysSqlGenerator`, `enumsSqlGenerator`, `utilsSqlGenerator` | namespaces | Per-concern SQL emitters and identifier helpers.                                                       |
+| `SchemaDiff`, `SchemaChange`                                                                                                            | types      | The diff result and the union of all change records.                                                   |
+| `MigrationGeneratorOptions`, `GeneratedMigration`                                                                                       | types      | SQL-generation options and output.                                                                     |
+| `CreateDiffMigrationOptions`, `DiffMigrationResult`                                                                                     | types      | Shapes consumed by the migration package's diff workflow.                                              |
 
 **Subpath exports:** none — everything is under `.`.
 

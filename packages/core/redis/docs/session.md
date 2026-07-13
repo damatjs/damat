@@ -9,9 +9,18 @@ Token → JSON-data storage with TTL, plus a `SessionManager` class that adds **
 ## Function API
 
 ```ts
-async function setSession<T>(token: string, data: T, ttlSeconds: number, client?: Redis): Promise<void>;
+async function setSession<T>(
+  token: string,
+  data: T,
+  ttlSeconds: number,
+  client?: Redis,
+): Promise<void>;
 async function getSession<T>(token: string, client?: Redis): Promise<T | null>;
-async function extendSession(token: string, ttlSeconds: number, client?: Redis): Promise<boolean>;
+async function extendSession(
+  token: string,
+  ttlSeconds: number,
+  client?: Redis,
+): Promise<boolean>;
 async function deleteSession(token: string, client?: Redis): Promise<void>;
 ```
 
@@ -24,9 +33,9 @@ async function deleteSession(token: string, client?: Redis): Promise<void>;
 
 ```ts
 interface SessionManagerOptions {
-  defaultTtlSeconds: number;   // default 3600
-  extendOnAccess: boolean;     // default true
-  extendThreshold?: number;    // default 0.5
+  defaultTtlSeconds: number; // default 3600
+  extendOnAccess: boolean; // default true
+  extendThreshold?: number; // default 0.5
 }
 
 class SessionManager<T = unknown> {
@@ -34,7 +43,7 @@ class SessionManager<T = unknown> {
   get(token: string): Promise<T | null>;
   set(token: string, data: T, ttlSeconds?: number): Promise<void>;
   delete(token: string): Promise<void>;
-  touch(token: string, ttlSeconds?: number): Promise<boolean>;   // extend only
+  touch(token: string, ttlSeconds?: number): Promise<boolean>; // extend only
   refresh(token: string, data: T, ttlSeconds?: number): Promise<void>; // overwrite + reset TTL
 }
 
@@ -54,9 +63,9 @@ Client resolution: a `SessionManager` captures an optional `client` at construct
 
 ```ts
 const ttl = await redis.ttl(`session:${token}`);
-const minTtl = Math.floor(defaultTtlSeconds * extendThreshold);  // e.g. 3600 * 0.5 = 1800
+const minTtl = Math.floor(defaultTtlSeconds * extendThreshold); // e.g. 3600 * 0.5 = 1800
 if (ttl > 0 && ttl < minTtl) {
-  await extendSession(token, defaultTtlSeconds, redis);          // bump back to full TTL
+  await extendSession(token, defaultTtlSeconds, redis); // bump back to full TTL
 }
 ```
 
@@ -70,13 +79,16 @@ So a session whose remaining TTL has dropped below half of `defaultTtlSeconds` i
 ```ts
 import { createSessionManager } from "@damatjs/redis";
 
-interface Session { userId: string; role: string; }
+interface Session {
+  userId: string;
+  role: string;
+}
 const sessions = createSessionManager<Session>({ defaultTtlSeconds: 3600 });
 
 await sessions.set(token, { userId: "123", role: "admin" });
-const s = await sessions.get(token);   // also slides TTL back to 3600 if it had decayed below 1800
-await sessions.touch(token, 7200);     // manual extension
-await sessions.delete(token);          // logout
+const s = await sessions.get(token); // also slides TTL back to 3600 if it had decayed below 1800
+await sessions.touch(token, 7200); // manual extension
+await sessions.delete(token); // logout
 ```
 
 ## Gotchas

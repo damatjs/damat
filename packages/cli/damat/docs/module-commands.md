@@ -89,8 +89,8 @@ End-to-end flow:
 8. **Copy**: `copyModule(sourceModuleDir, targetDir)` — copies only the module
    source (excludes `.git`/`node_modules`); package scaffolding stays behind.
 9. **Register**: `registerModuleInConfig(<cwd>/damat.config.ts, id,
-   relativeTarget, origin)` where `origin = { ...resolved.origin, installedAt:
-   now }`. On `false` → warn with the exact snippet to paste manually.
+relativeTarget, origin)` where `origin = { ...resolved.origin, installedAt:
+now }`. On `false` → warn with the exact snippet to paste manually.
 10. **Env sync**: `syncEnvVars(ctx.cwd, manifest)` → logs vars added to
     `.env.example` and warns about required vars missing from `.env`.
 11. **Packages**: `installModulePackages(ctx.cwd, packages, { allowScripts })`
@@ -204,7 +204,7 @@ Run the **current module package** standalone with hot reload. Option:
 Behaviour: ensure `.damat/`; write `<cwd>/.damat/module-dev-entry.ts`:
 
 ```ts
-import { runModuleEntry } from '@damatjs/module';
+import { runModuleEntry } from "@damatjs/module";
 runModuleEntry();
 ```
 
@@ -334,7 +334,7 @@ git source".
   verification, integrity, installedAt).
 - **Insertion strategy**: find `modules: {` and insert right after the brace
   (handling the `modules: {}` empty case); otherwise insert a fresh `modules: {
-  … }` block before the closing `})` of `defineConfig({ … })`.
+… }` block before the closing `})` of `defineConfig({ … })`.
 - If neither anchor is found → returns `false` (caller prints manual steps).
 
 ### Env sync — `helpers/env.ts`

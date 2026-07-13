@@ -8,7 +8,12 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 const redisState = {
   has: true,
   store: new Map<string, unknown>(),
-  setCalls: [] as Array<{ key: string; value: unknown; ttl: number; tags: string[] }>,
+  setCalls: [] as Array<{
+    key: string;
+    value: unknown;
+    ttl: number;
+    tags: string[];
+  }>,
   invalidations: [] as string[][],
   getThrows: false,
   setThrows: false,
@@ -21,7 +26,12 @@ mock.module("@damatjs/redis", () => ({
     if (redisState.getThrows) throw new Error("redis get down");
     return redisState.store.has(key) ? redisState.store.get(key) : null;
   },
-  cacheSetTagged: async (key: string, value: unknown, ttl: number, tags: string[]) => {
+  cacheSetTagged: async (
+    key: string,
+    value: unknown,
+    ttl: number,
+    tags: string[],
+  ) => {
     if (redisState.setThrows) throw new Error("redis set down");
     redisState.store.set(key, value);
     redisState.setCalls.push({ key, value, ttl, tags });
@@ -79,9 +89,11 @@ function makeStub() {
 }
 
 const wrap = (stub: ReturnType<typeof makeStub>, config = {}) =>
-  withTaggedCache(stub as unknown as ModelMethods, "user", config) as unknown as ReturnType<
-    typeof makeStub
-  >;
+  withTaggedCache(
+    stub as unknown as ModelMethods,
+    "user",
+    config,
+  ) as unknown as ReturnType<typeof makeStub>;
 
 beforeEach(() => {
   redisState.has = true;
@@ -112,8 +124,14 @@ describe("withTaggedCache — opt-in reads", () => {
   it("cache: true caches the result and serves the second call from redis", async () => {
     const stub = makeStub();
     const cached = wrap(stub);
-    const first = await cached.findMany({ where: { a: 1 }, cache: true } as never);
-    const second = await cached.findMany({ where: { a: 1 }, cache: true } as never);
+    const first = await cached.findMany({
+      where: { a: 1 },
+      cache: true,
+    } as never);
+    const second = await cached.findMany({
+      where: { a: 1 },
+      cache: true,
+    } as never);
     expect(stub.calls).toHaveLength(1); // only the miss hit the database
     expect(second).toEqual(first);
     expect(redisState.setCalls).toHaveLength(1);
@@ -127,7 +145,9 @@ describe("withTaggedCache — opt-in reads", () => {
     await cached.findMany({ cache: { ttl: 5, tags: ["storefront"] } } as never);
     expect(redisState.setCalls[0]!.ttl).toBe(5);
     expect(redisState.setCalls[0]!.tags).toEqual(["model:user", "storefront"]);
-    expect(redisState.setCalls[0]!.key.startsWith("shop:user:findMany:")).toBe(true);
+    expect(redisState.setCalls[0]!.key.startsWith("shop:user:findMany:")).toBe(
+      true,
+    );
 
     await cached.count({ cache: true } as never);
     expect(redisState.setCalls[1]!.ttl).toBe(120); // service default
@@ -170,8 +190,12 @@ describe("withTaggedCache — opt-in reads", () => {
   it("DOES cache falsy-but-valid results (exists false, count 0)", async () => {
     const stub = makeStub();
     const cached = wrap(stub);
-    expect(await cached.exists({ where: { id: 1 }, cache: true } as never)).toBe(false);
-    expect(await cached.exists({ where: { id: 1 }, cache: true } as never)).toBe(false);
+    expect(
+      await cached.exists({ where: { id: 1 }, cache: true } as never),
+    ).toBe(false);
+    expect(
+      await cached.exists({ where: { id: 1 }, cache: true } as never),
+    ).toBe(false);
     expect(await cached.count({ cache: true } as never)).toBe(0);
     expect(await cached.count({ cache: true } as never)).toBe(0);
     // one database call each — the falsy values were served from cache

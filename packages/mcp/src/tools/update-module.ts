@@ -13,8 +13,14 @@ export const updateModule: ToolDef = {
   inputSchema: {
     type: "object",
     properties: {
-      id: { type: "string", description: "The installed module id (single kebab-case segment)" },
-      dir: { type: "string", description: "Modules directory (default: src/modules)" },
+      id: {
+        type: "string",
+        description: "The installed module id (single kebab-case segment)",
+      },
+      dir: {
+        type: "string",
+        description: "Modules directory (default: src/modules)",
+      },
       yes: {
         type: "boolean",
         description:
@@ -34,7 +40,8 @@ export const updateModule: ToolDef = {
       },
       dryRun: {
         type: "boolean",
-        description: "Show the version and file changes without writing anything.",
+        description:
+          "Show the version and file changes without writing anything.",
       },
     },
     required: ["id"],

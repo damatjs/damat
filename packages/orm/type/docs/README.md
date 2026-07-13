@@ -8,25 +8,25 @@ type-safe.
 
 ## Module map
 
-| Path | Responsibility |
-| --- | --- |
-| `src/index.ts` | Barrel. Re-exports `pg` driver types and the four type groups. |
-| `src/connection/` | Connection, pool, transaction, and query-context types. See [connection-and-query.md](./connection-and-query.md). |
-| `src/connection/main.ts` | `DbConnection` — the connection abstraction interface. |
-| `src/connection/config.ts` | `DbPoolConfig`, `PoolStats`, `TransactionOptions`, `QueryContext`, etc. |
-| `src/model/` | Schema snapshot types (columns, tables, enums, FKs, constraints, indexes, relations, modules). See [schema-types.md](./schema-types.md). |
-| `src/model/column.ts` | `ColumnType` union + `ColumnSchema`. |
-| `src/model/table.ts` | `TableSchema`. |
-| `src/model/module.ts` | `ModuleSchema` (the schema snapshot — not the migration manifest). |
-| `src/model/enum.ts` | `EnumSchema`. |
-| `src/model/foreignKey.ts` | `ForeignKeyAction`, `ForeignKeyType`, `ForeignKeySchema`, `ForeignKeySchemaMatch`. |
-| `src/model/constrain.ts` | `ConstraintType` + the four constraint shapes + `ConstraintSchema`. |
-| `src/model/indexType.ts` | `IndexType`, `IndexColumn`, `IndexSchema`. |
-| `src/model/relation.ts` | `RelationType`, `RelationSchema`, and builder option payloads (`RelationOptions`, `LinkConfig`, `ConstraintOptions`). |
-| `src/query/` | Query JSON descriptors and clause types. See [connection-and-query.md](./connection-and-query.md). |
-| `src/query/clauses.ts` | `WhereOperators`, `WhereClause`, `OrderByClause`, `BuiltQuery`, `RawWhereClause`. |
+| Path                       | Responsibility                                                                                                                               |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/index.ts`             | Barrel. Re-exports `pg` driver types and the four type groups.                                                                               |
+| `src/connection/`          | Connection, pool, transaction, and query-context types. See [connection-and-query.md](./connection-and-query.md).                            |
+| `src/connection/main.ts`   | `DbConnection` — the connection abstraction interface.                                                                                       |
+| `src/connection/config.ts` | `DbPoolConfig`, `PoolStats`, `TransactionOptions`, `QueryContext`, etc.                                                                      |
+| `src/model/`               | Schema snapshot types (columns, tables, enums, FKs, constraints, indexes, relations, modules). See [schema-types.md](./schema-types.md).     |
+| `src/model/column.ts`      | `ColumnType` union + `ColumnSchema`.                                                                                                         |
+| `src/model/table.ts`       | `TableSchema`.                                                                                                                               |
+| `src/model/module.ts`      | `ModuleSchema` (the schema snapshot — not the migration manifest).                                                                           |
+| `src/model/enum.ts`        | `EnumSchema`.                                                                                                                                |
+| `src/model/foreignKey.ts`  | `ForeignKeyAction`, `ForeignKeyType`, `ForeignKeySchema`, `ForeignKeySchemaMatch`.                                                           |
+| `src/model/constrain.ts`   | `ConstraintType` + the four constraint shapes + `ConstraintSchema`.                                                                          |
+| `src/model/indexType.ts`   | `IndexType`, `IndexColumn`, `IndexSchema`.                                                                                                   |
+| `src/model/relation.ts`    | `RelationType`, `RelationSchema`, and builder option payloads (`RelationOptions`, `LinkConfig`, `ConstraintOptions`).                        |
+| `src/query/`               | Query JSON descriptors and clause types. See [connection-and-query.md](./connection-and-query.md).                                           |
+| `src/query/clauses.ts`     | `WhereOperators`, `WhereClause`, `OrderByClause`, `BuiltQuery`, `RawWhereClause`.                                                            |
 | `src/query/descriptors.ts` | `SelectDescriptor`, `InsertDescriptor`, `UpdateDescriptor`, `DeleteDescriptor`, `UpsertDescriptor`, `RelationDescriptor`, `QueryDescriptor`. |
-| `src/migration/index.ts` | `OrmModule`, `OrmModuleContainer` — the module manifest types used by the migration/CLI layer. |
+| `src/migration/index.ts`   | `OrmModule`, `OrmModuleContainer` — the module manifest types used by the migration/CLI layer.                                               |
 
 ## Architecture overview
 
@@ -53,7 +53,7 @@ them straight when editing:
 
 1. **Builder option payloads** — `RelationOptions`, `LinkConfig`,
    `ConstraintOptions` (in `model/relation.ts`). These describe what a caller
-   passes *into* the `@damatjs/orm-model` fluent builders.
+   passes _into_ the `@damatjs/orm-model` fluent builders.
 2. **Serialized snapshot** — `ColumnSchema`, `TableSchema`, `ModuleSchema`,
    `ForeignKeySchema`, `ConstraintSchema`, `IndexSchema`, `RelationSchema`,
    `EnumSchema`. These describe the JSON-able output of those builders
@@ -69,7 +69,7 @@ independent representation used by the query builder and executor.
   belongs in `@damatjs/orm-model` or `@damatjs/orm-core`, not here. A stray
   `const`/`function` would bloat every downstream bundle.
 - **`ColumnType` mirrors PostgreSQL exactly.** The union uses the SQL type
-  *names* as they appear in the PostgreSQL docs (`"character varying"`,
+  _names_ as they appear in the PostgreSQL docs (`"character varying"`,
   `"timestamp without time zone"`, `"double precision"`, …), not friendly
   aliases. The model DSL and the `pgTypeToTsBase` mapper in `@damatjs/orm-model`
   switch on these exact strings, so adding a type here means adding a case there
@@ -80,7 +80,7 @@ independent representation used by the query builder and executor.
   `string[]`.** This carries the FK column's SQL type so the migration layer can
   emit the column DDL. Composite FKs are first-class — every FK field is an array.
 - **`ModuleSchema.tables` is `Omit<TableSchema, "relations">[]`.** Relations are
-  *hoisted* out of each table into the module-level `relationships` array by
+  _hoisted_ out of each table into the module-level `relationships` array by
   `toModuleSchema()`. Don't add a per-table `relations` field back into the
   module representation — it would duplicate the hoisted data.
 - **Two unrelated `OrmModule`/`ModuleSchema` names exist.** `model/module.ts`

@@ -58,7 +58,9 @@ describe("PgModelClient.findMany / findOne", () => {
 
 describe("PgModelClient mutations", () => {
   it("create issues INSERT and returns the row", async () => {
-    const { client, conn } = makeClient({ rows: [{ id: "u1", email: "a@b.com" }] });
+    const { client, conn } = makeClient({
+      rows: [{ id: "u1", email: "a@b.com" }],
+    });
     const res = await client.create({
       data: { id: "u1", email: "a@b.com" },
       returning: ["id", "email"],

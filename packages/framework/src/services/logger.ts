@@ -1,4 +1,11 @@
-import { createLogger, ILogger, LogContext, NOOP_LOGGER, type Logger, type LoggerConfig } from "@damatjs/logger";
+import {
+  createLogger,
+  ILogger,
+  LogContext,
+  NOOP_LOGGER,
+  type Logger,
+  type LoggerConfig,
+} from "@damatjs/logger";
 
 let globalLogger: Logger | null = null;
 
@@ -7,12 +14,14 @@ export function initLogger(config?: LoggerConfig): Logger {
     return globalLogger;
   }
 
-  globalLogger = createLogger(config || {
-    level: "info",
-    format: "pretty",
-    timestamp: true,
-    prefix: "damat",
-  });
+  globalLogger = createLogger(
+    config || {
+      level: "info",
+      format: "pretty",
+      timestamp: true,
+      prefix: "damat",
+    },
+  );
 
   return globalLogger;
 }

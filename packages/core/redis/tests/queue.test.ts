@@ -4,7 +4,9 @@ import { createFakeRedis, type FakeRedis } from "./helpers/fakeRedis";
 
 type JobData = { task: string };
 
-function makeJob(overrides: Partial<QueueJob<JobData>> = {}): QueueJob<JobData> {
+function makeJob(
+  overrides: Partial<QueueJob<JobData>> = {},
+): QueueJob<JobData> {
   return {
     id: overrides.id ?? "job-1",
     queue: "test",
@@ -276,7 +278,10 @@ describe("RedisQueue", () => {
       }
 
       // A new completion (score = Date.now(), the highest) triggers a trim to 3.
-      await capped.updateStatus({ ...makeJob({ id: "c5" }), status: "completed" });
+      await capped.updateStatus({
+        ...makeJob({ id: "c5" }),
+        status: "completed",
+      });
 
       expect(await redis.zcard("queue:test:completed")).toBe(3);
       // The two oldest (c1, c2) are gone; the three newest survive.

@@ -24,7 +24,8 @@ const runCreate = (args: string[], options: Record<string, unknown> = {}) => {
   return { result: createCommand.handler(ctx), logger };
 };
 
-const written = (suffix: string) => writeCalls.find((c) => c.path.endsWith(suffix));
+const written = (suffix: string) =>
+  writeCalls.find((c) => c.path.endsWith(suffix));
 
 describe("damat create — validation", () => {
   test("rejects a missing name without writing anything", async () => {
@@ -77,7 +78,9 @@ describe("damat create — scaffold", () => {
       "git commit -m chore: scaffold damat app",
       "bun install",
     ]);
-    expect((spawnSyncCalls[1]!.opts as { cwd: string }).cwd).toBe("/base/my-api");
+    expect((spawnSyncCalls[1]!.opts as { cwd: string }).cwd).toBe(
+      "/base/my-api",
+    );
   });
 
   test("package.json pins @damatjs/* to the CLI's own version by default", async () => {
@@ -127,7 +130,9 @@ describe("damat create — scaffold", () => {
   test("tsconfig has the app-level @workflows aliases module add expects", async () => {
     await runCreate(["my-api"]).result;
     const tsconfig = JSON.parse(written("my-api/tsconfig.json")!.content);
-    expect(tsconfig.compilerOptions.paths["@workflows"]).toEqual(["./src/workflows"]);
+    expect(tsconfig.compilerOptions.paths["@workflows"]).toEqual([
+      "./src/workflows",
+    ]);
     expect(tsconfig.compilerOptions.paths["@/*"]).toEqual(["./src/*"]);
   });
 });
@@ -144,7 +149,9 @@ describe("damat create — git/install flags and failures", () => {
     const { result, logger } = runCreate(["my-api"], { install: false });
     expect((await result).exitCode).toBe(0);
     expect(
-      logger.warn.mock.calls.some((c) => String(c[0]).includes("git is not installed")),
+      logger.warn.mock.calls.some((c) =>
+        String(c[0]).includes("git is not installed"),
+      ),
     ).toBe(true);
     // Only the availability probe ran — no init/add/commit attempted.
     expect(spawnSyncCalls).toHaveLength(1);
@@ -158,18 +165,26 @@ describe("damat create — git/install flags and failures", () => {
     const { result, logger } = runCreate(["my-api"], { install: false });
     expect((await result).exitCode).toBe(0);
     expect(
-      logger.warn.mock.calls.some((c) => String(c[0]).includes("git is not installed")),
+      logger.warn.mock.calls.some((c) =>
+        String(c[0]).includes("git is not installed"),
+      ),
     ).toBe(true);
   });
 
   test("git present but init fails (e.g. unconfigured identity): generic warn, scaffold succeeds", async () => {
     mockSpawnSync
-      .mockImplementationOnce(() => ({ status: 0, stdout: "", stderr: "" }) as never) // --version
-      .mockImplementationOnce(() => ({ status: 1, stdout: "", stderr: "bad identity" }) as never);
+      .mockImplementationOnce(
+        () => ({ status: 0, stdout: "", stderr: "" }) as never,
+      ) // --version
+      .mockImplementationOnce(
+        () => ({ status: 1, stdout: "", stderr: "bad identity" }) as never,
+      );
     const { result, logger } = runCreate(["my-api"], { install: false });
     expect((await result).exitCode).toBe(0);
     expect(
-      logger.warn.mock.calls.some((c) => String(c[0]).includes("Could not initialize git")),
+      logger.warn.mock.calls.some((c) =>
+        String(c[0]).includes("Could not initialize git"),
+      ),
     ).toBe(true);
     // (once-impls bypass the call recorder, so no spawn-count assertion here;
     // the `&&` short-circuit is covered by the happy-path sequence test.)
@@ -180,7 +195,9 @@ describe("damat create — git/install flags and failures", () => {
     const { result, logger } = runCreate(["my-api"], { git: false });
     expect((await result).exitCode).toBe(0);
     expect(
-      logger.warn.mock.calls.some((c) => String(c[0]).includes("bun install failed")),
+      logger.warn.mock.calls.some((c) =>
+        String(c[0]).includes("bun install failed"),
+      ),
     ).toBe(true);
   });
 
@@ -191,12 +208,17 @@ describe("damat create — git/install flags and failures", () => {
     const { result, logger } = runCreate(["my-api"], { git: false });
     expect((await result).exitCode).toBe(0);
     expect(
-      logger.warn.mock.calls.some((c) => String(c[0]).includes("bun install failed")),
+      logger.warn.mock.calls.some((c) =>
+        String(c[0]).includes("bun install failed"),
+      ),
     ).toBe(true);
   });
 
   test("skipping install adds `bun install` to the next steps", async () => {
-    const { result, logger } = runCreate(["my-api"], { git: false, install: false });
+    const { result, logger } = runCreate(["my-api"], {
+      git: false,
+      install: false,
+    });
     expect((await result).exitCode).toBe(0);
     const info = logger.info.mock.calls.map((c) => String(c[0])).join("\n");
     expect(info).toContain("bun install");

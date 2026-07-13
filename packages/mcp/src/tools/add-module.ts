@@ -19,10 +19,23 @@ export const addModule: ToolDef = {
   inputSchema: {
     type: "object",
     properties: {
-      source: { type: "string", description: "Registry ref, path, github shorthand, or git URL" },
-      name: { type: "string", description: "Override the installed module id (single kebab-case segment)" },
-      dir: { type: "string", description: "Target modules directory (default: src/modules)" },
-      force: { type: "boolean", description: "Overwrite if the module already exists" },
+      source: {
+        type: "string",
+        description: "Registry ref, path, github shorthand, or git URL",
+      },
+      name: {
+        type: "string",
+        description:
+          "Override the installed module id (single kebab-case segment)",
+      },
+      dir: {
+        type: "string",
+        description: "Target modules directory (default: src/modules)",
+      },
+      force: {
+        type: "boolean",
+        description: "Overwrite if the module already exists",
+      },
       allowUnverified: {
         type: "boolean",
         description:
@@ -38,7 +51,14 @@ export const addModule: ToolDef = {
     required: ["source"],
     additionalProperties: false,
   },
-  handler: async ({ source, name, dir, force, allowUnverified, allowScripts }) => {
+  handler: async ({
+    source,
+    name,
+    dir,
+    force,
+    allowUnverified,
+    allowScripts,
+  }) => {
     if (!source || typeof source !== "string") {
       return { text: "A 'source' string is required", isError: true };
     }

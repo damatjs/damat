@@ -54,7 +54,9 @@ describe("EventBus — on/emit", () => {
     expect(received[0]!.context.event).toBe("user.created");
     expect(received[0]!.context.source).toBe("local");
     expect(received[0]!.context.emittedAt).toBeInstanceOf(Date);
-    expect(received[0]!.context.emittedAt.getTime()).toBeGreaterThanOrEqual(before);
+    expect(received[0]!.context.emittedAt.getTime()).toBeGreaterThanOrEqual(
+      before,
+    );
   });
 
   it("calls multiple handlers in subscription order", async () => {
@@ -356,6 +358,8 @@ describe("EventBus — broadcaster", () => {
 
     expect(errorCalls).toHaveLength(1);
     expect(errorCalls[0]!.error).toBeInstanceOf(Error);
-    expect((errorCalls[0]!.error as Error).message).toBe("transport string failure");
+    expect((errorCalls[0]!.error as Error).message).toBe(
+      "transport string failure",
+    );
   });
 });

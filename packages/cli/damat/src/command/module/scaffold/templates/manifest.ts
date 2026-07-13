@@ -1,4 +1,3 @@
-
 export function manifestTemplate(name: string): string {
   return `${JSON.stringify(
     {

@@ -21,7 +21,11 @@ import { join } from "node:path";
 import { clearRegistryCache, fetchVerdict } from "../registry/load";
 import { summarizeEntry } from "../registry/summarize";
 import { moduleInfo } from "../tools/module-info";
-import type { RegistryIndex, RegistryModuleEntry, RegistryVerdict } from "../registry/types";
+import type {
+  RegistryIndex,
+  RegistryModuleEntry,
+  RegistryVerdict,
+} from "../registry/types";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -79,14 +83,25 @@ describe("summarizeEntry — verdict field", () => {
   });
 
   test("live override takes precedence over static entry.verdict", () => {
-    const summary = summarizeEntry("damatjs/user", entryWithStaticVerdict, verdictFlagged);
+    const summary = summarizeEntry(
+      "damatjs/user",
+      entryWithStaticVerdict,
+      verdictFlagged,
+    );
     expect(summary.verdict?.status).toBe("flagged");
-    expect(summary.verdict?.reasons).toEqual(["obfuscated code", "suspicious network calls"]);
+    expect(summary.verdict?.reasons).toEqual([
+      "obfuscated code",
+      "suspicious network calls",
+    ]);
   });
 
   test("live verdict with null score/reasons/summary normalises to null", () => {
     const unscanned: RegistryVerdict = { status: "unscanned" };
-    const summary = summarizeEntry("damatjs/user", entryWithStaticVerdict, unscanned);
+    const summary = summarizeEntry(
+      "damatjs/user",
+      entryWithStaticVerdict,
+      unscanned,
+    );
     expect(summary.verdict).toEqual({
       status: "unscanned",
       score: null,
@@ -96,7 +111,11 @@ describe("summarizeEntry — verdict field", () => {
   });
 
   test("verdict override of null falls back to static entry.verdict", () => {
-    const summary = summarizeEntry("damatjs/user", entryWithStaticVerdict, null);
+    const summary = summarizeEntry(
+      "damatjs/user",
+      entryWithStaticVerdict,
+      null,
+    );
     expect(summary.verdict?.status).toBe("pass");
   });
 
@@ -120,12 +139,20 @@ describe("fetchVerdict", () => {
   });
 
   test("returns null for a local file path (not a URL)", async () => {
-    const result = await fetchVerdict("/tmp/registry.json", "damatjs/user", "0.2.0");
+    const result = await fetchVerdict(
+      "/tmp/registry.json",
+      "damatjs/user",
+      "0.2.0",
+    );
     expect(result).toBeNull();
   });
 
   test("returns null for a local directory path", async () => {
-    const result = await fetchVerdict("/tmp/my-registry", "damatjs/user", "0.2.0");
+    const result = await fetchVerdict(
+      "/tmp/my-registry",
+      "damatjs/user",
+      "0.2.0",
+    );
     expect(result).toBeNull();
   });
 
@@ -149,7 +176,9 @@ describe("fetchVerdict", () => {
     expect(result?.status).toBe("pass");
     expect(result?.score).toBe(95);
     // Confirm the URL hits the gateway verdict endpoint
-    expect(capturedUrl).toContain("/api/registry/packages/damatjs%2Fuser/0.2.0/verdict");
+    expect(capturedUrl).toContain(
+      "/api/registry/packages/damatjs%2Fuser/0.2.0/verdict",
+    );
   });
 
   test("returns null when the gateway returns a non-OK status", async () => {
@@ -188,7 +217,9 @@ describe("fetchVerdict", () => {
 
   test("returns null when the response JSON lacks a status field", async () => {
     globalThis.fetch = (async () =>
-      new Response(JSON.stringify({ score: 50 }), { status: 200 })) as typeof fetch;
+      new Response(JSON.stringify({ score: 50 }), {
+        status: 200,
+      })) as typeof fetch;
     const result = await fetchVerdict(
       "https://registry.damatjs.com/api/damat/modules",
       "damatjs/user",
@@ -228,7 +259,9 @@ describe("fetchVerdict", () => {
       "1.0.0",
     );
     // With no known suffix stripped, falls back to https://custom.registry.io
-    expect(capturedUrl).toContain("https://custom.registry.io/api/registry/packages/mymodule/1.0.0/verdict");
+    expect(capturedUrl).toContain(
+      "https://custom.registry.io/api/registry/packages/mymodule/1.0.0/verdict",
+    );
   });
 });
 
@@ -284,7 +317,8 @@ describe("module_info — verdict integration", () => {
       return new Response(JSON.stringify(hostedIndex), { status: 200 });
     }) as typeof fetch;
 
-    process.env.DAMAT_MODULE_REGISTRY = "https://registry.damatjs.com/api/damat/modules";
+    process.env.DAMAT_MODULE_REGISTRY =
+      "https://registry.damatjs.com/api/damat/modules";
 
     const res = await moduleInfo.handler({ ref: "damatjs/user" });
     expect(res.isError).toBeFalsy();
@@ -304,7 +338,8 @@ describe("module_info — verdict integration", () => {
       return new Response(JSON.stringify(hostedIndex), { status: 200 });
     }) as typeof fetch;
 
-    process.env.DAMAT_MODULE_REGISTRY = "https://registry.damatjs.com/api/damat/modules";
+    process.env.DAMAT_MODULE_REGISTRY =
+      "https://registry.damatjs.com/api/damat/modules";
 
     const res = await moduleInfo.handler({ ref: "acme/evil" });
     const payload = JSON.parse(res.text);
@@ -323,7 +358,8 @@ describe("module_info — verdict integration", () => {
       return new Response(JSON.stringify(hostedIndex), { status: 200 });
     }) as typeof fetch;
 
-    process.env.DAMAT_MODULE_REGISTRY = "https://registry.damatjs.com/api/damat/modules";
+    process.env.DAMAT_MODULE_REGISTRY =
+      "https://registry.damatjs.com/api/damat/modules";
 
     const res = await moduleInfo.handler({ ref: "damatjs/user" });
     expect(res.isError).toBeFalsy(); // not an error — verdict is just absent
@@ -412,19 +448,25 @@ describe("DAMAT_MODULE_REGISTRY — URL vs local path", () => {
     let fetchCalled = false;
     const remoteIndex: RegistryIndex = {
       modules: {
-        "damatjs/user": { source: "github:damatjs/user", description: "remote" },
+        "damatjs/user": {
+          source: "github:damatjs/user",
+          description: "remote",
+        },
       },
     };
     globalThis.fetch = (async (url: string | URL | Request) => {
       const urlStr = String(url);
       if (urlStr.includes("/verdict")) {
-        return new Response(JSON.stringify({ status: "unscanned" }), { status: 200 });
+        return new Response(JSON.stringify({ status: "unscanned" }), {
+          status: 200,
+        });
       }
       fetchCalled = true;
       return new Response(JSON.stringify(remoteIndex), { status: 200 });
     }) as typeof fetch;
 
-    process.env.DAMAT_MODULE_REGISTRY = "https://registry.damatjs.com/api/damat/modules";
+    process.env.DAMAT_MODULE_REGISTRY =
+      "https://registry.damatjs.com/api/damat/modules";
 
     const res = await moduleInfo.handler({ ref: "damatjs/user" });
     expect(res.isError).toBeFalsy();

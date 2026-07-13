@@ -4,7 +4,10 @@ import type { ExcludeConstraint } from "@/types";
 
 describe("ConstraintBuilder › unique", () => {
   it("builds a unique constraint with the given name and columns", () => {
-    const schema = constrainBuilder("email_uniq").columns(["email"]).unique().toSchema();
+    const schema = constrainBuilder("email_uniq")
+      .columns(["email"])
+      .unique()
+      .toSchema();
     expect(schema.type).toBe("unique");
     expect(schema.name).toBe("email_uniq");
     if (schema.type === "unique") {
@@ -15,7 +18,10 @@ describe("ConstraintBuilder › unique", () => {
 
 describe("ConstraintBuilder › primaryKey", () => {
   it("appends _pkey to the name and uses primary_key type", () => {
-    const schema = constrainBuilder("orders").columns(["id"]).primaryKey().toSchema();
+    const schema = constrainBuilder("orders")
+      .columns(["id"])
+      .primaryKey()
+      .toSchema();
     expect(schema.type).toBe("primary_key");
     expect(schema.name).toBe("orders_pkey");
     if (schema.type === "primary_key") {
@@ -55,18 +61,30 @@ describe("ConstraintBuilder › exclude", () => {
 
 describe("ConstraintBuilder › optional clauses", () => {
   it("where() attaches a partial constraint predicate", () => {
-    const schema = constrainBuilder("u").columns(["email"]).unique().where("deleted_at IS NULL").toSchema();
+    const schema = constrainBuilder("u")
+      .columns(["email"])
+      .unique()
+      .where("deleted_at IS NULL")
+      .toSchema();
     expect(schema.where).toBe("deleted_at IS NULL");
   });
 
   it("deferrable() defaults initiallyDeferred to false", () => {
-    const schema = constrainBuilder("u").columns(["email"]).unique().deferrable().toSchema();
+    const schema = constrainBuilder("u")
+      .columns(["email"])
+      .unique()
+      .deferrable()
+      .toSchema();
     expect(schema.deferrable).toBe(true);
     expect(schema.initiallyDeferred).toBe(false);
   });
 
   it("deferrable(true) sets initiallyDeferred true", () => {
-    const schema = constrainBuilder("u").columns(["email"]).unique().deferrable(true).toSchema();
+    const schema = constrainBuilder("u")
+      .columns(["email"])
+      .unique()
+      .deferrable(true)
+      .toSchema();
     expect(schema.deferrable).toBe(true);
     expect(schema.initiallyDeferred).toBe(true);
   });

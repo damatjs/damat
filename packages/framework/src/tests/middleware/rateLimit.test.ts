@@ -93,7 +93,11 @@ describe("createRateLimitMiddleware", () => {
       const res = await app.request("/");
       expect(res.status).toBe(200);
       expect(await res.text()).toBe("ok");
-      expect(logCalls.some((l) => l.level === "warn" && /Redis not available/.test(l.msg))).toBe(true);
+      expect(
+        logCalls.some(
+          (l) => l.level === "warn" && /Redis not available/.test(l.msg),
+        ),
+      ).toBe(true);
     });
   });
 
@@ -164,7 +168,11 @@ describe("createRateLimitMiddleware", () => {
       const res = await app.request("/");
       expect(res.status).toBe(200);
       expect(await res.text()).toBe("reached");
-      expect(logCalls.some((l) => l.level === "error" && /Rate limit check failed/.test(l.msg))).toBe(true);
+      expect(
+        logCalls.some(
+          (l) => l.level === "error" && /Rate limit check failed/.test(l.msg),
+        ),
+      ).toBe(true);
     });
 
     it("fails closed with 503 RATE_LIMIT_UNAVAILABLE when failClosed is set", async () => {
@@ -174,7 +182,10 @@ describe("createRateLimitMiddleware", () => {
       };
 
       const app = new Hono();
-      app.use("*", createRateLimitMiddleware(rl(10, "1m", { failClosed: true })));
+      app.use(
+        "*",
+        createRateLimitMiddleware(rl(10, "1m", { failClosed: true })),
+      );
       let reached = false;
       app.get("/", (c) => {
         reached = true;
@@ -188,7 +199,11 @@ describe("createRateLimitMiddleware", () => {
       expect(body.success).toBe(false);
       expect(body.error.code).toBe("RATE_LIMIT_UNAVAILABLE");
       expect(body.meta.requestId).toBe("unknown");
-      expect(logCalls.some((l) => l.level === "error" && /Rate limit check failed/.test(l.msg))).toBe(true);
+      expect(
+        logCalls.some(
+          (l) => l.level === "error" && /Rate limit check failed/.test(l.msg),
+        ),
+      ).toBe(true);
     });
 
     it("honors failClosed from a tier config (effectiveConfig wins)", async () => {
@@ -266,7 +281,9 @@ describe("createRateLimitMiddleware", () => {
       app.use("*", createRateLimitMiddleware(rl(10)));
       app.get("/baz", (c) => c.text("ok"));
 
-      await app.request("/baz", { headers: { "x-forwarded-for": " 5.6.7.8 , 9.9.9.9" } });
+      await app.request("/baz", {
+        headers: { "x-forwarded-for": " 5.6.7.8 , 9.9.9.9" },
+      });
 
       expect(captured.current).toContain("ratelimit:ip:5.6.7.8:/baz");
     });
@@ -335,7 +352,9 @@ describe("createRateLimitMiddleware", () => {
       const res = await app.request("/");
       expect(res.status).toBe(200);
       expect(res.headers.get("X-RateLimit-Limit")).toBe("10");
-      expect(logCalls.some((l) => l.level === "error" && /user tier/.test(l.msg))).toBe(true);
+      expect(
+        logCalls.some((l) => l.level === "error" && /user tier/.test(l.msg)),
+      ).toBe(true);
     });
 
     it("catches & logs when getApiKeyTier throws, keeping the base config", async () => {
@@ -351,7 +370,9 @@ describe("createRateLimitMiddleware", () => {
       const res = await app.request("/", { headers: { "x-api-key": "k1" } });
       expect(res.status).toBe(200);
       expect(res.headers.get("X-RateLimit-Limit")).toBe("10");
-      expect(logCalls.some((l) => l.level === "error" && /API key tier/.test(l.msg))).toBe(true);
+      expect(
+        logCalls.some((l) => l.level === "error" && /API key tier/.test(l.msg)),
+      ).toBe(true);
     });
 
     it("ignores a null tier result and keeps the base config", async () => {

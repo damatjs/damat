@@ -1,5 +1,11 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { getRegistry, clearRegistry, registerCommand, getCommand, getAllCommands } from "../registry";
+import {
+  getRegistry,
+  clearRegistry,
+  registerCommand,
+  getCommand,
+  getAllCommands,
+} from "../registry";
 import type { Command } from "../types";
 
 describe("CommandRegistry", () => {
@@ -48,8 +54,8 @@ describe("CommandRegistry", () => {
 
     const all = getAllCommands();
     expect(all.length).toBe(2);
-    expect(all.map(c => c.name)).toContain("test1");
-    expect(all.map(c => c.name)).toContain("test2");
+    expect(all.map((c) => c.name)).toContain("test1");
+    expect(all.map((c) => c.name)).toContain("test2");
   });
 
   test("should register command with aliases", () => {
@@ -143,7 +149,7 @@ describe("CommandRegistry", () => {
     registerCommand(cmd);
 
     const all = getAllCommands();
-    const names = all.map(c => c.name);
-    expect(names.filter(n => n === "alias-test").length).toBe(1);
+    const names = all.map((c) => c.name);
+    expect(names.filter((n) => n === "alias-test").length).toBe(1);
   });
 });

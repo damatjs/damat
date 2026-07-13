@@ -49,7 +49,10 @@ mock.module("@damatjs/module", () => ({
 // ---------------------------------------------------------------------------
 const gw = {
   status: 201,
-  body: { success: true, package: { name: "user", version: "1.0.0" } } as unknown,
+  body: {
+    success: true,
+    package: { name: "user", version: "1.0.0" },
+  } as unknown,
   calls: [] as Array<{
     url: string;
     method: string;
@@ -146,9 +149,9 @@ describe("module publish command", () => {
     expect(gw.calls).toHaveLength(1);
     expect(gw.calls[0]?.url).toContain("/api/npm/user");
     expect(gw.calls[0]?.method).toBe("PUT");
-    expect((gw.calls[0]?.headers as Record<string, string>)?.authorization).toBe(
-      "Bearer tok123",
-    );
+    expect(
+      (gw.calls[0]?.headers as Record<string, string>)?.authorization,
+    ).toBe("Bearer tok123");
     // Success logged.
     expect(logger.success).toHaveBeenCalled();
     const successCall = logger.success.mock.calls.find((c) =>
@@ -274,9 +277,7 @@ describe("module publish command", () => {
     const res = await cmd.handler(ctx);
 
     expect(res.exitCode).toBe(0);
-    expect(gw.calls[0]?.url).toBe(
-      "https://custom.example.com/api/npm/user",
-    );
+    expect(gw.calls[0]?.url).toBe("https://custom.example.com/api/npm/user");
   });
 
   it("cleans up temp dir in finally (rmSync called)", async () => {
@@ -312,7 +313,9 @@ describe("module publish command", () => {
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("Could not locate module")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("Could not locate module"),
+      ),
     ).toBe(true);
   });
 
@@ -329,18 +332,24 @@ describe("module publish command", () => {
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(0);
     expect(
-      logger.warn.mock.calls.some((c) => String(c[0]).includes("description is empty")),
+      logger.warn.mock.calls.some((c) =>
+        String(c[0]).includes("description is empty"),
+      ),
     ).toBe(true);
   });
 
   it("rejects a package.json without a name", async () => {
     basePublishSetup();
-    fsState.readFileMap["/m/package.json"] = JSON.stringify({ version: "1.0.0" });
+    fsState.readFileMap["/m/package.json"] = JSON.stringify({
+      version: "1.0.0",
+    });
     const cmd = await get();
     const { ctx, logger } = createContext({}, { cwd: "/m" });
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
-    expect(logger.error.mock.calls.some((c) => String(c[0]).includes("`name`"))).toBe(true);
+    expect(
+      logger.error.mock.calls.some((c) => String(c[0]).includes("`name`")),
+    ).toBe(true);
   });
 
   it("rejects a package.json without a version", async () => {
@@ -350,7 +359,9 @@ describe("module publish command", () => {
     const { ctx, logger } = createContext({}, { cwd: "/m" });
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
-    expect(logger.error.mock.calls.some((c) => String(c[0]).includes("`version`"))).toBe(true);
+    expect(
+      logger.error.mock.calls.some((c) => String(c[0]).includes("`version`")),
+    ).toBe(true);
   });
 
   it("reports an unreadable package.json", async () => {
@@ -361,7 +372,9 @@ describe("module publish command", () => {
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("Could not read package.json")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("Could not read package.json"),
+      ),
     ).toBe(true);
   });
 
@@ -373,7 +386,9 @@ describe("module publish command", () => {
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("Could not read module manifest")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("Could not read module manifest"),
+      ),
     ).toBe(true);
   });
 
@@ -385,7 +400,9 @@ describe("module publish command", () => {
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("Failed to create tarball")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("Failed to create tarball"),
+      ),
     ).toBe(true);
     expect(gw.calls).toHaveLength(0);
   });
@@ -399,7 +416,9 @@ describe("module publish command", () => {
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("check the module manifest")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("check the module manifest"),
+      ),
     ).toBe(true);
   });
 
@@ -412,7 +431,9 @@ describe("module publish command", () => {
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("Publish failed (502)")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("Publish failed (502)"),
+      ),
     ).toBe(true);
   });
 

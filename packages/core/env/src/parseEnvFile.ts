@@ -45,4 +45,4 @@ export const parseEnvFile = (content: string): Record<string, string> => {
   }
 
   return result;
-}
+};

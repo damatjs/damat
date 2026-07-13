@@ -188,9 +188,9 @@ describe("buildCommand.handler", () => {
     await buildCommand.handler(ctx);
 
     // The nested file was copied through the recursive branch.
-    expect(
-      copyCalls.some((c) => c.src === "/project/src/sub/nested.ts"),
-    ).toBe(true);
+    expect(copyCalls.some((c) => c.src === "/project/src/sub/nested.ts")).toBe(
+      true,
+    );
     expect(copyCalls.some((c) => c.src === "/project/src/app.ts")).toBe(true);
   });
 

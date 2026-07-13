@@ -7,7 +7,8 @@ const KIT_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
 
 export const kitInitCommand: Command = {
   name: "init",
-  description: "Describe THIS codebase as a shareable kit (writes damat-kit.json)",
+  description:
+    "Describe THIS codebase as a shareable kit (writes damat-kit.json)",
   usage: "damat kit init [name]",
   examples: ["damat kit init", "damat kit init design-system"],
   options: [],
@@ -32,9 +33,7 @@ export const kitInitCommand: Command = {
       name,
       description: "",
       version: "0.1.0",
-      mappings: [
-        { from: "src/**", to: `src/${name}` },
-      ],
+      mappings: [{ from: "src/**", to: `src/${name}` }],
       fallback: `shared/${name}`,
       ignore: ["**/*.test.*", "tests/**", "README.md", ".gitignore"],
       packages: {},

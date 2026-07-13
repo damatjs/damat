@@ -6,19 +6,19 @@ Maintainer-facing documentation. For usage see the [package README](../README.md
 
 ## Module map
 
-| File / dir | Responsibility | Detail doc |
-| --- | --- | --- |
-| `src/index.ts` | Barrel re-exporting the whole public surface. | — |
-| `src/types/` | All interfaces/types (`CliConfig`, `Command`, `CommandOption`, `CommandContext`, `CommandRegistry`, `ParsedCommand`, `BannerConfig`). | [command-model.md](./command-model.md) |
-| `src/registry/` | Singleton `CommandRegistry` + helper functions; namespacing of subcommands/aliases. | [registry.md](./registry.md) |
-| `src/run/` | `runCli` and its helpers: command building, arg parsing, context, subcommand dispatch, help command. | [run.md](./run.md) |
-| `src/config.ts` | Project-config file loader with caching (`loadConfig`, `withConfig`, `clearConfigCache`). | [run.md](./run.md) |
-| `src/help/` | Default + per-command help rendering and line formatters. | [help.md](./help.md) |
-| `src/utils/banner.ts` | Banner rendering (boxed/minimal/none). | [help.md](./help.md) |
-| `src/utils/output/` | Logger-backed console helpers (`printError`/`printSuccess`/`printInfo`/`printSection`/`formatCommandHelp`). | [output-and-validation.md](./output-and-validation.md) |
-| `src/utils/validate/` | Option validation, default application, type coercion. | [output-and-validation.md](./output-and-validation.md) |
-| `src/errors/` | `CliError` hierarchy. | [output-and-validation.md](./output-and-validation.md) |
-| `src/tests/` | Bun unit tests (no live services). | — |
+| File / dir            | Responsibility                                                                                                                        | Detail doc                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `src/index.ts`        | Barrel re-exporting the whole public surface.                                                                                         | —                                                      |
+| `src/types/`          | All interfaces/types (`CliConfig`, `Command`, `CommandOption`, `CommandContext`, `CommandRegistry`, `ParsedCommand`, `BannerConfig`). | [command-model.md](./command-model.md)                 |
+| `src/registry/`       | Singleton `CommandRegistry` + helper functions; namespacing of subcommands/aliases.                                                   | [registry.md](./registry.md)                           |
+| `src/run/`            | `runCli` and its helpers: command building, arg parsing, context, subcommand dispatch, help command.                                  | [run.md](./run.md)                                     |
+| `src/config.ts`       | Project-config file loader with caching (`loadConfig`, `withConfig`, `clearConfigCache`).                                             | [run.md](./run.md)                                     |
+| `src/help/`           | Default + per-command help rendering and line formatters.                                                                             | [help.md](./help.md)                                   |
+| `src/utils/banner.ts` | Banner rendering (boxed/minimal/none).                                                                                                | [help.md](./help.md)                                   |
+| `src/utils/output/`   | Logger-backed console helpers (`printError`/`printSuccess`/`printInfo`/`printSection`/`formatCommandHelp`).                           | [output-and-validation.md](./output-and-validation.md) |
+| `src/utils/validate/` | Option validation, default application, type coercion.                                                                                | [output-and-validation.md](./output-and-validation.md) |
+| `src/errors/`         | `CliError` hierarchy.                                                                                                                 | [output-and-validation.md](./output-and-validation.md) |
+| `src/tests/`          | Bun unit tests (no live services).                                                                                                    | —                                                      |
 
 ## Architecture overview
 

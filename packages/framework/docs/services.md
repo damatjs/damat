@@ -9,7 +9,10 @@ Source: `src/services/` — `index.ts`, `logger.ts`, `database.ts`, `redis.ts`, 
 ## `initializeServices(config, cwd?)` (`index.ts`)
 
 ```ts
-async function initializeServices(config: AppConfig, cwd = process.cwd()): Promise<ServiceInstances>;
+async function initializeServices(
+  config: AppConfig,
+  cwd = process.cwd(),
+): Promise<ServiceInstances>;
 
 interface ServiceInstances {
   healthChecks?: { database?: HealthCheckFn; redis?: HealthCheckFn };
@@ -40,14 +43,14 @@ Steps:
 
 Module-global singleton from `@damatjs/logger`.
 
-| Function | Behaviour |
-| --- | --- |
-| `initLogger(config?)` | Creates the logger once (default: `level: "info"`, `format: "pretty"`, `timestamp: true`, `prefix: "damat"`); returns the existing one on subsequent calls. |
-| `getLogger()` | Returns the logger, lazily calling `initLogger()` if none. |
-| `setGlobalLoggerInstance(logger)` | Replaces the singleton (used in tests). |
-| `clearGlobalLogger()` / `closeLogger()` | Reset / close + reset. |
-| `isLoggerConfigured()` | Whether a logger exists. |
-| `createContextLogger(context)` | A child logger bound to `context` (falls back to `NOOP_LOGGER.child` if none). |
+| Function                                | Behaviour                                                                                                                                                   |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `initLogger(config?)`                   | Creates the logger once (default: `level: "info"`, `format: "pretty"`, `timestamp: true`, `prefix: "damat"`); returns the existing one on subsequent calls. |
+| `getLogger()`                           | Returns the logger, lazily calling `initLogger()` if none.                                                                                                  |
+| `setGlobalLoggerInstance(logger)`       | Replaces the singleton (used in tests).                                                                                                                     |
+| `clearGlobalLogger()` / `closeLogger()` | Reset / close + reset.                                                                                                                                      |
+| `isLoggerConfigured()`                  | Whether a logger exists.                                                                                                                                    |
+| `createContextLogger(context)`          | A child logger bound to `context` (falls back to `NOOP_LOGGER.child` if none).                                                                              |
 
 > Test note: `tests/services/logger.test.ts` shows that after `setGlobalLoggerInstance(null)`, `getLogger()` throws `"Logger not initialized. Call initLogger() first."` — i.e. forcing the singleton to `null` is treated as "not initialized" by the underlying logger.
 
@@ -55,12 +58,12 @@ Module-global singleton from `@damatjs/logger`.
 
 Bridges config to `@damatjs/services` `PoolManager`.
 
-| Function | Behaviour |
-| --- | --- |
+| Function                                  | Behaviour                                                                                                                                                                               |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `initDatabase(dbConfig, logger, nodeEnv)` | Lazily creates a `ConnectionManager` (with env-appropriate pool config), `connect()`s to get a `Pool`, then `PoolManager.setup({ pool, logger, connectionManager })`. Returns the pool. |
-| `getConnectionManager()` | The module-level `ConnectionManager` or `null`. |
-| `checkHealth()` | `connectionManager.healthCheck()` or `null`. |
-| `closeDatabase()` | `connectionManager.disconnect()`, null it, and `PoolManager.reset()`. |
+| `getConnectionManager()`                  | The module-level `ConnectionManager` or `null`.                                                                                                                                         |
+| `checkHealth()`                           | `connectionManager.healthCheck()` or `null`.                                                                                                                                            |
+| `closeDatabase()`                         | `connectionManager.disconnect()`, null it, and `PoolManager.reset()`.                                                                                                                   |
 
 `getPoolConfigByEnv(nodeEnv, config)`: if the config already has advanced pool settings (`min/max/idleTimeoutMillis/connectionTimeoutMillis`), use it verbatim; otherwise merge env defaults from `@damatjs/orm-connector` (`developmentPoolConfig`/`productionPoolConfig`/`testPoolConfig`) under the provided `config`.
 
@@ -79,9 +82,11 @@ The app-side registry of running module services.
 ```ts
 const moduleRegistry = new Map<string, ModuleInstance<any>>();
 
-function registerModule(name, module): void;            // module.init(); set in map
-function getModule<K extends keyof ModuleRegistry>(name: K): ModuleRegistry[K] | null;
-function getModule<T>(name: string): T | null;          // explicit-type overload
+function registerModule(name, module): void; // module.init(); set in map
+function getModule<K extends keyof ModuleRegistry>(
+  name: K,
+): ModuleRegistry[K] | null;
+function getModule<T>(name: string): T | null; // explicit-type overload
 function hasModule(name): boolean;
 function clearModules(): void;
 function getAllModules(): Map<string, ModuleInstance<any>>;

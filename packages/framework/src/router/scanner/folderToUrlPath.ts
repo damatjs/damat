@@ -1,7 +1,5 @@
 export function folderToUrlPath(folderPath: string): string {
-  return (
-    folderPath
-      .replace(/\[\.\.\.([^\]]+)\]/g, "*")
-      .replace(/\[([^\]]+)\]/g, ":$1")
-  );
+  return folderPath
+    .replace(/\[\.\.\.([^\]]+)\]/g, "*")
+    .replace(/\[([^\]]+)\]/g, ":$1");
 }

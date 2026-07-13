@@ -100,7 +100,11 @@ describe("generateRowInterface", () => {
         { name: "labels", type: "text", nullable: false, array: true },
         { name: "scores", type: "integer", nullable: true, array: true },
         { name: "kind", type: "enum", enum: "widget_kind", nullable: false },
-        { name: "created_at", type: "timestamp with time zone", nullable: false },
+        {
+          name: "created_at",
+          type: "timestamp with time zone",
+          nullable: false,
+        },
       ],
     };
     const lines = generateRowInterface(table, []);

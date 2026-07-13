@@ -1,6 +1,6 @@
 /**
  * Redis-backed, opt-in read cache for ModelMethods
- * 
+ *
  *   - a read is cached ONLY when the call passes `cache: true | { ttl, tags }`
  *     (nothing is cached by default);
  *   - every entry carries the implicit `model:<name>` tag;
@@ -14,9 +14,8 @@
  * database (a transaction must see its own writes).
  */
 
-
-export * from "./buildCacheKey"
-export * from "./constant"
-export * from "./stableStringify"
-export * from "./tag"
-export * from "./taggedCache"
+export * from "./buildCacheKey";
+export * from "./constant";
+export * from "./stableStringify";
+export * from "./tag";
+export * from "./taggedCache";

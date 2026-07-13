@@ -11,7 +11,8 @@ import { kitValidateCommand } from "./validate";
  */
 export const kitCommand: Command = {
   name: "kit",
-  description: "Share and install code between ANY projects via damat-kit.json (shadcn-style)",
+  description:
+    "Share and install code between ANY projects via damat-kit.json (shadcn-style)",
   aliases: ["k"],
   subcommands: [kitAddCommand, kitInitCommand, kitValidateCommand],
   handler: async (ctx) => {

@@ -40,7 +40,10 @@ const mm = {
     scaffolded: [] as string[],
   },
   generateThrows: null as Error | null,
-  migrationResult: { hasChanges: false, filePath: undefined as string | undefined },
+  migrationResult: {
+    hasChanges: false,
+    filePath: undefined as string | undefined,
+  },
   migrationThrows: null as Error | null,
   locateThrows: null as Error | null,
   locateResult: "/m/src",
@@ -105,7 +108,11 @@ mock.module("@damatjs/codegen", () => ({
 
 beforeEach(() => {
   resetMocks();
-  mm.generateResult = { outputDir: "/m/types", files: ["users.ts"], scaffolded: [] };
+  mm.generateResult = {
+    outputDir: "/m/types",
+    files: ["users.ts"],
+    scaffolded: [],
+  };
   mm.generateThrows = null;
   mm.migrationResult = { hasChanges: false, filePath: undefined };
   mm.migrationThrows = null;
@@ -125,7 +132,8 @@ beforeEach(() => {
 });
 
 describe("module codegen command", () => {
-  const get = async () => (await import("../module/codegen")).moduleCodegenCommand;
+  const get = async () =>
+    (await import("../module/codegen")).moduleCodegenCommand;
 
   it("reports generated files and scaffold count on success", async () => {
     mm.generateResult = {
@@ -190,7 +198,8 @@ describe("module migration:create command", () => {
 });
 
 describe("module validate command", () => {
-  const get = async () => (await import("../module/validate")).moduleValidateCommand;
+  const get = async () =>
+    (await import("../module/validate")).moduleValidateCommand;
 
   it("fails when the module dir can't be located", async () => {
     mm.locateThrows = new Error("not a module");
@@ -316,7 +325,9 @@ describe("module list command", () => {
     );
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(0);
-    expect(logger.info).toHaveBeenCalledWith("No modules directory at src/modules");
+    expect(logger.info).toHaveBeenCalledWith(
+      "No modules directory at src/modules",
+    );
   });
 
   it("reports when the directory has no module subdirs", async () => {
@@ -486,7 +497,9 @@ describe("module dev command", () => {
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(0);
     // .damat created since it did not exist.
-    expect(mockMkdirSync).toHaveBeenCalledWith("/m/.damat", { recursive: true });
+    expect(mockMkdirSync).toHaveBeenCalledWith("/m/.damat", {
+      recursive: true,
+    });
     // Entry file written with the runModuleEntry bootstrap.
     const entry = writeCalls.find((w) =>
       w.path.endsWith("/.damat/module-dev-entry.ts"),
@@ -518,7 +531,9 @@ describe("module dev command", () => {
     expect(mockMkdirSync).not.toHaveBeenCalledWith("/m/.damat", {
       recursive: true,
     });
-    expect("PORT" in (spawnCalls[0]!.env as Record<string, string>)).toBe(false);
+    expect("PORT" in (spawnCalls[0]!.env as Record<string, string>)).toBe(
+      false,
+    );
     expect(unlinkCalls).not.toContain("/m/.damat/module-dev-entry.ts");
   });
 
@@ -583,7 +598,9 @@ describe("resolveModuleSource (helpers/source.ts)", () => {
     mm.parseRef = { name: "ghost" };
     mm.registryRecord = null; // no record
     const fn = await get();
-    await expect(fn("ghost", "/cwd")).rejects.toThrow(/registry module reference/);
+    await expect(fn("ghost", "/cwd")).rejects.toThrow(
+      /registry module reference/,
+    );
   });
 
   it("falls through to git when a slashed registry ref is unknown", async () => {
@@ -641,14 +658,16 @@ describe("resolveModuleSource (helpers/source.ts)", () => {
     fsState.existsDefault = false;
     // Availability probe passes, the clone itself fails.
     mockSpawnSync
-      .mockImplementationOnce(() => ({ status: 0, stdout: "", stderr: "" }) as never)
+      .mockImplementationOnce(
+        () => ({ status: 0, stdout: "", stderr: "" }) as never,
+      )
       .mockImplementationOnce(
         () => ({ status: 128, stdout: "", stderr: "fatal: nope" }) as never,
       );
     const fn = await get();
-    await expect(
-      fn("https://github.com/acme/mod.git", "/cwd"),
-    ).rejects.toThrow(/git clone failed/);
+    await expect(fn("https://github.com/acme/mod.git", "/cwd")).rejects.toThrow(
+      /git clone failed/,
+    );
     expect(rmCalls.some((c) => String(c.path).includes("damat-module-"))).toBe(
       true,
     );
@@ -668,9 +687,9 @@ describe("resolveModuleSource (helpers/source.ts)", () => {
     fsState.existsDefault = false; // temp dir / subdir do NOT exist after clone
     fsState.spawnSyncResult = { status: 0, stdout: "", stderr: "" };
     const fn = await get();
-    await expect(
-      fn("acme/mod/missing/dir", "/cwd"),
-    ).rejects.toThrow(/not found inside/);
+    await expect(fn("acme/mod/missing/dir", "/cwd")).rejects.toThrow(
+      /not found inside/,
+    );
     expect(rmCalls.some((c) => String(c.path).includes("damat-module-"))).toBe(
       true,
     );
@@ -761,9 +780,9 @@ describe("module add command", () => {
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(0);
     // Registered in config + tsconfig aliases written + success logged.
-    expect(
-      writeCalls.some((w) => w.path === "/app/damat.config.ts"),
-    ).toBe(true);
+    expect(writeCalls.some((w) => w.path === "/app/damat.config.ts")).toBe(
+      true,
+    );
     expect(writeCalls.some((w) => w.path === "/app/tsconfig.json")).toBe(true);
     expect(logger.success).toHaveBeenCalled();
     // path-source provenance branch (not registry).
@@ -803,7 +822,9 @@ describe("module add command", () => {
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("already exists")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("already exists"),
+      ),
     ).toBe(true);
   });
 
@@ -892,7 +913,9 @@ describe("module add command", () => {
     ).toBe(true);
     // Link next-steps printed.
     expect(
-      logger.info.mock.calls.some((c) => String(c[0]).includes("migrate:create link:")),
+      logger.info.mock.calls.some((c) =>
+        String(c[0]).includes("migrate:create link:"),
+      ),
     ).toBe(true);
   });
 
@@ -943,7 +966,11 @@ describe("module add command", () => {
       owner: { namespace: "acme" },
       verification: { status: "unverified" },
     };
-    mm.verification = { allowed: false, status: "unverified", message: "blocked" };
+    mm.verification = {
+      allowed: false,
+      status: "unverified",
+      message: "blocked",
+    };
     mm.locateResult = "/cache/user/src";
     const cmd = await get();
     const { ctx, logger } = createContext(
@@ -982,7 +1009,11 @@ describe("module add command", () => {
       owner: { namespace: "acme" },
       verification: { status: "verified" },
     };
-    mm.verification = { allowed: true, status: "verified", message: "heads up" };
+    mm.verification = {
+      allowed: true,
+      status: "verified",
+      message: "heads up",
+    };
     mm.locateResult = "/cache/user/src";
     const cmd = await get();
     const { ctx, logger } = createContext(
@@ -1004,7 +1035,9 @@ describe("module add command", () => {
     });
     fsState.readFileMap = {
       "/app/.env.example": "",
-      "/pkg/package.json": JSON.stringify({ dependencies: { stripe: "^14.0.0" } }),
+      "/pkg/package.json": JSON.stringify({
+        dependencies: { stripe: "^14.0.0" },
+      }),
     };
     mm.manifest = {
       name: "user",
@@ -1022,17 +1055,23 @@ describe("module add command", () => {
     expect(res.exitCode).toBe(0);
     // Could-not-update warnings for config + tsconfig.
     expect(
-      logger.warn.mock.calls.some((c) => String(c[0]).includes("damat.config.ts")),
+      logger.warn.mock.calls.some((c) =>
+        String(c[0]).includes("damat.config.ts"),
+      ),
     ).toBe(true);
     expect(
-      logger.warn.mock.calls.some((c) => String(c[0]).includes("tsconfig.json")),
+      logger.warn.mock.calls.some((c) =>
+        String(c[0]).includes("tsconfig.json"),
+      ),
     ).toBe(true);
     // Env var added + reported missing.
     expect(
       logger.info.mock.calls.some((c) => String(c[0]).includes(".env.example")),
     ).toBe(true);
     expect(
-      logger.warn.mock.calls.some((c) => String(c[0]).includes("before starting")),
+      logger.warn.mock.calls.some((c) =>
+        String(c[0]).includes("before starting"),
+      ),
     ).toBe(true);
     expect(appendCalls.length).toBeGreaterThan(0);
     // `bun add` ran, with lifecycle scripts off by default.
@@ -1046,7 +1085,9 @@ describe("module add command", () => {
     fsState.readFileMap = {
       "/app/damat.config.ts": `export default defineConfig({\n  modules: {},\n});\n`,
       "/app/tsconfig.json": JSON.stringify({}),
-      "/pkg/package.json": JSON.stringify({ dependencies: { stripe: "^14.0.0" } }),
+      "/pkg/package.json": JSON.stringify({
+        dependencies: { stripe: "^14.0.0" },
+      }),
     };
     fsState.spawnSyncResult = { status: 1, stdout: "", stderr: "boom" };
     const cmd = await get();
@@ -1057,7 +1098,9 @@ describe("module add command", () => {
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("bun add failed")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("bun add failed"),
+      ),
     ).toBe(true);
   });
 
@@ -1113,7 +1156,9 @@ describe("module add command", () => {
     fsState.readFileMap = {
       "/app/damat.config.ts": `export default defineConfig({\n  modules: {},\n});\n`,
       "/app/tsconfig.json": JSON.stringify({}),
-      "/pkg/package.json": JSON.stringify({ dependencies: { stripe: "^14.0.0" } }),
+      "/pkg/package.json": JSON.stringify({
+        dependencies: { stripe: "^14.0.0" },
+      }),
     };
     mm.manifest = {
       name: "user",
@@ -1171,7 +1216,10 @@ describe("module add command", () => {
   // --- hardening gates -------------------------------------------------
 
   /** Run fn with DAMAT_MODULE_VERIFY forced to `value` (undefined = unset). */
-  async function withVerifyPolicy(value: string | undefined, fn: () => Promise<void>) {
+  async function withVerifyPolicy(
+    value: string | undefined,
+    fn: () => Promise<void>,
+  ) {
     const saved = process.env.DAMAT_MODULE_VERIFY;
     if (value === undefined) delete process.env.DAMAT_MODULE_VERIFY;
     else process.env.DAMAT_MODULE_VERIFY = value;
@@ -1250,7 +1298,9 @@ describe("module add command", () => {
       const res = await cmd.handler(ctx);
       expect(res.exitCode).toBe(1);
       expect(
-        logger.error.mock.calls.some((c) => String(c[0]).includes("kebab-case")),
+        logger.error.mock.calls.some((c) =>
+          String(c[0]).includes("kebab-case"),
+        ),
       ).toBe(true);
     }
     expect(cpCalls).toHaveLength(0);
@@ -1329,6 +1379,7 @@ describe("module add command", () => {
 // statSync helper for the links install path: owner dir + walked models dir.
 function mockStatSyncForLinks() {
   mockStatSync.mockImplementation((p: string) => ({
-    isDirectory: () => String(p).endsWith("/user") || String(p).endsWith("models"),
+    isDirectory: () =>
+      String(p).endsWith("/user") || String(p).endsWith("models"),
   }));
 }

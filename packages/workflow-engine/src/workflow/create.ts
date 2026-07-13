@@ -201,7 +201,7 @@ export function createWorkflow<I, O>(
                   );
                 }
               },
-              () => { },
+              () => {},
             );
           },
           Math.max(1000, Math.floor(ttlMs / 2)),

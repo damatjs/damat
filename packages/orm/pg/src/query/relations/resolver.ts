@@ -1,4 +1,9 @@
-import { BelongsToBuilder, HasManyBuilder, HasOneBuilder, ModelDefinition } from '@damatjs/orm-model';
+import {
+  BelongsToBuilder,
+  HasManyBuilder,
+  HasOneBuilder,
+  ModelDefinition,
+} from "@damatjs/orm-model";
 import type { RelationIncludeMap, ResolvedRelation } from "./types";
 import { RelationGuardError } from "./error";
 

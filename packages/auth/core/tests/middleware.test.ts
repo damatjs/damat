@@ -40,32 +40,52 @@ function fakeProvider(overrides: Partial<AuthProvider> = {}): AuthProvider {
 function appWith(handler: ReturnType<typeof createAuthHandlers>["session"]) {
   const app = new Hono();
   app.use("*", handler);
-  app.get("/", (c) => c.json({ user: c.get("user" as never), team: c.get("team" as never) }));
+  app.get("/", (c) =>
+    c.json({ user: c.get("user" as never), team: c.get("team" as never) }),
+  );
   return app;
 }
 
 describe("createAuthHandlers — session", () => {
   it("sets user/userId/team and continues on a verified request", async () => {
-    const principal: AuthPrincipal = { id: "u1", email: "a@b.co", orgId: "org1" };
-    const { session } = createAuthHandlers(fakeProvider({ authenticate: async () => principal }));
+    const principal: AuthPrincipal = {
+      id: "u1",
+      email: "a@b.co",
+      orgId: "org1",
+    };
+    const { session } = createAuthHandlers(
+      fakeProvider({ authenticate: async () => principal }),
+    );
     const res = await appWith(session).request("/");
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { user: AuthPrincipal; team: { id: string } };
+    const body = (await res.json()) as {
+      user: AuthPrincipal;
+      team: { id: string };
+    };
     expect(body.user).toEqual(principal);
     expect(body.team).toEqual({ id: "org1" });
   });
 
   it("omits team when the principal has no orgId", async () => {
-    const { session } = createAuthHandlers(fakeProvider({ authenticate: async () => ({ id: "u1" }) }));
-    const body = (await (await appWith(session).request("/")).json()) as { team?: unknown };
+    const { session } = createAuthHandlers(
+      fakeProvider({ authenticate: async () => ({ id: "u1" }) }),
+    );
+    const body = (await (await appWith(session).request("/")).json()) as {
+      team?: unknown;
+    };
     expect(body.team).toBeUndefined();
   });
 
   it("returns the 401 envelope when unauthenticated", async () => {
-    const { session } = createAuthHandlers(fakeProvider({ authenticate: async () => null }));
+    const { session } = createAuthHandlers(
+      fakeProvider({ authenticate: async () => null }),
+    );
     const res = await appWith(session).request("/");
     expect(res.status).toBe(401);
-    const body = (await res.json()) as { success: boolean; error: { code: string } };
+    const body = (await res.json()) as {
+      success: boolean;
+      error: { code: string };
+    };
     expect(body.success).toBe(false);
     expect(body.error.code).toBe("UNAUTHORIZED");
   });
@@ -81,7 +101,12 @@ describe("createAuthHandlers — session", () => {
     );
     const res = await appWith(session).request("/");
     expect(res.status).toBe(401);
-    expect(logs.some((l) => l.level === "warn" && l.msg.includes('"boom" verification failed'))).toBe(true);
+    expect(
+      logs.some(
+        (l) =>
+          l.level === "warn" && l.msg.includes('"boom" verification failed'),
+      ),
+    ).toBe(true);
   });
 });
 
@@ -98,9 +123,12 @@ describe("createAuthHandlers — onAuthenticated hook", () => {
 
   it("does not fire when unauthenticated", async () => {
     let fired = false;
-    const { session } = createAuthHandlers(fakeProvider({ authenticate: async () => null }), {
-      onAuthenticated: () => void (fired = true),
-    });
+    const { session } = createAuthHandlers(
+      fakeProvider({ authenticate: async () => null }),
+      {
+        onAuthenticated: () => void (fired = true),
+      },
+    );
     await appWith(session).request("/");
     expect(fired).toBe(false);
   });
@@ -116,7 +144,11 @@ describe("createAuthHandlers — onAuthenticated hook", () => {
     );
     const res = await appWith(session).request("/");
     expect(res.status).toBe(200);
-    expect(logs.some((l) => l.level === "error" && l.msg.includes("onAuthenticated"))).toBe(true);
+    expect(
+      logs.some(
+        (l) => l.level === "error" && l.msg.includes("onAuthenticated"),
+      ),
+    ).toBe(true);
   });
 });
 
@@ -127,14 +159,20 @@ describe("createAuthHandlers — apiKey & flexible", () => {
       authenticateApiKey: async () => ({ id: "key-user" }),
     });
     const { apiKey } = createAuthHandlers(provider);
-    const body = (await (await appWith(apiKey).request("/")).json()) as { user: AuthPrincipal };
+    const body = (await (await appWith(apiKey).request("/")).json()) as {
+      user: AuthPrincipal;
+    };
     expect(body.user).toEqual({ id: "key-user" });
   });
 
   it("apiKey falls back to authenticate when the provider has no apiKey path", async () => {
-    const provider = fakeProvider({ authenticate: async () => ({ id: "sess" }) });
+    const provider = fakeProvider({
+      authenticate: async () => ({ id: "sess" }),
+    });
     const { apiKey } = createAuthHandlers(provider);
-    const body = (await (await appWith(apiKey).request("/")).json()) as { user: AuthPrincipal };
+    const body = (await (await appWith(apiKey).request("/")).json()) as {
+      user: AuthPrincipal;
+    };
     expect(body.user).toEqual({ id: "sess" });
   });
 
@@ -145,7 +183,9 @@ describe("createAuthHandlers — apiKey & flexible", () => {
       authenticateApiKey: async () => ({ id: "via-key" }),
     });
     const { flexible } = createAuthHandlers(provider);
-    const body = (await (await appWith(flexible).request("/")).json()) as { user: AuthPrincipal };
+    const body = (await (await appWith(flexible).request("/")).json()) as {
+      user: AuthPrincipal;
+    };
     expect(body.user).toEqual({ id: "via-key" });
   });
 
@@ -155,7 +195,9 @@ describe("createAuthHandlers — apiKey & flexible", () => {
       authenticateApiKey: async () => ({ id: "via-key" }),
     });
     const { flexible } = createAuthHandlers(provider);
-    const body = (await (await appWith(flexible).request("/")).json()) as { user: AuthPrincipal };
+    const body = (await (await appWith(flexible).request("/")).json()) as {
+      user: AuthPrincipal;
+    };
     expect(body.user).toEqual({ id: "via-session" });
   });
 

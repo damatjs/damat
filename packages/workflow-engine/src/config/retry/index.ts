@@ -1,2 +1,2 @@
-export * from "./default"
-export * from "./policies"
+export * from "./default";
+export * from "./policies";

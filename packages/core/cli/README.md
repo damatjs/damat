@@ -42,13 +42,26 @@ runCli({
       name: "hello",
       description: "Say hello to someone",
       options: [
-        { name: "name", alias: "n", type: "string", description: "Name to greet", default: "World" },
-        { name: "loud", type: "boolean", description: "Shout the greeting", default: false },
+        {
+          name: "name",
+          alias: "n",
+          type: "string",
+          description: "Name to greet",
+          default: "World",
+        },
+        {
+          name: "loud",
+          type: "boolean",
+          description: "Shout the greeting",
+          default: false,
+        },
       ],
       handler: async (ctx) => {
         const name = ctx.options.name as string;
         const loud = ctx.options.loud as boolean;
-        ctx.logger.info(loud ? `HELLO, ${name.toUpperCase()}!` : `Hello, ${name}!`);
+        ctx.logger.info(
+          loud ? `HELLO, ${name.toUpperCase()}!` : `Hello, ${name}!`,
+        );
         return { exitCode: 0 };
       },
     },
@@ -70,67 +83,67 @@ All exports come from the single entry point `@damatjs/cli` (no subpath exports)
 
 ### Entry point
 
-| Export | Kind | Summary |
-| --- | --- | --- |
+| Export                      | Kind     | Summary                                                   |
+| --------------------------- | -------- | --------------------------------------------------------- |
 | `runCli(config: CliConfig)` | function | Build, parse, and dispatch the CLI. Calls `process.exit`. |
 
 ### Registry
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `getRegistry()` | function | Get the singleton `CommandRegistry`. |
-| `registerCommand(cmd)` | function | Register a command (and its subcommands/aliases). |
-| `getCommand(name)` | function | Look up a command by name/alias. |
-| `getAllCommands()` | function | All registered commands (deduped). |
-| `clearRegistry()` | function | Reset the registry (called at the start of `runCli`). |
+| Export                 | Kind     | Summary                                               |
+| ---------------------- | -------- | ----------------------------------------------------- |
+| `getRegistry()`        | function | Get the singleton `CommandRegistry`.                  |
+| `registerCommand(cmd)` | function | Register a command (and its subcommands/aliases).     |
+| `getCommand(name)`     | function | Look up a command by name/alias.                      |
+| `getAllCommands()`     | function | All registered commands (deduped).                    |
+| `clearRegistry()`      | function | Reset the registry (called at the start of `runCli`). |
 
 ### Config loading
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `loadConfig<T>(loader?, cwd?)` | function | Load + cache a project config file. |
-| `clearConfigCache()` | function | Drop the cached config. |
-| `withConfig<T>(loader)` | function | `{ get, clear }` helper around `loadConfig`. |
+| Export                         | Kind     | Summary                                      |
+| ------------------------------ | -------- | -------------------------------------------- |
+| `loadConfig<T>(loader?, cwd?)` | function | Load + cache a project config file.          |
+| `clearConfigCache()`           | function | Drop the cached config.                      |
+| `withConfig<T>(loader)`        | function | `{ get, clear }` helper around `loadConfig`. |
 
 ### Help & output
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `printDefaultHelp(config, commands)` | function | Render the top-level help. |
-| `printCommandSpecificHelp(config, cmd)` | function | Render help for one command. |
-| `formatCommandLine(cmd)`, `formatOptionLine(opt)`, `formatCommandHelp(...)` | functions | Help-line formatters. |
-| `printBanner(config, banner?)` | function | Render boxed/minimal/none banner. |
-| `printError`, `printSuccess`, `printInfo`, `printSection` | functions | Logger-backed console output helpers. |
+| Export                                                                      | Kind      | Summary                               |
+| --------------------------------------------------------------------------- | --------- | ------------------------------------- |
+| `printDefaultHelp(config, commands)`                                        | function  | Render the top-level help.            |
+| `printCommandSpecificHelp(config, cmd)`                                     | function  | Render help for one command.          |
+| `formatCommandLine(cmd)`, `formatOptionLine(opt)`, `formatCommandHelp(...)` | functions | Help-line formatters.                 |
+| `printBanner(config, banner?)`                                              | function  | Render boxed/minimal/none banner.     |
+| `printError`, `printSuccess`, `printInfo`, `printSection`                   | functions | Logger-backed console output helpers. |
 
 ### Validation (also run automatically by `runCli`)
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `validateOptions(options, defs, cmdName)` | function | Throw `MissingRequiredOptionError` for unmet required options. |
-| `applyDefaults(options, defs)` | function | Fill in option defaults. |
-| `coerceOptions(options, defs)`, `coerceOptionValue(value, type)` | functions | Coerce values to `string`/`number`/`boolean`. |
+| Export                                                           | Kind      | Summary                                                        |
+| ---------------------------------------------------------------- | --------- | -------------------------------------------------------------- |
+| `validateOptions(options, defs, cmdName)`                        | function  | Throw `MissingRequiredOptionError` for unmet required options. |
+| `applyDefaults(options, defs)`                                   | function  | Fill in option defaults.                                       |
+| `coerceOptions(options, defs)`, `coerceOptionValue(value, type)` | functions | Coerce values to `string`/`number`/`boolean`.                  |
 
 ### Key types
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `CliConfig` | interface | Top-level config (`name`, `version`, `commands`, `banner`, `verbose`, `configLoader`, `onError`, ...). |
-| `Command` | interface | `name`, `description`, `aliases?`, `usage?`, `examples?`, `options?`, `subcommands?`, `handler`. |
-| `CommandOption` | interface | `name`, `alias?`, `description`, `type?`, `default?`, `required?`. |
-| `CommandContext` | interface | `command`, `args`, `options`, `logger`, `cwd` — passed to every handler. |
-| `CommandResult` | interface | `{ exitCode: number }` returned by handlers. |
-| `CommandRegistry` | interface | `register`/`get`/`getAll`/`has`. |
-| `BannerConfig`, `VerboseConfig`, `ConfigLoader`, `HelpTemplateFn`, `ErrorHandlerFn` | types | Config sub-shapes. |
+| Export                                                                              | Kind      | Summary                                                                                                |
+| ----------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------ |
+| `CliConfig`                                                                         | interface | Top-level config (`name`, `version`, `commands`, `banner`, `verbose`, `configLoader`, `onError`, ...). |
+| `Command`                                                                           | interface | `name`, `description`, `aliases?`, `usage?`, `examples?`, `options?`, `subcommands?`, `handler`.       |
+| `CommandOption`                                                                     | interface | `name`, `alias?`, `description`, `type?`, `default?`, `required?`.                                     |
+| `CommandContext`                                                                    | interface | `command`, `args`, `options`, `logger`, `cwd` — passed to every handler.                               |
+| `CommandResult`                                                                     | interface | `{ exitCode: number }` returned by handlers.                                                           |
+| `CommandRegistry`                                                                   | interface | `register`/`get`/`getAll`/`has`.                                                                       |
+| `BannerConfig`, `VerboseConfig`, `ConfigLoader`, `HelpTemplateFn`, `ErrorHandlerFn` | types     | Config sub-shapes.                                                                                     |
 
 ### Errors
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `CliError` | class | Base error with `exitCode` (default `1`). |
-| `CommandNotFoundError` | class | Unknown command. |
-| `MissingRequiredOptionError` | class | Required option absent. |
-| `ConfigLoadError` | class | Config file failed to load. |
-| `CommandRegistrationError` | class | Duplicate command/alias on registration. |
+| Export                       | Kind  | Summary                                   |
+| ---------------------------- | ----- | ----------------------------------------- |
+| `CliError`                   | class | Base error with `exitCode` (default `1`). |
+| `CommandNotFoundError`       | class | Unknown command.                          |
+| `MissingRequiredOptionError` | class | Required option absent.                   |
+| `ConfigLoadError`            | class | Config file failed to load.               |
+| `CommandRegistrationError`   | class | Duplicate command/alias on registration.  |
 
 ## How it fits
 

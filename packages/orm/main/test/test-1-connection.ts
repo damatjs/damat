@@ -3,7 +3,8 @@ import { Pool } from "@damatjs/deps/pg";
 
 export async function test1_Connection() {
   const pool = new Pool({
-    connectionString: "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable"
+    connectionString:
+      "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable",
   });
 
   const client = await pool.connect();

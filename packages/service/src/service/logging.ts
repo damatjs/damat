@@ -34,13 +34,20 @@ export function withQueryLogging<T extends QueryResultRow>(
   return new Proxy(methods, {
     get(target, prop, receiver) {
       const value = Reflect.get(target, prop, receiver);
-      if (typeof value !== "function" || typeof prop !== "string" || !LOGGED_METHODS.has(prop)) {
+      if (
+        typeof value !== "function" ||
+        typeof prop !== "string" ||
+        !LOGGED_METHODS.has(prop)
+      ) {
         return value;
       }
       return async (...args: unknown[]) => {
         const start = Date.now();
         try {
-          return await (value as (...a: unknown[]) => unknown).apply(target, args);
+          return await (value as (...a: unknown[]) => unknown).apply(
+            target,
+            args,
+          );
         } finally {
           getLogger().debug("query", {
             model,

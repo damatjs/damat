@@ -57,7 +57,9 @@ describe("defineLink", () => {
       { module: "organization", model: "organization" },
       { database: { foreignKeys: true } },
     );
-    expect((fkLink.model.toTableSchema().foreignKeys ?? []).length).toBeGreaterThan(0);
+    expect(
+      (fkLink.model.toTableSchema().foreignKeys ?? []).length,
+    ).toBeGreaterThan(0);
   });
 
   test("honors a pivotTable override", () => {
@@ -165,19 +167,25 @@ const ep = (module: string, table: string) => ({ module, table });
 
 describe("naming", () => {
   test("collapses module/table segments when equal", () => {
-    expect(defaultPivotTable(ep("user", "user"), ep("billing", "invoice"))).toBe(
-      "user_billing_invoice",
-    );
+    expect(
+      defaultPivotTable(ep("user", "user"), ep("billing", "invoice")),
+    ).toBe("user_billing_invoice");
   });
 
   test("collapses a plural table onto its module's logical name", () => {
-    expect(defaultPivotTable(ep("user", "users"), ep("organization", "organizations"))).toBe(
-      "user_organization",
-    );
+    expect(
+      defaultPivotTable(
+        ep("user", "users"),
+        ep("organization", "organizations"),
+      ),
+    ).toBe("user_organization");
   });
 
   test("disambiguates identical column names across modules", () => {
-    const { leftColumn, rightColumn } = pivotColumns(ep("a", "note"), ep("b", "note"));
+    const { leftColumn, rightColumn } = pivotColumns(
+      ep("a", "note"),
+      ep("b", "note"),
+    );
     expect(leftColumn).toBe("a_note_id");
     expect(rightColumn).toBe("b_note_id");
   });
@@ -185,15 +193,27 @@ describe("naming", () => {
 
 describe("collectLinkModels", () => {
   test("keys junction models by their camelCase model name", () => {
-    const a = defineLink({ module: "user", model: "user" }, { module: "org", model: "org" });
-    const b = defineLink({ module: "user", model: "user" }, { module: "team", model: "team" });
+    const a = defineLink(
+      { module: "user", model: "user" },
+      { module: "org", model: "org" },
+    );
+    const b = defineLink(
+      { module: "user", model: "user" },
+      { module: "team", model: "team" },
+    );
     const models = collectLinkModels([a, b]);
     expect(Object.keys(models).sort()).toEqual(["userOrg", "userTeam"]);
   });
 
   test("throws on duplicate junctions", () => {
-    const a = defineLink({ module: "user", model: "user" }, { module: "org", model: "org" });
-    const b = defineLink({ module: "user", model: "user" }, { module: "org", model: "org" });
+    const a = defineLink(
+      { module: "user", model: "user" },
+      { module: "org", model: "org" },
+    );
+    const b = defineLink(
+      { module: "user", model: "user" },
+      { module: "org", model: "org" },
+    );
     expect(() => collectLinkModels([a, b])).toThrow(/Duplicate link junction/);
   });
 });

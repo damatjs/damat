@@ -129,7 +129,11 @@ describe("update_module", () => {
   });
 
   test("returns the CLI output on success", async () => {
-    nextSpawn = { status: 0, stdout: "Updated module at src/modules/user", stderr: "" };
+    nextSpawn = {
+      status: 0,
+      stdout: "Updated module at src/modules/user",
+      stderr: "",
+    };
     const res = await updateModule.handler({ id: "user" });
     expect(res.isError).toBe(false);
     expect(res.text).toContain("Updated module");

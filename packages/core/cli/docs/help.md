@@ -7,7 +7,7 @@ All output goes through `console.log` directly (not the logger), so help/banner 
 ## `printDefaultHelp` — `src/help/printDefaultHelp.ts`
 
 ```ts
-function printDefaultHelp(config: CliConfig, commands: Command[]): void
+function printDefaultHelp(config: CliConfig, commands: Command[]): void;
 ```
 
 Renders the top-level help:
@@ -33,7 +33,10 @@ The `Commands:` block is omitted when `commands` is empty; the `--verbose` line 
 ## `printCommandSpecificHelp` — `src/help/printCommandSpecificHelp.ts`
 
 ```ts
-function printCommandSpecificHelp(config: { name: string }, command: Command): void
+function printCommandSpecificHelp(
+  config: { name: string },
+  command: Command,
+): void;
 ```
 
 Delegates to an internal `printCommandHelp(cmd, cliName)` which prints:
@@ -62,7 +65,8 @@ Subcommands:                    (if cmd.subcommands)
 ### `formatCommandLine` — `src/help/formatCommandLine.ts`
 
 ```ts
-`  ${cmd.name.padEnd(20)}${cmd.description}` + (aliases ? ` (aliases: a, b)` : "")
+`  ${cmd.name.padEnd(20)}${cmd.description}` +
+  (aliases ? ` (aliases: a, b)` : "");
 ```
 
 Two-space indent, name left-padded to 20 columns, then description, then an optional `(aliases: ...)` suffix.
@@ -71,9 +75,11 @@ Two-space indent, name left-padded to 20 columns, then description, then an opti
 
 ```ts
 const flag = opt.alias ? `-${opt.alias}, --${opt.name}` : `--${opt.name}`;
-`  ${flag.padEnd(20)}${opt.description}`
-  + (opt.default !== undefined ? ` (default: ${JSON.stringify(opt.default)})` : "")
-  + (opt.required ? " [required]" : "");
+`  ${flag.padEnd(20)}${opt.description}` +
+  (opt.default !== undefined
+    ? ` (default: ${JSON.stringify(opt.default)})`
+    : "") +
+  (opt.required ? " [required]" : "");
 ```
 
 Same 20-column layout; appends `(default: ...)` (JSON-stringified) and `[required]` when applicable.
@@ -81,7 +87,7 @@ Same 20-column layout; appends `(default: ...)` (JSON-stringified) and `[require
 ## Banner — `src/utils/banner.ts`
 
 ```ts
-function printBanner(config: CliConfig, bannerConfig: BannerConfig = {}): void
+function printBanner(config: CliConfig, bannerConfig: BannerConfig = {}): void;
 ```
 
 - `style` defaults to `"boxed"`; `title` defaults to `config.name` (or `"CLI"`); `subtitle` defaults to `config.description` (or `""`).

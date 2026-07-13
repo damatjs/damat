@@ -3,7 +3,9 @@ import { indexBuilder } from "@/properties/indexes";
 
 describe("indexBuilder factory", () => {
   it("creates an IndexBuilder seeded with the given name", () => {
-    const schema = indexBuilder("user_email_idx").columns(["email"]).toSchema("user");
+    const schema = indexBuilder("user_email_idx")
+      .columns(["email"])
+      .toSchema("user");
     expect(schema.name).toBe("user_email_idx");
   });
 });

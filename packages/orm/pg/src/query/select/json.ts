@@ -1,17 +1,32 @@
-import { SelectDescriptor, RelationDescriptor, WhereConditionJson, OrderByJson } from "@damatjs/orm-type";
-import { assertValidRelationMap, resolveModelRelations, ResolvedRelation, RelationIncludeOptions } from "../relations";
+import {
+  SelectDescriptor,
+  RelationDescriptor,
+  WhereConditionJson,
+  OrderByJson,
+} from "@damatjs/orm-type";
+import {
+  assertValidRelationMap,
+  resolveModelRelations,
+  ResolvedRelation,
+  RelationIncludeOptions,
+} from "../relations";
 
 export function buildSelectJson(builder: any): SelectDescriptor {
   const desc: SelectDescriptor = {
     type: "select",
     table: builder._tableRef.name,
     columns: [...builder._cols],
-    where: builder._whereClauses.map((c: any) => ({ ...c })) as WhereConditionJson[],
+    where: builder._whereClauses.map((c: any) => ({
+      ...c,
+    })) as WhereConditionJson[],
     whereRaw: builder._rawWhereClauses.map((c: any) => ({ ...c })),
-    orderBy: builder._orderByClauses.map((c: any) => ({ ...c })) as OrderByJson[],
+    orderBy: builder._orderByClauses.map((c: any) => ({
+      ...c,
+    })) as OrderByJson[],
     distinct: builder._distinct,
   };
-  if (builder._tableRef.schema !== undefined) desc.schema = builder._tableRef.schema;
+  if (builder._tableRef.schema !== undefined)
+    desc.schema = builder._tableRef.schema;
   if (builder._limit !== undefined) desc.limit = builder._limit;
   if (builder._offset !== undefined) desc.offset = builder._offset;
 
@@ -64,8 +79,11 @@ export function buildRelationDescriptor(
       if (nestedOpts === false) continue;
       const nestedResolution = nestedResolved.get(nestedName);
       if (nestedResolution) {
-        const nestedOptions: RelationIncludeOptions = nestedOpts === true ? {} : nestedOpts;
-        relDesc.with.push(buildRelationDescriptor(nestedName, nestedResolution, nestedOptions));
+        const nestedOptions: RelationIncludeOptions =
+          nestedOpts === true ? {} : nestedOpts;
+        relDesc.with.push(
+          buildRelationDescriptor(nestedName, nestedResolution, nestedOptions),
+        );
       }
     }
   }

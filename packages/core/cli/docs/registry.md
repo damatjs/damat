@@ -9,11 +9,11 @@ Store commands by name, resolve aliases, recursively register subcommands under 
 ## Singleton + helpers — `src/registry/index.ts`
 
 ```ts
-function getRegistry(): CommandRegistry;        // lazily constructs the singleton
+function getRegistry(): CommandRegistry; // lazily constructs the singleton
 function registerCommand(command: Command): void;
 function getCommand(name: string): Command | undefined;
 function getAllCommands(): Command[];
-function clearRegistry(): void;                 // clears + drops the instance
+function clearRegistry(): void; // clears + drops the instance
 ```
 
 `getRegistry()` builds a `CommandRegistryImpl` on first use and reuses it after. `clearRegistry()` empties the map **and** nulls the instance — `runCli` calls it at the top of every run so state never leaks between invocations or tests.
@@ -29,8 +29,8 @@ The namespacing rule is the heart of this file:
 ```ts
 const name =
   prefix && !command.name.startsWith(`${prefix}:`)
-    ? `${prefix}:${command.name}`   // namespace under the parent
-    : command.name;                  // already prefixed, or no prefix → as-is
+    ? `${prefix}:${command.name}` // namespace under the parent
+    : command.name; // already prefixed, or no prefix → as-is
 ```
 
 Then:
@@ -59,7 +59,10 @@ Dedupes by `command.name` (not by map key), so a command stored under both its n
 ```ts
 const seen = new Set<string>();
 for (const cmd of this.commands.values())
-  if (!seen.has(cmd.name)) { seen.add(cmd.name); unique.push(cmd); }
+  if (!seen.has(cmd.name)) {
+    seen.add(cmd.name);
+    unique.push(cmd);
+  }
 ```
 
 Note dedup is by the command's own `name` field — subcommands appear as their own entries (e.g. `migrate:up`) because their `name` differs from the parent's. The parent also appears (it's registered under its bare name).

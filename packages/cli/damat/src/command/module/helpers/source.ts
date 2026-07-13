@@ -102,10 +102,15 @@ export async function resolveModuleSource(
   if (gitRef) cloneArgs.push("--branch", gitRef);
   cloneArgs.push(repoUrl, tempDir);
 
-  const result = spawnSync("git", cloneArgs, { stdio: "pipe", encoding: "utf-8" });
+  const result = spawnSync("git", cloneArgs, {
+    stdio: "pipe",
+    encoding: "utf-8",
+  });
   if (result.status !== 0) {
     rmSync(tempDir, { recursive: true, force: true });
-    throw new Error(`git clone failed for ${repoUrl}: ${result.stderr?.trim()}`);
+    throw new Error(
+      `git clone failed for ${repoUrl}: ${result.stderr?.trim()}`,
+    );
   }
 
   const moduleDir = subDir ? join(tempDir, subDir) : tempDir;

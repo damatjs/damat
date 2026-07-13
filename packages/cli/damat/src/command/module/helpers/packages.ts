@@ -27,7 +27,9 @@ export function invalidPackageSpecs(
       invalid.push(`"${name}" is not a valid npm package name`);
       continue;
     }
-    const pattern = options.allowUnsafeRanges ? UNSAFE_RANGE_PATTERN : RANGE_PATTERN;
+    const pattern = options.allowUnsafeRanges
+      ? UNSAFE_RANGE_PATTERN
+      : RANGE_PATTERN;
     if (!pattern.test(range)) {
       invalid.push(
         `"${name}@${range}" — range must be a semver range or dist-tag` +
@@ -53,7 +55,11 @@ export function installModulePackages(
 
   // Lifecycle scripts are an arbitrary-code hook; keep them off unless the
   // user opted in with --allow-scripts.
-  const args = ["add", ...(options.allowScripts ? [] : ["--ignore-scripts"]), ...specs];
+  const args = [
+    "add",
+    ...(options.allowScripts ? [] : ["--ignore-scripts"]),
+    ...specs,
+  ];
   const result = spawnSync("bun", args, {
     cwd: appDir,
     stdio: "pipe",

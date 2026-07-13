@@ -40,7 +40,9 @@ const migrateStatus: Command = {
       const config = await loadDatabaseUrl("damat.config.ts", ctx.cwd);
       databaseUrl = config.databaseUrl;
     } catch (error) {
-      reportError(ctx.logger, error, { prefix: "Failed to load database config" });
+      reportError(ctx.logger, error, {
+        prefix: "Failed to load database config",
+      });
       return { exitCode: 1 };
     }
 

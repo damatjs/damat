@@ -1,6 +1,6 @@
 import type { Hono } from "@damatjs/deps/hono";
-import { ProjectConfig } from './config';
-import type { LifecycleHooks } from './config';
+import { ProjectConfig } from "./config";
+import type { LifecycleHooks } from "./config";
 import type { AuthMiddlewareOptions } from "./middleware/auth";
 
 export type { Logger, ILogger } from "@damatjs/logger";
@@ -13,15 +13,17 @@ export interface ServerConfig {
 }
 
 export interface HealthCheckFn {
-  (): Promise<{ status: string; latency?: number, data?: unknown }>;
+  (): Promise<{ status: string; latency?: number; data?: unknown }>;
 }
 
 export interface HealthCheckConfig {
   version?: string | undefined;
-  checks?: {
-    database?: HealthCheckFn;
-    redis?: HealthCheckFn;
-  } | undefined;
+  checks?:
+    | {
+        database?: HealthCheckFn;
+        redis?: HealthCheckFn;
+      }
+    | undefined;
 }
 
 export interface BootstrapOptions {

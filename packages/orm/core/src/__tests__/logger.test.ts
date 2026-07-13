@@ -27,7 +27,10 @@ describe("QueryLogger › logQuery", () => {
   it("includes params in context only when non-empty", () => {
     const ql = new QueryLogger({}, fake);
     ql.logQuery("SELECT $1", [42]);
-    expect(fake.callsTo("debug")[0]!.args[1]).toEqual({ sql: "SELECT $1", params: [42] });
+    expect(fake.callsTo("debug")[0]!.args[1]).toEqual({
+      sql: "SELECT $1",
+      params: [42],
+    });
   });
 
   it("omits params when the array is empty", () => {
@@ -129,7 +132,10 @@ describe("QueryLogger › logSlowQuery", () => {
   });
 
   it("respects logSlowQueries=false", () => {
-    const ql = new QueryLogger({ logSlowQueries: false, slowQueryThreshold: 1 }, fake);
+    const ql = new QueryLogger(
+      { logSlowQueries: false, slowQueryThreshold: 1 },
+      fake,
+    );
     ql.logSlowQuery("SELECT 1", 9999);
     expect(fake.callsTo("warn")).toHaveLength(0);
   });

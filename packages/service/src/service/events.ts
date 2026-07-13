@@ -24,7 +24,10 @@ const WRITE_EVENT_KINDS: Record<string, "created" | "updated" | "deleted"> = {
 };
 
 /** The event name a model write emits ("user" + "created" → "user.created"). */
-export function modelEventName(modelName: string, kind: "created" | "updated" | "deleted"): string {
+export function modelEventName(
+  modelName: string,
+  kind: "created" | "updated" | "deleted",
+): string {
   return `${modelName}.${kind}`;
 }
 
@@ -48,8 +51,15 @@ export function withModelEvents<T extends QueryResultRow>(
       if (!kind) return value;
 
       return async (...args: unknown[]) => {
-        const result = await (value as (...a: unknown[]) => unknown).apply(target, args);
-        const payload: ModelEventPayload = { model: modelName, method: prop, result };
+        const result = await (value as (...a: unknown[]) => unknown).apply(
+          target,
+          args,
+        );
+        const payload: ModelEventPayload = {
+          model: modelName,
+          method: prop,
+          result,
+        };
         await getEventBus().emit(modelEventName(modelName, kind), payload);
         return result;
       };

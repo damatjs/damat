@@ -2,7 +2,12 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { formatModuleRef } from "./ref";
-import type { ModuleRef, RegistryIndex, RegistryModuleEntry, RegistryVerdict } from "./types";
+import type {
+  ModuleRef,
+  RegistryIndex,
+  RegistryModuleEntry,
+  RegistryVerdict,
+} from "./types";
 
 function isUrl(s: string): boolean {
   return /^https?:\/\//.test(s);
@@ -33,7 +38,9 @@ export function clearRegistryCache(): void {
  * URL indexes are cached in-process for a short TTL so the list/search/info
  * tools don't re-fetch on every call.
  */
-export async function loadRegistryIndex(location: string): Promise<RegistryIndex> {
+export async function loadRegistryIndex(
+  location: string,
+): Promise<RegistryIndex> {
   const cached = cache.get(location);
   if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
     return cached.index;
@@ -47,7 +54,11 @@ export async function loadRegistryIndex(location: string): Promise<RegistryIndex
     if (!existsSync(file)) throw new Error(`Registry index not found: ${file}`);
     raw = JSON.parse(readFileSync(file, "utf-8"));
   }
-  if (raw === null || typeof raw !== "object" || typeof (raw as RegistryIndex).modules !== "object") {
+  if (
+    raw === null ||
+    typeof raw !== "object" ||
+    typeof (raw as RegistryIndex).modules !== "object"
+  ) {
     throw new Error('Registry index must be JSON with a "modules" object');
   }
 
@@ -60,7 +71,9 @@ export async function loadRegistryIndex(location: string): Promise<RegistryIndex
 async function fetchRegistryJson(location: string): Promise<unknown> {
   let res: Response;
   try {
-    res = await fetch(location, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+    res = await fetch(location, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
   } catch (e) {
     const cause = e instanceof Error ? e : new Error(String(e));
     if (cause.name === "TimeoutError" || cause.name === "AbortError") {
@@ -68,7 +81,9 @@ async function fetchRegistryJson(location: string): Promise<unknown> {
         `Registry fetch timed out after ${FETCH_TIMEOUT_MS / 1000}s: ${location}`,
       );
     }
-    throw new Error(`Could not reach registry at ${location}: ${cause.message}`);
+    throw new Error(
+      `Could not reach registry at ${location}: ${cause.message}`,
+    );
   }
   if (res.status === 404) {
     throw new Error(
@@ -122,7 +137,10 @@ export function lookupEntry(
   ref: ModuleRef,
 ): { key: string; entry: RegistryModuleEntry } | null {
   const keys = [
-    formatModuleRef({ ...(ref.namespace ? { namespace: ref.namespace } : {}), name: ref.name }),
+    formatModuleRef({
+      ...(ref.namespace ? { namespace: ref.namespace } : {}),
+      name: ref.name,
+    }),
     ref.name,
   ];
   for (const key of keys) {
@@ -178,7 +196,9 @@ export async function fetchVerdict(
   const url = `${base}/api/registry/packages/${encodeURIComponent(name)}/${encodeURIComponent(version)}/verdict`;
 
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
     if (!res.ok) return null;
     const json = (await res.json()) as RegistryVerdict;
     if (!json || typeof json.status !== "string") return null;

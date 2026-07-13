@@ -35,7 +35,9 @@ export interface BroadcastOptions {
  * duplicates the singleton client for its subscriber — call
  * `disconnectEventBroadcast()` on shutdown to close it.
  */
-export async function connectEventBroadcast(options: BroadcastOptions = {}): Promise<void> {
+export async function connectEventBroadcast(
+  options: BroadcastOptions = {},
+): Promise<void> {
   if (state) return; // already connected — idempotent
 
   const channel = options.channel ?? DEFAULT_CHANNEL;

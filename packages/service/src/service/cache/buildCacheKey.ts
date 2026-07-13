@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
-import { stableStringify } from './stableStringify';
-
+import { stableStringify } from "./stableStringify";
 
 /**
  * Deterministic key for one read: namespace + model + method + a hash of the

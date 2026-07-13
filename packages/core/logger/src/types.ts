@@ -1,4 +1,14 @@
-export type LogLevel = "debug" | "info" | "progress" | "waiting" | "cached" | "success" | "warn" | "error" | "fatal" | "skip";
+export type LogLevel =
+  | "debug"
+  | "info"
+  | "progress"
+  | "waiting"
+  | "cached"
+  | "success"
+  | "warn"
+  | "error"
+  | "fatal"
+  | "skip";
 export type LogFormat = "json" | "pretty" | "simple";
 
 export type LogContext = Record<string, unknown>;
@@ -9,7 +19,7 @@ export interface RequestLogData {
   path: string;
   status: number;
   duration: number;
-  identifier?: { label: string, value: string }[];
+  identifier?: { label: string; value: string }[];
   error?: Error;
 }
 
@@ -36,11 +46,13 @@ export interface LogEntry {
   level: LogLevel;
   message: string;
   context: LogContext | undefined;
-  error: {
-    name: string;
-    message: string;
-    stack: string | undefined;
-  } | undefined;
+  error:
+    | {
+        name: string;
+        message: string;
+        stack: string | undefined;
+      }
+    | undefined;
 }
 
 export interface ILogger {

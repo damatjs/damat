@@ -19,13 +19,13 @@ To explore it, clone the repo (see
 `backend/default/src/`. Then trace **one feature end to end** across the code
 and the matching chapter:
 
-| What to trace | Where it lives | Chapter |
-| --- | --- | --- |
-| The `users` table definition | `src/modules/user/models/` | [Defining models](./05-models.md) |
-| The user service & generated CRUD | `src/modules/user/service.ts` | [Modules & services](./07-modules-and-services.md) |
-| `GET /api/users/:userId` | `src/api/routes/users/[userId]/` | [Building HTTP APIs](./08-http-apis.md) |
-| The `user-onboarding` saga | `src/workflows/` | [Workflows](./09-workflows.md) |
-| The cross-module link | `src/links/` | [Composing & linking](./17-composing-and-linking-modules.md) |
+| What to trace                     | Where it lives                   | Chapter                                                      |
+| --------------------------------- | -------------------------------- | ------------------------------------------------------------ |
+| The `users` table definition      | `src/modules/user/models/`       | [Defining models](./05-models.md)                            |
+| The user service & generated CRUD | `src/modules/user/service.ts`    | [Modules & services](./07-modules-and-services.md)           |
+| `GET /api/users/:userId`          | `src/api/routes/users/[userId]/` | [Building HTTP APIs](./08-http-apis.md)                      |
+| The `user-onboarding` saga        | `src/workflows/`                 | [Workflows](./09-workflows.md)                               |
+| The cross-module link             | `src/links/`                     | [Composing & linking](./17-composing-and-linking-modules.md) |
 
 If you can follow one row of that table through the code, you understand the
 framework — everything else is more of the same.

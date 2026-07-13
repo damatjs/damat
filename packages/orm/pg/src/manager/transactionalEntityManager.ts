@@ -5,7 +5,10 @@ import { ModelRegistry, ModelRegistryError } from "@damatjs/orm-core";
 import { PgRepository, createRepository } from "../repository";
 
 export class TransactionalEntityManager<
-  TModels extends Record<string, ModelDefinition> = Record<string, ModelDefinition>
+  TModels extends Record<string, ModelDefinition> = Record<
+    string,
+    ModelDefinition
+  >,
 > {
   [key: string]: any;
   private modelRegistry: ModelRegistry;
@@ -17,7 +20,7 @@ export class TransactionalEntityManager<
     modelRegistry: ModelRegistry,
     transactionContext: any,
     logger: ILogger,
-    modelsConfig?: TModels
+    modelsConfig?: TModels,
   ) {
     this.modelRegistry = modelRegistry;
     this.transactionContext = transactionContext;
@@ -38,11 +41,14 @@ export class TransactionalEntityManager<
     }
   }
 
-  getRepository<T extends QueryResultRow = QueryResultRow>(modelName: string): PgRepository<T> {
+  getRepository<T extends QueryResultRow = QueryResultRow>(
+    modelName: string,
+  ): PgRepository<T> {
     const entry =
       this.modelRegistry.get(modelName) ??
       this.modelRegistry.getByTableName(modelName);
-    if (!entry) throw new ModelRegistryError(`Model "${modelName}" not registered`);
+    if (!entry)
+      throw new ModelRegistryError(`Model "${modelName}" not registered`);
     const cached = this.repositories.get(modelName);
     if (cached) return cached as PgRepository<T>;
     const client = this.transactionContext.getClient();
@@ -53,7 +59,7 @@ export class TransactionalEntityManager<
 
   async query<T extends QueryResultRow = QueryResultRow>(
     sql: string,
-    params?: unknown[]
+    params?: unknown[],
   ): Promise<{ rows: T[]; rowCount: number }> {
     return this.transactionContext.query(sql, params);
   }
@@ -70,13 +76,15 @@ export class TransactionalEntityManager<
     await this.transactionContext.releaseSavepoint(name);
   }
 
-  repo<T extends QueryResultRow = QueryResultRow>(name: string): PgRepository<T> {
+  repo<T extends QueryResultRow = QueryResultRow>(
+    name: string,
+  ): PgRepository<T> {
     return this.getRepository<T>(name);
   }
 
   async execute<T extends QueryResultRow = Record<string, unknown>>(
     sql: string,
-    params?: unknown[]
+    params?: unknown[],
   ): Promise<{ rows: T[]; rowCount: number }> {
     return this.query<T>(sql, params);
   }

@@ -43,7 +43,7 @@ function firstExitCode(): number | "no-exit" {
  */
 async function runAndCaptureExit(
   cli: ReturnType<typeof cac>,
-  argv: string[]
+  argv: string[],
 ): Promise<number | "no-exit"> {
   await invokeAction(cli, argv, undefined);
   return firstExitCode();
@@ -53,14 +53,20 @@ async function runAndCaptureExit(
 async function invokeAction(
   cli: ReturnType<typeof cac>,
   argv: string[],
-  options?: Record<string, unknown>
+  options?: Record<string, unknown>,
 ): Promise<void> {
-  const parsed = cli.parse(["node", "cli", ...argv], { run: false }) as unknown as {
+  const parsed = cli.parse(["node", "cli", ...argv], {
+    run: false,
+  }) as unknown as {
     options: Record<string, unknown>;
   };
-  const matched = (cli as unknown as {
-    matchedCommand?: { commandAction?: (o: Record<string, unknown>) => Promise<void> };
-  }).matchedCommand;
+  const matched = (
+    cli as unknown as {
+      matchedCommand?: {
+        commandAction?: (o: Record<string, unknown>) => Promise<void>;
+      };
+    }
+  ).matchedCommand;
   if (!matched?.commandAction) return;
   try {
     await matched.commandAction(options ?? parsed.options);
@@ -97,7 +103,11 @@ describe("registerSingleCommand", () => {
       name: "db",
       description: "DB",
       subcommands: [
-        { name: "db:up", description: "up", handler: async () => ({ exitCode: 0 }) },
+        {
+          name: "db:up",
+          description: "up",
+          handler: async () => ({ exitCode: 0 }),
+        },
       ],
       handler: async () => ({ exitCode: 0 }),
     };
@@ -175,7 +185,8 @@ describe("registerSingleCommand", () => {
 
   test("catches a thrown handler error, logs it, calls onError, and exits 1", async () => {
     const cli = cac("cli");
-    let onErrorArgs: { error: Error; ctx: Partial<CommandContext> } | null = null;
+    let onErrorArgs: { error: Error; ctx: Partial<CommandContext> } | null =
+      null;
     const config: CliConfig = {
       ...baseConfig,
       onError: (error, ctx) => {
@@ -324,7 +335,7 @@ describe("registerSingleCommand", () => {
 
     await invokeAction(cli, ["v2"], { verbose: true });
     const calledWithMsg = infoSpy.mock.calls.some(
-      (c: unknown[]) => c[0] === "Verbose mode enabled"
+      (c: unknown[]) => c[0] === "Verbose mode enabled",
     );
     expect(calledWithMsg).toBe(false);
   });

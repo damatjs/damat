@@ -14,7 +14,7 @@ export class RelationGuardError extends Error {
         : "(none defined)";
     super(
       `[query:with] Unknown relation "${unknownRelation}" on model "${modelName}".\n` +
-      `  Available relations: ${list}`,
+        `  Available relations: ${list}`,
     );
     this.name = "RelationGuardError";
     this.modelName = modelName;

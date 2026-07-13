@@ -1,7 +1,7 @@
 import { ModuleSchema, RelationSchema } from "@damatjs/orm-type";
-import { toPascalCase } from './stringConvertor';
-import { columnToTsType } from '../columnToTsType';
-import { relationFields } from '../relation';
+import { toPascalCase } from "./stringConvertor";
+import { columnToTsType } from "../columnToTsType";
+import { relationFields } from "../relation";
 
 /**
  * Emit the row interface for a table, e.g.:
@@ -38,4 +38,4 @@ export const generateRowInterface = (
   }
 
   return [`export interface ${name} {`, ...lines, `}`];
-}
+};

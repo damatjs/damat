@@ -24,9 +24,11 @@ const APP_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
 
 export const createCommand: Command = {
   name: "create",
-  description: "Scaffold a new Damat backend app (offline, from embedded templates)",
+  description:
+    "Scaffold a new Damat backend app (offline, from embedded templates)",
   aliases: ["new"],
-  usage: "damat create <name> [--dir <path>] [--pin <version>] [--no-git] [--no-install]",
+  usage:
+    "damat create <name> [--dir <path>] [--pin <version>] [--no-git] [--no-install]",
   examples: [
     "damat create my-api",
     "damat create my-api --no-install   # scaffold only, install later",
@@ -50,13 +52,15 @@ export const createCommand: Command = {
     {
       name: "git",
       type: "boolean",
-      description: "Initialize a git repository with an initial commit (use --no-git to skip)",
+      description:
+        "Initialize a git repository with an initial commit (use --no-git to skip)",
       default: true,
     },
     {
       name: "install",
       type: "boolean",
-      description: "Run bun install after scaffolding (use --no-install to skip)",
+      description:
+        "Run bun install after scaffolding (use --no-install to skip)",
       default: true,
     },
   ],
@@ -95,7 +99,12 @@ export const createCommand: Command = {
     };
 
     // Layers `damat module add` installs into — present from day one.
-    for (const dir of ["src/modules", "src/api/routes", "src/workflows", "tests"]) {
+    for (const dir of [
+      "src/modules",
+      "src/api/routes",
+      "src/workflows",
+      "tests",
+    ]) {
       mkdirSync(join(targetDir, dir), { recursive: true });
     }
     for (const [relPath, content] of Object.entries(files)) {
@@ -121,7 +130,9 @@ export const createCommand: Command = {
           ctx.logger.success("Initialized git repository");
         } else {
           // git exists but init/commit failed (e.g. unconfigured identity).
-          ctx.logger.warn("Could not initialize git — run `git init` yourself when ready");
+          ctx.logger.warn(
+            "Could not initialize git — run `git init` yourself when ready",
+          );
         }
       }
     }
@@ -154,7 +165,11 @@ export const createCommand: Command = {
 /** Run a command in the target dir; true on exit 0, false on any failure. */
 function run(cmd: string, args: string[], cwd: string): boolean {
   try {
-    const result = spawnSync(cmd, args, { cwd, stdio: "pipe", encoding: "utf-8" });
+    const result = spawnSync(cmd, args, {
+      cwd,
+      stdio: "pipe",
+      encoding: "utf-8",
+    });
     return result.status === 0;
   } catch {
     return false;

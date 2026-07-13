@@ -28,9 +28,11 @@ import {
 
 export const moduleUpdateCommand: Command = {
   name: "update",
-  description: "Re-fetch an installed module from its recorded source and reinstall it",
+  description:
+    "Re-fetch an installed module from its recorded source and reinstall it",
   aliases: ["up", "upgrade"],
-  usage: "damat module update <id> [--dir <path>] [--yes] [--allow-unverified] [--allow-scripts] [--dry-run]",
+  usage:
+    "damat module update <id> [--dir <path>] [--yes] [--allow-unverified] [--allow-scripts] [--dry-run]",
   examples: [
     "damat module update user-management --dry-run   # show what would change",
     "damat module update user-management --yes        # apply (overwrites local edits)",
@@ -47,19 +49,22 @@ export const moduleUpdateCommand: Command = {
       name: "yes",
       alias: "y",
       type: "boolean",
-      description: "Apply the update (required — updating overwrites local edits to installed files)",
+      description:
+        "Apply the update (required — updating overwrites local edits to installed files)",
       default: false,
     },
     {
       name: "allow-unverified",
       type: "boolean",
-      description: "Allow updating from a recorded path/git source (no registry verification)",
+      description:
+        "Allow updating from a recorded path/git source (no registry verification)",
       default: false,
     },
     {
       name: "allow-scripts",
       type: "boolean",
-      description: "Run dependency lifecycle scripts during bun add (skipped by default)",
+      description:
+        "Run dependency lifecycle scripts during bun add (skipped by default)",
       default: false,
     },
     {
@@ -86,7 +91,9 @@ export const moduleUpdateCommand: Command = {
     const entry = readModuleConfigEntry(configPath, moduleId);
     const layout = moduleLayoutPaths(ctx.cwd, moduleId, modulesDir);
     if (!entry || !existsSync(layout.moduleHome)) {
-      ctx.logger.error(`Module "${moduleId}" is not installed — use \`damat module add\``);
+      ctx.logger.error(
+        `Module "${moduleId}" is not installed — use \`damat module add\``,
+      );
       return { exitCode: 1 };
     }
     const recordedRef = entry.source?.ref;
@@ -102,7 +109,9 @@ export const moduleUpdateCommand: Command = {
     try {
       resolved = await resolveModuleSource(recordedRef, ctx.cwd);
     } catch (e) {
-      reportError(ctx.logger, e, { prefix: `Could not resolve recorded source "${recordedRef}"` });
+      reportError(ctx.logger, e, {
+        prefix: `Could not resolve recorded source "${recordedRef}"`,
+      });
       return { exitCode: 1 };
     }
 
@@ -121,13 +130,21 @@ export const moduleUpdateCommand: Command = {
           verification: decision.status,
         });
         if (!decision.allowed) {
-          ctx.logger.error(`Refusing to update "${moduleId}": ${decision.message}`);
+          ctx.logger.error(
+            `Refusing to update "${moduleId}": ${decision.message}`,
+          );
           return { exitCode: 1 };
         }
         if (decision.message) ctx.logger.warn(decision.message);
       } else {
-        ctx.logger.info("Source", { from: resolved.origin.type, ref: resolved.origin.ref });
-        const trustError = unverifiedSourceError(resolved.origin.type, allowUnverified);
+        ctx.logger.info("Source", {
+          from: resolved.origin.type,
+          ref: resolved.origin.ref,
+        });
+        const trustError = unverifiedSourceError(
+          resolved.origin.type,
+          allowUnverified,
+        );
         if (trustError) {
           ctx.logger.error(`Refusing to update "${moduleId}": ${trustError}`);
           return { exitCode: 1 };
@@ -135,16 +152,21 @@ export const moduleUpdateCommand: Command = {
         const report = validateModuleDir(sourceModuleDir);
         if (!report.valid) {
           for (const error of report.errors) ctx.logger.error(error);
-          ctx.logger.error(`Refusing to update "${moduleId}": module failed validation`);
+          ctx.logger.error(
+            `Refusing to update "${moduleId}": module failed validation`,
+          );
           return { exitCode: 1 };
         }
       }
 
       const packages = collectModulePackages(resolved.dir, manifest);
-      const badSpecs = invalidPackageSpecs(packages, { allowUnsafeRanges: allowUnverified });
+      const badSpecs = invalidPackageSpecs(packages, {
+        allowUnsafeRanges: allowUnverified,
+      });
       if (badSpecs.length > 0) {
         ctx.logger.error(
-          `Refusing to update "${moduleId}" — unsafe package specs:\n  ` + badSpecs.join("\n  "),
+          `Refusing to update "${moduleId}" — unsafe package specs:\n  ` +
+            badSpecs.join("\n  "),
         );
         return { exitCode: 1 };
       }
@@ -159,7 +181,9 @@ export const moduleUpdateCommand: Command = {
         incoming: manifest.version,
       });
       if (diff.added.length + diff.changed.length + diff.removed.length === 0) {
-        ctx.logger.info("Module files are identical to the source — nothing to update");
+        ctx.logger.info(
+          "Module files are identical to the source — nothing to update",
+        );
       } else {
         const lines = [
           ...diff.added.map((f) => `  + ${f}`),
@@ -167,7 +191,10 @@ export const moduleUpdateCommand: Command = {
           ...diff.removed.map((f) => `  - ${f} (will be deleted)`),
         ];
         ctx.logger.info(
-          [`File changes under ${relative(ctx.cwd, layout.moduleHome)}/:`, ...lines].join("\n"),
+          [
+            `File changes under ${relative(ctx.cwd, layout.moduleHome)}/:`,
+            ...lines,
+          ].join("\n"),
         );
         if (diff.changed.length > 0) {
           ctx.logger.warn(
@@ -195,7 +222,9 @@ export const moduleUpdateCommand: Command = {
         packageDir: resolved.dir,
         force: true,
       });
-      ctx.logger.success(`Updated module at ${relative(ctx.cwd, installed.moduleHome)}`);
+      ctx.logger.success(
+        `Updated module at ${relative(ctx.cwd, installed.moduleHome)}`,
+      );
 
       if (installed.workflowsTarget) {
         generateBarrels(join(ctx.cwd, "src", "workflows"), ctx.logger);
@@ -208,8 +237,12 @@ export const moduleUpdateCommand: Command = {
       };
       deregisterModuleFromConfig(configPath, moduleId);
       const relativeTarget = `./${join(modulesDir, moduleId)}`;
-      if (registerModuleInConfig(configPath, moduleId, relativeTarget, origin)) {
-        ctx.logger.success(`Refreshed "${moduleId}" provenance in damat.config.ts`);
+      if (
+        registerModuleInConfig(configPath, moduleId, relativeTarget, origin)
+      ) {
+        ctx.logger.success(
+          `Refreshed "${moduleId}" provenance in damat.config.ts`,
+        );
       } else {
         ctx.logger.warn(
           `Could not update damat.config.ts automatically — re-add:\n` +
@@ -222,11 +255,15 @@ export const moduleUpdateCommand: Command = {
         ctx.logger.info(`Added to .env.example: ${addedToExample.join(", ")}`);
       }
       if (missingInEnv.length > 0) {
-        ctx.logger.warn(`Set these in your .env before starting: ${missingInEnv.join(", ")}`);
+        ctx.logger.warn(
+          `Set these in your .env before starting: ${missingInEnv.join(", ")}`,
+        );
       }
 
       if (Object.keys(packages).length > 0) {
-        ctx.logger.info(`Installing packages: ${Object.keys(packages).join(", ")}`);
+        ctx.logger.info(
+          `Installing packages: ${Object.keys(packages).join(", ")}`,
+        );
         const install = installModulePackages(ctx.cwd, packages, {
           allowScripts: Boolean(ctx.options["allow-scripts"]),
         });
@@ -260,7 +297,10 @@ function readInstalledVersion(moduleHome: string): string | null {
   const manifestPath = join(moduleHome, MODULE_MANIFEST_FILENAME);
   if (!existsSync(manifestPath)) return null;
   try {
-    return (JSON.parse(readFileSync(manifestPath, "utf-8")).version as string) ?? null;
+    return (
+      (JSON.parse(readFileSync(manifestPath, "utf-8")).version as string) ??
+      null
+    );
   } catch {
     return null;
   }
@@ -277,10 +317,22 @@ interface ModuleDiff {
  * subtrees) against what is installed under the module home. Content compare,
  * relative paths, sorted.
  */
-function diffModuleHome(sourceModuleDir: string, moduleHome: string): ModuleDiff {
-  const skip = new Set(["api", "workflows", "links", "tests", ".git", "node_modules"]);
+function diffModuleHome(
+  sourceModuleDir: string,
+  moduleHome: string,
+): ModuleDiff {
+  const skip = new Set([
+    "api",
+    "workflows",
+    "links",
+    "tests",
+    ".git",
+    "node_modules",
+  ]);
   const sourceFiles = listFiles(sourceModuleDir, skip);
-  const installedFiles = existsSync(moduleHome) ? listFiles(moduleHome, skip) : new Map();
+  const installedFiles = existsSync(moduleHome)
+    ? listFiles(moduleHome, skip)
+    : new Map();
 
   const added: string[] = [];
   const changed: string[] = [];
@@ -293,7 +345,11 @@ function diffModuleHome(sourceModuleDir: string, moduleHome: string): ModuleDiff
   for (const rel of installedFiles.keys()) {
     if (!sourceFiles.has(rel)) removed.push(rel);
   }
-  return { added: added.sort(), changed: changed.sort(), removed: removed.sort() };
+  return {
+    added: added.sort(),
+    changed: changed.sort(),
+    removed: removed.sort(),
+  };
 }
 
 /** Map of relative path → file content for a tree, skipping top-level dirs in `skip`. */

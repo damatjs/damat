@@ -86,7 +86,9 @@ describe("Rate Limiting", () => {
       await checkRateLimit("test-user", 60000, 1, redis); // rejected
       // TTL still counts down from the allowed request; a rejected flood
       // cannot keep re-arming it.
-      expect(await redis.pttl("ratelimit:test-user")).toBeLessThanOrEqual(30_000);
+      expect(await redis.pttl("ratelimit:test-user")).toBeLessThanOrEqual(
+        30_000,
+      );
     });
 
     it("allows at most maxRequests across concurrent checks", async () => {
@@ -275,8 +277,12 @@ describe("Rate Limiting", () => {
       ];
 
       // Two requests fill the short window; both are recorded in each window.
-      expect((await checkMultiRateLimit("test-user", windows, redis)).allowed).toBe(true);
-      expect((await checkMultiRateLimit("test-user", windows, redis)).allowed).toBe(true);
+      expect(
+        (await checkMultiRateLimit("test-user", windows, redis)).allowed,
+      ).toBe(true);
+      expect(
+        (await checkMultiRateLimit("test-user", windows, redis)).allowed,
+      ).toBe(true);
 
       // Third request inside the short window: denied by it, nothing recorded.
       const denied = await checkMultiRateLimit("test-user", windows, redis);
@@ -289,7 +295,11 @@ describe("Rate Limiting", () => {
       expect(await redis.zcard("ratelimit:test-user:minute")).toBe(0);
 
       // Allowed again: the short window is fresh, the hour window is at 2/3.
-      const afterBoundary = await checkMultiRateLimit("test-user", windows, redis);
+      const afterBoundary = await checkMultiRateLimit(
+        "test-user",
+        windows,
+        redis,
+      );
       expect(afterBoundary.allowed).toBe(true);
       expect(await redis.zcard("ratelimit:test-user:minute")).toBe(1);
       expect(await redis.zcard("ratelimit:test-user:hour")).toBe(3);

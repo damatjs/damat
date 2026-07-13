@@ -25,14 +25,19 @@ The file is a `JSON.stringify(schema, null, 2)` dump of the full `ModuleSchema`:
       "name": "product",
       "columns": [
         { "name": "id", "type": "uuid", "nullable": false, "primaryKey": true },
-        { "name": "title", "type": "character varying", "length": 200, "nullable": false }
+        {
+          "name": "title",
+          "type": "character varying",
+          "length": 200,
+          "nullable": false,
+        },
       ],
       "indexes": [],
-      "foreignKeys": []
-    }
+      "foreignKeys": [],
+    },
   ],
   "enums": [],
-  "relationships": []
+  "relationships": [],
 }
 ```
 
@@ -41,7 +46,10 @@ The file is a `JSON.stringify(schema, null, 2)` dump of the full `ModuleSchema`:
 ### `loadSnapshot(migrationsDir, moduleName): ModuleSchema`
 
 ```ts
-export function loadSnapshot(migrationsDir: string, moduleName: string): ModuleSchema
+export function loadSnapshot(
+  migrationsDir: string,
+  moduleName: string,
+): ModuleSchema;
 ```
 
 Reads `<migrationsDir>/schema-snapshot.json` and `JSON.parse`s it. If the file does **not** exist it returns an **empty baseline**, not an error:
@@ -55,7 +63,7 @@ This baseline is what makes the first-ever diff produce a full "create everythin
 ### `saveSnapshot(migrationsDir, schema): void`
 
 ```ts
-export function saveSnapshot(migrationsDir: string, schema: ModuleSchema): void
+export function saveSnapshot(migrationsDir: string, schema: ModuleSchema): void;
 ```
 
 Writes the pretty-printed schema to `<migrationsDir>/schema-snapshot.json`, creating `migrationsDir` recursively if it doesn't exist. Callers persist the **current** schema only after a migration has been successfully written, so a failed/aborted run leaves the previous snapshot intact.
@@ -63,7 +71,7 @@ Writes the pretty-printed schema to `<migrationsDir>/schema-snapshot.json`, crea
 ### `snapshotExist(migrationsDir): boolean`
 
 ```ts
-export function snapshotExist(migrationsDir: string): boolean
+export function snapshotExist(migrationsDir: string): boolean;
 ```
 
 Cheap existence check. The migration package uses it to decide between an initial (baseline) migration and a diff migration — see `createMigration` in orm-migration.
@@ -87,4 +95,4 @@ Cheap existence check. The migration package uses it to decide between an initia
 
 - To support a different filename or per-environment snapshots, parameterize the `"schema-snapshot.json"` constant (it is duplicated in all three functions — keep them in sync).
 - If you add validation, do it in `loadSnapshot` after `JSON.parse` and fail loudly; downstream layers assume a structurally valid `ModuleSchema`.
-- Keep these functions the *only* I/O in the package; do not add database access here.
+- Keep these functions the _only_ I/O in the package; do not add database access here.

@@ -1,8 +1,4 @@
-import {
-  RawWhereClause,
-  WhereClause,
-} from "../../types";
-
+import { RawWhereClause, WhereClause } from "../../types";
 
 /**
  * Options for `delete`.

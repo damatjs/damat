@@ -8,7 +8,7 @@
   TypeScript directly; there is no separate compile step in dev).
 - **PostgreSQL 15+** — with the [`pgvector`](https://github.com/pgvector/pgvector)
   extension if you want vector columns.
-- **Redis 7+** *(optional)* — only needed for cache, queues, distributed locks,
+- **Redis 7+** _(optional)_ — only needed for cache, queues, distributed locks,
   sessions, and rate limiting.
 
 No Postgres or Redis on your machine yet? This minimal `docker-compose.yml`

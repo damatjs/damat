@@ -38,7 +38,11 @@ export const moduleListCommand: Command = {
     }
 
     for (const entry of entries) {
-      const manifestPath = join(modulesDir, entry.name, MODULE_MANIFEST_FILENAME);
+      const manifestPath = join(
+        modulesDir,
+        entry.name,
+        MODULE_MANIFEST_FILENAME,
+      );
       let version = "";
       let description = "";
       if (existsSync(manifestPath)) {

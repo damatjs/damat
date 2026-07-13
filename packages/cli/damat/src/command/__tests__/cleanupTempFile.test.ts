@@ -46,7 +46,9 @@ describe("cleanupTempFile", () => {
 
     expect(logger.debug).toHaveBeenCalledTimes(1);
     const [message] = logger.debug.mock.calls[0]!;
-    expect(String(message)).toContain("Failed to clean up /app/.damat/dev-entry.ts");
+    expect(String(message)).toContain(
+      "Failed to clean up /app/.damat/dev-entry.ts",
+    );
     expect(String(message)).toContain("EACCES: permission denied");
   });
 });

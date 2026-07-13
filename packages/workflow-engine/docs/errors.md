@@ -13,12 +13,15 @@ always a `WorkflowError` (or subclass).
 class WorkflowError extends Error {
   readonly _tag: string = "WorkflowError";
   constructor(
-    public readonly code: string,        // programmatic code
+    public readonly code: string, // programmatic code
     message: string,
     public readonly workflowName?: string,
     public readonly stepName?: string,
-    public readonly cause?: unknown,      // original underlying error
-  ) { super(message); this.name = "WorkflowError"; }
+    public readonly cause?: unknown, // original underlying error
+  ) {
+    super(message);
+    this.name = "WorkflowError";
+  }
 }
 ```
 
@@ -30,13 +33,13 @@ It is also used directly with two codes produced by the workflow runner:
 
 ## Subclasses
 
-| Class | `code` | `_tag` | Thrown when | Extra fields |
-| --- | --- | --- | --- | --- |
-| `StepExecutionError` | `STEP_EXECUTION_FAILED` | `StepExecutionError` | `step.invoke` throws | `cause` = the thrown error |
-| `StepTimeoutError` | `STEP_TIMEOUT` | `StepTimeoutError` | a step attempt exceeds `timeoutMs` | `timeoutMs` |
-| `MaxRetriesExceededError` | `MAX_RETRIES_EXCEEDED` | `MaxRetriesExceededError` | all retries exhausted (surfaced at the **workflow** boundary) | `maxRetries`; `cause` = last error |
-| `CompensationError` | `COMPENSATION_FAILED` | `CompensationError` | a compensation throws | `cause` = the thrown error |
-| `WorkflowLockError` | `WORKFLOW_LOCKED` | `WorkflowLockError` | lock can't be acquired | `lockId` |
+| Class                     | `code`                  | `_tag`                    | Thrown when                                                   | Extra fields                       |
+| ------------------------- | ----------------------- | ------------------------- | ------------------------------------------------------------- | ---------------------------------- |
+| `StepExecutionError`      | `STEP_EXECUTION_FAILED` | `StepExecutionError`      | `step.invoke` throws                                          | `cause` = the thrown error         |
+| `StepTimeoutError`        | `STEP_TIMEOUT`          | `StepTimeoutError`        | a step attempt exceeds `timeoutMs`                            | `timeoutMs`                        |
+| `MaxRetriesExceededError` | `MAX_RETRIES_EXCEEDED`  | `MaxRetriesExceededError` | all retries exhausted (surfaced at the **workflow** boundary) | `maxRetries`; `cause` = last error |
+| `CompensationError`       | `COMPENSATION_FAILED`   | `CompensationError`       | a compensation throws                                         | `cause` = the thrown error         |
+| `WorkflowLockError`       | `WORKFLOW_LOCKED`       | `WorkflowLockError`       | lock can't be acquired                                        | `lockId`                           |
 
 ### Signatures
 
@@ -74,10 +77,13 @@ new WorkflowLockError(workflowName, lockId);
 const result = await workflow.execute(input);
 if (!result.success) {
   switch (result.error.code) {
-    case "WORKFLOW_LOCKED":     /* already running */ break;
-    case "STEP_TIMEOUT":        /* slow dependency */ break;
-    case "MAX_RETRIES_EXCEEDED":/* persistent failure; inspect .cause */ break;
-    default:                    /* STEP_EXECUTION_FAILED / WORKFLOW_FAILED / WORKFLOW_TIMEOUT */
+    case "WORKFLOW_LOCKED":
+      /* already running */ break;
+    case "STEP_TIMEOUT":
+      /* slow dependency */ break;
+    case "MAX_RETRIES_EXCEEDED":
+      /* persistent failure; inspect .cause */ break;
+    default: /* STEP_EXECUTION_FAILED / WORKFLOW_FAILED / WORKFLOW_TIMEOUT */
   }
   // result.compensated / result.compensationsFailed / result.compensationErrors
   // describe rollback

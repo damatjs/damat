@@ -10,13 +10,13 @@ validation — then how routes reach your module services.
 
 ## File-based routing
 
-Every `route.ts` under `src/api/routes/` becomes a URL path. The folder tree *is*
+Every `route.ts` under `src/api/routes/` becomes a URL path. The folder tree _is_
 the route table:
 
-| File | URL |
-| --- | --- |
-| `src/api/routes/posts/route.ts` | `/api/posts` |
-| `src/api/routes/users/[userId]/route.ts` | `/api/users/:userId` |
+| File                                      | URL                        |
+| ----------------------------------------- | -------------------------- |
+| `src/api/routes/posts/route.ts`           | `/api/posts`               |
+| `src/api/routes/users/[userId]/route.ts`  | `/api/users/:userId`       |
 | `src/api/routes/files/[...path]/route.ts` | `/api/files/*` (catch-all) |
 
 Two conventions govern the mapping:

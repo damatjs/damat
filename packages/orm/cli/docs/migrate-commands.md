@@ -58,7 +58,7 @@ Behaviour:
    `"<name>: <applied> applied, <pending> pending"` (level `success` when
    `pending === 0`, else `info`), then each migration (`success` if applied).
 4. **All modules** (no name): `getMigrationStatus(pool, Object.values(modules)
-   .map(m => m.resolve))`; iterate `status.modules`, logging the same per-module
+.map(m => m.resolve))`; iterate `status.modules`, logging the same per-module
    summary and per-migration lines.
 5. `finally { await pool.end() }`.
 
@@ -100,9 +100,9 @@ Behaviour:
 3. `isInitial = !snapshotExist(resolvedMigrationsDir)` (from
    `@damatjs/orm-processor`).
 4. **Initial** (`isInitial`): `createInitialMigration(moduleName,
-   moduleConfig.resolve)` → logs the created file path.
+moduleConfig.resolve)` → logs the created file path.
 5. **Diff** (snapshot exists): `createDiffMigration(moduleName,
-   moduleConfig.resolve)`:
+moduleConfig.resolve)`:
    - `result.hasChanges === false` → `logger.skip("No changes detected.")`,
      return `0`.
    - else → log the file path and any `result.warnings`.

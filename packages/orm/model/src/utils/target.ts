@@ -45,8 +45,8 @@ export function resolveModuleTarget(target: ModelTarget): ModelDefinition {
     if (!model) {
       throw new Error(
         `Model for table "${target}" not found in registry. ` +
-        `Ensure the model is defined before resolving relations. ` +
-        `If using string-based targets, all models must be imported/loaded before relation resolution.`,
+          `Ensure the model is defined before resolving relations. ` +
+          `If using string-based targets, all models must be imported/loaded before relation resolution.`,
       );
     }
     return model as ModelDefinition;

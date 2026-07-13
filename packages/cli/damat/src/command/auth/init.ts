@@ -17,7 +17,8 @@ const HOSTED_PROVIDERS = new Set(["clerk", "auth0"]);
 
 export const authInitCommand: Command = {
   name: "init",
-  description: "Scaffold the storage module an auth provider needs (Better Auth); no-op for hosted providers",
+  description:
+    "Scaffold the storage module an auth provider needs (Better Auth); no-op for hosted providers",
   usage: "damat auth init <provider> [--dir <path>] [--force]",
   examples: [
     "damat auth init better-auth      # scaffold src/modules/auth (owned by you)",
@@ -42,7 +43,9 @@ export const authInitCommand: Command = {
   handler: async (ctx) => {
     const provider = ctx.args[0];
     if (!provider) {
-      ctx.logger.error("Usage: damat auth init <provider>   (better-auth | clerk | auth0)");
+      ctx.logger.error(
+        "Usage: damat auth init <provider>   (better-auth | clerk | auth0)",
+      );
       return { exitCode: 1 };
     }
 
@@ -86,7 +89,9 @@ export const authInitCommand: Command = {
       mkdirSync(join(full, ".."), { recursive: true });
       writeFileSync(full, content);
     }
-    ctx.logger.success(`Scaffolded the Better Auth storage module at ${modulesDir}/auth`);
+    ctx.logger.success(
+      `Scaffolded the Better Auth storage module at ${modulesDir}/auth`,
+    );
 
     // Register it in damat.config.ts like any module.
     const configPath = join(ctx.cwd, "damat.config.ts");

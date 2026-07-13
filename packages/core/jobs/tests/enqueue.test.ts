@@ -1,4 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, setSystemTime } from "bun:test";
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  setSystemTime,
+} from "bun:test";
 import {
   enqueueJob,
   getJobQueue,
@@ -9,7 +16,10 @@ import {
 } from "../src/index";
 // The FakeRedis the @damatjs/redis suite itself tests RedisQueue against — the
 // real queue implementation runs on it, so nothing here mocks queue semantics.
-import { createFakeRedis, type FakeRedis } from "../../redis/tests/helpers/fakeRedis";
+import {
+  createFakeRedis,
+  type FakeRedis,
+} from "../../redis/tests/helpers/fakeRedis";
 
 let client: FakeRedis;
 
@@ -55,10 +65,16 @@ describe("enqueueJob — envelope", () => {
   });
 
   it("uses the explicit queueName", async () => {
-    const job = await enqueueJob("send-email", null, { client, queueName: "mailers" });
+    const job = await enqueueJob("send-email", null, {
+      client,
+      queueName: "mailers",
+    });
 
     expect(job.queue).toBe("mailers");
-    const [dequeued] = await getJobQueue({ client, queueName: "mailers" }).dequeue(1);
+    const [dequeued] = await getJobQueue({
+      client,
+      queueName: "mailers",
+    }).dequeue(1);
     expect(dequeued?.id).toBe(job.id);
   });
 });
@@ -71,7 +87,10 @@ describe("enqueueJob — priority/maxAttempts resolution", () => {
   });
 
   it("uses the definition's options when no enqueue option is given", async () => {
-    defineJob("important", async () => {}, { priority: "high", maxAttempts: 5 });
+    defineJob("important", async () => {}, {
+      priority: "high",
+      maxAttempts: 5,
+    });
 
     const job = await enqueueJob("important", null, { client });
     expect(job.priority).toBe("high");
@@ -79,7 +98,10 @@ describe("enqueueJob — priority/maxAttempts resolution", () => {
   });
 
   it("lets enqueue options override the definition", async () => {
-    defineJob("important", async () => {}, { priority: "high", maxAttempts: 5 });
+    defineJob("important", async () => {}, {
+      priority: "high",
+      maxAttempts: 5,
+    });
 
     const job = await enqueueJob("important", null, {
       client,
@@ -96,7 +118,11 @@ describe("enqueueJob — delayMs", () => {
     // Scores are Date.now()-based (delay minus a priority offset of up to 4s),
     // so a delay large enough to land in the future is jumped over with
     // setSystemTime — FakeRedis.advanceTime only drives TTL expiry, not scores.
-    const job = await enqueueJob("later", { n: 1 }, { client, delayMs: 60_000 });
+    const job = await enqueueJob(
+      "later",
+      { n: 1 },
+      { client, delayMs: 60_000 },
+    );
     expect(job.delay).toBe(60_000);
 
     const queue = getJobQueue({ client });

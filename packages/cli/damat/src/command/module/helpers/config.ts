@@ -19,8 +19,13 @@ export function registerModuleInConfig(
   if (!existsSync(configPath)) return false;
   const content = readFileSync(configPath, "utf-8");
 
-  const key = /^[a-z][a-zA-Z0-9]*$/.test(toCamel(name)) ? toCamel(name) : `"${name}"`;
-  if (new RegExp(`(^|[\\s{,])(["']?)${name}\\2\\s*:`).test(content) && content.includes(resolvePath)) {
+  const key = /^[a-z][a-zA-Z0-9]*$/.test(toCamel(name))
+    ? toCamel(name)
+    : `"${name}"`;
+  if (
+    new RegExp(`(^|[\\s{,])(["']?)${name}\\2\\s*:`).test(content) &&
+    content.includes(resolvePath)
+  ) {
     return true; // already registered
   }
 
@@ -165,7 +170,12 @@ export function deregisterModuleFromConfig(
 function findModuleEntrySpan(
   content: string,
   name: string,
-): { keyStart: number; bodyStart: number; bodyEnd: number; entryEnd: number } | null {
+): {
+  keyStart: number;
+  bodyStart: number;
+  bodyEnd: number;
+  entryEnd: number;
+} | null {
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const keyMatch = new RegExp(
     `(^|[\\s{,])(["']?)${escaped}\\2\\s*:\\s*\\{`,

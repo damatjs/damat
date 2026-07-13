@@ -1,6 +1,11 @@
 import { describe, it, expect } from "bun:test";
 import { deriveNames } from "../scaffold/naming";
-import { stepUpdate, stepCreate, stepDelete, stepFind } from "../scaffold/templates/step";
+import {
+  stepUpdate,
+  stepCreate,
+  stepDelete,
+  stepFind,
+} from "../scaffold/templates/step";
 
 // Saga steps must be reversible: when a LATER step in the workflow fails, the
 // compensation has to put the data back. The engine delivers ONLY the

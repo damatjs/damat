@@ -36,10 +36,14 @@ function makeModuleSrc(root: string, links: LinkLayout = "models"): string {
   mkdirSync(join(src, "models"), { recursive: true });
   writeFileSync(join(src, "index.ts"), "// entry\n");
   writeFileSync(join(src, "models", "user.ts"), "// model\n");
-  const linkFile = 'import { defineLink } from "@damatjs/framework";\nexport default {};\n';
+  const linkFile =
+    'import { defineLink } from "@damatjs/framework";\nexport default {};\n';
   if (links === "models") {
     mkdirSync(join(src, "links", "models"), { recursive: true });
-    writeFileSync(join(src, "links", "models", "user-organization.ts"), linkFile);
+    writeFileSync(
+      join(src, "links", "models", "user-organization.ts"),
+      linkFile,
+    );
   } else if (links === "flat") {
     mkdirSync(join(src, "links"), { recursive: true });
     writeFileSync(join(src, "links", "user-organization.ts"), linkFile);
@@ -77,42 +81,82 @@ withTmp((root, cwd) => {
   );
   check(
     "link model copied into src/links/user/models",
-    existsSync(join(cwd, "src", "links", "user", "models", "user-organization.ts")),
+    existsSync(
+      join(cwd, "src", "links", "user", "models", "user-organization.ts"),
+    ),
   );
   check(
     "empty migrations dir created",
     existsSync(join(cwd, "src", "links", "user", "migrations")),
   );
-  const ownerIndex = readFileSync(join(cwd, "src", "links", "user", "index.ts"), "utf-8");
-  check("owner index uses collectLinkModels", ownerIndex.includes("collectLinkModels"));
-  const aggregator = readFileSync(join(cwd, "src", "links", "index.ts"), "utf-8");
-  check("aggregator uses defineLinkModule + ./user", aggregator.includes("defineLinkModule") && aggregator.includes('from "./user"'));
+  const ownerIndex = readFileSync(
+    join(cwd, "src", "links", "user", "index.ts"),
+    "utf-8",
+  );
+  check(
+    "owner index uses collectLinkModels",
+    ownerIndex.includes("collectLinkModels"),
+  );
+  const aggregator = readFileSync(
+    join(cwd, "src", "links", "index.ts"),
+    "utf-8",
+  );
+  check(
+    "aggregator uses defineLinkModule + ./user",
+    aggregator.includes("defineLinkModule") &&
+      aggregator.includes('from "./user"'),
+  );
   check(
     "links NOT duplicated under src/modules/user",
     !existsSync(join(cwd, "src", "modules", "user", "links")),
   );
-  check("module home still landed", existsSync(join(cwd, "src", "modules", "user", "index.ts")));
+  check(
+    "module home still landed",
+    existsSync(join(cwd, "src", "modules", "user", "index.ts")),
+  );
 });
 
 withTmp((root, cwd) => {
   const src = makeModuleSrc(root);
-  const target = join(cwd, "src", "links", "user", "models", "user-organization.ts");
+  const target = join(
+    cwd,
+    "src",
+    "links",
+    "user",
+    "models",
+    "user-organization.ts",
+  );
   mkdirSync(join(cwd, "src", "links", "user", "models"), { recursive: true });
   writeFileSync(target, "// EDITED BY OWNER\n");
   run(src, cwd); // no force
-  check("owner edit preserved without --force", readFileSync(target, "utf-8") === "// EDITED BY OWNER\n");
+  check(
+    "owner edit preserved without --force",
+    readFileSync(target, "utf-8") === "// EDITED BY OWNER\n",
+  );
   run(src, cwd, true); // force
-  check("owner edit overwritten with --force", readFileSync(target, "utf-8").includes("defineLink"));
+  check(
+    "owner edit overwritten with --force",
+    readFileSync(target, "utf-8").includes("defineLink"),
+  );
 });
 
 withTmp((root, cwd) => {
-  mkdirSync(join(cwd, "src", "links", "billing", "models"), { recursive: true });
-  writeFileSync(join(cwd, "src", "links", "billing", "index.ts"), "export const links = [];\n");
+  mkdirSync(join(cwd, "src", "links", "billing", "models"), {
+    recursive: true,
+  });
+  writeFileSync(
+    join(cwd, "src", "links", "billing", "index.ts"),
+    "export const links = [];\n",
+  );
   run(makeModuleSrc(root), cwd);
-  const aggregator = readFileSync(join(cwd, "src", "links", "index.ts"), "utf-8");
+  const aggregator = readFileSync(
+    join(cwd, "src", "links", "index.ts"),
+    "utf-8",
+  );
   check(
     "aggregator preserves a hand-authored owner",
-    aggregator.includes('from "./billing"') && aggregator.includes('from "./user"'),
+    aggregator.includes('from "./billing"') &&
+      aggregator.includes('from "./user"'),
   );
 });
 
@@ -126,10 +170,15 @@ withTmp((root, cwd) => {
 // separated into src/links/<id>/models/ — never dumped into the module home.
 withTmp((root, cwd) => {
   const layout = run(makeModuleSrc(root, "flat"), cwd);
-  check("flat links/<x>.ts → linksTarget set", layout.linksTarget === join(cwd, "src", "links", "user"));
+  check(
+    "flat links/<x>.ts → linksTarget set",
+    layout.linksTarget === join(cwd, "src", "links", "user"),
+  );
   check(
     "flat link separated into src/links/user/models",
-    existsSync(join(cwd, "src", "links", "user", "models", "user-organization.ts")),
+    existsSync(
+      join(cwd, "src", "links", "user", "models", "user-organization.ts"),
+    ),
   );
   check(
     "flat link NOT dumped into src/modules/user",

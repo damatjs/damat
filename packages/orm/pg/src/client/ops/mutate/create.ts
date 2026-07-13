@@ -11,6 +11,10 @@ export async function executeCreate<
   options: CreateOptions<Cols>,
 ): Promise<PgInsertResult<T>> {
   const { sql, json } = client.accessor.create(options);
-  const { rows, rowCount } = await pgExecuteRaw<T>(client._conn, sql, client._logger);
+  const { rows, rowCount } = await pgExecuteRaw<T>(
+    client._conn,
+    sql,
+    client._logger,
+  );
   return { rows, rowCount, descriptor: json as InsertDescriptor };
 }

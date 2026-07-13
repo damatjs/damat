@@ -22,9 +22,11 @@ describe("defineRoute", () => {
   it("handles multiple params", async () => {
     const app = new Hono();
 
-    const handler = defineRoute<{ userId: string; postId: string }>((c, params) => {
-      return c.json({ userId: params.userId, postId: params.postId });
-    });
+    const handler = defineRoute<{ userId: string; postId: string }>(
+      (c, params) => {
+        return c.json({ userId: params.userId, postId: params.postId });
+      },
+    );
 
     app.get("/users/:userId/posts/:postId", handler);
 

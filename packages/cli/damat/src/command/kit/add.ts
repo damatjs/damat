@@ -1,5 +1,11 @@
 import { join, resolve, sep } from "node:path";
-import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { type Command, reportError } from "@damatjs/cli";
 import { readKitManifest } from "./manifest";
 import { buildKitPlan, type PlannedFile } from "./plan";
@@ -11,8 +17,10 @@ export const KIT_RECORD_FILENAME = "damat-kits.json";
 
 export const kitAddCommand: Command = {
   name: "add",
-  description: "Copy a shared kit (any codebase with a damat-kit.json) into this project",
-  usage: "damat kit add <source> [--force] [--dry-run] [--no-install] [--allow-scripts]",
+  description:
+    "Copy a shared kit (any codebase with a damat-kit.json) into this project",
+  usage:
+    "damat kit add <source> [--force] [--dry-run] [--no-install] [--allow-scripts]",
   examples: [
     "damat kit add acme/design-kit                    # github shorthand",
     "damat kit add acme/mono/kits/auth#main --dry-run # subdirectory + ref, plan only",
@@ -23,7 +31,8 @@ export const kitAddCommand: Command = {
       name: "force",
       alias: "f",
       type: "boolean",
-      description: "Overwrite files that already exist in the target (default: skip them)",
+      description:
+        "Overwrite files that already exist in the target (default: skip them)",
       default: false,
     },
     {
@@ -35,13 +44,15 @@ export const kitAddCommand: Command = {
     {
       name: "install",
       type: "boolean",
-      description: "Install the kit's npm packages via bun add (use --no-install to skip)",
+      description:
+        "Install the kit's npm packages via bun add (use --no-install to skip)",
       default: true,
     },
     {
       name: "allow-scripts",
       type: "boolean",
-      description: "Run dependency lifecycle scripts during bun add (skipped by default)",
+      description:
+        "Run dependency lifecycle scripts during bun add (skipped by default)",
       default: false,
     },
   ],
@@ -76,7 +87,8 @@ export const kitAddCommand: Command = {
       const badSpecs = invalidPackageSpecs(packages);
       if (badSpecs.length > 0) {
         ctx.logger.error(
-          `Refusing to add "${manifest.name}" — unsafe package specs:\n  ` + badSpecs.join("\n  "),
+          `Refusing to add "${manifest.name}" — unsafe package specs:\n  ` +
+            badSpecs.join("\n  "),
         );
         return { exitCode: 1 };
       }
@@ -95,7 +107,8 @@ export const kitAddCommand: Command = {
           [
             `Dry run — adding "${manifest.name}" would write:`,
             ...plan.files.map(
-              (f) => `  ${f.source} -> ${f.target}${f.via === "fallback" ? "  (fallback)" : ""}`,
+              (f) =>
+                `  ${f.source} -> ${f.target}${f.via === "fallback" ? "  (fallback)" : ""}`,
             ),
             ...(Object.keys(packages).length > 0
               ? [`  + bun add ${Object.keys(packages).join(" ")}`]
@@ -105,10 +118,17 @@ export const kitAddCommand: Command = {
         return { exitCode: 0 };
       }
 
-      const { written, skipped } = copyPlanned(resolved.dir, ctx.cwd, plan.files, {
-        force: Boolean(ctx.options.force),
-      });
-      ctx.logger.success(`Installed ${written.length} file(s) from "${manifest.name}"`);
+      const { written, skipped } = copyPlanned(
+        resolved.dir,
+        ctx.cwd,
+        plan.files,
+        {
+          force: Boolean(ctx.options.force),
+        },
+      );
+      ctx.logger.success(
+        `Installed ${written.length} file(s) from "${manifest.name}"`,
+      );
       if (skipped.length > 0) {
         ctx.logger.warn(
           `${skipped.length} file(s) already existed and were kept — re-run with --force to overwrite:\n  ` +
@@ -127,7 +147,9 @@ export const kitAddCommand: Command = {
       ctx.logger.info(`Recorded the kit in ${KIT_RECORD_FILENAME}`);
 
       if (ctx.options.install && Object.keys(packages).length > 0) {
-        ctx.logger.info(`Installing packages: ${Object.keys(packages).join(", ")}`);
+        ctx.logger.info(
+          `Installing packages: ${Object.keys(packages).join(", ")}`,
+        );
         const install = installModulePackages(ctx.cwd, packages, {
           allowScripts: Boolean(ctx.options["allow-scripts"]),
         });
@@ -167,7 +189,9 @@ function copyPlanned(
     // bypass of targetPathError must not write outside the project root.
     const targetAbs = resolve(root, file.target);
     if (targetAbs !== root && !targetAbs.startsWith(root + sep)) {
-      throw new Error(`Refusing to write outside the project root: ${file.target}`);
+      throw new Error(
+        `Refusing to write outside the project root: ${file.target}`,
+      );
     }
     if (existsSync(targetAbs) && !options.force) {
       skipped.push(file);
@@ -190,12 +214,17 @@ interface InstalledKitRecord {
 }
 
 /** Upsert the kit's entry in damat-kits.json (created on first install). */
-function recordInstalledKit(projectRoot: string, record: InstalledKitRecord): void {
+function recordInstalledKit(
+  projectRoot: string,
+  record: InstalledKitRecord,
+): void {
   const recordPath = join(projectRoot, KIT_RECORD_FILENAME);
   let kits: InstalledKitRecord[] = [];
   if (existsSync(recordPath)) {
     try {
-      const parsed = JSON.parse(readFileSync(recordPath, "utf-8")) as { kits?: InstalledKitRecord[] };
+      const parsed = JSON.parse(readFileSync(recordPath, "utf-8")) as {
+        kits?: InstalledKitRecord[];
+      };
       if (Array.isArray(parsed.kits)) kits = parsed.kits;
     } catch {
       // Unreadable record — start fresh rather than fail the install.

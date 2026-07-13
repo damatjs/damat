@@ -9,10 +9,24 @@ Atomic integer counters using Redis `INCRBY`/`DECRBY`. Unlike the other modules,
 ## API
 
 ```ts
-async function incrementCounter(key: string, amount = 1, ttlSeconds?: number, client?: Redis): Promise<number>;
-async function decrementCounter(key: string, amount = 1, client?: Redis): Promise<number>;
+async function incrementCounter(
+  key: string,
+  amount = 1,
+  ttlSeconds?: number,
+  client?: Redis,
+): Promise<number>;
+async function decrementCounter(
+  key: string,
+  amount = 1,
+  client?: Redis,
+): Promise<number>;
 async function getCounter(key: string, client?: Redis): Promise<number>;
-async function setCounter(key: string, value: number, ttlSeconds?: number, client?: Redis): Promise<void>;
+async function setCounter(
+  key: string,
+  value: number,
+  ttlSeconds?: number,
+  client?: Redis,
+): Promise<void>;
 async function resetCounter(key: string, client?: Redis): Promise<void>;
 ```
 

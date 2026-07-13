@@ -27,10 +27,15 @@ the [MCP server](./15-installing-modules-with-ai.md) read it from
       "latest": "0.2.0",
       "versions": {
         "0.1.0": "https://github.com/damatjs/modules.git#user-v0.1.0",
-        "0.2.0": { "source": "https://github.com/damatjs/modules.git#user-v0.2.0" }
+        "0.2.0": {
+          "source": "https://github.com/damatjs/modules.git#user-v0.2.0"
+        }
       },
       "owner": { "namespace": "damatjs", "verified": true },
-      "verification": { "status": "verified", "verifiedBy": "registry.damatjs.com" },
+      "verification": {
+        "status": "verified",
+        "verifiedBy": "registry.damatjs.com"
+      },
       "keywords": ["auth", "users", "sessions"],
       "license": "MIT",
       "repository": "https://github.com/damatjs/modules"
@@ -59,17 +64,17 @@ operators review and mark entries `verified`.
 
 ## Verification statuses
 
-| Status | Meaning | Install behavior |
-|--------|---------|------------------|
-| `verified` | Reviewed; source pinned by the registry | installs cleanly |
-| `unverified` | Listed, not reviewed | subject to your policy |
-| `pending` | Review in progress | subject to your policy |
-| `rejected` / `revoked` | Blocked by the registry | **always refused** |
+| Status                 | Meaning                                 | Install behavior       |
+| ---------------------- | --------------------------------------- | ---------------------- |
+| `verified`             | Reviewed; source pinned by the registry | installs cleanly       |
+| `unverified`           | Listed, not reviewed                    | subject to your policy |
+| `pending`              | Review in progress                      | subject to your policy |
+| `rejected` / `revoked` | Blocked by the registry                 | **always refused**     |
 
 The consumer-side policy is `DAMAT_MODULE_VERIFY`:
 
 - `off` — install anything the registry serves
-- `warn` *(default)* — install, but print what you're trusting
+- `warn` _(default)_ — install, but print what you're trusting
 - `require` — only `verified` entries install
 
 Path and git sources bypass the registry entirely and require

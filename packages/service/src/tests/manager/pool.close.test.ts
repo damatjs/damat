@@ -20,7 +20,11 @@ function makeFakePool(): Pool & { endCalls: number } {
   return pool as unknown as Pool & { endCalls: number };
 }
 
-const fakeLogger = { debug: () => {}, info: () => {}, error: () => {} } as unknown as ILogger;
+const fakeLogger = {
+  debug: () => {},
+  info: () => {},
+  error: () => {},
+} as unknown as ILogger;
 const fakeConnectionManager = {
   healthCheck: async () => ({ connected: true }),
   getPoolStats: () => ({ totalCount: 0, idleCount: 0, waitingCount: 0 }),
@@ -33,7 +37,11 @@ describe("PoolManager.close", () => {
 
   it("ends the pool and clears all state", async () => {
     const pool = makeFakePool();
-    PoolManager.setup({ pool, logger: fakeLogger, connectionManager: fakeConnectionManager });
+    PoolManager.setup({
+      pool,
+      logger: fakeLogger,
+      connectionManager: fakeConnectionManager,
+    });
     expect(PoolManager.isInitialized()).toBe(true);
 
     await PoolManager.close();
@@ -46,7 +54,11 @@ describe("PoolManager.close", () => {
 
   it("is idempotent — a second close is a no-op", async () => {
     const pool = makeFakePool();
-    PoolManager.setup({ pool, logger: fakeLogger, connectionManager: fakeConnectionManager });
+    PoolManager.setup({
+      pool,
+      logger: fakeLogger,
+      connectionManager: fakeConnectionManager,
+    });
 
     await PoolManager.close();
     await PoolManager.close(); // must not throw or call end again
@@ -56,7 +68,11 @@ describe("PoolManager.close", () => {
 
   it("does not double-end a pool someone else already ended", async () => {
     const pool = makeFakePool();
-    PoolManager.setup({ pool, logger: fakeLogger, connectionManager: fakeConnectionManager });
+    PoolManager.setup({
+      pool,
+      logger: fakeLogger,
+      connectionManager: fakeConnectionManager,
+    });
     await pool.end();
 
     await PoolManager.close(); // pg throws on double end(); close must guard

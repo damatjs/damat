@@ -1,1 +1,1 @@
-export * from "nanoid"
+export * from "nanoid";

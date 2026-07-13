@@ -26,17 +26,17 @@ is just the executable entry — it carries the shebang and the env-var referenc
 then calls `run()`. Everything else lives under `src/`, split so no file
 exceeds ~100 lines:
 
-| Path | Responsibility |
-|------|----------------|
-| `bin/damat-mcp.ts` | Executable entry: shebang + env-var docs; imports `run` from `src/server` and calls it. |
-| `src/constants.ts` | Server identity (`SERVER_NAME`/`SERVER_VERSION`), `DEFAULT_PROTOCOL`, and shared strings (`NO_REGISTRY_MSG`, `SERVER_INSTRUCTIONS`). |
-| `src/env.ts` | Config from environment: `appDir()`, `registryLocation()`, `damatCli()`. |
-| `src/registry/` | Registry layer — `types.ts` (inline copies of `@damatjs/module` shapes), `ref.ts` (`parseModuleRef`/`formatModuleRef`), `load.ts` (`loadRegistryIndex`/`lookupEntry`), `summarize.ts` (`summarizeEntry`). |
-| `src/app/` | The target Damat app — `cli.ts` (`runDamat`, shells out to the CLI) and `installed.ts` (`listInstalled`, scans the modules dir). |
-| `src/tools/` | One MCP tool per file (`list-modules`, `search-modules`, `module-info`, `list-installed`, `add-module`), the `ToolDef` type, and `index.ts` assembling the `tools` catalog. |
-| `src/server/` | The MCP transport — `rpc.ts` (`send`/`reply`/`replyError`), `dispatch.ts` (`handleMessage`), `run.ts` (the newline-delimited stdin loop). |
-| `registry.example.json` | A sample registry index used by the repo's `.mcp.json` and for local testing. |
-| `package.json` | Declares the `damat-mcp` bin (raw `.ts`, run by Bun — no build); publishes `bin` + `src`. |
+| Path                    | Responsibility                                                                                                                                                                                            |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bin/damat-mcp.ts`      | Executable entry: shebang + env-var docs; imports `run` from `src/server` and calls it.                                                                                                                   |
+| `src/constants.ts`      | Server identity (`SERVER_NAME`/`SERVER_VERSION`), `DEFAULT_PROTOCOL`, and shared strings (`NO_REGISTRY_MSG`, `SERVER_INSTRUCTIONS`).                                                                      |
+| `src/env.ts`            | Config from environment: `appDir()`, `registryLocation()`, `damatCli()`.                                                                                                                                  |
+| `src/registry/`         | Registry layer — `types.ts` (inline copies of `@damatjs/module` shapes), `ref.ts` (`parseModuleRef`/`formatModuleRef`), `load.ts` (`loadRegistryIndex`/`lookupEntry`), `summarize.ts` (`summarizeEntry`). |
+| `src/app/`              | The target Damat app — `cli.ts` (`runDamat`, shells out to the CLI) and `installed.ts` (`listInstalled`, scans the modules dir).                                                                          |
+| `src/tools/`            | One MCP tool per file (`list-modules`, `search-modules`, `module-info`, `list-installed`, `add-module`), the `ToolDef` type, and `index.ts` assembling the `tools` catalog.                               |
+| `src/server/`           | The MCP transport — `rpc.ts` (`send`/`reply`/`replyError`), `dispatch.ts` (`handleMessage`), `run.ts` (the newline-delimited stdin loop).                                                                 |
+| `registry.example.json` | A sample registry index used by the repo's `.mcp.json` and for local testing.                                                                                                                             |
+| `package.json`          | Declares the `damat-mcp` bin (raw `.ts`, run by Bun — no build); publishes `bin` + `src`.                                                                                                                 |
 
 Each folder has an `index.ts` barrel, so imports stay at the folder level
 (`from "../registry"`, `from "../tools"`). The dependency direction is
@@ -67,13 +67,13 @@ JSON-RPC errors) so the assistant sees the message and can recover.
 
 ## Tool reference
 
-| Tool | Inputs | Behavior |
-|------|--------|----------|
-| `list_modules` | — | Loads the registry index, returns a summary per module. Errors if no registry is configured. |
-| `search_modules` | `query` | Same, filtered by case-insensitive match on ref/description/keywords. |
-| `module_info` | `ref` | `parseModuleRef` → `lookupEntry` (tries `namespace/name` then bare `name`) → summary. |
-| `list_installed` | `dir?` (default `src/modules`) | Scans `DAMAT_APP_DIR/<dir>` for subdirectories with a `module.json`. |
-| `add_module` | `source`, `name?`, `dir?`, `force?`, `allowUnverified?`, `allowScripts?` | Builds `module add` args and runs `runDamat()`. `allowUnverified` maps to `--allow-unverified` (required for path/git sources), `allowScripts` to `--allow-scripts` (dependency lifecycle scripts). |
+| Tool             | Inputs                                                                   | Behavior                                                                                                                                                                                            |
+| ---------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `list_modules`   | —                                                                        | Loads the registry index, returns a summary per module. Errors if no registry is configured.                                                                                                        |
+| `search_modules` | `query`                                                                  | Same, filtered by case-insensitive match on ref/description/keywords.                                                                                                                               |
+| `module_info`    | `ref`                                                                    | `parseModuleRef` → `lookupEntry` (tries `namespace/name` then bare `name`) → summary.                                                                                                               |
+| `list_installed` | `dir?` (default `src/modules`)                                           | Scans `DAMAT_APP_DIR/<dir>` for subdirectories with a `module.json`.                                                                                                                                |
+| `add_module`     | `source`, `name?`, `dir?`, `force?`, `allowUnverified?`, `allowScripts?` | Builds `module add` args and runs `runDamat()`. `allowUnverified` maps to `--allow-unverified` (required for path/git sources), `allowScripts` to `--allow-scripts` (dependency lifecycle scripts). |
 
 `summarizeEntry()` is the single place that decides which registry fields are
 surfaced to the model — extend it when you add fields to the registry schema.

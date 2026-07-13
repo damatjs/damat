@@ -40,7 +40,10 @@ const files = generateFilesMap(schema);
 
 // ─── Write output ─────────────────────────────────────────────────────────────
 
-const outDir = join(import.meta.dir, "../src/tests/__snapshots__/generated/types");
+const outDir = join(
+  import.meta.dir,
+  "../src/tests/__snapshots__/generated/types",
+);
 
 mkdirSync(outDir, { recursive: true });
 

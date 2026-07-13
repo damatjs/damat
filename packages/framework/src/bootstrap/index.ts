@@ -2,18 +2,24 @@ import { Hono } from "@damatjs/deps/hono";
 import { createFileRouter } from "../router";
 import { setupMiddleware, notFoundHandler } from "../middleware";
 import { handleError } from "../middleware/error/handleError";
-import { createRootRoute, createApiRoutesRoute, createHealthRoute } from "../handlers";
+import {
+  createRootRoute,
+  createApiRoutesRoute,
+  createHealthRoute,
+} from "../handlers";
 import type { BootstrapOptions, BootstrapResult } from "../types";
-import { getLogger } from '../services';
+import { getLogger } from "../services";
 
-export async function bootstrap(options: BootstrapOptions): Promise<BootstrapResult> {
+export async function bootstrap(
+  options: BootstrapOptions,
+): Promise<BootstrapResult> {
   const {
     routesDir,
     projectConfig,
     healthCheck,
     authHandlers,
     authRoutes,
-    hooks
+    hooks,
   } = options;
 
   const logger = getLogger();
@@ -30,7 +36,7 @@ export async function bootstrap(options: BootstrapOptions): Promise<BootstrapRes
   setupMiddleware({
     app,
     logger,
-    corsConfig: projectConfig.http.corsConfig
+    corsConfig: projectConfig.http.corsConfig,
   });
 
   // Provider-owned auth endpoints (Better Auth sign-in/session) mount before
@@ -39,7 +45,8 @@ export async function bootstrap(options: BootstrapOptions): Promise<BootstrapRes
 
   // The app exists but no routes are registered yet. A throwing hook fails
   // startup — never boot a half-configured server.
-  if (hooks?.beforeRoutes) await hooks.beforeRoutes({ config: projectConfig, logger, app });
+  if (hooks?.beforeRoutes)
+    await hooks.beforeRoutes({ config: projectConfig, logger, app });
 
   const fileRouter = await createFileRouter({
     routesDir,
@@ -53,26 +60,32 @@ export async function bootstrap(options: BootstrapOptions): Promise<BootstrapRes
   const entryPathUrl = projectConfig.http.api?.entryRouter ?? "/api";
   app.route(entryPathUrl, fileRouter.router);
 
-  if (projectConfig.nodeEnv === "development") logger.info(fileRouter.getRouteList());
+  if (projectConfig.nodeEnv === "development")
+    logger.info(fileRouter.getRouteList());
 
-  if (projectConfig.nodeEnv === "development") app.route("", createRootRoute(fileRouter));
-  if (projectConfig.nodeEnv === "development") app.route("", createApiRoutesRoute(fileRouter));
+  if (projectConfig.nodeEnv === "development")
+    app.route("", createRootRoute(fileRouter));
+  if (projectConfig.nodeEnv === "development")
+    app.route("", createApiRoutesRoute(fileRouter));
 
   if (healthCheck)
-    app.route("", createHealthRoute(healthCheck, projectConfig.http.api?.healthCheckRouter));
+    app.route(
+      "",
+      createHealthRoute(healthCheck, projectConfig.http.api?.healthCheckRouter),
+    );
 
   // Every route is registered; the 404 handler has not been installed yet.
-  if (hooks?.afterRoutes) await hooks.afterRoutes({ config: projectConfig, logger, app });
+  if (hooks?.afterRoutes)
+    await hooks.afterRoutes({ config: projectConfig, logger, app });
 
   app.notFound(notFoundHandler);
 
   return {
     app,
-    config:
-    {
+    config: {
       port: projectConfig.http.port,
       host: projectConfig.http.host,
-      nodeEnv: projectConfig.nodeEnv
-    }
+      nodeEnv: projectConfig.nodeEnv,
+    },
   };
 }

@@ -5,6 +5,6 @@ import type { UserModuleService } from "@user/service";
 
 declare module "@damatjs/services" {
   interface ModuleRegistry {
-    "user": UserModuleService;
+    user: UserModuleService;
   }
 }

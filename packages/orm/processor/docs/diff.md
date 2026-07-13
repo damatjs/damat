@@ -11,32 +11,32 @@ Compare two `ModuleSchema`s (`previous` from the snapshot, `current` built from 
 ```ts
 // src/types/diff/schema.ts
 interface SchemaDiff {
-  hasChanges: boolean;       // changes.length > 0
-  changes: SchemaChange[];   // sorted ascending by priority
-  warnings: string[];        // e.g. destructive-operation notices
+  hasChanges: boolean; // changes.length > 0
+  changes: SchemaChange[]; // sorted ascending by priority
+  warnings: string[]; // e.g. destructive-operation notices
 }
 ```
 
 `SchemaChange` (`src/types/diff/changes.ts`) is a discriminated union keyed on `type`. Every member carries a numeric `priority`:
 
-| `type` | extra fields | priority constant |
-| --- | --- | --- |
-| `create_table` | `tableName`, `table: Omit<TableSchema, "relations">` | `CREATE_TABLE` (20) |
-| `drop_table` | `tableName`, `cascade` | `DROP_TABLE` (130) |
-| `rename_table` | `fromName`, `toName` | `RENAME_TABLE` (80) |
-| `add_column` | `tableName`, `column: ColumnSchema` | `ADD_COLUMN` (30) |
-| `drop_column` | `tableName`, `columnName` | `DROP_COLUMN` (120) |
-| `rename_column` | `tableName`, `fromName`, `toName` | `RENAME_COLUMN` (75) |
-| `alter_column` | `tableName`, `columnName`, `changes` (per-attribute `{from,to}`) | `ALTER_COLUMN` (70) |
-| `add_index` | `tableName`, `index: IndexSchema` | `ADD_INDEX` (40) |
-| `drop_index` | `tableName`, `indexName` | `DROP_INDEX` (110) |
-| `add_foreign_key` | `tableName`, `foreignKey: ForeignKeySchema` | `ADD_FOREIGN_KEY` (50) |
-| `drop_foreign_key` | `tableName`, `constraintName` | `DROP_FOREIGN_KEY` (100) |
-| `create_enum` | `enumDef: EnumSchema` | `CREATE_ENUM` (10) |
-| `drop_enum` | `enumName` | `DROP_ENUM` (140) |
-| `alter_enum` | `enumName`, `addValues?`, `removeValues?` | `ALTER_ENUM` (60) |
+| `type`             | extra fields                                                     | priority constant        |
+| ------------------ | ---------------------------------------------------------------- | ------------------------ |
+| `create_table`     | `tableName`, `table: Omit<TableSchema, "relations">`             | `CREATE_TABLE` (20)      |
+| `drop_table`       | `tableName`, `cascade`                                           | `DROP_TABLE` (130)       |
+| `rename_table`     | `fromName`, `toName`                                             | `RENAME_TABLE` (80)      |
+| `add_column`       | `tableName`, `column: ColumnSchema`                              | `ADD_COLUMN` (30)        |
+| `drop_column`      | `tableName`, `columnName`                                        | `DROP_COLUMN` (120)      |
+| `rename_column`    | `tableName`, `fromName`, `toName`                                | `RENAME_COLUMN` (75)     |
+| `alter_column`     | `tableName`, `columnName`, `changes` (per-attribute `{from,to}`) | `ALTER_COLUMN` (70)      |
+| `add_index`        | `tableName`, `index: IndexSchema`                                | `ADD_INDEX` (40)         |
+| `drop_index`       | `tableName`, `indexName`                                         | `DROP_INDEX` (110)       |
+| `add_foreign_key`  | `tableName`, `foreignKey: ForeignKeySchema`                      | `ADD_FOREIGN_KEY` (50)   |
+| `drop_foreign_key` | `tableName`, `constraintName`                                    | `DROP_FOREIGN_KEY` (100) |
+| `create_enum`      | `enumDef: EnumSchema`                                            | `CREATE_ENUM` (10)       |
+| `drop_enum`        | `enumName`                                                       | `DROP_ENUM` (140)        |
+| `alter_enum`       | `enumName`, `addValues?`, `removeValues?`                        | `ALTER_ENUM` (60)        |
 
-> Note: `rename_table` / `rename_column` change types exist in the union and have SQL generators, but the current diff algorithm never *produces* them — a rename is detected as a drop + add (a removed name plus an added name). They are available for callers that construct changes manually.
+> Note: `rename_table` / `rename_column` change types exist in the union and have SQL generators, but the current diff algorithm never _produces_ them — a rename is detected as a drop + add (a removed name plus an added name). They are available for callers that construct changes manually.
 
 ## Priority ordering
 
@@ -48,13 +48,16 @@ DROP_FOREIGN_KEY: 100, READD_FOREIGN_KEY: 105, DROP_INDEX: 110, READD_INDEX: 115
 DROP_COLUMN: 120, DROP_TABLE: 130, DROP_ENUM: 140
 ```
 
-This single ordering is the contract between the diff and SQL layers. Creates come before the things that depend on them (enums before tables, tables before FKs, columns before indexes); drops come last and in reverse dependency order (FKs before indexes before columns before tables). The two `READD_*` slots sit just after their matching drop so that a **changed** index or FK (handled as drop + re-add) re-creates *after* the old one is removed, rather than racing it. `diffSchemas` sorts once with `a.priority - b.priority`, so the generator can iterate `diff.changes` blindly.
+This single ordering is the contract between the diff and SQL layers. Creates come before the things that depend on them (enums before tables, tables before FKs, columns before indexes); drops come last and in reverse dependency order (FKs before indexes before columns before tables). The two `READD_*` slots sit just after their matching drop so that a **changed** index or FK (handled as drop + re-add) re-creates _after_ the old one is removed, rather than racing it. `diffSchemas` sorts once with `a.priority - b.priority`, so the generator can iterate `diff.changes` blindly.
 
 ## Entry point: `diffSchemas`
 
 ```ts
 // src/diff/diffSchemas.ts
-export function diffSchemas(previous: ModuleSchema, current: ModuleSchema): SchemaDiff
+export function diffSchemas(
+  previous: ModuleSchema,
+  current: ModuleSchema,
+): SchemaDiff;
 ```
 
 Algorithm:
@@ -87,11 +90,11 @@ Algorithm:
 
 ### Indexes — `diff/indexes.ts`
 
-Indexes are keyed by name; when an index has no explicit `name`, a synthetic one is derived: `${tableName}_${col1_col2}_idx`. `indexesEqual` compares `unique`, `type`, `where`, and `JSON.stringify(columns)`. A **changed** index becomes `drop_index` (priority `DROP_INDEX` 110) + `add_index` at the higher `READD_INDEX` priority (115), so the re-add sorts after the drop (PostgreSQL cannot alter an index in place). A purely *added* index uses the normal `ADD_INDEX` priority (40). Added indexes carry the resolved `name` so the generator and a later drop agree on it.
+Indexes are keyed by name; when an index has no explicit `name`, a synthetic one is derived: `${tableName}_${col1_col2}_idx`. `indexesEqual` compares `unique`, `type`, `where`, and `JSON.stringify(columns)`. A **changed** index becomes `drop_index` (priority `DROP_INDEX` 110) + `add_index` at the higher `READD_INDEX` priority (115), so the re-add sorts after the drop (PostgreSQL cannot alter an index in place). A purely _added_ index uses the normal `ADD_INDEX` priority (40). Added indexes carry the resolved `name` so the generator and a later drop agree on it.
 
 ### Foreign keys — `diff/foreignKeys.ts`
 
-Keyed by `fk.name`. `foreignKeysEqual` compares `referencedTable`, `onDelete`, `onUpdate`, `deferrable`, `match`, and JSON of `columns` / `referencedColumns`. A **changed** FK becomes `drop_foreign_key` (priority `DROP_FOREIGN_KEY` 100) + `add_foreign_key` at the higher `READD_FOREIGN_KEY` priority (105), so the re-add sorts after the drop (no `ALTER CONSTRAINT` in PostgreSQL). A purely *added* FK uses the normal `ADD_FOREIGN_KEY` priority (50).
+Keyed by `fk.name`. `foreignKeysEqual` compares `referencedTable`, `onDelete`, `onUpdate`, `deferrable`, `match`, and JSON of `columns` / `referencedColumns`. A **changed** FK becomes `drop_foreign_key` (priority `DROP_FOREIGN_KEY` 100) + `add_foreign_key` at the higher `READD_FOREIGN_KEY` priority (105), so the re-add sorts after the drop (no `ALTER CONSTRAINT` in PostgreSQL). A purely _added_ FK uses the normal `ADD_FOREIGN_KEY` priority (50).
 
 ### Enums — `diff/enums.ts`
 
@@ -104,7 +107,7 @@ Keyed by `fk.name`. `foreignKeysEqual` compares `referencedTable`, `onDelete`, `
 ## Reverse diff — `diff/reverse.ts`
 
 ```ts
-export function reverseDiff(diff: SchemaDiff): SchemaDiff
+export function reverseDiff(diff: SchemaDiff): SchemaDiff;
 ```
 
 Produces the inverse of a forward diff for `down` migrations:
@@ -127,4 +130,4 @@ Because drops are not reversible, true rollback relies on regenerating from the 
 ## Safe extension
 
 - New change kinds: add the interface to `types/diff/changes.ts`, add it to the `SchemaChange` union, add a `PRIORITY` constant, emit it from the relevant `diff/*.ts`, **and** add a `case` to `sqlGenerator/changeSql.ts` (the dispatch is exhaustive over the union — TypeScript will flag a missing case) and to `reverse.ts` if it is reversible.
-- New comparable attributes: extend the matching `*Equal` in `diff/utils.ts` *and* the `alter_*` builder, or the change will be silently ignored.
+- New comparable attributes: extend the matching `*Equal` in `diff/utils.ts` _and_ the `alter_*` builder, or the change will be silently ignored.

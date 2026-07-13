@@ -10,7 +10,11 @@ import {
 
 describe("parseFields", () => {
   test("splits dotted paths into a column/relation tree", () => {
-    const tree = parseFields(["*", "organizations.name", "organizations.members.email"]);
+    const tree = parseFields([
+      "*",
+      "organizations.name",
+      "organizations.members.email",
+    ]);
     expect(tree.columns.has("*")).toBe(true);
     const orgs = tree.children.get("organizations")!;
     expect(orgs).toBeDefined();
@@ -53,11 +57,17 @@ describe("LinkRegistry", () => {
   const registry = new LinkRegistry([link]);
 
   test("resolves a pair in both orientations", () => {
-    const forward = registry.resolve({ model: "user" }, { model: "organization" });
+    const forward = registry.resolve(
+      { model: "user" },
+      { model: "organization" },
+    );
     expect(forward.fromColumn).toBe("user_id");
     expect(forward.toColumn).toBe("organization_id");
 
-    const reverse = registry.resolve({ model: "organization" }, { model: "user" });
+    const reverse = registry.resolve(
+      { model: "organization" },
+      { model: "user" },
+    );
     expect(reverse.fromColumn).toBe("organization_id");
     expect(reverse.toColumn).toBe("user_id");
   });
@@ -69,9 +79,9 @@ describe("LinkRegistry", () => {
   });
 
   test("throws for an undefined pair", () => {
-    expect(() => registry.resolve({ model: "user" }, { model: "ghost" })).toThrow(
-      /No link defined/,
-    );
+    expect(() =>
+      registry.resolve({ model: "user" }, { model: "ghost" }),
+    ).toThrow(/No link defined/);
   });
 });
 

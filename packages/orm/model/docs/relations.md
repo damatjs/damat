@@ -27,14 +27,17 @@ user.orders = hasMany("order").mappedBy("user")  →  no column; metadata only
 
 ```ts
 abstract class Relation {
-  readonly kind: RelationType;            // "belongsTo" | "hasMany" | "hasOne"
+  readonly kind: RelationType; // "belongsTo" | "hasMany" | "hasOne"
   protected target: ModelTarget;
 
-  getModuleTarget(): ModelDefinition;     // resolves the target (registry/thunk/model)
-  getModuleTargetTable(): string;         // target table name — string target used as-is, no resolution
+  getModuleTarget(): ModelDefinition; // resolves the target (registry/thunk/model)
+  getModuleTargetTable(): string; // target table name — string target used as-is, no resolution
 
-  abstract createsForeignKey(): boolean;  // true only for BelongsTo
-  abstract toRelationSchema(fromTable: string, fromProp: string): RelationSchema;
+  abstract createsForeignKey(): boolean; // true only for BelongsTo
+  abstract toRelationSchema(
+    fromTable: string,
+    fromProp: string,
+  ): RelationSchema;
 }
 ```
 
@@ -57,10 +60,10 @@ and circular references between tables are a non-issue. A direct model reference
 or a lazy thunk also work and resolve to the same schema:
 
 ```ts
-belongsTo("users")           // table name — the normal form; no import needed
-belongsTo(UserSchema)        // direct model — requires UserSchema already defined
-belongsTo(() => UserSchema)  // lazy thunk — defers resolution past circular init
-hasMany("orders")            // table name on the inverse side
+belongsTo("users"); // table name — the normal form; no import needed
+belongsTo(UserSchema); // direct model — requires UserSchema already defined
+belongsTo(() => UserSchema); // lazy thunk — defers resolution past circular init
+hasMany("orders"); // table name on the inverse side
 ```
 
 `resolveModuleTarget`:
@@ -98,14 +101,14 @@ belongsTo(target, options?)            // options.mappedBy = inverse prop name o
 
 - Defaults: `foreignKey` → `["<targetTable>_id"]`, `reference` → `["id"]`.
 - Normalises single values to arrays; **throws** if `foreignKey.length !==
-  reference.length` (composite FKs must line up).
+reference.length` (composite FKs must line up).
 - String FKs become `{ name, type: "text" }`; pass `ForeignKeyType` objects to
   control the SQL type. `config.name` sets the constraint name.
 
 ### Resolved defaults (getters)
 
 - `getForeignKey()` → falls back to `[{ name: "<targetTable>_id", type: "text" }]`
-  when unset. **Note:** the fallback uses the *target table* name, not the
+  when unset. **Note:** the fallback uses the _target table_ name, not the
   property name (despite a doc-comment mentioning property-name fallback — the
   property-name path is not wired). So `order.user = belongsTo(User)` yields a
   `user_id` column.
@@ -224,20 +227,28 @@ loaded from JSON), with no access to live builders.
 ### Violations & errors (`types.ts`, `format.ts`, `index.ts`)
 
 ```ts
-type ViolationKind = "missing_inverse" | "missing_belongsTo" | "wrong_type" | "mappedBy_mismatch";
+type ViolationKind =
+  "missing_inverse" | "missing_belongsTo" | "wrong_type" | "mappedBy_mismatch";
 
 interface RelationViolation {
   kind: ViolationKind;
-  sourceTable: string; sourceProp: string;
+  sourceTable: string;
+  sourceProp: string;
   sourceType: "belongsTo" | "hasMany" | "hasOne";
-  targetTable: string; targetProp: string;
+  targetTable: string;
+  targetProp: string;
   expectedType?: "belongsTo" | "hasMany" | "hasOne";
   foundType?: string;
 }
 
-interface ValidationResult { valid: boolean; violations: RelationViolation[]; }
+interface ValidationResult {
+  valid: boolean;
+  violations: RelationViolation[];
+}
 
-class RelationValidationError extends Error { readonly violations: RelationViolation[]; }
+class RelationValidationError extends Error {
+  readonly violations: RelationViolation[];
+}
 ```
 
 `formatViolations()` renders all violations into one human-readable message with
@@ -256,7 +267,7 @@ user"). `RelationValidationError`'s message is `formatViolations(violations)`.
 - **String targets and ordering.** Schema generation (columns, FK, relation
   metadata, codegen) uses the string table name directly via
   `getModuleTargetTable()` — no registry lookup, so ordering does **not** matter
-  there. Only *query-time* resolution (`getModuleTarget()` in `@damatjs/orm-pg`'s
+  there. Only _query-time_ resolution (`getModuleTarget()` in `@damatjs/orm-pg`'s
   relation resolver) needs the live model, so the target must be loaded before you
   run a query that traverses the relation. Within a single file, lazy thunks
   (`() => User`) remain a good way to dodge circular-import issues.

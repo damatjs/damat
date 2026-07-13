@@ -1,2 +1,2 @@
-export * from "./map"
-export * from "./relationFields"
+export * from "./map";
+export * from "./relationFields";

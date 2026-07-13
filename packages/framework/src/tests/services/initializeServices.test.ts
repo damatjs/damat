@@ -12,7 +12,9 @@ const SCRATCH = tmpdir();
 
 let cwd: string;
 
-function baseConfig(overrides: Partial<AppConfig["projectConfig"]> = {}): AppConfig {
+function baseConfig(
+  overrides: Partial<AppConfig["projectConfig"]> = {},
+): AppConfig {
   return {
     projectConfig: {
       http: { port: 3000, host: "localhost" },
@@ -58,7 +60,9 @@ describe("initializeServices (no database / no redis)", () => {
     expect(redis.status).toBe("not configured");
 
     // The logger shutdown handler runs cleanly.
-    await instances.shutdownHandlers.find((h) => h.name === "logger")!.handler();
+    await instances.shutdownHandlers
+      .find((h) => h.name === "logger")!
+      .handler();
 
     // No modules were configured.
     expect(instances.modules).toBeUndefined();

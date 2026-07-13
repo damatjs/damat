@@ -29,21 +29,21 @@ Add the server to your assistant's MCP config (e.g. `.mcp.json` in your app):
 
 The three env vars:
 
-| Variable | Meaning | Default |
-|----------|---------|---------|
-| `DAMAT_MODULE_REGISTRY` | Registry index — a URL, a `registry.json` path, or a directory | *(unset — discovery tools report no registry)* |
-| `DAMAT_APP_DIR` | The app the assistant installs into | current directory |
-| `DAMAT_CLI` | How to invoke the CLI | `damat` |
+| Variable                | Meaning                                                        | Default                                        |
+| ----------------------- | -------------------------------------------------------------- | ---------------------------------------------- |
+| `DAMAT_MODULE_REGISTRY` | Registry index — a URL, a `registry.json` path, or a directory | _(unset — discovery tools report no registry)_ |
+| `DAMAT_APP_DIR`         | The app the assistant installs into                            | current directory                              |
+| `DAMAT_CLI`             | How to invoke the CLI                                          | `damat`                                        |
 
 ## The tools
 
-| Tool | Purpose | Key inputs |
-|------|---------|-----------|
-| `list_modules` | List everything in the registry | — |
-| `search_modules` | Find modules by keyword | `query` |
-| `module_info` | Inspect one module — versions, owner, verification | `ref` |
-| `list_installed` | What's already in the app | — |
-| `add_module` | Install (runs `damat module add`) | `source`, plus optional `name`, `dir`, `force`, `allowUnverified`, `allowScripts` |
+| Tool             | Purpose                                            | Key inputs                                                                        |
+| ---------------- | -------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `list_modules`   | List everything in the registry                    | —                                                                                 |
+| `search_modules` | Find modules by keyword                            | `query`                                                                           |
+| `module_info`    | Inspect one module — versions, owner, verification | `ref`                                                                             |
+| `list_installed` | What's already in the app                          | —                                                                                 |
+| `add_module`     | Install (runs `damat module add`)                  | `source`, plus optional `name`, `dir`, `force`, `allowUnverified`, `allowScripts` |
 
 `add_module` honors the same trust gate as the CLI: unverified path/git sources
 need an explicit `allowUnverified: true`, and registry verification follows
@@ -52,7 +52,7 @@ your `DAMAT_MODULE_VERIFY` policy (see
 
 ## Using it
 
-Just ask: *"Find a Damat auth module and install it."* The assistant chains
+Just ask: _"Find a Damat auth module and install it."_ The assistant chains
 `search_modules → module_info → add_module`, reports what changed
 (`damat.config.ts` entry, synced env keys), and reminds you to apply
 migrations:

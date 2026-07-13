@@ -1,8 +1,8 @@
 import type { Command } from "@damatjs/cli";
 import { loadModules } from "@damatjs/orm-cli";
 import { ModuleContainer } from "./constant";
-import { codegenAll } from './codegen/all';
-import { codegenOne } from './codegen/one';
+import { codegenAll } from "./codegen/all";
+import { codegenOne } from "./codegen/one";
 
 /**
  * App-mode codegen. For each app module declared in `damat.config.ts`, generate
@@ -24,9 +24,14 @@ import { codegenOne } from './codegen/one';
  */
 export const codegenCommand: Command = {
   name: "codegen",
-  description: "Generate types + zod + registry + CRUD scaffold for app modules",
+  description:
+    "Generate types + zod + registry + CRUD scaffold for app modules",
   usage: "damat codegen <module> [--flat] | damat codegen --all [--flat]",
-  examples: ["damat codegen user", "damat codegen user --flat", "damat codegen --all"],
+  examples: [
+    "damat codegen user",
+    "damat codegen user --flat",
+    "damat codegen --all",
+  ],
   options: [
     {
       name: "all",
@@ -78,6 +83,5 @@ export const codegenCommand: Command = {
     return codegenOne(ctx, modules, moduleName);
   },
 };
-
 
 export default codegenCommand;

@@ -14,21 +14,21 @@ Maintainer-facing reference for the `damat-orm` CLI. Read alongside the
 
 ## Module map
 
-| File / dir | Responsibility |
-|---|---|
-| `src/bin.ts` | Executable entry (`#!/usr/bin/env bun`). Calls `runCli(...)` with name/version/commands, the `damat.config.ts` config loader, and a boxed banner |
-| `src/index.ts` | Library entry — re-exports `runCli`, the `@damatjs/cli` command types, `loadModules`, `requireDatabaseUrl` |
-| `src/cli/index.ts` | Re-exports `runCli` and `./types` |
-| `src/cli/types.ts` | `ModulesMap`, `OrmCliOptions`, `Logger`, and re-exported `Command`/`CommandContext`/`CommandResult`/`CommandOption` + `OrmModule`/`OrmModuleContainer` |
-| `src/cli/registry.ts` | A standalone in-memory `CommandRegistry` impl (`getRegistry`, `registerCommand`, `getCommand`, `getAllCommands`) |
-| `src/cli/commands/index.ts` | Aggregates the top-level command list: `[generateCommand, migrateCommand]` |
-| `src/cli/commands/migrate/*` | The `migrate` group: `index.ts` (parent) + `up`, `status`, `list`, `create` |
-| `src/cli/commands/generate/*` | The `generate` group: `index.ts` (parent) + `types` |
-| `src/cli/config/index.ts` | `requireDatabaseUrl(logger)` — reads `process.env.DATABASE_URL`, exits 1 if missing |
-| `src/cli/utils/load.ts` | `loadModules(configPath, cwd)` and `loadDatabaseUrl(configPath, cwd)` — import `damat.config.ts` and normalize it; `loadModules` also adds `link:<owner>` migration modules from `config.links` (via `resolveLinkMigrationModules` from `@damatjs/link`) |
-| `src/cli/utils/index.ts` | Re-exports `./paths` |
-| `src/cli/utils/paths/*` | `resolveModelsPath`, `resolveMigrationsPath`, `resolveTypesPath`, `resolvePaths`, `resolveBasePath`, `getModulesDir`, `DEFAULT_MODULES_DIR` |
-| `src/tests/*` | `bun:test` coverage of commands, config loading, paths, registry, migrate/generate structure |
+| File / dir                    | Responsibility                                                                                                                                                                                                                                           |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/bin.ts`                  | Executable entry (`#!/usr/bin/env bun`). Calls `runCli(...)` with name/version/commands, the `damat.config.ts` config loader, and a boxed banner                                                                                                         |
+| `src/index.ts`                | Library entry — re-exports `runCli`, the `@damatjs/cli` command types, `loadModules`, `requireDatabaseUrl`                                                                                                                                               |
+| `src/cli/index.ts`            | Re-exports `runCli` and `./types`                                                                                                                                                                                                                        |
+| `src/cli/types.ts`            | `ModulesMap`, `OrmCliOptions`, `Logger`, and re-exported `Command`/`CommandContext`/`CommandResult`/`CommandOption` + `OrmModule`/`OrmModuleContainer`                                                                                                   |
+| `src/cli/registry.ts`         | A standalone in-memory `CommandRegistry` impl (`getRegistry`, `registerCommand`, `getCommand`, `getAllCommands`)                                                                                                                                         |
+| `src/cli/commands/index.ts`   | Aggregates the top-level command list: `[generateCommand, migrateCommand]`                                                                                                                                                                               |
+| `src/cli/commands/migrate/*`  | The `migrate` group: `index.ts` (parent) + `up`, `status`, `list`, `create`                                                                                                                                                                              |
+| `src/cli/commands/generate/*` | The `generate` group: `index.ts` (parent) + `types`                                                                                                                                                                                                      |
+| `src/cli/config/index.ts`     | `requireDatabaseUrl(logger)` — reads `process.env.DATABASE_URL`, exits 1 if missing                                                                                                                                                                      |
+| `src/cli/utils/load.ts`       | `loadModules(configPath, cwd)` and `loadDatabaseUrl(configPath, cwd)` — import `damat.config.ts` and normalize it; `loadModules` also adds `link:<owner>` migration modules from `config.links` (via `resolveLinkMigrationModules` from `@damatjs/link`) |
+| `src/cli/utils/index.ts`      | Re-exports `./paths`                                                                                                                                                                                                                                     |
+| `src/cli/utils/paths/*`       | `resolveModelsPath`, `resolveMigrationsPath`, `resolveTypesPath`, `resolvePaths`, `resolveBasePath`, `getModulesDir`, `DEFAULT_MODULES_DIR`                                                                                                              |
+| `src/tests/*`                 | `bun:test` coverage of commands, config loading, paths, registry, migrate/generate structure                                                                                                                                                             |
 
 ## Architecture overview
 
@@ -82,7 +82,7 @@ Every handler returns `{ exitCode: number }` and reports via `ctx.logger`
 ## Data flow & invariants
 
 - **Config file is fixed**: every handler calls `loadModules("damat.config.ts",
-  ctx.cwd)`; `bin.ts`'s `configLoader.file` is also `"damat.config.ts"`.
+ctx.cwd)`; `bin.ts`'s `configLoader.file` is also `"damat.config.ts"`.
 - **Module ids drive everything**: `loadModules` returns an `OrmModuleContainer`
   keyed by module id, each value `{ id, name, path, resolve }` with `resolve`
   always an absolute path. Per-module commands look up `modules[moduleName]` and

@@ -1,7 +1,10 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import { buildOptionFlag } from "../run/buildOption";
 import { resolveCommandName } from "../run/resolveCommand";
-import { buildCommandContext, extractPositionalArgs } from "../run/buildCommand";
+import {
+  buildCommandContext,
+  extractPositionalArgs,
+} from "../run/buildCommand";
 import { Logger } from "@damatjs/logger";
 import type { CliConfig } from "../types";
 
@@ -11,7 +14,9 @@ describe("buildOptionFlag", () => {
   });
 
   test("renders 'short, long' when an alias is provided", () => {
-    expect(buildOptionFlag({ name: "output", alias: "o" })).toBe("-o, --output");
+    expect(buildOptionFlag({ name: "output", alias: "o" })).toBe(
+      "-o, --output",
+    );
   });
 
   test("treats an empty-string alias as falsy and uses the long flag only", () => {
@@ -19,14 +24,18 @@ describe("buildOptionFlag", () => {
   });
 
   test("string options get a <value> placeholder so cac consumes the next token", () => {
-    expect(buildOptionFlag({ name: "name", type: "string" })).toBe("--name <value>");
+    expect(buildOptionFlag({ name: "name", type: "string" })).toBe(
+      "--name <value>",
+    );
     expect(buildOptionFlag({ name: "port", alias: "p", type: "number" })).toBe(
       "-p, --port <value>",
     );
   });
 
   test("boolean options stay bare flags (cac --no-x negation keeps working)", () => {
-    expect(buildOptionFlag({ name: "install", type: "boolean" })).toBe("--install");
+    expect(buildOptionFlag({ name: "install", type: "boolean" })).toBe(
+      "--install",
+    );
   });
 });
 
@@ -60,7 +69,9 @@ describe("extractPositionalArgs", () => {
 
   test("skips a flag and the value immediately following it", () => {
     // The implementation skips the flag AND the next token (treated as its value).
-    expect(extractPositionalArgs(["build", "--out", "dist"])).toEqual(["build"]);
+    expect(extractPositionalArgs(["build", "--out", "dist"])).toEqual([
+      "build",
+    ]);
   });
 
   test("skips short flags and consumes their following value too", () => {

@@ -50,11 +50,18 @@ every successful write.
 
 ```ts
 // framework apps: damat.config.ts
-services: { events: { broadcast: true } }   // needs projectConfig.redisUrl
+services: {
+  events: {
+    broadcast: true;
+  }
+} // needs projectConfig.redisUrl
 
 // standalone:
-import { connectEventBroadcast, disconnectEventBroadcast } from "@damatjs/events";
-await connectEventBroadcast();              // Redis pub/sub, one channel
+import {
+  connectEventBroadcast,
+  disconnectEventBroadcast,
+} from "@damatjs/events";
+await connectEventBroadcast(); // Redis pub/sub, one channel
 ```
 
 Local delivery is unchanged; other processes receive the event with
@@ -65,13 +72,13 @@ framework wires this automatically).
 
 ## API
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `EventBus` | class | `on`, `once`, `off`, `emit`, `dispatch`, `removeAllListeners`, `listenerCount`, `setBroadcaster`, `broadcasting`. |
-| `getEventBus()` / `setEventBus()` / `resetEventBus()` | function | The process-wide bus (state on `globalThis`, so duplicate package copies share it). |
-| `connectEventBroadcast(options?)` / `disconnectEventBroadcast()` / `isEventBroadcastConnected()` | function | The Redis pub/sub transport. |
-| `EventMap` | interface | Augment to type your events; unregistered names still work (`unknown` payload). |
-| `EventHandler`, `EventContext`, `EventName`, `EventPayload`, `Unsubscribe`, `Broadcaster` | types | Handler and metadata shapes. |
+| Export                                                                                           | Kind      | Summary                                                                                                           |
+| ------------------------------------------------------------------------------------------------ | --------- | ----------------------------------------------------------------------------------------------------------------- |
+| `EventBus`                                                                                       | class     | `on`, `once`, `off`, `emit`, `dispatch`, `removeAllListeners`, `listenerCount`, `setBroadcaster`, `broadcasting`. |
+| `getEventBus()` / `setEventBus()` / `resetEventBus()`                                            | function  | The process-wide bus (state on `globalThis`, so duplicate package copies share it).                               |
+| `connectEventBroadcast(options?)` / `disconnectEventBroadcast()` / `isEventBroadcastConnected()` | function  | The Redis pub/sub transport.                                                                                      |
+| `EventMap`                                                                                       | interface | Augment to type your events; unregistered names still work (`unknown` payload).                                   |
+| `EventHandler`, `EventContext`, `EventName`, `EventPayload`, `Unsubscribe`, `Broadcaster`        | types     | Handler and metadata shapes.                                                                                      |
 
 ## How it fits
 

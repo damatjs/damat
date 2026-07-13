@@ -9,7 +9,7 @@ app, register it in `damat.config.ts`, surface required env vars, and install np
 packages. The future module registry indexes modules by the same manifest.
 
 > Author-facing field reference also lives in [MODULES.md](../../../MODULES.md). This
-> page documents the *types and validation* as implemented.
+> page documents the _types and validation_ as implemented.
 
 ## Filename
 
@@ -22,15 +22,15 @@ MODULE_MANIFEST_FILENAME = "module.json";
 
 ```ts
 interface ModuleManifest {
-  name: string;                    // module id — registry key + default dir name; kebab-case
+  name: string; // module id — registry key + default dir name; kebab-case
   version?: string;
   description?: string;
-  author?: ModuleAuthor | string;  // string or { name, email?, url? }
-  env?: ModuleEnvVar[];            // env vars the credentials loader reads
+  author?: ModuleAuthor | string; // string or { name, email?, url? }
+  env?: ModuleEnvVar[]; // env vars the credentials loader reads
   packages?: Record<string, string>; // npm deps the host app must install: name -> semver range
-  modules?: string[];              // other damat modules this depends on (registry ids)
-  paths?: ModuleManifestPaths;     // layout overrides (omit for standard layout)
-  registry?: ModuleRegistryMeta;   // registry publishing metadata
+  modules?: string[]; // other damat modules this depends on (registry ids)
+  paths?: ModuleManifestPaths; // layout overrides (omit for standard layout)
+  registry?: ModuleRegistryMeta; // registry publishing metadata
 }
 ```
 
@@ -38,20 +38,24 @@ interface ModuleManifest {
 
 ```ts
 interface ModuleEnvVar {
-  name: string;          // e.g. "BETTER_AUTH_SECRET"
-  required?: boolean;    // module fails to start without it (default: true, by convention)
-  description?: string;  // shown when missing
-  example?: string;      // written to .env.example
+  name: string; // e.g. "BETTER_AUTH_SECRET"
+  required?: boolean; // module fails to start without it (default: true, by convention)
+  description?: string; // shown when missing
+  example?: string; // written to .env.example
 }
 ```
 
 ### `ModuleAuthor`
 
 ```ts
-interface ModuleAuthor { name: string; email?: string; url?: string; }
+interface ModuleAuthor {
+  name: string;
+  email?: string;
+  url?: string;
+}
 ```
 
-May also be a single string (`"Name <email> (url)"`). This is the *declared*
+May also be a single string (`"Name <email> (url)"`). This is the _declared_
 author — provenance/display only, **not** the verifiable owner (the registry
 backend assigns that; see [registry.md](./registry.md)).
 
@@ -59,16 +63,19 @@ backend assigns that; see [registry.md](./registry.md)).
 
 ```ts
 interface ModuleManifestPaths {
-  entry?: string;      // default "./index.ts" — must default-export defineModule(...)
-  models?: string;     // default "./models"
+  entry?: string; // default "./index.ts" — must default-export defineModule(...)
+  models?: string; // default "./models"
   migrations?: string; // default "./migrations"
-  workflows?: string;  // default "./workflows"
-  types?: string;      // default "./types"
+  workflows?: string; // default "./workflows"
+  types?: string; // default "./types"
 }
 
 const DEFAULT_MODULE_PATHS: Required<ModuleManifestPaths> = {
-  entry: "./index.ts", models: "./models", migrations: "./migrations",
-  workflows: "./workflows", types: "./types",
+  entry: "./index.ts",
+  models: "./models",
+  migrations: "./migrations",
+  workflows: "./workflows",
+  types: "./types",
 };
 ```
 
@@ -79,11 +86,11 @@ Omit `paths` entirely (or any subset) to use the standard layout. Consumers merg
 
 ```ts
 interface ModuleRegistryMeta {
-  namespace?: string;    // publisher/org, e.g. "damatjs"
-  keywords?: string[];   // search keywords
-  license?: string;      // SPDX id, e.g. "MIT"
-  repository?: string;   // source repo URL
-  homepage?: string;     // docs/homepage URL
+  namespace?: string; // publisher/org, e.g. "damatjs"
+  keywords?: string[]; // search keywords
+  license?: string; // SPDX id, e.g. "MIT"
+  repository?: string; // source repo URL
+  homepage?: string; // docs/homepage URL
 }
 ```
 
@@ -123,10 +130,10 @@ function readModuleManifest(moduleDir: string): ModuleManifest;
 
 - `name` is the registry key, the default install directory name, **and** the
   migration namespace. It must be globally meaningful, not just locally unique.
-- `required` on env vars defaults to `true` *by convention* (consumers decide) —
+- `required` on env vars defaults to `true` _by convention_ (consumers decide) —
   validation doesn't enforce a value, it only checks shape.
 - `packages` is name → semver **range** (a string), not name → boolean.
-- `modules` are *registry ids* (other damat modules), distinct from `packages`
+- `modules` are _registry ids_ (other damat modules), distinct from `packages`
   (npm deps).
 - Validation is permissive about unknown keys on purpose; don't rely on it to
   reject typos in optional fields — `validateModuleDir` is the readiness check.

@@ -23,7 +23,6 @@ import { discoverModuleMigrations } from "./moduleMigrations";
 export function discoverAllMigrations(
   modulesResolver: string[],
 ): MigrationInfo[] {
-
   const migrations: MigrationInfo[] = [];
 
   for (const moduleResolver of modulesResolver) {

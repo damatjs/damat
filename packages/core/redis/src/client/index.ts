@@ -12,4 +12,4 @@ export async function disconnect(client: Redis): Promise<void> {
   await client.quit();
 }
 
-export * from "./factory"
+export * from "./factory";

@@ -37,7 +37,10 @@ interface RecordedQuery {
 
 interface FakePoolOptions {
   /** Rows returned for `getApplied(module)` SELECTs, keyed by module name. */
-  applied?: Record<string, { module: string; name: string; applied_at: Date }[]>;
+  applied?: Record<
+    string,
+    { module: string; name: string; applied_at: Date }[]
+  >;
   /** When set, the client query matching this predicate throws (to test rollback). */
   failOn?: (sql: string) => boolean;
 }
@@ -100,9 +103,10 @@ let tmpRoot: string;
 let moduleCounter = 0;
 
 /** Create a module dir with migrations/ containing the named .sql files. */
-function makeModule(
-  files: { name: string; sql?: string }[],
-): { dir: string; name: string } {
+function makeModule(files: { name: string; sql?: string }[]): {
+  dir: string;
+  name: string;
+} {
   const name = `module_${moduleCounter}`;
   const dir = path.join(tmpRoot, `mod_${moduleCounter++}`);
   const migrationsDir = path.join(dir, "migrations");
@@ -118,7 +122,10 @@ function makeModule(
 
 /** Build an OrmModuleContainer-shaped map (name-keyed, resolve = dir). */
 function container(modules: { dir: string; name: string }[]) {
-  const c: Record<string, { id: string; name: string; path: string; resolve: string }> = {};
+  const c: Record<
+    string,
+    { id: string; name: string; path: string; resolve: string }
+  > = {};
   for (const m of modules) {
     c[m.name] = { id: m.name, name: m.name, path: m.dir, resolve: m.dir };
   }
@@ -141,7 +148,9 @@ describe("bootstrapDatabase", () => {
     expect(fake.connectCount).toBe(1);
     expect(fake.clientQueries).toHaveLength(1);
     expect(fake.clientQueries[0]!.sql).toBe(GENERATE_ID_SQL);
-    expect(fake.clientQueries[0]!.sql).toContain("CREATE OR REPLACE FUNCTION generate_id");
+    expect(fake.clientQueries[0]!.sql).toContain(
+      "CREATE OR REPLACE FUNCTION generate_id",
+    );
     expect(fake.releaseCount).toBe(1);
   });
 
@@ -251,9 +260,9 @@ describe("runMigrations", () => {
         /CREATE TABLE IF NOT EXISTS "_damat_migration_logs"/.test(q.sql),
       ),
     ).toBe(true);
-    expect(
-      fake.clientQueries.some((q) => /generate_id/.test(q.sql)),
-    ).toBe(true);
+    expect(fake.clientQueries.some((q) => /generate_id/.test(q.sql))).toBe(
+      true,
+    );
   });
 
   it("skips migrations already recorded as applied (idempotency)", async () => {
@@ -279,7 +288,9 @@ describe("runMigrations", () => {
     expect(results[0]!.pending).toEqual(["Migration20260201000000_AddEmail"]);
     expect(results[0]!.applied).toEqual(["Migration20260201000000_AddEmail"]);
     // Exactly one migration transaction ran (the pending one), not two.
-    const beginCount = fake.clientQueries.filter((q) => q.sql === "BEGIN").length;
+    const beginCount = fake.clientQueries.filter(
+      (q) => q.sql === "BEGIN",
+    ).length;
     expect(beginCount).toBe(1);
     // The pending migration's body ran; the already-applied one did not get
     // re-recorded with a fresh INSERT for the *Initial* migration this run.
@@ -341,11 +352,15 @@ describe("runMigrations", () => {
     expect(sqls[0]).toMatch(/pg_advisory_lock\(\d+\)/);
     expect(sqls[sqls.length - 1]).toMatch(/pg_advisory_unlock\(\d+\)/);
     // Lock and unlock use the same key.
-    expect(sqls[0]!.match(/\d+/)![0]).toBe(sqls[sqls.length - 1]!.match(/\d+/)![0]);
+    expect(sqls[0]!.match(/\d+/)![0]).toBe(
+      sqls[sqls.length - 1]!.match(/\d+/)![0],
+    );
   });
 
   it("unlocks and releases the lock session even when a migration fails", async () => {
-    const mod = makeModule([{ name: "Migration20260101000000_Bad", sql: "BAD;" }]);
+    const mod = makeModule([
+      { name: "Migration20260101000000_Bad", sql: "BAD;" },
+    ]);
     const fake = makeFakePool({ failOn: (sql) => sql === "BAD;" });
 
     const results = await runMigrations(fake.pool, container([mod]) as any);
@@ -402,9 +417,7 @@ describe("getMigrationStatus / getModuleMigrationStatus", () => {
     expect(m.applied).toBe(1);
     expect(m.pending).toBe(1);
     // The applied flag is set on the matching migration only.
-    const initial = m.migrations.find((x) =>
-      x.name.endsWith("_Initial"),
-    );
+    const initial = m.migrations.find((x) => x.name.endsWith("_Initial"));
     const email = m.migrations.find((x) => x.name.endsWith("_AddEmail"));
     expect(initial!.applied).toBe(true);
     expect(email!.applied).toBe(false);

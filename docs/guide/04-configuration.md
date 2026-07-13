@@ -16,7 +16,7 @@ export default defineConfig({
     nodeEnv: "development",
     loggerConfig: {
       level: "debug",
-      format: "pretty",       // "json" | "pretty" | "simple"
+      format: "pretty", // "json" | "pretty" | "simple"
       timestamp: true,
       prefix: "server",
     },
@@ -29,7 +29,7 @@ export default defineConfig({
   // `modules` is an OBJECT keyed by module id (not an array):
   modules: {
     user: {
-      resolve: "./src/modules/user",   // path to the module's folder
+      resolve: "./src/modules/user", // path to the module's folder
       id: "user",
     },
   },
@@ -57,15 +57,15 @@ so local overrides win:
 
 Common variables (see the default backend's `.env.example` for the full set):
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | ✅ | PostgreSQL connection string |
-| `REDIS_URL` | — | Redis URL (enables cache/queues/locks/rate limiting) |
-| `NODE_ENV` | — | `development` \| `production` \| `test` |
-| `PORT` / `HOST` | — | HTTP bind |
-| `BETTER_AUTH_SECRET` | ✅* | Auth secret (min 32 chars) — *if using the auth module* |
-| `DAMAT_MODULE_REGISTRY` | — | Module registry index (for `module add` / MCP) |
-| `DAMAT_MODULE_VERIFY` | — | `off` \| `warn` \| `require` install policy |
+| Variable                | Required | Description                                             |
+| ----------------------- | -------- | ------------------------------------------------------- |
+| `DATABASE_URL`          | ✅       | PostgreSQL connection string                            |
+| `REDIS_URL`             | —        | Redis URL (enables cache/queues/locks/rate limiting)    |
+| `NODE_ENV`              | —        | `development` \| `production` \| `test`                 |
+| `PORT` / `HOST`         | —        | HTTP bind                                               |
+| `BETTER_AUTH_SECRET`    | ✅*      | Auth secret (min 32 chars) — _if using the auth module_ |
+| `DAMAT_MODULE_REGISTRY` | —        | Module registry index (for `module add` / MCP)          |
+| `DAMAT_MODULE_VERIFY`   | —        | `off` \| `warn` \| `require` install policy             |
 
 Modules declare their own env vars in `module.json`; `damat module add` syncs
 them into `.env.example` for you (see [Authoring a module](./13-authoring-modules.md)).

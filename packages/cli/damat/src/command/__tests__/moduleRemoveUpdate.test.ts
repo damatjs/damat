@@ -24,7 +24,11 @@ import * as realCodegen from "@damatjs/codegen";
 const mm = {
   locateThrows: null as Error | null,
   locateResult: "/pkg/src",
-  validateReport: { valid: true, errors: [] as string[], warnings: [] as string[] },
+  validateReport: {
+    valid: true,
+    errors: [] as string[],
+    warnings: [] as string[],
+  },
   manifest: { name: "user", version: "1.1.0", description: "User" } as Record<
     string,
     unknown
@@ -100,7 +104,10 @@ beforeEach(() => {
 afterEach(resetMocks);
 
 /** Run fn with DAMAT_MODULE_VERIFY forced to `value` (undefined = unset). */
-async function withVerifyPolicy(value: string | undefined, fn: () => Promise<void>) {
+async function withVerifyPolicy(
+  value: string | undefined,
+  fn: () => Promise<void>,
+) {
   const saved = process.env.DAMAT_MODULE_VERIFY;
   if (value === undefined) delete process.env.DAMAT_MODULE_VERIFY;
   else process.env.DAMAT_MODULE_VERIFY = value;
@@ -141,14 +148,20 @@ const dirent = (name: string, isDir = true) => ({
 // damat module remove
 // ---------------------------------------------------------------------------
 describe("module remove command", () => {
-  const get = async () => (await import("../module/remove")).moduleRemoveCommand;
+  const get = async () =>
+    (await import("../module/remove")).moduleRemoveCommand;
 
   it("errors when no module id is given", async () => {
     const cmd = await get();
-    const { ctx, logger } = createContext({ dir: "src/modules" }, { args: [], cwd: "/app" });
+    const { ctx, logger } = createContext(
+      { dir: "src/modules" },
+      { args: [], cwd: "/app" },
+    );
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
-    expect(logger.error).toHaveBeenCalledWith("Usage: damat module remove <id>");
+    expect(logger.error).toHaveBeenCalledWith(
+      "Usage: damat module remove <id>",
+    );
   });
 
   it("rejects an unsafe module id before touching anything", async () => {
@@ -178,7 +191,9 @@ describe("module remove command", () => {
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("not installed")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("not installed"),
+      ),
     ).toBe(true);
     expect(rmCalls).toHaveLength(0);
   });
@@ -193,7 +208,9 @@ describe("module remove command", () => {
     };
     fsState.readFileMap = {
       "/app/damat.config.ts": configWithUser,
-      "/app/src/modules/billing/module.json": JSON.stringify({ modules: ["user"] }),
+      "/app/src/modules/billing/module.json": JSON.stringify({
+        modules: ["user"],
+      }),
       "/app/src/modules/broken/module.json": "{not json", // ignored dependent
     };
     readdirMap = {
@@ -246,7 +263,9 @@ describe("module remove command", () => {
       }),
       "/app/.env.example": "BASE=1\n\n# --- module: user ---\nAPI_KEY=abc\n",
       "/app/src/modules/user/module.json": JSON.stringify({ name: "user" }),
-      "/app/src/modules/billing/module.json": JSON.stringify({ modules: ["user"] }),
+      "/app/src/modules/billing/module.json": JSON.stringify({
+        modules: ["user"],
+      }),
     };
     readdirMap = {
       "/app/src/modules": [dirent("user"), dirent("billing")],
@@ -272,7 +291,9 @@ describe("module remove command", () => {
       expect(rmCalls.some((c) => c.path === target)).toBe(true);
     }
     // Links aggregator regenerated; workflow barrels rebuilt.
-    expect(writeCalls.some((w) => w.path === "/app/src/links/index.ts")).toBe(true);
+    expect(writeCalls.some((w) => w.path === "/app/src/links/index.ts")).toBe(
+      true,
+    );
     expect(
       logger.info.mock.calls.some((c) => String(c[0]).includes("aggregator")),
     ).toBe(true);
@@ -286,7 +307,9 @@ describe("module remove command", () => {
     const tsconfig = writeCalls.find((w) => w.path === "/app/tsconfig.json");
     const json = JSON.parse(tsconfig!.content);
     expect(json.compilerOptions.paths["@user/*"]).toBeUndefined();
-    expect(json.compilerOptions.paths["@workflows"]).toEqual(["./src/workflows"]);
+    expect(json.compilerOptions.paths["@workflows"]).toEqual([
+      "./src/workflows",
+    ]);
     // --clean-env removed the block from .env.example only.
     const env = writeCalls.find((w) => w.path === "/app/.env.example");
     expect(env!.content).toBe("BASE=1\n");
@@ -296,7 +319,9 @@ describe("module remove command", () => {
       ),
     ).toBe(true);
     expect(
-      logger.warn.mock.calls.some((c) => String(c[0]).includes(".env were left untouched")),
+      logger.warn.mock.calls.some((c) =>
+        String(c[0]).includes(".env were left untouched"),
+      ),
     ).toBe(true);
   });
 
@@ -319,12 +344,14 @@ describe("module remove command", () => {
     );
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(0);
-    const plan = logger.info.mock.calls.find((c) => String(c[0]).startsWith("Dry run"));
+    const plan = logger.info.mock.calls.find((c) =>
+      String(c[0]).startsWith("Dry run"),
+    );
     expect(plan).toBeDefined();
     expect(plan![0]).toContain("delete src/modules/user/");
     expect(plan![0]).toContain('deregister "user" from damat.config.ts');
     expect(plan![0]).toContain('remove "@user/*" alias');
-    expect(plan![0]).toContain('# --- module: user ---');
+    expect(plan![0]).toContain("# --- module: user ---");
     expect(rmCalls).toHaveLength(0);
     expect(writeCalls).toHaveLength(0);
     expect(barrelCalls).toHaveLength(0);
@@ -393,7 +420,8 @@ describe("module remove command", () => {
 // damat module update
 // ---------------------------------------------------------------------------
 describe("module update command", () => {
-  const get = async () => (await import("../module/update")).moduleUpdateCommand;
+  const get = async () =>
+    (await import("../module/update")).moduleUpdateCommand;
 
   /** An installed local-path module whose provenance points at /pkg. */
   function baseInstalled(extra: Record<string, boolean> = {}) {
@@ -408,10 +436,15 @@ describe("module update command", () => {
 
   it("errors when no module id is given", async () => {
     const cmd = await get();
-    const { ctx, logger } = createContext({ dir: "src/modules" }, { args: [], cwd: "/app" });
+    const { ctx, logger } = createContext(
+      { dir: "src/modules" },
+      { args: [], cwd: "/app" },
+    );
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
-    expect(logger.error).toHaveBeenCalledWith("Usage: damat module update <id>");
+    expect(logger.error).toHaveBeenCalledWith(
+      "Usage: damat module update <id>",
+    );
   });
 
   it("rejects an unsafe module id", async () => {
@@ -440,7 +473,9 @@ describe("module update command", () => {
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("not installed")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("not installed"),
+      ),
     ).toBe(true);
   });
 
@@ -481,7 +516,10 @@ describe("module update command", () => {
       // the recorded ref "???bad???" is not a path, registry ref, or git source
     };
     fsState.readFileMap = {
-      "/app/damat.config.ts": configWithUser.replace('ref: "/pkg"', 'ref: "???bad???"'),
+      "/app/damat.config.ts": configWithUser.replace(
+        'ref: "/pkg"',
+        'ref: "???bad???"',
+      ),
     };
     const cmd = await get();
     const { ctx, logger } = createContext(
@@ -515,7 +553,11 @@ describe("module update command", () => {
       owner: { namespace: "acme" },
       verification: { status: "unverified" },
     };
-    mm.verification = { allowed: false, status: "unverified", message: "blocked" };
+    mm.verification = {
+      allowed: false,
+      status: "unverified",
+      message: "blocked",
+    };
     mm.locateResult = "/cache/user/src";
     const cmd = await get();
     const { ctx, logger } = createContext(
@@ -551,7 +593,11 @@ describe("module update command", () => {
       owner: { namespace: "acme" },
       verification: { status: "verified" },
     };
-    mm.verification = { allowed: true, status: "verified", message: "heads up" };
+    mm.verification = {
+      allowed: true,
+      status: "verified",
+      message: "heads up",
+    };
     mm.locateResult = "/cache/user/src";
     // Both trees read as empty → identical; module.json absent → "(unknown)".
     const cmd = await get();
@@ -596,7 +642,11 @@ describe("module update command", () => {
 
   it("blocks an unverified source that fails local validation", async () => {
     baseInstalled();
-    mm.validateReport = { valid: false, errors: ["broken entry"], warnings: [] };
+    mm.validateReport = {
+      valid: false,
+      errors: ["broken entry"],
+      warnings: [],
+    };
     const cmd = await get();
     const { ctx, logger } = createContext(
       { dir: "src/modules", "allow-unverified": true },
@@ -683,7 +733,9 @@ describe("module update command", () => {
       logger.warn.mock.calls.some((c) => String(c[0]).includes("local edits")),
     ).toBe(true);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("Re-run with --yes")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("Re-run with --yes"),
+      ),
     ).toBe(true);
     // Nothing was applied.
     expect(cpCalls).toHaveLength(0);
@@ -714,14 +766,20 @@ describe("module update command", () => {
     expect(res.exitCode).toBe(0);
     // Force re-install: the module home was wiped and re-copied.
     expect(rmCalls.some((c) => c.path === "/app/src/modules/user")).toBe(true);
-    expect(cpCalls.some((c) => c.src === "/pkg/src" && c.dest === "/app/src/modules/user")).toBe(true);
+    expect(
+      cpCalls.some(
+        (c) => c.src === "/pkg/src" && c.dest === "/app/src/modules/user",
+      ),
+    ).toBe(true);
     // Workflows merged into the grouped target, barrels rebuilt.
     expect(
       cpCalls.some((c) => c.dest === "/app/src/workflows/user/users"),
     ).toBe(true);
     expect(barrelCalls).toContain("/app/src/workflows");
     // Provenance refreshed: deregistered then re-registered with a NEW installedAt.
-    const configWrites = writeCalls.filter((w) => w.path === "/app/damat.config.ts");
+    const configWrites = writeCalls.filter(
+      (w) => w.path === "/app/damat.config.ts",
+    );
     expect(configWrites.length).toBe(2); // deregister + register
     const final = configWrites[configWrites.length - 1]!.content;
     expect(final).toContain('resolve: "./src/modules/user"');
@@ -730,12 +788,15 @@ describe("module update command", () => {
     expect(final).not.toContain("2026-01-01T00:00:00.000Z");
     expect(final).toContain("billing:"); // sibling untouched
     expect(
-      logger.success.mock.calls.some((c) => String(c[0]).includes("provenance")),
+      logger.success.mock.calls.some((c) =>
+        String(c[0]).includes("provenance"),
+      ),
     ).toBe(true);
     // Env synced into .env.example and reported missing in .env.
     expect(
       appendCalls.some(
-        (a) => a.path === "/app/.env.example" && a.content.includes("API_KEY=x"),
+        (a) =>
+          a.path === "/app/.env.example" && a.content.includes("API_KEY=x"),
       ),
     ).toBe(true);
     expect(
@@ -765,7 +826,9 @@ describe("module update command", () => {
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("bun add failed")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("bun add failed"),
+      ),
     ).toBe(true);
   });
 

@@ -3,7 +3,8 @@ import { createModuleMigration } from "@damatjs/module";
 
 export const moduleMigrationCreateCommand: Command = {
   name: "migration:create",
-  description: "Diff this module's models against its snapshot and create a migration",
+  description:
+    "Diff this module's models against its snapshot and create a migration",
   handler: async (ctx) => {
     try {
       const result = await createModuleMigration(ctx.cwd);

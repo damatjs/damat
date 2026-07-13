@@ -24,7 +24,11 @@ import { Effect } from "@damatjs/deps/effect";
 import { createWorkflow } from "../src/workflow";
 import { createStep, executeStep, StepResponse } from "../src/step";
 import { runStep, parallel, when, skipStep } from "../src/utils";
-import { WorkflowError, WorkflowLockError, StepExecutionError } from "../src/index";
+import {
+  WorkflowError,
+  WorkflowLockError,
+  StepExecutionError,
+} from "../src/index";
 import type { WorkflowContext } from "../src/types";
 
 beforeEach(() => {
@@ -128,7 +132,9 @@ describe("workflow/execute: success", () => {
 describe("workflow/execute: failure & compensation", () => {
   it("returns failure with the WorkflowError and compensated:false when nothing was compensated", async () => {
     const wf = createWorkflow<number, number>("boom", () =>
-      Effect.fail(new StepExecutionError("s", "step blew up", undefined, "boom")),
+      Effect.fail(
+        new StepExecutionError("s", "step blew up", undefined, "boom"),
+      ),
     );
     const res = await wf.execute(1);
 
@@ -237,7 +243,9 @@ describe("workflow/execute: failure & compensation", () => {
       expect(res.compensationsFailed).toBe(1);
       expect(res.compensationErrors).toHaveLength(1);
       expect(res.compensationErrors[0]!.stepName).toBe("A");
-      expect(res.compensationErrors[0]!.message).toContain("rollback A blew up");
+      expect(res.compensationErrors[0]!.message).toContain(
+        "rollback A blew up",
+      );
     }
   });
 });
@@ -298,7 +306,9 @@ describe("workflow/executeWithLock", () => {
   it("releases the lock even when the workflow fails", async () => {
     state.acquireResult = "lv-2";
     const wf = createWorkflow<number, number>("locked-fail", () =>
-      Effect.fail(new StepExecutionError("s", "fail", undefined, "locked-fail")),
+      Effect.fail(
+        new StepExecutionError("s", "fail", undefined, "locked-fail"),
+      ),
     );
     const res = await wf.executeWithLock(1, { lockId: "order-2" });
 

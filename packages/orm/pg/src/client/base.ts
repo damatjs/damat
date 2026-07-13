@@ -3,7 +3,14 @@ import type { ModelDefinition } from "@damatjs/orm-model";
 import type { QueryLogger } from "@damatjs/orm-core";
 import { ModelAccessor } from "../query";
 import { executeFindMany, executeFindOne } from "./ops/find";
-import { executeCreate, executeCreateMany, executeUpdate, executeDelete, executeUpsert, executeUpsertMany } from "./ops/mutate";
+import {
+  executeCreate,
+  executeCreateMany,
+  executeUpdate,
+  executeDelete,
+  executeUpsert,
+  executeUpsertMany,
+} from "./ops/mutate";
 import { executeTransaction } from "./ops/transaction";
 import type {
   FindOptions,
@@ -48,7 +55,9 @@ export class PgModelClient<
     return executeFindMany<T, Cols>(this, options);
   }
 
-  async findOne(options: FindOneOptions<Cols> = {}): Promise<PgSelectResult<T>> {
+  async findOne(
+    options: FindOneOptions<Cols> = {},
+  ): Promise<PgSelectResult<T>> {
     return executeFindOne<T, Cols>(this, options);
   }
 
@@ -56,7 +65,9 @@ export class PgModelClient<
     return executeCreate<T, Cols>(this, options);
   }
 
-  async createMany(options: CreateManyOptions<Cols>): Promise<PgInsertResult<T>> {
+  async createMany(
+    options: CreateManyOptions<Cols>,
+  ): Promise<PgInsertResult<T>> {
     return executeCreateMany<T, Cols>(this, options);
   }
 
@@ -72,12 +83,19 @@ export class PgModelClient<
     return executeUpsert<T, Cols>(this, options);
   }
 
-  async upsertMany(options: UpsertManyOptions<Cols>): Promise<PgInsertResult<T>> {
+  async upsertMany(
+    options: UpsertManyOptions<Cols>,
+  ): Promise<PgInsertResult<T>> {
     return executeUpsertMany<T, Cols>(this, options);
   }
 
-  async transaction<R>(callback: (tx: PgModelClient<T, Cols>) => Promise<R>): Promise<R> {
-    return executeTransaction<T, Cols, R>(this, callback as (tx: PgModelClientLike<T, Cols>) => Promise<R>);
+  async transaction<R>(
+    callback: (tx: PgModelClient<T, Cols>) => Promise<R>,
+  ): Promise<R> {
+    return executeTransaction<T, Cols, R>(
+      this,
+      callback as (tx: PgModelClientLike<T, Cols>) => Promise<R>,
+    );
   }
 
   withClient(client: PoolClient): PgModelClient<T, Cols> {

@@ -17,13 +17,21 @@ describe("Counters", () => {
 
   describe("incrementCounter", () => {
     it("increments counter by 1 by default", async () => {
-      expect(await incrementCounter("test-counter", undefined, undefined, redis)).toBe(1);
-      expect(await incrementCounter("test-counter", undefined, undefined, redis)).toBe(2);
+      expect(
+        await incrementCounter("test-counter", undefined, undefined, redis),
+      ).toBe(1);
+      expect(
+        await incrementCounter("test-counter", undefined, undefined, redis),
+      ).toBe(2);
     });
 
     it("increments by custom amount", async () => {
-      expect(await incrementCounter("test-counter", 5, undefined, redis)).toBe(5);
-      expect(await incrementCounter("test-counter", 5, undefined, redis)).toBe(10);
+      expect(await incrementCounter("test-counter", 5, undefined, redis)).toBe(
+        5,
+      );
+      expect(await incrementCounter("test-counter", 5, undefined, redis)).toBe(
+        10,
+      );
     });
 
     it("sets TTL when provided", async () => {

@@ -1,6 +1,6 @@
 // Test 2: Migration SQL Generation
 import { model, columns, toModuleSchema } from "@damatjs/orm-model";
-import { generateMigration } from '@damatjs/orm-processor';
+import { generateMigration } from "@damatjs/orm-processor";
 
 export async function test2_MigrationSQL() {
   const UserSchema = model("user", {

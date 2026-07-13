@@ -10,14 +10,21 @@ executor (`pgExecuteRaw` / `pgTransaction`). Unlike `PgRepository` it returns th
 ## `PgModelClient`
 
 ```ts
-class PgModelClient<T extends QueryResultRow = Record<string, unknown>, Cols extends string = string>
-  implements PgModelClientLike<T, Cols> {
+class PgModelClient<
+  T extends QueryResultRow = Record<string, unknown>,
+  Cols extends string = string,
+> implements PgModelClientLike<T, Cols> {
   readonly accessor: ModelAccessor<Cols>;
   readonly _pool: Pool;
-  readonly _conn: Pool | PoolClient;   // execution target
+  readonly _conn: Pool | PoolClient; // execution target
   readonly _logger: QueryLogger | undefined;
 
-  constructor(model: ModelDefinition, pool: Pool, conn?: PoolClient, logger?: QueryLogger)
+  constructor(
+    model: ModelDefinition,
+    pool: Pool,
+    conn?: PoolClient,
+    logger?: QueryLogger,
+  );
 }
 ```
 
@@ -28,20 +35,20 @@ class PgModelClient<T extends QueryResultRow = Record<string, unknown>, Cols ext
 
 ### Methods
 
-| Method | Returns | Delegates to |
-| --- | --- | --- |
-| `findMany(options = {})` | `PgSelectResult<T>` | `executeFindMany` (ops/find/many.ts) |
-| `findOne(options = {})` | `PgSelectResult<T>` | `executeFindOne` (ops/find/one.ts) |
-| `create(options)` | `PgInsertResult<T>` | `executeCreate` (ops/mutate/create.ts) |
-| `createMany(options)` | `PgInsertResult<T>` | `executeCreateMany` (ops/mutate/createMany.ts) |
-| `update(options)` | `PgUpdateResult<T>` | `executeUpdate` (ops/mutate/update.ts) |
-| `delete(options)` | `PgDeleteResult<T>` | `executeDelete` (ops/mutate/delete.ts) |
-| `upsert(options)` | `PgInsertResult<T>` | `executeUpsert` (ops/mutate/upsert.ts) |
-| `transaction<R>(cb)` | `Promise<R>` | `executeTransaction` (ops/transaction.ts) |
-| `withClient(client)` | `PgModelClient<T,Cols>` | Returns a new client bound to `client`. |
+| Method                   | Returns                 | Delegates to                                   |
+| ------------------------ | ----------------------- | ---------------------------------------------- |
+| `findMany(options = {})` | `PgSelectResult<T>`     | `executeFindMany` (ops/find/many.ts)           |
+| `findOne(options = {})`  | `PgSelectResult<T>`     | `executeFindOne` (ops/find/one.ts)             |
+| `create(options)`        | `PgInsertResult<T>`     | `executeCreate` (ops/mutate/create.ts)         |
+| `createMany(options)`    | `PgInsertResult<T>`     | `executeCreateMany` (ops/mutate/createMany.ts) |
+| `update(options)`        | `PgUpdateResult<T>`     | `executeUpdate` (ops/mutate/update.ts)         |
+| `delete(options)`        | `PgDeleteResult<T>`     | `executeDelete` (ops/mutate/delete.ts)         |
+| `upsert(options)`        | `PgInsertResult<T>`     | `executeUpsert` (ops/mutate/upsert.ts)         |
+| `transaction<R>(cb)`     | `Promise<R>`            | `executeTransaction` (ops/transaction.ts)      |
+| `withClient(client)`     | `PgModelClient<T,Cols>` | Returns a new client bound to `client`.        |
 
 > The client exposes `findMany/findOne/create/createMany/update/delete/upsert/transaction`. There is
-> no `upsertMany` on the client even though the *accessor* has one (`ModelAccessor.upsertMany`); reach
+> no `upsertMany` on the client even though the _accessor_ has one (`ModelAccessor.upsertMany`); reach
 > through `client.accessor.upsertMany(...)` if you need bulk upsert SQL.
 
 ## The `ops/*` execute wrappers
@@ -49,10 +56,17 @@ class PgModelClient<T extends QueryResultRow = Record<string, unknown>, Cols ext
 Every operation file follows the same three-line shape. Example (`ops/find/many.ts`):
 
 ```ts
-export async function executeFindMany<T, Cols>(client, options = {}): Promise<PgSelectResult<T>> {
-  const { sql, json } = client.accessor.findMany(options);             // 1. build SQL + JSON
-  const { rows, rowCount } = await pgExecuteRaw<T>(client._conn, sql, client._logger); // 2. execute
-  return { rows, rowCount, descriptor: json as SelectDescriptor };     // 3. attach descriptor
+export async function executeFindMany<T, Cols>(
+  client,
+  options = {},
+): Promise<PgSelectResult<T>> {
+  const { sql, json } = client.accessor.findMany(options); // 1. build SQL + JSON
+  const { rows, rowCount } = await pgExecuteRaw<T>(
+    client._conn,
+    sql,
+    client._logger,
+  ); // 2. execute
+  return { rows, rowCount, descriptor: json as SelectDescriptor }; // 3. attach descriptor
 }
 ```
 
@@ -74,10 +88,14 @@ and logger). It's how a transaction binds the same model to a transaction connec
 ```ts
 // ops/transaction.ts
 export async function executeTransaction(client, callback) {
-  return pgTransaction(client._pool, async (conn) => {
-    const tx = client.withClient(conn);   // same model, transaction connection
-    return callback(tx);
-  }, client._logger);
+  return pgTransaction(
+    client._pool,
+    async (conn) => {
+      const tx = client.withClient(conn); // same model, transaction connection
+      return callback(tx);
+    },
+    client._logger,
+  );
 }
 ```
 
@@ -89,11 +107,28 @@ statement on one transaction connection (BEGIN/COMMIT/ROLLBACK handled by `pgTra
 ## Result shapes (`src/types/results.ts`)
 
 ```ts
-interface PgSelectResult<T> { rows: T[]; rowCount: number; descriptor: SelectDescriptor }
-interface PgInsertResult<T> { rows: T[]; rowCount: number; descriptor: InsertDescriptor | UpsertDescriptor }
-interface PgUpdateResult<T> { rows: T[]; rowCount: number; descriptor: UpdateDescriptor }
-interface PgDeleteResult<T> { rows: T[]; rowCount: number; descriptor: DeleteDescriptor }
-type PgQueryResult<T> = PgSelectResult<T> | PgInsertResult<T> | PgUpdateResult<T> | PgDeleteResult<T>;
+interface PgSelectResult<T> {
+  rows: T[];
+  rowCount: number;
+  descriptor: SelectDescriptor;
+}
+interface PgInsertResult<T> {
+  rows: T[];
+  rowCount: number;
+  descriptor: InsertDescriptor | UpsertDescriptor;
+}
+interface PgUpdateResult<T> {
+  rows: T[];
+  rowCount: number;
+  descriptor: UpdateDescriptor;
+}
+interface PgDeleteResult<T> {
+  rows: T[];
+  rowCount: number;
+  descriptor: DeleteDescriptor;
+}
+type PgQueryResult<T> =
+  PgSelectResult<T> | PgInsertResult<T> | PgUpdateResult<T> | PgDeleteResult<T>;
 ```
 
 `create`/`createMany`/`upsert` all return `PgInsertResult` (the descriptor is `InsertDescriptor` for

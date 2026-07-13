@@ -2,7 +2,10 @@ import { describe, it, expect } from "bun:test";
 import { ColumnSchema, ColumnType } from "@damatjs/orm-type";
 import { columnToZodSchema } from "../columnToZodSchema";
 
-const col = (type: ColumnType, extra: Partial<ColumnSchema> = {}): ColumnSchema => ({
+const col = (
+  type: ColumnType,
+  extra: Partial<ColumnSchema> = {},
+): ColumnSchema => ({
   name: "c",
   type,
   nullable: false,
@@ -11,7 +14,13 @@ const col = (type: ColumnType, extra: Partial<ColumnSchema> = {}): ColumnSchema 
 
 describe("columnToZodSchema › numeric types", () => {
   it("maps integer-family types to z.number().int()", () => {
-    for (const t of ["smallint", "integer", "smallserial", "serial", "oid"] as const) {
+    for (const t of [
+      "smallint",
+      "integer",
+      "smallserial",
+      "serial",
+      "oid",
+    ] as const) {
       expect(columnToZodSchema(col(t))).toBe("z.number().int()");
     }
   });
@@ -22,7 +31,12 @@ describe("columnToZodSchema › numeric types", () => {
   });
 
   it("maps floating point and exact numeric to z.number()", () => {
-    for (const t of ["real", "double precision", "numeric", "decimal"] as const) {
+    for (const t of [
+      "real",
+      "double precision",
+      "numeric",
+      "decimal",
+    ] as const) {
       expect(columnToZodSchema(col(t))).toBe("z.number()");
     }
   });
@@ -30,7 +44,12 @@ describe("columnToZodSchema › numeric types", () => {
 
 describe("columnToZodSchema › character types", () => {
   it("maps character types to z.string()", () => {
-    for (const t of ["text", "character", "character varying", "money"] as const) {
+    for (const t of [
+      "text",
+      "character",
+      "character varying",
+      "money",
+    ] as const) {
       expect(columnToZodSchema(col(t))).toBe("z.string()");
     }
   });
@@ -199,7 +218,9 @@ describe("columnToZodSchema › unmatched types", () => {
 describe("columnToZodSchema › nullability is NOT applied here", () => {
   it("does not add .nullable()/.optional() regardless of the nullable flag", () => {
     // Those modifiers are appended by the schema generators, not by this fn.
-    expect(columnToZodSchema(col("text", { nullable: true }))).toBe("z.string()");
+    expect(columnToZodSchema(col("text", { nullable: true }))).toBe(
+      "z.string()",
+    );
     expect(columnToZodSchema(col("integer", { nullable: true }))).toBe(
       "z.number().int()",
     );

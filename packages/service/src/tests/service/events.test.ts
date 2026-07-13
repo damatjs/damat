@@ -97,9 +97,10 @@ function makeStub() {
 }
 
 const wrap = (stub: ReturnType<typeof makeStub>, model = "user") =>
-  withModelEvents(stub as unknown as ModelMethods, model) as unknown as ReturnType<
-    typeof makeStub
-  >;
+  withModelEvents(
+    stub as unknown as ModelMethods,
+    model,
+  ) as unknown as ReturnType<typeof makeStub>;
 
 beforeEach(() => {
   eventState.emitted.length = 0;
@@ -203,7 +204,11 @@ describe("withModelEvents — reads and non-CRUD members", () => {
 
     expect(eventState.emitted).toHaveLength(0);
     expect(eventState.order).toHaveLength(0);
-    expect(stub.calls.map((c) => c.method)).toEqual(["findMany", "findById", "count"]);
+    expect(stub.calls.map((c) => c.method)).toEqual([
+      "findMany",
+      "findById",
+      "count",
+    ]);
   });
 
   it("leaves non-CRUD functions and plain properties untouched", async () => {

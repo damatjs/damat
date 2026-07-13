@@ -13,7 +13,10 @@ import {
 const REGISTRY_KEY = Symbol.for("damatjs.jobs.registry");
 
 function registry(): Map<string, JobDefinition> {
-  const g = globalThis as Record<symbol, Map<string, JobDefinition> | undefined>;
+  const g = globalThis as Record<
+    symbol,
+    Map<string, JobDefinition> | undefined
+  >;
   if (!g[REGISTRY_KEY]) g[REGISTRY_KEY] = new Map();
   return g[REGISTRY_KEY];
 }
@@ -29,7 +32,9 @@ export function defineJob<K extends JobName>(
   options: JobOptions = {},
 ): JobDefinition<JobPayload<K>> {
   if (registry().has(name)) {
-    throw new Error(`Job "${name}" is already defined — job names must be unique`);
+    throw new Error(
+      `Job "${name}" is already defined — job names must be unique`,
+    );
   }
   const definition: JobDefinition<JobPayload<K>> = {
     name,

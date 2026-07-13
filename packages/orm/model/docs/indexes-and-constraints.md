@@ -13,13 +13,13 @@ attached to a model with `.indexes([...])` / `.constrain([...])`.
 
 ```ts
 class IndexBuilder {
-  constructor(name?: string)               // empty name → auto-generated later
-  columns(cols: (string | IndexColumn)[]): this   // strings normalised to { name }
-  unique(): this
-  type(indexType: IndexType): this         // default "btree"
-  where(condition: string): this           // partial index
-  concurrently(): this                     // CREATE INDEX CONCURRENTLY
-  toSchema(tableName: string, indexNumber?: number): IndexSchema
+  constructor(name?: string); // empty name → auto-generated later
+  columns(cols: (string | IndexColumn)[]): this; // strings normalised to { name }
+  unique(): this;
+  type(indexType: IndexType): this; // default "btree"
+  where(condition: string): this; // partial index
+  concurrently(): this; // CREATE INDEX CONCURRENTLY
+  toSchema(tableName: string, indexNumber?: number): IndexSchema;
 }
 ```
 
@@ -67,16 +67,16 @@ intent explicit and self-documenting.
 
 ```ts
 class ConstraintBuilder {
-  constructor(name?: string)
-  columns(cols: string[]): this            // for unique / primary_key
-  unique(): this                           // type = "unique"
-  primaryKey(): this                       // type = "primary_key"
-  check(condition: string): this           // type = "check"
-  exclude(expressions: { column; operator; expression? }[]): this  // type = "exclude"
-  indexType(indexType: IndexType): this    // exclude only, default "gist"
-  where(condition: string): this           // partial constraint
-  deferrable(initiallyDeferred = false): this
-  toSchema(): ConstraintSchema
+  constructor(name?: string);
+  columns(cols: string[]): this; // for unique / primary_key
+  unique(): this; // type = "unique"
+  primaryKey(): this; // type = "primary_key"
+  check(condition: string): this; // type = "check"
+  exclude(expressions: { column; operator; expression? }[]): this; // type = "exclude"
+  indexType(indexType: IndexType): this; // exclude only, default "gist"
+  where(condition: string): this; // partial constraint
+  deferrable(initiallyDeferred = false): this;
+  toSchema(): ConstraintSchema;
 }
 ```
 

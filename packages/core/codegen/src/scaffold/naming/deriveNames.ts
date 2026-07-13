@@ -1,7 +1,7 @@
 import type { TableSchema } from "@damatjs/orm-type";
-import { toPascalCase } from './toPascalCase';
-import { toCamelCaseCodeGen } from './toCamelCase';
-import { CrudNames } from './type';
+import { toPascalCase } from "./toPascalCase";
+import { toCamelCaseCodeGen } from "./toCamelCase";
+import { CrudNames } from "./type";
 
 export function deriveNames(moduleId: string, table: TableSchema): CrudNames {
   const pascal = toPascalCase(table.name);

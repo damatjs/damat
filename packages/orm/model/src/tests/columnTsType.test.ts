@@ -35,7 +35,9 @@ describe("ColumnBuilder.toTsType › array wrapping", () => {
     expect(tsOf(columns.text().array())).toBe("Array<string>");
   });
   it("nullable array applies | null after the Array<> wrapper", () => {
-    expect(tsOf(columns.text().array().nullable())).toBe("Array<string> | null");
+    expect(tsOf(columns.text().array().nullable())).toBe(
+      "Array<string> | null",
+    );
   });
 });
 

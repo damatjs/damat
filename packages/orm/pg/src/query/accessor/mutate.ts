@@ -2,10 +2,26 @@ import { InsertBuilder } from "../insert";
 import { UpdateBuilder } from "../update";
 import { DeleteBuilder } from "../delete";
 import { UpsertBuilder } from "../upsert";
-import type { QueryResult, CreateOptions, CreateManyOptions, UpdateOptions, DeleteOptions, UpsertOptions, UpsertManyOptions } from "./type";
-import type { InsertDescriptor, UpdateDescriptor, DeleteDescriptor, UpsertDescriptor } from "../types";
+import type {
+  QueryResult,
+  CreateOptions,
+  CreateManyOptions,
+  UpdateOptions,
+  DeleteOptions,
+  UpsertOptions,
+  UpsertManyOptions,
+} from "./type";
+import type {
+  InsertDescriptor,
+  UpdateDescriptor,
+  DeleteDescriptor,
+  UpsertDescriptor,
+} from "../types";
 
-export function executeCreate(accessor: any, options: CreateOptions<any>): QueryResult<InsertDescriptor> {
+export function executeCreate(
+  accessor: any,
+  options: CreateOptions<any>,
+): QueryResult<InsertDescriptor> {
   const b = new InsertBuilder<any>(accessor._model);
   b.values(options.data);
   if (options.returning) b.returning(options.returning);
@@ -13,7 +29,10 @@ export function executeCreate(accessor: any, options: CreateOptions<any>): Query
   return { sql: b.generateSql(), json: b.generateJson() };
 }
 
-export function executeCreateMany(accessor: any, options: CreateManyOptions<any>): QueryResult<InsertDescriptor> {
+export function executeCreateMany(
+  accessor: any,
+  options: CreateManyOptions<any>,
+): QueryResult<InsertDescriptor> {
   const b = new InsertBuilder<any>(accessor._model);
   b.values(options.data);
   if (options.returning) b.returning(options.returning);
@@ -21,12 +40,17 @@ export function executeCreateMany(accessor: any, options: CreateManyOptions<any>
   return { sql: b.generateSql(), json: b.generateJson() };
 }
 
-export function executeUpdate(accessor: any, options: UpdateOptions<any>): QueryResult<UpdateDescriptor> {
+export function executeUpdate(
+  accessor: any,
+  options: UpdateOptions<any>,
+): QueryResult<UpdateDescriptor> {
   const b = new UpdateBuilder<any>(accessor._model);
   b.set(options.set);
   if (options.where) b.where(options.where);
   if (options.whereRaw) {
-    const raws = Array.isArray(options.whereRaw) ? options.whereRaw : [options.whereRaw];
+    const raws = Array.isArray(options.whereRaw)
+      ? options.whereRaw
+      : [options.whereRaw];
     for (const r of raws) b.whereRaw(r);
   }
   if (options.returning) b.returning(options.returning);
@@ -34,11 +58,16 @@ export function executeUpdate(accessor: any, options: UpdateOptions<any>): Query
   return { sql: b.generateSql(), json: b.generateJson() };
 }
 
-export function executeDelete(accessor: any, options: DeleteOptions<any>): QueryResult<DeleteDescriptor> {
+export function executeDelete(
+  accessor: any,
+  options: DeleteOptions<any>,
+): QueryResult<DeleteDescriptor> {
   const b = new DeleteBuilder<any>(accessor._model);
   if (options.where) b.where(options.where);
   if (options.whereRaw) {
-    const raws = Array.isArray(options.whereRaw) ? options.whereRaw : [options.whereRaw];
+    const raws = Array.isArray(options.whereRaw)
+      ? options.whereRaw
+      : [options.whereRaw];
     for (const r of raws) b.whereRaw(r);
   }
   if (options.returning) b.returning(options.returning);
@@ -46,7 +75,10 @@ export function executeDelete(accessor: any, options: DeleteOptions<any>): Query
   return { sql: b.generateSql(), json: b.generateJson() };
 }
 
-export function executeUpsert(accessor: any, options: UpsertOptions<any>): QueryResult<UpsertDescriptor> {
+export function executeUpsert(
+  accessor: any,
+  options: UpsertOptions<any>,
+): QueryResult<UpsertDescriptor> {
   const b = new UpsertBuilder<any>(accessor._model);
   b.values(options.data);
   b.onConflict(options.onConflict);
@@ -56,7 +88,10 @@ export function executeUpsert(accessor: any, options: UpsertOptions<any>): Query
   return { sql: b.generateSql(), json: b.generateJson() };
 }
 
-export function executeUpsertMany(accessor: any, options: UpsertManyOptions<any>): QueryResult<UpsertDescriptor> {
+export function executeUpsertMany(
+  accessor: any,
+  options: UpsertManyOptions<any>,
+): QueryResult<UpsertDescriptor> {
   const b = new UpsertBuilder<any>(accessor._model);
   b.values(options.data);
   b.onConflict(options.onConflict);

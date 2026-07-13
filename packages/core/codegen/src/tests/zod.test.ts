@@ -71,7 +71,9 @@ describe("generateZodFile", () => {
   it("coerces query params for numeric and boolean columns", () => {
     const content = generateZodFile(schema.tables[0]!, schema, null);
     // Inside the query schema, integers/booleans become coercing validators.
-    expect(content).toContain("age: z.coerce.number().int().nullable().optional(),");
+    expect(content).toContain(
+      "age: z.coerce.number().int().nullable().optional(),",
+    );
     expect(content).toContain("verified: z.coerce.boolean().optional(),");
   });
 
@@ -243,14 +245,12 @@ describe("generateZodFile › banner", () => {
 
   it("starts with the import when banner is null", () => {
     const content = generateZodFile(schema.tables[0]!, schema, null);
-    expect(content.startsWith('import { z }')).toBe(true);
+    expect(content.startsWith("import { z }")).toBe(true);
   });
 });
 
 describe("generateNewZodSchema", () => {
-  const allEnums = [
-    { name: "role", values: ["admin", "member"] },
-  ];
+  const allEnums = [{ name: "role", values: ["admin", "member"] }];
 
   it("requires plain columns, makes defaults optional, nullables nullable+optional", () => {
     const table: ModuleSchema["tables"][number] = {
@@ -291,9 +291,7 @@ describe("generateNewZodSchema", () => {
   it("expands a named enum into z.enum([...]) with its literal values", () => {
     const table: ModuleSchema["tables"][number] = {
       name: "account",
-      columns: [
-        { name: "role", type: "enum", enum: "role", nullable: false },
-      ],
+      columns: [{ name: "role", type: "enum", enum: "role", nullable: false }],
     };
     const lines = generateNewZodSchema(table, new Set(), allEnums);
     expect(lines).toContain("  role: z.enum(['admin', 'member']),");
@@ -302,7 +300,9 @@ describe("generateNewZodSchema", () => {
   it("falls back to z.string() for an enum with no matching enum schema", () => {
     const table: ModuleSchema["tables"][number] = {
       name: "account",
-      columns: [{ name: "role", type: "enum", enum: "missing", nullable: false }],
+      columns: [
+        { name: "role", type: "enum", enum: "missing", nullable: false },
+      ],
     };
     const lines = generateNewZodSchema(table, new Set(), allEnums);
     expect(lines).toContain("  role: z.string(),");
@@ -343,8 +343,12 @@ describe("generateQueryZodSchema", () => {
     expect(body).toContain("count: z.coerce.number().int().optional(),");
     expect(body).toContain("active: z.coerce.boolean().optional(),");
     expect(body).toContain("big: z.coerce.bigint().nullable().optional(),");
-    expect(body).toContain("limit: z.coerce.number().int().positive().optional(),");
-    expect(body).toContain("offset: z.coerce.number().int().min(0).optional(),");
+    expect(body).toContain(
+      "limit: z.coerce.number().int().positive().optional(),",
+    );
+    expect(body).toContain(
+      "offset: z.coerce.number().int().min(0).optional(),",
+    );
     expect(body).toContain("orderBy: z.string().optional(),");
     expect(body).toContain("orderDir: z.enum(['asc', 'desc']).optional(),");
   });
@@ -354,10 +358,14 @@ describe("generateIdZodSchema", () => {
   it("uses z.string().uuid() for a uuid PK", () => {
     const lines = generateIdZodSchema({
       name: "user",
-      columns: [{ name: "id", type: "uuid", nullable: false, primaryKey: true }],
+      columns: [
+        { name: "id", type: "uuid", nullable: false, primaryKey: true },
+      ],
     });
     expect(lines).toContain("export const UserIdSchema = z.string().uuid();");
-    expect(lines).toContain("export type UserId = z.infer<typeof UserIdSchema>;");
+    expect(lines).toContain(
+      "export type UserId = z.infer<typeof UserIdSchema>;",
+    );
   });
 
   it("uses a coerced positive int for integer / serial PK", () => {
@@ -375,7 +383,9 @@ describe("generateIdZodSchema", () => {
   it("uses a coerced bigint for bigint / bigserial PK", () => {
     const lines = generateIdZodSchema({
       name: "big",
-      columns: [{ name: "id", type: "bigserial", nullable: false, primaryKey: true }],
+      columns: [
+        { name: "id", type: "bigserial", nullable: false, primaryKey: true },
+      ],
     });
     expect(lines).toContain("export const BigIdSchema = z.coerce.bigint();");
   });
@@ -383,7 +393,9 @@ describe("generateIdZodSchema", () => {
   it("falls back to z.string() for a non-numeric, non-uuid PK", () => {
     const lines = generateIdZodSchema({
       name: "code",
-      columns: [{ name: "value", type: "text", nullable: false, primaryKey: true }],
+      columns: [
+        { name: "value", type: "text", nullable: false, primaryKey: true },
+      ],
     });
     expect(lines).toContain("export const CodeIdSchema = z.string();");
   });
@@ -425,16 +437,28 @@ describe("generateZodTypes (single-file orchestration)", () => {
     expect(out.startsWith('import { z } from "@damatjs/deps/zod";')).toBe(true);
     expect(out.match(/import \{ z \}/g)?.length).toBe(1);
 
-    for (const name of ["newUserSchema", "updateUserSchema", "UserQuerySchema", "UserIdSchema"]) {
+    for (const name of [
+      "newUserSchema",
+      "updateUserSchema",
+      "UserQuerySchema",
+      "UserIdSchema",
+    ]) {
       expect(out).toContain(`export const ${name} = `.trimEnd());
     }
-    for (const name of ["newPostSchema", "updatePostSchema", "PostQuerySchema", "PostIdSchema"]) {
+    for (const name of [
+      "newPostSchema",
+      "updatePostSchema",
+      "PostQuerySchema",
+      "PostIdSchema",
+    ]) {
       expect(out).toContain(`export const ${name}`);
     }
   });
 
   it("includes the default banner and respects banner: false", () => {
-    expect(generateZodTypes(schema)).toContain("// This file is auto-generated");
+    expect(generateZodTypes(schema)).toContain(
+      "// This file is auto-generated",
+    );
     expect(generateZodTypes(schema, { banner: false })).not.toContain(
       "auto-generated",
     );

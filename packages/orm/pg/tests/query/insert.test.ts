@@ -54,7 +54,7 @@ describe("InsertBuilder.generateSql — many rows", () => {
       .generateSql();
     expect(q.sql).toBe(
       'INSERT INTO "app"."user" ("id", "email") ' +
-        "VALUES ($1, $2), ($3, $4) RETURNING \"id\"",
+        'VALUES ($1, $2), ($3, $4) RETURNING "id"',
     );
     expect(q.params).toEqual(["u1", "a@b.com", "u2", "c@d.com"]);
   });
@@ -120,7 +120,9 @@ describe("buildOnConflictSql (unit)", () => {
       { action: "update", conflictColumns: ["email"] } as any,
       params,
     );
-    expect(sql).toBe('ON CONFLICT ("email") DO UPDATE SET "email" = EXCLUDED."email"');
+    expect(sql).toBe(
+      'ON CONFLICT ("email") DO UPDATE SET "email" = EXCLUDED."email"',
+    );
     expect(params).toEqual([]);
   });
 
@@ -144,7 +146,11 @@ describe("InsertBuilder.generateJson", () => {
     const json = ins()
       .values([{ id: "u1" }, { id: "u2" }])
       .returning(["id"])
-      .onConflict({ action: "update", conflictColumns: ["email"], set: { name: "x" } })
+      .onConflict({
+        action: "update",
+        conflictColumns: ["email"],
+        set: { name: "x" },
+      })
       .generateJson();
     expect(json).toMatchObject({
       type: "insert",

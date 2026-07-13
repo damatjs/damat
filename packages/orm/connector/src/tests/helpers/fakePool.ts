@@ -11,9 +11,12 @@ export class FakePoolClient {
   public releaseError: Error | undefined;
   private queryImpl: (args: unknown[]) => Promise<unknown>;
 
-  constructor(opts: { queryImpl?: (args: unknown[]) => Promise<unknown> } = {}) {
+  constructor(
+    opts: { queryImpl?: (args: unknown[]) => Promise<unknown> } = {},
+  ) {
     this.queryImpl =
-      opts.queryImpl ?? (async () => ({ rows: [{ "?column?": 1 }], rowCount: 1 }));
+      opts.queryImpl ??
+      (async () => ({ rows: [{ "?column?": 1 }], rowCount: 1 }));
   }
 
   query = (...args: unknown[]): Promise<unknown> => {
@@ -105,22 +108,51 @@ export class StubLogger implements ILogger {
     skip: [],
   };
 
-  private record(level: string, message: string, context?: LogContext, error?: unknown) {
+  private record(
+    level: string,
+    message: string,
+    context?: LogContext,
+    error?: unknown,
+  ) {
     this.calls[level]!.push({ message, context, error });
   }
 
-  debug(message: string, context?: LogContext): void { this.record("debug", message, context); }
-  info(message: string, context?: LogContext): void { this.record("info", message, context); }
-  waiting(message: string, context?: LogContext): void { this.record("waiting", message, context); }
-  progress(message: string, context?: LogContext): void { this.record("progress", message, context); }
-  cached(message: string, context?: LogContext): void { this.record("cached", message, context); }
-  success(message: string, context?: LogContext): void { this.record("success", message, context); }
-  warn(message: string, context?: LogContext): void { this.record("warn", message, context); }
-  error(message: string, error?: unknown, context?: LogContext): void { this.record("error", message, context, error); }
-  fatal(message: string, error?: unknown, context?: LogContext): void { this.record("fatal", message, context, error); }
-  skip(message: string, context?: LogContext): void { this.record("skip", message, context); }
-  child(): ILogger { return this; }
-  withPrefix(): ILogger { return this; }
+  debug(message: string, context?: LogContext): void {
+    this.record("debug", message, context);
+  }
+  info(message: string, context?: LogContext): void {
+    this.record("info", message, context);
+  }
+  waiting(message: string, context?: LogContext): void {
+    this.record("waiting", message, context);
+  }
+  progress(message: string, context?: LogContext): void {
+    this.record("progress", message, context);
+  }
+  cached(message: string, context?: LogContext): void {
+    this.record("cached", message, context);
+  }
+  success(message: string, context?: LogContext): void {
+    this.record("success", message, context);
+  }
+  warn(message: string, context?: LogContext): void {
+    this.record("warn", message, context);
+  }
+  error(message: string, error?: unknown, context?: LogContext): void {
+    this.record("error", message, context, error);
+  }
+  fatal(message: string, error?: unknown, context?: LogContext): void {
+    this.record("fatal", message, context, error);
+  }
+  skip(message: string, context?: LogContext): void {
+    this.record("skip", message, context);
+  }
+  child(): ILogger {
+    return this;
+  }
+  withPrefix(): ILogger {
+    return this;
+  }
   request(_data: RequestLogData): void {}
 
   /** Convenience: messages logged at a level (in order). */

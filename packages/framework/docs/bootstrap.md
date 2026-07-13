@@ -11,19 +11,21 @@ Source: `src/bootstrap/index.ts`, driven by `src/entry.ts`, types in `src/types.
 ## `bootstrap(options)`
 
 ```ts
-export async function bootstrap(options: BootstrapOptions): Promise<BootstrapResult>;
+export async function bootstrap(
+  options: BootstrapOptions,
+): Promise<BootstrapResult>;
 
 interface BootstrapOptions {
-  routesDir: string;                       // absolute path to scan for route.ts files
-  projectConfig: ProjectConfig;            // port/host/cors/api/rateLimit/auth + nodeEnv
-  healthCheck?: HealthCheckConfig;         // { version?, checks?: { database?, redis? } }
-  authHandlers?: AuthMiddlewareOptions;    // app-provided session/apiKey/flexible verifiers
-  hooks?: LifecycleHooks;                  // beforeRoutes/afterRoutes run here (see config.md)
+  routesDir: string; // absolute path to scan for route.ts files
+  projectConfig: ProjectConfig; // port/host/cors/api/rateLimit/auth + nodeEnv
+  healthCheck?: HealthCheckConfig; // { version?, checks?: { database?, redis? } }
+  authHandlers?: AuthMiddlewareOptions; // app-provided session/apiKey/flexible verifiers
+  hooks?: LifecycleHooks; // beforeRoutes/afterRoutes run here (see config.md)
 }
 
 interface BootstrapResult {
-  app: Hono;                               // the assembled Hono instance
-  config: ServerConfig;                    // { port, host?, nodeEnv? }
+  app: Hono; // the assembled Hono instance
+  config: ServerConfig; // { port, host?, nodeEnv? }
 }
 ```
 
@@ -46,7 +48,7 @@ interface BootstrapResult {
 
 ```ts
 export async function start(cwd: string = process.cwd()): Promise<void>;
-export async function runEntry(): Promise<void>;  // start() wrapped in try/catch -> process.exit(1)
+export async function runEntry(): Promise<void>; // start() wrapped in try/catch -> process.exit(1)
 ```
 
 Pipeline (`entry.ts`):
@@ -64,10 +66,22 @@ Pipeline (`entry.ts`):
 ## Important types (`types.ts`)
 
 ```ts
-interface ServerConfig { port: number; host?: string; nodeEnv?: string; }
-interface HealthCheckFn { (): Promise<{ status: string; latency?: number; data?: unknown }>; }
-interface HealthCheckConfig { version?: string; checks?: { database?: HealthCheckFn; redis?: HealthCheckFn }; }
-interface ShutdownHandler { name: string; handler: () => Promise<void> | void; }
+interface ServerConfig {
+  port: number;
+  host?: string;
+  nodeEnv?: string;
+}
+interface HealthCheckFn {
+  (): Promise<{ status: string; latency?: number; data?: unknown }>;
+}
+interface HealthCheckConfig {
+  version?: string;
+  checks?: { database?: HealthCheckFn; redis?: HealthCheckFn };
+}
+interface ShutdownHandler {
+  name: string;
+  handler: () => Promise<void> | void;
+}
 ```
 
 `BootstrapResult.app` is typed `Hono` (via `@damatjs/deps/hono`), so callers get a real Hono instance without casting.
@@ -77,6 +91,6 @@ interface ShutdownHandler { name: string; handler: () => Promise<void> | void; }
 - **`bootstrap` does not init services.** It calls `getLogger()` (which lazily inits a default logger if none exists) but assumes the pool/redis/modules were set up by `initializeServices` beforehand. Calling `bootstrap` standalone (e.g. in a test) gives you an app but no DB-backed behaviour unless you set up `PoolManager` yourself.
 - **`routesDir` must be absolute** and is resolved by the caller (`entry.start` joins it with `cwd`). The scanner silently returns no routes if the directory doesn't exist (`scanDirectory` guards with `existsSync`), so a wrong path yields an empty API rather than an error.
 - **Dev introspection leaks structure.** `/damat` and `/damat/api/routes` are intentionally dev-only; don't rely on them in production.
-- **API base default is `/api`.** Override with `projectConfig.http.api.entryRouter`. The routes *directory* default is `/src/api/routes`, overridden with `http.api.entryRouterPath`.
+- **API base default is `/api`.** Override with `projectConfig.http.api.entryRouter`. The routes _directory_ default is `/src/api/routes`, overridden with `http.api.entryRouterPath`.
 - **Handler errors go through `onError`, not middleware.** In Hono v4 an error thrown from a route handler is dispatched to `app.onError`; it never unwinds through the middleware chain, so the `errorHandler` middleware alone would leave handler throws with Hono's default 500. `bootstrap` installs both against the same `handleError`, so every throw gets the JSON error envelope.
 - **Hooks fail startup.** `beforeRoutes`/`afterRoutes` (and `beforeServices`/`afterServices` in `entry.start`) are awaited; there is no try/catch around them — a rejecting hook propagates and aborts the boot.

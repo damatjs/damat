@@ -3,7 +3,7 @@
  */
 
 import { model, columns, toModuleSchema } from "@damatjs/orm-model";
-import { generateMigration } from '@damatjs/orm-processor';
+import { generateMigration } from "@damatjs/orm-processor";
 
 const UserSchema = model("user", {
   id: columns.text().primaryKey(),

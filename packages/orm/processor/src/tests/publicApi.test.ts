@@ -24,14 +24,30 @@ describe("public API surface", () => {
   });
 
   it("exposes the sqlGenerator namespaces", () => {
-    expect(typeof processor.tablesSqlGenerator.generateCreateTable).toBe("function");
-    expect(typeof processor.columnsSqlGenerator.generateAddColumn).toBe("function");
-    expect(typeof processor.enumsSqlGenerator.generateCreateEnum).toBe("function");
-    expect(typeof processor.indexesSqlGenerator.generateCreateIndex).toBe("function");
-    expect(typeof processor.foreignKeysSqlGenerator.generateAddForeignKey).toBe("function");
-    expect(typeof processor.changeSqlGenerator.generateChangeSQL).toBe("function");
-    expect(typeof processor.generateMigration.generateFromDiff).toBe("function");
-    expect(typeof processor.generateMigration.generateFromSnapshot).toBe("function");
+    expect(typeof processor.tablesSqlGenerator.generateCreateTable).toBe(
+      "function",
+    );
+    expect(typeof processor.columnsSqlGenerator.generateAddColumn).toBe(
+      "function",
+    );
+    expect(typeof processor.enumsSqlGenerator.generateCreateEnum).toBe(
+      "function",
+    );
+    expect(typeof processor.indexesSqlGenerator.generateCreateIndex).toBe(
+      "function",
+    );
+    expect(typeof processor.foreignKeysSqlGenerator.generateAddForeignKey).toBe(
+      "function",
+    );
+    expect(typeof processor.changeSqlGenerator.generateChangeSQL).toBe(
+      "function",
+    );
+    expect(typeof processor.generateMigration.generateFromDiff).toBe(
+      "function",
+    );
+    expect(typeof processor.generateMigration.generateFromSnapshot).toBe(
+      "function",
+    );
   });
 
   it("exposes the snapshot helpers at the top level", () => {
@@ -46,6 +62,8 @@ describe("public API surface", () => {
     const diff = processor.diffSchemas.diffSchemas(prev, next);
     expect(diff.hasChanges).toBe(true);
     const migration = processor.generateMigration.generateFromDiff(diff);
-    expect(migration.upStatements[0]).toContain('CREATE TABLE IF NOT EXISTS "public"."user"');
+    expect(migration.upStatements[0]).toContain(
+      'CREATE TABLE IF NOT EXISTS "public"."user"',
+    );
   });
 });

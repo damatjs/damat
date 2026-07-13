@@ -16,12 +16,14 @@ const exitCodes: number[] = [];
 /** Invoke cac's matched action with the given positional arg, swallowing ExitSignal. */
 async function invokeHelp(
   cli: ReturnType<typeof cac>,
-  argv: string[]
+  argv: string[],
 ): Promise<void> {
   cli.parse(["node", "cli", ...argv], { run: false });
-  const matched = (cli as unknown as {
-    matchedCommand?: { commandAction?: (...a: unknown[]) => unknown };
-  }).matchedCommand;
+  const matched = (
+    cli as unknown as {
+      matchedCommand?: { commandAction?: (...a: unknown[]) => unknown };
+    }
+  ).matchedCommand;
   if (!matched?.commandAction) return;
   try {
     // `help [command]` -> action(commandName, options)

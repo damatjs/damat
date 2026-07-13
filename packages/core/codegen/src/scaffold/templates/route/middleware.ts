@@ -1,5 +1,3 @@
-
-
 export function routeMiddleware(): string {
   return `import type { MiddlewareHandler } from "@damatjs/deps/hono";
 

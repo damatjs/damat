@@ -52,7 +52,7 @@ describe("ModelAccessor.findMany", () => {
 
   it("supports relations via with()", () => {
     const { sql } = acc().findMany({ with: { posts: { select: ["id"] } } });
-    expect(sql.sql).toContain('LEFT JOIN LATERAL');
+    expect(sql.sql).toContain("LEFT JOIN LATERAL");
     expect(sql.sql).toContain('AS "posts"');
   });
 });
@@ -60,9 +60,7 @@ describe("ModelAccessor.findMany", () => {
 describe("ModelAccessor.findOne", () => {
   it("forces LIMIT 1", () => {
     const { sql } = acc().findOne({ where: { id: "u1" } });
-    expect(sql.sql).toBe(
-      'SELECT * FROM "app"."user" WHERE "id" = $1 LIMIT 1',
-    );
+    expect(sql.sql).toBe('SELECT * FROM "app"."user" WHERE "id" = $1 LIMIT 1');
     expect(sql.params).toEqual(["u1"]);
   });
 });
@@ -108,9 +106,7 @@ describe("ModelAccessor.update", () => {
       set: { verified: true },
       allowFullTable: true,
     });
-    expect(sql.sql).toBe(
-      'UPDATE "app"."user" SET "verified" = $1 RETURNING *',
-    );
+    expect(sql.sql).toBe('UPDATE "app"."user" SET "verified" = $1 RETURNING *');
   });
 
   it("applies whereRaw (single clause) on update", () => {

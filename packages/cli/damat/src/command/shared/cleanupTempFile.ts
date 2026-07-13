@@ -9,6 +9,8 @@ export function cleanupTempFile(path: string, logger: ILogger): void {
   try {
     if (existsSync(path)) unlinkSync(path);
   } catch (err) {
-    logger.debug(`Failed to clean up ${path}: ${err instanceof Error ? err.message : String(err)}`);
+    logger.debug(
+      `Failed to clean up ${path}: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }

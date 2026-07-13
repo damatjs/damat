@@ -23,7 +23,9 @@ beforeEach(() => {
   resetMocks();
   readdirMap = {};
   statDirMap = {};
-  mockReaddirSync.mockImplementation((p: string) => readdirMap[p as string] ?? []);
+  mockReaddirSync.mockImplementation(
+    (p: string) => readdirMap[p as string] ?? [],
+  );
   mockStatSync.mockImplementation((p: string) => ({
     isDirectory: () => statDirMap[p as string] ?? false,
   }));
@@ -99,9 +101,7 @@ describe("installModuleSplit", () => {
       packageDir: "/pkg",
       force: true,
     });
-    expect(
-      rmCalls.some((c) => c.path === "/app/src/modules/user"),
-    ).toBe(true);
+    expect(rmCalls.some((c) => c.path === "/app/src/modules/user")).toBe(true);
   });
 
   it("merges api routes, workflows and tests subtrees into grouped targets", async () => {
@@ -198,9 +198,9 @@ describe("installModuleSplit", () => {
     expect(
       writeCalls.some((w) => w.path === "/app/src/links/user/index.ts"),
     ).toBe(true);
-    expect(
-      writeCalls.some((w) => w.path === "/app/src/links/index.ts"),
-    ).toBe(true);
+    expect(writeCalls.some((w) => w.path === "/app/src/links/index.ts")).toBe(
+      true,
+    );
   });
 
   it("preserves an owner-edited link target (skip-existing) unless forced", async () => {
@@ -301,7 +301,9 @@ describe("removeModuleSplit", () => {
       ).toBe(true);
     }
     // Aggregator rewritten from the surviving owner dirs.
-    const aggregator = writeCalls.find((w) => w.path === "/app/src/links/index.ts");
+    const aggregator = writeCalls.find(
+      (w) => w.path === "/app/src/links/index.ts",
+    );
     expect(aggregator).toBeDefined();
     expect(aggregator!.content).toContain("billingLinks");
     expect(aggregator!.content).not.toContain("userLinks");

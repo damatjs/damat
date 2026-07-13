@@ -1,5 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { mkdtempSync, mkdirSync, rmSync, existsSync, readFileSync, readdirSync, writeFileSync } from "fs";
+import {
+  mkdtempSync,
+  mkdirSync,
+  rmSync,
+  existsSync,
+  readFileSync,
+  readdirSync,
+  writeFileSync,
+} from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { FileTransport } from "../file-transport";
@@ -36,7 +44,12 @@ afterEach(() => {
 });
 
 function makeTransport(extra: Record<string, unknown> = {}) {
-  return new FileTransport({ enabled: true, dir: tmp, bufferFlushMs: 0, ...extra });
+  return new FileTransport({
+    enabled: true,
+    dir: tmp,
+    bufferFlushMs: 0,
+    ...extra,
+  });
 }
 
 describe("FileTransport: enabled gating", () => {
@@ -90,12 +103,20 @@ describe("FileTransport: log + flush writes both .log and .md", () => {
     t.log(entry({ message: "m", context: { a: 1 }, timestamp: "TS" }));
     t.flush();
     const logFile = readdirSync(tmp).find((f) => f.endsWith(".log"))!;
-    expect(readFileSync(join(tmp, logFile), "utf-8")).toBe('[TS] [INFO] m {"a":1}\n');
+    expect(readFileSync(join(tmp, logFile), "utf-8")).toBe(
+      '[TS] [INFO] m {"a":1}\n',
+    );
   });
 
   it("appends an error block (name/message/stack) to the .log line", () => {
     const t = makeTransport();
-    t.log(entry({ message: "m", timestamp: "TS", error: { name: "Boom", message: "x", stack: "stk" } }));
+    t.log(
+      entry({
+        message: "m",
+        timestamp: "TS",
+        error: { name: "Boom", message: "x", stack: "stk" },
+      }),
+    );
     t.flush();
     const logFile = readdirSync(tmp).find((f) => f.endsWith(".log"))!;
     const content = readFileSync(join(tmp, logFile), "utf-8");
@@ -241,7 +262,9 @@ describe("FileTransport: rotation", () => {
 
     const logs = readdirSync(tmp).filter((f) => f.endsWith(".log"));
     const active = logs.filter((f) => /^\d{4}-\d{2}-\d{2}_all\.log$/.test(f));
-    const rotated = logs.filter((f) => /^\d{4}-\d{2}-\d{2}_all_\d{4}-\d{2}-\d{2}T[\d-]+Z\.log$/.test(f));
+    const rotated = logs.filter((f) =>
+      /^\d{4}-\d{2}-\d{2}_all_\d{4}-\d{2}-\d{2}T[\d-]+Z\.log$/.test(f),
+    );
     expect(active).toHaveLength(1);
     expect(rotated).toHaveLength(1);
 
@@ -256,11 +279,17 @@ describe("FileTransport: rotation", () => {
     // markdown file was also rolled, and a fresh active .md was started).
     const mds = readdirSync(tmp).filter((f) => f.endsWith(".md"));
     const activeMd = mds.filter((f) => /^\d{4}-\d{2}-\d{2}_all\.md$/.test(f));
-    const rotatedMd = mds.filter((f) => /^\d{4}-\d{2}-\d{2}_all_.+\.md$/.test(f));
+    const rotatedMd = mds.filter((f) =>
+      /^\d{4}-\d{2}-\d{2}_all_.+\.md$/.test(f),
+    );
     expect(activeMd).toHaveLength(1);
     expect(rotatedMd).toHaveLength(1);
-    expect(readFileSync(join(tmp, activeMd[0]), "utf-8")).toContain("second-after-roll");
-    expect(readFileSync(join(tmp, activeMd[0]), "utf-8")).not.toContain("first-");
+    expect(readFileSync(join(tmp, activeMd[0]), "utf-8")).toContain(
+      "second-after-roll",
+    );
+    expect(readFileSync(join(tmp, activeMd[0]), "utf-8")).not.toContain(
+      "first-",
+    );
   });
 });
 
@@ -288,7 +317,9 @@ describe("FileTransport: concurrent writes", () => {
       expect(line).toMatch(/^\[TS\] \[INFO\] line-\d+$/);
     }
     // ...and every index appears exactly once.
-    const seen = new Set(lines.map((l) => Number(l.slice("[TS] [INFO] line-".length))));
+    const seen = new Set(
+      lines.map((l) => Number(l.slice("[TS] [INFO] line-".length))),
+    );
     expect(seen.size).toBe(N);
     for (let i = 0; i < N; i++) expect(seen.has(i)).toBe(true);
   });
@@ -305,7 +336,11 @@ describe("FileTransport: failure path (unwritable location)", () => {
     writeFileSync(blocker, "i am a file, not a directory");
     let caught: unknown;
     try {
-      new FileTransport({ enabled: true, dir: join(blocker, "logs"), bufferFlushMs: 0 });
+      new FileTransport({
+        enabled: true,
+        dir: join(blocker, "logs"),
+        bufferFlushMs: 0,
+      });
     } catch (e) {
       caught = e;
     }
@@ -316,7 +351,11 @@ describe("FileTransport: failure path (unwritable location)", () => {
   it("constructor does NOT touch the unwritable path when disabled (graceful no-op)", () => {
     const blocker = join(tmp, "blocker");
     writeFileSync(blocker, "file");
-    const t = new FileTransport({ enabled: false, dir: join(blocker, "logs"), bufferFlushMs: 0 });
+    const t = new FileTransport({
+      enabled: false,
+      dir: join(blocker, "logs"),
+      bufferFlushMs: 0,
+    });
     t.log(entry());
     t.flush();
     t.close(); // none of these throw; nothing was created
@@ -346,6 +385,8 @@ describe("FileTransport: failure path (unwritable location)", () => {
     mkdirSync(dir, { recursive: true });
     t.flush();
     const logFile = readdirSync(dir).find((f) => f.endsWith(".log"))!;
-    expect(readFileSync(join(dir, logFile), "utf-8")).toBe("[TS] [INFO] survivor\n");
+    expect(readFileSync(join(dir, logFile), "utf-8")).toBe(
+      "[TS] [INFO] survivor\n",
+    );
   });
 });

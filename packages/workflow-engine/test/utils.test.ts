@@ -96,14 +96,26 @@ describe("utils/parallel", () => {
   });
 
   it("supports heterogeneous output types in the result tuple", async () => {
-    const a = runStep(createStep<void, string>("a", async () => "x"), undefined as never, ctx());
-    const b = runStep(createStep<void, number>("b", async () => 7), undefined as never, ctx());
+    const a = runStep(
+      createStep<void, string>("a", async () => "x"),
+      undefined as never,
+      ctx(),
+    );
+    const b = runStep(
+      createStep<void, number>("b", async () => 7),
+      undefined as never,
+      ctx(),
+    );
     const exit = await run(parallel(a, b));
     if (Exit.isSuccess(exit)) expect(exit.value).toEqual(["x", 7]);
   });
 
   it("fails if any effect fails", async () => {
-    const ok = runStep(createStep<void, number>("ok", async () => 1), undefined as never, ctx());
+    const ok = runStep(
+      createStep<void, number>("ok", async () => 1),
+      undefined as never,
+      ctx(),
+    );
     const bad = runStep(
       createStep<void, number>("bad", async () => {
         throw new Error("parallel failure");
@@ -119,7 +131,11 @@ describe("utils/parallel", () => {
   });
 
   it("handles a single effect", async () => {
-    const a = runStep(createStep<void, number>("solo", async () => 99), undefined as never, ctx());
+    const a = runStep(
+      createStep<void, number>("solo", async () => 99),
+      undefined as never,
+      ctx(),
+    );
     const exit = await run(parallel(a));
     if (Exit.isSuccess(exit)) expect(exit.value).toEqual([99]);
   });

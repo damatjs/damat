@@ -22,26 +22,26 @@ export interface ColumnSchema {
   name: string;
   type: ColumnType;
   primaryKey?: boolean;
-  length?: number;        // varchar/char length, numeric precision, vector dimensions
-  scale?: number;         // numeric digits after the decimal point
-  nullable: boolean;      // required — always set by builders
-  default?: any;          // default value *expression* (already SQL-quoted)
+  length?: number; // varchar/char length, numeric precision, vector dimensions
+  scale?: number; // numeric digits after the decimal point
+  nullable: boolean; // required — always set by builders
+  default?: any; // default value *expression* (already SQL-quoted)
   unique?: boolean;
-  enum?: string;          // named enum type reference (matches EnumSchema.name)
-  array?: boolean;        // array column (e.g. text[])
-  fieldName?: string;     // DB column name when it differs from the property name
+  enum?: string; // named enum type reference (matches EnumSchema.name)
+  array?: boolean; // array column (e.g. text[])
+  fieldName?: string; // DB column name when it differs from the property name
   autoincrement?: boolean; // serial/bigserial/smallserial
 }
 ```
 
 Notes / gotchas:
 
-- `length` is overloaded: it carries varchar/char length, numeric precision, *and*
+- `length` is overloaded: it carries varchar/char length, numeric precision, _and_
   the dimension count for vector columns. `scale` is numeric-only.
 - `default` is an expression string (e.g. `"now()"`, `"generate_id('usr')"`,
   `"'active'"`). String literal defaults arrive already single-quoted from the
   builder — do not re-quote when generating DDL.
-- `enum` holds the *name* of an `EnumSchema`, not the values. The values live on
+- `enum` holds the _name_ of an `EnumSchema`, not the values. The values live on
   the `EnumSchema` declared at module level.
 
 ## `TableSchema` (`table.ts`)
@@ -66,7 +66,7 @@ export interface TableSchema {
 
 ```ts
 export interface ModuleSchema {
-  schema?: string;            // PG schema name, default "public"
+  schema?: string; // PG schema name, default "public"
   moduleName: string;
   tables: Omit<TableSchema, "relations">[];
   enums?: EnumSchema[];
@@ -83,7 +83,7 @@ passed to codegen.
 ```ts
 export interface EnumSchema {
   schema?: string;
-  name: string;       // CREATE TYPE <name> AS ENUM (...)
+  name: string; // CREATE TYPE <name> AS ENUM (...)
   values: string[];
 }
 ```
@@ -92,7 +92,7 @@ export interface EnumSchema {
 
 ```ts
 export type ForeignKeyAction =
-  | "CASCADE" | "SET NULL" | "SET DEFAULT" | "RESTRICT" | "NO ACTION";
+  "CASCADE" | "SET NULL" | "SET DEFAULT" | "RESTRICT" | "NO ACTION";
 
 export type ForeignKeySchemaMatch = "SIMPLE" | "FULL";
 
@@ -100,7 +100,7 @@ export type ForeignKeyType = { name: string; type: ColumnType };
 
 export interface ForeignKeySchema {
   name: string;
-  columns: ForeignKeyType[];        // FK columns on THIS table (composite-aware)
+  columns: ForeignKeyType[]; // FK columns on THIS table (composite-aware)
   referencedTable: string;
   referencedColumns: string[];
   onDelete?: ForeignKeyAction;
@@ -108,7 +108,7 @@ export interface ForeignKeySchema {
   deferrable?: boolean;
   initiallyDeferred?: boolean;
   match?: ForeignKeySchemaMatch;
-  unique?: boolean;   // 1:1 marker
+  unique?: boolean; // 1:1 marker
   nullable?: boolean;
   indexed?: boolean;
 }
@@ -126,7 +126,7 @@ export type ConstraintType = "unique" | "primary_key" | "check" | "exclude";
 export interface Constraint {
   name?: string;
   type: ConstraintType;
-  where?: string;            // partial constraint condition
+  where?: string; // partial constraint condition
   deferrable?: boolean;
   initiallyDeferred?: boolean;
 }
@@ -143,19 +143,22 @@ fields.
 ```ts
 export type IndexType = "btree" | "hash" | "gin" | "gist" | "brin";
 
-export interface IndexColumn { name: string; order?: "ASC" | "DESC"; }
+export interface IndexColumn {
+  name: string;
+  order?: "ASC" | "DESC";
+}
 
 export interface IndexSchema {
   name?: string;
   columns: (string | IndexColumn)[]; // strings are normalised to IndexColumn
   unique?: boolean;
   type?: IndexType;
-  where?: string;          // partial index
-  concurrently?: boolean;  // CREATE INDEX CONCURRENTLY
+  where?: string; // partial index
+  concurrently?: boolean; // CREATE INDEX CONCURRENTLY
 }
 ```
 
-`columns` accepts bare strings *or* `IndexColumn` objects; the model layer's
+`columns` accepts bare strings _or_ `IndexColumn` objects; the model layer's
 `cleanupIndexSchema` normalises strings to `{ name }`.
 
 ## Relations (`relation.ts`)
@@ -166,7 +169,9 @@ This file holds both the snapshot relation type and the builder option payloads.
 export type RelationType = "belongsTo" | "hasMany" | "hasOne";
 
 // Builder option payloads (inputs to the @damatjs/orm-model fluent API):
-export interface RelationOptions { mappedBy?: string; }
+export interface RelationOptions {
+  mappedBy?: string;
+}
 export interface LinkConfig {
   name?: string;
   foreignKey?: string | string[] | ForeignKeyType | ForeignKeyType[];
@@ -183,12 +188,12 @@ export interface ConstraintOptions {
 
 // Snapshot relation record (module-level metadata):
 export interface RelationSchema {
-  fromTable: string;        // source table
-  from: string;             // source property name
-  to: string;               // target table
+  fromTable: string; // source table
+  from: string; // source property name
+  to: string; // target table
   type: RelationType;
-  mappedBy?: string[];      // inverse property name(s) on the other side
-  linkedBy?: string[];      // FK column name(s) — populated on belongsTo only
+  mappedBy?: string[]; // inverse property name(s) on the other side
+  linkedBy?: string[]; // FK column name(s) — populated on belongsTo only
   rule?: {
     onDelete?: ForeignKeyAction;
     onUpdate?: ForeignKeyAction;
@@ -199,7 +204,7 @@ export interface RelationSchema {
 }
 ```
 
-`RelationSchema` is *not* the FK constraint record — that is `ForeignKeySchema`.
+`RelationSchema` is _not_ the FK constraint record — that is `ForeignKeySchema`.
 `RelationSchema` is the graph view: who points at whom, by which property, via
 which FK column. `linkedBy` only appears on `belongsTo` entries (the side that
 physically owns the FK). The TODO comment in source flags that this record is

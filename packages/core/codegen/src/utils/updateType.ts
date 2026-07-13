@@ -1,5 +1,5 @@
 import { ModuleSchema } from "@damatjs/orm-type";
-import { toPascalCase } from './stringConvertor';
+import { toPascalCase } from "./stringConvertor";
 
 /**
  * Emit the `Update*` partial update type — all non-PK columns optional.
@@ -8,7 +8,9 @@ import { toPascalCase } from './stringConvertor';
  * export type UpdateProduct = Partial<Omit<Product, 'id'>>;
  * ```
  */
-export const generateUpdateType = (table: ModuleSchema["tables"][number]): string[] => {
+export const generateUpdateType = (
+  table: ModuleSchema["tables"][number],
+): string[] => {
   const name = toPascalCase(table.name);
   const pkCols = table.columns
     .filter((c) => c.primaryKey)
@@ -21,4 +23,4 @@ export const generateUpdateType = (table: ModuleSchema["tables"][number]): strin
   const omit = pkCols.length === 1 ? pkCols[0] : pkCols.join(" | ");
 
   return [`export type Update${name} = Partial<Omit<${name}, ${omit}>>;`];
-}
+};

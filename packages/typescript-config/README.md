@@ -16,8 +16,8 @@ This package is internal to the monorepo and is **not published**. It is referen
 // some-package/package.json
 {
   "devDependencies": {
-    "@damatjs/typescript-config": "*"
-  }
+    "@damatjs/typescript-config": "*",
+  },
 }
 ```
 
@@ -45,9 +45,9 @@ A backend package extends the base preset and supplies only its own `rootDir`/`o
   "compilerOptions": {
     "types": ["bun"],
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
   },
-  "include": ["src"]
+  "include": ["src"],
 }
 ```
 
@@ -57,11 +57,11 @@ Build with the package's own script (typically `tsc` or `tsc && tsc-alias`). No 
 
 This package exposes JSON preset files (referenced by relative subpath, e.g. `@damatjs/typescript-config/base.json`). There are no runtime exports.
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `base.json` | tsconfig preset | The shared base: `ES2023` target/lib, `ESNext` modules, `bundler` resolution, full strict mode (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitReturns`, `noUnusedLocals`), `composite`/`incremental` project builds, declaration + source maps, decorator metadata, and monorepo `paths` aliases. Emits to `${configDir}/dist`. |
-| `nextjs.json` | tsconfig preset | Extends `base.json` for Next.js apps: adds the `next` plugin, `jsx: "preserve"`, `allowJs`, `noEmit`, and frontend `paths` (`@damatjs/ui`, `@damatjs/eslint-config`, ...). |
-| `react-library.json` | tsconfig preset | Extends `base.json` for React component libraries: only adds `jsx: "react-jsx"`. |
+| Export               | Kind            | Summary                                                                                                                                                                                                                                                                                                                                                          |
+| -------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `base.json`          | tsconfig preset | The shared base: `ES2023` target/lib, `ESNext` modules, `bundler` resolution, full strict mode (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitReturns`, `noUnusedLocals`), `composite`/`incremental` project builds, declaration + source maps, decorator metadata, and monorepo `paths` aliases. Emits to `${configDir}/dist`. |
+| `nextjs.json`        | tsconfig preset | Extends `base.json` for Next.js apps: adds the `next` plugin, `jsx: "preserve"`, `allowJs`, `noEmit`, and frontend `paths` (`@damatjs/ui`, `@damatjs/eslint-config`, ...).                                                                                                                                                                                       |
+| `react-library.json` | tsconfig preset | Extends `base.json` for React component libraries: only adds `jsx: "react-jsx"`.                                                                                                                                                                                                                                                                                 |
 
 See [`docs/architecture.md`](./docs/architecture.md) for a field-by-field breakdown of `base.json` and the rationale behind each option.
 

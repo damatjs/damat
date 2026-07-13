@@ -17,9 +17,11 @@ import {
 
 export const moduleRemoveCommand: Command = {
   name: "remove",
-  description: "Remove an installed module from this app (inverse of module add)",
+  description:
+    "Remove an installed module from this app (inverse of module add)",
   aliases: ["rm", "uninstall"],
-  usage: "damat module remove <id> [--dir <path>] [--force] [--clean-env] [--dry-run]",
+  usage:
+    "damat module remove <id> [--dir <path>] [--force] [--clean-env] [--dry-run]",
   examples: [
     "damat module remove user-management",
     "damat module remove user-management --dry-run   # show what would be deleted",
@@ -37,7 +39,8 @@ export const moduleRemoveCommand: Command = {
       name: "force",
       alias: "f",
       type: "boolean",
-      description: "Remove even when other installed modules depend on this one",
+      description:
+        "Remove even when other installed modules depend on this one",
       default: false,
     },
     {
@@ -84,7 +87,9 @@ export const moduleRemoveCommand: Command = {
       ].filter((t) => existsSync(t));
 
       if (targets.length === 0 && !entry) {
-        ctx.logger.error(`Module "${moduleId}" is not installed (nothing to remove)`);
+        ctx.logger.error(
+          `Module "${moduleId}" is not installed (nothing to remove)`,
+        );
         return { exitCode: 1 };
       }
 
@@ -115,18 +120,27 @@ export const moduleRemoveCommand: Command = {
         ...(entry ? [`deregister "${moduleId}" from damat.config.ts`] : []),
         `remove "@${moduleId}/*" alias from tsconfig.json (if present)`,
         ...(ctx.options["clean-env"] && manifest
-          ? [`remove the "# --- module: ${manifest.name} ---" block from .env.example`]
+          ? [
+              `remove the "# --- module: ${manifest.name} ---" block from .env.example`,
+            ]
           : []),
       ];
 
       if (dryRun) {
         ctx.logger.info(
-          [`Dry run — removing "${moduleId}" would:`, ...plannedActions.map((a) => `  - ${a}`)].join("\n"),
+          [
+            `Dry run — removing "${moduleId}" would:`,
+            ...plannedActions.map((a) => `  - ${a}`),
+          ].join("\n"),
         );
         return { exitCode: 0 };
       }
 
-      const { removed, linksRegenerated } = removeModuleSplit(ctx.cwd, moduleId, modulesDir);
+      const { removed, linksRegenerated } = removeModuleSplit(
+        ctx.cwd,
+        moduleId,
+        modulesDir,
+      );
       for (const path of removed) {
         ctx.logger.success(`Removed ${relative(ctx.cwd, path)}`);
       }
@@ -162,7 +176,9 @@ export const moduleRemoveCommand: Command = {
       if (ctx.options["clean-env"] && manifest) {
         const removedVars = removeModuleEnvVars(ctx.cwd, manifest.name);
         if (removedVars.length > 0) {
-          ctx.logger.info(`Removed from .env.example: ${removedVars.join(", ")}`);
+          ctx.logger.info(
+            `Removed from .env.example: ${removedVars.join(", ")}`,
+          );
           ctx.logger.warn(
             `Values in .env were left untouched — remove ${removedVars.join(", ")} yourself if nothing else uses them`,
           );
@@ -187,7 +203,11 @@ export const moduleRemoveCommand: Command = {
 };
 
 /** Other installed modules whose manifest lists `moduleId` as a dependency. */
-function findDependents(cwd: string, modulesDir: string, moduleId: string): string[] {
+function findDependents(
+  cwd: string,
+  modulesDir: string,
+  moduleId: string,
+): string[] {
   const root = join(cwd, modulesDir);
   if (!existsSync(root)) return [];
   const dependents: string[] = [];

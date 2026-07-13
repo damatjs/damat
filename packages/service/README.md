@@ -65,12 +65,25 @@ Generated accessors are camelCased from the model key (`account` → `service.ac
 
 ```ts
 const svc = new UserModuleService({ apiKey: "..." });
-const user = await svc.user.create({ data: { email: "a@b.com" }, returning: ["id"] });
-const many = await svc.user.findMany({ where: { active: true }, take: 10, include: ["account"] });
+const user = await svc.user.create({
+  data: { email: "a@b.com" },
+  returning: ["id"],
+});
+const many = await svc.user.findMany({
+  where: { active: true },
+  take: 10,
+  include: ["account"],
+});
 
 // insert-or-update on a unique column, and update returning the single row
-await svc.user.upsert({ data: { email: "a@b.com", name: "Ada" }, onConflict: ["email"] });
-const updated = await svc.user.updateOne({ where: { id: user.id }, data: { name: "Grace" } });
+await svc.user.upsert({
+  data: { email: "a@b.com", name: "Ada" },
+  onConflict: ["email"],
+});
+const updated = await svc.user.updateOne({
+  where: { id: user.id },
+  data: { name: "Grace" },
+});
 const byId = await svc.user.findById(user.id);
 
 // remove the user and everything reachable via hasMany/hasOne, atomically
@@ -79,22 +92,22 @@ await svc.user.delete({ where: { id: user.id }, cascade: true });
 
 ## API
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `ModuleService(config)` | factory | Builds an abstract base class from `{ models, credentialsSchema?, cache?, logQueries?, events? }`. Returns a class with `em`, `getModels`, `transaction()`, and one `ModelMethods` accessor per model (camelCased key). |
-| `ModelMethods<T>` | class | The per-model CRUD surface: `create`, `createMany`, `upsert`, `upsertMany`, `find`, `findById`, `findOne`, `findMany`, `update`, `updateOne`, `delete` (optional `cascade`), `softDelete` (optional `cascade`), `restore`, `count`, `exists`, plus relation loading and transaction binding. |
-| `PoolManager` | static class | Process-wide holder of the `Pool`, `PgEntityManager`, and `ConnectionManager`. `setup`, `getPool`, `getPgEntityManager`, `getConnectionManager`, `healthCheck`, `getStats`, `isInitialized`, `reset`, `close` (drains and ends the pg pool; idempotent). State lives on `globalThis` so duplicate package copies share one pool. |
-| `defineModule(name, definition)` | factory | Wraps a service class + credentials loader into a `ModuleInstance` whose `.service` is a lazy `Proxy`. Returns `{ name, service, credentials, init }`. |
-| `ModuleDefinition<TService>` | type | `{ service: new (credentials) => TService; credentials: (env) => any }`. |
-| `ModuleInstance<TService>` | type | `{ name; service; credentials; init() }`. |
-| `ModuleRegistry` | interface | Empty interface apps augment via declaration merging so `getModule("user")` (in the framework) is typed. |
-| `ModuleServiceConfig`, `ModelsMap`, `FindOptions`, `CreateOptions`, `CreateManyOptions`, `UpsertOptions`, `UpsertManyOptions`, `UpdateOptions`, `DeleteOptions`, `SoftDeleteOptions`, `CountOptions`, `ExistsOptions`, `ToCamelCase` | types | Configuration and per-method option types for the service layer. |
-| `withTaggedCache(methods, model, config)`, `modelCacheTag(model)` | function | The opt-in Redis read cache (applied automatically by `ModuleService` when the config carries `cache`) and the implicit invalidation tag a model's cached reads carry. |
-| `CacheReadOptions`, `ServiceCacheConfig` | types | Per-call `cache: { ttl?, tags? }` read options and the service-level cache switch `{ defaultTtl?, prefix? }`. |
-| `withModelEvents(methods, model)`, `modelEventName(model, kind)` | function | The opt-in CRUD event wrapper (applied automatically when the config carries `events: true`) and the `<model>.<kind>` name a write emits. |
-| `ModelEventPayload` | type | `{ model, method, result }` — the payload every model CRUD event carries. |
-| `PoolManagerStats`, `ConnectionManagerLike` | types | Pool statistics and the minimal connection-manager shape `PoolManager` accepts. |
-| `toCamelCase(name)` | internal util | Lowercases the first character only (`"UserService"` → `"userService"`); used internally to derive accessor names. Lives in `src/util/string.ts` and is **not** re-exported from `@damatjs/services`. |
+| Export                                                                                                                                                                                                                               | Kind          | Summary                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ModuleService(config)`                                                                                                                                                                                                              | factory       | Builds an abstract base class from `{ models, credentialsSchema?, cache?, logQueries?, events? }`. Returns a class with `em`, `getModels`, `transaction()`, and one `ModelMethods` accessor per model (camelCased key).                                                                                                          |
+| `ModelMethods<T>`                                                                                                                                                                                                                    | class         | The per-model CRUD surface: `create`, `createMany`, `upsert`, `upsertMany`, `find`, `findById`, `findOne`, `findMany`, `update`, `updateOne`, `delete` (optional `cascade`), `softDelete` (optional `cascade`), `restore`, `count`, `exists`, plus relation loading and transaction binding.                                     |
+| `PoolManager`                                                                                                                                                                                                                        | static class  | Process-wide holder of the `Pool`, `PgEntityManager`, and `ConnectionManager`. `setup`, `getPool`, `getPgEntityManager`, `getConnectionManager`, `healthCheck`, `getStats`, `isInitialized`, `reset`, `close` (drains and ends the pg pool; idempotent). State lives on `globalThis` so duplicate package copies share one pool. |
+| `defineModule(name, definition)`                                                                                                                                                                                                     | factory       | Wraps a service class + credentials loader into a `ModuleInstance` whose `.service` is a lazy `Proxy`. Returns `{ name, service, credentials, init }`.                                                                                                                                                                           |
+| `ModuleDefinition<TService>`                                                                                                                                                                                                         | type          | `{ service: new (credentials) => TService; credentials: (env) => any }`.                                                                                                                                                                                                                                                         |
+| `ModuleInstance<TService>`                                                                                                                                                                                                           | type          | `{ name; service; credentials; init() }`.                                                                                                                                                                                                                                                                                        |
+| `ModuleRegistry`                                                                                                                                                                                                                     | interface     | Empty interface apps augment via declaration merging so `getModule("user")` (in the framework) is typed.                                                                                                                                                                                                                         |
+| `ModuleServiceConfig`, `ModelsMap`, `FindOptions`, `CreateOptions`, `CreateManyOptions`, `UpsertOptions`, `UpsertManyOptions`, `UpdateOptions`, `DeleteOptions`, `SoftDeleteOptions`, `CountOptions`, `ExistsOptions`, `ToCamelCase` | types         | Configuration and per-method option types for the service layer.                                                                                                                                                                                                                                                                 |
+| `withTaggedCache(methods, model, config)`, `modelCacheTag(model)`                                                                                                                                                                    | function      | The opt-in Redis read cache (applied automatically by `ModuleService` when the config carries `cache`) and the implicit invalidation tag a model's cached reads carry.                                                                                                                                                           |
+| `CacheReadOptions`, `ServiceCacheConfig`                                                                                                                                                                                             | types         | Per-call `cache: { ttl?, tags? }` read options and the service-level cache switch `{ defaultTtl?, prefix? }`.                                                                                                                                                                                                                    |
+| `withModelEvents(methods, model)`, `modelEventName(model, kind)`                                                                                                                                                                     | function      | The opt-in CRUD event wrapper (applied automatically when the config carries `events: true`) and the `<model>.<kind>` name a write emits.                                                                                                                                                                                        |
+| `ModelEventPayload`                                                                                                                                                                                                                  | type          | `{ model, method, result }` — the payload every model CRUD event carries.                                                                                                                                                                                                                                                        |
+| `PoolManagerStats`, `ConnectionManagerLike`                                                                                                                                                                                          | types         | Pool statistics and the minimal connection-manager shape `PoolManager` accepts.                                                                                                                                                                                                                                                  |
+| `toCamelCase(name)`                                                                                                                                                                                                                  | internal util | Lowercases the first character only (`"UserService"` → `"userService"`); used internally to derive accessor names. Lives in `src/util/string.ts` and is **not** re-exported from `@damatjs/services`.                                                                                                                            |
 
 This package has a single root export (`@damatjs/services`); there are no subpath exports.
 
@@ -110,7 +123,7 @@ than intended:
   rows — paginate explicitly for large tables.)
 - **Option allow-listing.** `find`/`findMany`/`delete` forward only their known
   option keys. Raw-SQL (`whereRaw`) and full-table (`allowFullTable`) escape
-  hatches are *not* reachable through the service layer — use the underlying
+  hatches are _not_ reachable through the service layer — use the underlying
   `@damatjs/orm-pg` repository directly when you deliberately need them.
 - **`orderBy` validation.** `direction` is restricted to `ASC`/`DESC` and
   `nulls` to `NULLS FIRST`/`NULLS LAST` (both string-interpolated in SQL, so
@@ -173,8 +186,8 @@ Two more per-service config switches, both off by default:
 ```ts
 class UserService extends ModuleService({
   models,
-  logQueries: true,   // one debug `query` log per CRUD call
-  events: true,       // <model>.created|updated|deleted on the global bus
+  logQueries: true, // one debug `query` log per CRUD call
+  events: true, // <model>.created|updated|deleted on the global bus
 }) {}
 ```
 

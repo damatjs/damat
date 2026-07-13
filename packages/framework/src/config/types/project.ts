@@ -1,5 +1,5 @@
-import { LoggerConfig } from '@damatjs/logger';
-import { HttpConfig } from './http';
+import { LoggerConfig } from "@damatjs/logger";
+import { HttpConfig } from "./http";
 
 export interface ProjectConfig {
   databaseUrl?: string;

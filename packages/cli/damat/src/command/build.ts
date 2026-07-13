@@ -1,6 +1,14 @@
 import { spawn } from "bun";
 import { join } from "node:path";
-import { existsSync, mkdirSync, writeFileSync, readdirSync, statSync, copyFileSync, rmSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  writeFileSync,
+  readdirSync,
+  statSync,
+  copyFileSync,
+  rmSync,
+} from "node:fs";
 import { type Command } from "@damatjs/cli";
 import { runTypeCheck } from "./shared/typecheck";
 import { cleanupTempFile } from "./shared/cleanupTempFile";
@@ -53,7 +61,8 @@ export const buildCommand: Command = {
     {
       name: "typecheck",
       type: "boolean",
-      description: "Type-check the app before building (use --no-typecheck to skip)",
+      description:
+        "Type-check the app before building (use --no-typecheck to skip)",
       default: true,
     },
   ],
@@ -84,7 +93,7 @@ export const buildCommand: Command = {
       ctx.logger.info("Cleaning old build...");
       rmSync(outputDir, { recursive: true, force: true });
     }
-    
+
     mkdirSync(outputDir, { recursive: true });
 
     const tempEntryPath = join(damatDir, "build-entry.ts");
@@ -95,10 +104,15 @@ export const buildCommand: Command = {
     writeFileSync(tempEntryPath, entryContent);
 
     const buildArgs = [
-      "bun", "build", tempEntryPath,
-      "--outfile", entryJsPath,
-      "--target", target,
-      "--packages", "external",
+      "bun",
+      "build",
+      tempEntryPath,
+      "--outfile",
+      entryJsPath,
+      "--target",
+      target,
+      "--packages",
+      "external",
     ];
 
     if (minify) {
@@ -127,7 +141,17 @@ export const buildCommand: Command = {
         const configJsPath = join(outputDir, "damat.config.js");
 
         const configResult = spawn({
-          cmd: ["bun", "build", configPath, "--outfile", configJsPath, "--target", target, "--external", "pg-cloudflare"],
+          cmd: [
+            "bun",
+            "build",
+            configPath,
+            "--outfile",
+            configJsPath,
+            "--target",
+            target,
+            "--external",
+            "pg-cloudflare",
+          ],
           cwd: ctx.cwd,
           stdout: "inherit",
           stderr: "inherit",

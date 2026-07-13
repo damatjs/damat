@@ -20,7 +20,9 @@ interface ModuleMigrationResult {
   filePath?: string;
 }
 
-function createModuleMigration(packageDir: string): Promise<ModuleMigrationResult>;
+function createModuleMigration(
+  packageDir: string,
+): Promise<ModuleMigrationResult>;
 ```
 
 Creates a migration by **diffing the module's models against the last schema
@@ -45,14 +47,16 @@ if (hasChanges) console.log("wrote", filePath);
 ```ts
 interface RunModuleMigrationResult {
   moduleName: string;
-  applied: string[];   // migration names applied this run
-  pending: string[];   // names that were pending before the run
+  applied: string[]; // migration names applied this run
+  pending: string[]; // names that were pending before the run
   success: boolean;
   error?: Error;
   hadMigrations: boolean; // false when the module has no migrations dir yet
 }
 
-function runModuleMigration(packageDir: string): Promise<RunModuleMigrationResult>;
+function runModuleMigration(
+  packageDir: string,
+): Promise<RunModuleMigrationResult>;
 ```
 
 **Applies the module's own migration files to `DATABASE_URL`** — scoped to this
@@ -87,7 +91,9 @@ interface ModuleMigrationStatusResult {
   hadMigrations: boolean;
 }
 
-function runModuleMigrationStatus(packageDir: string): Promise<ModuleMigrationStatusResult>;
+function runModuleMigrationStatus(
+  packageDir: string,
+): Promise<ModuleMigrationStatusResult>;
 ```
 
 **Reports which of the module's migrations are applied vs pending** against
@@ -104,7 +110,10 @@ interface ModuleCodegenResult {
   files: string[];
 }
 
-function generateModuleTypes(packageDir: string, logger: ILogger): Promise<ModuleCodegenResult>;
+function generateModuleTypes(
+  packageDir: string,
+  logger: ILogger,
+): Promise<ModuleCodegenResult>;
 ```
 
 Generates TypeScript row types + zod schemas for the module's models
@@ -129,7 +138,7 @@ Both share the same front end — `locateModuleDir` + `readModuleManifest` — s
 work on a module package laid out with `src/module.json` or the legacy
 root-`module.json`. They are deliberately thin: all real work lives in the ORM
 packages (`orm-migration`, `orm-model`, `codegen`). This package's job is to
-make those usable *for a single module package* without app config.
+make those usable _for a single module package_ without app config.
 
 ## Gotchas
 

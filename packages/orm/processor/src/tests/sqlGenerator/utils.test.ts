@@ -82,14 +82,19 @@ describe("columnTypeSql", () => {
 
   it("renders numeric with precision only", () => {
     expect(
-      columnTypeSql({ name: "x", type: "numeric", length: 10, nullable: false }),
+      columnTypeSql({
+        name: "x",
+        type: "numeric",
+        length: 10,
+        nullable: false,
+      }),
     ).toBe("NUMERIC(10)");
   });
 
   it("renders bare NUMERIC when no precision", () => {
-    expect(
-      columnTypeSql({ name: "x", type: "numeric", nullable: false }),
-    ).toBe("NUMERIC");
+    expect(columnTypeSql({ name: "x", type: "numeric", nullable: false })).toBe(
+      "NUMERIC",
+    );
   });
 
   it("maps decimal to NUMERIC", () => {

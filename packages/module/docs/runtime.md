@@ -11,7 +11,9 @@ and what in-process API tests start with `port: 0`.
 ## `startModuleApp`
 
 ```ts
-function startModuleApp(options?: StartModuleAppOptions): Promise<RunningModuleApp>;
+function startModuleApp(
+  options?: StartModuleAppOptions,
+): Promise<RunningModuleApp>;
 ```
 
 Step by step (`start.ts`):
@@ -59,7 +61,7 @@ Finds the dir holding `module.json`:
 2. else `<packageDir>` if `module.json` exists (legacy in-app layout).
 3. else throw `"No module.json found in <pkg> or <pkg>/src — not a damat module package"`.
 
-Used by the runtime *and* the tooling (`createModuleMigration`, `generateModuleTypes`).
+Used by the runtime _and_ the tooling (`createModuleMigration`, `generateModuleTypes`).
 
 ## `buildModuleAppConfig` + `DEFAULT_MODULE_PORT`
 
@@ -99,18 +101,20 @@ return { projectConfig, modules: { [manifest.name]: { resolve: moduleDir, id: ma
 ```ts
 interface StartModuleAppOptions {
   packageDir?: string; // module package root (has package.json / module.config.ts). Default: cwd
-  port?: number;       // override. Default: PORT env, module.config, then 7654. Use 0 for random.
+  port?: number; // override. Default: PORT env, module.config, then 7654. Use 0 for random.
 }
 
 interface RunningModuleApp {
-  app: Hono;                 // for direct fetch-style testing
-  server: ModuleServerHandle;// node server handle (matches @hono/node-server)
-  port: number;              // the port actually bound
+  app: Hono; // for direct fetch-style testing
+  server: ModuleServerHandle; // node server handle (matches @hono/node-server)
+  port: number; // the port actually bound
   manifest: ModuleManifest;
-  stop(): Promise<void>;     // stop server + run all shutdown handlers
+  stop(): Promise<void>; // stop server + run all shutdown handlers
 }
 
-interface ModuleServerHandle { close(callback?: (err?: Error) => void): void; }
+interface ModuleServerHandle {
+  close(callback?: (err?: Error) => void): void;
+}
 ```
 
 ## Gotchas

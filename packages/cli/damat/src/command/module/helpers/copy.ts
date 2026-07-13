@@ -142,8 +142,14 @@ export function installModuleSplit(
   // module dir; in the package layout it lives outside `sourceModuleDir`.
   const testsDir = join(sourceModuleDir, "tests");
 
-  const { moduleHome, apiTarget, workflowsTarget, linksRoot, linksTarget, testsTarget } =
-    moduleLayoutPaths(cwd, moduleId, modulesDir);
+  const {
+    moduleHome,
+    apiTarget,
+    workflowsTarget,
+    linksRoot,
+    linksTarget,
+    testsTarget,
+  } = moduleLayoutPaths(cwd, moduleId, modulesDir);
 
   const hasApi = existsSync(apiSrc);
   const hasWorkflows = existsSync(workflowsSrc);
@@ -169,7 +175,8 @@ export function installModuleSplit(
     filter: (src) => {
       if (!notVcsOrDeps(src)) return false;
       if (src === apiDir || src.startsWith(apiDir + sep)) return false;
-      if (src === workflowsDir || src.startsWith(workflowsDir + sep)) return false;
+      if (src === workflowsDir || src.startsWith(workflowsDir + sep))
+        return false;
       if (src === linksDir || src.startsWith(linksDir + sep)) return false;
       if (src === testsDir || src.startsWith(testsDir + sep)) return false;
       return true;
@@ -184,7 +191,8 @@ export function installModuleSplit(
 
   // 4. Links → app's src/links/<moduleId>/ (grouped by module), then regenerate
   //    the owner index and the top-level aggregator from the filesystem.
-  if (hasLinks) installModuleLinks(linkModels, linksTarget, linksRoot, Boolean(force));
+  if (hasLinks)
+    installModuleLinks(linkModels, linksTarget, linksRoot, Boolean(force));
 
   // 5. Tests → app's tests/<moduleId>/… (grouped by module).
   if (hasTests) mergeChildren(testsSrc, testsTarget);

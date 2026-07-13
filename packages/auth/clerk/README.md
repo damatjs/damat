@@ -34,11 +34,11 @@ Routes with `auth: "session"` verify the Clerk token and populate `c.get("user")
 
 ## Options (`ClerkAdapterOptions`)
 
-| Option | Purpose |
-| --- | --- |
-| `client` | A pre-built Clerk client (escape hatch); when set, the keys below are ignored. |
-| `secretKey` / `publishableKey` | Clerk keys (fall back to `CLERK_SECRET_KEY` / `CLERK_PUBLISHABLE_KEY`). |
-| `authorizedParties` | Origins allowed to present tokens (passed to `authenticateRequest`). |
+| Option                         | Purpose                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------ |
+| `client`                       | A pre-built Clerk client (escape hatch); when set, the keys below are ignored. |
+| `secretKey` / `publishableKey` | Clerk keys (fall back to `CLERK_SECRET_KEY` / `CLERK_PUBLISHABLE_KEY`).        |
+| `authorizedParties`            | Origins allowed to present tokens (passed to `authenticateRequest`).           |
 
 ## License
 

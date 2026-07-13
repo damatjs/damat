@@ -38,12 +38,21 @@ export function buildKitPlan(kitDir: string, manifest: KitManifest): KitPlan {
     if (mapping) {
       // Drop the glob's static prefix so "components/**" → "src/ui" nests
       // "components/nav/menu.tsx" as "src/ui/nav/menu.tsx".
-      const remainder = mapping.prefix && file.startsWith(mapping.prefix)
-        ? file.slice(mapping.prefix.length)
-        : file;
-      planned.push({ source: file, target: joinRel(mapping.to, remainder), via: "mapping" });
+      const remainder =
+        mapping.prefix && file.startsWith(mapping.prefix)
+          ? file.slice(mapping.prefix.length)
+          : file;
+      planned.push({
+        source: file,
+        target: joinRel(mapping.to, remainder),
+        via: "mapping",
+      });
     } else if (manifest.fallback) {
-      planned.push({ source: file, target: joinRel(manifest.fallback, file), via: "fallback" });
+      planned.push({
+        source: file,
+        target: joinRel(manifest.fallback, file),
+        via: "fallback",
+      });
     } else {
       unmatched.push(file);
     }

@@ -71,7 +71,12 @@ export const moduleInitCommand: Command = {
       "AGENTS.md": AGENTS_GUIDE,
     };
 
-    for (const dir of ["src/models", "src/migrations", "src/workflows", "src/api/routes"]) {
+    for (const dir of [
+      "src/models",
+      "src/migrations",
+      "src/workflows",
+      "src/api/routes",
+    ]) {
       mkdirSync(join(targetDir, dir), { recursive: true });
     }
     mkdirSync(join(src, "config", "schema"), { recursive: true });

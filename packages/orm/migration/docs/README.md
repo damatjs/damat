@@ -6,24 +6,31 @@ This package coordinates the full migration lifecycle for a **module-based** app
 
 ## Module map
 
-| File / dir | Responsibility |
-| --- | --- |
-| `src/index.ts` | Barrel: re-exports discovery, executor, generator, tracker, and logger helpers. |
-| `src/discovery/` | Find what exists. `moduleMigrations.ts` scans a module's `migrations/` for `Migration*.sql`; `allMigrations.ts` aggregates across modules; `models.ts` dynamically `import()`s a module's `models`. → [discovery.md](./discovery.md) |
-| `src/executor/` | Apply migrations. `run.ts` (`runMigrations`) orchestrates; `migration.ts` (`executeMigration`) runs one file in a transaction; `bootstrap.ts` installs DB prerequisites; `status.ts` reports applied/pending. → [executor.md](./executor.md) |
-| `src/generator/` | Create new migration files. `index.ts` (`createMigration`) picks initial vs diff; `initialMigration.ts` and `diffMigration.ts` build the SQL via the processor and write `.sql` + snapshot. → [generator.md](./generator.md) |
-| `src/tracker/` | `MigrationTracker` class: owns the `_damat_migration_logs` table. → [tracker.md](./tracker.md) |
-| `src/logger/` | `log(level, msg, details?)` wrapper over `@damatjs/logger`; re-exports `separator`/`successBanner`/`errorBanner`. |
-| `src/utils/` | `template.ts` (`getMigrationTemplateWithSQL` — renders the `.sql` file body) and `timestamp.ts` (`generateTimestamp` → `YYYYMMDDHHMMSS`). |
-| `src/types/` | `migration.ts` (`MigrationInfo`, `ModuleMigrationResult`, `ModuleMigrationStatus`, `MigrationStatus`) and `config.ts` (`DatabaseConfig`). |
+| File / dir       | Responsibility                                                                                                                                                                                                                               |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/index.ts`   | Barrel: re-exports discovery, executor, generator, tracker, and logger helpers.                                                                                                                                                              |
+| `src/discovery/` | Find what exists. `moduleMigrations.ts` scans a module's `migrations/` for `Migration*.sql`; `allMigrations.ts` aggregates across modules; `models.ts` dynamically `import()`s a module's `models`. → [discovery.md](./discovery.md)         |
+| `src/executor/`  | Apply migrations. `run.ts` (`runMigrations`) orchestrates; `migration.ts` (`executeMigration`) runs one file in a transaction; `bootstrap.ts` installs DB prerequisites; `status.ts` reports applied/pending. → [executor.md](./executor.md) |
+| `src/generator/` | Create new migration files. `index.ts` (`createMigration`) picks initial vs diff; `initialMigration.ts` and `diffMigration.ts` build the SQL via the processor and write `.sql` + snapshot. → [generator.md](./generator.md)                 |
+| `src/tracker/`   | `MigrationTracker` class: owns the `_damat_migration_logs` table. → [tracker.md](./tracker.md)                                                                                                                                               |
+| `src/logger/`    | `log(level, msg, details?)` wrapper over `@damatjs/logger`; re-exports `separator`/`successBanner`/`errorBanner`.                                                                                                                            |
+| `src/utils/`     | `template.ts` (`getMigrationTemplateWithSQL` — renders the `.sql` file body) and `timestamp.ts` (`generateTimestamp` → `YYYYMMDDHHMMSS`).                                                                                                    |
+| `src/types/`     | `migration.ts` (`MigrationInfo`, `ModuleMigrationResult`, `ModuleMigrationStatus`, `MigrationStatus`) and `config.ts` (`DatabaseConfig`).                                                                                                    |
 
 ## The module-resolver model
 
 Migrations are addressed through module **resolvers** rather than a single flat folder. The shape comes from `@damatjs/orm-type`:
 
 ```ts
-interface OrmModule { id: string; name: string; path: string; resolve: string; }
-interface OrmModuleContainer { [key: string]: OrmModule; }
+interface OrmModule {
+  id: string;
+  name: string;
+  path: string;
+  resolve: string;
+}
+interface OrmModuleContainer {
+  [key: string]: OrmModule;
+}
 ```
 
 - `name` — the module name; used as the `module` key in the log table.
@@ -43,15 +50,15 @@ Example: `Migration20260316103000_Initial.sql`. The leading `Migration` + 14-dig
 
 A single table, `_damat_migration_logs`, records every applied migration keyed by `(module, name)`:
 
-| Column | Type | Meaning |
-| --- | --- | --- |
-| `id` | TEXT PK | `"<module>_<name>"` |
-| `module` | TEXT | Module name |
-| `name` | TEXT | Migration file name (without `.sql`) |
-| `applied_at` | TIMESTAMPTZ | When applied (default `NOW()`) |
-| `reverted_at` | TIMESTAMPTZ | When reverted, if ever |
-| `execution_time_ms` | INTEGER | Apply duration |
-| `status` | TEXT | `'applied'` or `'reverted'` |
+| Column              | Type        | Meaning                              |
+| ------------------- | ----------- | ------------------------------------ |
+| `id`                | TEXT PK     | `"<module>_<name>"`                  |
+| `module`            | TEXT        | Module name                          |
+| `name`              | TEXT        | Migration file name (without `.sql`) |
+| `applied_at`        | TIMESTAMPTZ | When applied (default `NOW()`)       |
+| `reverted_at`       | TIMESTAMPTZ | When reverted, if ever               |
+| `execution_time_ms` | INTEGER     | Apply duration                       |
+| `status`            | TEXT        | `'applied'` or `'reverted'`          |
 
 A `UNIQUE (module, name)` constraint plus indexes on `module` and `status` back the per-module queries. Because rows carry `module`, "applied for module X" is just `WHERE module = X AND status = 'applied'`, and two modules can independently own a migration named e.g. `Migration..._Initial`. See [tracker.md](./tracker.md).
 

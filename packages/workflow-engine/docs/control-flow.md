@@ -31,8 +31,8 @@ compensation. Use it for the "do nothing" branch of a conditional.
 
 ```ts
 const result = input.skip
-  ? yield* skipStep({ skipped: true })
-  : yield* runStep(processStep, input, ctx);
+  ? yield * skipStep({ skipped: true })
+  : yield * runStep(processStep, input, ctx);
 ```
 
 ## `parallel`
@@ -53,11 +53,13 @@ error type is the union of the inputs' errors; the context is their combined
 context (so it still requires a `Scope`).
 
 ```ts
-const [user, products, inventory] = yield* parallel(
-  runStep(fetchUser, { userId }, ctx),
-  runStep(fetchProducts, { ids }, ctx),
-  runStep(checkInventory, { ids }, ctx),
-);
+const [user, products, inventory] =
+  yield *
+  parallel(
+    runStep(fetchUser, { userId }, ctx),
+    runStep(fetchProducts, { ids }, ctx),
+    runStep(checkInventory, { ids }, ctx),
+  );
 ```
 
 The engine test asserts three 20ms steps finish in under 100ms — well below the
@@ -66,7 +68,7 @@ The engine test asserts three 20ms steps finish in under 100ms — well below th
 > Concurrency is **unbounded** — every effect starts at once. For large fan-outs
 > against a rate-limited resource, batch them yourself or run sequentially.
 > If one effect fails, Effect interrupts the others (standard `Effect.all`
-> short-circuit). Compensations for any steps that *did* complete still fire when
+> short-circuit). Compensations for any steps that _did_ complete still fire when
 > the workflow scope unwinds.
 
 ## `when`
@@ -85,9 +87,9 @@ Runs `step` when `condition` is true, otherwise `Effect.succeed(defaultValue)`.
 Both branches must produce the same output type `O`.
 
 ```ts
-const verification = yield* when(
-  input.needsVerification, verifyStep, input, ctx, { verified: false },
-);
+const verification =
+  yield *
+  when(input.needsVerification, verifyStep, input, ctx, { verified: false });
 ```
 
 ## `ifElse`
@@ -106,12 +108,13 @@ Executes one of two steps by condition. Both take the same `input: I` and return
 the same `O`.
 
 ```ts
-const result = yield* ifElse(input.isPremium, premiumStep, standardStep, input, ctx);
+const result =
+  yield * ifElse(input.isPremium, premiumStep, standardStep, input, ctx);
 ```
 
 ## Gotchas
 
-- `when`/`ifElse` evaluate `condition` eagerly in plain JS *before* returning the
+- `when`/`ifElse` evaluate `condition` eagerly in plain JS _before_ returning the
   effect — they are not lazy on the Effect side. The unchosen step is never run.
 - All of these (except `skipStep`) propagate the underlying step's retry/timeout/
   compensation behavior, because they delegate to `executeStep`.

@@ -28,10 +28,10 @@ declare module "@damatjs/events" {
 const bus = getEventBus();
 
 const off = bus.on("user.created", async (user, ctx) => {
-  console.log(user.email, ctx.source);   // "local" | "remote"
+  console.log(user.email, ctx.source); // "local" | "remote"
 });
 bus.once("user.created", (user) => sendWelcomeEmail(user));
-bus.on("*", (payload, ctx) => audit(ctx.event, payload));  // wildcard: everything
+bus.on("*", (payload, ctx) => audit(ctx.event, payload)); // wildcard: everything
 
 await bus.emit("user.created", { id: "u1", email: "a@b.co" });
 ```
@@ -100,16 +100,24 @@ declare module "@damatjs/jobs" {
 }
 
 // 1. Define — in code the worker process imports (a module is a good home):
-defineJob("send-welcome-email", async ({ userId }) => {
-  await mailer.sendWelcome(userId);
-}, { maxAttempts: 5, backoffMs: 2000 });
+defineJob(
+  "send-welcome-email",
+  async ({ userId }) => {
+    await mailer.sendWelcome(userId);
+  },
+  { maxAttempts: 5, backoffMs: 2000 },
+);
 
 // 2. Enqueue — from any process: a route, a workflow step, a cron:
 await enqueueJob("send-welcome-email", { userId: "u1" });
-await enqueueJob("send-welcome-email", { userId: "u2" }, {
-  priority: "high",
-  delayMs: 60_000,        // deliver in a minute
-});
+await enqueueJob(
+  "send-welcome-email",
+  { userId: "u2" },
+  {
+    priority: "high",
+    delayMs: 60_000, // deliver in a minute
+  },
+);
 ```
 
 To execute jobs, a process needs a worker. In a framework app, enable it in
@@ -138,7 +146,7 @@ Semantics worth knowing:
 
 - A **job** is one unit of deferred work: send an email, resize an image,
   re-index a record. Fire and forget, retried on failure.
-- A **workflow** ([ch. 9](./09-workflows.md)) is a *multi-step* process where
+- A **workflow** ([ch. 9](./09-workflows.md)) is a _multi-step_ process where
   failures must undo earlier steps (compensation). A job handler is a fine
   place to `execute()` a workflow.
 - An **event** is a fact, not a task — emit it when something happened; any

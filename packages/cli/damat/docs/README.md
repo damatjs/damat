@@ -18,37 +18,37 @@ Maintainer-facing reference for the `damat` CLI. Read alongside the
 
 ## Module map
 
-| File / dir | Responsibility |
-|---|---|
-| `src/cli.ts` | Executable entry (`#!/usr/bin/env bun`). `runCli({ commands: [create, clone, dev, start, build, codegen, barrel, module, kit], banner })` |
-| `src/index.ts` | Library entry — `export * from "@damatjs/cli"` (re-exposes command types + `runCli`) |
-| `src/command/index.ts` | Barrel re-exporting `build`, `clone`, `create`, `dev`, `kit`, `start`, `codegen`, `barrel`, `module` |
-| `src/command/create/` | `createCommand` — scaffold a new app offline (`create/scaffold/` holds the embedded templates); option is `--pin`, **not** `--version` (cac owns `-v, --version`) |
-| `src/command/clone/` | `cloneCommand` — git clone with extras (shorthand, `#ref`, subdirectory extraction, `--fresh`) |
-| `src/command/dev.ts` | `devCommand` — hot-reload dev server |
-| `src/command/build.ts` | `buildCommand` — production bundle + source/config copy |
-| `src/command/start.ts` | `startCommand` — run the built app |
-| `src/command/codegen/` | `codegenCommand` — app-mode codegen (types + zod + registry + CRUD scaffold) via `@damatjs/codegen` |
-| `src/command/barrel/` | `barrelCommand` — recursively (re)write `index.ts` barrels |
-| `src/command/kit/` | `kitCommand` group — `add`/`init`/`validate` + `manifest`/`plan`/`source` internals |
-| `src/command/shared/git.ts` | `gitAvailable`/`requireGit` — system-git detection; one clear error instead of a vague spawn failure |
-| `src/command/shared/typecheck.ts` | `runTypeCheck` — shared by `module build` / `module publish` |
-| `src/command/module/index.ts` | `moduleCommand` — parent of the module subcommands |
-| `src/command/module/add.ts` | `moduleAddCommand` — install a module (the big one) |
-| `src/command/module/remove.ts` | `moduleRemoveCommand` — inverse of add (files, config, aliases) |
-| `src/command/module/update.ts` | `moduleUpdateCommand` — re-fetch from recorded provenance, diff, reinstall |
-| `src/command/module/list.ts` | `moduleListCommand` — list installed modules + provenance |
-| `src/command/module/init.ts` | `moduleInitCommand` — scaffold a standalone module package |
-| `src/command/module/dev.ts` | `moduleDevCommand` — run a module package standalone |
-| `src/command/module/migrationCreate.ts` | `moduleMigrationCreateCommand` — diff models → migration |
-| `src/command/module/migrationRun.ts` | `moduleMigrationRunCommand` — apply the module's migrations to `DATABASE_URL` |
-| `src/command/module/migrationStatus.ts` | `moduleMigrationStatusCommand` — applied vs pending migrations |
-| `src/command/module/codegen.ts` | `moduleCodegenCommand` — row types + zod schemas |
-| `src/command/module/validate.ts` | `moduleValidateCommand` — contract/registry check |
-| `src/command/module/build.ts` | `moduleBuildCommand` — type-check + contract validate (release gate, no bundle) |
-| `src/command/module/publish.ts` | `modulePublishCommand` — validate, build, pack, PUT to the registry gateway |
-| `src/command/module/helpers/*` | `add`/`remove`/`update` helpers: `source`, `copy`, `config`, `tsconfig`, `env`, `packages`, `dependencies`, `guard`, `linkTemplates`, `types` |
-| `src/command/module/scaffold/` | File templates emitted by `module init` (`templates/` one file per template; `AGENTS.md` is embedded as `agents.generated.ts` via `scripts/embedAgents.ts`) |
+| File / dir                              | Responsibility                                                                                                                                                    |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/cli.ts`                            | Executable entry (`#!/usr/bin/env bun`). `runCli({ commands: [create, clone, dev, start, build, codegen, barrel, module, kit], banner })`                         |
+| `src/index.ts`                          | Library entry — `export * from "@damatjs/cli"` (re-exposes command types + `runCli`)                                                                              |
+| `src/command/index.ts`                  | Barrel re-exporting `build`, `clone`, `create`, `dev`, `kit`, `start`, `codegen`, `barrel`, `module`                                                              |
+| `src/command/create/`                   | `createCommand` — scaffold a new app offline (`create/scaffold/` holds the embedded templates); option is `--pin`, **not** `--version` (cac owns `-v, --version`) |
+| `src/command/clone/`                    | `cloneCommand` — git clone with extras (shorthand, `#ref`, subdirectory extraction, `--fresh`)                                                                    |
+| `src/command/dev.ts`                    | `devCommand` — hot-reload dev server                                                                                                                              |
+| `src/command/build.ts`                  | `buildCommand` — production bundle + source/config copy                                                                                                           |
+| `src/command/start.ts`                  | `startCommand` — run the built app                                                                                                                                |
+| `src/command/codegen/`                  | `codegenCommand` — app-mode codegen (types + zod + registry + CRUD scaffold) via `@damatjs/codegen`                                                               |
+| `src/command/barrel/`                   | `barrelCommand` — recursively (re)write `index.ts` barrels                                                                                                        |
+| `src/command/kit/`                      | `kitCommand` group — `add`/`init`/`validate` + `manifest`/`plan`/`source` internals                                                                               |
+| `src/command/shared/git.ts`             | `gitAvailable`/`requireGit` — system-git detection; one clear error instead of a vague spawn failure                                                              |
+| `src/command/shared/typecheck.ts`       | `runTypeCheck` — shared by `module build` / `module publish`                                                                                                      |
+| `src/command/module/index.ts`           | `moduleCommand` — parent of the module subcommands                                                                                                                |
+| `src/command/module/add.ts`             | `moduleAddCommand` — install a module (the big one)                                                                                                               |
+| `src/command/module/remove.ts`          | `moduleRemoveCommand` — inverse of add (files, config, aliases)                                                                                                   |
+| `src/command/module/update.ts`          | `moduleUpdateCommand` — re-fetch from recorded provenance, diff, reinstall                                                                                        |
+| `src/command/module/list.ts`            | `moduleListCommand` — list installed modules + provenance                                                                                                         |
+| `src/command/module/init.ts`            | `moduleInitCommand` — scaffold a standalone module package                                                                                                        |
+| `src/command/module/dev.ts`             | `moduleDevCommand` — run a module package standalone                                                                                                              |
+| `src/command/module/migrationCreate.ts` | `moduleMigrationCreateCommand` — diff models → migration                                                                                                          |
+| `src/command/module/migrationRun.ts`    | `moduleMigrationRunCommand` — apply the module's migrations to `DATABASE_URL`                                                                                     |
+| `src/command/module/migrationStatus.ts` | `moduleMigrationStatusCommand` — applied vs pending migrations                                                                                                    |
+| `src/command/module/codegen.ts`         | `moduleCodegenCommand` — row types + zod schemas                                                                                                                  |
+| `src/command/module/validate.ts`        | `moduleValidateCommand` — contract/registry check                                                                                                                 |
+| `src/command/module/build.ts`           | `moduleBuildCommand` — type-check + contract validate (release gate, no bundle)                                                                                   |
+| `src/command/module/publish.ts`         | `modulePublishCommand` — validate, build, pack, PUT to the registry gateway                                                                                       |
+| `src/command/module/helpers/*`          | `add`/`remove`/`update` helpers: `source`, `copy`, `config`, `tsconfig`, `env`, `packages`, `dependencies`, `guard`, `linkTemplates`, `types`                     |
+| `src/command/module/scaffold/`          | File templates emitted by `module init` (`templates/` one file per template; `AGENTS.md` is embedded as `agents.generated.ts` via `scripts/embedAgents.ts`)       |
 
 ## Architecture overview
 

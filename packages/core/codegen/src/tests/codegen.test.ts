@@ -129,7 +129,9 @@ describe("generateTableFile", () => {
     expect(content).not.toContain("import");
     expect(content.startsWith("export interface Category {")).toBe(true);
     expect(content).toContain("export type NewCategory = {");
-    expect(content).toContain("export type UpdateCategory = Partial<Omit<Category, 'id'>>;");
+    expect(content).toContain(
+      "export type UpdateCategory = Partial<Omit<Category, 'id'>>;",
+    );
   });
 
   it("deduplicates relation imports that target the same table", () => {
@@ -138,7 +140,9 @@ describe("generateTableFile", () => {
       tables: [
         {
           name: "post",
-          columns: [{ name: "id", type: "uuid", nullable: false, primaryKey: true }],
+          columns: [
+            { name: "id", type: "uuid", nullable: false, primaryKey: true },
+          ],
         },
       ],
       relationships: [
@@ -164,7 +168,9 @@ describe("generateTableFile", () => {
       DEFAULT_AUTO_FIELDS,
       null,
     );
-    const importCount = (content.match(/import type \{ User \} from "\.\/user";/g) ?? []).length;
+    const importCount = (
+      content.match(/import type \{ User \} from "\.\/user";/g) ?? []
+    ).length;
     expect(importCount).toBe(1);
     // Both distinct relation fields are still emitted on the interface.
     expect(content).toContain("  author?: User;");
@@ -335,15 +341,26 @@ describe("generateTypes › row interface column mapping", () => {
           { name: "id", type: "uuid", nullable: false, primaryKey: true },
           { name: "price", type: "numeric", nullable: false },
           { name: "in_stock", type: "boolean", nullable: false },
-          { name: "released_at", type: "timestamp with time zone", nullable: false },
+          {
+            name: "released_at",
+            type: "timestamp with time zone",
+            nullable: false,
+          },
           { name: "description", type: "text", nullable: true },
           { name: "tags", type: "text", nullable: true, array: true },
           { name: "specs", type: "jsonb", nullable: true },
-          { name: "status", type: "enum", enum: "product_status", nullable: false },
+          {
+            name: "status",
+            type: "enum",
+            enum: "product_status",
+            nullable: false,
+          },
         ],
       },
     ],
-    enums: [{ name: "product_status", values: ["draft", "active", "archived"] }],
+    enums: [
+      { name: "product_status", values: ["draft", "active", "archived"] },
+    ],
     relationships: [],
   };
 
@@ -449,7 +466,9 @@ describe("generateTypes › relations and edge cases", () => {
       tables: [
         {
           name: "user",
-          columns: [{ name: "id", type: "uuid", nullable: false, primaryKey: true }],
+          columns: [
+            { name: "id", type: "uuid", nullable: false, primaryKey: true },
+          ],
         },
       ],
       relationships: [
@@ -489,7 +508,9 @@ describe("generateTypes › relations and edge cases", () => {
       tables: [
         {
           name: "category",
-          columns: [{ name: "id", type: "uuid", nullable: false, primaryKey: true }],
+          columns: [
+            { name: "id", type: "uuid", nullable: false, primaryKey: true },
+          ],
         },
       ],
     };
@@ -507,13 +528,17 @@ describe("generateTypes › relations and edge cases", () => {
       tables: [
         {
           name: "order_item",
-          columns: [{ name: "id", type: "uuid", nullable: false, primaryKey: true }],
+          columns: [
+            { name: "id", type: "uuid", nullable: false, primaryKey: true },
+          ],
         },
       ],
     };
     const out = generateTypes(schema, { banner: false });
     expect(out).toContain("export interface OrderItem {");
     expect(out).toContain("export type NewOrderItem = {");
-    expect(out).toContain("export type UpdateOrderItem = Partial<Omit<OrderItem, 'id'>>;");
+    expect(out).toContain(
+      "export type UpdateOrderItem = Partial<Omit<OrderItem, 'id'>>;",
+    );
   });
 });

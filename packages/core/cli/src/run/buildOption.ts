@@ -9,6 +9,8 @@ export function buildOptionFlag(option: {
   alias?: string;
   type?: "string" | "boolean" | "number";
 }): string {
-  const flag = option.alias ? `-${option.alias}, --${option.name}` : `--${option.name}`;
+  const flag = option.alias
+    ? `-${option.alias}, --${option.name}`
+    : `--${option.name}`;
   return option.type && option.type !== "boolean" ? `${flag} <value>` : flag;
 }

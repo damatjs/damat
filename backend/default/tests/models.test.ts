@@ -276,7 +276,9 @@ describe("models › VerificationModel", () => {
   });
 
   it("has a btree index on identifier and no relations / FKs", () => {
-    const idx = schema.indexes.find((i) => i.name === "verifications_identifier");
+    const idx = schema.indexes.find(
+      (i) => i.name === "verifications_identifier",
+    );
     expect(idx).toBeDefined();
     expect(idx!.columns).toEqual([{ name: "identifier" }]);
     expect(schema.foreignKeys).toEqual([]);
@@ -295,7 +297,12 @@ describe("models › cross-cutting invariants", () => {
   });
 
   it("every model exposes exactly one primary key column", () => {
-    for (const m of [UserModel, AccountModel, SessionModel, VerificationModel]) {
+    for (const m of [
+      UserModel,
+      AccountModel,
+      SessionModel,
+      VerificationModel,
+    ]) {
       const pks = m.toTableSchema().columns.filter((c) => c.primaryKey);
       expect(pks).toHaveLength(1);
       expect(pks[0]!.name).toBe("id");

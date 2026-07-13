@@ -40,7 +40,10 @@ Do **not** use it when:
 ## Quick start
 
 ```ts
-import { ConnectionManager, productionPoolConfig } from "@damatjs/orm-connector";
+import {
+  ConnectionManager,
+  productionPoolConfig,
+} from "@damatjs/orm-connector";
 import { model, columns } from "@damatjs/orm-model";
 import { PgEntityManager } from "@damatjs/orm-pg";
 
@@ -53,7 +56,9 @@ const User = model("user", {
 });
 
 // 2. A pool.
-const cm = new ConnectionManager(productionPoolConfig({ connectionString: process.env.DATABASE_URL }));
+const cm = new ConnectionManager(
+  productionPoolConfig({ connectionString: process.env.DATABASE_URL }),
+);
 const pool = await cm.connect();
 
 // 3. The entity manager — register models, then get repositories.
@@ -75,7 +80,9 @@ const verified = await users.findMany({
 
 // 4. Transactions — accessors (tx.user) and repo(name) both work inside.
 await em.transaction(async (tx) => {
-  await tx.repo("user").update({ set: { verified: true }, where: { id: "usr_1" } });
+  await tx
+    .repo("user")
+    .update({ set: { verified: true }, where: { id: "usr_1" } });
   await tx.createSavepoint("sp1");
   // throw to roll back automatically
 });
@@ -90,25 +97,25 @@ const { rows, descriptor } = await client.findMany({ select: ["id", "email"] });
 
 Exported from the package root (`@damatjs/orm-pg`):
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `PgEntityManager` | class | Top-level manager: caches `PgRepository` per model, runs transactions, raw SQL, and exposes a dynamic `em.<model>` repository accessor per registered model. `registerModel` / `getRepository` / `repo` / `transaction` / `tx` / `raw` / `execute`. |
-| `EntityManager` | const | Alias of `PgEntityManager` (`export const EntityManager = PgEntityManager`). |
-| `TransactionalEntityManager` | class | The `tx` object inside `em.transaction(...)`: dynamic model accessors (`tx.user`), `repo`, `query`, savepoint methods. |
-| `EntityManagerError`, `QueryExecutionError` | class | Errors thrown by the manager layer. |
-| `TransactionManager` | class | Owns BEGIN/COMMIT/ROLLBACK over a pooled client; validates isolation level; `begin` / `run`. |
-| `TransactionContext` | class | A live transaction: `query`, `commit`, `rollback`, `createSavepoint` / `rollbackToSavepoint` / `releaseSavepoint`, `getClient`, `release`. |
-| `TransactionError`, `TransactionContextError` | class | Errors thrown by the transaction layer. |
-| `PgRepository`, `PgRepositoryConfig` | class / type | Repository over a model: `findMany/findOne/findById/findManyByIds/create/createMany/update/updateOne/delete/deleteById/upsert/upsertMany/count/exists`. |
-| `createRepository` | function | Factory building a `PgRepository` from a model + connection (`Pool` / `PoolClient` / `{ getPool }`). |
-| `pgExecuteRaw` | function | Executes a `BuiltQuery` against a `Pool`/`PoolClient`, with query/slow/error logging. |
-| `pgTransaction` | function | Runs a callback inside BEGIN/COMMIT/ROLLBACK on a pooled client. |
-| `PgModelClient` | class | Per-model CRUD over a connection; returns `{ rows, rowCount, descriptor }`. `findMany/findOne/create/createMany/update/delete/upsert/upsertMany/transaction/withClient`. |
-| `ModelAccessor` | class | Pure query factory: each method returns `{ sql: BuiltQuery, json: Descriptor }`. Exposes `builders.{select,insert,update,delete,upsert}`. |
-| `SelectBuilder`, `InsertBuilder`, `UpdateBuilder`, `DeleteBuilder`, `UpsertBuilder` | class | The low-level query builders (chainable; `generateSql()` / `generateJson()`). |
-| `QueryBase` | class | Abstract base for the builders (where/orderBy/returning + column-existence asserts). |
-| query helpers | functions | `quoteIdent`, `buildTableRef`, `assembleQuery`, `buildWhereClause`, `buildOrderByClause`, `buildReturningClause`, `compileCondition`, `assertKnownColumns`, … |
-| relations | functions | `resolveModelRelations`, `assertValidRelationMap`, `getModelRelationNames`, `buildLateralJoin`, `compileRelCondition`, `RelationGuardError`. |
+| Export                                                                              | Kind         | Summary                                                                                                                                                                                                                                             |
+| ----------------------------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PgEntityManager`                                                                   | class        | Top-level manager: caches `PgRepository` per model, runs transactions, raw SQL, and exposes a dynamic `em.<model>` repository accessor per registered model. `registerModel` / `getRepository` / `repo` / `transaction` / `tx` / `raw` / `execute`. |
+| `EntityManager`                                                                     | const        | Alias of `PgEntityManager` (`export const EntityManager = PgEntityManager`).                                                                                                                                                                        |
+| `TransactionalEntityManager`                                                        | class        | The `tx` object inside `em.transaction(...)`: dynamic model accessors (`tx.user`), `repo`, `query`, savepoint methods.                                                                                                                              |
+| `EntityManagerError`, `QueryExecutionError`                                         | class        | Errors thrown by the manager layer.                                                                                                                                                                                                                 |
+| `TransactionManager`                                                                | class        | Owns BEGIN/COMMIT/ROLLBACK over a pooled client; validates isolation level; `begin` / `run`.                                                                                                                                                        |
+| `TransactionContext`                                                                | class        | A live transaction: `query`, `commit`, `rollback`, `createSavepoint` / `rollbackToSavepoint` / `releaseSavepoint`, `getClient`, `release`.                                                                                                          |
+| `TransactionError`, `TransactionContextError`                                       | class        | Errors thrown by the transaction layer.                                                                                                                                                                                                             |
+| `PgRepository`, `PgRepositoryConfig`                                                | class / type | Repository over a model: `findMany/findOne/findById/findManyByIds/create/createMany/update/updateOne/delete/deleteById/upsert/upsertMany/count/exists`.                                                                                             |
+| `createRepository`                                                                  | function     | Factory building a `PgRepository` from a model + connection (`Pool` / `PoolClient` / `{ getPool }`).                                                                                                                                                |
+| `pgExecuteRaw`                                                                      | function     | Executes a `BuiltQuery` against a `Pool`/`PoolClient`, with query/slow/error logging.                                                                                                                                                               |
+| `pgTransaction`                                                                     | function     | Runs a callback inside BEGIN/COMMIT/ROLLBACK on a pooled client.                                                                                                                                                                                    |
+| `PgModelClient`                                                                     | class        | Per-model CRUD over a connection; returns `{ rows, rowCount, descriptor }`. `findMany/findOne/create/createMany/update/delete/upsert/upsertMany/transaction/withClient`.                                                                            |
+| `ModelAccessor`                                                                     | class        | Pure query factory: each method returns `{ sql: BuiltQuery, json: Descriptor }`. Exposes `builders.{select,insert,update,delete,upsert}`.                                                                                                           |
+| `SelectBuilder`, `InsertBuilder`, `UpdateBuilder`, `DeleteBuilder`, `UpsertBuilder` | class        | The low-level query builders (chainable; `generateSql()` / `generateJson()`).                                                                                                                                                                       |
+| `QueryBase`                                                                         | class        | Abstract base for the builders (where/orderBy/returning + column-existence asserts).                                                                                                                                                                |
+| query helpers                                                                       | functions    | `quoteIdent`, `buildTableRef`, `assembleQuery`, `buildWhereClause`, `buildOrderByClause`, `buildReturningClause`, `compileCondition`, `assertKnownColumns`, …                                                                                       |
+| relations                                                                           | functions    | `resolveModelRelations`, `assertValidRelationMap`, `getModelRelationNames`, `buildLateralJoin`, `compileRelCondition`, `RelationGuardError`.                                                                                                        |
 
 Key exported types: `PgEntityManagerConfig`, `FindOptions`, `CreateOptions`, `CreateManyOptions`,
 `UpdateOptions`, `DeleteOptions`, `UpsertOptions`, `UpsertManyOptions`, `FindOneOptions`,

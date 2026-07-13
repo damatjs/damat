@@ -17,7 +17,7 @@ initRedis(process.env.REDIS_URL!); // only needed outside a framework app
 ```ts
 import { cacheGet, cacheSet } from "@damatjs/redis";
 
-await cacheSet("user:1", user, 60);        // (key, value, ttlSeconds — default 300)
+await cacheSet("user:1", user, 60); // (key, value, ttlSeconds — default 300)
 const cached = await cacheGet<User>("user:1"); // typed read; null on miss
 ```
 
@@ -48,14 +48,22 @@ The HTTP layer can also rate-limit for you — see `http.rateLimit` in
 import { withLock, acquireLock, releaseLock } from "@damatjs/redis";
 
 // run a critical section under a lock (ttlMs default 10_000)
-await withLock("import-job", async () => {
-  /* only one process runs this at a time */
-}, 30_000);
+await withLock(
+  "import-job",
+  async () => {
+    /* only one process runs this at a time */
+  },
+  30_000,
+);
 
 // or manage the lock yourself
 const token = await acquireLock("import-job", 30_000); // null if already held
 if (token) {
-  try { /* ... */ } finally { await releaseLock("import-job", token); }
+  try {
+    /* ... */
+  } finally {
+    await releaseLock("import-job", token);
+  }
 }
 ```
 
@@ -82,7 +90,7 @@ const job: QueueJob<{ to: string }> = {
   queue: "emails",
   data: { to: "a@b.co" },
   status: "pending",
-  priority: "normal",     // "low" | "normal" | "high" | "critical"
+  priority: "normal", // "low" | "normal" | "high" | "critical"
   attempts: 0,
   maxAttempts: 3,
   createdAt: new Date(),

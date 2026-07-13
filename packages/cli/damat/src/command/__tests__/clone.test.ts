@@ -81,7 +81,9 @@ describe("damat clone — validation", () => {
     const { result, logger } = runClone(["no spaces allowed"]);
     expect((await result).exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("Could not parse clone source")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("Could not parse clone source"),
+      ),
     ).toBe(true);
   });
 
@@ -107,10 +109,17 @@ describe("damat clone — validation", () => {
 
   test("a spawn error mid-clone (git vanished) is reported plainly", async () => {
     mockSpawnSync
-      .mockImplementationOnce(() => ({ status: 0, stdout: "", stderr: "" }) as never) // preflight
+      .mockImplementationOnce(
+        () => ({ status: 0, stdout: "", stderr: "" }) as never,
+      ) // preflight
       .mockImplementationOnce(
         () =>
-          ({ status: null, error: new Error("spawn git ENOENT"), stdout: "", stderr: "" }) as never,
+          ({
+            status: null,
+            error: new Error("spawn git ENOENT"),
+            stdout: "",
+            stderr: "",
+          }) as never,
       );
     const { result, logger } = runClone(["acme/service"]);
     expect((await result).exitCode).toBe(1);
@@ -124,7 +133,9 @@ describe("damat clone — validation", () => {
 
 describe("damat clone — plain clone (git clone semantics)", () => {
   test("clones the URL into a dir derived from the repo name, keeping .git", async () => {
-    const { result, logger } = runClone(["https://github.com/acme/service.git"]);
+    const { result, logger } = runClone([
+      "https://github.com/acme/service.git",
+    ]);
     expect((await result).exitCode).toBe(0);
     expect(spawned()).toEqual([
       "git clone -- https://github.com/acme/service.git /base/service",
@@ -154,14 +165,23 @@ describe("damat clone — plain clone (git clone semantics)", () => {
 
   test("a failed clone reports git's stderr, removes the target, and exits 1", async () => {
     mockSpawnSync
-      .mockImplementationOnce(() => ({ status: 0, stdout: "", stderr: "" }) as never) // preflight
       .mockImplementationOnce(
-        () => ({ status: 128, stdout: "", stderr: "fatal: repo not found" }) as never,
+        () => ({ status: 0, stdout: "", stderr: "" }) as never,
+      ) // preflight
+      .mockImplementationOnce(
+        () =>
+          ({
+            status: 128,
+            stdout: "",
+            stderr: "fatal: repo not found",
+          }) as never,
       );
     const { result, logger } = runClone(["acme/missing"]);
     expect((await result).exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("fatal: repo not found")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("fatal: repo not found"),
+      ),
     ).toBe(true);
     expect(rmCalls.some((c) => c.path === "/base/missing")).toBe(true);
   });
@@ -186,11 +206,15 @@ describe("damat clone — subdirectory extraction", () => {
     expect(filter(join(TEMP, "examples/api", ".git"))).toBe(false);
     expect(filter(join(TEMP, "examples/api", ".git", "HEAD"))).toBe(false);
     expect(filter(join(TEMP, "examples/api", "node_modules"))).toBe(false);
-    expect(filter(join(TEMP, "examples/api", "node_modules", "x", "i.js"))).toBe(false);
+    expect(
+      filter(join(TEMP, "examples/api", "node_modules", "x", "i.js")),
+    ).toBe(false);
     expect(rmCalls.some((c) => c.path === TEMP)).toBe(true);
     // Extraction can't carry history — the hint appears without --fresh.
     expect(
-      logger.info.mock.calls.some((c) => String(c[0]).includes("no git history")),
+      logger.info.mock.calls.some((c) =>
+        String(c[0]).includes("no git history"),
+      ),
     ).toBe(true);
   });
 
@@ -198,7 +222,9 @@ describe("damat clone — subdirectory extraction", () => {
     const { result, logger } = runClone(["acme/mono/../../../etc"]);
     expect((await result).exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("escapes the cloned repository")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("escapes the cloned repository"),
+      ),
     ).toBe(true);
     expect(cpCalls).toHaveLength(0);
   });
@@ -207,7 +233,9 @@ describe("damat clone — subdirectory extraction", () => {
     const { result, logger } = runClone(["acme/mono/nope/nothing"]);
     expect((await result).exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("not found inside")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("not found inside"),
+      ),
     ).toBe(true);
   });
 });
@@ -223,67 +251,96 @@ describe("damat clone — extras", () => {
       "git add .",
       "git commit -m chore: bootstrap from acme/service",
     ]);
-    expect(logger.success.mock.calls.some((c) => String(c[0]).includes("fresh git history"))).toBe(
-      true,
-    );
+    expect(
+      logger.success.mock.calls.some((c) =>
+        String(c[0]).includes("fresh git history"),
+      ),
+    ).toBe(true);
   });
 
   test("--fresh warns when the new init fails (clone already succeeded)", async () => {
     // preflight ok, clone ok, init fails.
     mockSpawnSync
-      .mockImplementationOnce(() => ({ status: 0, stdout: "", stderr: "" }) as never)
-      .mockImplementationOnce(() => ({ status: 0, stdout: "", stderr: "" }) as never)
+      .mockImplementationOnce(
+        () => ({ status: 0, stdout: "", stderr: "" }) as never,
+      )
+      .mockImplementationOnce(
+        () => ({ status: 0, stdout: "", stderr: "" }) as never,
+      )
       .mockImplementationOnce(() => {
         throw new Error("git broke");
       });
     const { result, logger } = runClone(["acme/service"], { fresh: true });
     expect((await result).exitCode).toBe(0);
     expect(
-      logger.warn.mock.calls.some((c) => String(c[0]).includes("Could not initialize")),
+      logger.warn.mock.calls.some((c) =>
+        String(c[0]).includes("Could not initialize"),
+      ),
     ).toBe(true);
   });
 
   test("--name rewrites package.json preserving its indentation", async () => {
     state.existsMap["/base/service/package.json"] = true;
-    state.readFileMap["/base/service/package.json"] = `{\n    "name": "old",\n    "version": "1.0.0"\n}\n`;
+    state.readFileMap["/base/service/package.json"] =
+      `{\n    "name": "old",\n    "version": "1.0.0"\n}\n`;
     const { result, logger } = runClone(["acme/service"], { name: "renamed" });
     expect((await result).exitCode).toBe(0);
-    const write = writeCalls.find((c) => c.path === "/base/service/package.json")!;
+    const write = writeCalls.find(
+      (c) => c.path === "/base/service/package.json",
+    )!;
     expect(write.content).toContain('    "name": "renamed"');
-    expect(logger.success.mock.calls.some((c) => String(c[0]).includes('"renamed"'))).toBe(true);
+    expect(
+      logger.success.mock.calls.some((c) => String(c[0]).includes('"renamed"')),
+    ).toBe(true);
   });
 
   test("--name warns when there is no readable package.json", async () => {
     const { result, logger } = runClone(["acme/service"], { name: "renamed" });
     expect((await result).exitCode).toBe(0);
-    expect(logger.warn.mock.calls.some((c) => String(c[0]).includes("No readable"))).toBe(true);
+    expect(
+      logger.warn.mock.calls.some((c) => String(c[0]).includes("No readable")),
+    ).toBe(true);
 
     resetMocks();
     state.existsMap["/base/service/package.json"] = true;
     state.readFileMap["/base/service/package.json"] = "{ not json";
     const second = runClone(["acme/service"], { name: "renamed" });
     expect((await second.result).exitCode).toBe(0);
-    expect(second.logger.warn.mock.calls.some((c) => String(c[0]).includes("No readable"))).toBe(
-      true,
-    );
+    expect(
+      second.logger.warn.mock.calls.some((c) =>
+        String(c[0]).includes("No readable"),
+      ),
+    ).toBe(true);
   });
 
   test("--install runs bun install and warns on failure", async () => {
     const { result, logger } = runClone(["acme/service"], { install: true });
     expect((await result).exitCode).toBe(0);
     expect(spawned()).toContain("bun install");
-    expect(logger.success.mock.calls.some((c) => String(c[0]).includes("Dependencies"))).toBe(true);
+    expect(
+      logger.success.mock.calls.some((c) =>
+        String(c[0]).includes("Dependencies"),
+      ),
+    ).toBe(true);
 
     resetMocks();
     // preflight ok, clone ok, install fails.
     mockSpawnSync
-      .mockImplementationOnce(() => ({ status: 0, stdout: "", stderr: "" }) as never)
-      .mockImplementationOnce(() => ({ status: 0, stdout: "", stderr: "" }) as never)
-      .mockImplementationOnce(() => ({ status: 1, stdout: "", stderr: "offline" }) as never);
+      .mockImplementationOnce(
+        () => ({ status: 0, stdout: "", stderr: "" }) as never,
+      )
+      .mockImplementationOnce(
+        () => ({ status: 0, stdout: "", stderr: "" }) as never,
+      )
+      .mockImplementationOnce(
+        () => ({ status: 1, stdout: "", stderr: "offline" }) as never,
+      );
     const second = runClone(["acme/service"], { install: true });
     expect((await second.result).exitCode).toBe(0);
     expect(
-      second.logger.warn.mock.calls.some((c) => String(c[0]).includes("bun install failed")),
+      second.logger.warn.mock.calls.some((c) =>
+        String(c[0]).includes("bun install failed"),
+      ),
     ).toBe(true);
   });
 });

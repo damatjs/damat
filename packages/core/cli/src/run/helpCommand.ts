@@ -7,19 +7,21 @@ import { printDefaultHelp, printCommandSpecificHelp } from "../help";
 export function handleHelpCommand(
   cli: CAC,
   config: CliConfig,
-  logger: Logger
+  logger: Logger,
 ): void {
-  cli.command("help [command]", "Show help for a command").action((commandName?: string) => {
-    if (commandName) {
-      const cmd = getRegistry().get(commandName);
-      if (!cmd) {
-        logger.error(`Unknown command: ${commandName}`);
-        process.exit(1);
+  cli
+    .command("help [command]", "Show help for a command")
+    .action((commandName?: string) => {
+      if (commandName) {
+        const cmd = getRegistry().get(commandName);
+        if (!cmd) {
+          logger.error(`Unknown command: ${commandName}`);
+          process.exit(1);
+        }
+        printCommandSpecificHelp(config, cmd);
+      } else {
+        printDefaultHelp(config, getRegistry().getAll());
       }
-      printCommandSpecificHelp(config, cmd);
-    } else {
-      printDefaultHelp(config, getRegistry().getAll());
-    }
-    process.exit(0);
-  });
+      process.exit(0);
+    });
 }

@@ -38,7 +38,6 @@ export async function createInitialMigration(
   moduleResolver: string,
   options: MigrationGeneratorOptions = {},
 ): Promise<string> {
-
   if (!fs.existsSync(moduleResolver)) {
     throw new Error(`Module '${moduleName}' not found at ${moduleResolver}`);
   }

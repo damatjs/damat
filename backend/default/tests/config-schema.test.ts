@@ -97,7 +97,9 @@ describe("config › betterAuthSchema", () => {
     });
     expect(r.success).toBe(true);
     if (r.success) {
-      expect((r.data as Record<string, unknown>).somethingExtra).toBeUndefined();
+      expect(
+        (r.data as Record<string, unknown>).somethingExtra,
+      ).toBeUndefined();
     }
   });
 });

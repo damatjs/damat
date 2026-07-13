@@ -54,7 +54,8 @@ beforeEach(() => {
   statDirMap = {};
   symlinkMap = {};
   mockReaddirSync.mockImplementation(
-    (p: string, _o?: unknown) => readdirMap[p as string] ?? fsState.readdirResult,
+    (p: string, _o?: unknown) =>
+      readdirMap[p as string] ?? fsState.readdirResult,
   );
   mockLstatSync.mockImplementation((p: string) => ({
     isDirectory: () => statDirMap[p as string] ?? fsState.statIsDirectory,
@@ -73,7 +74,8 @@ afterEach(() => {
 function stageLocalKit(dir: string, manifest: unknown) {
   fsState.existsMap[dir] = true;
   fsState.existsMap[join(dir, KIT_MANIFEST_FILENAME)] = true;
-  fsState.readFileMap[join(dir, KIT_MANIFEST_FILENAME)] = JSON.stringify(manifest);
+  fsState.readFileMap[join(dir, KIT_MANIFEST_FILENAME)] =
+    JSON.stringify(manifest);
 }
 
 /** A minimal valid manifest: every file ships to src/kit. */
@@ -112,15 +114,26 @@ describe("kit manifest", () => {
 
   describe("kitManifestErrors", () => {
     it("rejects non-object candidates outright", () => {
-      expect(kitManifestErrors(null)).toEqual(["manifest must be a JSON object"]);
-      expect(kitManifestErrors([1, 2])).toEqual(["manifest must be a JSON object"]);
-      expect(kitManifestErrors("kit")).toEqual(["manifest must be a JSON object"]);
+      expect(kitManifestErrors(null)).toEqual([
+        "manifest must be a JSON object",
+      ]);
+      expect(kitManifestErrors([1, 2])).toEqual([
+        "manifest must be a JSON object",
+      ]);
+      expect(kitManifestErrors("kit")).toEqual([
+        "manifest must be a JSON object",
+      ]);
     });
 
     it("requires a kebab-case name and a mappings array", () => {
-      const errors = kitManifestErrors({ name: "Design Kit", mappings: "nope" });
+      const errors = kitManifestErrors({
+        name: "Design Kit",
+        mappings: "nope",
+      });
       expect(errors.some((e) => e.includes("kebab-case"))).toBe(true);
-      expect(errors.some((e) => e.includes("`mappings` must be an array"))).toBe(true);
+      expect(
+        errors.some((e) => e.includes("`mappings` must be an array")),
+      ).toBe(true);
     });
 
     it("validates every mapping entry's from/to", () => {
@@ -147,7 +160,9 @@ describe("kit manifest", () => {
         ignore: "*.md",
         packages: null,
       });
-      expect(errors).toContain("`fallback` must be a relative path inside the project");
+      expect(errors).toContain(
+        "`fallback` must be a relative path inside the project",
+      );
       expect(errors).toContain("`ignore` must be an array of globs");
       expect(errors).toContain("`packages` must be an object of name → range");
       // Non-string fallback is also rejected.
@@ -203,7 +218,9 @@ describe("kit manifest", () => {
     it("returns the parsed manifest when valid", () => {
       const manifest = baseManifest({ version: "1.2.3" });
       stageLocalKit("/kit", manifest);
-      expect(readKitManifest("/kit")).toEqual(manifest as unknown as KitManifest);
+      expect(readKitManifest("/kit")).toEqual(
+        manifest as unknown as KitManifest,
+      );
     });
   });
 });
@@ -263,7 +280,16 @@ describe("kit plan", () => {
   describe("buildKitPlan", () => {
     it("applies first-match-wins mappings, prefix stripping, fallback, ignore and skips", () => {
       readdirMap = {
-        "/kit": ["z.txt", "components", ".git", "node_modules", "damat-kit.json", "README.md", "LICENSE", "evil-link"],
+        "/kit": [
+          "z.txt",
+          "components",
+          ".git",
+          "node_modules",
+          "damat-kit.json",
+          "README.md",
+          "LICENSE",
+          "evil-link",
+        ],
         "/kit/components": ["nav", "menu.tsx"],
         "/kit/components/nav": ["item.tsx"],
       };
@@ -283,8 +309,16 @@ describe("kit plan", () => {
       // files never appear.
       expect(plan.files).toEqual([
         { source: "LICENSE", target: "shared/LICENSE", via: "fallback" },
-        { source: "components/menu.tsx", target: "src/ui/menu.tsx", via: "mapping" },
-        { source: "components/nav/item.tsx", target: "src/ui/nav/item.tsx", via: "mapping" },
+        {
+          source: "components/menu.tsx",
+          target: "src/ui/menu.tsx",
+          via: "mapping",
+        },
+        {
+          source: "components/nav/item.tsx",
+          target: "src/ui/nav/item.tsx",
+          via: "mapping",
+        },
         { source: "z.txt", target: "notes/z.txt", via: "mapping" },
       ]);
       expect(plan.unmatched).toEqual([]);
@@ -296,7 +330,9 @@ describe("kit plan", () => {
         name: "kit",
         mappings: [{ from: "*.ts", to: "lib" }],
       });
-      expect(plan.files).toEqual([{ source: "a.ts", target: "lib/a.ts", via: "mapping" }]);
+      expect(plan.files).toEqual([
+        { source: "a.ts", target: "lib/a.ts", via: "mapping" },
+      ]);
       expect(plan.unmatched).toEqual(["b.md"]);
     });
   });
@@ -334,11 +370,18 @@ describe("resolveKitSource", () => {
   });
 
   it("cleans the temp dir and throws when the clone fails", () => {
-    mockSpawnSync.mockImplementation((cmd: string, args: string[], opts?: unknown) => {
-      spawnSyncCalls.push({ cmd, args, opts });
-      if (args[0] === "--version") return { status: 0, stdout: "git version 2", stderr: "" };
-      return { status: 128, stdout: "", stderr: "fatal: repository not found" };
-    });
+    mockSpawnSync.mockImplementation(
+      (cmd: string, args: string[], opts?: unknown) => {
+        spawnSyncCalls.push({ cmd, args, opts });
+        if (args[0] === "--version")
+          return { status: 0, stdout: "git version 2", stderr: "" };
+        return {
+          status: 128,
+          stdout: "",
+          stderr: "fatal: repository not found",
+        };
+      },
+    );
     expect(() => resolveKitSource("acme/kit", "/proj")).toThrow(
       "git clone failed for https://github.com/acme/kit.git: fatal: repository not found",
     );
@@ -346,7 +389,10 @@ describe("resolveKitSource", () => {
   });
 
   it("clones a URL#ref shallow to a temp dir and cleanup removes it", () => {
-    const resolved = resolveKitSource("https://github.com/acme/kit.git#v2", "/proj");
+    const resolved = resolveKitSource(
+      "https://github.com/acme/kit.git#v2",
+      "/proj",
+    );
     expect(resolved.dir).toBe(TMP);
     expect(resolved.origin).toEqual({
       type: "git",
@@ -356,7 +402,14 @@ describe("resolveKitSource", () => {
     const clone = spawnSyncCalls.find((c) => c.args[0] === "clone");
     expect(clone!.cmd).toBe("git");
     expect(clone!.args).toEqual([
-      "clone", "--depth", "1", "--branch", "v2", "--", "https://github.com/acme/kit.git", TMP,
+      "clone",
+      "--depth",
+      "1",
+      "--branch",
+      "v2",
+      "--",
+      "https://github.com/acme/kit.git",
+      TMP,
     ]);
     expect(rmCalls).toHaveLength(0);
     resolved.cleanup();
@@ -435,12 +488,20 @@ describe("kit add command", () => {
   });
 
   it("refuses unsafe package specs before writing anything", async () => {
-    stageLocalKit("/kit", baseManifest({ packages: { evil: "file:../../pwn" } }));
-    const { ctx, logger } = createContext({ install: true }, { args: ["/kit"] });
+    stageLocalKit(
+      "/kit",
+      baseManifest({ packages: { evil: "file:../../pwn" } }),
+    );
+    const { ctx, logger } = createContext(
+      { install: true },
+      { args: ["/kit"] },
+    );
     const res = await kitAddCommand.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("unsafe package specs")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("unsafe package specs"),
+      ),
     ).toBe(true);
     expect(cpCalls).toHaveLength(0);
     expect(writeCalls).toHaveLength(0);
@@ -448,8 +509,14 @@ describe("kit add command", () => {
   });
 
   it("warns about unmatched files when the kit has no fallback", async () => {
-    stageLocalKit("/kit", { name: "design-kit", mappings: [{ from: "src/**", to: "lib" }] });
-    const { ctx, logger } = createContext({ "dry-run": true }, { args: ["/kit"] });
+    stageLocalKit("/kit", {
+      name: "design-kit",
+      mappings: [{ from: "src/**", to: "lib" }],
+    });
+    const { ctx, logger } = createContext(
+      { "dry-run": true },
+      { args: ["/kit"] },
+    );
     const res = await kitAddCommand.handler(ctx); // default tree: a single app.ts
     expect(res.exitCode).toBe(0);
     const warn = logger.warn.mock.calls.find((c) =>
@@ -482,9 +549,17 @@ describe("kit add command", () => {
     const res = await kitAddCommand.handler(ctx);
     expect(res.exitCode).toBe(0);
     // Header logged with version + description + file count.
-    const header = logger.info.mock.calls.find((c) => c[0] === 'Kit "design-kit"');
-    expect(header![1]).toMatchObject({ version: "1.0.0", description: "UI kit", files: 2 });
-    const plan = logger.info.mock.calls.find((c) => String(c[0]).startsWith("Dry run"));
+    const header = logger.info.mock.calls.find(
+      (c) => c[0] === 'Kit "design-kit"',
+    );
+    expect(header![1]).toMatchObject({
+      version: "1.0.0",
+      description: "UI kit",
+      files: 2,
+    });
+    const plan = logger.info.mock.calls.find((c) =>
+      String(c[0]).startsWith("Dry run"),
+    );
     expect(plan).toBeDefined();
     expect(plan![0]).toContain("components/a.ts -> src/ui/a.ts");
     expect(plan![0]).toContain("notes.txt -> shared/notes.txt  (fallback)");
@@ -505,21 +580,28 @@ describe("kit add command", () => {
         notes: "Wire the provider into your app root.",
       }),
     );
-    const { ctx, logger } = createContext({ install: true }, { args: ["/kit"] });
+    const { ctx, logger } = createContext(
+      { install: true },
+      { args: ["/kit"] },
+    );
     const res = await kitAddCommand.handler(ctx);
     expect(res.exitCode).toBe(0);
     // app.ts copied to the mapped location, parent dir ensured first.
     expect(cpCalls).toEqual([
       { src: "/kit/app.ts", dest: "/project/src/kit/app.ts", opts: undefined },
     ]);
-    expect(mockMkdirSync.mock.calls.some((c) => c[0] === "/project/src/kit")).toBe(true);
+    expect(
+      mockMkdirSync.mock.calls.some((c) => c[0] === "/project/src/kit"),
+    ).toBe(true);
     expect(
       logger.success.mock.calls.some((c) =>
         String(c[0]).includes('Installed 1 file(s) from "design-kit"'),
       ),
     ).toBe(true);
     // The committable record was written.
-    const record = writeCalls.find((w) => w.path === join("/project", KIT_RECORD_FILENAME));
+    const record = writeCalls.find(
+      (w) => w.path === join("/project", KIT_RECORD_FILENAME),
+    );
     expect(record).toBeDefined();
     const parsed = JSON.parse(record!.content);
     expect(parsed.kits).toHaveLength(1);
@@ -560,7 +642,9 @@ describe("kit add command", () => {
     expect(res1.exitCode).toBe(0);
     expect(cpCalls).toHaveLength(0); // kept, not overwritten
     expect(
-      first.logger.success.mock.calls.some((c) => String(c[0]).includes("Installed 0 file(s)")),
+      first.logger.success.mock.calls.some((c) =>
+        String(c[0]).includes("Installed 0 file(s)"),
+      ),
     ).toBe(true);
     const warn = first.logger.warn.mock.calls.find((c) =>
       String(c[0]).includes("--force to overwrite"),
@@ -568,14 +652,19 @@ describe("kit add command", () => {
     expect(warn).toBeDefined();
     expect(String(warn![0])).toContain("src/kit/app.ts");
 
-    const second = createContext({ install: true, force: true }, { args: ["/kit"] });
+    const second = createContext(
+      { install: true, force: true },
+      { args: ["/kit"] },
+    );
     const res2 = await kitAddCommand.handler(second.ctx);
     expect(res2.exitCode).toBe(0);
     expect(cpCalls).toEqual([
       { src: "/kit/app.ts", dest: "/project/src/kit/app.ts", opts: undefined },
     ]);
     expect(
-      second.logger.warn.mock.calls.some((c) => String(c[0]).includes("--force to overwrite")),
+      second.logger.warn.mock.calls.some((c) =>
+        String(c[0]).includes("--force to overwrite"),
+      ),
     ).toBe(false);
   });
 
@@ -643,9 +732,15 @@ describe("kit add command", () => {
     // The manifest's lexical checks make this unreachable through real file
     // trees; a mocked readdir entry with ../ segments exercises the
     // defense-in-depth guard in copyPlanned.
-    stageLocalKit("/kit", baseManifest({ mappings: [{ from: "**", to: "x" }] }));
+    stageLocalKit(
+      "/kit",
+      baseManifest({ mappings: [{ from: "**", to: "x" }] }),
+    );
     readdirMap = { "/kit": ["../../escape.ts"] };
-    const { ctx, logger } = createContext({ install: true }, { args: ["/kit"] });
+    const { ctx, logger } = createContext(
+      { install: true },
+      { args: ["/kit"] },
+    );
     const res = await kitAddCommand.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(
@@ -659,12 +754,17 @@ describe("kit add command", () => {
   it("exits 1 when bun add fails", async () => {
     stageLocalKit("/kit", baseManifest({ packages: { react: "^18.0.0" } }));
     fsState.spawnSyncResult = { status: 1, stdout: "", stderr: "boom" };
-    const { ctx, logger } = createContext({ install: true }, { args: ["/kit"] });
+    const { ctx, logger } = createContext(
+      { install: true },
+      { args: ["/kit"] },
+    );
     const res = await kitAddCommand.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(
       logger.error.mock.calls.some(
-        (c) => String(c[0]).includes("bun add failed") && String(c[0]).includes("boom"),
+        (c) =>
+          String(c[0]).includes("bun add failed") &&
+          String(c[0]).includes("boom"),
       ),
     ).toBe(true);
   });
@@ -690,19 +790,28 @@ describe("kit init command", () => {
       fallback: "shared/my-kit",
     });
     expect(Array.isArray(starter.ignore)).toBe(true);
-    expect(logger.success).toHaveBeenCalledWith(`Wrote ${KIT_MANIFEST_FILENAME}`);
+    expect(logger.success).toHaveBeenCalledWith(
+      `Wrote ${KIT_MANIFEST_FILENAME}`,
+    );
     expect(
-      logger.info.mock.calls.some((c) => String(c[0]).includes("damat kit validate")),
+      logger.info.mock.calls.some((c) =>
+        String(c[0]).includes("damat kit validate"),
+      ),
     ).toBe(true);
   });
 
   it("prefers an explicit name argument", async () => {
-    const { ctx } = createContext({}, { args: ["design-system"], cwd: "/somewhere/Else" });
+    const { ctx } = createContext(
+      {},
+      { args: ["design-system"], cwd: "/somewhere/Else" },
+    );
     const res = await kitInitCommand.handler(ctx);
     expect(res.exitCode).toBe(0);
     const starter = JSON.parse(writeCalls[0]!.content);
     expect(starter.name).toBe("design-system");
-    expect(starter.mappings).toEqual([{ from: "src/**", to: "src/design-system" }]);
+    expect(starter.mappings).toEqual([
+      { from: "src/**", to: "src/design-system" },
+    ]);
   });
 
   it("rejects a non-kebab-case name", async () => {
@@ -720,7 +829,9 @@ describe("kit init command", () => {
     const { ctx, logger } = createContext({}, { args: ["my-kit"] });
     const res = await kitInitCommand.handler(ctx);
     expect(res.exitCode).toBe(1);
-    expect(logger.error).toHaveBeenCalledWith(`${KIT_MANIFEST_FILENAME} already exists`);
+    expect(logger.error).toHaveBeenCalledWith(
+      `${KIT_MANIFEST_FILENAME} already exists`,
+    );
     expect(writeCalls).toHaveLength(0);
   });
 });
@@ -734,14 +845,19 @@ describe("kit validate command", () => {
     const res = await kitValidateCommand.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("Kit manifest invalid")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("Kit manifest invalid"),
+      ),
     ).toBe(true);
   });
 
   it("prints the placement preview and summary for a valid kit", async () => {
     stageLocalKit(
       "/kitproj",
-      baseManifest({ mappings: [{ from: "*.ts", to: "src" }], fallback: "shared" }),
+      baseManifest({
+        mappings: [{ from: "*.ts", to: "src" }],
+        fallback: "shared",
+      }),
     );
     readdirMap = { "/kitproj": ["a.ts", "b.md", "damat-kit.json"] };
     const { ctx, logger } = createContext({}, { cwd: "/kitproj" });
@@ -760,7 +876,10 @@ describe("kit validate command", () => {
   });
 
   it("warns about unmatched files but still validates", async () => {
-    stageLocalKit("/kitproj", baseManifest({ mappings: [{ from: "*.ts", to: "src" }] }));
+    stageLocalKit(
+      "/kitproj",
+      baseManifest({ mappings: [{ from: "*.ts", to: "src" }] }),
+    );
     readdirMap = { "/kitproj": ["a.ts", "b.md", "damat-kit.json"] };
     const { ctx, logger } = createContext({}, { cwd: "/kitproj" });
     const res = await kitValidateCommand.handler(ctx);
@@ -776,13 +895,18 @@ describe("kit validate command", () => {
   });
 
   it("exits 1 when the kit ships no files at all", async () => {
-    stageLocalKit("/kitproj", baseManifest({ mappings: [{ from: "src/**", to: "lib" }] }));
+    stageLocalKit(
+      "/kitproj",
+      baseManifest({ mappings: [{ from: "src/**", to: "lib" }] }),
+    );
     readdirMap = { "/kitproj": ["damat-kit.json"] };
     const { ctx, logger } = createContext({}, { cwd: "/kitproj" });
     const res = await kitValidateCommand.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(
-      logger.error.mock.calls.some((c) => String(c[0]).includes("ships no files")),
+      logger.error.mock.calls.some((c) =>
+        String(c[0]).includes("ships no files"),
+      ),
     ).toBe(true);
     expect(logger.success).not.toHaveBeenCalled();
   });

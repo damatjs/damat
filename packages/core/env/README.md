@@ -63,14 +63,17 @@ Both arguments are optional: `loadEnv()` defaults `environment` to `"development
 
 The single entry point `@damatjs/load-env` exports `loadEnv`.
 
-| Export    | Kind | Summary                                                                              |
+| Export    | Kind | Summary                                                                             |
 | --------- | ---- | ----------------------------------------------------------------------------------- |
-| `loadEnv` | fn   | Read the `.env` cascade in `cwd` and merge it into `process.env` (non-overwriting).  |
+| `loadEnv` | fn   | Read the `.env` cascade in `cwd` and merge it into `process.env` (non-overwriting). |
 
 Signature:
 
 ```ts
-function loadEnv(environment?: string /* = "development" */, cwd?: string /* = process.cwd() */): void;
+function loadEnv(
+  environment?: string /* = "development" */,
+  cwd?: string /* = process.cwd() */,
+): void;
 ```
 
 The parser, `parseEnvFile(content: string): Record<string, string>`, is an internal

@@ -1,6 +1,6 @@
 // ─── Global Model Registry ───────────────────────────────────────────────────
 
-import { ModelDefinition } from '@/schema';
+import { ModelDefinition } from "@/schema";
 
 /**
  * A lightweight global registry that maps table names to their model definitions.
@@ -17,7 +17,9 @@ export function registerModel(tableName: string, model: ModelDefinition): void {
 }
 
 /** Look up a model by table name. Returns undefined if not registered. */
-export function getRegisteredModel(tableName: string): ModelDefinition | undefined {
+export function getRegisteredModel(
+  tableName: string,
+): ModelDefinition | undefined {
   return MODEL_REGISTRY.get(tableName);
 }
 

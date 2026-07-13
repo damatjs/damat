@@ -36,7 +36,10 @@ export interface AuthProvider {
 }
 
 /** Fired once per verified request so the app can sync a local user row (opt-in). */
-export type OnAuthenticated = (principal: AuthPrincipal, c: Context) => void | Promise<void>;
+export type OnAuthenticated = (
+  principal: AuthPrincipal,
+  c: Context,
+) => void | Promise<void>;
 
 /**
  * The `services.auth` block of `damat.config.ts`. `provider` names the adapter

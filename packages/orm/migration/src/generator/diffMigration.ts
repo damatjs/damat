@@ -13,7 +13,12 @@ import path from "node:path";
 import { log } from "../logger";
 import { getMigrationTemplateWithSQL } from "../utils/template";
 import { generateTimestamp } from "../utils/timestamp";
-import { diffSchemas, generateMigration, loadSnapshot, saveSnapshot } from "@damatjs/orm-processor";
+import {
+  diffSchemas,
+  generateMigration,
+  loadSnapshot,
+  saveSnapshot,
+} from "@damatjs/orm-processor";
 import { toModuleSchema } from "@damatjs/orm-model";
 import { discoverModels } from "../discovery";
 import type {
@@ -49,7 +54,6 @@ export async function createDiffMigration(
   moduleResolver: string,
   options: CreateDiffMigrationOptions = {},
 ): Promise<DiffMigrationResult> {
-
   if (!fs.existsSync(moduleResolver)) {
     throw new Error(`Module '${moduleName}' not found at ${moduleResolver}`);
   }

@@ -9,7 +9,9 @@ Define and load the application configuration (`damat.config.ts`). `defineConfig
 ## `defineConfig`
 
 ```ts
-export function defineConfig(config: AppConfig): AppConfig { return config; }
+export function defineConfig(config: AppConfig): AppConfig {
+  return config;
+}
 ```
 
 Pure identity — its only job is to attach the `AppConfig` type to your object literal so the editor checks it and infers field types. Used at the top of `damat.config.ts`.
@@ -20,7 +22,7 @@ Pure identity — its only job is to attach the `AppConfig` type to your object 
 const CONFIG_FILE = "damat.config.ts";
 let cachedConfig: AppConfig | null = null;
 
-export function loadConfig(cwd?: string): AppConfig;          // ALWAYS THROWS — see below
+export function loadConfig(cwd?: string): AppConfig; // ALWAYS THROWS — see below
 export async function loadConfigAsync(cwd?: string): Promise<AppConfig>;
 export function clearConfigCache(): void;
 ```
@@ -38,83 +40,94 @@ export function clearConfigCache(): void;
 ```ts
 // types/app.ts
 interface AppConfig {
-  projectConfig: ProjectConfig;     // required
-  modules?: ModuleConfigObject;     // map id -> ModuleConfig
-  hooks?: LifecycleHooks;           // bootstrap lifecycle hooks (see below)
-  links?: string | string[];        // cross-module link dir(s), e.g. "./src/links"
-  services?: ServicesConfig;        // redis/database/workflowLock/events/jobs overrides
+  projectConfig: ProjectConfig; // required
+  modules?: ModuleConfigObject; // map id -> ModuleConfig
+  hooks?: LifecycleHooks; // bootstrap lifecycle hooks (see below)
+  links?: string | string[]; // cross-module link dir(s), e.g. "./src/links"
+  services?: ServicesConfig; // redis/database/workflowLock/events/jobs overrides
 }
 
 // types/project.ts
 interface ProjectConfig {
   databaseUrl?: string;
   redisUrl?: string;
-  loggerConfig?: LoggerConfig;       // from @damatjs/logger
+  loggerConfig?: LoggerConfig; // from @damatjs/logger
   nodeEnv?: "development" | "production" | "test";
-  http: HttpConfig;                  // required
+  http: HttpConfig; // required
 }
 
 // types/http.ts
 interface HttpConfig {
   port: number;
   host: string;
-  corsConfig?: string | CorsConfigType;     // "*" / "a.com,b.com" / full object
+  corsConfig?: string | CorsConfigType; // "*" / "a.com,b.com" / full object
   api?: {
-    bathUrl?: string;                        // (sic) present in source, currently unused
-    entryRouter?: string;                    // API mount path, default "/api"
-    entryRouterPath?: string;                // routes dir, default "/src/api/routes"
-    healthCheckRouter?: string;              // health path, default "/health"
+    bathUrl?: string; // (sic) present in source, currently unused
+    entryRouter?: string; // API mount path, default "/api"
+    entryRouterPath?: string; // routes dir, default "/src/api/routes"
+    healthCheckRouter?: string; // health path, default "/health"
   };
-  rateLimit?: HttpRateLimitConfig;           // global default rate limit
-  auth?: HttpAuthConfig;                     // global default auth
+  rateLimit?: HttpRateLimitConfig; // global default rate limit
+  auth?: HttpAuthConfig; // global default auth
 }
 
 interface HttpRateLimitConfig {
   requests: number;
-  window: string;                            // "1m" | "5m" | "1h" | "1d"
-  failClosed?: boolean;                      // reject with 503 when the rate-limit backend is down (default false: fail-open)
+  window: string; // "1m" | "5m" | "1h" | "1d"
+  failClosed?: boolean; // reject with 503 when the rate-limit backend is down (default false: fail-open)
   getUserTier?: (userId: string) => Promise<HttpRateLimitConfig | null>;
   getApiKeyTier?: (apiKey: string) => Promise<HttpRateLimitConfig | null>;
 }
 
-interface HttpAuthConfig { type: AuthType; }  // AuthType = "session"|"apiKey"|"flexible"|"none"
+interface HttpAuthConfig {
+  type: AuthType;
+} // AuthType = "session"|"apiKey"|"flexible"|"none"
 
 // types/hooks.ts
 interface LifecycleHookContext {
   config: ProjectConfig;
   logger: ILogger;
-  app?: Hono;                        // set for beforeRoutes/afterRoutes, absent around service init
+  app?: Hono; // set for beforeRoutes/afterRoutes, absent around service init
 }
 type LifecycleHook = (ctx: LifecycleHookContext) => void | Promise<void>;
 interface LifecycleHooks {
-  beforeServices?: LifecycleHook;    // after config load, before logger/db/redis/module init
-  afterServices?: LifecycleHook;     // services are up, routes not yet built
-  beforeRoutes?: LifecycleHook;      // the Hono app exists, no routes registered yet
-  afterRoutes?: LifecycleHook;       // all routes registered, just before the 404 handler
+  beforeServices?: LifecycleHook; // after config load, before logger/db/redis/module init
+  afterServices?: LifecycleHook; // services are up, routes not yet built
+  beforeRoutes?: LifecycleHook; // the Hono app exists, no routes registered yet
+  afterRoutes?: LifecycleHook; // all routes registered, just before the 404 handler
 }
 
 // types/module.ts
-interface ModuleConfigObject { [id: string]: ModuleConfig; }
-interface ModuleConfig { id?: string; resolve: string; options?: Record<string, unknown>; }
+interface ModuleConfigObject {
+  [id: string]: ModuleConfig;
+}
+interface ModuleConfig {
+  id?: string;
+  resolve: string;
+  options?: Record<string, unknown>;
+}
 
 // types/services.ts
 interface ServicesConfig {
-  redis?: RedisConfig;               // from @damatjs/redis
-  database?: DbPoolConfig;           // from @damatjs/orm-type
+  redis?: RedisConfig; // from @damatjs/redis
+  database?: DbPoolConfig; // from @damatjs/orm-type
   workflowLock?: boolean;
-  events?: {                         // cross-process event broadcast (@damatjs/events); requires redisUrl
+  events?: {
+    // cross-process event broadcast (@damatjs/events); requires redisUrl
     broadcast?: boolean;
-    channel?: string;                // pub/sub channel, default "damat-events"
+    channel?: string; // pub/sub channel, default "damat-events"
   };
-  jobs?: {                           // background job worker (@damatjs/jobs); requires redisUrl
-    worker?: boolean;                // only worker:true processes execute jobs
-    queueName?: string;              // default "damat-jobs"
-    concurrency?: number;            // default 1
-    pollIntervalMs?: number;         // default 1000
+  jobs?: {
+    // background job worker (@damatjs/jobs); requires redisUrl
+    worker?: boolean; // only worker:true processes execute jobs
+    queueName?: string; // default "damat-jobs"
+    concurrency?: number; // default 1
+    pollIntervalMs?: number; // default 1000
   };
-  auth?: {                           // pluggable auth provider (@damatjs/auth-*); optional, dynamically loaded
-    provider: "better-auth" | "clerk" | "auth0" | string;  // short name → @damatjs/auth-<name>; a "/" value is verbatim
-    options?: Record<string, unknown>;                     // passed to the adapter factory (keys, table names, …)
+  auth?: {
+    // pluggable auth provider (@damatjs/auth-*); optional, dynamically loaded
+    provider: "better-auth" | "clerk" | "auth0" | string; // short name → @damatjs/auth-<name>; a "/" value is verbatim
+    options?: Record<string, unknown>; // passed to the adapter factory (keys, table names, …)
     onAuthenticated?: (principal, c) => void | Promise<void>; // opt-in per-request local-user sync hook
   };
 }

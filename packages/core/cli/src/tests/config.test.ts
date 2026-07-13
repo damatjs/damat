@@ -26,19 +26,13 @@ describe("Config Loader", () => {
   });
 
   test("should return null when config file does not exist", async () => {
-    const result = await loadConfig(
-      { file: "nonexistent.config.ts" },
-      testDir
-    );
+    const result = await loadConfig({ file: "nonexistent.config.ts" }, testDir);
     expect(result).toBeNull();
   });
 
   test("should load config from TypeScript file", async () => {
     const configPath = join(testDir, "test.config.ts");
-    writeFileSync(
-      configPath,
-      "export default { name: 'test', value: 42 };"
-    );
+    writeFileSync(configPath, "export default { name: 'test', value: 42 };");
 
     const result = await loadConfig({ file: "test.config.ts" }, testDir);
 
@@ -58,7 +52,7 @@ describe("Config Loader", () => {
     const configPath = join(testDir, "func.config.ts");
     writeFileSync(
       configPath,
-      "export default () => ({ name: 'function', value: 123 });"
+      "export default () => ({ name: 'function', value: 123 });",
     );
 
     const result = await loadConfig({ file: "func.config.ts" }, testDir);
@@ -77,7 +71,7 @@ describe("Config Loader", () => {
           return { custom: true, path: filePath };
         },
       },
-      testDir
+      testDir,
     );
 
     expect(result).toEqual({ custom: true, path: configPath });
@@ -85,14 +79,11 @@ describe("Config Loader", () => {
 
   test("should try multiple config files", async () => {
     const configPath = join(testDir, "secondary.config.ts");
-    writeFileSync(
-      configPath,
-      "export default { source: 'secondary' };"
-    );
+    writeFileSync(configPath, "export default { source: 'secondary' };");
 
     const result = await loadConfig(
       { file: ["primary.config.ts", "secondary.config.ts"] },
-      testDir
+      testDir,
     );
 
     expect(result).toEqual({ source: "secondary" });
@@ -100,10 +91,7 @@ describe("Config Loader", () => {
 
   test("should cache loaded config", async () => {
     const configPath = join(testDir, "cached.config.ts");
-    writeFileSync(
-      configPath,
-      "export default { cached: true };"
-    );
+    writeFileSync(configPath, "export default { cached: true };");
 
     const result1 = await loadConfig({ file: "cached.config.ts" }, testDir);
     const result2 = await loadConfig({ file: "cached.config.ts" }, testDir);
@@ -113,10 +101,7 @@ describe("Config Loader", () => {
 
   test("should clear cache", async () => {
     const configPath = join(testDir, "clear.config.ts");
-    writeFileSync(
-      configPath,
-      "export default { value: 1 };"
-    );
+    writeFileSync(configPath, "export default { value: 1 };");
 
     const result1 = await loadConfig({ file: "clear.config.ts" }, testDir);
     clearConfigCache();
@@ -127,10 +112,7 @@ describe("Config Loader", () => {
 
   test("should handle absolute paths", async () => {
     const configPath = join(testDir, "absolute.config.ts");
-    writeFileSync(
-      configPath,
-      "export default { absolute: true };"
-    );
+    writeFileSync(configPath, "export default { absolute: true };");
 
     const result = await loadConfig({ file: configPath });
     expect(result).toEqual({ absolute: true });

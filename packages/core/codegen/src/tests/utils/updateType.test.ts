@@ -13,7 +13,9 @@ describe("generateUpdateType", () => {
     };
 
     const lines = generateUpdateType(table);
-    expect(lines).toContain("export type UpdateProduct = Partial<Omit<Product, 'id'>>;");
+    expect(lines).toContain(
+      "export type UpdateProduct = Partial<Omit<Product, 'id'>>;",
+    );
   });
 
   it("generates simple partial for no PK", () => {
@@ -40,7 +42,9 @@ describe("generateUpdateType", () => {
     };
 
     const lines = generateUpdateType(table);
-    expect(lines).toContain("export type UpdateJunction = Partial<Omit<Junction, 'left_id' | 'right_id'>>;");
+    expect(lines).toContain(
+      "export type UpdateJunction = Partial<Omit<Junction, 'left_id' | 'right_id'>>;",
+    );
   });
 
   it("generates correct type name for snake_case tables", () => {

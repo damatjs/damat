@@ -12,9 +12,9 @@ logging happens. Everything above it (clients, repos, managers) routes through `
 ```ts
 async function pgExecuteRaw<T extends QueryResultRow = Record<string, unknown>>(
   conn: Pool | PoolClient,
-  query: BuiltQuery,          // { sql: string; params: unknown[] }
+  query: BuiltQuery, // { sql: string; params: unknown[] }
   logger?: QueryLogger,
-): Promise<{ rows: T[]; rowCount: number }>
+): Promise<{ rows: T[]; rowCount: number }>;
 ```
 
 Step by step:
@@ -44,7 +44,7 @@ async function pgTransaction<R>(
   pool: Pool,
   callback: (client: PoolClient) => Promise<R>,
   logger?: QueryLogger,
-): Promise<R>
+): Promise<R>;
 ```
 
 A minimal BEGIN/COMMIT/ROLLBACK helper used by the **client-level** transaction
@@ -53,12 +53,15 @@ A minimal BEGIN/COMMIT/ROLLBACK helper used by the **client-level** transaction
 ```ts
 const client = await pool.connect();
 try {
-  logger.logTransaction("begin");  await client.query("BEGIN");
+  logger.logTransaction("begin");
+  await client.query("BEGIN");
   const result = await callback(client);
-  await client.query("COMMIT");    logger.logTransaction("commit");
+  await client.query("COMMIT");
+  logger.logTransaction("commit");
   return result;
 } catch (err) {
-  await client.query("ROLLBACK");  logger.logTransaction("rollback");
+  await client.query("ROLLBACK");
+  logger.logTransaction("rollback");
   throw err;
 } finally {
   client.release();

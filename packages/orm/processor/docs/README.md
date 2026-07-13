@@ -4,19 +4,19 @@ Maintainer-facing documentation for `@damatjs/orm-processor`. For the public ove
 
 The processor is a **pure, stateless schema engine**. Given the serialized `ModuleSchema` shape (from `@damatjs/orm-type`), it answers three questions:
 
-1. *What did the schema look like last time?* → **snapshot** (the only layer that touches disk).
-2. *What changed between two versions?* → **diff** (emits an ordered list of `SchemaChange`).
-3. *What SQL realizes those changes?* → **sqlGenerator** (emits PostgreSQL DDL strings).
+1. _What did the schema look like last time?_ → **snapshot** (the only layer that touches disk).
+2. _What changed between two versions?_ → **diff** (emits an ordered list of `SchemaChange`).
+3. _What SQL realizes those changes?_ → **sqlGenerator** (emits PostgreSQL DDL strings).
 
 ## Module map
 
-| File / dir | Responsibility |
-| --- | --- |
-| `src/index.ts` | Barrel: re-exports `types`, `diff`, `sqlGenerator`, `snapshot`. |
-| `src/snapshot/index.ts` | `loadSnapshot`, `saveSnapshot`, `snapshotExist` — JSON read/write of `schema-snapshot.json`. The only file with I/O. → [snapshot.md](./snapshot.md) |
-| `src/diff/` | Schema comparison. `diffSchemas.ts` is the entry point; `tables.ts`/`columns.ts`/`indexes.ts`/`foreignKeys.ts`/`enums.ts` are per-concern; `utils.ts` has equality checks; `priority.ts` defines ordering; `reverse.ts` inverts a diff. → [diff.md](./diff.md) |
-| `src/sqlGenerator/` | DDL emission. `changeSql.ts` dispatches a `SchemaChange`; `tables.ts`/`columns.ts`/`indexes.ts`/`foreignKeys.ts`/`enums.ts` emit per-concern SQL; `utils.ts` quotes identifiers and builds column fragments; `generateMigration/` wraps it all into `generateFromDiff` / `generateFromSnapshot`. → [sql-generator.md](./sql-generator.md) |
-| `src/types/diff/` | `schema.ts` (`SchemaDiff`), `changes.ts` (`SchemaChange` union), `generator.ts` (options & results). |
+| File / dir              | Responsibility                                                                                                                                                                                                                                                                                                                            |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/index.ts`          | Barrel: re-exports `types`, `diff`, `sqlGenerator`, `snapshot`.                                                                                                                                                                                                                                                                           |
+| `src/snapshot/index.ts` | `loadSnapshot`, `saveSnapshot`, `snapshotExist` — JSON read/write of `schema-snapshot.json`. The only file with I/O. → [snapshot.md](./snapshot.md)                                                                                                                                                                                       |
+| `src/diff/`             | Schema comparison. `diffSchemas.ts` is the entry point; `tables.ts`/`columns.ts`/`indexes.ts`/`foreignKeys.ts`/`enums.ts` are per-concern; `utils.ts` has equality checks; `priority.ts` defines ordering; `reverse.ts` inverts a diff. → [diff.md](./diff.md)                                                                            |
+| `src/sqlGenerator/`     | DDL emission. `changeSql.ts` dispatches a `SchemaChange`; `tables.ts`/`columns.ts`/`indexes.ts`/`foreignKeys.ts`/`enums.ts` emit per-concern SQL; `utils.ts` quotes identifiers and builds column fragments; `generateMigration/` wraps it all into `generateFromDiff` / `generateFromSnapshot`. → [sql-generator.md](./sql-generator.md) |
+| `src/types/diff/`       | `schema.ts` (`SchemaDiff`), `changes.ts` (`SchemaChange` union), `generator.ts` (options & results).                                                                                                                                                                                                                                      |
 
 ## Architecture overview
 

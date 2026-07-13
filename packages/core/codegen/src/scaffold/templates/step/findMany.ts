@@ -1,5 +1,5 @@
 import type { CrudNames } from "../../naming";
-import { SCAFFOLD_NOTE } from '../constant';
+import { SCAFFOLD_NOTE } from "../constant";
 
 export function stepFindMany(n: CrudNames, typesSpec: string): string {
   return `${SCAFFOLD_NOTE}

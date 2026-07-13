@@ -1,18 +1,23 @@
 import type { Redis, RedisClientConfig } from "./types";
 import { RedisClient } from "./RedisClient";
 import { RedisNotInitializedError } from "./errors";
-import { ILogger } from '@damatjs/logger';
+import { ILogger } from "@damatjs/logger";
 
 let globalClient: RedisClient | null = null;
 
-export function initRedis(config?: RedisClientConfig, logger?: ILogger): RedisClient | null {
+export function initRedis(
+  config?: RedisClientConfig,
+  logger?: ILogger,
+): RedisClient | null {
   if (!config) {
     return null;
   }
 
   if (globalClient) {
-    (logger ?? config.logger)?.warn("Redis already initialized, closing existing connection");
-    globalClient.disconnect().catch(() => { });
+    (logger ?? config.logger)?.warn(
+      "Redis already initialized, closing existing connection",
+    );
+    globalClient.disconnect().catch(() => {});
   }
   globalClient = new RedisClient(config);
   return globalClient;
@@ -23,10 +28,9 @@ export async function connectRedis(): Promise<Redis> {
     throw new RedisNotInitializedError();
   }
 
-  if (!globalClient.client)
-    await globalClient.connect();
+  if (!globalClient.client) await globalClient.connect();
 
-  await globalClient.client.ping()
+  await globalClient.client.ping();
   return globalClient.client;
 }
 

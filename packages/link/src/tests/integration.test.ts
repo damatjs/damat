@@ -104,7 +104,10 @@ describe.skipIf(!DB)("link integration (DATABASE_URL)", () => {
     expect(links).toHaveLength(2);
 
     const books = await linkSvc.fetch(a, { module: "store", model: "book" });
-    expect(books.map((b: any) => b.title).sort()).toEqual(["LOTR", "The Hobbit"]);
+    expect(books.map((b: any) => b.title).sort()).toEqual([
+      "LOTR",
+      "The Hobbit",
+    ]);
 
     const authors = await linkSvc.fetch(
       { module: "store", model: "book", id: b1.id },
@@ -120,14 +123,20 @@ describe.skipIf(!DB)("link integration (DATABASE_URL)", () => {
     const b = { module: "store", model: "book", id: book.id };
 
     await linkSvc.create(a, b);
-    expect(await linkSvc.fetch(a, { module: "store", model: "book" })).toHaveLength(1);
+    expect(
+      await linkSvc.fetch(a, { module: "store", model: "book" }),
+    ).toHaveLength(1);
 
     const removed = await linkSvc.dismiss(a, b);
     expect(removed).toBe(1);
-    expect(await linkSvc.fetch(a, { module: "store", model: "book" })).toHaveLength(0);
+    expect(
+      await linkSvc.fetch(a, { module: "store", model: "book" }),
+    ).toHaveLength(0);
 
     await linkSvc.create(a, b); // revive
-    expect(await linkSvc.fetch(a, { module: "store", model: "book" })).toHaveLength(1);
+    expect(
+      await linkSvc.fetch(a, { module: "store", model: "book" }),
+    ).toHaveLength(1);
   });
 
   test("graph resolves nested linked records with field selection", async () => {

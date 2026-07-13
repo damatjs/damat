@@ -67,7 +67,10 @@ export async function runCli(config: CliConfig): Promise<void> {
         ? getRegistry().get(config.defaultCommand)
         : undefined;
       if (fallback) {
-        const { options, positional } = parseCommandArgs(args, fallback.options);
+        const { options, positional } = parseCommandArgs(
+          args,
+          fallback.options,
+        );
         const ctx = buildCommandContext(fallback.name, options, logger, config);
         const result = await fallback.handler({ ...ctx, args: positional });
         process.exit(result.exitCode);
@@ -79,10 +82,12 @@ export async function runCli(config: CliConfig): Promise<void> {
       process.exit(1);
     }
 
-    const subcommandName = cmd.subcommands && args.length > 1 ? args[1] : undefined;
+    const subcommandName =
+      cmd.subcommands && args.length > 1 ? args[1] : undefined;
     if (subcommandName) {
       const fullName = `${cmd.name}:${subcommandName}`;
-      const subcmd = getRegistry().get(fullName) || getRegistry().get(subcommandName);
+      const subcmd =
+        getRegistry().get(fullName) || getRegistry().get(subcommandName);
 
       if (subcmd && subcmd !== cmd) {
         const { options, positional } = parseCommandArgs(

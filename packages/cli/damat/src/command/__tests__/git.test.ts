@@ -20,7 +20,13 @@ describe("gitAvailable", () => {
 
   test("false when spawn reports an error (git not on PATH)", () => {
     mockSpawnSync.mockImplementationOnce(
-      () => ({ status: null, error: new Error("ENOENT"), stdout: "", stderr: "" }) as never,
+      () =>
+        ({
+          status: null,
+          error: new Error("ENOENT"),
+          stdout: "",
+          stderr: "",
+        }) as never,
     );
     expect(gitAvailable()).toBe(false);
   });

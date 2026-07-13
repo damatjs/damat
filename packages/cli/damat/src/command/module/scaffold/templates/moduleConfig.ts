@@ -1,4 +1,3 @@
-
 export function moduleConfigTemplate(): string {
   return `import { defineModuleConfig } from "@damatjs/module";
 

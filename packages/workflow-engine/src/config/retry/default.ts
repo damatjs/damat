@@ -1,6 +1,4 @@
-import type {
-  RetryPolicy,
-} from "../../types";
+import type { RetryPolicy } from "../../types";
 
 /**
  * Default retry policy - no retries

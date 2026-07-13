@@ -125,14 +125,25 @@ describe("types › organization zod + barrels", () => {
   });
 
   it("validates new/update/query/id/params schemas", () => {
-    expect(newOrganizationsSchema.safeParse({ name: "n", slug: "s" }).success).toBe(true);
+    expect(
+      newOrganizationsSchema.safeParse({ name: "n", slug: "s" }).success,
+    ).toBe(true);
     expect(newOrganizationsSchema.safeParse({ name: "n" }).success).toBe(false);
     expect(updateOrganizationsSchema.safeParse({}).success).toBe(true);
-    expect(OrganizationsQuerySchema.safeParse({ orderDir: "asc", limit: "2" }).success).toBe(true);
-    expect(OrganizationsQuerySchema.safeParse({ orderDir: "nope" }).success).toBe(false);
+    expect(
+      OrganizationsQuerySchema.safeParse({ orderDir: "asc", limit: "2" })
+        .success,
+    ).toBe(true);
+    expect(
+      OrganizationsQuerySchema.safeParse({ orderDir: "nope" }).success,
+    ).toBe(false);
     expect(OrganizationsIdSchema.safeParse("org_1").success).toBe(true);
-    expect(OrganizationsParamsSchema.safeParse({ id: "org_1" }).success).toBe(true);
-    expect(OrganizationsParamsSchema.safeParse({ id: "x", extra: 1 }).success).toBe(false);
+    expect(OrganizationsParamsSchema.safeParse({ id: "org_1" }).success).toBe(
+      true,
+    );
+    expect(
+      OrganizationsParamsSchema.safeParse({ id: "x", extra: 1 }).success,
+    ).toBe(false);
   });
 });
 

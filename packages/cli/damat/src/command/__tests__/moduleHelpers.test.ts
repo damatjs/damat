@@ -24,7 +24,9 @@ describe("registerModuleInConfig", () => {
   it("returns false when the config file is missing", async () => {
     fsState.existsDefault = false;
     const fn = await get();
-    expect(fn("/app/damat.config.ts", "user", "./src/modules/user")).toBe(false);
+    expect(fn("/app/damat.config.ts", "user", "./src/modules/user")).toBe(
+      false,
+    );
   });
 
   it("inserts an entry into an existing modules block", async () => {
@@ -59,7 +61,9 @@ describe("registerModuleInConfig", () => {
     const fn = await get();
     expect(fn("/app/damat.config.ts", "user", "./src/modules/user")).toBe(true);
     // No write — already present.
-    expect(writeCalls.find((c) => c.path === "/app/damat.config.ts")).toBeUndefined();
+    expect(
+      writeCalls.find((c) => c.path === "/app/damat.config.ts"),
+    ).toBeUndefined();
   });
 
   it("camelizes a kebab-case module name into a valid key", async () => {
@@ -68,7 +72,11 @@ describe("registerModuleInConfig", () => {
       "/app/damat.config.ts": `defineConfig({\n  modules: {},\n});\n`,
     };
     const fn = await get();
-    fn("/app/damat.config.ts", "user-management", "./src/modules/user-management");
+    fn(
+      "/app/damat.config.ts",
+      "user-management",
+      "./src/modules/user-management",
+    );
     const w = writeCalls.find((c) => c.path === "/app/damat.config.ts");
     // "user-management" → identifier key "userManagement".
     expect(w!.content).toContain("userManagement:");
@@ -102,7 +110,9 @@ describe("registerModuleInConfig", () => {
     fsState.existsMap = { "/app/damat.config.ts": true };
     fsState.readFileMap = { "/app/damat.config.ts": `const x = 1;` };
     const fn = await get();
-    expect(fn("/app/damat.config.ts", "user", "./src/modules/user")).toBe(false);
+    expect(fn("/app/damat.config.ts", "user", "./src/modules/user")).toBe(
+      false,
+    );
   });
 });
 
@@ -123,7 +133,9 @@ describe("ensureLinksInConfig", () => {
     };
     const fn = await get();
     expect(fn("/app/damat.config.ts")).toBe(true);
-    expect(writeCalls.find((c) => c.path === "/app/damat.config.ts")).toBeUndefined();
+    expect(
+      writeCalls.find((c) => c.path === "/app/damat.config.ts"),
+    ).toBeUndefined();
   });
 
   it("inserts links before the closing })", async () => {
@@ -181,9 +193,8 @@ describe("readModuleConfigEntry", () => {
     fsState.readFileMap = {
       "/app/damat.config.ts": `export default defineConfig({\n  modules: {},\n});\n`,
     };
-    const { registerModuleInConfig, readModuleConfigEntry } = await import(
-      "../module/helpers/config"
-    );
+    const { registerModuleInConfig, readModuleConfigEntry } =
+      await import("../module/helpers/config");
     const source = {
       type: "registry",
       ref: "user@1.0.0",
@@ -346,7 +357,9 @@ describe("registerModuleTsconfigPaths", () => {
     };
     const fn = await get();
     expect(fn("/app", "user")).toBe("present");
-    expect(writeCalls.find((c) => c.path === "/app/tsconfig.json")).toBeUndefined();
+    expect(
+      writeCalls.find((c) => c.path === "/app/tsconfig.json"),
+    ).toBeUndefined();
   });
 });
 
@@ -401,7 +414,9 @@ describe("removeModuleTsconfigPaths", () => {
     const written = writeCalls.find((c) => c.path === "/app/tsconfig.json");
     const json = JSON.parse(written!.content);
     expect(json.compilerOptions.paths["@user/*"]).toBeUndefined();
-    expect(json.compilerOptions.paths["@workflows"]).toEqual(["./src/workflows"]);
+    expect(json.compilerOptions.paths["@workflows"]).toEqual([
+      "./src/workflows",
+    ]);
     expect(json.compilerOptions.paths["@workflows/*"]).toEqual([
       "./src/workflows/*",
     ]);
@@ -682,9 +697,8 @@ describe("collectModulePackages (dependencies.ts duplicate)", () => {
 describe("linkTemplates fs scanners", () => {
   it("listModelBasenames returns [] when the dir is missing", async () => {
     fsState.existsDefault = false;
-    const { listModelBasenames } = await import(
-      "../module/helpers/linkTemplates"
-    );
+    const { listModelBasenames } =
+      await import("../module/helpers/linkTemplates");
     expect(listModelBasenames("/links/user/models")).toEqual([]);
   });
 
@@ -696,9 +710,8 @@ describe("linkTemplates fs scanners", () => {
       "user-org.ts",
       "notes.md",
     ]);
-    const { listModelBasenames } = await import(
-      "../module/helpers/linkTemplates"
-    );
+    const { listModelBasenames } =
+      await import("../module/helpers/linkTemplates");
     expect(listModelBasenames("/links/user/models")).toEqual([
       "user-org",
       "user-team",

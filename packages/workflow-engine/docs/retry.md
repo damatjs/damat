@@ -7,10 +7,10 @@ Source: `src/types/retry.ts`, `src/config/retry/default.ts`,
 
 ```ts
 interface RetryPolicy {
-  maxAttempts: number;          // number of RETRIES (0 = none). Total runs = 1 + maxAttempts
-  initialDelayMs: number;       // first backoff delay
-  maxDelayMs: number;           // cap applied to each delay
-  backoffMultiplier: number;    // exponential factor (e.g. 2)
+  maxAttempts: number; // number of RETRIES (0 = none). Total runs = 1 + maxAttempts
+  initialDelayMs: number; // first backoff delay
+  maxDelayMs: number; // cap applied to each delay
+  backoffMultiplier: number; // exponential factor (e.g. 2)
   isRetryable?: (error: unknown) => boolean; // predicate on the ORIGINAL error
 }
 ```
@@ -26,7 +26,12 @@ that always fails runs **3 times** (1 initial + 2 retries) and then fails with
 
 ```ts
 // src/config/retry/default.ts
-DEFAULT_RETRY_POLICY = { maxAttempts: 0, initialDelayMs: 100, maxDelayMs: 5000, backoffMultiplier: 2 };
+DEFAULT_RETRY_POLICY = {
+  maxAttempts: 0,
+  initialDelayMs: 100,
+  maxDelayMs: 5000,
+  backoffMultiplier: 2,
+};
 ```
 
 So by default steps **do not retry**. `DEFAULT_STEP_CONFIG.timeoutMs` is `30_000`
@@ -40,7 +45,7 @@ with `idempotent: false` is **never** automatically retried:
 - `maxAttempts` is ignored — a warning is logged when it is `> 0`.
 - The first failure propagates straight to the workflow's
   failure/compensation path.
-- Since retries were *suppressed*, not *exhausted*, no
+- Since retries were _suppressed_, not _exhausted_, no
   `MaxRetriesExceededError` is recorded — the plain
   `StepExecutionError`/`StepTimeoutError` surfaces at the workflow boundary.
 
@@ -53,11 +58,11 @@ per-call override.
 
 ```ts
 // src/config/retry/policies.ts  (each is a Partial<RetryPolicy>)
-RetryPolicies.none       // { maxAttempts: 0 }
-RetryPolicies.once       // { maxAttempts: 1, initialDelayMs: 0 }
-RetryPolicies.standard   // { maxAttempts: 3, initialDelayMs: 100,  maxDelayMs: 5000,  backoffMultiplier: 2 }
-RetryPolicies.aggressive // { maxAttempts: 5, initialDelayMs: 50,   maxDelayMs: 10000, backoffMultiplier: 2 }
-RetryPolicies.patient    // { maxAttempts: 3, initialDelayMs: 1000, maxDelayMs: 30000, backoffMultiplier: 3 }
+RetryPolicies.none; // { maxAttempts: 0 }
+RetryPolicies.once; // { maxAttempts: 1, initialDelayMs: 0 }
+RetryPolicies.standard; // { maxAttempts: 3, initialDelayMs: 100,  maxDelayMs: 5000,  backoffMultiplier: 2 }
+RetryPolicies.aggressive; // { maxAttempts: 5, initialDelayMs: 50,   maxDelayMs: 10000, backoffMultiplier: 2 }
+RetryPolicies.patient; // { maxAttempts: 3, initialDelayMs: 1000, maxDelayMs: 30000, backoffMultiplier: 3 }
 ```
 
 `RetryPolicyPreset = keyof typeof RetryPolicies`. Presets are partial; missing
@@ -69,8 +74,13 @@ Usage:
 createStep("call-api", invoke, undefined, { retry: RetryPolicies.standard });
 // or a custom policy:
 createStep("call-api", invoke, undefined, {
-  retry: { maxAttempts: 4, initialDelayMs: 200, maxDelayMs: 10_000, backoffMultiplier: 2,
-           isRetryable: (e) => !(e instanceof MyValidationError) },
+  retry: {
+    maxAttempts: 4,
+    initialDelayMs: 200,
+    maxDelayMs: 10_000,
+    backoffMultiplier: 2,
+    isRetryable: (e) => !(e instanceof MyValidationError),
+  },
 });
 ```
 
@@ -80,11 +90,10 @@ When `maxAttempts > 0` (and the step is idempotent), the engine builds an
 Effect `Schedule`:
 
 ```ts
-Schedule.exponential(Duration.millis(initialDelayMs), backoffMultiplier)
-  .pipe(
-    Schedule.union(Schedule.spaced(Duration.millis(maxDelayMs))), // cap each delay
-    Schedule.intersect(Schedule.recurs(maxAttempts)),             // bound the count
-  );
+Schedule.exponential(Duration.millis(initialDelayMs), backoffMultiplier).pipe(
+  Schedule.union(Schedule.spaced(Duration.millis(maxDelayMs))), // cap each delay
+  Schedule.intersect(Schedule.recurs(maxAttempts)), // bound the count
+);
 ```
 
 - **Exponential**: delay grows `initialDelayMs * backoffMultiplier^k`.
@@ -93,7 +102,7 @@ Schedule.exponential(Duration.millis(initialDelayMs), backoffMultiplier)
   would otherwise wait ~1000s finishes in under 2s.
 - **`intersect` with `recurs(maxAttempts)`**: stops after `maxAttempts` retries.
 
-> Why `union` for the cap: `Schedule.union` takes the *shorter* of the two delays,
+> Why `union` for the cap: `Schedule.union` takes the _shorter_ of the two delays,
 > so once the exponential delay exceeds `maxDelayMs`, the `spaced` schedule wins —
 > producing a flat cap.
 
@@ -113,7 +122,7 @@ while: (error) => {
 - The predicate receives the **original** error your `invoke` threw (unwrapped
   from `StepExecutionError`), or the `StepTimeoutError` for timeouts. Test
   "isRetryable receives the original error" asserts this.
-- **Default behavior** (no `isRetryable`): retry everything *except* errors whose
+- **Default behavior** (no `isRetryable`): retry everything _except_ errors whose
   `name === "ValidationError"`.
 - Returning `false` stops retries early; the last error propagates as-is (it is
   **not** wrapped in `MaxRetriesExceededError`, because `attemptCount <= maxAttempts`).
@@ -134,7 +143,10 @@ When all retries are spent (`attemptCount > maxAttempts`), the step itself
 
 ```ts
 ctx.engineState.retriesExceeded = new MaxRetriesExceededError(
-  step.name, maxAttempts, lastError, ctx.workflowName,
+  step.name,
+  maxAttempts,
+  lastError,
+  ctx.workflowName,
 );
 // code: "MAX_RETRIES_EXCEEDED"; .cause = last error
 ```

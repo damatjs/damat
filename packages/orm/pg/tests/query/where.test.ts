@@ -99,9 +99,9 @@ describe("compileCondition — eq/neq null special-casing", () => {
 describe("compileCondition — IN / NOT IN", () => {
   it("IN with values", () => {
     const params: unknown[] = [];
-    expect(compileCondition('"id"', { in: ["a", "b", "c"] } as any, params)).toBe(
-      '"id" IN ($1, $2, $3)',
-    );
+    expect(
+      compileCondition('"id"', { in: ["a", "b", "c"] } as any, params),
+    ).toBe('"id" IN ($1, $2, $3)');
     expect(params).toEqual(["a", "b", "c"]);
   });
 
@@ -113,9 +113,9 @@ describe("compileCondition — IN / NOT IN", () => {
 
   it("NOT IN with values", () => {
     const params: unknown[] = [];
-    expect(
-      compileCondition('"id"', { notIn: ["a", "b"] } as any, params),
-    ).toBe('"id" NOT IN ($1, $2)');
+    expect(compileCondition('"id"', { notIn: ["a", "b"] } as any, params)).toBe(
+      '"id" NOT IN ($1, $2)',
+    );
     expect(params).toEqual(["a", "b"]);
   });
 
@@ -137,9 +137,9 @@ describe("compileCondition — null checks & between", () => {
 
   it("isNotNull", () => {
     const params: unknown[] = [];
-    expect(
-      compileCondition('"name"', { isNotNull: true } as any, params),
-    ).toBe('"name" IS NOT NULL');
+    expect(compileCondition('"name"', { isNotNull: true } as any, params)).toBe(
+      '"name" IS NOT NULL',
+    );
     expect(params).toEqual([]);
   });
 
@@ -222,10 +222,7 @@ describe("buildWhereClause", () => {
   });
 
   it("only raw clauses (no object clauses)", () => {
-    const { sql, params } = build(
-      [],
-      [{ sql: '"age" = $1', params: [42] }],
-    );
+    const { sql, params } = build([], [{ sql: '"age" = $1', params: [42] }]);
     expect(sql).toBe('WHERE "age" = $1');
     expect(params).toEqual([42]);
   });

@@ -24,10 +24,18 @@ describe("ChildLogger: context binding + merge", () => {
     child.warn("w");
     child.success("s");
 
-    expect(log).toHaveBeenCalledWith("debug", "d", undefined, { service: "auth" });
-    expect(log).toHaveBeenCalledWith("info", "i", undefined, { service: "auth" });
-    expect(log).toHaveBeenCalledWith("warn", "w", undefined, { service: "auth" });
-    expect(log).toHaveBeenCalledWith("success", "s", undefined, { service: "auth" });
+    expect(log).toHaveBeenCalledWith("debug", "d", undefined, {
+      service: "auth",
+    });
+    expect(log).toHaveBeenCalledWith("info", "i", undefined, {
+      service: "auth",
+    });
+    expect(log).toHaveBeenCalledWith("warn", "w", undefined, {
+      service: "auth",
+    });
+    expect(log).toHaveBeenCalledWith("success", "s", undefined, {
+      service: "auth",
+    });
   });
 
   it("forwards the status-style methods (progress/cached/waiting/skip) to the parent", () => {
@@ -53,7 +61,10 @@ describe("ChildLogger: context binding + merge", () => {
     child.progress("p", { b: 2 });
     child.cached("c", { b: 2 });
     child.waiting("w", { b: 2 });
-    expect(log).toHaveBeenCalledWith("progress", "p", undefined, { a: 1, b: 2 });
+    expect(log).toHaveBeenCalledWith("progress", "p", undefined, {
+      a: 1,
+      b: 2,
+    });
     expect(log).toHaveBeenCalledWith("cached", "c", undefined, { a: 1, b: 2 });
     expect(log).toHaveBeenCalledWith("waiting", "w", undefined, { a: 1, b: 2 });
   });
@@ -63,7 +74,11 @@ describe("ChildLogger: context binding + merge", () => {
     const log = spyOn(parent, "logWithPrefix").mockImplementation(() => {});
     const child = new ChildLogger(parent, { a: 1, shared: "bound" });
     child.info("m", { b: 2, shared: "call" });
-    expect(log).toHaveBeenCalledWith("info", "m", undefined, { a: 1, b: 2, shared: "call" });
+    expect(log).toHaveBeenCalledWith("info", "m", undefined, {
+      a: 1,
+      b: 2,
+      shared: "call",
+    });
   });
 
   it("error/fatal forward (level, message, prefix, mergedContext, error) in correct order", () => {
@@ -73,14 +88,32 @@ describe("ChildLogger: context binding + merge", () => {
     const child = new ChildLogger(parent, { svc: "db" });
     child.error("failed", err, { op: "read" });
     child.fatal("dead", err);
-    expect(log).toHaveBeenCalledWith("error", "failed", undefined, { svc: "db", op: "read" }, err);
-    expect(log).toHaveBeenCalledWith("fatal", "dead", undefined, { svc: "db" }, err);
+    expect(log).toHaveBeenCalledWith(
+      "error",
+      "failed",
+      undefined,
+      { svc: "db", op: "read" },
+      err,
+    );
+    expect(log).toHaveBeenCalledWith(
+      "fatal",
+      "dead",
+      undefined,
+      { svc: "db" },
+      err,
+    );
   });
 
   it("request() delegates straight to the parent unchanged", () => {
     const parent = makeParent();
     const request = spyOn(parent, "request").mockImplementation(() => {});
-    const data = { requestId: "r", method: "GET", path: "/", status: 200, duration: 1 };
+    const data = {
+      requestId: "r",
+      method: "GET",
+      path: "/",
+      status: 200,
+      duration: 1,
+    };
     new ChildLogger(parent, { a: 1 }).request(data);
     expect(request).toHaveBeenCalledWith(data);
   });
@@ -93,7 +126,11 @@ describe("ChildLogger: nested child()", () => {
     const child = new ChildLogger(parent, { a: 1 });
     const grandchild = child.child({ b: 2 });
     grandchild.info("m", { c: 3 });
-    expect(log).toHaveBeenCalledWith("info", "m", undefined, { a: 1, b: 2, c: 3 });
+    expect(log).toHaveBeenCalledWith("info", "m", undefined, {
+      a: 1,
+      b: 2,
+      c: 3,
+    });
   });
 
   it("child() points at the SAME root parent (flattened, not chained)", () => {
@@ -164,7 +201,11 @@ describe("ChildLogger: integration through real parent output", () => {
   });
 
   it("emits the composed prefix alongside merged context", () => {
-    const parent = new Logger({ timestamp: false, level: "debug", prefix: "base" });
+    const parent = new Logger({
+      timestamp: false,
+      level: "debug",
+      prefix: "base",
+    });
     const child = parent.withPrefix("sub").child({ scope: "worker" });
     child.info("tick");
     const line = String(logSpy.mock.calls[0][0]);

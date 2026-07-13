@@ -10,7 +10,10 @@ export const listInstalledTool: ToolDef = {
   inputSchema: {
     type: "object",
     properties: {
-      dir: { type: "string", description: "Modules directory (default: src/modules)" },
+      dir: {
+        type: "string",
+        description: "Modules directory (default: src/modules)",
+      },
     },
     additionalProperties: false,
   },

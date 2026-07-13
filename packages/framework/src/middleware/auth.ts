@@ -10,7 +10,7 @@ export interface AuthMiddlewareOptions {
 
 export function createAuthMiddleware(
   type: AuthType,
-  options?: AuthMiddlewareOptions
+  options?: AuthMiddlewareOptions,
 ): MiddlewareHandler {
   return async (c, next) => {
     const logger = getLogger();
@@ -27,15 +27,21 @@ export function createAuthMiddleware(
     // Fail closed: a route that declares auth must never run unauthenticated
     // just because no handler for its auth type was configured.
     logger.error(
-      `Auth type "${type}" has no configured handler for ${c.req.method} ${c.req.path}; rejecting request`
+      `Auth type "${type}" has no configured handler for ${c.req.method} ${c.req.path}; rejecting request`,
     );
-    return c.json({
-      success: false,
-      error: {
-        code: "UNAUTHORIZED",
-        message: "Authentication required",
+    return c.json(
+      {
+        success: false,
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+        meta: {
+          requestId: c.get("requestId") || "unknown",
+          timestamp: new Date().toISOString(),
+        },
       },
-      meta: { requestId: c.get("requestId") || "unknown", timestamp: new Date().toISOString() },
-    }, 401);
+      401,
+    );
   };
 }

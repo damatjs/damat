@@ -9,7 +9,10 @@ import { spawnSync } from "node:child_process";
 /** True when a working `git` binary is on PATH. */
 export function gitAvailable(): boolean {
   try {
-    const result = spawnSync("git", ["--version"], { stdio: "pipe", encoding: "utf-8" });
+    const result = spawnSync("git", ["--version"], {
+      stdio: "pipe",
+      encoding: "utf-8",
+    });
     return !result.error && result.status === 0;
   } catch {
     return false;

@@ -63,7 +63,10 @@ export function diffColumns(
     if (oldCol.scale !== newCol.scale)
       columnChanges.scale = { from: oldCol.scale, to: newCol.scale };
     if (oldCol.unique !== newCol.unique)
-      columnChanges.unique = { from: oldCol.unique ?? false, to: newCol.unique ?? false };
+      columnChanges.unique = {
+        from: oldCol.unique ?? false,
+        to: newCol.unique ?? false,
+      };
     if (oldCol.array !== newCol.array)
       columnChanges.array = { from: !!oldCol.array, to: !!newCol.array };
 

@@ -46,7 +46,11 @@ export class QueryLogger {
     if (!this.options.enabled || !this.options.logSlowQueries) return;
 
     if (duration > this.options.slowQueryThreshold) {
-      const context: LogContext = { sql, duration, threshold: this.options.slowQueryThreshold };
+      const context: LogContext = {
+        sql,
+        duration,
+        threshold: this.options.slowQueryThreshold,
+      };
       if (params?.length) context.params = params;
       this.logger.warn(`Slow query (${duration}ms)`, context);
     }

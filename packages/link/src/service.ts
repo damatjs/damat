@@ -141,7 +141,7 @@ export function createLinkService(links: LinkDefinition[]) {
       if (!methods) {
         throw new Error(
           `Module "${moduleId}" has no model accessor "${accessor}". ` +
-          "A link endpoint's `model` must be the key in that module's `models` map.",
+            "A link endpoint's `model` must be the key in that module's `models` map.",
         );
       }
       return methods.findMany({
@@ -166,7 +166,7 @@ export function createLinkService(links: LinkDefinition[]) {
       if (registry.linksFrom(config.module, config.entity).length === 0) {
         throw new Error(
           `Graph query: "${config.module}.${config.entity}" is not part of any ` +
-          "registered link. Only linked entities can be graph roots.",
+            "registered link. Only linked entities can be graph roots.",
         );
       }
       const tree = parseFields(config.fields);
@@ -188,7 +188,7 @@ export function createLinkService(links: LinkDefinition[]) {
         skip?: number | undefined;
         take?: number | undefined;
         orderBy?:
-        Array<{ column: string; direction?: "ASC" | "DESC" }> | undefined;
+          Array<{ column: string; direction?: "ASC" | "DESC" }> | undefined;
       },
     ): Promise<Record<string, any>[]> {
       const svc = resolveLinkedModule(moduleId);
@@ -262,13 +262,13 @@ export function createLinkService(links: LinkDefinition[]) {
         ];
         const otherRows = otherIds.length
           ? await this.#resolveNode(
-            oriented.other.module,
-            oriented.other.model,
-            child,
-            {
-              where: { [oriented.other.primaryKey]: { in: otherIds } },
-            },
-          )
+              oriented.other.module,
+              oriented.other.model,
+              child,
+              {
+                where: { [oriented.other.primaryKey]: { in: otherIds } },
+              },
+            )
           : [];
         const otherById = new Map<string, Record<string, any>>(
           otherRows.map((o) => [o[oriented.other.primaryKey] ?? o.id, o]),

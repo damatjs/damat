@@ -6,10 +6,10 @@ Source: `src/handlers/` — `root.ts`, `apiRoutes.ts`, `health.ts`, `type.ts`.
 
 A small set of framework-provided routes mounted by `bootstrap` (separate from the file-based application routes). Each factory returns a fresh `Hono` sub-app that gets `app.route("", ...)`-mounted.
 
-| Factory | Mounted when | Path | Purpose |
-| --- | --- | --- | --- |
-| `createRootRoute(fileRouter)` | `nodeEnv === "development"` | `GET /damat` | API info / banner. |
-| `createApiRoutesRoute(fileRouter)` | `nodeEnv === "development"` | `GET /damat/api/routes` | List all registered routes. |
+| Factory                                      | Mounted when                | Path                      | Purpose                                  |
+| -------------------------------------------- | --------------------------- | ------------------------- | ---------------------------------------- |
+| `createRootRoute(fileRouter)`                | `nodeEnv === "development"` | `GET /damat`              | API info / banner.                       |
+| `createApiRoutesRoute(fileRouter)`           | `nodeEnv === "development"` | `GET /damat/api/routes`   | List all registered routes.              |
 | `createHealthRoute(options?, entryPathUrl?)` | a `healthCheck` is provided | `GET /health` (or custom) | Liveness/health with per-service checks. |
 
 ## `createRootRoute(fileRouter)` (`root.ts`)
@@ -25,8 +25,8 @@ A small set of framework-provided routes mounted by `bootstrap` (separate from t
   "defaultEndpoints": {
     "GET /damat": "API information",
     "GET /health": "Health check",
-    "GET /damat/api/routes": "List all registered routes"
-  }
+    "GET /damat/api/routes": "List all registered routes",
+  },
 }
 ```
 
@@ -45,7 +45,9 @@ A small set of framework-provided routes mounted by `bootstrap` (separate from t
 ## `createHealthRoute(options?, entryPathUrl?)` (`health.ts`)
 
 ```ts
-interface HealthCheckFn { (): Promise<{ status: string; latency?: number }>; }
+interface HealthCheckFn {
+  (): Promise<{ status: string; latency?: number }>;
+}
 interface HealthCheckOptions {
   checks?: { database?: HealthCheckFn; redis?: HealthCheckFn };
   version?: string;

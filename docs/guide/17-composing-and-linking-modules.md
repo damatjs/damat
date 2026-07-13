@@ -27,7 +27,7 @@ by module id. This is recapped here; the full config reference is in
 import { defineConfig } from "@damatjs/framework";
 
 export default defineConfig({
-  projectConfig: { /* server / db / logging — see ch.4 */ },
+  projectConfig: {/* server / db / logging — see ch.4 */},
   // `modules` is an OBJECT keyed by id (not an array):
   modules: {
     user: { resolve: "./src/modules/user", id: "user" },
@@ -46,7 +46,7 @@ each module's default export and constructs its service against the live pool.
 
 ## 17.2 Runtime composition with `getModule(id)`
 
-`getModule(id)` is how one module *calls* another at runtime — from a route, a
+`getModule(id)` is how one module _calls_ another at runtime — from a route, a
 service method, or a workflow step. It returns the target module's service (or
 `null` if it isn't registered), with no import of the other module's code:
 
@@ -55,10 +55,10 @@ import { getModule } from "@damatjs/framework";
 
 // A user-module accessor and an organization-module accessor, side by side:
 const users = getModule("user");
-const orgs  = getModule("organization");
+const orgs = getModule("organization");
 
 const user = await users.user.create({ data: { email: "a@b.co" } });
-const org  = await orgs.organization.create({ data: { name: "Acme" } });
+const org = await orgs.organization.create({ data: { name: "Acme" } });
 ```
 
 Because the dependency goes through the registry (the id string), not through an
@@ -66,7 +66,7 @@ Because the dependency goes through the registry (the id string), not through an
 together. Typing is via the augmentable `ModuleRegistry`; without augmentation,
 type the call explicitly: `getModule<UserModuleService>("user")`.
 
-`getModule` gives you a *behavioral* call (run the other module's logic). When
+`getModule` gives you a _behavioral_ call (run the other module's logic). When
 what you need is a persistent **data relationship** between two modules' rows,
 reach for a link instead.
 
@@ -76,7 +76,7 @@ reach for a link instead.
 
 A **link** connects two models that live in **different** modules through an
 auto-generated **junction table**, so neither module has to import — or even know
-about — the other. The relationship is declared *outside* both modules, in the
+about — the other. The relationship is declared _outside_ both modules, in the
 app's `src/links/`, and Damat manages and traverses it through a `link` service.
 
 ```
@@ -136,7 +136,7 @@ Each endpoint is `{ module, model, field }`:
 
 - `module` — the module id (the `getModule` key).
 - `model` — the **key in that module's `models` map** (its service accessor,
-  e.g. `user`), *not* the database table name (`users`).
+  e.g. `user`), _not_ the database table name (`users`).
 - `field` — the name the linked side is exposed as in queries. Defaults to
   `model` if omitted.
 
@@ -185,7 +185,7 @@ entry is needed:
 ```ts
 // damat.config.ts
 export default defineConfig({
-  projectConfig: { /* … */ },
+  projectConfig: {/* … */},
   modules: {
     user: { resolve: "./src/modules/user" },
     organization: { resolve: "./src/modules/organization" },
@@ -217,7 +217,7 @@ import type { Organizations } from "../../organization/types";
 
 declare module "./users" {
   interface Users {
-    organizations?: Organizations[];   // the linked entity, not the junction row
+    organizations?: Organizations[]; // the linked entity, not the junction row
   }
 }
 ```
@@ -245,7 +245,7 @@ await link.dismiss(
 );
 
 // List linked rows on either side
-const orgs  = await link.fetch(
+const orgs = await link.fetch(
   { module: "user", model: "user", id: u.id },
   { module: "organization", model: "organization" },
 );
@@ -288,7 +288,7 @@ For the link service internals and junction-table shape, see the
 ### Links shipped by a module
 
 Everything above is the **owner** authoring a link by hand in `src/links/`. A
-module can also *ship the link for you* — as a real `defineLink` file, the same form
+module can also _ship the link for you_ — as a real `defineLink` file, the same form
 you'd write yourself — so installing it is one step, not five. The module never
 imports the other module and never activates the connection; the file it ships is
 **dormant** until you migrate it.
@@ -334,15 +334,15 @@ you**, never commands — composition stays the owner's decision (see the
 
 - **`pairsWith`** — a non-binding hint listing modules this one pairs well with.
   It's a comment for the backend owner: never enforced, never auto-installed. A
-  user module that lists `"pairsWith": ["organization"]` is *suggesting* you might
+  user module that lists `"pairsWith": ["organization"]` is _suggesting_ you might
   want to install the organization module and link the two — but whether you do,
   and how you link them, is entirely up to you.
-- **shipped link files** — a module may also *ship* the connection as a dormant
+- **shipped link files** — a module may also _ship_ the connection as a dormant
   `defineLink` under `links/` (see the subsection above). Like `pairsWith` it is
   non-binding and creates nothing on its own: `add` drops it into `src/links/`, and
   you activate it by migrating (or delete it if you don't want it).
 - **`modules`** — a **rare** hard dependency on other modules. Even then it only
-  *warns* at install time if a listed module is missing; it does not install
+  _warns_ at install time if a listed module is missing; it does not install
   anything for you. A well-built module stays self-contained and prefers
   `pairsWith`; `modules` is an escape hatch for genuine hard dependencies.
 

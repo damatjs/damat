@@ -69,14 +69,21 @@ describe("handleMessage — notifications", () => {
   });
 
   test("an id-less unknown method produces no error frame", async () => {
-    const frames = await dispatchCapture({ jsonrpc: "2.0", method: "whatever" });
+    const frames = await dispatchCapture({
+      jsonrpc: "2.0",
+      method: "whatever",
+    });
     expect(frames).toHaveLength(0);
   });
 });
 
 describe("handleMessage — ping", () => {
   test("replies with an empty result when given an id", async () => {
-    const [res] = await dispatchCapture({ jsonrpc: "2.0", id: 5, method: "ping" });
+    const [res] = await dispatchCapture({
+      jsonrpc: "2.0",
+      id: 5,
+      method: "ping",
+    });
     expect(res).toEqual({ jsonrpc: "2.0", id: 5, result: {} });
   });
 
@@ -250,7 +257,10 @@ describe("handleMessage — unexpected dispatch failure (outer catch)", () => {
     };
     tools.push(hostile as never);
     try {
-      const frames = await dispatchCapture({ jsonrpc: "2.0", method: "tools/list" });
+      const frames = await dispatchCapture({
+        jsonrpc: "2.0",
+        method: "tools/list",
+      });
       // No id -> notification -> the outer catch swallows without replying.
       expect(frames).toHaveLength(0);
     } finally {

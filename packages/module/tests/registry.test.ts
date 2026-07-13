@@ -49,13 +49,18 @@ describe("normalizeVersionEntry", () => {
 
 describe("resolveRegistryEntry", () => {
   test("returns null when no registry is configured", async () => {
-    expect(await resolveRegistryEntry(parseModuleRef("acme/foo")!, "")).toBeNull();
+    expect(
+      await resolveRegistryEntry(parseModuleRef("acme/foo")!, ""),
+    ).toBeNull();
   });
 
   test("resolves the default source with owner + verification", async () => {
     const { dir, indexFile } = makeRegistry();
     try {
-      const r = await resolveRegistryEntry(parseModuleRef("acme/foo")!, indexFile);
+      const r = await resolveRegistryEntry(
+        parseModuleRef("acme/foo")!,
+        indexFile,
+      );
       expect(r?.source).toBe(resolve(dir, "pkgs/foo"));
       expect(r?.owner?.namespace).toBe("acme");
       expect(r?.verification.status).toBe("verified");
@@ -69,7 +74,10 @@ describe("resolveRegistryEntry", () => {
   test("resolves a pinned version with its integrity, inheriting verification", async () => {
     const { dir, indexFile } = makeRegistry();
     try {
-      const r = await resolveRegistryEntry(parseModuleRef("acme/foo@1.0.0")!, indexFile);
+      const r = await resolveRegistryEntry(
+        parseModuleRef("acme/foo@1.0.0")!,
+        indexFile,
+      );
       expect(r?.source).toBe(resolve(dir, "pkgs/foo-1.0.0"));
       expect(r?.integrity).toBe("sha256-abc");
       expect(r?.verification.status).toBe("verified");
@@ -82,7 +90,10 @@ describe("resolveRegistryEntry", () => {
   test("resolves a version given as a bare string source", async () => {
     const { dir, indexFile } = makeRegistry();
     try {
-      const r = await resolveRegistryEntry(parseModuleRef("acme/foo@0.9.0")!, indexFile);
+      const r = await resolveRegistryEntry(
+        parseModuleRef("acme/foo@0.9.0")!,
+        indexFile,
+      );
       expect(r?.source).toBe(resolve(dir, "pkgs/foo-0.9.0"));
       expect(r?.integrity).toBeUndefined();
     } finally {
@@ -116,7 +127,9 @@ describe("resolveRegistryEntry", () => {
   test("returns null for an unindexed ref", async () => {
     const { dir, indexFile } = makeRegistry();
     try {
-      expect(await resolveRegistryEntry(parseModuleRef("nope")!, indexFile)).toBeNull();
+      expect(
+        await resolveRegistryEntry(parseModuleRef("nope")!, indexFile),
+      ).toBeNull();
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -142,12 +155,16 @@ describe("evaluateVerification", () => {
   });
 
   test("rejected / revoked are always blocked, even under 'off'", () => {
-    expect(evaluateVerification({ status: "rejected", reason: "malware" }, "off").allowed).toBe(
+    expect(
+      evaluateVerification({ status: "rejected", reason: "malware" }, "off")
+        .allowed,
+    ).toBe(false);
+    expect(evaluateVerification({ status: "revoked" }, "off").allowed).toBe(
       false,
     );
-    expect(evaluateVerification({ status: "revoked" }, "off").allowed).toBe(false);
     expect(
-      evaluateVerification({ status: "rejected", reason: "malware" }, "warn").message,
+      evaluateVerification({ status: "rejected", reason: "malware" }, "warn")
+        .message,
     ).toContain("malware");
   });
 
@@ -165,8 +182,12 @@ describe("evaluateVerification", () => {
   });
 
   test("pending is treated like unverified under the policy", () => {
-    expect(evaluateVerification({ status: "pending" }, "require").allowed).toBe(false);
-    expect(evaluateVerification({ status: "pending" }, "warn").allowed).toBe(true);
+    expect(evaluateVerification({ status: "pending" }, "require").allowed).toBe(
+      false,
+    );
+    expect(evaluateVerification({ status: "pending" }, "warn").allowed).toBe(
+      true,
+    );
   });
 });
 
@@ -175,13 +196,21 @@ describe("verificationPolicy", () => {
     expect(verificationPolicy({})).toBe("warn");
   });
   test("DAMAT_MODULE_VERIFY wins", () => {
-    expect(verificationPolicy({ DAMAT_MODULE_VERIFY: "require" })).toBe("require");
+    expect(verificationPolicy({ DAMAT_MODULE_VERIFY: "require" })).toBe(
+      "require",
+    );
     expect(verificationPolicy({ DAMAT_MODULE_VERIFY: "off" })).toBe("off");
     expect(verificationPolicy({ DAMAT_MODULE_VERIFY: "garbage" })).toBe("warn");
   });
   test("DAMAT_MODULE_REQUIRE_VERIFIED is a boolean shortcut", () => {
-    expect(verificationPolicy({ DAMAT_MODULE_REQUIRE_VERIFIED: "true" })).toBe("require");
-    expect(verificationPolicy({ DAMAT_MODULE_REQUIRE_VERIFIED: "1" })).toBe("require");
-    expect(verificationPolicy({ DAMAT_MODULE_REQUIRE_VERIFIED: "false" })).toBe("warn");
+    expect(verificationPolicy({ DAMAT_MODULE_REQUIRE_VERIFIED: "true" })).toBe(
+      "require",
+    );
+    expect(verificationPolicy({ DAMAT_MODULE_REQUIRE_VERIFIED: "1" })).toBe(
+      "require",
+    );
+    expect(verificationPolicy({ DAMAT_MODULE_REQUIRE_VERIFIED: "false" })).toBe(
+      "warn",
+    );
   });
 });

@@ -33,9 +33,7 @@ describe("generateNewType", () => {
   it("makes nullable columns optional", () => {
     const table: ModuleSchema["tables"][number] = {
       name: "product",
-      columns: [
-        { name: "description", type: "text", nullable: true },
-      ],
+      columns: [{ name: "description", type: "text", nullable: true }],
     };
 
     const lines = generateNewType(table, new Set());
@@ -45,9 +43,7 @@ describe("generateNewType", () => {
   it("keeps required columns non-optional", () => {
     const table: ModuleSchema["tables"][number] = {
       name: "product",
-      columns: [
-        { name: "name", type: "text", nullable: false },
-      ],
+      columns: [{ name: "name", type: "text", nullable: false }],
     };
 
     const lines = generateNewType(table, new Set());
@@ -61,7 +57,9 @@ describe("generateNewType", () => {
     };
 
     const lines = generateNewType(table, new Set());
-    expect(lines.some((l) => l.includes("export type NewOrderItem"))).toBe(true);
+    expect(lines.some((l) => l.includes("export type NewOrderItem"))).toBe(
+      true,
+    );
   });
 
   it("handles custom autoFields", () => {

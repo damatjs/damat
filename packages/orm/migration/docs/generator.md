@@ -17,7 +17,7 @@ export async function createMigration(
   moduleName: string,
   modulesDir: string = DEFAULT_MODULES_DIR,
   options: CreateDiffMigrationOptions = {},
-): Promise<string | DiffMigrationResult>
+): Promise<string | DiffMigrationResult>;
 ```
 
 Computes `migrationsDir = path.join(modulesDir, moduleName, "migrations")` for the snapshot check and chooses:
@@ -36,7 +36,7 @@ export async function createInitialMigration(
   moduleName: string,
   moduleResolver: string,
   options: MigrationGeneratorOptions = {},
-): Promise<string>
+): Promise<string>;
 ```
 
 1. Verify `moduleResolver` exists (throws `Module '<name>' not found at <resolver>` otherwise).
@@ -56,7 +56,7 @@ export async function createDiffMigration(
   moduleName: string,
   moduleResolver: string,
   options: CreateDiffMigrationOptions = {},
-): Promise<DiffMigrationResult>
+): Promise<DiffMigrationResult>;
 ```
 
 1. Verify `moduleResolver` exists; ensure `migrations/` exists.
@@ -74,7 +74,7 @@ export async function createDiffMigration(
 // from @damatjs/orm-processor
 interface CreateDiffMigrationOptions extends MigrationGeneratorOptions {
   updateSnapshot?: boolean; // default true
-  force?: boolean;          // write even with no changes
+  force?: boolean; // write even with no changes
 }
 interface DiffMigrationResult {
   filePath: string | null;

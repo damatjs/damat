@@ -11,7 +11,9 @@ describe("formatCommandLine", () => {
       description: "Build the project",
       handler: async () => ({ exitCode: 0 }),
     };
-    expect(formatCommandLine(cmd)).toBe("  " + "build".padEnd(20) + "Build the project");
+    expect(formatCommandLine(cmd)).toBe(
+      "  " + "build".padEnd(20) + "Build the project",
+    );
   });
 
   test("appends an aliases suffix when aliases are present", () => {
@@ -45,29 +47,47 @@ describe("formatOptionLine", () => {
   });
 
   test("renders 'alias, long-flag' when an alias is set", () => {
-    const opt: CommandOption = { name: "output", alias: "o", description: "Output dir" };
+    const opt: CommandOption = {
+      name: "output",
+      alias: "o",
+      description: "Output dir",
+    };
     expect(formatOptionLine(opt)).toContain("-o, --output");
   });
 
   test("appends a JSON-encoded default when default is defined", () => {
-    const opt: CommandOption = { name: "output", description: "d", default: "dist" };
+    const opt: CommandOption = {
+      name: "output",
+      description: "d",
+      default: "dist",
+    };
     expect(formatOptionLine(opt)).toContain('(default: "dist")');
   });
 
   test("renders falsy defaults like false and 0 (not undefined)", () => {
-    expect(formatOptionLine({ name: "minify", description: "d", default: false }))
-      .toContain("(default: false)");
-    expect(formatOptionLine({ name: "retries", description: "d", default: 0 }))
-      .toContain("(default: 0)");
+    expect(
+      formatOptionLine({ name: "minify", description: "d", default: false }),
+    ).toContain("(default: false)");
+    expect(
+      formatOptionLine({ name: "retries", description: "d", default: 0 }),
+    ).toContain("(default: 0)");
   });
 
   test("omits the default suffix when default is undefined", () => {
-    const opt: CommandOption = { name: "x", description: "d", default: undefined };
+    const opt: CommandOption = {
+      name: "x",
+      description: "d",
+      default: undefined,
+    };
     expect(formatOptionLine(opt)).not.toContain("default:");
   });
 
   test("appends a [required] marker for required options", () => {
-    const opt: CommandOption = { name: "name", description: "d", required: true };
+    const opt: CommandOption = {
+      name: "name",
+      description: "d",
+      required: true,
+    };
     expect(formatOptionLine(opt)).toContain("[required]");
   });
 
@@ -130,8 +150,16 @@ describe("printCommandSpecificHelp - additional branches", () => {
       name: "db",
       description: "Database commands",
       subcommands: [
-        { name: "db:migrate", description: "Run migrations", handler: async () => ({ exitCode: 0 }) },
-        { name: "db:seed", description: "Seed the db", handler: async () => ({ exitCode: 0 }) },
+        {
+          name: "db:migrate",
+          description: "Run migrations",
+          handler: async () => ({ exitCode: 0 }),
+        },
+        {
+          name: "db:seed",
+          description: "Seed the db",
+          handler: async () => ({ exitCode: 0 }),
+        },
       ],
       handler: async () => ({ exitCode: 0 }),
     };
@@ -208,6 +236,8 @@ describe("printDefaultHelp - additional branches", () => {
   test("includes the 'help <command>' hint with the CLI name", () => {
     const config: CliConfig = { name: "mycli", version: "1.0.0", commands: [] };
     printDefaultHelp(config, []);
-    expect(consoleOutput.join("\n")).toContain("Run 'mycli help <command>' for more information.");
+    expect(consoleOutput.join("\n")).toContain(
+      "Run 'mycli help <command>' for more information.",
+    );
   });
 });

@@ -27,8 +27,8 @@ Mounted at the API base (default `/api`), so `/users` is served at `/api/users`.
 
 ```ts
 folderPath
-  .replace(/\[\.\.\.([^\]]+)\]/g, "*")   // [...rest] -> *
-  .replace(/\[([^\]]+)\]/g, ":$1")        // [userId]  -> :userId
+  .replace(/\[\.\.\.([^\]]+)\]/g, "*") // [...rest] -> *
+  .replace(/\[([^\]]+)\]/g, ":$1"); // [userId]  -> :userId
 ```
 
 ### `scanDirectory(dir, basePath?)` (`scanner/scanDirectory.ts`)
@@ -82,7 +82,7 @@ Algorithm:
 interface FileRouter {
   router: Hono;
   routes: RegisteredRoute[];
-  getRouteList(): string;                               // human-readable, grouped by path
+  getRouteList(): string; // human-readable, grouped by path
   getRoutesJson(): Array<{ method: string; path: string }>;
 }
 ```
@@ -102,7 +102,7 @@ Precedence, independently for `rateLimit` and `auth`:
 ```ts
 interface RouteModuleConfig {
   method: HttpMethod;
-  rateLimit?: HttpRateLimitConfig | false;   // false => disable for this method
+  rateLimit?: HttpRateLimitConfig | false; // false => disable for this method
   auth?: HttpAuthConfig | false;
 }
 interface ResolvedConfig {
@@ -118,18 +118,26 @@ interface ResolvedConfig {
 type AuthType = "session" | "apiKey" | "flexible" | "none";
 
 interface RouteModule {
-  GET?: RouteHandler; POST?: RouteHandler; PUT?: RouteHandler; PATCH?: RouteHandler; DELETE?: RouteHandler;
-  middleware?: MiddlewareHandler[];     // applied to all methods on this path
-  validators?: RouteValidator[];        // per-method validation
-  config?: RouteModuleConfig;           // route-level default
-  configs?: RouteModuleConfig[];        // per-method overrides
+  GET?: RouteHandler;
+  POST?: RouteHandler;
+  PUT?: RouteHandler;
+  PATCH?: RouteHandler;
+  DELETE?: RouteHandler;
+  middleware?: MiddlewareHandler[]; // applied to all methods on this path
+  validators?: RouteValidator[]; // per-method validation
+  config?: RouteModuleConfig; // route-level default
+  configs?: RouteModuleConfig[]; // per-method overrides
 }
 
-type RouteHandler = (c: Context) => Promise<Response> | Response;   // types/handlers.ts
+type RouteHandler = (c: Context) => Promise<Response> | Response; // types/handlers.ts
 
-interface RouteValidator {              // types/validation.ts
+interface RouteValidator {
+  // types/validation.ts
   method: HttpMethod;
-  body?: ZodSchema; query?: ZodSchema; params?: ZodSchema; json?: ZodSchema;
+  body?: ZodSchema;
+  query?: ZodSchema;
+  params?: ZodSchema;
+  json?: ZodSchema;
 }
 ```
 
@@ -159,12 +167,12 @@ The validator middleware runs before the handler and rejects invalid requests wi
 
 The standard envelope helpers (used inside handlers):
 
-| Helper | Output |
-| --- | --- |
-| `response.json(c, data, status=200)` | `{ success: true, data, meta: { requestId, timestamp } }` |
-| `response.created(c, data)` | `json(c, data, 201)` |
-| `response.noContent(c)` | `c.body(null, 204)` |
-| `response.error(c, message, code, status=400)` | `{ success: false, error: { code, message }, meta }` |
+| Helper                                         | Output                                                    |
+| ---------------------------------------------- | --------------------------------------------------------- |
+| `response.json(c, data, status=200)`           | `{ success: true, data, meta: { requestId, timestamp } }` |
+| `response.created(c, data)`                    | `json(c, data, 201)`                                      |
+| `response.noContent(c)`                        | `c.body(null, 204)`                                       |
+| `response.error(c, message, code, status=400)` | `{ success: false, error: { code, message }, meta }`      |
 
 `meta.requestId` is read from `c.get("requestId")` (set by `requestSetup`).
 

@@ -1,6 +1,10 @@
 import { createClerkClient } from "@clerk/backend";
 import type { Context } from "@damatjs/deps/hono";
-import { defineAuthAdapter, type AuthPrincipal, type AuthProvider } from "@damatjs/auth";
+import {
+  defineAuthAdapter,
+  type AuthPrincipal,
+  type AuthProvider,
+} from "@damatjs/auth";
 
 /** The slice of a Clerk client this adapter uses (kept structural for testing). */
 export interface ClerkLike {
@@ -38,7 +42,9 @@ export interface ClerkAdapterOptions {
  * `authenticateRequest`. There are no provider-owned routes and no local
  * storage — sign-in happens on Clerk. `orgId` becomes the request team.
  */
-export function createClerkAuthProvider(options: ClerkAdapterOptions = {}): AuthProvider {
+export function createClerkAuthProvider(
+  options: ClerkAdapterOptions = {},
+): AuthProvider {
   const client = options.client ?? buildClient(options);
   const authorizedParties = options.authorizedParties;
 
@@ -64,7 +70,8 @@ function buildClient(options: ClerkAdapterOptions): ClerkLike {
       "Clerk requires a secret key — set CLERK_SECRET_KEY or pass options.secretKey",
     );
   }
-  const publishableKey = options.publishableKey ?? process.env.CLERK_PUBLISHABLE_KEY;
+  const publishableKey =
+    options.publishableKey ?? process.env.CLERK_PUBLISHABLE_KEY;
   return createClerkClient({
     secretKey,
     ...(publishableKey ? { publishableKey } : {}),

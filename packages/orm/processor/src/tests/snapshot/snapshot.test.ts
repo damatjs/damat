@@ -3,11 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import type { ModuleSchema } from "@damatjs/orm-type";
-import {
-  loadSnapshot,
-  saveSnapshot,
-  snapshotExist,
-} from "../../snapshot";
+import { loadSnapshot, saveSnapshot, snapshotExist } from "../../snapshot";
 import { idColumn, moduleSchema, table } from "../__fixtures__/schemas";
 
 let dir: string;
@@ -64,7 +60,10 @@ describe("loadSnapshot", () => {
 
   it("persists pretty-printed JSON (2-space indent)", () => {
     saveSnapshot(dir, moduleSchema({ tables: [table("t", [idColumn])] }));
-    const raw = fs.readFileSync(path.join(dir, "schema-snapshot.json"), "utf-8");
+    const raw = fs.readFileSync(
+      path.join(dir, "schema-snapshot.json"),
+      "utf-8",
+    );
     expect(raw).toContain('\n  "moduleName"');
   });
 });

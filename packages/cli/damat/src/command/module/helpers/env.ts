@@ -1,5 +1,10 @@
 import { join } from "node:path";
-import { existsSync, readFileSync, appendFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  readFileSync,
+  appendFileSync,
+  writeFileSync,
+} from "node:fs";
 import type { ModuleManifest } from "@damatjs/module";
 import type { EnvSyncResult } from "./types";
 
@@ -52,7 +57,10 @@ export function syncEnvVars(
  * real secrets and shared values, so it is never edited. Returns the var
  * names that were removed (empty when no block was found).
  */
-export function removeModuleEnvVars(appDir: string, moduleName: string): string[] {
+export function removeModuleEnvVars(
+  appDir: string,
+  moduleName: string,
+): string[] {
   const examplePath = join(appDir, ".env.example");
   if (!existsSync(examplePath)) return [];
   const content = readFileSync(examplePath, "utf-8");
@@ -67,9 +75,9 @@ export function removeModuleEnvVars(appDir: string, moduleName: string): string[
   const end = nextHeader === -1 ? content.length : nextHeader;
 
   const block = content.slice(afterHeader, end);
-  const removedVars = [...block.matchAll(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=/gm)].map(
-    (m) => m[1]!,
-  );
+  const removedVars = [
+    ...block.matchAll(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=/gm),
+  ].map((m) => m[1]!);
 
   // Also drop the blank line the append put before the header.
   const cutStart = content.slice(0, start).endsWith("\n\n") ? start - 1 : start;

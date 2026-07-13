@@ -9,6 +9,6 @@ This is a **private, never-published** package (`"private": true`, version
 follow — it has no published versions and no `CHANGELOG.md`. The single
 baseline file below describes what the shared TypeScript presets provide.
 
-| Version | Summary | Upgrade notes |
-|---------|---------|---------------|
-| 0.0.0 | Baseline — shared `base.json` preset plus `nextjs.json` and `react-library.json` frontend presets | [0.0.0 →](./0.0.0.md) |
+| Version | Summary                                                                                           | Upgrade notes         |
+| ------- | ------------------------------------------------------------------------------------------------- | --------------------- |
+| 0.0.0   | Baseline — shared `base.json` preset plus `nextjs.json` and `react-library.json` frontend presets | [0.0.0 →](./0.0.0.md) |

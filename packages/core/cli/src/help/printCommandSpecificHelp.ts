@@ -39,7 +39,7 @@ function printCommandHelp(cmd: Command, cliName: string): void {
 
 export function printCommandSpecificHelp(
   config: { name: string },
-  command: Command
+  command: Command,
 ): void {
   printCommandHelp(command, config.name);
 }

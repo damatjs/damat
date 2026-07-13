@@ -5,7 +5,12 @@ describe("createHealthRoute", () => {
   it("returns healthy status when no checks are configured", async () => {
     const healthRouter = createHealthRoute();
     const res = await healthRouter.request("/health");
-    const data = (await res.json()) as { status: string; timestamp: string; version: string; checks: Record<string, unknown> };
+    const data = (await res.json()) as {
+      status: string;
+      timestamp: string;
+      version: string;
+      checks: Record<string, unknown>;
+    };
 
     expect(res.status).toBe(200);
     expect(data).toHaveProperty("status", "healthy");
@@ -23,7 +28,13 @@ describe("createHealthRoute", () => {
     });
 
     const res = await healthRouter.request("/health");
-    const data = (await res.json()) as { status: string; checks: { database: { status: string; latency: number }; redis: { status: string; latency: number } } };
+    const data = (await res.json()) as {
+      status: string;
+      checks: {
+        database: { status: string; latency: number };
+        redis: { status: string; latency: number };
+      };
+    };
 
     expect(res.status).toBe(200);
     expect(data.status).toBe("healthy");
@@ -41,7 +52,10 @@ describe("createHealthRoute", () => {
     });
 
     const res = await healthRouter.request("/health");
-    const data = (await res.json()) as { status: string; checks: { database: { status: string } } };
+    const data = (await res.json()) as {
+      status: string;
+      checks: { database: { status: string } };
+    };
 
     expect(res.status).toBe(503);
     expect(data.status).toBe("degraded");
@@ -58,7 +72,10 @@ describe("createHealthRoute", () => {
     });
 
     const res = await healthRouter.request("/health");
-    const data = (await res.json()) as { status: string; checks: { redis: { status: string } } };
+    const data = (await res.json()) as {
+      status: string;
+      checks: { redis: { status: string } };
+    };
 
     expect(res.status).toBe(503);
     expect(data.status).toBe("degraded");

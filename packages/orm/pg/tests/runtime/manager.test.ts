@@ -97,7 +97,9 @@ describe("PgEntityManager.raw / execute — error mapping", () => {
   });
 
   it("raw wraps driver errors in QueryExecutionError", async () => {
-    const { em } = makeEm({ throwOn: () => new Error("relation does not exist") });
+    const { em } = makeEm({
+      throwOn: () => new Error("relation does not exist"),
+    });
     await expect(em.raw("SELECT * FROM nope")).rejects.toThrow(
       QueryExecutionError,
     );

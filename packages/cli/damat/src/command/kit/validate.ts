@@ -5,7 +5,8 @@ import { buildKitPlan } from "./plan";
 
 export const kitValidateCommand: Command = {
   name: "validate",
-  description: "Check this kit's damat-kit.json and preview where every file would land",
+  description:
+    "Check this kit's damat-kit.json and preview where every file would land",
   usage: "damat kit validate",
   options: [],
   handler: async (ctx) => {
@@ -25,7 +26,8 @@ export const kitValidateCommand: Command = {
       [
         `Kit "${manifest.name}" placement preview:`,
         ...plan.files.map(
-          (f) => `  ${f.source} -> ${f.target}${f.via === "fallback" ? "  (fallback)" : ""}`,
+          (f) =>
+            `  ${f.source} -> ${f.target}${f.via === "fallback" ? "  (fallback)" : ""}`,
         ),
       ].join("\n"),
     );

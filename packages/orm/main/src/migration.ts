@@ -1,1 +1,1 @@
-export * from "@damatjs/orm-migration"
+export * from "@damatjs/orm-migration";

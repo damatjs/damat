@@ -1,8 +1,12 @@
 import type { CrudNames } from "../../../naming";
-import { SCAFFOLD_NOTE } from '../../constant';
+import { SCAFFOLD_NOTE } from "../../constant";
 
 /** Collection route `GET` (list) + `POST` (create) handlers. */
-export function routeCollectionApi(n: CrudNames, wfDirSpec: string, typesSpec: string): string {
+export function routeCollectionApi(
+  n: CrudNames,
+  wfDirSpec: string,
+  typesSpec: string,
+): string {
   return `${SCAFFOLD_NOTE}
 import { getValidated, type RouteHandler } from "@damatjs/framework/router";
 import { create${n.pascal}Workflow, findMany${n.pascal}Workflow } from "${wfDirSpec}";

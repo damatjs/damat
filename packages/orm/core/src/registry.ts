@@ -71,13 +71,13 @@ export class ModelRegistry {
 
   resolveRelation(
     modelName: string,
-    propertyName: string
+    propertyName: string,
   ): ModelRegistryEntry | undefined {
     const entry = this.get(modelName);
     if (!entry) return undefined;
 
     const schema = entry.model.toTableSchema();
-    const relation = schema.relations?.find(r => r.from === propertyName);
+    const relation = schema.relations?.find((r) => r.from === propertyName);
 
     if (!relation) return undefined;
     return this.getByTableName(relation.to);
@@ -85,7 +85,7 @@ export class ModelRegistry {
 
   private _extractColumns(model: ModelDefinition): string[] {
     const schema = model.toTableSchema();
-    return schema.columns.map(c => c.name);
+    return schema.columns.map((c) => c.name);
   }
 }
 

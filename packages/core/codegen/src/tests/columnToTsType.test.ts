@@ -3,7 +3,10 @@ import { ColumnSchema, ColumnType } from "@damatjs/orm-type";
 import { columnToTsType } from "../columnToTsType";
 
 /** Helper to build a minimal ColumnSchema for a given type. */
-const col = (type: ColumnType, extra: Partial<ColumnSchema> = {}): ColumnSchema => ({
+const col = (
+  type: ColumnType,
+  extra: Partial<ColumnSchema> = {},
+): ColumnSchema => ({
   name: "c",
   type,
   nullable: false,
@@ -23,7 +26,12 @@ describe("columnToTsType › primitive base mappings", () => {
   });
 
   it("maps floating point and exact numeric to number", () => {
-    for (const t of ["real", "double precision", "numeric", "decimal"] as const) {
+    for (const t of [
+      "real",
+      "double precision",
+      "numeric",
+      "decimal",
+    ] as const) {
       expect(columnToTsType(col(t))).toBe("number");
     }
   });
@@ -67,7 +75,13 @@ describe("columnToTsType › primitive base mappings", () => {
   });
 
   it("maps uuid, xml and bit strings to string", () => {
-    for (const t of ["uuid", "xml", "bit", "bit varying", "jsonpath"] as const) {
+    for (const t of [
+      "uuid",
+      "xml",
+      "bit",
+      "bit varying",
+      "jsonpath",
+    ] as const) {
       expect(columnToTsType(col(t))).toBe("string");
     }
   });
@@ -150,9 +164,15 @@ describe("columnToTsType › structured object base mappings", () => {
 
 describe("columnToTsType › nullability", () => {
   it("appends ` | null` for nullable primitives", () => {
-    expect(columnToTsType(col("text", { nullable: true }))).toBe("string | null");
-    expect(columnToTsType(col("integer", { nullable: true }))).toBe("number | null");
-    expect(columnToTsType(col("boolean", { nullable: true }))).toBe("boolean | null");
+    expect(columnToTsType(col("text", { nullable: true }))).toBe(
+      "string | null",
+    );
+    expect(columnToTsType(col("integer", { nullable: true }))).toBe(
+      "number | null",
+    );
+    expect(columnToTsType(col("boolean", { nullable: true }))).toBe(
+      "boolean | null",
+    );
   });
 
   it("appends ` | null` after a structured object without adding parens", () => {
@@ -175,13 +195,15 @@ describe("columnToTsType › nullability", () => {
 describe("columnToTsType › arrays", () => {
   it("wraps a non-nullable array base in Array<...>", () => {
     expect(columnToTsType(col("text", { array: true }))).toBe("Array<string>");
-    expect(columnToTsType(col("integer", { array: true }))).toBe("Array<number>");
+    expect(columnToTsType(col("integer", { array: true }))).toBe(
+      "Array<number>",
+    );
   });
 
   it("wraps then nullifies a nullable array", () => {
-    expect(columnToTsType(col("integer", { array: true, nullable: true }))).toBe(
-      "Array<number> | null",
-    );
+    expect(
+      columnToTsType(col("integer", { array: true, nullable: true })),
+    ).toBe("Array<number> | null");
   });
 
   it("wraps structured object arrays", () => {
@@ -202,24 +224,28 @@ describe("columnToTsType › enums", () => {
   });
 
   it("supports nullable named enums", () => {
-    expect(columnToTsType(col("enum", { enum: "status_type", nullable: true }))).toBe(
-      "StatusTypeEnum | null",
-    );
+    expect(
+      columnToTsType(col("enum", { enum: "status_type", nullable: true })),
+    ).toBe("StatusTypeEnum | null");
   });
 
   it("supports enum arrays (nullable and non-nullable)", () => {
-    expect(columnToTsType(col("enum", { enum: "status_type", array: true }))).toBe(
-      "Array<StatusTypeEnum>",
-    );
     expect(
-      columnToTsType(col("enum", { enum: "status_type", array: true, nullable: true })),
+      columnToTsType(col("enum", { enum: "status_type", array: true })),
+    ).toBe("Array<StatusTypeEnum>");
+    expect(
+      columnToTsType(
+        col("enum", { enum: "status_type", array: true, nullable: true }),
+      ),
     ).toBe("Array<StatusTypeEnum> | null");
   });
 
   it("falls back to the base 'string' type for an enum column with no enum name", () => {
     // No `enum` property → not a named enum, so pgTypeToTsBase('enum') = 'string'.
     expect(columnToTsType(col("enum"))).toBe("string");
-    expect(columnToTsType(col("enum", { nullable: true }))).toBe("string | null");
+    expect(columnToTsType(col("enum", { nullable: true }))).toBe(
+      "string | null",
+    );
   });
 });
 

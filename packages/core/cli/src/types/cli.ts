@@ -1,15 +1,12 @@
-import { BannerConfig } from './banner';
+import { BannerConfig } from "./banner";
 import type { Command } from "./command";
 import type { CommandContext } from "./command";
 
-export type HelpTemplateFn = (
-  config: CliConfig,
-  commands: Command[]
-) => string;
+export type HelpTemplateFn = (config: CliConfig, commands: Command[]) => string;
 
 export type ErrorHandlerFn = (
   error: Error,
-  ctx: CommandContext | Partial<CommandContext>
+  ctx: CommandContext | Partial<CommandContext>,
 ) => void;
 
 export interface VerboseConfig {

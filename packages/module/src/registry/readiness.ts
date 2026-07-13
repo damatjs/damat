@@ -38,7 +38,9 @@ export function validateModuleDir(moduleDir: string): ModuleValidationReport {
   // Entry must exist — it's what damat.config.ts resolves
   const entryPath = join(moduleDir, paths.entry);
   if (!existsSync(entryPath)) {
-    errors.push(`Entry "${paths.entry}" not found (must default-export defineModule(...))`);
+    errors.push(
+      `Entry "${paths.entry}" not found (must default-export defineModule(...))`,
+    );
   }
 
   // Declared layout dirs must exist when explicitly set in the manifest
@@ -67,16 +69,24 @@ export function validateModuleDir(moduleDir: string): ModuleValidationReport {
   }
 
   // Registry-readiness — the registry indexes these fields
-  if (!manifest.version) warnings.push('Missing "version" — required for registry publishing');
-  if (!manifest.description) warnings.push('Missing "description" — shown in registry search');
+  if (!manifest.version)
+    warnings.push('Missing "version" — required for registry publishing');
+  if (!manifest.description)
+    warnings.push('Missing "description" — shown in registry search');
   if (!manifest.author) {
-    warnings.push('Missing "author" — shown in the registry and recorded as install provenance');
+    warnings.push(
+      'Missing "author" — shown in the registry and recorded as install provenance',
+    );
   }
   if (!manifest.registry?.license) {
-    warnings.push('Missing "registry.license" — required for registry publishing');
+    warnings.push(
+      'Missing "registry.license" — required for registry publishing',
+    );
   }
   if (!manifest.registry?.namespace) {
-    warnings.push('Missing "registry.namespace" — modules publish under a namespace');
+    warnings.push(
+      'Missing "registry.namespace" — modules publish under a namespace',
+    );
   }
 
   return { valid: errors.length === 0, errors, warnings, manifest };

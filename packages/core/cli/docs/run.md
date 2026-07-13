@@ -34,9 +34,13 @@ These are the two paths and they behave differently.
 if (cmd.subcommands && args.length > 1) {
   const subcommandName = args[1];
   const fullName = `${cmd.name}:${subcommandName}`;
-  const subcmd = getRegistry().get(fullName) || getRegistry().get(subcommandName);
+  const subcmd =
+    getRegistry().get(fullName) || getRegistry().get(subcommandName);
   if (subcmd && subcmd !== cmd) {
-    const { options, positional } = parseCommandArgs(args.slice(2), subcmd.options);
+    const { options, positional } = parseCommandArgs(
+      args.slice(2),
+      subcmd.options,
+    );
     const ctx = buildCommandContext(fullName, options, logger, config);
     const result = await subcmd.handler({ ...ctx, args: positional });
     process.exit(result.exitCode);
@@ -53,7 +57,12 @@ The full pipeline, see below. Parent commands (those with `subcommands`) are **s
 ## `registerSingleCommand` — `src/run/registerCommand.ts`
 
 ```ts
-function registerSingleCommand(cli: CAC, cmd: Command, config: CliConfig, logger: Logger): void
+function registerSingleCommand(
+  cli: CAC,
+  cmd: Command,
+  config: CliConfig,
+  logger: Logger,
+): void;
 ```
 
 - **Early return** if `cmd.subcommands` is set (parents aren't registered with cac).
@@ -95,7 +104,13 @@ The framework's own parser (used on the **subcommand** path; the leaf path uses 
 Builds the `CommandContext`. It computes positionals **independently** via `extractPositionalArgs(process.argv.slice(2).filter(a => a !== commandName))`:
 
 ```ts
-return { command: commandName, args: positionalArgs, options, logger, cwd: process.cwd() };
+return {
+  command: commandName,
+  args: positionalArgs,
+  options,
+  logger,
+  cwd: process.cwd(),
+};
 ```
 
 So `ctx.args` here comes from a fresh scan of `process.argv` (skipping a token after any `-`/`--` flag), **not** from `parseCommandArgs`. On the subcommand path this `args` is then overridden by the caller. (`extractPositionalArgs` is the simpler scanner used for this.)
@@ -119,9 +134,15 @@ Registers a cac `help [command]` command. With an argument it looks the command 
 ## Config loading — `src/config.ts`
 
 ```ts
-async function loadConfig<T>(loaderConfig: ConfigLoader | undefined, cwd = process.cwd()): Promise<T | null>;
+async function loadConfig<T>(
+  loaderConfig: ConfigLoader | undefined,
+  cwd = process.cwd(),
+): Promise<T | null>;
 function clearConfigCache(): void;
-function withConfig<T>(loader): { get: () => Promise<T | null>; clear: () => void };
+function withConfig<T>(loader): {
+  get: () => Promise<T | null>;
+  clear: () => void;
+};
 ```
 
 - **Module-level cache** (`cachedConfig`): once a non-null config is loaded, subsequent calls return it without re-reading. `clearConfigCache()` resets it (tests call this between cases).

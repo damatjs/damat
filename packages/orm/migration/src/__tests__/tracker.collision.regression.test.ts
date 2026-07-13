@@ -38,7 +38,9 @@ function makeStatefulPool() {
         }
         // No conflict-target match => every other unique constraint must hold.
         if (rows.some((r) => r.id === id)) {
-          throw new Error(`duplicate key value violates unique constraint (id=${id})`);
+          throw new Error(
+            `duplicate key value violates unique constraint (id=${id})`,
+          );
         }
         if (rows.some((r) => r.module === module && r.name === name)) {
           throw new Error("duplicate key value violates UNIQUE(module, name)");
@@ -92,7 +94,12 @@ describe("MigrationTracker — id collision cannot clobber a different module", 
   it("a pre-existing old-scheme row still reads as applied and is not re-inserted", async () => {
     const { pool, rows } = makeStatefulPool();
     // Seed a row written by the OLD `${module}_${name}` id scheme.
-    rows.push({ id: "user_Migration1_Initial", module: "user", name: "Migration1_Initial", status: "applied" });
+    rows.push({
+      id: "user_Migration1_Initial",
+      module: "user",
+      name: "Migration1_Initial",
+      status: "applied",
+    });
     const tracker = new MigrationTracker(pool);
 
     // Re-recording matches on UNIQUE(module, name) despite the differing id.

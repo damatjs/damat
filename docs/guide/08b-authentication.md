@@ -42,10 +42,10 @@ already has — the provider supplies the handler behind them:
 // src/api/routes/me/route.ts
 import { defineRoute, getUser } from "@damatjs/framework";
 
-export const config = { GET: { auth: "session" } };   // "session" | "apiKey" | "flexible" | "none"
+export const config = { GET: { auth: "session" } }; // "session" | "apiKey" | "flexible" | "none"
 
 export const GET = defineRoute((c) => {
-  const user = getUser(c);            // typed AuthUser — set by the provider
+  const user = getUser(c); // typed AuthUser — set by the provider
   return c.json({ success: true, data: { id: user!.id, email: user!.email } });
 });
 ```
@@ -59,7 +59,7 @@ API key.
 
 ### Better Auth — in your backend
 
-Better Auth runs *inside* your server: it serves sign-in/sign-up/session endpoints
+Better Auth runs _inside_ your server: it serves sign-in/sign-up/session endpoints
 (mounted at `/api/auth/*`) and stores users in your Postgres. Because Damat never
 manages schema, its tables come from a **module you own** — scaffold it once:
 
@@ -100,10 +100,13 @@ import { defineAuthAdapter, defineAuthProvider } from "@damatjs/auth";
 export default defineAuthAdapter((options) =>
   defineAuthProvider({
     name: "my-idp",
-    async authenticate(c) {                          // verify → principal | null
+    async authenticate(c) {
+      // verify → principal | null
       const token = c.req.header("authorization")?.replace(/^Bearer /, "");
       const claims = token ? await verifyWithMyIdp(token, options) : null;
-      return claims ? { id: claims.sub, email: claims.email, orgId: claims.org } : null;
+      return claims
+        ? { id: claims.sub, email: claims.email, orgId: claims.org }
+        : null;
     },
     // optional: authenticateApiKey(c), routes: { basePath, handler }, shutdown()
   }),
@@ -124,7 +127,7 @@ middleware, the context keys, or the router.
 - **Optional by design.** No `services.auth` → no auth package imported. A
   provider set but not installed fails boot with a clear `bun add …` message.
 - **No schema, ever.** Adapters only verify/read; persistence (Better Auth) is a
-  module *you* own and migrate. The adapter is told the names and assumes the
+  module _you_ own and migrate. The adapter is told the names and assumes the
   tables exist.
 - **Errors are 401, not 500.** A bad/expired token is treated as unauthenticated
   (with a warn log), never a crash.

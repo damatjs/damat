@@ -19,7 +19,9 @@ describe("DeleteBuilder.generateSql", () => {
   });
 
   it("DELETE with operator-based WHERE", () => {
-    const q = del().where({ age: { lt: 18 } }).generateSql();
+    const q = del()
+      .where({ age: { lt: 18 } })
+      .generateSql();
     expect(q.sql).toBe('DELETE FROM "app"."user" WHERE "age" < $1 RETURNING *');
     expect(q.params).toEqual([18]);
   });

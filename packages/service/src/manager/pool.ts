@@ -29,7 +29,11 @@ const STATE_KEY = Symbol.for("damatjs.services.poolManager");
 function getState(): PoolManagerState {
   const holder = globalThis as Record<symbol, PoolManagerState | undefined>;
   if (!holder[STATE_KEY]) {
-    holder[STATE_KEY] = { pool: null, entityManager: null, connectionManager: null };
+    holder[STATE_KEY] = {
+      pool: null,
+      entityManager: null,
+      connectionManager: null,
+    };
   }
   return holder[STATE_KEY];
 }
@@ -54,15 +58,17 @@ export class PoolManager {
     getState().connectionManager = value;
   }
 
-  private constructor() { }
+  private constructor() {}
 
   static setup({
-    connectionManager, pool, logger }: {
-      pool: Pool,
-      logger: ILogger,
-      connectionManager: ConnectionManager
-    }
-  ): void {
+    connectionManager,
+    pool,
+    logger,
+  }: {
+    pool: Pool;
+    logger: ILogger;
+    connectionManager: ConnectionManager;
+  }): void {
     this.pool = pool;
     this.connectionManager = connectionManager;
 
@@ -74,14 +80,18 @@ export class PoolManager {
 
   static getPool(): Pool {
     if (!this.pool) {
-      throw new Error("Pool not initialized. Call PoolManager.setup(pool) first.");
+      throw new Error(
+        "Pool not initialized. Call PoolManager.setup(pool) first.",
+      );
     }
     return this.pool;
   }
 
   static getPgEntityManager(): PgEntityManager {
     if (!this.entityManager) {
-      throw new Error("EntityManager not initialized. Call PoolManager.setup(pool) first.");
+      throw new Error(
+        "EntityManager not initialized. Call PoolManager.setup(pool) first.",
+      );
     }
     return this.entityManager;
   }

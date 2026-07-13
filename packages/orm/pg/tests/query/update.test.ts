@@ -66,9 +66,7 @@ describe("UpdateBuilder — guard rails", () => {
 
   it("allowFullTable() permits an unscoped UPDATE", () => {
     const q = upd().set({ verified: true }).allowFullTable().generateSql();
-    expect(q.sql).toBe(
-      'UPDATE "app"."user" SET "verified" = $1 RETURNING *',
-    );
+    expect(q.sql).toBe('UPDATE "app"."user" SET "verified" = $1 RETURNING *');
   });
 
   it("throws on unknown column in set()", () => {

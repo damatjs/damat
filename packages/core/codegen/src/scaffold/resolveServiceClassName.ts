@@ -7,7 +7,10 @@ import { toPascalCase } from "./naming";
  * (`export class <X> extends ModuleService(...)`). Falls back to the scaffold
  * convention `${PascalCase(moduleId)}Service` when the file can't be read.
  */
-export function resolveServiceClassName(moduleDir: string, moduleId: string): string {
+export function resolveServiceClassName(
+  moduleDir: string,
+  moduleId: string,
+): string {
   try {
     const src = readFileSync(join(moduleDir, "service.ts"), "utf-8");
     const m = src.match(/export\s+class\s+(\w+)\s+extends\s+ModuleService/);

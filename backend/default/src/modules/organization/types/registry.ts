@@ -5,6 +5,6 @@ import type { OrganizationModuleService } from "@organization/service";
 
 declare module "@damatjs/services" {
   interface ModuleRegistry {
-    "organization": OrganizationModuleService;
+    organization: OrganizationModuleService;
   }
 }

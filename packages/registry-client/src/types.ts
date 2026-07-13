@@ -1,7 +1,8 @@
 // Types matching the gateway's discovery + verdict + publish response shapes.
 
 /** Verdict status values (mirrors the verdict blade's VerdictStatus). */
-export type VerdictStatus = "unscanned" | "pending" | "pass" | "warn" | "flagged" | "malicious";
+export type VerdictStatus =
+  "unscanned" | "pending" | "pass" | "warn" | "flagged" | "malicious";
 
 /** A single entry from GET /api/registry/packages. */
 export interface PackageSummary {

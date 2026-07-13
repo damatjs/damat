@@ -33,7 +33,13 @@ const WITH_PROVENANCE = process.env.GITHUB_ACTIONS === "true";
 
 // Workspace globs from the root package.json that live under packages/.
 // (backend/* and modules/* workspaces are app/dev-only and never published.)
-const PACKAGE_GLOBS = ["packages/*", "packages/auth/*", "packages/cli/*", "packages/core/*", "packages/orm/*"];
+const PACKAGE_GLOBS = [
+  "packages/*",
+  "packages/auth/*",
+  "packages/cli/*",
+  "packages/core/*",
+  "packages/orm/*",
+];
 
 interface Pkg {
   dir: string;
@@ -48,9 +54,13 @@ function discoverPackages(): Pkg[] {
   for (const glob of PACKAGE_GLOBS) {
     const base = join(ROOT, glob.replace("/*", ""));
     if (!existsSync(base)) continue;
-    for (const entry of new Bun.Glob("*/package.json").scanSync({ cwd: base })) {
+    for (const entry of new Bun.Glob("*/package.json").scanSync({
+      cwd: base,
+    })) {
       const dir = join(base, entry, "..");
-      const manifest = JSON.parse(readFileSync(join(dir, "package.json"), "utf-8"));
+      const manifest = JSON.parse(
+        readFileSync(join(dir, "package.json"), "utf-8"),
+      );
       // packages/cli, packages/core, packages/orm are matched by packages/*
       // too but contain no package.json themselves; dedupe by name.
       if (pkgs.some((p) => p.name === manifest.name)) continue;
@@ -66,22 +76,36 @@ function discoverPackages(): Pkg[] {
   return pkgs.filter((p) => !p.private);
 }
 
-function run(cmd: string[], cwd: string): { status: number; stdout: string; stderr: string } {
+function run(
+  cmd: string[],
+  cwd: string,
+): { status: number; stdout: string; stderr: string } {
   const res = spawnSync(cmd[0], cmd.slice(1), { cwd, encoding: "utf-8" });
-  return { status: res.status ?? 1, stdout: res.stdout ?? "", stderr: res.stderr ?? "" };
+  return {
+    status: res.status ?? 1,
+    stdout: res.stdout ?? "",
+    stderr: res.stderr ?? "",
+  };
 }
 
 /** true = already on the registry, false = not published (E404). */
 function isPublished(name: string, version: string): boolean {
-  const res = run(["npm", "view", `${name}@${version}`, "version", "--json"], ROOT);
+  const res = run(
+    ["npm", "view", `${name}@${version}`, "version", "--json"],
+    ROOT,
+  );
   if (res.status === 0 && res.stdout.trim().length > 0) return true;
   if (res.stderr.includes("E404") || res.stdout.includes("E404")) return false;
   // Anything else (network/auth error) must not silently skip or publish.
-  throw new Error(`npm view failed for ${name}@${version}:\n${res.stderr || res.stdout}`);
+  throw new Error(
+    `npm view failed for ${name}@${version}:\n${res.stderr || res.stdout}`,
+  );
 }
 
 const packages = discoverPackages();
-console.log(`Found ${packages.length} public packages${DRY_RUN ? " (dry run)" : ""}.`);
+console.log(
+  `Found ${packages.length} public packages${DRY_RUN ? " (dry run)" : ""}.`,
+);
 
 const failures: string[] = [];
 let published = 0;
@@ -96,7 +120,9 @@ for (const pkg of packages) {
   if (pkg.scripts?.prepublishOnly) {
     const guard = run(["bun", "run", "prepublishOnly"], pkg.dir);
     if (guard.status !== 0) {
-      console.error(`- ${label}: prepublishOnly guard failed\n${guard.stdout}${guard.stderr}`);
+      console.error(
+        `- ${label}: prepublishOnly guard failed\n${guard.stdout}${guard.stderr}`,
+      );
       failures.push(label);
       continue;
     }
@@ -104,9 +130,14 @@ for (const pkg of packages) {
 
   const dest = mkdtempSync(join(tmpdir(), "damat-publish-"));
   try {
-    const pack = run(["bun", "pm", "pack", "--destination", dest, "--quiet"], pkg.dir);
+    const pack = run(
+      ["bun", "pm", "pack", "--destination", dest, "--quiet"],
+      pkg.dir,
+    );
     if (pack.status !== 0) {
-      console.error(`- ${label}: bun pm pack failed\n${pack.stdout}${pack.stderr}`);
+      console.error(
+        `- ${label}: bun pm pack failed\n${pack.stdout}${pack.stderr}`,
+      );
       failures.push(label);
       continue;
     }
@@ -118,11 +149,15 @@ for (const pkg of packages) {
 
     const pub = run(publishCmd, pkg.dir);
     if (pub.status !== 0) {
-      console.error(`- ${label}: npm publish failed\n${pub.stdout}${pub.stderr}`);
+      console.error(
+        `- ${label}: npm publish failed\n${pub.stdout}${pub.stderr}`,
+      );
       failures.push(label);
       continue;
     }
-    console.log(`- ${label}: published${WITH_PROVENANCE ? " (with provenance)" : ""}`);
+    console.log(
+      `- ${label}: published${WITH_PROVENANCE ? " (with provenance)" : ""}`,
+    );
     published += 1;
   } finally {
     rmSync(dest, { recursive: true, force: true });

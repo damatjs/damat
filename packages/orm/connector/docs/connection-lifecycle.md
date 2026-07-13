@@ -12,10 +12,10 @@ holds mutable state; all SQL building and transactions live above it in `@damatj
 
 ```ts
 class ConnectionManager {
-  private pool: Pool | null = null;                  // null until connect()
-  private config: DbPoolConfigWithExtras;            // immutable after construction
-  private logger?: ILogger | undefined;              // optional; enables event logging
-  private isConnectedFlag: boolean = false;          // true after a verified connection
+  private pool: Pool | null = null; // null until connect()
+  private config: DbPoolConfigWithExtras; // immutable after construction
+  private logger?: ILogger | undefined; // optional; enables event logging
+  private isConnectedFlag: boolean = false; // true after a verified connection
   private connectionPromise: Promise<Pool> | null = null; // in-flight connect, for idempotency
 }
 ```

@@ -11,7 +11,12 @@ import type { Server } from "bun";
 // ---------------------------------------------------------------------------
 
 const STUB_PACKAGES = [
-  { name: "@damatjs/user", kind: "module", origin: "damatjs", description: "User management" },
+  {
+    name: "@damatjs/user",
+    kind: "module",
+    origin: "damatjs",
+    description: "User management",
+  },
   { name: "logging", kind: "plain", origin: "community", description: null },
 ];
 
@@ -59,7 +64,9 @@ beforeAll(() => {
       // GET /api/registry/packages
       if (req.method === "GET" && path === "/api/registry/packages") {
         const kind = url.searchParams.get("kind");
-        const pkgs = kind ? STUB_PACKAGES.filter((p) => p.kind === kind) : STUB_PACKAGES;
+        const pkgs = kind
+          ? STUB_PACKAGES.filter((p) => p.kind === kind)
+          : STUB_PACKAGES;
         return Response.json({ packages: pkgs });
       }
 
@@ -73,7 +80,9 @@ beforeAll(() => {
       }
 
       // GET /api/registry/packages/:name/:version/source
-      const sourceMatch = path.match(/^\/api\/registry\/packages\/([^/]+)\/([^/]+)\/source$/);
+      const sourceMatch = path.match(
+        /^\/api\/registry\/packages\/([^/]+)\/([^/]+)\/source$/,
+      );
       if (req.method === "GET" && sourceMatch) {
         return new Response(STUB_TARBALL, {
           headers: { "content-type": "application/octet-stream" },
@@ -81,10 +90,13 @@ beforeAll(() => {
       }
 
       // GET /api/registry/packages/:name/:version/verdict
-      const verdictMatch = path.match(/^\/api\/registry\/packages\/([^/]+)\/([^/]+)\/verdict$/);
+      const verdictMatch = path.match(
+        /^\/api\/registry\/packages\/([^/]+)\/([^/]+)\/verdict$/,
+      );
       if (req.method === "GET" && verdictMatch) {
         const name = decodeURIComponent(verdictMatch[1]!);
-        if (name === "unknown-pkg") return Response.json({ status: "unscanned" });
+        if (name === "unknown-pkg")
+          return Response.json({ status: "unscanned" });
         return Response.json(STUB_VERDICT);
       }
 
@@ -93,7 +105,13 @@ beforeAll(() => {
       if (req.method === "PUT" && npmPublishMatch) {
         lastPublishAuth = req.headers.get("authorization");
         lastPublishUrl = path;
-        return Response.json({ success: true, package: { name: "@damatjs/user", version: "0.3.0" } }, { status: 201 });
+        return Response.json(
+          {
+            success: true,
+            package: { name: "@damatjs/user", version: "0.3.0" },
+          },
+          { status: 201 },
+        );
       }
 
       return Response.json({ error: "not found" }, { status: 404 });
@@ -116,7 +134,10 @@ describe("RegistryClient.listPackages", () => {
     const client = new RegistryClient({ baseUrl });
     const pkgs = await client.listPackages();
     expect(pkgs).toHaveLength(2);
-    expect(pkgs.map((p) => p.name).sort()).toEqual(["@damatjs/user", "logging"]);
+    expect(pkgs.map((p) => p.name).sort()).toEqual([
+      "@damatjs/user",
+      "logging",
+    ]);
   });
 
   test("filters by kind=module", async () => {

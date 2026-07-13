@@ -17,13 +17,15 @@ export const moduleBuildCommand: Command = {
     {
       name: "typecheck",
       type: "boolean",
-      description: "Type-check the module before validating (use --no-typecheck to skip)",
+      description:
+        "Type-check the module before validating (use --no-typecheck to skip)",
       default: true,
     },
     {
       name: "validate",
       type: "boolean",
-      description: "Check the module.json contract + registry readiness (use --no-validate to skip)",
+      description:
+        "Check the module.json contract + registry readiness (use --no-validate to skip)",
       default: true,
     },
   ],

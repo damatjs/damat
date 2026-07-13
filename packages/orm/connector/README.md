@@ -36,7 +36,10 @@ Do **not** use it when:
 ## Quick start
 
 ```ts
-import { ConnectionManager, productionPoolConfig } from "@damatjs/orm-connector";
+import {
+  ConnectionManager,
+  productionPoolConfig,
+} from "@damatjs/orm-connector";
 import { Logger } from "@damatjs/logger";
 
 const logger = new Logger({ prefix: "DB", timestamp: true });
@@ -75,26 +78,26 @@ await manager.disconnect();
 
 Exported from the package root (`@damatjs/orm-connector`):
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `ConnectionManager` | class | Owns the `pg` Pool lifecycle: `connect`, `disconnect`, `healthCheck`, `getPool`, `getClient`, `getPoolStats`, `isInitialized`. |
-| `ConnectionError` | class | `Error` subclass thrown on connect/disconnect failures and when accessing the pool before `connect()`. Carries an optional `cause`. |
-| `setupPoolListeners` | function | `(pool, logger) => void` — attaches debug/error logging to a pool's `error`/`connect`/`acquire`/`release`/`remove` events. |
-| `performHealthCheck` | function | `(pool, updateStatus) => Promise<ConnectionStatus>` — runs `SELECT 1` and reports connectivity + pool stats. |
-| `fetchPoolStats` | function | `(pool \| null) => PoolStats` — reads `totalCount` / `idleCount` / `waitingCount` (zeros when null). |
-| `productionPoolConfig` | function | Pool config preset: `min 2`, `max 20`, 5s connect / 30s idle, `allowExitOnIdle: false`. Accepts overrides. |
-| `developmentPoolConfig` | function | Pool config preset: `min 1`, `max 5`, 5s connect / 10s idle. Accepts overrides. |
-| `testPoolConfig` | function | Pool config preset: `min 0`, `max 2`, 2s connect / 1s idle. Accepts overrides. |
+| Export                  | Kind     | Summary                                                                                                                             |
+| ----------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `ConnectionManager`     | class    | Owns the `pg` Pool lifecycle: `connect`, `disconnect`, `healthCheck`, `getPool`, `getClient`, `getPoolStats`, `isInitialized`.      |
+| `ConnectionError`       | class    | `Error` subclass thrown on connect/disconnect failures and when accessing the pool before `connect()`. Carries an optional `cause`. |
+| `setupPoolListeners`    | function | `(pool, logger) => void` — attaches debug/error logging to a pool's `error`/`connect`/`acquire`/`release`/`remove` events.          |
+| `performHealthCheck`    | function | `(pool, updateStatus) => Promise<ConnectionStatus>` — runs `SELECT 1` and reports connectivity + pool stats.                        |
+| `fetchPoolStats`        | function | `(pool \| null) => PoolStats` — reads `totalCount` / `idleCount` / `waitingCount` (zeros when null).                                |
+| `productionPoolConfig`  | function | Pool config preset: `min 2`, `max 20`, 5s connect / 30s idle, `allowExitOnIdle: false`. Accepts overrides.                          |
+| `developmentPoolConfig` | function | Pool config preset: `min 1`, `max 5`, 5s connect / 10s idle. Accepts overrides.                                                     |
+| `testPoolConfig`        | function | Pool config preset: `min 0`, `max 2`, 2s connect / 1s idle. Accepts overrides.                                                      |
 
 `ConnectionManager` is also re-exported by `@damatjs/orm-main`. The config presets come from `./tools/config` (re-exported by the package root).
 
 Key types (defined in `@damatjs/orm-type`, re-used here):
 
-| Type | Shape |
-| --- | --- |
+| Type                     | Shape                                                                                                                      |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | `DbPoolConfigWithExtras` | `DbPoolConfig & { allowExitOnIdle?: boolean }` — host/port/user/password/database/ssl/min/max/timeouts/`connectionString`. |
-| `ConnectionStatus` | `{ connected: boolean; poolStats: PoolStats; lastChecked: Date }` |
-| `PoolStats` | `{ totalCount: number; idleCount: number; waitingCount: number }` |
+| `ConnectionStatus`       | `{ connected: boolean; poolStats: PoolStats; lastChecked: Date }`                                                          |
+| `PoolStats`              | `{ totalCount: number; idleCount: number; waitingCount: number }`                                                          |
 
 ## How it fits
 

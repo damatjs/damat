@@ -1,4 +1,11 @@
-import type { ILogger, LoggerConfig, LogContext, LogLevel, LogEntry, RequestLogData } from "./types";
+import type {
+  ILogger,
+  LoggerConfig,
+  LogContext,
+  LogLevel,
+  LogEntry,
+  RequestLogData,
+} from "./types";
 import { LOG_LEVELS } from "./colors";
 import { Colorizer } from "./colorizer";
 import { Formatter } from "./formatter";
@@ -14,7 +21,10 @@ export class Logger implements ILogger {
 
   constructor(config: LoggerConfig = {}) {
     this.minLevel = LOG_LEVELS[config.level ?? "info"];
-    this.formatter = new Formatter(config.format ?? "pretty", new Colorizer(config.colors ?? true));
+    this.formatter = new Formatter(
+      config.format ?? "pretty",
+      new Colorizer(config.colors ?? true),
+    );
     this.timestampEnabled = config.timestamp ?? true;
     this.prefix = config.prefix;
     if (config.file?.enabled !== false && config.file) {
@@ -26,47 +36,118 @@ export class Logger implements ILogger {
     return LOG_LEVELS[level] >= this.minLevel;
   }
 
-  private log(level: LogLevel, message: string, context?: LogContext, error?: unknown): void {
+  private log(
+    level: LogLevel,
+    message: string,
+    context?: LogContext,
+    error?: unknown,
+  ): void {
     this.logWithPrefix(level, message, this.prefix, context, error);
   }
 
-  logWithPrefix(level: LogLevel, message: string, prefix: string | undefined, context?: LogContext, error?: unknown): void {
+  logWithPrefix(
+    level: LogLevel,
+    message: string,
+    prefix: string | undefined,
+    context?: LogContext,
+    error?: unknown,
+  ): void {
     if (!this.shouldLog(level)) return;
-    const timestamp = this.timestampEnabled ? this.formatter.getTimestamp() : "";
-    const errorInfo = error instanceof Error
-      ? { name: error.name, message: error.message, stack: error.stack }
-      : undefined;
+    const timestamp = this.timestampEnabled
+      ? this.formatter.getTimestamp()
+      : "";
+    const errorInfo =
+      error instanceof Error
+        ? { name: error.name, message: error.message, stack: error.stack }
+        : undefined;
 
     if (this.fileTransport) {
-      this.fileTransport.log({ timestamp, level, message, context, error: errorInfo } as LogEntry);
+      this.fileTransport.log({
+        timestamp,
+        level,
+        message,
+        context,
+        error: errorInfo,
+      } as LogEntry);
     }
 
-    const formatted = this.formatter.formatEntry({ timestamp, level, message, context, error: errorInfo, prefix });
+    const formatted = this.formatter.formatEntry({
+      timestamp,
+      level,
+      message,
+      context,
+      error: errorInfo,
+      prefix,
+    });
 
     if (level === "fatal" || level === "error") console.error(formatted);
     else if (level === "warn") console.warn(formatted);
     else console.log(formatted);
   }
 
-  debug(message: string, context?: LogContext): void { this.log("debug", message, context); }
-  info(message: string, context?: LogContext): void { this.log("info", message, context); }
-  progress(message: string, context?: LogContext): void { this.log("progress", message, context); }
-  cached(message: string, context?: LogContext): void { this.log("cached", message, context); }
-  waiting(message: string, context?: LogContext): void { this.log("waiting", message, context); }
-  success(message: string, context?: LogContext): void { this.log("success", message, context); }
-  warn(message: string, context?: LogContext): void { this.log("warn", message, context); }
-  error(message: string, error?: unknown, context?: LogContext): void { this.log("error", message, context, error); }
-  fatal(message: string, error?: unknown, context?: LogContext): void { this.log("fatal", message, context, error); }
-  skip(message: string, context?: LogContext): void { this.log("skip", message, context); }
-  child(context: LogContext): ILogger { return new ChildLogger(this, context, this.prefix); }
-  withPrefix(prefix: string): ILogger { return new ChildLogger(this, {}, this.prefix ? `${this.prefix}:${prefix}` : prefix); }
-  request(data: RequestLogData): void {
-    const level: LogLevel = data.status >= 500 ? "error" : data.status >= 400 ? "warn" : "info";
-    this.log(level, `${data.method} ${data.path} ${data.status} ${data.duration}ms`, {
-      requestId: data.requestId,
-      ...data.identifier?.reduce((acc, { label, value }) => ({ ...acc, [label]: value }), {}),
-    }, data.error);
+  debug(message: string, context?: LogContext): void {
+    this.log("debug", message, context);
   }
-  static create(config?: LoggerConfig): Logger { return new Logger(config); }
-  close(): void { if (this.fileTransport) { this.fileTransport.close(); this.fileTransport = null; } }
+  info(message: string, context?: LogContext): void {
+    this.log("info", message, context);
+  }
+  progress(message: string, context?: LogContext): void {
+    this.log("progress", message, context);
+  }
+  cached(message: string, context?: LogContext): void {
+    this.log("cached", message, context);
+  }
+  waiting(message: string, context?: LogContext): void {
+    this.log("waiting", message, context);
+  }
+  success(message: string, context?: LogContext): void {
+    this.log("success", message, context);
+  }
+  warn(message: string, context?: LogContext): void {
+    this.log("warn", message, context);
+  }
+  error(message: string, error?: unknown, context?: LogContext): void {
+    this.log("error", message, context, error);
+  }
+  fatal(message: string, error?: unknown, context?: LogContext): void {
+    this.log("fatal", message, context, error);
+  }
+  skip(message: string, context?: LogContext): void {
+    this.log("skip", message, context);
+  }
+  child(context: LogContext): ILogger {
+    return new ChildLogger(this, context, this.prefix);
+  }
+  withPrefix(prefix: string): ILogger {
+    return new ChildLogger(
+      this,
+      {},
+      this.prefix ? `${this.prefix}:${prefix}` : prefix,
+    );
+  }
+  request(data: RequestLogData): void {
+    const level: LogLevel =
+      data.status >= 500 ? "error" : data.status >= 400 ? "warn" : "info";
+    this.log(
+      level,
+      `${data.method} ${data.path} ${data.status} ${data.duration}ms`,
+      {
+        requestId: data.requestId,
+        ...data.identifier?.reduce(
+          (acc, { label, value }) => ({ ...acc, [label]: value }),
+          {},
+        ),
+      },
+      data.error,
+    );
+  }
+  static create(config?: LoggerConfig): Logger {
+    return new Logger(config);
+  }
+  close(): void {
+    if (this.fileTransport) {
+      this.fileTransport.close();
+      this.fileTransport = null;
+    }
+  }
 }

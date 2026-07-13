@@ -21,16 +21,21 @@ interface QueueJob<TData = unknown> {
   startedAt?: Date;
   completedAt?: Date;
   error?: string;
-  delay?: number;        // ms to defer before the job becomes due
+  delay?: number; // ms to defer before the job becomes due
   metadata?: Record<string, unknown>;
 }
 
-interface QueueStats { pending: number; processing: number; completed: number; failed: number; }
+interface QueueStats {
+  pending: number;
+  processing: number;
+  completed: number;
+  failed: number;
+}
 
 interface RedisQueueOptions {
   visibilityTimeoutMs?: number; // > 0 enables reclaim of stale :processing entries on dequeue
   maxCompletedEntries?: number; // cap on the :completed zset (default 10000; <= 0 disables trimming)
-  maxFailedEntries?: number;    // cap on the :failed zset (default 10000; <= 0 disables trimming)
+  maxFailedEntries?: number; // cap on the :failed zset (default 10000; <= 0 disables trimming)
 }
 ```
 
@@ -40,13 +45,13 @@ interface RedisQueueOptions {
 
 For a queue named `<name>`, `keyPrefix = "queue:<name>"` and five keys are used:
 
-| Key | Type | Holds |
-| --- | --- | --- |
-| `queue:<name>:jobs` | hash | `jobId → JSON(job)` (the full record) |
-| `queue:<name>:pending` | zset | jobs waiting, scored by due-time-minus-priority |
-| `queue:<name>:processing` | zset | jobs handed out, scored by dequeue time |
-| `queue:<name>:completed` | zset | finished jobs, scored by completion time |
-| `queue:<name>:failed` | zset | failed jobs, scored by completion time |
+| Key                       | Type | Holds                                           |
+| ------------------------- | ---- | ----------------------------------------------- |
+| `queue:<name>:jobs`       | hash | `jobId → JSON(job)` (the full record)           |
+| `queue:<name>:pending`    | zset | jobs waiting, scored by due-time-minus-priority |
+| `queue:<name>:processing` | zset | jobs handed out, scored by dequeue time         |
+| `queue:<name>:completed`  | zset | finished jobs, scored by completion time        |
+| `queue:<name>:failed`     | zset | failed jobs, scored by completion time          |
 
 ## Class API — `src/queue/queue.ts`
 
@@ -66,7 +71,7 @@ class RedisQueue<TData = unknown> {
 ### `enqueue`
 
 ```ts
-const priorityScore = PRIORITY_SCORES[job.priority] ?? 2;        // normal if unknown
+const priorityScore = PRIORITY_SCORES[job.priority] ?? 2; // normal if unknown
 const score = Date.now() + (job.delay ?? 0) - priorityScore * 1000;
 // pipeline: HSET jobs id JSON(job) ; ZADD pending score id
 ```
@@ -77,7 +82,7 @@ The **score encodes due time and priority**: lower score = dequeued earlier. `de
 
 The claim runs as a **single Lua script** (`DEQUEUE_SCRIPT` in `scripts.ts`), so concurrent workers can never claim the same job — the read and the move happen atomically server-side:
 
-1. *(only when `visibilityTimeoutMs` is set)* `ZRANGEBYSCORE processing 0 (now − visibilityTimeoutMs)` — entries claimed longer ago than the timeout are moved back to `pending` with score `now` (immediately due, priority/delay not re-applied), so jobs from crashed workers are redelivered.
+1. _(only when `visibilityTimeoutMs` is set)_ `ZRANGEBYSCORE processing 0 (now − visibilityTimeoutMs)` — entries claimed longer ago than the timeout are moved back to `pending` with score `now` (immediately due, priority/delay not re-applied), so jobs from crashed workers are redelivered.
 2. `ZRANGEBYSCORE pending 0 now LIMIT 0 count` — pull up to `count` job ids whose score is **due** (`<= now`). Delayed jobs (future score) are skipped until due.
 3. Per claimed id: `ZREM pending id` + `ZADD processing now id` — the score records the **claim timestamp** used by step 1.
 4. Back in JS: if no ids, return `[]`; else `HMGET jobs ...ids`, filter out `null`s, `JSON.parse` each → `QueueJob[]`.
@@ -89,9 +94,12 @@ The claim runs as a **single Lua script** (`DEQUEUE_SCRIPT` in `scripts.ts`), so
 Routes the job to a terminal/return set based on `job.status`:
 
 ```ts
-const statusSet = job.status === "completed" ? "completed"
-                : job.status === "failed"    ? "failed"
-                : "pending";   // anything else (incl. "retrying"/"processing") → back to pending
+const statusSet =
+  job.status === "completed"
+    ? "completed"
+    : job.status === "failed"
+      ? "failed"
+      : "pending"; // anything else (incl. "retrying"/"processing") → back to pending
 // score: pending → Date.now() + (job.delay ?? 0) - priorityScore * 1000  (same as enqueue)
 //        completed/failed → Date.now()
 // pipeline: HSET jobs id JSON(job) ; ZREM processing id ; ZADD <statusSet> score id
@@ -136,7 +144,8 @@ const jobs = await queue.dequeue(10);
 for (const job of jobs) {
   try {
     await handle(job.data);
-    job.status = "completed"; job.completedAt = new Date();
+    job.status = "completed";
+    job.completedAt = new Date();
   } catch (e) {
     job.attempts += 1;
     job.error = String(e);
@@ -152,8 +161,8 @@ const stats = await queue.getStats();
 ## Gotchas
 
 - **No built-in worker / scheduler.** Polling cadence, concurrency, and retry timing are the caller's job.
-- **The visibility timeout is opt-in and disabled by default.** Without `visibilityTimeoutMs`, a job stuck in `processing` (e.g. worker crashed) is **never** auto-returned to `pending` — existing callers that track job state externally and never ack rely on this. With it enabled, reclaim only happens *on dequeue* (no background reaper), and a **slow** worker that outlives the timeout gets its job redelivered — pick a timeout comfortably above your worst-case handling time, and ack via `updateStatus`.
-- **`delay` sticks across retries.** A re-queue via `updateStatus` re-applies whatever `delay` is on the job record — set it to your backoff before acking, and clear (or overwrite) it when you *don't* want the original enqueue delay deferring every redelivery. Visibility-timeout **reclaims** are the exception: the Lua script returns stale jobs with score `now` (immediately due), without re-applying priority or delay.
+- **The visibility timeout is opt-in and disabled by default.** Without `visibilityTimeoutMs`, a job stuck in `processing` (e.g. worker crashed) is **never** auto-returned to `pending` — existing callers that track job state externally and never ack rely on this. With it enabled, reclaim only happens _on dequeue_ (no background reaper), and a **slow** worker that outlives the timeout gets its job redelivered — pick a timeout comfortably above your worst-case handling time, and ack via `updateStatus`.
+- **`delay` sticks across retries.** A re-queue via `updateStatus` re-applies whatever `delay` is on the job record — set it to your backoff before acking, and clear (or overwrite) it when you _don't_ want the original enqueue delay deferring every redelivery. Visibility-timeout **reclaims** are the exception: the Lua script returns stale jobs with score `now` (immediately due), without re-applying priority or delay.
 - **`cancelJob` only affects pending jobs.** In-flight jobs can't be cancelled through it.
 - **`createdAt`/`startedAt`/`completedAt` are `Date`s** but serialize to ISO strings through `JSON.stringify`; after `getJob`/`dequeue` they come back as **strings**, not `Date` objects — re-hydrate if you need `Date` methods.
 - **`enqueue` does not enforce unique ids** — re-enqueuing the same id overwrites the hash entry and re-scores it in `pending`.

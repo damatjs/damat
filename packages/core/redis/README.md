@@ -71,89 +71,89 @@ All exports are available from the single entry point `@damatjs/redis` (no subpa
 
 ### Client lifecycle
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `RedisClient` | class | ioredis wrapper with logging, `connect`/`disconnect`/`ping`, `client`, `isConnected`. |
-| `initRedis(config?, logger?)` | function | Create/replace the global client. Returns `null` if no config given. |
-| `connectRedis()` | function | Connect the global client and `PING` it; returns the raw `Redis`. |
-| `getRedis()` | function | Get the global raw `Redis` (throws `RedisNotInitializedError` if unset). |
-| `getRedisClient()` | function | Get the global `RedisClient` wrapper. |
-| `hasRedis()` | function | Whether the global client exists. |
-| `disconnectRedis()` | function | Quit and clear the global client. |
-| `createRedis(config)` | function | Create a standalone `Redis` (no singleton). |
-| `createRedisConnection(config)` | function | Lower-level factory used by the above. |
-| `createRetryStrategy(times)` | function | Default backoff: `min(times*50, 2000)` ms. |
-| `disconnect(client)` | function | `client.quit()` for a standalone client. |
+| Export                          | Kind     | Summary                                                                               |
+| ------------------------------- | -------- | ------------------------------------------------------------------------------------- |
+| `RedisClient`                   | class    | ioredis wrapper with logging, `connect`/`disconnect`/`ping`, `client`, `isConnected`. |
+| `initRedis(config?, logger?)`   | function | Create/replace the global client. Returns `null` if no config given.                  |
+| `connectRedis()`                | function | Connect the global client and `PING` it; returns the raw `Redis`.                     |
+| `getRedis()`                    | function | Get the global raw `Redis` (throws `RedisNotInitializedError` if unset).              |
+| `getRedisClient()`              | function | Get the global `RedisClient` wrapper.                                                 |
+| `hasRedis()`                    | function | Whether the global client exists.                                                     |
+| `disconnectRedis()`             | function | Quit and clear the global client.                                                     |
+| `createRedis(config)`           | function | Create a standalone `Redis` (no singleton).                                           |
+| `createRedisConnection(config)` | function | Lower-level factory used by the above.                                                |
+| `createRetryStrategy(times)`    | function | Default backoff: `min(times*50, 2000)` ms.                                            |
+| `disconnect(client)`            | function | `client.quit()` for a standalone client.                                              |
 
 ### Cache · prefix `cache:`
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `cacheSet(key, value, ttlSeconds=300, client?)` | function | JSON-serialize and `SETEX`. |
-| `cacheGet<T>(key, client?)` | function | `GET` + `JSON.parse`; `null` on miss/parse error. |
-| `cacheSetRaw(key, value, ttlSeconds?, client?)` | function | Store a raw string (`SETEX` or `SET`). |
-| `cacheGetRaw(key, client?)` | function | `GET` raw string. |
-| `cacheDelete(key, client?)` | function | `DEL` one key. |
-| `cacheDeletePattern(pattern, client?)` | function | `SCAN cache:<pattern>` loop, `DEL`-ing each batch. |
-| `cacheSetTagged(key, value, ttlSeconds=300, tags=[], client?)` | function | `cacheSet` + index the key under each tag (`cache-tag:<tag>` sets) for group invalidation — the `revalidateTag` model. |
-| `invalidateCacheTags(tags, client?)` | function | Delete every entry carrying any of the tags (and the tag indexes); returns the number of entries removed. Backs the service layer's automatic write invalidation. |
+| Export                                                         | Kind     | Summary                                                                                                                                                           |
+| -------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cacheSet(key, value, ttlSeconds=300, client?)`                | function | JSON-serialize and `SETEX`.                                                                                                                                       |
+| `cacheGet<T>(key, client?)`                                    | function | `GET` + `JSON.parse`; `null` on miss/parse error.                                                                                                                 |
+| `cacheSetRaw(key, value, ttlSeconds?, client?)`                | function | Store a raw string (`SETEX` or `SET`).                                                                                                                            |
+| `cacheGetRaw(key, client?)`                                    | function | `GET` raw string.                                                                                                                                                 |
+| `cacheDelete(key, client?)`                                    | function | `DEL` one key.                                                                                                                                                    |
+| `cacheDeletePattern(pattern, client?)`                         | function | `SCAN cache:<pattern>` loop, `DEL`-ing each batch.                                                                                                                |
+| `cacheSetTagged(key, value, ttlSeconds=300, tags=[], client?)` | function | `cacheSet` + index the key under each tag (`cache-tag:<tag>` sets) for group invalidation — the `revalidateTag` model.                                            |
+| `invalidateCacheTags(tags, client?)`                           | function | Delete every entry carrying any of the tags (and the tag indexes); returns the number of entries removed. Backs the service layer's automatic write invalidation. |
 
 ### Rate limiting · prefix `ratelimit:`
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `checkRateLimit(id, windowMs, maxRequests, client?)` | function | Sliding-window check → `RateLimitResult`. |
-| `checkMultiRateLimit(id, windows, client?)` | function | Check several windows → `MultiRateLimitResult`. |
+| Export                                               | Kind     | Summary                                         |
+| ---------------------------------------------------- | -------- | ----------------------------------------------- |
+| `checkRateLimit(id, windowMs, maxRequests, client?)` | function | Sliding-window check → `RateLimitResult`.       |
+| `checkMultiRateLimit(id, windows, client?)`          | function | Check several windows → `MultiRateLimitResult`. |
 
 ### Sessions · prefix `session:`
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `setSession<T>(token, data, ttlSeconds, client?)` | function | JSON `SETEX`. |
-| `getSession<T>(token, client?)` | function | Parse session, `null` on miss/error. |
-| `extendSession(token, ttlSeconds, client?)` | function | `EXPIRE`; `true` if the key existed. |
-| `deleteSession(token, client?)` | function | `DEL` the session. |
-| `SessionManager<T>` | class | Wrapper with auto-extend-on-access (`get`/`set`/`delete`/`touch`/`refresh`). |
-| `createSessionManager<T>(options?, client?)` | function | Factory for `SessionManager`. |
+| Export                                            | Kind     | Summary                                                                      |
+| ------------------------------------------------- | -------- | ---------------------------------------------------------------------------- |
+| `setSession<T>(token, data, ttlSeconds, client?)` | function | JSON `SETEX`.                                                                |
+| `getSession<T>(token, client?)`                   | function | Parse session, `null` on miss/error.                                         |
+| `extendSession(token, ttlSeconds, client?)`       | function | `EXPIRE`; `true` if the key existed.                                         |
+| `deleteSession(token, client?)`                   | function | `DEL` the session.                                                           |
+| `SessionManager<T>`                               | class    | Wrapper with auto-extend-on-access (`get`/`set`/`delete`/`touch`/`refresh`). |
+| `createSessionManager<T>(options?, client?)`      | function | Factory for `SessionManager`.                                                |
 
 ### Distributed locks · prefix `lock:`
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `acquireLock(key, ttlMs=10000, client?)` | function | `SET NX PX`; returns a token or `null`. |
-| `releaseLock(key, lockValue, client?)` | function | Token-checked delete (Lua); `true` if released. |
-| `extendLock(key, lockValue, ttlMs, client?)` | function | Token-checked `PEXPIRE` (Lua). |
-| `isLocked(key, client?)` | function | Whether the lock key exists. |
-| `withLock<T>(key, fn, ttlMs=10000, client?)` | function | Acquire → run `fn` → release in `finally`. |
-| `LOCK_PREFIX` | const | `"lock:"`. |
+| Export                                       | Kind     | Summary                                         |
+| -------------------------------------------- | -------- | ----------------------------------------------- |
+| `acquireLock(key, ttlMs=10000, client?)`     | function | `SET NX PX`; returns a token or `null`.         |
+| `releaseLock(key, lockValue, client?)`       | function | Token-checked delete (Lua); `true` if released. |
+| `extendLock(key, lockValue, ttlMs, client?)` | function | Token-checked `PEXPIRE` (Lua).                  |
+| `isLocked(key, client?)`                     | function | Whether the lock key exists.                    |
+| `withLock<T>(key, fn, ttlMs=10000, client?)` | function | Acquire → run `fn` → release in `finally`.      |
+| `LOCK_PREFIX`                                | const    | `"lock:"`.                                      |
 
 ### Counters · no prefix
 
-| Export | Kind | Summary |
-| --- | --- | --- |
+| Export                                                  | Kind     | Summary                         |
+| ------------------------------------------------------- | -------- | ------------------------------- |
 | `incrementCounter(key, amount=1, ttlSeconds?, client?)` | function | `INCRBY` (+ optional `EXPIRE`). |
-| `decrementCounter(key, amount=1, client?)` | function | `DECRBY`. |
-| `getCounter(key, client?)` | function | Parsed int, `0` if missing. |
-| `setCounter(key, value, ttlSeconds?, client?)` | function | `SET`/`SETEX`. |
-| `resetCounter(key, client?)` | function | `DEL`. |
+| `decrementCounter(key, amount=1, client?)`              | function | `DECRBY`.                       |
+| `getCounter(key, client?)`                              | function | Parsed int, `0` if missing.     |
+| `setCounter(key, value, ttlSeconds?, client?)`          | function | `SET`/`SETEX`.                  |
+| `resetCounter(key, client?)`                            | function | `DEL`.                          |
 
 ### Queue · prefix `queue:<name>:`
 
-| Export | Kind | Summary |
-| --- | --- | --- |
+| Export              | Kind  | Summary                                                                                              |
+| ------------------- | ----- | ---------------------------------------------------------------------------------------------------- |
 | `RedisQueue<TData>` | class | Priority + delay queue (`enqueue`/`dequeue`/`updateStatus`/`getJob`/`cancelJob`/`getStats`/`clear`). |
-| `PRIORITY_SCORES` | const | `{ critical:4, high:3, normal:2, low:1 }`. |
+| `PRIORITY_SCORES`   | const | `{ critical:4, high:3, normal:2, low:1 }`.                                                           |
 
 ### Errors & types
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `RedisConnectionError` | class | Connection failure (carries `cause`). |
-| `RedisNotInitializedError` | class | Thrown by `getRedis`/`connectRedis` before `initRedis`. |
-| `RedisConfig`, `RedisClientConfig` | types | Connection config (see [client internals](./docs/client.md)). |
-| `RateLimitResult`, `RateLimitWindow`, `MultiRateLimitResult` | types | Rate-limit shapes. |
-| `QueueJob<TData>`, `QueueStats` | types | Queue shapes. |
-| `Redis`, `RedisOptions` | types | Re-exported from `@damatjs/deps/ioredis`. |
+| Export                                                       | Kind  | Summary                                                       |
+| ------------------------------------------------------------ | ----- | ------------------------------------------------------------- |
+| `RedisConnectionError`                                       | class | Connection failure (carries `cause`).                         |
+| `RedisNotInitializedError`                                   | class | Thrown by `getRedis`/`connectRedis` before `initRedis`.       |
+| `RedisConfig`, `RedisClientConfig`                           | types | Connection config (see [client internals](./docs/client.md)). |
+| `RateLimitResult`, `RateLimitWindow`, `MultiRateLimitResult` | types | Rate-limit shapes.                                            |
+| `QueueJob<TData>`, `QueueStats`                              | types | Queue shapes.                                                 |
+| `Redis`, `RedisOptions`                                      | types | Re-exported from `@damatjs/deps/ioredis`.                     |
 
 ## How it fits
 

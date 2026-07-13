@@ -120,7 +120,9 @@ async function augmentWithLinks(
     const { renderLinkAugmentations } = await import("@damatjs/link");
 
     const modelsCache = new Map<string, Record<string, any>>();
-    const loadModels = async (resolve: string): Promise<Record<string, any>> => {
+    const loadModels = async (
+      resolve: string,
+    ): Promise<Record<string, any>> => {
       const cached = modelsCache.get(resolve);
       if (cached) return cached;
       const mod = await import(pathToFileURL(resolve).href);
@@ -145,7 +147,9 @@ async function augmentWithLinks(
         const mod = await import(pathToFileURL(lm.resolve).href);
         if (Array.isArray(mod.links)) allLinks.push(...mod.links);
       } catch (e) {
-        ctx.logger.warn(`Could not load links from ${lm.resolve}: ${String(e)}`);
+        ctx.logger.warn(
+          `Could not load links from ${lm.resolve}: ${String(e)}`,
+        );
       }
     }
 

@@ -28,7 +28,7 @@ Config is merged once at creation:
 
 ```ts
 mergedConfig = {
-  ...DEFAULT_WORKFLOW_CONFIG,            // timeoutMs 300000
+  ...DEFAULT_WORKFLOW_CONFIG, // timeoutMs 300000
   ...config,
   defaultStepConfig: {
     ...DEFAULT_STEP_CONFIG,
@@ -42,8 +42,8 @@ mergedConfig = {
 
 ```ts
 interface WorkflowConfig {
-  timeoutMs?: number;            // whole-workflow timeout (default 300000 = 5 min)
-  defaultStepConfig?: StepConfig;// layered under each step's own config
+  timeoutMs?: number; // whole-workflow timeout (default 300000 = 5 min)
+  defaultStepConfig?: StepConfig; // layered under each step's own config
 }
 ```
 
@@ -56,7 +56,10 @@ every step that doesn't override it. See the layering rules in [steps.md](./step
 interface WorkflowDefinition<I, O> {
   name: string;
   config: RequiredWorkflowConfig;
-  execute: (input: I, metadata?: Record<string, unknown>) => Promise<WorkflowResult<O>>;
+  execute: (
+    input: I,
+    metadata?: Record<string, unknown>,
+  ) => Promise<WorkflowResult<O>>;
   executeWithLock: (
     input: I,
     lockConfig?: WorkflowLockConfig,
@@ -103,13 +106,13 @@ interface WorkflowSuccess<T> {
 
 interface WorkflowFailure {
   success: false;
-  error: WorkflowError;     // always a WorkflowError (or subclass)
+  error: WorkflowError; // always a WorkflowError (or subclass)
   executionId: string;
   durationMs: number;
-  compensated: boolean;       // ≥1 compensation ran successfully
-  compensationsFailed: number;// compensations that threw (logged, not raised)
+  compensated: boolean; // ≥1 compensation ran successfully
+  compensationsFailed: number; // compensations that threw (logged, not raised)
   compensationErrors: CompensationError[]; // those errors, in occurrence order
-                                           // (empty array when none failed)
+  // (empty array when none failed)
 }
 ```
 
@@ -122,7 +125,13 @@ union, as the tests do).
 ```ts
 const result = await workflow.executeWithLock(
   input,
-  { lockId: orderId, ttlMs: 120_000, maxRetries: 3, retryDelayMs: 100, autoExtend: true },
+  {
+    lockId: orderId,
+    ttlMs: 120_000,
+    maxRetries: 3,
+    retryDelayMs: 100,
+    autoExtend: true,
+  },
   { userId: "123" },
 );
 ```
@@ -153,7 +162,7 @@ interface WorkflowContext {
   executionId: string;
   workflowName: string;
   startedAt: Date;
-  attempt: number;          // 1-based; inside a step's invoke, the current attempt
+  attempt: number; // 1-based; inside a step's invoke, the current attempt
   metadata: Record<string, unknown>;
   engineState?: WorkflowEngineState; // @internal — do not read/mutate from steps
 }
@@ -165,7 +174,7 @@ is set for you.
 ## Gotchas
 
 - **In-process only.** A crash mid-run loses the run; there is no resume. The lock
-  is for *concurrency*, not durability — a crash will leave the lock held until its
+  is for _concurrency_, not durability — a crash will leave the lock held until its
   TTL expires (which is why `autoExtend` + a sane `ttlMs` matter).
 - The **workflow timeout** wraps the whole generator. A workflow timeout fails the
   scope, which triggers compensations for already-completed steps.

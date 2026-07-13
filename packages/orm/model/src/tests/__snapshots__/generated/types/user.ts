@@ -26,4 +26,4 @@ export type NewUser = {
   metadata?: unknown | null;
 };
 
-export type UpdateUser = Partial<Omit<User, 'id'>>;
+export type UpdateUser = Partial<Omit<User, "id">>;

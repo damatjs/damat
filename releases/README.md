@@ -19,7 +19,7 @@ your target version.
 
 ## Versioning
 
-All Damat packages are released **in lockstep** — a release moves *every*
+All Damat packages are released **in lockstep** — a release moves _every_
 published package to the same version, whether or not its own code changed. So
 there is a single version to care about, not one per package.
 
@@ -29,7 +29,7 @@ exception: **`@damatjs/codegen` is at `2.1.0`**. It was published to npm at
 stays on its own version until the lockstep line catches up past it.
 
 A package's folder only carries a `<version>.md` (and a detailed index row) for
-versions where *its own* code changed; for a lockstep bump with no change of its
+versions where _its own_ code changed; for a lockstep bump with no change of its
 own, the package simply moves to the shared version with no new note. That is why
 a package can sit at `0.6.0` while the newest version it actually links is older.
 
@@ -56,6 +56,7 @@ snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
 ## Packages
 
 ### Framework & app
+
 - [`framework`](./framework/) — `@damatjs/framework`
 - [`services`](./services/) — `@damatjs/services`
 - [`module`](./module/) — `@damatjs/module`
@@ -63,6 +64,7 @@ snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
 - [`workflow-engine`](./workflow-engine/) — `@damatjs/workflow-engine`
 
 ### ORM
+
 - [`orm`](./orm/) — `@damatjs/orm`
 - [`orm-model`](./orm-model/) — `@damatjs/orm-model`
 - [`orm-pg`](./orm-pg/) — `@damatjs/orm-pg`
@@ -74,6 +76,7 @@ snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
 - [`orm-type`](./orm-type/) — `@damatjs/orm-type`
 
 ### Core
+
 - [`logger`](./logger/) — `@damatjs/logger`
 - [`redis`](./redis/) — `@damatjs/redis`
 - [`load-env`](./load-env/) — `@damatjs/load-env`
@@ -83,6 +86,7 @@ snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
 - [`typescript-config`](./typescript-config/) — `@damatjs/typescript-config`
 
 ### CLIs & AI
+
 - [`damat-cli`](./damat-cli/) — `@damatjs/damat-cli`
 - [`orm-cli`](./orm-cli/) — `@damatjs/orm-cli`
 - [`create-damat-app`](./create-damat-app/) — `@damatjs/create-damat-app` (retired 0.7 — use `bunx @damatjs/damat-cli create`)

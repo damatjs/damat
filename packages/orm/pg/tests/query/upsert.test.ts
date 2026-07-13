@@ -101,7 +101,9 @@ describe("UpsertBuilder — validation", () => {
 
   it("throws on unknown conflict column", () => {
     expect(() =>
-      ups().values({ id: "u1" }).onConflict(["bogus" as any]),
+      ups()
+        .values({ id: "u1" })
+        .onConflict(["bogus" as any]),
     ).toThrow(/Unknown column "bogus"/);
   });
 

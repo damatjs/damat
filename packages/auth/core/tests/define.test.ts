@@ -1,5 +1,9 @@
 import { describe, it, expect } from "bun:test";
-import { defineAuthProvider, defineAuthAdapter, createAuthHandlers } from "../src/index";
+import {
+  defineAuthProvider,
+  defineAuthAdapter,
+  createAuthHandlers,
+} from "../src/index";
 import type { AuthProvider } from "../src/index";
 
 describe("defineAuthProvider / defineAuthAdapter", () => {

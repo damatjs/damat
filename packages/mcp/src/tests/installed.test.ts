@@ -20,7 +20,12 @@ afterEach(() => {
 });
 
 /** Create <appDir>/<dir>/<name>/module.json with the given manifest contents. */
-function makeModule(dir: string, name: string, manifest?: unknown, raw?: string) {
+function makeModule(
+  dir: string,
+  name: string,
+  manifest?: unknown,
+  raw?: string,
+) {
   const moduleDir = join(tmp, dir, name);
   mkdirSync(moduleDir, { recursive: true });
   if (raw !== undefined) {
@@ -55,7 +60,11 @@ describe("listInstalled", () => {
   test("marks a module with invalid JSON in its manifest", () => {
     makeModule("src/modules", "broken", undefined, "{ not json");
     expect(listInstalled("src/modules")).toEqual([
-      { id: "broken", version: undefined, description: "(invalid module.json)" },
+      {
+        id: "broken",
+        version: undefined,
+        description: "(invalid module.json)",
+      },
     ]);
   });
 

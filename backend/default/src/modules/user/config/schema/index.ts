@@ -1,5 +1,5 @@
 import { z } from "@damatjs/deps/zod";
-import { betterAuthSchema } from './betterAuth';
+import { betterAuthSchema } from "./betterAuth";
 
 export const schema = z.object({
   // Better Auth

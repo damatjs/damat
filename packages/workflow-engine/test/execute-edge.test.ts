@@ -278,9 +278,9 @@ describe("step/execute: per-attempt timeout is retryable", () => {
     if (!res.success) {
       expect(res.error).toBeInstanceOf(MaxRetriesExceededError);
       expect(res.error.code).toBe("MAX_RETRIES_EXCEEDED");
-      expect(
-        (res.error as MaxRetriesExceededError).cause,
-      ).toBeInstanceOf(StepTimeoutError);
+      expect((res.error as MaxRetriesExceededError).cause).toBeInstanceOf(
+        StepTimeoutError,
+      );
     }
   });
 });

@@ -10,6 +10,5 @@ export const load = (env: NodeJS.ProcessEnv) => ({
     githubClientSecret: env.GITHUB_CLIENT_SECRET,
     adminSecret: env.ADMIN_SECRET,
     superAdminEmail: env.SUPER_ADMIN_EMAIL,
-  }
+  },
 });
-

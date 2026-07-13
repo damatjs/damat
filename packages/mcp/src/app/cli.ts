@@ -10,7 +10,10 @@ export function runDamat(args: string[]): { ok: boolean; output: string } {
     encoding: "utf-8",
     env: process.env,
   });
-  const output = [result.stdout, result.stderr].filter(Boolean).join("\n").trim();
+  const output = [result.stdout, result.stderr]
+    .filter(Boolean)
+    .join("\n")
+    .trim();
   if (result.error) {
     return {
       ok: false,

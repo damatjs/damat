@@ -34,7 +34,10 @@ describe("typed context accessors", () => {
 
   it("returns undefined for user/team when no auth middleware ran", async () => {
     const app = new Hono();
-    const seen: Record<string, unknown> = { user: "sentinel", team: "sentinel" };
+    const seen: Record<string, unknown> = {
+      user: "sentinel",
+      team: "sentinel",
+    };
     app.get("/", (c) => {
       seen.user = getUser(c);
       seen.team = getTeam(c);

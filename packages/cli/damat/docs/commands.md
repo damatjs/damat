@@ -66,17 +66,17 @@ Start the development server with hot reload.
 
 Options:
 
-| Option | Alias | Type | Default | Effect |
-|---|---|---|---|---|
-| `--port` | `-p` | number | `3000` | Port (only used if `process.env.PORT` is unset) |
-| `--clear` | `-c` | boolean | `false` | `console.clear()` on start |
+| Option    | Alias | Type    | Default | Effect                                          |
+| --------- | ----- | ------- | ------- | ----------------------------------------------- |
+| `--port`  | `-p`  | number  | `3000`  | Port (only used if `process.env.PORT` is unset) |
+| `--clear` | `-c`  | boolean | `false` | `console.clear()` on start                      |
 
 Behaviour:
 
 1. Ensure `<cwd>/.damat/` exists.
 2. Write `<cwd>/.damat/dev-entry.ts`:
    ```ts
-   import { runEntry } from '@damatjs/framework/entry';
+   import { runEntry } from "@damatjs/framework/entry";
    runEntry();
    ```
 3. Optionally `console.clear()`.
@@ -94,11 +94,11 @@ Build for production.
 
 Options:
 
-| Option | Alias | Type | Default | Effect |
-|---|---|---|---|---|
-| `--output` | `-o` | string | `.damat/dist` | Output directory (joined to `cwd`) |
-| `--target` | `-t` | string | `bun` | `bun` or `node` |
-| `--minify` | `-m` | boolean | `false` | Pass `--minify` to `bun build` |
+| Option     | Alias | Type    | Default       | Effect                             |
+| ---------- | ----- | ------- | ------------- | ---------------------------------- |
+| `--output` | `-o`  | string  | `.damat/dist` | Output directory (joined to `cwd`) |
+| `--target` | `-t`  | string  | `bun`         | `bun` or `node`                    |
+| `--minify` | `-m`  | boolean | `false`       | Pass `--minify` to `bun build`     |
 
 Behaviour:
 
@@ -106,14 +106,14 @@ Behaviour:
    `rmSync` it; then recreate it.
 2. Write `<cwd>/.damat/build-entry.ts` (same `runEntry()` content as dev).
 3. `bun build <build-entry.ts> --outfile <outputDir>/entry.js --target <target>
-   --packages external` (+ `--minify` if set). `--packages external` keeps
+--packages external` (+ `--minify` if set). `--packages external` keeps
    dependencies out of the bundle.
 4. `await exited`, best-effort `unlinkSync(build-entry.ts)`.
 5. On success **and** if `<cwd>/src` exists:
    - Recursively copy `src/` → `<outputDir>/src` (`copyDir` helper).
    - If `<cwd>/damat.config.ts` exists, build it too:
      `bun build damat.config.ts --outfile <outputDir>/damat.config.js
-     --target <target> --external pg-cloudflare`.
+--target <target> --external pg-cloudflare`.
    - Log "Build complete!".
 
 Returns the bundle step's exit code (the config build's code is awaited but not
@@ -125,9 +125,9 @@ Run the production build.
 
 Options:
 
-| Option | Alias | Type | Default | Effect |
-|---|---|---|---|---|
-| `--output` | `-o` | string | `.damat/dist` | Build directory to run from |
+| Option     | Alias | Type   | Default       | Effect                      |
+| ---------- | ----- | ------ | ------------- | --------------------------- |
+| `--output` | `-o`  | string | `.damat/dist` | Build directory to run from |
 
 Behaviour:
 

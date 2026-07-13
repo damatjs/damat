@@ -12,7 +12,7 @@ function model<T extends Record<string, PropertyValue>>(
   tableName: string,
   properties: T,
   options?: { schema?: string; name?: string },
-): ModelDefinition
+): ModelDefinition;
 ```
 
 `PropertyValue` (`src/types/schema.ts`) is the allowed property union:
@@ -23,8 +23,8 @@ function model<T extends Record<string, PropertyValue>>(
 ```ts
 class ModelDefinition {
   readonly _tableName: string;
-  readonly _name: string;                 // options.name ?? tableName
-  _schemaName?: string;                    // options.schema
+  readonly _name: string; // options.name ?? tableName
+  _schemaName?: string; // options.schema
   readonly _properties: Record<string, PropertyValue>;
   _indexes: IndexSchema[] = [];
   _constraints: ConstraintSchema[] = [];
@@ -32,15 +32,16 @@ class ModelDefinition {
   _softDelete = true;
   _deletedAtField = "deleted_at";
 
-  get name(): string; get tableName(): string;
+  get name(): string;
+  get tableName(): string;
 
-  timestamps(enabled = true): this
-  softDelete(enabled = true, fieldName = "deleted_at"): this
-  indexes(indexes: IndexBuilder[]): this   // REPLACES; calls entry.toSchema(table, i+1)
-  constrain(constraints: ConstraintBuilder[]): this  // REPLACES; calls entry.toSchema()
+  timestamps(enabled = true): this;
+  softDelete(enabled = true, fieldName = "deleted_at"): this;
+  indexes(indexes: IndexBuilder[]): this; // REPLACES; calls entry.toSchema(table, i+1)
+  constrain(constraints: ConstraintBuilder[]): this; // REPLACES; calls entry.toSchema()
 
-  toTableSchema(): TableSchema
-  toTsType(typeName?: string): string
+  toTableSchema(): TableSchema;
+  toTsType(typeName?: string): string;
 }
 ```
 
@@ -68,12 +69,16 @@ for (const [propName, propValue] of Object.entries(this._properties)) {
     propValue._setName(propName);
     columns.push(propValue.toSchema());
   } else if (propValue instanceof BelongsToBuilder) {
-    columns.push(...propValue.toColumnSchema());        // FK column(s)
-    foreignKeys.push(propValue.toForeignKeySchema());   // FK constraint
+    columns.push(...propValue.toColumnSchema()); // FK column(s)
+    foreignKeys.push(propValue.toForeignKeySchema()); // FK constraint
     relations.push(propValue.toRelationSchema(this._tableName, propName));
     if (propValue.isIndexed())
-      for (const fk of propValue.getForeignKey()) indexes.push({ columns: [fk.name] });
-  } else if (propValue instanceof HasManyBuilder || propValue instanceof HasOneBuilder) {
+      for (const fk of propValue.getForeignKey())
+        indexes.push({ columns: [fk.name] });
+  } else if (
+    propValue instanceof HasManyBuilder ||
+    propValue instanceof HasOneBuilder
+  ) {
     relations.push(propValue.toRelationSchema(this._tableName, propName));
   }
 }
@@ -132,7 +137,7 @@ Generates an `export interface` string for the model's **row shape**:
   columns).
 - `typeName` defaults to `toPascalCase(this._tableName)`.
 
-This emits the *base* row type only — it does not add timestamp/soft-delete
+This emits the _base_ row type only — it does not add timestamp/soft-delete
 columns (those are added in `toTableSchema()`, not here) and uses the raw enum
 type name. The richer per-table files in `src/tests/__snapshots__/generated/`
 (with `NewX`/`UpdateX` and `…Enum` suffixed names) come from a separate codegen
@@ -146,7 +151,7 @@ function toModuleSchema(
   moduleName: string,
   models: ModelDefinition[],
   options?: { schema?: string; enums?: EnumBuilder[] },
-): ModuleSchema
+): ModuleSchema;
 ```
 
 - Calls `m.toTableSchema()` for each model.
@@ -180,7 +185,7 @@ hasRegisteredModel(tableName): boolean
 ## `model()` options recap
 
 ```ts
-model("user", { ...props }, { schema: "store", name: "User" })
+model("user", { ...props }, { schema: "store", name: "User" });
 ```
 
 - `schema` → PG schema for this table (sets `_schemaName`, surfaces in

@@ -1,6 +1,10 @@
 import { betterAuth } from "better-auth";
 import type { Context, MiddlewareHandler } from "@damatjs/deps/hono";
-import { defineAuthAdapter, type AuthPrincipal, type AuthProvider } from "@damatjs/auth";
+import {
+  defineAuthAdapter,
+  type AuthPrincipal,
+  type AuthProvider,
+} from "@damatjs/auth";
 
 /**
  * The slice of a Better Auth instance this adapter uses. Kept structural so the
@@ -64,7 +68,9 @@ const DEFAULT_BASE_PATH = "/api/auth";
  * `authenticate` verifies the session cookie via `getSession`. It reads and
  * writes only the tables it is told about — it creates none.
  */
-export function createBetterAuthProvider(options: BetterAuthAdapterOptions = {}): AuthProvider {
+export function createBetterAuthProvider(
+  options: BetterAuthAdapterOptions = {},
+): AuthProvider {
   const basePath = options.basePath ?? DEFAULT_BASE_PATH;
   const auth = options.auth ?? buildBetterAuth(options, basePath);
 
@@ -81,7 +87,10 @@ export function createBetterAuthProvider(options: BetterAuthAdapterOptions = {})
 }
 
 /** Construct a Better Auth instance from the adapter options + table map. */
-function buildBetterAuth(options: BetterAuthAdapterOptions, basePath: string): BetterAuthLike {
+function buildBetterAuth(
+  options: BetterAuthAdapterOptions,
+  basePath: string,
+): BetterAuthLike {
   const secret = options.secret ?? process.env.BETTER_AUTH_SECRET;
   if (!secret) {
     throw new Error(
@@ -99,13 +108,16 @@ function buildBetterAuth(options: BetterAuthAdapterOptions, basePath: string): B
 }
 
 /** Translate the `tables` map into Better Auth's per-model `modelName` overrides. */
-function modelConfig(tables?: BetterAuthTables): Record<string, { modelName: string }> {
+function modelConfig(
+  tables?: BetterAuthTables,
+): Record<string, { modelName: string }> {
   if (!tables) return {};
   const config: Record<string, { modelName: string }> = {};
   if (tables.user) config.user = { modelName: tables.user };
   if (tables.session) config.session = { modelName: tables.session };
   if (tables.account) config.account = { modelName: tables.account };
-  if (tables.verification) config.verification = { modelName: tables.verification };
+  if (tables.verification)
+    config.verification = { modelName: tables.verification };
   return config;
 }
 

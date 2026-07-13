@@ -24,7 +24,9 @@ export interface JobWorkerOptions extends JobQueueOptions {
  * - `stop()` stops polling and waits for in-flight jobs to settle.
  */
 export class JobWorker {
-  private readonly options: Required<Pick<JobWorkerOptions, "concurrency" | "pollIntervalMs">> &
+  private readonly options: Required<
+    Pick<JobWorkerOptions, "concurrency" | "pollIntervalMs">
+  > &
     JobQueueOptions;
   private running = false;
   private timer: ReturnType<typeof setTimeout> | null = null;
@@ -34,7 +36,9 @@ export class JobWorker {
     this.options = {
       concurrency: options.concurrency ?? 1,
       pollIntervalMs: options.pollIntervalMs ?? 1000,
-      ...(options.queueName !== undefined ? { queueName: options.queueName } : {}),
+      ...(options.queueName !== undefined
+        ? { queueName: options.queueName }
+        : {}),
       ...(options.client !== undefined ? { client: options.client } : {}),
       ...(options.visibilityTimeoutMs !== undefined
         ? { visibilityTimeoutMs: options.visibilityTimeoutMs }
@@ -80,7 +84,9 @@ export class JobWorker {
         const jobs = await getJobQueue(this.options).dequeue(capacity);
         dequeued = jobs.length;
         for (const job of jobs) {
-          const run = this.process(job).finally(() => this.inFlight.delete(run));
+          const run = this.process(job).finally(() =>
+            this.inFlight.delete(run),
+          );
           this.inFlight.add(run);
         }
       } catch (e) {
@@ -93,7 +99,8 @@ export class JobWorker {
 
     if (!this.running) return;
     // A full batch means there is likely more waiting — poll again at once.
-    const delay = dequeued === capacity && dequeued > 0 ? 0 : this.options.pollIntervalMs;
+    const delay =
+      dequeued === capacity && dequeued > 0 ? 0 : this.options.pollIntervalMs;
     this.timer = setTimeout(() => void this.tick(), delay);
   }
 
@@ -104,7 +111,9 @@ export class JobWorker {
     const definition = getJobDefinition(job.data.job);
 
     if (!definition) {
-      logger.error(`Unknown job "${job.data.job}" — dead-lettered (define it before enqueueing)`);
+      logger.error(
+        `Unknown job "${job.data.job}" — dead-lettered (define it before enqueueing)`,
+      );
       await queue.updateStatus({
         ...job,
         status: "failed",
@@ -145,7 +154,8 @@ export class JobWorker {
       const backoffMs =
         (definition.options.backoffMs ?? DEFAULT_JOB_OPTIONS.backoffMs) *
         Math.pow(
-          definition.options.backoffMultiplier ?? DEFAULT_JOB_OPTIONS.backoffMultiplier,
+          definition.options.backoffMultiplier ??
+            DEFAULT_JOB_OPTIONS.backoffMultiplier,
           attempt - 1,
         );
       await queue.updateStatus({
@@ -155,10 +165,13 @@ export class JobWorker {
         error,
         delay: backoffMs,
       });
-      logger.warn(`Job "${job.data.job}" failed (attempt ${attempt}/${maxAttempts}) — retrying in ${backoffMs}ms`, {
-        id: job.id,
-        error,
-      });
+      logger.warn(
+        `Job "${job.data.job}" failed (attempt ${attempt}/${maxAttempts}) — retrying in ${backoffMs}ms`,
+        {
+          id: job.id,
+          error,
+        },
+      );
     }
   }
 }

@@ -39,6 +39,8 @@ export function defineAuthProvider(provider: AuthProvider): AuthProvider {
  * services: { auth: { provider: "@my-org/auth-my-idp", options: { ... } } }
  * ```
  */
-export function defineAuthAdapter(factory: AuthAdapterFactory): AuthAdapterFactory {
+export function defineAuthAdapter(
+  factory: AuthAdapterFactory,
+): AuthAdapterFactory {
   return factory;
 }

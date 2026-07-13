@@ -29,7 +29,7 @@ WORKFLOW_LOCK_PREFIX = "workflow-lock:";
 getLockKey(workflowName, lockId) => `workflow-lock:${workflowName}:${lockId}`;
 ```
 
-So locks are namespaced per workflow *and* per business id. Two different
+So locks are namespaced per workflow _and_ per business id. Two different
 workflows with the same `lockId` do not contend. (`getLockKey`, `delay`,
 `WORKFLOW_LOCK_PREFIX`, and the `DEFAULT_*` constants are exported from the lock
 barrel but are **not** re-exported from the package root — only the four
@@ -39,20 +39,20 @@ functions below are public.)
 
 ```ts
 // src/lock/constants.ts
-DEFAULT_LOCK_TTL_MS    = 300_000; // 5 min
+DEFAULT_LOCK_TTL_MS = 300_000; // 5 min
 DEFAULT_RETRY_DELAY_MS = 100;
-DEFAULT_MAX_RETRIES    = 0;       // fail immediately if locked
-DEFAULT_AUTO_EXTEND    = true;    // heartbeat the TTL while the workflow runs
+DEFAULT_MAX_RETRIES = 0; // fail immediately if locked
+DEFAULT_AUTO_EXTEND = true; // heartbeat the TTL while the workflow runs
 ```
 
 ## `WorkflowLockConfig`
 
 ```ts
 interface WorkflowLockConfig {
-  lockId?: string;     // business id (orderId, userId). Default: random nanoid (unique per run)
-  ttlMs?: number;      // lock TTL (default 300000)
+  lockId?: string; // business id (orderId, userId). Default: random nanoid (unique per run)
+  ttlMs?: number; // lock TTL (default 300000)
   maxRetries?: number; // acquisition retries (default 0)
-  retryDelayMs?: number;// delay between acquisition retries (default 100)
+  retryDelayMs?: number; // delay between acquisition retries (default 100)
   autoExtend?: boolean; // heartbeat-extend the TTL every ttlMs/2 while running (default true)
 }
 ```
@@ -62,9 +62,9 @@ interface WorkflowLockConfig {
 ```ts
 interface WorkflowLockResult {
   acquired: boolean;
-  lockId: string;       // the id used (provided or generated)
-  lockValue?: string;   // fencing token, only when acquired — required to release/extend
-  lockKey: string;      // full Redis key
+  lockId: string; // the id used (provided or generated)
+  lockValue?: string; // fencing token, only when acquired — required to release/extend
+  lockKey: string; // full Redis key
 }
 ```
 
@@ -104,18 +104,27 @@ never discards the workflow result:
 
 ```ts
 const lock = await acquireWorkflowLock(name, lockConfig);
-if (!lock.acquired) return /* WorkflowFailure with WorkflowLockError */;
+if (!lock.acquired) return; /* WorkflowFailure with WorkflowLockError */
 
 let heartbeat;
 if ((lockConfig.autoExtend ?? DEFAULT_AUTO_EXTEND) && lock.lockValue) {
-  heartbeat = setInterval(() =>
-    extendWorkflowLock(name, lock.lockId, lock.lockValue!, ttlMs).then(/* warn if !extended */),
+  heartbeat = setInterval(
+    () =>
+      extendWorkflowLock(name, lock.lockId, lock.lockValue!, ttlMs).then(
+        /* warn if !extended */
+      ),
     Math.max(1000, Math.floor(ttlMs / 2)),
   );
 }
 try {
-  return await executeWorkflowInternal(name, definition, mergedConfig, input,
-    { ...metadata, lockId: lock.lockId }, executionId);
+  return await executeWorkflowInternal(
+    name,
+    definition,
+    mergedConfig,
+    input,
+    { ...metadata, lockId: lock.lockId },
+    executionId,
+  );
 } finally {
   if (heartbeat) clearInterval(heartbeat);
   if (lock.lockValue) {
@@ -131,11 +140,19 @@ try {
 ## Manual locking outside a workflow
 
 ```ts
-const lock = await acquireWorkflowLock("process-order", { lockId: orderId, ttlMs: 60_000 });
+const lock = await acquireWorkflowLock("process-order", {
+  lockId: orderId,
+  ttlMs: 60_000,
+});
 if (!lock.acquired) throw new Error("already running");
 try {
   // ...work...
-  await extendWorkflowLock("process-order", lock.lockId, lock.lockValue!, 120_000);
+  await extendWorkflowLock(
+    "process-order",
+    lock.lockId,
+    lock.lockValue!,
+    120_000,
+  );
 } finally {
   await releaseWorkflowLock("process-order", lock.lockId, lock.lockValue!);
 }

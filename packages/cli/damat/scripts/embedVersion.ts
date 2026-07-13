@@ -32,4 +32,6 @@ export const CLI_VERSION: string = ${JSON.stringify(version)};
 `;
 
 writeFileSync(target, out);
-console.log(`embedVersion: wrote version ${version} -> src/version.generated.ts`);
+console.log(
+  `embedVersion: wrote version ${version} -> src/version.generated.ts`,
+);

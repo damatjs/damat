@@ -278,7 +278,9 @@ describe("executeMigration — statements that can't run in a transaction", () =
     // Autocommit path: no transaction wrapping, body issued directly.
     expect(sqls).not.toContain("BEGIN");
     expect(sqls).not.toContain("COMMIT");
-    expect(sqls).toContain('CREATE INDEX CONCURRENTLY "idx_u" ON users (email);');
+    expect(sqls).toContain(
+      'CREATE INDEX CONCURRENTLY "idx_u" ON users (email);',
+    );
     expect(fake.releaseCount).toBe(1);
     expect(
       fake.poolQueries.some((q) =>

@@ -21,7 +21,11 @@ describe("ModelDefinition getters", () => {
   });
 
   it("name getter returns the explicit name option when provided", () => {
-    const M = model("widget", { id: columns.id().primaryKey() }, { name: "Widget" });
+    const M = model(
+      "widget",
+      { id: columns.id().primaryKey() },
+      { name: "Widget" },
+    );
     expect(M.name).toBe("Widget");
     expect(M.tableName).toBe("widget");
   });

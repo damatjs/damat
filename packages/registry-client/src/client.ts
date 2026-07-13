@@ -25,12 +25,16 @@ export class RegistryClient {
   }
 
   /** GET /api/registry/packages(?q=&kind=) — list/search hosted packages. */
-  async listPackages(opts?: { q?: string; kind?: "module" | "plain" }): Promise<PackageSummary[]> {
+  async listPackages(opts?: {
+    q?: string;
+    kind?: "module" | "plain";
+  }): Promise<PackageSummary[]> {
     const url = new URL(`${this.base}/registry/packages`);
     if (opts?.q) url.searchParams.set("q", opts.q);
     if (opts?.kind) url.searchParams.set("kind", opts.kind);
     const res = await fetch(url.toString());
-    if (!res.ok) throw new Error(`listPackages: ${res.status} ${await res.text()}`);
+    if (!res.ok)
+      throw new Error(`listPackages: ${res.status} ${await res.text()}`);
     const json = (await res.json()) as { packages: PackageSummary[] };
     return json.packages;
   }
@@ -39,7 +43,8 @@ export class RegistryClient {
   async packageInfo(name: string): Promise<PackageInfo> {
     const url = `${this.base}/registry/packages/${encodeURIComponent(name)}`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`packageInfo: ${res.status} ${await res.text()}`);
+    if (!res.ok)
+      throw new Error(`packageInfo: ${res.status} ${await res.text()}`);
     return (await res.json()) as PackageInfo;
   }
 
@@ -47,7 +52,8 @@ export class RegistryClient {
   async packageSource(name: string, version: string): Promise<Uint8Array> {
     const url = `${this.base}/registry/packages/${encodeURIComponent(name)}/${encodeURIComponent(version)}/source`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`packageSource: ${res.status} ${await res.text()}`);
+    if (!res.ok)
+      throw new Error(`packageSource: ${res.status} ${await res.text()}`);
     return new Uint8Array(await res.arrayBuffer());
   }
 
@@ -64,7 +70,9 @@ export class RegistryClient {
    *  Sends the token as Authorization: Bearer <token>. */
   async publish(input: PublishInput): Promise<PublishResult> {
     const url = `${this.base}/npm/${encodeURIComponent(input.name)}`;
-    const headers: Record<string, string> = { "content-type": "application/json" };
+    const headers: Record<string, string> = {
+      "content-type": "application/json",
+    };
     if (this.token) headers["authorization"] = `Bearer ${this.token}`;
     const res = await fetch(url, {
       method: "PUT",

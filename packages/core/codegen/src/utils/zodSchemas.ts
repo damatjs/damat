@@ -87,7 +87,8 @@ export const generateUpdateZodSchema = (
   for (const col of table.columns) {
     // Skip primary keys and auto-generated fields
     if (col.primaryKey) continue;
-    if (["deleted_at", "created_at", "updated_at", "id"].includes(col.name)) continue;
+    if (["deleted_at", "created_at", "updated_at", "id"].includes(col.name))
+      continue;
 
     let zodSchema = columnToZodSchema(col);
 
@@ -149,7 +150,11 @@ export const generateQueryZodSchema = (
     }
 
     // Query params come as strings, coerce to proper types for numbers
-    if (["integer", "smallint", "serial", "smallserial"].includes(col.type as string)) {
+    if (
+      ["integer", "smallint", "serial", "smallserial"].includes(
+        col.type as string,
+      )
+    ) {
       zodSchema = "z.coerce.number().int()";
     } else if (col.type === "bigint" || col.type === "bigserial") {
       zodSchema = "z.coerce.bigint()";

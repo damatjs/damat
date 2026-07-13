@@ -49,13 +49,11 @@ export function generateZodFile(
   const sections: string[][] = [];
 
   // Import z from deps
-  sections.push([
-    `import { z } from "@damatjs/deps/zod";`,
-  ]);
+  sections.push([`import { z } from "@damatjs/deps/zod";`]);
 
   // Import enum types if needed
   const tableEnums = allEnums.filter((e) =>
-    table.columns.some((c) => c.type === "enum" && c.enum === e.name)
+    table.columns.some((c) => c.type === "enum" && c.enum === e.name),
   );
 
   if (tableEnums.length > 0) {

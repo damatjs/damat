@@ -22,7 +22,11 @@ interface PoolManagerState {
 function getState(): PoolManagerState {
   const holder = globalThis as Record<symbol, PoolManagerState | undefined>;
   if (!holder[STATE_KEY]) {
-    holder[STATE_KEY] = { pool: null, entityManager: null, connectionManager: null };
+    holder[STATE_KEY] = {
+      pool: null,
+      entityManager: null,
+      connectionManager: null,
+    };
   }
   return holder[STATE_KEY];
 }
@@ -32,23 +36,30 @@ The static getters/setters (`pool`, `entityManager`, `connectionManager`) proxy 
 
 ## API
 
-| Method | Signature | Behaviour |
-| --- | --- | --- |
-| `setup` | `({ pool, logger, connectionManager }) => void` | Stores the pool and connection manager, and constructs `new PgEntityManager({ pool, logger })`. Call once at startup. |
-| `getPool` | `() => Pool` | Returns the pool; throws `"Pool not initialized..."` if unset. |
-| `getPgEntityManager` | `() => PgEntityManager` | Returns the entity manager; throws `"EntityManager not initialized..."` if unset. |
-| `getConnectionManager` | `() => ConnectionManagerLike \| null` | Returns the connection manager or `null`. |
-| `setEntityManager` | `(em: PgEntityManager) => void` | Replaces the entity manager (escape hatch / testing). |
-| `isInitialized` | `() => boolean` | `pool !== null`. The `ModuleService` constructor guards on this. |
-| `hasEntityManager` | `() => boolean` | `entityManager !== null`. |
-| `healthCheck` | `() => Promise<boolean>` | If a connection manager exists, returns its `healthCheck().connected`; otherwise runs `SELECT 1 as ok` against the pool. Returns `false` on any failure (and `false` when uninitialized with no connection manager). |
-| `getStats` | `() => PoolManagerStats` | If a connection manager exists, maps `getPoolStats()`; otherwise reads `pool.totalCount/idleCount/waitingCount`. **Throws if the pool is not initialized and there is no connection manager** (it calls `getPool()`). |
-| `reset` | `() => void` | Clears `pool`, `entityManager`, and `connectionManager` to `null`. Does **not** end the pool. |
-| `close` | `() => Promise<void>` | Drains and ends the pg pool, then clears all state. Idempotent: it calls `reset()` *before* `pool.end()`, so a second `close()` (or a `close()` after `reset()`) is a no-op, and a pool someone else already ended is skipped via `pool.ended` (pg throws on double `end()`). |
+| Method                 | Signature                                       | Behaviour                                                                                                                                                                                                                                                                     |
+| ---------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `setup`                | `({ pool, logger, connectionManager }) => void` | Stores the pool and connection manager, and constructs `new PgEntityManager({ pool, logger })`. Call once at startup.                                                                                                                                                         |
+| `getPool`              | `() => Pool`                                    | Returns the pool; throws `"Pool not initialized..."` if unset.                                                                                                                                                                                                                |
+| `getPgEntityManager`   | `() => PgEntityManager`                         | Returns the entity manager; throws `"EntityManager not initialized..."` if unset.                                                                                                                                                                                             |
+| `getConnectionManager` | `() => ConnectionManagerLike \| null`           | Returns the connection manager or `null`.                                                                                                                                                                                                                                     |
+| `setEntityManager`     | `(em: PgEntityManager) => void`                 | Replaces the entity manager (escape hatch / testing).                                                                                                                                                                                                                         |
+| `isInitialized`        | `() => boolean`                                 | `pool !== null`. The `ModuleService` constructor guards on this.                                                                                                                                                                                                              |
+| `hasEntityManager`     | `() => boolean`                                 | `entityManager !== null`.                                                                                                                                                                                                                                                     |
+| `healthCheck`          | `() => Promise<boolean>`                        | If a connection manager exists, returns its `healthCheck().connected`; otherwise runs `SELECT 1 as ok` against the pool. Returns `false` on any failure (and `false` when uninitialized with no connection manager).                                                          |
+| `getStats`             | `() => PoolManagerStats`                        | If a connection manager exists, maps `getPoolStats()`; otherwise reads `pool.totalCount/idleCount/waitingCount`. **Throws if the pool is not initialized and there is no connection manager** (it calls `getPool()`).                                                         |
+| `reset`                | `() => void`                                    | Clears `pool`, `entityManager`, and `connectionManager` to `null`. Does **not** end the pool.                                                                                                                                                                                 |
+| `close`                | `() => Promise<void>`                           | Drains and ends the pg pool, then clears all state. Idempotent: it calls `reset()` _before_ `pool.end()`, so a second `close()` (or a `close()` after `reset()`) is a no-op, and a pool someone else already ended is skipped via `pool.ended` (pg throws on double `end()`). |
 
 ```ts
-interface PoolManagerStats { totalConnections: number; idleConnections: number; waitingCount: number; }
-interface ConnectionManagerLike { healthCheck(): Promise<ConnectionStatus>; getPoolStats(): PoolStats; }
+interface PoolManagerStats {
+  totalConnections: number;
+  idleConnections: number;
+  waitingCount: number;
+}
+interface ConnectionManagerLike {
+  healthCheck(): Promise<ConnectionStatus>;
+  getPoolStats(): PoolStats;
+}
 ```
 
 ## Setup signature
@@ -79,5 +90,5 @@ The framework's `closeDatabase()` disconnects the connection manager and calls `
 - **`getStats()` can throw.** Unlike `healthCheck()` (which returns `false`), `getStats()` falls through to `getPool()` when there is no connection manager, which throws if the pool is uninitialized. The test suite asserts this (`tests/manager/pool.test.ts`).
 - **`healthCheck()` returns `false`, never throws.** When uninitialized with no connection manager it returns `false`; the pool-path is wrapped in `try/catch`.
 - **One pool per process.** This is intentional and shared globally. Do not try to run multiple independent pools through `PoolManager`; use the underlying `pg.Pool` directly if you need that.
-- **`reset()` is for teardown / test isolation.** After `reset()`, services constructed earlier hold a `ModelMethods` bound to an entity manager that is now detached. `defineModule().init()` re-constructs services against the *current* pool — call it again after a reset (the framework's module init does).
+- **`reset()` is for teardown / test isolation.** After `reset()`, services constructed earlier hold a `ModelMethods` bound to an entity manager that is now detached. `defineModule().init()` re-constructs services against the _current_ pool — call it again after a reset (the framework's module init does).
 - **`reset()` drops references; `close()` ends the pool.** After a bare `reset()` the pool object keeps its connections alive — whoever created it must still `end()` it. Use `close()` when `PoolManager` is the last owner and you want the connections gone (`tests/manager/pool.close.test.ts` covers the idempotency cases).

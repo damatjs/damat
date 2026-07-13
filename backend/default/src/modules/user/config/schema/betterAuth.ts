@@ -1,6 +1,5 @@
 import { z } from "@damatjs/deps/zod";
 
-
 export const betterAuthSchema = z.object({
   // Better Auth
   betterAuthSecret: z
@@ -20,4 +19,3 @@ export const betterAuthSchema = z.object({
   adminSecret: z.string().optional(),
   superAdminEmail: z.string().email().optional(),
 });
-

@@ -1,4 +1,11 @@
-import { Effect, Scope, Exit, Cause, Schedule, Duration } from "@damatjs/deps/effect";
+import {
+  Effect,
+  Scope,
+  Exit,
+  Cause,
+  Schedule,
+  Duration,
+} from "@damatjs/deps/effect";
 import type {
   StepDefinition,
   WorkflowContext,
@@ -101,11 +108,7 @@ export function executeStep<I, O, C = undefined>(
   input: I,
   ctx: WorkflowContext,
   overrideConfig?: StepConfig,
-): Effect.Effect<
-  O,
-  StepExecutionError | StepTimeoutError,
-  Scope.Scope
-> {
+): Effect.Effect<O, StepExecutionError | StepTimeoutError, Scope.Scope> {
   const stepLogger = createContextLogger({
     workflow: ctx.workflowName,
     step: step.name,
@@ -130,9 +133,12 @@ export function executeStep<I, O, C = undefined>(
     // to the failure/compensation path instead of duplicating side effects.
     const shouldRetry = maxAttempts > 0 && config.idempotent;
     if (maxAttempts > 0 && !config.idempotent) {
-      stepLogger.warn(`Retry policy ignored: step is marked idempotent: false`, {
-        maxAttempts,
-      });
+      stepLogger.warn(
+        `Retry policy ignored: step is marked idempotent: false`,
+        {
+          maxAttempts,
+        },
+      );
     }
 
     // Tracks how many times invoke actually ran, so ctx.attempt is accurate
@@ -202,10 +208,7 @@ export function executeStep<I, O, C = undefined>(
         Effect.catchAll(
           (
             error,
-          ): Effect.Effect<
-            never,
-            StepExecutionError | StepTimeoutError
-          > => {
+          ): Effect.Effect<never, StepExecutionError | StepTimeoutError> => {
             if (attemptCount > maxAttempts) {
               stepLogger.warn(`Step retries exhausted`, {
                 attempts: attemptCount,

@@ -2,10 +2,7 @@ import { model, columns } from "@damatjs/orm-model";
 
 export const AccountModel = model("accounts", {
   id: columns.id({ prefix: "acc" }).primaryKey(),
-  user: columns
-    .belongsTo("users")
-    .link({ foreignKey: "user_id" })
-    .indexed(),
+  user: columns.belongsTo("users").link({ foreignKey: "user_id" }).indexed(),
   accountId: columns.text(),
   providerId: columns.text(),
   accessToken: columns.text().nullable(),

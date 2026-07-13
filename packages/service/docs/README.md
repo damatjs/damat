@@ -4,24 +4,24 @@ Maintainer notes for the service layer. Three concerns: the `ModuleService` fact
 
 ## Module map
 
-| File / dir | Responsibility |
-| --- | --- |
-| `src/index.ts` | Barrel: `export * from "./manager" "./module" "./service"`. |
-| `src/manager/pool.ts` | `PoolManager` — process-wide holder of `Pool` / `PgEntityManager` / `ConnectionManager`, with state on `globalThis`. Plus `PoolManagerStats`, `ConnectionManagerLike`. |
-| `src/manager/index.ts` | Re-exports `./pool`. |
-| `src/service/module.ts` | `ModuleService(config)` — the factory that builds the abstract base class with per-model accessors and `transaction()`. |
-| `src/service/methods.ts` | `ModelMethods<T>` — the per-model CRUD implementation (delegates to `PgRepository`) + relation loading. |
-| `src/service/cache.ts` | `withTaggedCache`, `modelCacheTag` — the opt-in, Redis-backed read cache as a `Proxy` over `ModelMethods`. |
-| `src/service/events.ts` | `withModelEvents`, `modelEventName`, `ModelEventPayload` — opt-in `<model>.created\|updated\|deleted` events on the `@damatjs/events` global bus. |
-| `src/service/logging.ts` | `withQueryLogging` — opt-in debug-level `query` log per CRUD call. **Not** in the barrel; internal to the factory. |
-| `src/service/type.ts` | Option types (`FindOptions`, `CreateOptions`, ...), `ModuleServiceConfig` (incl. the `cache` / `logQueries` / `events` switches), `ModelsMap`, `ToCamelCase`, `MAX_PAGE_SIZE`. |
-| `src/service/index.ts` | Re-exports `./cache` `./events` `./methods` `./module` `./type` (not `./logging`). |
-| `src/module/define.ts` | `defineModule(name, definition)` — wraps a service class into a `ModuleInstance` with a lazy `Proxy` service. |
-| `src/module/type.ts` | `ModuleDefinition`, `ModuleInstance`, `ModuleCredentials`, `ModuleRegistry` (augmentation point). |
-| `src/module/index.ts` | Re-exports `./define` `./type`. |
-| `src/util/string.ts` | `toCamelCase` (first-char lowercase). |
-| `src/util/index.ts` | Re-exports `./string`. |
-| `src/tests/**` | `bun:test` suites for the pool (incl. lifecycle and `close`), `defineModule`, methods, cascade, cache, events, logging, types, and `toCamelCase`. |
+| File / dir               | Responsibility                                                                                                                                                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/index.ts`           | Barrel: `export * from "./manager" "./module" "./service"`.                                                                                                                    |
+| `src/manager/pool.ts`    | `PoolManager` — process-wide holder of `Pool` / `PgEntityManager` / `ConnectionManager`, with state on `globalThis`. Plus `PoolManagerStats`, `ConnectionManagerLike`.         |
+| `src/manager/index.ts`   | Re-exports `./pool`.                                                                                                                                                           |
+| `src/service/module.ts`  | `ModuleService(config)` — the factory that builds the abstract base class with per-model accessors and `transaction()`.                                                        |
+| `src/service/methods.ts` | `ModelMethods<T>` — the per-model CRUD implementation (delegates to `PgRepository`) + relation loading.                                                                        |
+| `src/service/cache.ts`   | `withTaggedCache`, `modelCacheTag` — the opt-in, Redis-backed read cache as a `Proxy` over `ModelMethods`.                                                                     |
+| `src/service/events.ts`  | `withModelEvents`, `modelEventName`, `ModelEventPayload` — opt-in `<model>.created\|updated\|deleted` events on the `@damatjs/events` global bus.                              |
+| `src/service/logging.ts` | `withQueryLogging` — opt-in debug-level `query` log per CRUD call. **Not** in the barrel; internal to the factory.                                                             |
+| `src/service/type.ts`    | Option types (`FindOptions`, `CreateOptions`, ...), `ModuleServiceConfig` (incl. the `cache` / `logQueries` / `events` switches), `ModelsMap`, `ToCamelCase`, `MAX_PAGE_SIZE`. |
+| `src/service/index.ts`   | Re-exports `./cache` `./events` `./methods` `./module` `./type` (not `./logging`).                                                                                             |
+| `src/module/define.ts`   | `defineModule(name, definition)` — wraps a service class into a `ModuleInstance` with a lazy `Proxy` service.                                                                  |
+| `src/module/type.ts`     | `ModuleDefinition`, `ModuleInstance`, `ModuleCredentials`, `ModuleRegistry` (augmentation point).                                                                              |
+| `src/module/index.ts`    | Re-exports `./define` `./type`.                                                                                                                                                |
+| `src/util/string.ts`     | `toCamelCase` (first-char lowercase).                                                                                                                                          |
+| `src/util/index.ts`      | Re-exports `./string`.                                                                                                                                                         |
+| `src/tests/**`           | `bun:test` suites for the pool (incl. lifecycle and `close`), `defineModule`, methods, cascade, cache, events, logging, types, and `toCamelCase`.                              |
 
 ## Architecture overview
 
@@ -64,7 +64,7 @@ The order matters; the framework enforces it at boot:
 ## Invariants & design decisions
 
 - **`PoolManager` state lives on `globalThis`, not class statics.** Keyed by `Symbol.for("damatjs.services.poolManager")`. This is deliberate: if two copies of `@damatjs/services` end up in one process (a linked dev package next to an installed one), class statics would be per-copy and the second copy would see an uninitialized pool. The global symbol guarantees a single shared pool/entity manager.
-- **Construct-on-init, not cache-forever.** `defineModule`'s `init()` always constructs a fresh instance. After a `PoolManager.reset()` (tests, harness reboot), re-initializing yields a service bound to the *current* pool instead of one holding a stale connection.
+- **Construct-on-init, not cache-forever.** `defineModule`'s `init()` always constructs a fresh instance. After a `PoolManager.reset()` (tests, harness reboot), re-initializing yields a service bound to the _current_ pool instead of one holding a stale connection.
 - **Service construction requires an initialized pool.** The `ModuleService` constructor throws `"PoolManager not initialized..."` if `PoolManager.isInitialized()` is false. This surfaces misordered startup immediately.
 - **Accessor names are camelCased model keys.** `toCamelCase` only lowercases the first character (`account` → `account`, `Verification` → `verification`, `APIKey` → `aPIKey`). It does **not** convert snake_case or kebab-case (see `module-service.md` gotchas).
 - **Relation FK conventions are by-convention.** `loadRelation` infers FK column names (`<model>_id`) from relation metadata; non-standard FK naming will not resolve. See `module-service.md`.

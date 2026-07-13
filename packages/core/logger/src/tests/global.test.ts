@@ -130,7 +130,9 @@ describe("global: convenience functions route through getLogger", () => {
   it("warn goes to console.warn", () => {
     createLogger({ timestamp: false, level: "debug" });
     warn("careful");
-    expect(warnSpy.mock.calls.map((c) => String(c[0])).join("\n")).toContain("careful");
+    expect(warnSpy.mock.calls.map((c) => String(c[0])).join("\n")).toContain(
+      "careful",
+    );
   });
 
   it("error and fatal go to console.error and accept an error argument", () => {

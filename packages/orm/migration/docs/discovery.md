@@ -11,11 +11,11 @@ Find what exists on disk and in code: the migration `.sql` files a module declar
 ```ts
 // src/types/migration.ts
 interface MigrationInfo {
-  name: string;       // filename without ".sql", e.g. "Migration20260316103000_Initial"
-  resolver: string;   // the module resolver this file was found under
-  path: string;       // absolute path to the .sql file
-  timestamp: number;  // 14-digit timestamp parsed from the filename
-  applied: boolean;   // false at discovery; set true by status after consulting the tracker
+  name: string; // filename without ".sql", e.g. "Migration20260316103000_Initial"
+  resolver: string; // the module resolver this file was found under
+  path: string; // absolute path to the .sql file
+  timestamp: number; // 14-digit timestamp parsed from the filename
+  applied: boolean; // false at discovery; set true by status after consulting the tracker
 }
 ```
 
@@ -26,7 +26,9 @@ interface MigrationInfo {
 Source: [`moduleMigrations.ts`](../src/discovery/moduleMigrations.ts)
 
 ```ts
-export function discoverModuleMigrations(moduleResolver: string): MigrationInfo[]
+export function discoverModuleMigrations(
+  moduleResolver: string,
+): MigrationInfo[];
 ```
 
 1. Looks in `path.join(moduleResolver, "migrations")`. If the directory doesn't exist, returns `[]`.
@@ -41,7 +43,9 @@ export function discoverModuleMigrations(moduleResolver: string): MigrationInfo[
 Source: [`allMigrations.ts`](../src/discovery/allMigrations.ts)
 
 ```ts
-export function discoverAllMigrations(modulesResolver: string[]): MigrationInfo[]
+export function discoverAllMigrations(
+  modulesResolver: string[],
+): MigrationInfo[];
 ```
 
 Calls `discoverModuleMigrations` for each resolver, concatenates the results, and sorts the combined list by `timestamp` ascending (oldest first) — giving a global chronological order across modules.
@@ -56,7 +60,7 @@ Source: [`models.ts`](../src/discovery/models.ts)
 export async function discoverModels(
   moduleResolver: string,
   logger?: ILogger,
-): Promise<ModelDefinition[]>
+): Promise<ModelDefinition[]>;
 ```
 
 1. `await import(moduleResolver)` — dynamically imports the module entry.

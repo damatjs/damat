@@ -5,7 +5,7 @@ import type { WorkflowResult } from "./result";
 import type { WorkflowLockConfig } from "./lock";
 import type { WorkflowError } from "../errors";
 import type { StepResponse } from "../step/response";
-import { WorkflowContext } from './context';
+import { WorkflowContext } from "./context";
 
 /**
  * Step definition with typed input/output.

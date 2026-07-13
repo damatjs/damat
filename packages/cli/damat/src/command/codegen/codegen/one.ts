@@ -4,7 +4,6 @@ import { generateBarrels } from "@damatjs/codegen";
 import { ModuleContainer } from "../constant";
 import { runModuleCodegen } from "../runModule";
 
-
 /** Generate for a single, explicitly named module (strict: missing models fails). */
 export async function codegenOne(
   ctx: CommandContext,

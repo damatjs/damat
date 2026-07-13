@@ -8,14 +8,14 @@ source, placed where the manifest says they belong. Sources:
 
 ## The manifest — `damat-kit.json` (`manifest.ts`)
 
-| Field | Meaning |
-|---|---|
-| `name` | Kebab-case kit id (becomes directory names in the target). |
+| Field      | Meaning                                                                                                                                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`     | Kebab-case kit id (becomes directory names in the target).                                                                                                                                              |
 | `mappings` | `[{ from: "<glob>", to: "<dir>" }]` — evaluated in order, first match wins. `from` globs the kit's files (`**` crosses segments, `*` stays within one); `to` is relative to the receiving project root. |
-| `fallback` | Where files matched by NO mapping go. Omitted → those files are skipped with a warning (explicit, never guessed). |
-| `ignore` | Globs excluded entirely (tests, docs, …). `damat-kit.json` itself, `.git/`, and `node_modules/` never ship. |
-| `packages` | npm deps the kit needs in the target — validated with the same `invalidPackageSpecs` gate as `module add`, installed via `bun add` (`--ignore-scripts` unless `--allow-scripts`). |
-| `notes` | Free-form next steps printed after install. |
+| `fallback` | Where files matched by NO mapping go. Omitted → those files are skipped with a warning (explicit, never guessed).                                                                                       |
+| `ignore`   | Globs excluded entirely (tests, docs, …). `damat-kit.json` itself, `.git/`, and `node_modules/` never ship.                                                                                             |
+| `packages` | npm deps the kit needs in the target — validated with the same `invalidPackageSpecs` gate as `module add`, installed via `bun add` (`--ignore-scripts` unless `--allow-scripts`).                       |
+| `notes`    | Free-form next steps printed after install.                                                                                                                                                             |
 
 Security: manifests come from other people's repositories, so every target
 path is validated (`targetPathError`) — relative only, no `..`, no drive

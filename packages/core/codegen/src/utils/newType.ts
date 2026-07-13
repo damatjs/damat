@@ -1,6 +1,6 @@
 import { ModuleSchema } from "@damatjs/orm-type";
 import { toPascalCase } from "./stringConvertor";
-import { columnToTsType } from '../columnToTsType';
+import { columnToTsType } from "../columnToTsType";
 
 /**
  * Emit the `New*` insert type — all non-auto fields required, columns that
@@ -28,9 +28,13 @@ export const generateNewType = (
     // Column is optional in New type if it has a default OR is nullable
     // (the DB / app layer will fill it in when omitted).
     const optional = col.default !== undefined || col.nullable;
-    if (col.name != 'deleted_at' && col.name != 'created_at' && col.name != 'updated_at')
+    if (
+      col.name != "deleted_at" &&
+      col.name != "created_at" &&
+      col.name != "updated_at"
+    )
       lines.push(`  ${col.name}${optional ? "?" : ""}: ${tsType};`);
   }
 
   return [`export type New${name} = {`, ...lines, `};`];
-}
+};
