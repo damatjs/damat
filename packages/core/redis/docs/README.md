@@ -14,7 +14,7 @@ This package is a thin, function-first layer over [ioredis](https://github.com/r
 | `src/client/` | Standalone factory (`createRedis`, `createRedisConnection`, `createRetryStrategy`, `disconnect`). | [client.md](./client.md) |
 | `src/errors/` | `RedisConnectionError`, `RedisNotInitializedError`. | [client.md](./client.md) |
 | `src/types/` | `RedisConfig`, `RedisClientConfig`, rate-limit types, `Redis`/`RedisOptions` re-exports. | [client.md](./client.md) |
-| `src/cache/` | JSON + raw string cache with TTL. | [cache.md](./cache.md) |
+| `src/cache/` | JSON + raw string cache with TTL, plus tagged group invalidation. | [cache.md](./cache.md) |
 | `src/rateLimit/` | Sliding-window rate limiter (single + multi). | [rate-limit.md](./rate-limit.md) |
 | `src/session/` | Session CRUD + `SessionManager` (auto-extend). | [session.md](./session.md) |
 | `src/lock/` | Distributed locks (Lua-guarded release/extend). | [lock.md](./lock.md) |
@@ -69,6 +69,7 @@ Each concern namespaces its keys to avoid collisions; counters and the explicit 
 | Concern | Prefix constant | Value |
 | --- | --- | --- |
 | Cache | `CACHE_PREFIX` | `cache:` |
+| Cache tag index | `CACHE_TAG_PREFIX` (exported) | `cache-tag:` |
 | Rate limit | `RATE_LIMIT_PREFIX` | `ratelimit:` |
 | Session | `SESSION_PREFIX` | `session:` |
 | Lock | `LOCK_PREFIX` (exported) | `lock:` |

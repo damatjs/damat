@@ -92,12 +92,14 @@ Routes the job to a terminal/return set based on `job.status`:
 const statusSet = job.status === "completed" ? "completed"
                 : job.status === "failed"    ? "failed"
                 : "pending";   // anything else (incl. "retrying"/"processing") → back to pending
-// pipeline: HSET jobs id JSON(job) ; ZREM processing id ; ZADD <statusSet> Date.now() id
+// score: pending → Date.now() + (job.delay ?? 0) - priorityScore * 1000  (same as enqueue)
+//        completed/failed → Date.now()
+// pipeline: HSET jobs id JSON(job) ; ZREM processing id ; ZADD <statusSet> score id
 //   ; when statusSet is completed/failed and the cap > 0:
 //     ZREMRANGEBYRANK <statusSet> 0 -(cap+1)   // keep newest `cap`, drop oldest
 ```
 
-So to retry, set `status` to e.g. `"retrying"` (or `"pending"`) and call `updateStatus` — it lands back in `pending` with score `now` (i.e. immediately due; the requeue does **not** re-apply priority or delay). To finish, set `"completed"`/`"failed"`.
+So to retry, set `status` to e.g. `"retrying"` (or `"pending"`) and call `updateStatus` — it lands back in `pending` scored **exactly like `enqueue`**: the job's `delay` and priority are re-applied, so setting `job.delay` to a backoff before acking actually defers redelivery. Terminal sets (`completed`/`failed`) keep plain completion-time (`Date.now()`) scores. To finish, set `"completed"`/`"failed"`.
 
 The `:completed`/`:failed` zsets are trimmed to `maxCompletedEntries`/`maxFailedEntries` (default 10000) on each terminal transition — oldest entries drop first — so they can't grow unbounded. Pass `0` (or a negative) to disable trimming and keep the full history.
 
@@ -139,6 +141,7 @@ for (const job of jobs) {
     job.attempts += 1;
     job.error = String(e);
     job.status = job.attempts < job.maxAttempts ? "retrying" : "failed";
+    job.delay = 2 ** job.attempts * 1000; // backoff — honored by the re-queue
   }
   await queue.updateStatus(job);
 }
@@ -150,7 +153,7 @@ const stats = await queue.getStats();
 
 - **No built-in worker / scheduler.** Polling cadence, concurrency, and retry timing are the caller's job.
 - **The visibility timeout is opt-in and disabled by default.** Without `visibilityTimeoutMs`, a job stuck in `processing` (e.g. worker crashed) is **never** auto-returned to `pending` — existing callers that track job state externally and never ack rely on this. With it enabled, reclaim only happens *on dequeue* (no background reaper), and a **slow** worker that outlives the timeout gets its job redelivered — pick a timeout comfortably above your worst-case handling time, and ack via `updateStatus`.
-- **Requeue loses priority/delay.** `updateStatus` always scores returned jobs with `Date.now()`. To preserve ordering on retry, `cancelJob` + `enqueue` instead (with backoff via `delay`).
+- **`delay` sticks across retries.** A re-queue via `updateStatus` re-applies whatever `delay` is on the job record — set it to your backoff before acking, and clear (or overwrite) it when you *don't* want the original enqueue delay deferring every redelivery. Visibility-timeout **reclaims** are the exception: the Lua script returns stale jobs with score `now` (immediately due), without re-applying priority or delay.
 - **`cancelJob` only affects pending jobs.** In-flight jobs can't be cancelled through it.
 - **`createdAt`/`startedAt`/`completedAt` are `Date`s** but serialize to ISO strings through `JSON.stringify`; after `getJob`/`dequeue` they come back as **strings**, not `Date` objects — re-hydrate if you need `Date` methods.
 - **`enqueue` does not enforce unique ids** — re-enqueuing the same id overwrites the hash entry and re-scores it in `pending`.

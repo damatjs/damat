@@ -75,11 +75,20 @@ export class RedisQueue<TData = unknown> {
           ? this.maxFailedEntries
           : undefined;
 
+    // A re-queue (retrying/pending) honors the job's delay and priority just
+    // like enqueue, so retry backoff actually defers redelivery; terminal
+    // sets keep plain completion-time scores.
+    const priorityScore = PRIORITY_SCORES[job.priority] ?? 2;
+    const score =
+      statusSet === "pending"
+        ? Date.now() + (job.delay ?? 0) - priorityScore * 1000
+        : Date.now();
+
     const pipeline = this.redis
       .pipeline()
       .hset(`${this.keyPrefix}:jobs`, job.id, JSON.stringify(job))
       .zrem(`${this.keyPrefix}:processing`, job.id)
-      .zadd(`${this.keyPrefix}:${statusSet}`, Date.now(), job.id);
+      .zadd(`${this.keyPrefix}:${statusSet}`, score, job.id);
 
     // Trim the terminal set to its cap in the same pipeline as the add, so the
     // `:completed` / `:failed` sets stay bounded. Rank -cap-1 keeps the newest

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { mkdtempSync, rmSync, existsSync, readFileSync, readdirSync, writeFileSync } from "fs";
+import { mkdtempSync, mkdirSync, rmSync, existsSync, readFileSync, readdirSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { FileTransport } from "../file-transport";
@@ -224,5 +224,128 @@ describe("FileTransport: rotation", () => {
     expect(files).toHaveLength(1);
     expect(readFileSync(join(tmp, files[0]), "utf-8")).toContain("a");
     expect(readFileSync(join(tmp, files[0]), "utf-8")).toContain("b");
+  });
+
+  it("rotates under real write volume: rolled file keeps old content, active file restarts", () => {
+    // Rotation is checked BEFORE each append: if the current file's size is
+    // already >= maxSizeBytes it is renamed to <date>_all_<iso-ts>.<ext> and a
+    // fresh active file is started by the append. So we exceed the limit with
+    // one flush of real log entries, then flush again and observe the roll.
+    const t = makeTransport({ maxSizeBytes: 256 });
+    const big = "x".repeat(300); // one entry alone exceeds 256 bytes
+    t.log(entry({ message: `first-${big}`, timestamp: "TS" }));
+    t.flush(); // active .log is now oversized
+
+    t.log(entry({ message: "second-after-roll", timestamp: "TS" }));
+    t.flush(); // triggers rename, then appends to a fresh active file
+
+    const logs = readdirSync(tmp).filter((f) => f.endsWith(".log"));
+    const active = logs.filter((f) => /^\d{4}-\d{2}-\d{2}_all\.log$/.test(f));
+    const rotated = logs.filter((f) => /^\d{4}-\d{2}-\d{2}_all_\d{4}-\d{2}-\d{2}T[\d-]+Z\.log$/.test(f));
+    expect(active).toHaveLength(1);
+    expect(rotated).toHaveLength(1);
+
+    // Rolled file holds the pre-rotation content; active file restarted fresh.
+    const rotatedContent = readFileSync(join(tmp, rotated[0]), "utf-8");
+    expect(rotatedContent).toContain("first-");
+    expect(rotatedContent).not.toContain("second-after-roll");
+    const activeContent = readFileSync(join(tmp, active[0]), "utf-8");
+    expect(activeContent).toBe("[TS] [INFO] second-after-roll\n");
+
+    // The .md stream rotates independently by the same rule (the oversized
+    // markdown file was also rolled, and a fresh active .md was started).
+    const mds = readdirSync(tmp).filter((f) => f.endsWith(".md"));
+    const activeMd = mds.filter((f) => /^\d{4}-\d{2}-\d{2}_all\.md$/.test(f));
+    const rotatedMd = mds.filter((f) => /^\d{4}-\d{2}-\d{2}_all_.+\.md$/.test(f));
+    expect(activeMd).toHaveLength(1);
+    expect(rotatedMd).toHaveLength(1);
+    expect(readFileSync(join(tmp, activeMd[0]), "utf-8")).toContain("second-after-roll");
+    expect(readFileSync(join(tmp, activeMd[0]), "utf-8")).not.toContain("first-");
+  });
+});
+
+describe("FileTransport: concurrent writes", () => {
+  it("keeps every line intact and un-interleaved under many parallel log() calls", async () => {
+    const t = makeTransport();
+    const N = 250;
+    await Promise.all(
+      Array.from({ length: N }, (_, i) =>
+        Promise.resolve().then(() => {
+          t.log(entry({ message: `line-${i}`, timestamp: "TS" }));
+        }),
+      ),
+    );
+    t.close(); // flushes whatever is buffered
+
+    const logFile = readdirSync(tmp).find((f) => f.endsWith(".log"))!;
+    const content = readFileSync(join(tmp, logFile), "utf-8");
+    const lines = content.split("\n").filter((l) => l.length > 0);
+
+    // All N lines present...
+    expect(lines).toHaveLength(N);
+    // ...each one whole (no interleaving/corruption)...
+    for (const line of lines) {
+      expect(line).toMatch(/^\[TS\] \[INFO\] line-\d+$/);
+    }
+    // ...and every index appears exactly once.
+    const seen = new Set(lines.map((l) => Number(l.slice("[TS] [INFO] line-".length))));
+    expect(seen.size).toBe(N);
+    for (let i = 0; i < N; i++) expect(seen.has(i)).toBe(true);
+  });
+});
+
+describe("FileTransport: failure path (unwritable location)", () => {
+  // NOTE: FileTransport does NOT swallow filesystem errors — the real behavior
+  // is that the sync fs calls throw. These tests pin that down. The parent of
+  // the target dir is a FILE, so mkdir/open fails deterministically (ENOTDIR)
+  // regardless of uid/chmod semantics.
+
+  it("constructor throws ENOTDIR when enabled and the dir's parent is a file", () => {
+    const blocker = join(tmp, "blocker");
+    writeFileSync(blocker, "i am a file, not a directory");
+    let caught: unknown;
+    try {
+      new FileTransport({ enabled: true, dir: join(blocker, "logs"), bufferFlushMs: 0 });
+    } catch (e) {
+      caught = e;
+    }
+    expect(caught).toBeDefined();
+    expect((caught as NodeJS.ErrnoException).code).toBe("ENOTDIR");
+  });
+
+  it("constructor does NOT touch the unwritable path when disabled (graceful no-op)", () => {
+    const blocker = join(tmp, "blocker");
+    writeFileSync(blocker, "file");
+    const t = new FileTransport({ enabled: false, dir: join(blocker, "logs"), bufferFlushMs: 0 });
+    t.log(entry());
+    t.flush();
+    t.close(); // none of these throw; nothing was created
+    expect(readdirSync(tmp)).toEqual(["blocker"]);
+  });
+
+  it("flush throws if the dir becomes unwritable, retains the buffer, and recovers once writable again", () => {
+    const dir = join(tmp, "logs");
+    const t = new FileTransport({ enabled: true, dir, bufferFlushMs: 0 });
+    t.log(entry({ message: "survivor", timestamp: "TS" }));
+
+    // Replace the directory with a FILE so append's parent lookup fails.
+    rmSync(dir, { recursive: true, force: true });
+    writeFileSync(dir, "now a file");
+
+    let caught: unknown;
+    try {
+      t.flush();
+    } catch (e) {
+      caught = e;
+    }
+    expect((caught as NodeJS.ErrnoException).code).toBe("ENOTDIR");
+
+    // The throw happened before the buffer was cleared, so the entries are
+    // retained: restore the directory and flush again — the data lands.
+    rmSync(dir, { force: true });
+    mkdirSync(dir, { recursive: true });
+    t.flush();
+    const logFile = readdirSync(dir).find((f) => f.endsWith(".log"))!;
+    expect(readFileSync(join(dir, logFile), "utf-8")).toBe("[TS] [INFO] survivor\n");
   });
 });

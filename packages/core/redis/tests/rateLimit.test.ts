@@ -267,6 +267,41 @@ describe("Rate Limiting", () => {
       expect(await redis.zcard("ratelimit:test-user:minute")).toBe(1);
     });
 
+    it("re-allows after the short window expires while the long one keeps counting", async () => {
+      // A tight 1s window (labeled "minute") next to a generous hour window.
+      const windows = [
+        { windowMs: 1000, maxRequests: 2 },
+        { windowMs: 3600000, maxRequests: 3 },
+      ];
+
+      // Two requests fill the short window; both are recorded in each window.
+      expect((await checkMultiRateLimit("test-user", windows, redis)).allowed).toBe(true);
+      expect((await checkMultiRateLimit("test-user", windows, redis)).allowed).toBe(true);
+
+      // Third request inside the short window: denied by it, nothing recorded.
+      const denied = await checkMultiRateLimit("test-user", windows, redis);
+      expect(denied.allowed).toBe(false);
+      expect(denied.limitedBy).toBe("minute");
+      expect(await redis.zcard("ratelimit:test-user:hour")).toBe(2);
+
+      // Cross the short window boundary: its key TTL elapses and it drains.
+      redis.advanceTime(1100);
+      expect(await redis.zcard("ratelimit:test-user:minute")).toBe(0);
+
+      // Allowed again: the short window is fresh, the hour window is at 2/3.
+      const afterBoundary = await checkMultiRateLimit("test-user", windows, redis);
+      expect(afterBoundary.allowed).toBe(true);
+      expect(await redis.zcard("ratelimit:test-user:minute")).toBe(1);
+      expect(await redis.zcard("ratelimit:test-user:hour")).toBe(3);
+
+      // Now the LONG window is the bottleneck (3/3) even though the short one
+      // has room, and the short window is not charged for the rejection.
+      const hourDenied = await checkMultiRateLimit("test-user", windows, redis);
+      expect(hourDenied.allowed).toBe(false);
+      expect(hourDenied.limitedBy).toBe("hour");
+      expect(await redis.zcard("ratelimit:test-user:minute")).toBe(1);
+    });
+
     it("rejects a zero-limit window and falls back to now for retry timing", async () => {
       const result = await checkMultiRateLimit(
         "test-user",

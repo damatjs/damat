@@ -7,6 +7,7 @@
  *  - Strings : get, set (with PX/EX/NX flags), setex
  *  - Generic : del (variadic), expire, pexpire, ttl, keys (glob), scan
  *  - Counter : incrby, decrby
+ *  - Set     : sadd, smembers, srem
  *  - ZSet    : zadd, zcard, zrange (+WITHSCORES), zrangebyscore (+LIMIT),
  *              zrem, zremrangebyscore, zremrangebyrank
  *  - Hash    : hset, hget, hmget, hdel
@@ -30,6 +31,8 @@ interface Entry {
   value?: string;
   // For sorted sets
   zset?: ZMember[];
+  // For plain sets
+  set?: Set<string>;
   // For hashes
   hash?: Map<string, string>;
   // Absolute expiry timestamp in ms, or undefined for no expiry
@@ -65,7 +68,7 @@ export class FakeRedis {
   advanceTime(ms: number): void {
     this.timeOffset += ms;
     // Proactively purge anything that has now expired.
-    for (const key of [...this.store.keys()]) {
+    for (const key of this.store.keys()) {
       this.getLive(key);
     }
   }
@@ -84,7 +87,7 @@ export class FakeRedis {
   /** Test-only helper: total number of (live) keys. */
   size(): number {
     let n = 0;
-    for (const key of [...this.store.keys()]) {
+    for (const key of this.store.keys()) {
       if (this.getLive(key)) n++;
     }
     return n;
@@ -108,7 +111,11 @@ export class FakeRedis {
    *   set(key, value, "PX", ms, "NX")
    * Returns "OK" on success, or null when NX is set and the key already exists.
    */
-  async set(key: string, value: string, ...args: unknown[]): Promise<string | null> {
+  async set(
+    key: string,
+    value: string,
+    ...args: unknown[]
+  ): Promise<string | null> {
     let expireAt: number | undefined;
     let nx = false;
     let xx = false;
@@ -134,7 +141,11 @@ export class FakeRedis {
     return "OK";
   }
 
-  async setex(key: string, ttlSeconds: number, value: string | number): Promise<string> {
+  async setex(
+    key: string,
+    ttlSeconds: number,
+    value: string | number,
+  ): Promise<string> {
     this.store.set(key, {
       value: String(value),
       expireAt: this.now() + Number(ttlSeconds) * 1000,
@@ -189,7 +200,7 @@ export class FakeRedis {
   async keys(pattern: string): Promise<string[]> {
     const re = globToRegExp(pattern);
     const out: string[] = [];
-    for (const key of [...this.store.keys()]) {
+    for (const key of this.store.keys()) {
       if (this.getLive(key) && re.test(key)) out.push(key);
     }
     return out;
@@ -199,7 +210,10 @@ export class FakeRedis {
    * Minimal SCAN: ignores cursor pagination and returns everything in one pass.
    * Supports MATCH and COUNT (COUNT is ignored). Returns [nextCursor, keys].
    */
-  async scan(_cursor: string | number, ...args: unknown[]): Promise<[string, string[]]> {
+  async scan(
+    _cursor: string | number,
+    ...args: unknown[]
+  ): Promise<[string, string[]]> {
     let match = "*";
     for (let i = 0; i < args.length; i++) {
       const flag = String(args[i]).toUpperCase();
@@ -393,6 +407,45 @@ export class FakeRedis {
     return before - kept.length;
   }
 
+  // ---- sets --------------------------------------------------------------
+  private setOf(key: string, create = false): Set<string> | undefined {
+    let e = this.getLive(key);
+    if (!e && create) {
+      e = { set: new Set() };
+      this.store.set(key, e);
+    }
+    if (!e) return undefined;
+    if (!e.set) e.set = new Set();
+    return e.set;
+  }
+
+  async sadd(key: string, ...members: string[]): Promise<number> {
+    const set = this.setOf(key, true)!;
+    let added = 0;
+    for (const member of members) {
+      if (!set.has(String(member))) {
+        set.add(String(member));
+        added++;
+      }
+    }
+    return added;
+  }
+
+  async smembers(key: string): Promise<string[]> {
+    const set = this.setOf(key);
+    return set ? [...set] : [];
+  }
+
+  async srem(key: string, ...members: string[]): Promise<number> {
+    const set = this.setOf(key);
+    if (!set) return 0;
+    let removed = 0;
+    for (const member of members) {
+      if (set.delete(String(member))) removed++;
+    }
+    return removed;
+  }
+
   // ---- hashes ------------------------------------------------------------
   private hashOf(key: string, create = false): Map<string, string> | undefined {
     let e = this.getLive(key);
@@ -532,7 +585,11 @@ export class FakeRedis {
   /** DEQUEUE_SCRIPT: reclaim stale processing entries, then claim due ids. */
   private async evalDequeue(keys: string[], argv: string[]): Promise<string[]> {
     const [pending, processing] = keys as [string, string];
-    const [now, reclaimBefore, count] = argv.map(Number) as [number, number, number];
+    const [now, reclaimBefore, count] = argv.map(Number) as [
+      number,
+      number,
+      number,
+    ];
     if (reclaimBefore >= 0) {
       const stale = await this.zrangebyscore(processing, 0, reclaimBefore);
       for (const id of stale) {
@@ -549,7 +606,10 @@ export class FakeRedis {
   }
 
   /** incrementCounter script: INCRBY, then EXPIRE only when no TTL is set. */
-  private async evalIncrementWithTtl(key: string, argv: string[]): Promise<number> {
+  private async evalIncrementWithTtl(
+    key: string,
+    argv: string[],
+  ): Promise<number> {
     const value = await this.incrby(key, Number(argv[0]));
     if ((await this.ttl(key)) < 0) {
       await this.expire(key, Number(argv[1]));
@@ -660,7 +720,9 @@ export class FakePipeline {
     for (const op of this.ops) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const fn = (this.client as any)[op.method] as (...a: unknown[]) => Promise<unknown>;
+        const fn = (this.client as any)[op.method] as (
+          ...a: unknown[]
+        ) => Promise<unknown>;
         const value = await fn.apply(this.client, op.args);
         results.push([null, value]);
       } catch (err) {

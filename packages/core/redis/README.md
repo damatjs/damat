@@ -94,7 +94,9 @@ All exports are available from the single entry point `@damatjs/redis` (no subpa
 | `cacheSetRaw(key, value, ttlSeconds?, client?)` | function | Store a raw string (`SETEX` or `SET`). |
 | `cacheGetRaw(key, client?)` | function | `GET` raw string. |
 | `cacheDelete(key, client?)` | function | `DEL` one key. |
-| `cacheDeletePattern(pattern, client?)` | function | `KEYS cache:<pattern>` then `DEL`. |
+| `cacheDeletePattern(pattern, client?)` | function | `SCAN cache:<pattern>` loop, `DEL`-ing each batch. |
+| `cacheSetTagged(key, value, ttlSeconds=300, tags=[], client?)` | function | `cacheSet` + index the key under each tag (`cache-tag:<tag>` sets) for group invalidation — the `revalidateTag` model. |
+| `invalidateCacheTags(tags, client?)` | function | Delete every entry carrying any of the tags (and the tag indexes); returns the number of entries removed. Backs the service layer's automatic write invalidation. |
 
 ### Rate limiting · prefix `ratelimit:`
 

@@ -198,6 +198,68 @@ describe("RedisQueue", () => {
     });
   });
 
+  describe("failure lifecycle (retry then dead-letter)", () => {
+    it("retries a failed attempt and dead-letters after maxAttempts", async () => {
+      const job = makeJob({ id: "j1", maxAttempts: 2 });
+      await queue.enqueue(job);
+
+      // Attempt 1: worker claims the job.
+      const [claimed] = await queue.dequeue(1);
+      expect(claimed?.id).toBe("j1");
+      expect(await redis.zcard("queue:test:pending")).toBe(0);
+      expect(await redis.zcard("queue:test:processing")).toBe(1);
+
+      // Attempt 1 fails below maxAttempts: the worker requeues it as retrying.
+      await queue.updateStatus({
+        ...job,
+        status: "retrying",
+        attempts: 1,
+        error: "boom",
+      });
+
+      // Back in pending, out of processing, and NOT in the failed set.
+      expect(await redis.zrange("queue:test:pending", 0, -1)).toEqual(["j1"]);
+      expect(await redis.zcard("queue:test:processing")).toBe(0);
+      expect(await redis.zcard("queue:test:failed")).toBe(0);
+
+      // The persisted job carries the attempt count and error forward.
+      const afterRetry = await queue.getJob("j1");
+      expect(afterRetry?.status).toBe("retrying");
+      expect(afterRetry?.attempts).toBe(1);
+      expect(afterRetry?.error).toBe("boom");
+
+      // Attempt 2: the retried job is re-delivered by a later dequeue.
+      const [redelivered] = await queue.dequeue(1);
+      expect(redelivered?.id).toBe("j1");
+      expect(redelivered?.attempts).toBe(1);
+      expect(await redis.zcard("queue:test:processing")).toBe(1);
+
+      // Attempt 2 exhausts maxAttempts: the worker dead-letters it as failed.
+      await queue.updateStatus({
+        ...job,
+        status: "failed",
+        attempts: 2,
+        error: "boom again",
+      });
+
+      // Terminal state: only the failed set holds the job.
+      expect(await redis.zrange("queue:test:failed", 0, -1)).toEqual(["j1"]);
+      expect(await queue.getStats()).toEqual({
+        pending: 0,
+        processing: 0,
+        completed: 0,
+        failed: 1,
+      });
+
+      // The dead-lettered job keeps its final error and is not re-delivered.
+      const deadLettered = await queue.getJob("j1");
+      expect(deadLettered?.status).toBe("failed");
+      expect(deadLettered?.attempts).toBe(2);
+      expect(deadLettered?.error).toBe("boom again");
+      expect(await queue.dequeue(10)).toEqual([]);
+    });
+  });
+
   describe("terminal-set retention", () => {
     it("trims the completed set to maxCompletedEntries, dropping the oldest", async () => {
       const capped = new RedisQueue<JobData>("test", redis, {

@@ -81,6 +81,47 @@ describe("SessionManager", () => {
       // Nothing should have been created.
       expect(await redis.ttl("session:missing")).toBe(-2);
     });
+
+    it("re-extends the TTL when accessed after the clock passes the threshold", async () => {
+      await manager.set("sliding", { userId: "123", role: "user" }, 3600);
+
+      // Advance 2000s: remaining TTL ~1600 < minTtl = floor(3600 * 0.5) = 1800.
+      redis.advanceTime(2_000_000);
+      expect(await redis.ttl("session:sliding")).toBeLessThan(1800);
+
+      const session = await manager.get("sliding");
+      expect(session).toEqual({ userId: "123", role: "user" });
+
+      // The access re-armed the TTL back to the full default.
+      const ttl = await redis.ttl("session:sliding");
+      expect(ttl).toBeGreaterThan(3590);
+      expect(ttl).toBeLessThanOrEqual(3600);
+    });
+
+    it("sliding TTL keeps an accessed session alive past its original TTL", async () => {
+      await manager.set("sliding", { userId: "123", role: "user" }, 3600);
+
+      // Each access below the threshold slides the expiry window forward.
+      redis.advanceTime(2_000_000); // t = 2000s
+      await manager.get("sliding");
+      redis.advanceTime(2_000_000); // t = 4000s, past the original 3600s TTL
+
+      expect(await manager.get("sliding")).toEqual({
+        userId: "123",
+        role: "user",
+      });
+    });
+
+    it("expires without access even when extendOnAccess is enabled", async () => {
+      await manager.set("idle", { userId: "123", role: "user" }, 3600);
+
+      // No access happens, so nothing slides the window.
+      redis.advanceTime(3_601_000);
+
+      expect(await manager.get("idle")).toBeNull();
+      // The key is truly gone, not extended by the failed access.
+      expect(await redis.ttl("session:idle")).toBe(-2);
+    });
   });
 
   describe("delete", () => {

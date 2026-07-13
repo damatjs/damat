@@ -71,6 +71,16 @@ describe("Cache", () => {
       expect(await cacheGet("invalid", redis)).toBeNull();
     });
 
+    it("leaves a corrupt value in place on parse failure", async () => {
+      await redis.set("cache:corrupt", "{not-json");
+
+      // The graceful path returns null but does NOT delete or rewrite the key,
+      // so the raw value stays inspectable (e.g. via cacheGetRaw).
+      expect(await cacheGet("corrupt", redis)).toBeNull();
+      expect(await redis.get("cache:corrupt")).toBe("{not-json");
+      expect(await cacheGetRaw("corrupt", redis)).toBe("{not-json");
+    });
+
     it("returns null when stored value is an empty string (falsy)", async () => {
       await redis.set("cache:empty", "");
       expect(await cacheGet("empty", redis)).toBeNull();
