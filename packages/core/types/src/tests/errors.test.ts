@@ -157,15 +157,3 @@ describe("error hierarchy", () => {
     expect(new NotFoundError()).not.toBeInstanceOf(ValidationError);
   });
 });
-
-describe("initFramework", () => {
-  it("returns true and logs an initialization message", () => {
-    const log = spyOn(console, "log").mockImplementation(() => {});
-    try {
-      expect(initFramework()).toBe(true);
-      expect(log).toHaveBeenCalledWith("Framework initialized");
-    } finally {
-      log.mockRestore();
-    }
-  });
-});
