@@ -1,0 +1,38 @@
+/**
+ * The app's damat.config.ts. The `modules: {}` block is written even though it
+ * starts empty — `damat module add` registers installed modules by inserting
+ * into exactly this block (registerModuleInConfig matches `modules: {`).
+ */
+export function damatConfigTemplate(name: string): string {
+  return `import { defineConfig } from "@damatjs/framework";
+
+export default defineConfig({
+  projectConfig: {
+    databaseUrl: process.env.DATABASE_URL ?? "",
+    redisUrl: process.env.REDIS_URL,
+    nodeEnv: "development",
+    loggerConfig: {
+      level: "debug",
+      format: "pretty",
+      timestamp: true,
+      prefix: "${name}",
+      file: {
+        enabled: process.env.LOG_FILE === "true",
+        dir: process.env.LOG_DIR || "logs",
+        errorFile: "error.log",
+        allFile: "all.log",
+        maxSizeBytes: 10 * 1024 * 1024,
+        bufferFlushMs: 1000,
+      },
+    },
+    http: {
+      port: Number(process.env.PORT) || 6543,
+      host: process.env.HOST || "0.0.0.0",
+      corsConfig: process.env.FRONTEND_CORS,
+    },
+  },
+  // Installed modules are registered here by \`damat module add\`.
+  modules: {},
+});
+`;
+}

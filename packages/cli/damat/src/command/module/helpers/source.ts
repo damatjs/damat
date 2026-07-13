@@ -7,6 +7,7 @@ import {
   formatModuleRef,
   resolveRegistryEntry,
 } from "@damatjs/module";
+import { requireGit } from "../../shared/git";
 import type { ResolvedModuleSource } from "./types";
 
 /**
@@ -91,6 +92,10 @@ export async function resolveModuleSource(
       `Module source "${source}" is neither an existing path nor a recognizable git source`,
     );
   }
+
+  // Git sources ride on the user's system git — no bundled fallback.
+  const gitError = requireGit(`install modules from git sources (${repoUrl})`);
+  if (gitError) throw new Error(gitError);
 
   const tempDir = mkdtempSync(join(tmpdir(), "damat-module-"));
   const cloneArgs = ["clone", "--depth", "1"];

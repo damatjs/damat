@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { existsSync, readFileSync, appendFileSync } from "node:fs";
+import { existsSync, readFileSync, appendFileSync, writeFileSync } from "node:fs";
 import type { ModuleManifest } from "@damatjs/module";
 import type { EnvSyncResult } from "./types";
 
@@ -44,4 +44,35 @@ export function syncEnvVars(
   }
 
   return { addedToExample, missingInEnv };
+}
+
+/**
+ * Remove the `# --- module: <name> ---` block syncEnvVars appended to
+ * .env.example. Deliberately touches ONLY .env.example — `.env` may hold
+ * real secrets and shared values, so it is never edited. Returns the var
+ * names that were removed (empty when no block was found).
+ */
+export function removeModuleEnvVars(appDir: string, moduleName: string): string[] {
+  const examplePath = join(appDir, ".env.example");
+  if (!existsSync(examplePath)) return [];
+  const content = readFileSync(examplePath, "utf-8");
+
+  const header = `# --- module: ${moduleName} ---`;
+  const start = content.indexOf(header);
+  if (start === -1) return [];
+
+  // The block runs until the next module header or the end of the file.
+  const afterHeader = start + header.length;
+  const nextHeader = content.indexOf("\n# --- module: ", afterHeader);
+  const end = nextHeader === -1 ? content.length : nextHeader;
+
+  const block = content.slice(afterHeader, end);
+  const removedVars = [...block.matchAll(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=/gm)].map(
+    (m) => m[1]!,
+  );
+
+  // Also drop the blank line the append put before the header.
+  const cutStart = content.slice(0, start).endsWith("\n\n") ? start - 1 : start;
+  writeFileSync(examplePath, content.slice(0, cutStart) + content.slice(end));
+  return removedVars;
 }

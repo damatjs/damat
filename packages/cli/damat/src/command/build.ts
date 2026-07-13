@@ -1,8 +1,9 @@
 import { spawn } from "bun";
 import { join } from "node:path";
-import { existsSync, mkdirSync, writeFileSync, unlinkSync, readdirSync, statSync, copyFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync, readdirSync, statSync, copyFileSync, rmSync } from "node:fs";
 import { type Command } from "@damatjs/cli";
 import { runTypeCheck } from "./shared/typecheck";
+import { cleanupTempFile } from "./shared/cleanupTempFile";
 
 function copyDir(src: string, dest: string) {
   if (!existsSync(dest)) {
@@ -113,9 +114,7 @@ export const buildCommand: Command = {
 
     const exitCode = await result.exited;
 
-    try {
-      if (existsSync(tempEntryPath)) unlinkSync(tempEntryPath);
-    } catch { }
+    cleanupTempFile(tempEntryPath, ctx.logger);
 
     if (exitCode === 0 && existsSync(srcDir)) {
       ctx.logger.info("Copying source files to output directory...");

@@ -1,5 +1,7 @@
 import type { Command } from "@damatjs/cli";
 import { moduleAddCommand } from "./add";
+import { moduleRemoveCommand } from "./remove";
+import { moduleUpdateCommand } from "./update";
 import { moduleListCommand } from "./list";
 import { moduleDevCommand } from "./dev";
 import { moduleInitCommand } from "./init";
@@ -9,6 +11,7 @@ import { moduleMigrationStatusCommand } from "./migrationStatus";
 import { moduleCodegenCommand } from "./codegen";
 import { moduleValidateCommand } from "./validate";
 import { moduleBuildCommand } from "./build";
+import { modulePublishCommand } from "./publish";
 
 export const moduleCommand: Command = {
   name: "module",
@@ -16,6 +19,8 @@ export const moduleCommand: Command = {
   aliases: ["m"],
   subcommands: [
     moduleAddCommand,
+    moduleRemoveCommand,
+    moduleUpdateCommand,
     moduleListCommand,
     moduleDevCommand,
     moduleInitCommand,
@@ -25,6 +30,7 @@ export const moduleCommand: Command = {
     moduleCodegenCommand,
     moduleValidateCommand,
     moduleBuildCommand,
+    modulePublishCommand,
   ],
   handler: async (ctx) => {
     ctx.logger.info(
@@ -38,9 +44,12 @@ export const moduleCommand: Command = {
         "  damat module codegen            Generate row types + zod schemas",
         "  damat module validate           Contract + registry readiness check",
         "  damat module build              Type-check + contract validate for release",
+        "  damat module publish             Validate, build, pack, and publish to the registry",
         "",
         "App side (inside a backend):",
         "  damat module add <source>       Install from registry ref, path, or git",
+        "  damat module remove <id>        Remove an installed module (inverse of add)",
+        "  damat module update <id>        Re-fetch a module from its recorded source",
         "  damat module list               List installed modules",
       ].join("\n"),
     );
@@ -50,6 +59,8 @@ export const moduleCommand: Command = {
 
 export {
   moduleAddCommand,
+  moduleRemoveCommand,
+  moduleUpdateCommand,
   moduleListCommand,
   moduleDevCommand,
   moduleInitCommand,
@@ -59,4 +70,5 @@ export {
   moduleCodegenCommand,
   moduleValidateCommand,
   moduleBuildCommand,
+  modulePublishCommand,
 };

@@ -80,6 +80,115 @@ export function ensureLinksInConfig(
   return false;
 }
 
+/** A module's entry in damat.config.ts, as far as it can be read textually. */
+export interface ModuleConfigEntry {
+  /** The entry's `resolve` path, e.g. "./src/modules/user". */
+  resolve?: string;
+  /** The recorded provenance fields from the `source: { ... }` block. */
+  source?: Partial<ModuleSource>;
+}
+
+/**
+ * Best-effort read of a module's entry from damat.config.ts (the shape
+ * `registerModuleInConfig` writes). Returns null when the module has no
+ * entry or the config cannot be read.
+ */
+export function readModuleConfigEntry(
+  configPath: string,
+  name: string,
+): ModuleConfigEntry | null {
+  if (!existsSync(configPath)) return null;
+  const content = readFileSync(configPath, "utf-8");
+  const span = findModuleEntrySpan(content, name);
+  if (!span) return null;
+  const body = content.slice(span.bodyStart, span.bodyEnd);
+
+  const entry: ModuleConfigEntry = {};
+  const resolve = /resolve\s*:\s*["']([^"']*)["']/.exec(body)?.[1];
+  if (resolve) entry.resolve = resolve;
+
+  const sourceBody = /source\s*:\s*\{([\s\S]*?)\}/.exec(body)?.[1];
+  if (sourceBody) {
+    const source: Record<string, string> = {};
+    for (const field of [
+      "type",
+      "ref",
+      "url",
+      "version",
+      "owner",
+      "verification",
+      "integrity",
+      "installedAt",
+    ]) {
+      const value = new RegExp(`${field}\\s*:\\s*["']([^"']*)["']`).exec(
+        sourceBody,
+      )?.[1];
+      if (value !== undefined) source[field] = value;
+    }
+    if (Object.keys(source).length > 0) {
+      entry.source = source as Partial<ModuleSource>;
+    }
+  }
+  return entry;
+}
+
+/**
+ * Remove the module's entry from the `modules: { ... }` block. Conservative
+ * like `registerModuleInConfig`: returns false when the entry can't be located
+ * unambiguously, so the caller prints manual steps instead of corrupting the
+ * config.
+ */
+export function deregisterModuleFromConfig(
+  configPath: string,
+  name: string,
+): boolean {
+  if (!existsSync(configPath)) return false;
+  const content = readFileSync(configPath, "utf-8");
+  const span = findModuleEntrySpan(content, name);
+  if (!span) return false;
+
+  // Cut from the start of the entry's line through its closing `},` (plus the
+  // trailing newline) so no blank hole is left behind.
+  let cutStart = content.lastIndexOf("\n", span.keyStart);
+  cutStart = cutStart === -1 ? 0 : cutStart;
+  let cutEnd = span.entryEnd;
+  if (content[cutEnd] === ",") cutEnd++;
+  writeFileSync(configPath, content.slice(0, cutStart) + content.slice(cutEnd));
+  return true;
+}
+
+/**
+ * Locate a module entry's span inside the config text: where its key starts,
+ * where its object body starts/ends (inside the braces), and where the entry
+ * (including the closing brace) ends. Null when absent or unbalanced.
+ */
+function findModuleEntrySpan(
+  content: string,
+  name: string,
+): { keyStart: number; bodyStart: number; bodyEnd: number; entryEnd: number } | null {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const keyMatch = new RegExp(
+    `(^|[\\s{,])(["']?)${escaped}\\2\\s*:\\s*\\{`,
+    "m",
+  ).exec(content);
+  if (!keyMatch || keyMatch.index === undefined) return null;
+
+  const keyStart = keyMatch.index + (keyMatch[1]?.length ?? 0);
+  const bodyStart = keyMatch.index + keyMatch[0].length;
+  let depth = 1;
+  for (let i = bodyStart; i < content.length; i++) {
+    const ch = content[i];
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        return { keyStart, bodyStart, bodyEnd: i, entryEnd: i + 1 };
+      }
+    }
+  }
+  return null;
+}
+
 function toCamel(name: string): string {
   return name.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase());
 }

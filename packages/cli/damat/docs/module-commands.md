@@ -8,16 +8,23 @@ package)" and "App side (inside a backend)".
 ```
 module (parent, prints cheat-sheet)
 ├─ add <source>          install a module into the app   (helpers/* + @damatjs/module)
+├─ remove <id> / rm      inverse of add                   (moduleLayoutPaths + config/alias removal)
+├─ update <id> / up      re-fetch from recorded source    (diff + force reinstall)
 ├─ list / ls             list installed modules          (scan src/modules + config)
-├─ init <name>           scaffold a standalone package    (scaffold/templates.ts)
+├─ init <name>           scaffold a standalone package    (scaffold/templates/*)
 ├─ dev                   run a module package standalone  (.damat/module-dev-entry.ts)
 ├─ migration:create      diff models → migration          (createModuleMigration)
+├─ migration:run         apply migrations                 (runModuleMigration)
+├─ migration:status      applied vs pending               (runModuleMigrationStatus)
 ├─ codegen               row types + zod schemas          (generateModuleTypes)
-└─ validate              contract / registry readiness     (validateModuleDir)
+├─ validate              contract / registry readiness     (validateModuleDir)
+├─ build / b             type-check + validate (release)   (shared/typecheck + validateModuleDir)
+└─ publish / pub         pack + PUT to registry gateway    (tar + <gateway>/api/npm/<name>)
 ```
 
-Subcommands divide cleanly: **`add`/`list`** run inside an app; **`init`/`dev`/
-`migration:create`/`codegen`/`validate`** run inside (or create) a single module
+Subcommands divide cleanly: **`add`/`remove`/`update`/`list`** run inside an
+app; **`init`/`dev`/`migration:create`/`migration:run`/`migration:status`/
+`codegen`/`validate`/`build`/`publish`** run inside (or create) a single module
 package, delegating to `@damatjs/module`.
 
 ---
@@ -94,6 +101,56 @@ End-to-end flow:
 
 ---
 
+## `remove <id>` (aliases `rm`, `uninstall`) — `src/command/module/remove.ts`
+
+The inverse of `add`. Targets come from `moduleLayoutPaths(cwd, id, modulesDir)`
+(shared with the installer so the two can never drift): module home, grouped
+routes/workflows/links/tests.
+
+Behaviour:
+
+1. Same id/dir traversal guards as `add`; error when neither files nor a config
+   entry exist.
+2. **Dependents check**: scan sibling modules' `module.json` `modules` arrays;
+   refuse (exit 1) while anything depends on the module unless `--force`
+   (which warns and proceeds).
+3. `--dry-run`: print the full plan (deletes, deregistration, alias removal,
+   env block) and exit 0 before any write.
+4. `removeModuleSplit` deletes the existing targets and regenerates the
+   `src/links/index.ts` aggregator from surviving owners; workflow barrels are
+   rebuilt when a workflows dir was removed.
+5. `deregisterModuleFromConfig` splices the entry out of `damat.config.ts`
+   (brace-counted; conservative false → manual instructions).
+   `removeModuleTsconfigPaths` drops only `@<id>/*` (the `@workflows` aliases
+   are app-level and stay).
+6. `--clean-env` removes the module's `# --- module: <name> ---` block from
+   `.env.example` only — `.env` is never touched.
+7. Database tables/migrations are **not** rolled back; the next-steps output
+   says so.
+
+## `update <id>` (aliases `up`, `upgrade`) — `src/command/module/update.ts`
+
+Re-fetch a module from the provenance `add` recorded (`readModuleConfigEntry`
+reads the `source: { ref, … }` block) and force-reinstall it through the same
+pipeline.
+
+Behaviour:
+
+1. Requires an installed module **and** a recorded `source.ref` — modules
+   installed by hand get pointed at `module add --force` instead.
+2. `resolveModuleSource(ref)` + the same verification gates as `add`
+   (registry verdict, or `--allow-unverified` for path/git, plus structural
+   validation).
+3. Diff summary of the module home (content compare, skipping the split-out
+   api/workflows/links/tests subtrees): `+ added`, `~ changed (overwritten)`,
+   `- removed (deleted)`; changed files are flagged as local-edit hazards.
+4. `--dry-run` exits 0 after the diff; otherwise `--yes` is required to apply
+   (exit 1 with instructions without it).
+5. Apply = `installModuleSplit` with `force: true`, barrel regen, config entry
+   re-written with a fresh `installedAt`, `syncEnvVars`, package install.
+
+---
+
 ## `list` (alias `ls`) — `src/command/module/list.ts`
 
 List modules installed under `--dir`/`-d` (default `src/modules`). No network.
@@ -165,6 +222,21 @@ models against its snapshot. If `result.hasChanges && result.filePath` →
 success with the path; else "No schema changes detected". Errors → `error`,
 return `1`.
 
+## `migration:run` — `src/command/module/migrationRun.ts`
+
+Apply the module's own migrations. Loads env via `@damatjs/load-env`
+(`NODE_ENV || "development"`) and errors up front when `DATABASE_URL` is
+unset. `runModuleMigration(ctx.cwd)` (from `@damatjs/module`) does the work;
+the command reports "No migrations found" (exit 0), "No pending migrations",
+or the list of applied names. A failed migration reports with the module name
+and returns `1`.
+
+## `migration:status` — `src/command/module/migrationStatus.ts`
+
+Same env/`DATABASE_URL` preamble, then `runModuleMigrationStatus(ctx.cwd)` —
+prints a `"<module>: <n> applied, <m> pending"` headline plus one
+applied/pending line per migration. Read-only; returns `1` only on errors.
+
 ## `codegen` — `src/command/module/codegen.ts`
 
 `generateModuleTypes(ctx.cwd, ctx.logger)` (from `@damatjs/module`) — generates
@@ -179,14 +251,45 @@ return `1`.
 with warnings → info ("fix the warnings before publishing"). Returns
 `report.valid ? 0 : 1`.
 
+## `build` (alias `b`) — `src/command/module/build.ts`
+
+A verification gate, not a bundle — modules ship as source (`module add`
+relocates it), so "build" means the module must **compile** and be
+**installable**: `runTypeCheck` (`shared/typecheck.ts`; skip with
+`--no-typecheck`) then `locateModuleDir` + `validateModuleDir` (skip with
+`--no-validate`). Either failure exits non-zero; success prints "Module build
+OK".
+
+## `publish` (alias `pub`) — `src/command/module/publish.ts`
+
+Validate, build, pack, and publish to the registry gateway:
+
+1. Same type-check + contract-validate gates as `build` (`--no-typecheck` /
+   `--no-validate` to skip).
+2. Read `package.json` (`name`/`version` required) and the `module.json`
+   manifest.
+3. Resolve the gateway base URL: `--registry` > `DAMAT_PUBLISH_REGISTRY` >
+   derived from `DAMAT_MODULE_REGISTRY` (strips `/api/damat/modules…`,
+   `/registry.json`, `/api/registry/modules…` — mirrors the MCP's
+   `registry/load.ts`). Token: `--token` > `DAMAT_PUBLISH_TOKEN`.
+4. `--dry-run` prints the plan (gateway, token presence, tarball name, PUT
+   URL) and exits 0 **before** requiring either.
+5. Pack `src/`, `module.json`, `package.json` (those that exist) into a temp
+   `tar -czf` tarball, then `PUT <gateway>/api/npm/<name>` with an
+   npm-publish-shaped JSON body (`versions` + base64 `_attachments`) and a
+   `Bearer` token. 401/403 → "invalid or expired publish token"; 400 →
+   manifest/package.json hint; anything else surfaces the body. Temp dir is
+   cleaned up best-effort.
+
 ---
 
 <a id="add-helpers"></a>
 
 ## `add` helpers — `src/command/module/helpers/`
 
-`helpers/index.ts` re-exports `types`, `source`, `copy`, `config`, `env`,
-`packages`, `dependencies`, `guard`. Key types live in `helpers/types.ts`
+`helpers/index.ts` re-exports `types`, `source`, `copy`, `config`, `tsconfig`,
+`env`, `packages`, `dependencies`, `guard` (`linkTemplates.ts` is imported
+directly, not via the barrel). Key types live in `helpers/types.ts`
 (`ResolvedModuleSource`, `EnvSyncResult`, `PackageInstallResult`).
 
 ### Source resolution — `helpers/source.ts`

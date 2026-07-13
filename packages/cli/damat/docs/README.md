@@ -5,34 +5,50 @@ Maintainer-facing reference for the `damat` CLI. Read alongside the
 
 ## Split docs
 
-- [commands.md](./commands.md) — the app-lifecycle commands: `dev`, `build`,
-  `start`.
+- [commands.md](./commands.md) — the app-lifecycle commands: `create`,
+  `clone`, `dev`, `build`, `start`.
 - [module-commands.md](./module-commands.md) — the full `module` group
-  (`add`, `list`, `init`, `dev`, `migration:create`, `codegen`, `validate`) and
-  the `add` helpers (source resolution, copy, config registration, env sync,
-  package install).
+  (`add`, `remove`, `update`, `list`, `init`, `dev`, `migration:create`,
+  `migration:run`, `migration:status`, `codegen`, `validate`, `build`,
+  `publish`) and the `add` helpers (source resolution, copy, config
+  registration, tsconfig aliases, env sync, package install).
+- [kit-commands.md](./kit-commands.md) — the `kit` group: sharing code between
+  ANY projects via `damat-kit.json` (`add`, `init`, `validate`).
 - [scaffolding.md](./scaffolding.md) — the `module init` file templates.
 
 ## Module map
 
 | File / dir | Responsibility |
 |---|---|
-| `src/cli.ts` | Executable entry (`#!/usr/bin/env bun`). `runCli({ commands: [devCommand, startCommand, buildCommand, moduleCommand], banner })` |
+| `src/cli.ts` | Executable entry (`#!/usr/bin/env bun`). `runCli({ commands: [create, clone, dev, start, build, codegen, barrel, module, kit], banner })` |
 | `src/index.ts` | Library entry — `export * from "@damatjs/cli"` (re-exposes command types + `runCli`) |
-| `src/command/index.ts` | Barrel re-exporting `build`, `dev`, `start`, `module` |
+| `src/command/index.ts` | Barrel re-exporting `build`, `clone`, `create`, `dev`, `kit`, `start`, `codegen`, `barrel`, `module` |
+| `src/command/create/` | `createCommand` — scaffold a new app offline (`create/scaffold/` holds the embedded templates); option is `--pin`, **not** `--version` (cac owns `-v, --version`) |
+| `src/command/clone/` | `cloneCommand` — git clone with extras (shorthand, `#ref`, subdirectory extraction, `--fresh`) |
 | `src/command/dev.ts` | `devCommand` — hot-reload dev server |
 | `src/command/build.ts` | `buildCommand` — production bundle + source/config copy |
 | `src/command/start.ts` | `startCommand` — run the built app |
+| `src/command/codegen/` | `codegenCommand` — app-mode codegen (types + zod + registry + CRUD scaffold) via `@damatjs/codegen` |
+| `src/command/barrel/` | `barrelCommand` — recursively (re)write `index.ts` barrels |
+| `src/command/kit/` | `kitCommand` group — `add`/`init`/`validate` + `manifest`/`plan`/`source` internals |
+| `src/command/shared/git.ts` | `gitAvailable`/`requireGit` — system-git detection; one clear error instead of a vague spawn failure |
+| `src/command/shared/typecheck.ts` | `runTypeCheck` — shared by `module build` / `module publish` |
 | `src/command/module/index.ts` | `moduleCommand` — parent of the module subcommands |
 | `src/command/module/add.ts` | `moduleAddCommand` — install a module (the big one) |
+| `src/command/module/remove.ts` | `moduleRemoveCommand` — inverse of add (files, config, aliases) |
+| `src/command/module/update.ts` | `moduleUpdateCommand` — re-fetch from recorded provenance, diff, reinstall |
 | `src/command/module/list.ts` | `moduleListCommand` — list installed modules + provenance |
 | `src/command/module/init.ts` | `moduleInitCommand` — scaffold a standalone module package |
 | `src/command/module/dev.ts` | `moduleDevCommand` — run a module package standalone |
 | `src/command/module/migrationCreate.ts` | `moduleMigrationCreateCommand` — diff models → migration |
+| `src/command/module/migrationRun.ts` | `moduleMigrationRunCommand` — apply the module's migrations to `DATABASE_URL` |
+| `src/command/module/migrationStatus.ts` | `moduleMigrationStatusCommand` — applied vs pending migrations |
 | `src/command/module/codegen.ts` | `moduleCodegenCommand` — row types + zod schemas |
 | `src/command/module/validate.ts` | `moduleValidateCommand` — contract/registry check |
-| `src/command/module/helpers/*` | `add`'s helpers: `source`, `copy`, `config`, `env`, `packages`, `dependencies`, `types` |
-| `src/command/module/scaffold/templates.ts` | File templates emitted by `module init` |
+| `src/command/module/build.ts` | `moduleBuildCommand` — type-check + contract validate (release gate, no bundle) |
+| `src/command/module/publish.ts` | `modulePublishCommand` — validate, build, pack, PUT to the registry gateway |
+| `src/command/module/helpers/*` | `add`/`remove`/`update` helpers: `source`, `copy`, `config`, `tsconfig`, `env`, `packages`, `dependencies`, `guard`, `linkTemplates`, `types` |
+| `src/command/module/scaffold/` | File templates emitted by `module init` (`templates/` one file per template; `AGENTS.md` is embedded as `agents.generated.ts` via `scripts/embedAgents.ts`) |
 
 ## Architecture overview
 
@@ -47,19 +63,30 @@ Maintainer-facing reference for the `damat` CLI. Read alongside the
 
 ```
 cli.ts
-  └─ runCli({ commands: [dev, start, build, module], banner })
+  └─ runCli({ commands: [create, clone, dev, start, build, codegen, barrel, module, kit], banner })
         │
+        ├─ createCommand → embedded templates → new app dir (+ git init, bun install)
+        ├─ cloneCommand  → system git (requireGit) → clone/extract, --fresh, --name, --install
         ├─ devCommand    → writes .damat/dev-entry.ts → bun --watch
         ├─ buildCommand  → bun build → copy src/ + build damat.config.ts
         ├─ startCommand  → bun run .damat/dist/entry.js
+        ├─ codegenCommand→ @damatjs/codegen (types + zod + registry + CRUD scaffold)
+        ├─ barrelCommand → rewrite index.ts barrels (default src/workflows)
+        ├─ kitCommand (parent; subcommands: add / init / validate)
         └─ moduleCommand (parent; subcommands:)
               ├─ add               → helpers/* + @damatjs/module (resolve/verify/manifest)
+              ├─ remove / rm       → moduleLayoutPaths + deregister config + drop aliases
+              ├─ update / up       → re-resolve recorded source, diff, reinstall (--yes)
               ├─ list / ls         → scan src/modules, read module.json + config provenance
-              ├─ init              → scaffold/templates.ts
+              ├─ init              → scaffold/templates/*
               ├─ dev               → writes .damat/module-dev-entry.ts → bun --watch
               ├─ migration:create  → @damatjs/module createModuleMigration
+              ├─ migration:run     → @damatjs/module runModuleMigration
+              ├─ migration:status  → @damatjs/module runModuleMigrationStatus
               ├─ codegen           → @damatjs/module generateModuleTypes
-              └─ validate          → @damatjs/module locateModuleDir + validateModuleDir
+              ├─ validate          → @damatjs/module locateModuleDir + validateModuleDir
+              ├─ build             → shared/typecheck + validateModuleDir (release gate)
+              └─ publish           → typecheck + validate + tar pack + PUT <gateway>/api/npm/<name>
 ```
 
 Every handler returns `{ exitCode }` and reports through `ctx.logger`.
@@ -67,15 +94,24 @@ Every handler returns `{ exitCode }` and reports through `ctx.logger`.
 ## Command-dispatch / data flow
 
 - `cli.ts` passes the top-level command array to `runCli`; the runner resolves
-  `damat <cmd> <subcmd> …`. `module` is a parent command — its handler prints a
-  cheat-sheet; the dispatchable commands are its subcommands.
-- App-lifecycle commands operate on the **current project** (`ctx.cwd`): they
-  write a tiny entry file under `.damat/` and `spawn` Bun against it.
-- Module-authoring commands (`init`, `dev`, `migration:create`, `codegen`,
-  `validate`) operate on the **current module package** (`ctx.cwd`), via
+  `damat <cmd> <subcmd> …`. `module` and `kit` are parent commands — their
+  handlers print a cheat-sheet; the dispatchable commands are their subcommands.
+- Project-creating commands (`create`, `clone`) write a **new directory** under
+  `ctx.cwd`; both refuse an existing target. `clone` (and `kit add`'s git
+  sources) require the **system git** — `shared/git.ts`'s `requireGit` turns a
+  missing binary into one clear up-front error (the CLI never bundles its own
+  git).
+- App-lifecycle commands (`dev`, `build`, `start`) operate on the **current
+  project** (`ctx.cwd`): they write a tiny entry file under `.damat/` and
+  `spawn` Bun against it. `codegen` and `barrel` also operate on the current
+  project, but generate source instead of spawning it.
+- Module-authoring commands (`init`, `dev`, `migration:create`,
+  `migration:run`, `migration:status`, `codegen`, `validate`, `build`,
+  `publish`) operate on the **current module package** (`ctx.cwd`), via
   `@damatjs/module`.
-- `module add` is the one cross-cutting command: it pulls a module from a remote
-  or local source into the current app and mutates `damat.config.ts`,
+- `module add` / `remove` / `update` are the cross-cutting commands: they pull
+  a module from a remote or local source into the current app (or invert /
+  redo that) and mutate `damat.config.ts`, `tsconfig.json` aliases,
   `.env.example`, and the app's installed packages.
 
 ## Invariants / design decisions

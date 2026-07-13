@@ -15,6 +15,7 @@ import {
   mockReaddirSync,
   mockStatSync,
   mockExistsSync,
+  mockSpawnSync,
   resetMocks,
 } from "./setup";
 import { describe, it, expect, mock, beforeEach } from "bun:test";
@@ -598,9 +599,8 @@ describe("resolveModuleSource (helpers/source.ts)", () => {
     const fn = await get();
     const res = await fn("acme/mod", "/cwd");
     expect(res.origin.type).toBe("git");
-    expect(spawnSyncCalls[0]!.args).toContain(
-      "https://github.com/acme/mod.git",
-    );
+    const cloneCall = spawnSyncCalls.find((c) => c.args.includes("clone"))!;
+    expect(cloneCall.args).toContain("https://github.com/acme/mod.git");
   });
 
   it("clones a git url and returns a cleanup that removes the temp dir", async () => {
@@ -612,10 +612,10 @@ describe("resolveModuleSource (helpers/source.ts)", () => {
     fsState.spawnSyncResult = { status: 0, stdout: "", stderr: "" };
     const fn = await get();
     const res = await fn("https://github.com/acme/mod.git#main", "/cwd");
-    expect(spawnSyncCalls[0]!.cmd).toBe("git");
-    expect(spawnSyncCalls[0]!.args).toContain("clone");
-    expect(spawnSyncCalls[0]!.args).toContain("--branch");
-    expect(spawnSyncCalls[0]!.args).toContain("main");
+    const cloneCall = spawnSyncCalls.find((c) => c.args.includes("clone"))!;
+    expect(cloneCall.cmd).toBe("git");
+    expect(cloneCall.args).toContain("--branch");
+    expect(cloneCall.args).toContain("main");
     expect(res.origin.type).toBe("git");
     res.cleanup();
     expect(rmCalls.some((c) => String(c.path).includes("damat-module-"))).toBe(
@@ -633,14 +633,18 @@ describe("resolveModuleSource (helpers/source.ts)", () => {
     const fn = await get();
     const res = await fn("acme/mod/packages/widget", "/cwd");
     expect(res.origin.type).toBe("git");
-    expect(spawnSyncCalls[0]!.args).toContain(
-      "https://github.com/acme/mod.git",
-    );
+    const cloneCall = spawnSyncCalls.find((c) => c.args.includes("clone"))!;
+    expect(cloneCall.args).toContain("https://github.com/acme/mod.git");
   });
 
   it("throws and cleans up when git clone fails", async () => {
     fsState.existsDefault = false;
-    fsState.spawnSyncResult = { status: 128, stdout: "", stderr: "fatal: nope" };
+    // Availability probe passes, the clone itself fails.
+    mockSpawnSync
+      .mockImplementationOnce(() => ({ status: 0, stdout: "", stderr: "" }) as never)
+      .mockImplementationOnce(
+        () => ({ status: 128, stdout: "", stderr: "fatal: nope" }) as never,
+      );
     const fn = await get();
     await expect(
       fn("https://github.com/acme/mod.git", "/cwd"),
@@ -648,6 +652,16 @@ describe("resolveModuleSource (helpers/source.ts)", () => {
     expect(rmCalls.some((c) => String(c.path).includes("damat-module-"))).toBe(
       true,
     );
+  });
+
+  it("errors clearly when git itself is missing — no clone attempted", async () => {
+    fsState.existsDefault = false;
+    fsState.spawnSyncResult = { status: 1, stdout: "", stderr: "" }; // `git --version` fails
+    const fn = await get();
+    await expect(fn("https://github.com/acme/mod.git", "/cwd")).rejects.toThrow(
+      /git is required to install modules from git sources/,
+    );
+    expect(spawnSyncCalls.some((c) => c.args.includes("clone"))).toBe(false);
   });
 
   it("throws and cleans up when the subdir is missing inside the repo", async () => {
@@ -1087,6 +1101,71 @@ describe("module add command", () => {
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(1);
     expect(logger.error).toHaveBeenCalled();
+  });
+
+  it("--dry-run prints the full plan and writes nothing", async () => {
+    baseLocalInstall({
+      "/pkg/src/api/routes": true,
+      "/pkg/src/workflows": true,
+      "/pkg/src/links": true,
+      "/pkg/package.json": true,
+    });
+    fsState.readFileMap = {
+      "/app/damat.config.ts": `export default defineConfig({\n  modules: {},\n});\n`,
+      "/app/tsconfig.json": JSON.stringify({}),
+      "/pkg/package.json": JSON.stringify({ dependencies: { stripe: "^14.0.0" } }),
+    };
+    mm.manifest = {
+      name: "user",
+      version: "1.0.0",
+      description: "User",
+      env: [{ name: "STRIPE_KEY", required: true, example: "sk" }],
+    };
+    const cmd = await get();
+    const { ctx, logger } = createContext(
+      { dir: "src/modules", "allow-unverified": true, "dry-run": true },
+      { args: ["/pkg"], cwd: "/app" },
+    );
+    const res = await cmd.handler(ctx);
+    expect(res.exitCode).toBe(0);
+    const plan = logger.info.mock.calls.find((c) =>
+      String(c[0]).startsWith("Dry run"),
+    );
+    expect(plan).toBeDefined();
+    expect(plan![0]).toContain("install module files to src/modules/user/");
+    expect(plan![0]).toContain("install routes to src/api/routes/user/");
+    expect(plan![0]).toContain("install workflows to src/workflows/user/");
+    expect(plan![0]).toContain("install links to src/links/user/");
+    expect(plan![0]).toContain('register "user" in damat.config.ts');
+    expect(plan![0]).toContain("STRIPE_KEY");
+    expect(plan![0]).toContain("bun add stripe");
+    // Nothing was written, copied, deleted, appended, or spawned.
+    expect(writeCalls).toHaveLength(0);
+    expect(cpCalls).toHaveLength(0);
+    expect(rmCalls).toHaveLength(0);
+    expect(appendCalls).toHaveLength(0);
+    expect(spawnSyncCalls.some((c) => c.cmd === "bun")).toBe(false);
+  });
+
+  it("--dry-run for a bare module plans only files/config/aliases", async () => {
+    baseLocalInstall();
+    const cmd = await get();
+    const { ctx, logger } = createContext(
+      { dir: "src/modules", "allow-unverified": true, "dry-run": true },
+      { args: ["/pkg"], cwd: "/app" },
+    );
+    const res = await cmd.handler(ctx);
+    expect(res.exitCode).toBe(0);
+    const plan = logger.info.mock.calls.find((c) =>
+      String(c[0]).startsWith("Dry run"),
+    );
+    expect(plan![0]).not.toContain("install routes");
+    expect(plan![0]).not.toContain("install workflows");
+    expect(plan![0]).not.toContain("install links");
+    expect(plan![0]).not.toContain("bun add");
+    expect(plan![0]).toContain('ensure "@user/*" + "@workflows" aliases');
+    expect(writeCalls).toHaveLength(0);
+    expect(cpCalls).toHaveLength(0);
   });
 
   // --- hardening gates -------------------------------------------------

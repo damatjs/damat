@@ -39,6 +39,37 @@ export interface InstalledModuleLayout {
   linksTarget: string | null;
 }
 
+/** The app-side directories one installed module occupies (see installModuleSplit). */
+export interface ModuleLayoutPaths {
+  moduleHome: string;
+  apiTarget: string;
+  workflowsTarget: string;
+  linksRoot: string;
+  linksTarget: string;
+  testsTarget: string;
+}
+
+/**
+ * The single source of truth for WHERE a module's split pieces live in the
+ * app. Install and remove both derive their targets from here so the two can
+ * never drift.
+ */
+export function moduleLayoutPaths(
+  cwd: string,
+  moduleId: string,
+  modulesDir: string,
+): ModuleLayoutPaths {
+  const linksRoot = join(cwd, "src", "links");
+  return {
+    moduleHome: join(cwd, modulesDir, moduleId),
+    apiTarget: join(cwd, "src", "api", "routes", moduleId),
+    workflowsTarget: join(cwd, "src", "workflows", moduleId),
+    linksRoot,
+    linksTarget: join(linksRoot, moduleId),
+    testsTarget: join(cwd, "tests", moduleId),
+  };
+}
+
 export interface InstallModuleSplitOptions {
   cwd: string;
   moduleId: string;
@@ -111,12 +142,8 @@ export function installModuleSplit(
   // module dir; in the package layout it lives outside `sourceModuleDir`.
   const testsDir = join(sourceModuleDir, "tests");
 
-  const moduleHome = join(cwd, modulesDir, moduleId);
-  const apiTarget = join(cwd, "src", "api", "routes", moduleId);
-  const workflowsTarget = join(cwd, "src", "workflows", moduleId);
-  const linksRoot = join(cwd, "src", "links");
-  const linksTarget = join(linksRoot, moduleId);
-  const testsTarget = join(cwd, "tests", moduleId);
+  const { moduleHome, apiTarget, workflowsTarget, linksRoot, linksTarget, testsTarget } =
+    moduleLayoutPaths(cwd, moduleId, modulesDir);
 
   const hasApi = existsSync(apiSrc);
   const hasWorkflows = existsSync(workflowsSrc);
@@ -169,6 +196,53 @@ export function installModuleSplit(
     testsTarget: hasTests ? testsTarget : null,
     linksTarget: hasLinks ? linksTarget : null,
   };
+}
+
+/** What removeModuleSplit actually deleted (paths that existed). */
+export interface RemovedModuleLayout {
+  removed: string[];
+  /** True when the links aggregator was regenerated after removal. */
+  linksRegenerated: boolean;
+}
+
+/**
+ * The inverse of installModuleSplit: delete every app-side directory the
+ * module occupies (module home, grouped routes/workflows/links/tests) and
+ * regenerate the top-level `src/links/index.ts` aggregator from the remaining
+ * owners so it never references the deleted one.
+ */
+export function removeModuleSplit(
+  cwd: string,
+  moduleId: string,
+  modulesDir: string,
+): RemovedModuleLayout {
+  const layout = moduleLayoutPaths(cwd, moduleId, modulesDir);
+  const targets = [
+    layout.moduleHome,
+    layout.apiTarget,
+    layout.workflowsTarget,
+    layout.linksTarget,
+    layout.testsTarget,
+  ];
+
+  const removed: string[] = [];
+  const hadLinks = existsSync(layout.linksTarget);
+  for (const target of targets) {
+    if (!existsSync(target)) continue;
+    rmSync(target, { recursive: true, force: true });
+    removed.push(target);
+  }
+
+  let linksRegenerated = false;
+  if (hadLinks && existsSync(layout.linksRoot)) {
+    writeFileSync(
+      join(layout.linksRoot, "index.ts"),
+      renderAggregator(listOwnerDirs(layout.linksRoot)),
+    );
+    linksRegenerated = true;
+  }
+
+  return { removed, linksRegenerated };
 }
 
 /** A shipped link model file: its flattened basename and absolute source path. */

@@ -146,6 +146,158 @@ describe("ensureLinksInConfig", () => {
 });
 
 // ---------------------------------------------------------------------------
+// config.ts — readModuleConfigEntry / deregisterModuleFromConfig
+// ---------------------------------------------------------------------------
+describe("readModuleConfigEntry", () => {
+  const get = async () =>
+    (await import("../module/helpers/config")).readModuleConfigEntry;
+
+  it("returns null when the config file is missing", async () => {
+    fsState.existsDefault = false;
+    const fn = await get();
+    expect(fn("/app/damat.config.ts", "user")).toBeNull();
+  });
+
+  it("returns null when the module has no entry", async () => {
+    fsState.existsMap = { "/app/damat.config.ts": true };
+    fsState.readFileMap = {
+      "/app/damat.config.ts": `export default defineConfig({\n  modules: {},\n});\n`,
+    };
+    const fn = await get();
+    expect(fn("/app/damat.config.ts", "user")).toBeNull();
+  });
+
+  it("returns null when the entry's braces never balance", async () => {
+    fsState.existsMap = { "/app/damat.config.ts": true };
+    fsState.readFileMap = {
+      "/app/damat.config.ts": `modules: {\n  user: {\n    resolve: "./x",\n`,
+    };
+    const fn = await get();
+    expect(fn("/app/damat.config.ts", "user")).toBeNull();
+  });
+
+  it("round-trips what registerModuleInConfig writes", async () => {
+    fsState.existsMap = { "/app/damat.config.ts": true };
+    fsState.readFileMap = {
+      "/app/damat.config.ts": `export default defineConfig({\n  modules: {},\n});\n`,
+    };
+    const { registerModuleInConfig, readModuleConfigEntry } = await import(
+      "../module/helpers/config"
+    );
+    const source = {
+      type: "registry",
+      ref: "user@1.0.0",
+      url: "https://registry.example/user",
+      version: "1.0.0",
+      owner: "acme",
+      verification: "verified",
+      integrity: "sha256-abc",
+      installedAt: "2026-01-01T00:00:00.000Z",
+    } as const;
+    expect(
+      registerModuleInConfig(
+        "/app/damat.config.ts",
+        "user",
+        "./src/modules/user",
+        source as never,
+      ),
+    ).toBe(true);
+    const written = writeCalls.find((c) => c.path === "/app/damat.config.ts");
+    // Feed the written config back through the reader.
+    fsState.readFileMap = { "/app/damat.config.ts": written!.content };
+    const entry = readModuleConfigEntry("/app/damat.config.ts", "user");
+    expect(entry).not.toBeNull();
+    expect(entry!.resolve).toBe("./src/modules/user");
+    expect(entry!.source).toEqual(source);
+  });
+
+  it("returns an empty entry when resolve/source are absent", async () => {
+    fsState.existsMap = { "/app/damat.config.ts": true };
+    fsState.readFileMap = {
+      "/app/damat.config.ts": `modules: {\n  user: {\n    id: "user",\n  },\n}`,
+    };
+    const fn = await get();
+    const entry = fn("/app/damat.config.ts", "user");
+    expect(entry).not.toBeNull();
+    expect(entry!.resolve).toBeUndefined();
+    expect(entry!.source).toBeUndefined();
+  });
+
+  it("omits source when the block holds no recognized fields", async () => {
+    fsState.existsMap = { "/app/damat.config.ts": true };
+    fsState.readFileMap = {
+      "/app/damat.config.ts": `modules: {\n  user: {\n    resolve: "./src/modules/user",\n    source: {\n      junk: "x",\n    },\n  },\n}`,
+    };
+    const fn = await get();
+    const entry = fn("/app/damat.config.ts", "user");
+    expect(entry!.resolve).toBe("./src/modules/user");
+    expect(entry!.source).toBeUndefined();
+  });
+});
+
+describe("deregisterModuleFromConfig", () => {
+  const get = async () =>
+    (await import("../module/helpers/config")).deregisterModuleFromConfig;
+
+  it("returns false when the config file is missing", async () => {
+    fsState.existsDefault = false;
+    const fn = await get();
+    expect(fn("/app/damat.config.ts", "user")).toBe(false);
+  });
+
+  it("returns false when the module has no entry", async () => {
+    fsState.existsMap = { "/app/damat.config.ts": true };
+    fsState.readFileMap = {
+      "/app/damat.config.ts": `export default defineConfig({\n  modules: {},\n});\n`,
+    };
+    const fn = await get();
+    expect(fn("/app/damat.config.ts", "user")).toBe(false);
+    expect(writeCalls).toHaveLength(0);
+  });
+
+  it("splices out the entry and leaves sibling entries intact", async () => {
+    const config = `export default defineConfig({
+  modules: {
+    user: {
+      resolve: "./src/modules/user",
+      id: "user",
+      source: {
+        type: "path",
+        ref: "/pkg",
+      },
+    },
+    billing: {
+      resolve: "./src/modules/billing",
+      id: "billing",
+    },
+  },
+});
+`;
+    fsState.existsMap = { "/app/damat.config.ts": true };
+    fsState.readFileMap = { "/app/damat.config.ts": config };
+    const fn = await get();
+    expect(fn("/app/damat.config.ts", "user")).toBe(true);
+    const written = writeCalls.find((c) => c.path === "/app/damat.config.ts");
+    expect(written!.content).not.toContain("user:");
+    expect(written!.content).not.toContain('"./src/modules/user"');
+    expect(written!.content).toContain("billing:");
+    expect(written!.content).toContain('resolve: "./src/modules/billing"');
+    expect(written!.content).toContain("modules: {");
+  });
+
+  it("handles an entry at the very start of the file without a trailing comma", async () => {
+    fsState.existsMap = { "/app/damat.config.ts": true };
+    fsState.readFileMap = {
+      "/app/damat.config.ts": `user: {\n  resolve: "./x",\n}\nrest`,
+    };
+    const fn = await get();
+    expect(fn("/app/damat.config.ts", "user")).toBe(true);
+    const written = writeCalls.find((c) => c.path === "/app/damat.config.ts");
+    expect(written!.content).toBe("\nrest");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // tsconfig.ts — registerModuleTsconfigPaths
 // ---------------------------------------------------------------------------
 describe("registerModuleTsconfigPaths", () => {
@@ -195,6 +347,124 @@ describe("registerModuleTsconfigPaths", () => {
     const fn = await get();
     expect(fn("/app", "user")).toBe("present");
     expect(writeCalls.find((c) => c.path === "/app/tsconfig.json")).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// tsconfig.ts — removeModuleTsconfigPaths
+// ---------------------------------------------------------------------------
+describe("removeModuleTsconfigPaths", () => {
+  const get = async () =>
+    (await import("../module/helpers/tsconfig")).removeModuleTsconfigPaths;
+
+  it("skips when tsconfig.json is missing", async () => {
+    fsState.existsDefault = false;
+    const fn = await get();
+    expect(fn("/app", "user")).toBe("skipped");
+  });
+
+  it("skips when tsconfig.json is not plain JSON", async () => {
+    fsState.existsMap = { "/app/tsconfig.json": true };
+    fsState.readFileMap = { "/app/tsconfig.json": `{ // comment\n }` };
+    const fn = await get();
+    expect(fn("/app", "user")).toBe("skipped");
+  });
+
+  it("reports absent when the module alias is not present", async () => {
+    fsState.existsMap = { "/app/tsconfig.json": true };
+    fsState.readFileMap = {
+      "/app/tsconfig.json": JSON.stringify({
+        compilerOptions: { paths: { "@workflows": ["./src/workflows"] } },
+      }),
+    };
+    const fn = await get();
+    expect(fn("/app", "user")).toBe("absent");
+    expect(writeCalls).toHaveLength(0);
+  });
+
+  it("removes only the module's alias, leaving @workflows untouched", async () => {
+    fsState.existsMap = { "/app/tsconfig.json": true };
+    fsState.readFileMap = {
+      "/app/tsconfig.json": JSON.stringify({
+        compilerOptions: {
+          baseUrl: ".",
+          paths: {
+            "@user/*": ["./src/modules/user/*"],
+            "@workflows": ["./src/workflows"],
+            "@workflows/*": ["./src/workflows/*"],
+          },
+        },
+      }),
+    };
+    const fn = await get();
+    expect(fn("/app", "user")).toBe("updated");
+    const written = writeCalls.find((c) => c.path === "/app/tsconfig.json");
+    const json = JSON.parse(written!.content);
+    expect(json.compilerOptions.paths["@user/*"]).toBeUndefined();
+    expect(json.compilerOptions.paths["@workflows"]).toEqual(["./src/workflows"]);
+    expect(json.compilerOptions.paths["@workflows/*"]).toEqual([
+      "./src/workflows/*",
+    ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// env.ts — removeModuleEnvVars
+// ---------------------------------------------------------------------------
+describe("removeModuleEnvVars", () => {
+  const get = async () =>
+    (await import("../module/helpers/env")).removeModuleEnvVars;
+
+  it("returns [] when .env.example is missing", async () => {
+    fsState.existsDefault = false;
+    const fn = await get();
+    expect(fn("/app", "user")).toEqual([]);
+    expect(writeCalls).toHaveLength(0);
+  });
+
+  it("returns [] when the module header is not present", async () => {
+    fsState.existsMap = { "/app/.env.example": true };
+    fsState.readFileMap = { "/app/.env.example": "BASE=1\n" };
+    const fn = await get();
+    expect(fn("/app", "user")).toEqual([]);
+    expect(writeCalls).toHaveLength(0);
+  });
+
+  it("removes a block at the end of the file, plus its preceding blank line", async () => {
+    fsState.existsMap = { "/app/.env.example": true };
+    fsState.readFileMap = {
+      "/app/.env.example":
+        "BASE=1\n\n# --- module: user ---\n# key\nAPI_KEY=abc\nDB_URL=\n",
+    };
+    const fn = await get();
+    expect(fn("/app", "user")).toEqual(["API_KEY", "DB_URL"]);
+    const written = writeCalls.find((c) => c.path === "/app/.env.example");
+    expect(written!.content).toBe("BASE=1\n");
+  });
+
+  it("removes a middle block, preserving the following module's block", async () => {
+    fsState.existsMap = { "/app/.env.example": true };
+    fsState.readFileMap = {
+      "/app/.env.example":
+        "BASE=1\n\n# --- module: user ---\nAPI_KEY=abc\n\n# --- module: other ---\nOTHER=1\n",
+    };
+    const fn = await get();
+    expect(fn("/app", "user")).toEqual(["API_KEY"]);
+    const written = writeCalls.find((c) => c.path === "/app/.env.example");
+    expect(written!.content).toBe(
+      "BASE=1\n\n# --- module: other ---\nOTHER=1\n",
+    );
+  });
+
+  it("removes a block at the very start of the file", async () => {
+    fsState.existsMap = { "/app/.env.example": true };
+    fsState.readFileMap = {
+      "/app/.env.example": "# --- module: user ---\nAPI_KEY=abc\n",
+    };
+    const fn = await get();
+    expect(fn("/app", "user")).toEqual(["API_KEY"]);
+    const written = writeCalls.find((c) => c.path === "/app/.env.example");
+    expect(written!.content).toBe("");
   });
 });
 

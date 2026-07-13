@@ -1,7 +1,8 @@
 import { spawn } from "bun";
 import { join } from "node:path";
-import { writeFileSync, existsSync, mkdirSync, unlinkSync } from "node:fs";
+import { writeFileSync, existsSync, mkdirSync } from "node:fs";
 import type { Command } from "@damatjs/cli";
+import { cleanupTempFile } from "../shared/cleanupTempFile";
 
 export const moduleDevCommand: Command = {
   name: "dev",
@@ -44,9 +45,7 @@ export const moduleDevCommand: Command = {
 
     const exitCode = await result.exited;
 
-    try {
-      if (existsSync(entryFile)) unlinkSync(entryFile);
-    } catch { }
+    cleanupTempFile(entryFile, ctx.logger);
 
     return { exitCode };
   },

@@ -234,6 +234,18 @@ describe("installModuleSplit", () => {
     ).toBe(false);
   });
 
+  it("exposes the same layout via moduleLayoutPaths (install/remove single source of truth)", async () => {
+    const { moduleLayoutPaths } = await import("../module/helpers/copy");
+    expect(moduleLayoutPaths("/app", "user", "src/modules")).toEqual({
+      moduleHome: "/app/src/modules/user",
+      apiTarget: "/app/src/api/routes/user",
+      workflowsTarget: "/app/src/workflows/user",
+      linksRoot: "/app/src/links",
+      linksTarget: "/app/src/links/user",
+      testsTarget: "/app/tests/user",
+    });
+  });
+
   it("defaults packageDir to sourceModuleDir for the legacy layout", async () => {
     fsState.existsMap = {
       [`${src}/api/routes`]: false,
@@ -249,5 +261,71 @@ describe("installModuleSplit", () => {
       modulesDir: "src/modules",
     });
     expect(layout.testsTarget).toBe("/app/tests/user");
+  });
+});
+
+describe("removeModuleSplit", () => {
+  const cwd = "/app";
+
+  it("removes every existing layout target and regenerates the links aggregator", async () => {
+    fsState.existsMap = {
+      "/app/src/modules/user": true,
+      "/app/src/api/routes/user": true,
+      "/app/src/workflows/user": true,
+      "/app/src/links/user": true,
+      "/app/tests/user": true,
+      "/app/src/links": true, // aggregator regenerated from remaining owners
+      "/app/src/links/billing/index.ts": true,
+    };
+    // listOwnerDirs over the links root after removal: billing remains.
+    readdirMap = { "/app/src/links": ["billing"] };
+    statDirMap = { "/app/src/links/billing": true };
+    const { removeModuleSplit } = await import("../module/helpers/copy");
+    const result = removeModuleSplit(cwd, "user", "src/modules");
+    expect(result.removed).toEqual([
+      "/app/src/modules/user",
+      "/app/src/api/routes/user",
+      "/app/src/workflows/user",
+      "/app/src/links/user",
+      "/app/tests/user",
+    ]);
+    expect(result.linksRegenerated).toBe(true);
+    // Each target was rm'd recursively.
+    for (const target of result.removed) {
+      expect(
+        rmCalls.some(
+          (c) =>
+            c.path === target &&
+            (c.opts as { recursive: boolean }).recursive === true,
+        ),
+      ).toBe(true);
+    }
+    // Aggregator rewritten from the surviving owner dirs.
+    const aggregator = writeCalls.find((w) => w.path === "/app/src/links/index.ts");
+    expect(aggregator).toBeDefined();
+    expect(aggregator!.content).toContain("billingLinks");
+    expect(aggregator!.content).not.toContain("userLinks");
+  });
+
+  it("is a no-op when the module occupies nothing", async () => {
+    fsState.existsDefault = false;
+    const { removeModuleSplit } = await import("../module/helpers/copy");
+    const result = removeModuleSplit(cwd, "user", "src/modules");
+    expect(result.removed).toEqual([]);
+    expect(result.linksRegenerated).toBe(false);
+    expect(rmCalls).toHaveLength(0);
+    expect(writeCalls).toHaveLength(0);
+  });
+
+  it("skips the aggregator when the links root itself is gone", async () => {
+    fsState.existsMap = {
+      "/app/src/links/user": true, // had links…
+      "/app/src/links": false, // …but the whole links root was deleted too
+    };
+    const { removeModuleSplit } = await import("../module/helpers/copy");
+    const result = removeModuleSplit(cwd, "user", "src/modules");
+    expect(result.removed).toEqual(["/app/src/links/user"]);
+    expect(result.linksRegenerated).toBe(false);
+    expect(writeCalls).toHaveLength(0);
   });
 });

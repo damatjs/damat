@@ -25,7 +25,8 @@ bun damat <command> [options]
 ```
 
 ```bash
-# typical invocations from a project root
+# typical invocations
+bunx damat create my-api      # scaffold a new backend app (offline)
 bun damat dev                 # dev server, hot reload
 bun damat build               # production build
 bun damat start               # run the build
@@ -36,13 +37,23 @@ bun damat module add user     # install a module
 
 | Command | Description | Example |
 |---|---|---|
+| `create <name>` (`new`) | Scaffold a new backend app from embedded templates — offline, no starter repo; writes `.env` with generated secrets, git-inits, runs `bun install` (`--no-git` / `--no-install` to skip) | `damat create my-api` |
+| `clone <source> [dir]` | git clone with extras: github shorthand + `#ref`, subdirectory extraction, `--fresh` new history, `--name` package rename, `--install` | `damat clone acme/mono/examples/api my-api --fresh` |
+| `kit` (`k`) | Kit command group (see below); lists subcommands when run alone | `damat kit` |
+| `kit add <source>` | Copy a shared kit (any codebase with a `damat-kit.json`) into THIS project — shadcn-style editable source for every kind of project; `--dry-run` / `--force` / `--no-install` | `damat kit add acme/design-kit --dry-run` |
+| `kit init [name]` | Describe the current codebase as a shareable kit (writes `damat-kit.json`) | `damat kit init design-system` |
+| `kit validate` | Check the manifest + preview where every file would land in a consumer | `damat kit validate` |
+| `auth` | Auth setup command group (see below); prints provider install/config help when run alone | `damat auth` |
+| `auth init <provider>` | Scaffold the storage module a provider needs (Better Auth); a no-op note for hosted providers (Clerk/Auth0) | `damat auth init better-auth` |
 | `dev` (`d`) | Start the dev server with hot reload | `damat dev --port 4000 --clear` |
 | `build` (`b`) | Build for production into `.damat/dist` | `damat build --minify --target node` |
 | `start` (`s`) | Run the production build | `damat start --output .damat/dist` |
 | `codegen <module>` \| `--all` | Types + zod + registry + scaffold-once CRUD for app modules | `damat codegen user` |
 | `barrel [dir]` | Recursively (re)write `index.ts` barrels so one bare import re-exports a whole tree (default `src/workflows`) | `damat barrel` |
 | `module` (`m`) | Module command group (see below); lists subcommands when run alone | `damat module` |
-| `module add <source>` | Install a module from registry ref, path, or git (splits any shipped link files into `src/links/<moduleId>/`); path/git sources need `--allow-unverified` | `damat module add damatjs/user@0.0.1` |
+| `module add <source>` | Install a module from registry ref, path, or git (splits any shipped link files into `src/links/<moduleId>/`); path/git sources need `--allow-unverified`; `--dry-run` prints the plan | `damat module add damatjs/user@0.0.1` |
+| `module remove <id>` (`rm`) | Remove an installed module — inverse of add (deletes files, deregisters config, drops the tsconfig alias); refuses while other modules depend on it unless `--force`; `--dry-run` / `--clean-env` | `damat module remove user` |
+| `module update <id>` (`up`) | Re-fetch a module from its recorded source, show a version + file diff, and reinstall with `--yes` (overwrites local edits) | `damat module update user --dry-run` |
 | `module list` (`ls`) | List modules installed in the app | `damat module list` |
 | `module init <name>` | Scaffold a new standalone module package | `damat module init user-management` |
 | `module dev` | Run the current module package standalone, hot reload | `damat module dev --port 7654` |
@@ -51,6 +62,8 @@ bun damat module add user     # install a module
 | `module migration:status` | Show the module's applied vs pending migrations | `damat module migration:status` |
 | `module codegen` | Generate row types + zod schemas for the module | `damat module codegen` |
 | `module validate` | Contract + registry-readiness check for the module | `damat module validate` |
+| `module build` | Type-check + contract validate for release | `damat module build` |
+| `module publish` | Validate, build, pack, and publish the module to the registry gateway | `damat module publish --dry-run` |
 
 ## When to use
 
@@ -66,6 +79,20 @@ bun damat module add user     # install a module
 
 ## Quick start
 
+### Scaffold an app
+
+```bash
+bunx damat create my-api      # embedded templates — works offline, no starter repo
+cd my-api
+bun run dev                   # http://localhost:6543/api/hello
+```
+
+The scaffold writes `damat.config.ts` (empty `modules` block ready for `module
+add`), a working example route, a `.env` with generated `JWT_SECRET`/
+`COOKIE_SECRET`, the `@workflows` tsconfig aliases, git-inits, and runs `bun
+install`. `@damatjs/*` dependencies default to the CLI's own version; override
+with `--pin`.
+
 ### Run an app
 
 ```bash
@@ -77,6 +104,45 @@ bun damat start               # runs .damat/dist/entry.js (errors if not built)
 `dev` and `start` load env via `@damatjs/load-env` (`NODE_ENV` or
 `development`/`production`). `build` honours `--output`, `--target` (bun|node),
 and `--minify`.
+
+### Share code between ANY projects (kits)
+
+Kits generalize `module add` to every kind of project: any codebase that
+ships a `damat-kit.json` can be copied into any other project — like packages
+into node_modules, but shadcn-style: the files land as editable source, where
+the kit says they belong.
+
+```jsonc
+// damat-kit.json — in the SOURCE codebase
+{
+  "name": "design-sys",
+  "mappings": [                                   // first match wins
+    { "from": "src/components/**", "to": "app/ui" },
+    { "from": "src/hooks/**", "to": "app/lib/hooks" }
+  ],
+  "fallback": "shared/design-sys",                // where unknown files go
+  "ignore": ["**/*.test.*"],
+  "packages": { "zod": "^4.0.0" },                // installed via bun add
+  "notes": "Import the theme in your root layout."
+}
+```
+
+```bash
+# in the source codebase
+damat kit init design-sys        # write a starter manifest
+damat kit validate               # preview where every file would land
+
+# in ANY consuming project
+damat kit add acme/design-sys --dry-run   # URL, user/repo[/subdir][#ref], or path
+damat kit add acme/design-sys             # copy in + record in damat-kits.json
+```
+
+Placement: a file's path after the glob's static prefix nests under `to`
+(`src/components/nav/menu.tsx` → `app/ui/nav/menu.tsx`); files matched by no
+mapping go to `fallback` (or are skipped with a warning when none is
+declared). Existing files are kept unless `--force`, installs are recorded in
+`damat-kits.json`, package specs pass the same safety gate as `module add`,
+and manifest target paths are validated (relative, no `..`).
 
 ### Compose a module into your app
 

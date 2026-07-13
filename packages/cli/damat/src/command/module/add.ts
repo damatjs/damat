@@ -13,6 +13,7 @@ import type { ModuleSource } from "@damatjs/framework";
 import {
   resolveModuleSource,
   installModuleSplit,
+  moduleLayoutPaths,
   registerModuleInConfig,
   registerModuleTsconfigPaths,
   ensureLinksInConfig,
@@ -29,7 +30,7 @@ export const moduleAddCommand: Command = {
   name: "add",
   description: "Add a module to this app from the registry, a path, or git (shadcn-style)",
   usage:
-    "damat module add <source> [--name <id>] [--dir <path>] [--force] [--allow-unverified] [--allow-scripts]",
+    "damat module add <source> [--name <id>] [--dir <path>] [--force] [--allow-unverified] [--allow-scripts] [--dry-run]",
   examples: [
     "damat module add user-management            # registry ref (DAMAT_MODULE_REGISTRY)",
     "damat module add damatjs/user-management@0.0.1",
@@ -69,6 +70,12 @@ export const moduleAddCommand: Command = {
       type: "boolean",
       description:
         "Run dependency lifecycle scripts during bun add (skipped by default)",
+      default: false,
+    },
+    {
+      name: "dry-run",
+      type: "boolean",
+      description: "Resolve and validate the module, then print what would be installed without writing anything",
       default: false,
     },
   ],
@@ -181,6 +188,36 @@ export const moduleAddCommand: Command = {
           `${relative(ctx.cwd, targetDir)} already exists — use --force to overwrite`,
         );
         return { exitCode: 1 };
+      }
+
+      // Everything is resolved and validated but nothing has been written yet —
+      // this is the dry-run boundary.
+      if (ctx.options["dry-run"]) {
+        const layout = moduleLayoutPaths(ctx.cwd, moduleId, modulesDir);
+        const plannedActions = [
+          `install module files to ${relative(ctx.cwd, layout.moduleHome)}/`,
+          ...(existsSync(join(sourceModuleDir, "api", "routes"))
+            ? [`install routes to ${relative(ctx.cwd, layout.apiTarget)}/`]
+            : []),
+          ...(existsSync(join(sourceModuleDir, "workflows"))
+            ? [`install workflows to ${relative(ctx.cwd, layout.workflowsTarget)}/ and rebuild barrels`]
+            : []),
+          ...(existsSync(join(sourceModuleDir, "links"))
+            ? [`install links to ${relative(ctx.cwd, layout.linksTarget)}/`]
+            : []),
+          `register "${moduleId}" in damat.config.ts (resolve: "${relativeTarget}")`,
+          `ensure "@${moduleId}/*" + "@workflows" aliases in tsconfig.json`,
+          ...((manifest.env ?? []).length > 0
+            ? [`sync env vars into .env.example: ${(manifest.env ?? []).map((v) => v.name).join(", ")}`]
+            : []),
+          ...(Object.keys(packages).length > 0
+            ? [`bun add ${Object.keys(packages).join(" ")}`]
+            : []),
+        ];
+        ctx.logger.info(
+          [`Dry run — adding "${moduleId}" would:`, ...plannedActions.map((a) => `  - ${a}`)].join("\n"),
+        );
+        return { exitCode: 0 };
       }
 
       // Split the module across the app's layers (the package scaffolding —

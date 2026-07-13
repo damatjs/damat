@@ -1,8 +1,8 @@
 import { spawn } from "bun";
 import { join } from "node:path";
-import { writeFileSync, unlinkSync, existsSync, mkdirSync } from "node:fs";
+import { writeFileSync, existsSync, mkdirSync } from "node:fs";
 import type { Command } from "@damatjs/cli";
-
+import { cleanupTempFile } from "./shared/cleanupTempFile";
 
 export const devCommand: Command = {
   name: "dev",
@@ -35,9 +35,12 @@ export const devCommand: Command = {
 
     const tempFile = join(damatDir, "dev-entry.ts");
 
-    writeFileSync(tempFile, `import { runEntry } from '@damatjs/framework/entry';\nrunEntry();\n`);
+    writeFileSync(
+      tempFile,
+      `import { runEntry } from '@damatjs/framework/entry';\nrunEntry();\n`,
+    );
 
-    clear && console.clear();
+    if (clear) console.clear();
 
     const { loadEnv } = await import("@damatjs/load-env");
     loadEnv(process.env.NODE_ENV || "development", process.cwd());
@@ -52,9 +55,7 @@ export const devCommand: Command = {
 
     const exitCode = await result.exited;
 
-    try {
-      if (existsSync(tempFile)) unlinkSync(tempFile);
-    } catch { }
+    cleanupTempFile(tempFile, ctx.logger);
 
     return { exitCode };
   },

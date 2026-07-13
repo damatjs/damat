@@ -1,12 +1,64 @@
-# App-lifecycle commands: dev, build, start
+# App-lifecycle commands: create, dev, build, start
 
-The three top-level commands that drive a Damat **application** (not a module
-package). Each writes a generated entry under `.damat/` and `spawn`s Bun, then
-returns the child's exit code. Sources: `src/command/dev.ts`,
+The top-level commands that drive a Damat **application** (not a module
+package). `create` scaffolds a new app; `dev`/`build`/`start` each write a
+generated entry under `.damat/` and `spawn` Bun, then return the child's exit
+code. Sources: `src/command/create/index.ts`, `src/command/dev.ts`,
 `src/command/build.ts`, `src/command/start.ts`.
 
-All three resolve paths against `ctx.cwd` (the project root) and stream child
-stdio with `stdout: "inherit", stderr: "inherit"`.
+The lifecycle commands resolve paths against `ctx.cwd` (the project root) and
+stream child stdio with `stdout: "inherit", stderr: "inherit"`.
+
+## `create <name>` (alias `new`) — `src/command/create/index.ts`
+
+Scaffold a new backend app **offline** from embedded templates
+(`src/command/create/scaffold/templates/` — the same pattern as `module init`,
+no starter repo, no network for the scaffold itself). Name must be kebab-case
+(same guard rationale as module ids: it becomes a directory, a package name,
+and a database name).
+
+Behaviour:
+
+1. Guard the name and refuse an existing target dir (`--dir` overrides
+   `./<name>`).
+2. Write the tree: `package.json` (deps pinned `^CLI_VERSION`, or `--pin`),
+   `damat.config.ts` (empty `modules: {}` block that `module add` inserts
+   into), standalone `tsconfig.json` with the `@workflows` aliases, README,
+   `.gitignore`, `.env.example` (placeholders), `.env` (generated
+   `JWT_SECRET`/`COOKIE_SECRET` via `randomBytes`, `REDIS_URL` commented out so
+   a password-protected localhost redis can't fail the first boot), an example
+   `src/api/routes/hello/route.ts`, an empty `src/workflows/index.ts` barrel,
+   and `tests/smoke.test.ts`. Empty `src/modules` is pre-created.
+3. `git init -b main` + bootstrap commit (skippable with `--no-git`; a missing
+   git only warns).
+4. `bun install` (skippable with `--no-install`; a failure warns with manual
+   instructions — the scaffold itself is complete either way).
+
+This is the getting-started entry point for new projects:
+`bunx @damatjs/damat-cli@latest create my-app`. (The old `create-damat-app`
+wrapper that used to delegate here was retired.)
+
+## `clone <source> [dir]` — `src/command/clone/index.ts`
+
+`git clone` with extras. A plain `damat clone <url>` behaves like git clone
+(full history, original `.git` kept); the extras are what git clone can't do:
+
+- **Sources**: full URLs (`https://…`, `git@…`) or github shorthand
+  (`user/repo`), each with an optional `#ref` suffix (`--branch` overrides it).
+- **Subdirectory extraction**: `user/repo/sub/dir` shallow-clones to a temp dir
+  and copies only that subtree out (minus `.git`/`node_modules`, with the same
+  `..`-escape guard as module sources). Extraction can't carry history — the
+  command says so and suggests `--fresh`.
+- **`--fresh`**: strip `.git`/`.github`, `git init -b main`, bootstrap commit —
+  the starter-template behavior. Failures here only warn (the clone already
+  succeeded).
+- **`--name <pkg>`**: rewrite `package.json`'s `name` (indentation preserved).
+- **`--install`**: `bun install` afterwards (failure warns).
+- **`--depth <n>`**: shallow clone (plain-clone mode only; subdir mode is
+  always depth 1).
+
+Safety: git argv always passes `--` before the URL so a hostile source can
+never be parsed as a git flag; a failed clone removes the half-written target.
 
 ## `dev` (alias `d`) — `src/command/dev.ts`
 

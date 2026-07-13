@@ -51,3 +51,33 @@ export function registerModuleTsconfigPaths(
   writeFileSync(tsconfigPath, `${JSON.stringify(json, null, 2)}\n`, "utf-8");
   return "updated";
 }
+
+/**
+ * Remove a module's own `@<id>/*` alias from tsconfig.json. The shared
+ * `@workflows` aliases are app-level (used by every module) and are left
+ * alone. Returns `"updated"` when the alias was removed, `"absent"` when
+ * there was nothing to remove, or `"skipped"` when the file is missing or
+ * not plain JSON.
+ */
+export function removeModuleTsconfigPaths(
+  cwd: string,
+  moduleId: string,
+): "updated" | "absent" | "skipped" {
+  const tsconfigPath = join(cwd, "tsconfig.json");
+  if (!existsSync(tsconfigPath)) return "skipped";
+
+  let json: { compilerOptions?: { paths?: Record<string, string[]> } };
+  try {
+    json = JSON.parse(readFileSync(tsconfigPath, "utf-8"));
+  } catch {
+    return "skipped"; // jsonc / comments — don't risk mangling it
+  }
+
+  const paths = json.compilerOptions?.paths;
+  const key = `@${moduleId}/*`;
+  if (!paths || !paths[key]) return "absent";
+
+  delete paths[key];
+  writeFileSync(tsconfigPath, `${JSON.stringify(json, null, 2)}\n`, "utf-8");
+  return "updated";
+}

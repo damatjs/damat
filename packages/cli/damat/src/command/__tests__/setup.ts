@@ -143,6 +143,12 @@ export const mockReadFileSync = mock(
 export const mockStatSync = mock((_p: string) => ({
   isDirectory: () => state.statIsDirectory,
 }));
+// `lstatSync` is used by the kit planner (plan.ts) so hostile symlinks are
+// never followed. Default: a plain file/dir per state, never a symlink.
+export const mockLstatSync = mock((_p: string) => ({
+  isDirectory: () => state.statIsDirectory,
+  isSymbolicLink: () => false,
+}));
 export const mockCopyFileSync = mock((src: string, dest: string) => {
   copyCalls.push({ src, dest });
 });
@@ -168,6 +174,7 @@ mock.module("node:fs", () => ({
   rmSync: mockRmSync,
   readdirSync: mockReaddirSync,
   statSync: mockStatSync,
+  lstatSync: mockLstatSync,
   copyFileSync: mockCopyFileSync,
   readFileSync: mockReadFileSync,
   cpSync: mockCpSync,
@@ -252,6 +259,12 @@ export function resetMocks() {
   mockStatSync.mockReset();
   mockStatSync.mockImplementation((_p: string) => ({
     isDirectory: () => state.statIsDirectory,
+  }));
+  mockLstatSync.mockClear();
+  mockLstatSync.mockReset();
+  mockLstatSync.mockImplementation((_p: string) => ({
+    isDirectory: () => state.statIsDirectory,
+    isSymbolicLink: () => false,
   }));
   mockCopyFileSync.mockClear();
   mockCpSync.mockClear();
