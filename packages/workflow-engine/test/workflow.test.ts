@@ -193,6 +193,52 @@ describe("workflow/execute: failure & compensation", () => {
     // A succeeded -> its compensation runs; B never produced output so its
     // finalizer is never registered (only registered after a successful result).
     expect(events).toEqual(["A-run", "B-run", "A-comp(a-out)"]);
+    // No compensation failed, so the result carries an empty error list.
+    if (!res.success) {
+      expect(res.compensationsFailed).toBe(0);
+      expect(res.compensationErrors).toEqual([]);
+    }
+  });
+
+  it("surfaces failed compensations on the result via compensationErrors", async () => {
+    const stepA = createStep<number, string, string>(
+      "A",
+      async () => new StepResponse("a-out", "a-out"),
+      async () => {
+        throw new Error("rollback A blew up");
+      },
+    );
+    const stepB = createStep<string, string, string>(
+      "B",
+      async () => new StepResponse("b-out", "b-out"),
+      async () => {
+        /* compensates cleanly */
+      },
+    );
+    const stepC = createStep<string, string>("C", async () => {
+      throw new Error("C failed");
+    });
+    const wf = createWorkflow<number, string>("comp-errors", (input, ctx) =>
+      Effect.gen(function* () {
+        const a = yield* executeStep(stepA, input, ctx);
+        const b = yield* executeStep(stepB, a, ctx);
+        return yield* executeStep(stepC, b, ctx);
+      }),
+    );
+    const res = await wf.execute(1);
+
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      // The workflow's own error is still C's failure — compensation errors
+      // never cascade or replace it.
+      expect(res.error.message).toBe("C failed");
+      // B compensated fine, A's compensation threw.
+      expect(res.compensated).toBe(true);
+      expect(res.compensationsFailed).toBe(1);
+      expect(res.compensationErrors).toHaveLength(1);
+      expect(res.compensationErrors[0]!.stepName).toBe("A");
+      expect(res.compensationErrors[0]!.message).toContain("rollback A blew up");
+    }
   });
 });
 
@@ -303,14 +349,17 @@ describe("workflow/executeWithLock", () => {
 
 describe("workflow + utils integration", () => {
   it("parallel runs steps concurrently inside a workflow and aggregates results", async () => {
-    let active = 0;
-    let maxActive = 0;
+    // Barrier instead of sleep-overlap timing: only concurrent execution can
+    // open it, so a loaded machine can't flake this (sequential = deadlock →
+    // loud timeout failure).
+    let started = 0;
+    let release!: () => void;
+    const allStarted = new Promise<void>((r) => (release = r));
     const mk = (name: string, val: number) =>
       createStep<void, number>(name, async () => {
-        active++;
-        maxActive = Math.max(maxActive, active);
-        await new Promise((r) => setTimeout(r, 20));
-        active--;
+        started++;
+        if (started === 3) release();
+        await allStarted;
         return val;
       });
 
@@ -330,7 +379,7 @@ describe("workflow + utils integration", () => {
 
     expect(res.success).toBe(true);
     if (res.success) expect(res.result).toEqual({ a: 1, b: 2, c: 3 });
-    expect(maxActive).toBeGreaterThan(1); // proves concurrency
+    expect(started).toBe(3); // the barrier only opens when all ran concurrently
   });
 
   it("when() conditionally runs (true) or returns default (false) inside a workflow", async () => {

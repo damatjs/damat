@@ -157,6 +157,7 @@ export function createWorkflow<I, O>(
           durationMs: 0,
           compensated: false,
           compensationsFailed: 0,
+          compensationErrors: [],
         };
       }
 
@@ -173,6 +174,7 @@ export function createWorkflow<I, O>(
           durationMs: 0,
           compensated: false,
           compensationsFailed: 0,
+          compensationErrors: [],
         };
       }
 

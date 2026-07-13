@@ -87,7 +87,7 @@ Generates a `nanoid` `executionId` and delegates to `executeWorkflowInternal`.
      retries), use that `MaxRetriesExceededError`. Otherwise `Cause.squash(exit.cause)`;
      if it's a `WorkflowError`, use it, else wrap as
      `WorkflowError("WORKFLOW_FAILED", message, name, undefined, raw)`.
-     Return `{ success: false, error, executionId, durationMs, compensated: engineState.compensationsRun > 0, compensationsFailed: engineState.compensationsFailed }`.
+     Return `{ success: false, error, executionId, durationMs, compensated: engineState.compensationsRun > 0, compensationsFailed: engineState.compensationsFailed, compensationErrors: engineState.compensationErrors ?? [] }`.
 
 ## `WorkflowResult` — the return contract
 
@@ -108,6 +108,8 @@ interface WorkflowFailure {
   durationMs: number;
   compensated: boolean;       // ≥1 compensation ran successfully
   compensationsFailed: number;// compensations that threw (logged, not raised)
+  compensationErrors: CompensationError[]; // those errors, in occurrence order
+                                           // (empty array when none failed)
 }
 ```
 
@@ -130,8 +132,8 @@ Flow (`src/workflow/create.ts`):
 1. `acquireWorkflowLock(name, lockConfig)`.
 2. If **not acquired** → return a `WorkflowFailure` immediately with
    `error = WorkflowLockError(name, lockId)` (`code: "WORKFLOW_LOCKED"`),
-   `durationMs: 0`, `compensated: false`. (It does **not** throw, despite the
-   doc comment.)
+   `durationMs: 0`, `compensated: false`, `compensationsFailed: 0`,
+   `compensationErrors: []`. (It does **not** throw, despite the doc comment.)
 3. If acquired → fresh `executionId` (the `lockId` repeats; the `executionId` must
    not). Merge `metadata` with `lockId`.
 4. Unless `autoExtend: false` (it defaults **on**), start a `setInterval`
@@ -169,5 +171,5 @@ is set for you.
   scope, which triggers compensations for already-completed steps.
 - `defaultStepConfig.retry` only applies to steps created via `createStep`
   (they carry `rawConfig`). Hand-built step objects bypass it.
-- A successful result has **no** `compensated`/`compensationsFailed` fields — they
-  exist only on `WorkflowFailure`.
+- A successful result has **no** `compensated`/`compensationsFailed`/
+  `compensationErrors` fields — they exist only on `WorkflowFailure`.

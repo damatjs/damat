@@ -1,4 +1,4 @@
-import type { WorkflowError } from "../errors";
+import type { CompensationError, WorkflowError } from "../errors";
 
 /**
  * Result type for successful workflow execution
@@ -22,6 +22,8 @@ export interface WorkflowFailure {
   compensated: boolean;
   /** Number of compensation functions that threw (errors are logged, not raised) */
   compensationsFailed: number;
+  /** The errors from failed compensations, in occurrence order (empty when none failed) */
+  compensationErrors: CompensationError[];
 }
 
 /**

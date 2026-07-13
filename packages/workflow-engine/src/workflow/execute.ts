@@ -108,6 +108,7 @@ export async function executeWorkflowInternal<I, O>(
       durationMs,
       compensated: engineState.compensationsRun > 0,
       compensationsFailed: engineState.compensationsFailed,
+      compensationErrors: engineState.compensationErrors ?? [],
     };
   }
 }

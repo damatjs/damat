@@ -181,8 +181,10 @@ directly without baking per-site values into the step definition.
    `Effect.addFinalizer((exit) => ...)`:
    - If the scope closes with **failure**, run `step.compensate(compensateInput, ctx)`.
      On success, increment `engineState.compensationsRun`.
-     On throw, increment `engineState.compensationsFailed`, log the error
-     (with the squashed original cause), and **swallow** it (`Effect.catchAll → Effect.void`).
+     On throw, increment `engineState.compensationsFailed`, push a
+     `CompensationError` onto `engineState.compensationErrors` (surfaced as
+     `result.compensationErrors`), log the error (with the squashed original
+     cause), and **swallow** it (`Effect.catchAll → Effect.void`).
    - If the scope closes with **success**, the finalizer is a no-op.
 7. **Return** the step output (the unwrapped `StepResponse.output`).
 
@@ -216,6 +218,7 @@ const wf = createWorkflow("saga", (input, ctx) =>
   the `ctx` parameter your `invoke` function is given to read the real attempt
   number.
 - Don't throw from compensation expecting it to abort anything — it's logged and
-  swallowed; only `compensationsFailed` reflects it.
+  swallowed; only `compensationsFailed`/`compensationErrors` on the failure
+  result reflect it.
 - `executeStep` needs a `Scope`. Calling it outside a scoped workflow effect is a
   type error (its `R` channel includes `Scope.Scope`).

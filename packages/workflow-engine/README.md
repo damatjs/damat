@@ -88,8 +88,10 @@ const result = await placeOrder.execute({ items: ["sku-1"] });
 if (result.success) {
   console.log(result.result, result.durationMs);
 } else {
-  // If chargeCard failed, createOrder's compensation already ran.
-  console.error(result.error.code, result.compensated);
+  // If chargeCard failed, createOrder's compensation already ran. Any
+  // compensation that itself threw is listed in result.compensationErrors
+  // (empty array when none failed) — the original error is never replaced.
+  console.error(result.error.code, result.compensated, result.compensationErrors);
 }
 ```
 

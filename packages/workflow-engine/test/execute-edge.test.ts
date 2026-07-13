@@ -23,7 +23,6 @@ mock.module("@damatjs/redis", () => ({ acquireLock, releaseLock, getRedis }));
 import { Effect, Scope, Exit, Cause } from "@damatjs/deps/effect";
 import { createWorkflow } from "../src/workflow";
 import { createStep, executeStep, StepResponse } from "../src/step";
-import { runStep } from "../src/utils";
 import {
   StepExecutionError,
   StepTimeoutError,
@@ -160,13 +159,15 @@ describe("step/execute: retry exhaustion records MaxRetriesExceededError", () =>
     );
     await runScoped(executeStep(step, 1, c));
 
-    expect(engineState!.retriesExceeded).toBeInstanceOf(MaxRetriesExceededError);
+    expect(engineState!.retriesExceeded).toBeInstanceOf(
+      MaxRetriesExceededError,
+    );
     expect(engineState!.retriesExceeded!.maxRetries).toBe(2);
     expect(engineState!.retriesExceeded!.stepName).toBe("exhaust");
     // lastError is threaded through as the cause.
-    expect((engineState!.retriesExceeded!.cause as StepExecutionError).message).toBe(
-      "permanent",
-    );
+    expect(
+      (engineState!.retriesExceeded!.cause as StepExecutionError).message,
+    ).toBe("permanent");
   });
 
   it("does NOT record retriesExceeded when isRetryable stops retries early (not exhaustion)", async () => {
@@ -184,13 +185,103 @@ describe("step/execute: retry exhaustion records MaxRetriesExceededError", () =>
         throw new Error("nope");
       },
       undefined,
-      { retry: { maxAttempts: 5, initialDelayMs: 1, isRetryable: () => false } },
+      {
+        retry: { maxAttempts: 5, initialDelayMs: 1, isRetryable: () => false },
+      },
     );
     await runScoped(executeStep(step, 1, c));
 
     // Only the first attempt ran; maxAttempts was never exhausted.
     expect(calls).toBe(1);
     expect(engineState!.retriesExceeded).toBeUndefined();
+  });
+});
+
+// =============================================================================
+// step/execute — timeoutMs applies PER ATTEMPT and a timeout is retryable
+// =============================================================================
+
+describe("step/execute: per-attempt timeout is retryable", () => {
+  it("retries a timed-out attempt; a later fast attempt succeeds (fresh budget per attempt)", async () => {
+    let calls = 0;
+    const step = createStep<number, string>(
+      "timeout-then-ok",
+      async () => {
+        calls++;
+        if (calls === 1) {
+          // First attempt blows the 25ms budget.
+          await new Promise((r) => setTimeout(r, 100));
+          return "too late";
+        }
+        return "recovered";
+      },
+      undefined,
+      { timeoutMs: 25, retry: { maxAttempts: 2, initialDelayMs: 1 } },
+    );
+    const exit = await runScoped(executeStep(step, 1, ctx()));
+
+    expect(Exit.isSuccess(exit)).toBe(true);
+    if (Exit.isSuccess(exit)) expect(exit.value).toBe("recovered");
+    // Attempt 2 ran and completed — if the timeout were cumulative across
+    // attempts, the second attempt would have had no budget left.
+    expect(calls).toBe(2);
+  });
+
+  it("exhaustion by repeated timeouts records MaxRetriesExceededError with the StepTimeoutError cause", async () => {
+    const engineState: WorkflowEngineState = {
+      compensationsRun: 0,
+      compensationsFailed: 0,
+    };
+    const c: WorkflowContext = { ...ctx(), engineState };
+    let calls = 0;
+    const step = createStep<number, string>(
+      "always-timeout",
+      async () => {
+        calls++;
+        await new Promise((r) => setTimeout(r, 100));
+        return "never";
+      },
+      undefined,
+      { timeoutMs: 10, retry: { maxAttempts: 1, initialDelayMs: 1 } },
+    );
+    const exit = await runScoped(executeStep(step, 1, c));
+    const err = squashError(exit);
+
+    // 1 initial + 1 retry, each burned by its own per-attempt timeout.
+    expect(calls).toBe(2);
+    // The step boundary keeps the LAST StepTimeoutError...
+    expect(err).toBeInstanceOf(StepTimeoutError);
+    expect((err as StepTimeoutError).timeoutMs).toBe(10);
+    // ...while engineState records the exhaustion, cause = the timeout error.
+    expect(engineState.retriesExceeded).toBeInstanceOf(MaxRetriesExceededError);
+    expect(engineState.retriesExceeded!.maxRetries).toBe(1);
+    expect(engineState.retriesExceeded!.cause).toBeInstanceOf(StepTimeoutError);
+  });
+
+  it("timeout exhaustion surfaces MAX_RETRIES_EXCEEDED at the workflow boundary", async () => {
+    const step = createStep<number, string>(
+      "wf-timeout-exhaust",
+      async () => {
+        await new Promise((r) => setTimeout(r, 100));
+        return "never";
+      },
+      undefined,
+      { timeoutMs: 10, retry: { maxAttempts: 1, initialDelayMs: 1 } },
+    );
+    const wf = createWorkflow<number, string>(
+      "timeout-exhaust-wf",
+      (input, c) => executeStep(step, input, c),
+    );
+    const res = await wf.execute(1);
+
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(res.error).toBeInstanceOf(MaxRetriesExceededError);
+      expect(res.error.code).toBe("MAX_RETRIES_EXCEEDED");
+      expect(
+        (res.error as MaxRetriesExceededError).cause,
+      ).toBeInstanceOf(StepTimeoutError);
+    }
   });
 });
 
@@ -334,7 +425,9 @@ describe("workflow/execute: MAX_RETRIES_EXCEEDED at boundary", () => {
     if (!res.success) {
       expect(res.error).toBeInstanceOf(MaxRetriesExceededError);
       expect(res.error.code).toBe("MAX_RETRIES_EXCEEDED");
-      expect(res.error.message).toBe("Step 'flaky-exhaust' failed after 2 retries");
+      expect(res.error.message).toBe(
+        "Step 'flaky-exhaust' failed after 2 retries",
+      );
     }
     expect(calls).toBe(3);
   });
@@ -564,9 +657,14 @@ describe("step/execute: step built without rawConfig", () => {
   // layering, while still honouring a per-call override.
 
   it("uses the step's pre-merged config verbatim when there is no override", async () => {
-    const step = createStep<number, number>("no-raw", async (n) => n + 1, undefined, {
-      timeoutMs: 1234,
-    });
+    const step = createStep<number, number>(
+      "no-raw",
+      async (n) => n + 1,
+      undefined,
+      {
+        timeoutMs: 1234,
+      },
+    );
     // Simulate a step assembled outside createStep.
     delete (step as { rawConfig?: unknown }).rawConfig;
 
@@ -576,7 +674,6 @@ describe("step/execute: step built without rawConfig", () => {
   });
 
   it("layers a per-call override on top of the step's config (no rawConfig)", async () => {
-    let seenTimeout: number | undefined;
     const step = createStep<number, number>(
       "no-raw-override",
       async (n) => n + 1,
@@ -587,9 +684,11 @@ describe("step/execute: step built without rawConfig", () => {
 
     // Wrap invoke to observe the timeout actually used would require internals;
     // instead we simply assert the override path runs and the step still works.
-    void seenTimeout;
     const exit = await runScoped(
-      executeStep(step, 1, ctx(), { timeoutMs: 9999, retry: { maxAttempts: 2 } }),
+      executeStep(step, 1, ctx(), {
+        timeoutMs: 9999,
+        retry: { maxAttempts: 2 },
+      }),
     );
     expect(Exit.isSuccess(exit)).toBe(true);
     if (Exit.isSuccess(exit)) expect(exit.value).toBe(2);

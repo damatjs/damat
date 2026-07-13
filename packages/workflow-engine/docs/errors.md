@@ -62,8 +62,9 @@ new WorkflowLockError(workflowName, lockId);
   boundary then promotes that recorded error to `result.error`. `cause` holds the
   last underlying error.
 - **`CompensationError`** is constructed inside the compensation finalizer, then
-  **logged and swallowed** — it never reaches `result.error`. Its only externally
-  visible effect is incrementing `result.compensationsFailed`.
+  **logged and swallowed** — it never reaches `result.error` (the workflow's own
+  error always stands). It is appended to `result.compensationErrors` (in
+  occurrence order) and counted in `result.compensationsFailed`.
 - **`WorkflowLockError`** is placed in a `WorkflowFailure` by `executeWithLock`
   when acquisition fails (it is returned, not thrown).
 
@@ -78,7 +79,8 @@ if (!result.success) {
     case "MAX_RETRIES_EXCEEDED":/* persistent failure; inspect .cause */ break;
     default:                    /* STEP_EXECUTION_FAILED / WORKFLOW_FAILED / WORKFLOW_TIMEOUT */
   }
-  // result.compensated / result.compensationsFailed describe rollback
+  // result.compensated / result.compensationsFailed / result.compensationErrors
+  // describe rollback
 }
 ```
 
@@ -99,5 +101,6 @@ You can also branch on `instanceof` (the classes are exported) or on `_tag`.
 - The base `WorkflowError._tag` is a mutable-typed `string` (so subclasses can
   `override` it with a literal); rely on `code`/`instanceof` for exhaustive
   matching rather than the base tag's type.
-- Compensation errors are intentionally invisible in `result.error`. Watch
-  `compensationsFailed` and your logs.
+- Compensation errors are intentionally invisible in `result.error`. Inspect
+  `result.compensationErrors` (and `compensationsFailed`) for the actual
+  `CompensationError`s.

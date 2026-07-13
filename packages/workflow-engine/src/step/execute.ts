@@ -256,19 +256,23 @@ export function executeStep<I, O, C = undefined>(
               if (engineState) engineState.compensationsRun++;
             },
             catch: (e) => {
-              if (engineState) engineState.compensationsFailed++;
               // Log but don't fail - compensation errors are tracked but shouldn't cascade
               stepLogger.error(
                 `Compensation failed`,
                 e instanceof Error ? e : new Error(String(e)),
                 { originalError: Cause.squash(exit.cause) },
               );
-              return new CompensationError(
+              const compensationError = new CompensationError(
                 step.name,
                 e instanceof Error ? e.message : String(e),
                 e,
                 ctx.workflowName,
               );
+              if (engineState) {
+                engineState.compensationsFailed++;
+                (engineState.compensationErrors ??= []).push(compensationError);
+              }
+              return compensationError;
             },
           }).pipe(
             Effect.catchAll(() => Effect.void), // Swallow compensation errors after logging

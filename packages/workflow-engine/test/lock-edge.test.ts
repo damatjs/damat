@@ -49,6 +49,7 @@ import {
   acquireWorkflowLock,
   releaseWorkflowLock,
   extendWorkflowLock,
+  getLockKey,
 } from "../src/lock";
 import { StepExecutionError, WorkflowLockError } from "../src/index";
 
@@ -112,6 +113,25 @@ describe("lock/acquire: contention edges", () => {
     expect(res.lockValue).toBe("real");
     expect(acquireLock).toHaveBeenCalledTimes(2);
   });
+
+  it("waits ~retryDelayMs between attempts while the lock is held, then wins when it frees", async () => {
+    // Held on attempts 1 and 2, freed by attempt 3 — the two inter-attempt
+    // waits (~25ms each) must actually elapse (every other retry test uses 0).
+    state.acquireResults = [null, null, "freed-up"];
+    const start = Date.now();
+    const res = await acquireWorkflowLock("wf", {
+      lockId: "id",
+      maxRetries: 2,
+      retryDelayMs: 25,
+    });
+    const elapsed = Date.now() - start;
+
+    expect(res.acquired).toBe(true);
+    expect(res.lockValue).toBe("freed-up");
+    expect(acquireLock).toHaveBeenCalledTimes(3);
+    // Two denials -> two delays of ~25ms (allow timer slop).
+    expect(elapsed).toBeGreaterThanOrEqual(40);
+  });
 });
 
 // =============================================================================
@@ -124,6 +144,9 @@ describe("lock/release: edges", () => {
     const ok = await releaseWorkflowLock("wf", "id", "stale");
     expect(ok).toBe(false);
     expect(releaseLock).toHaveBeenCalledTimes(1);
+    // The stale/wrong token is passed through verbatim to redis releaseLock —
+    // the compare-and-delete decision belongs to redis, never the wrapper.
+    expect(releaseLock).toHaveBeenCalledWith(getLockKey("wf", "id"), "stale");
   });
 });
 

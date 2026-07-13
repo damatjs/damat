@@ -80,8 +80,9 @@ no-ops.
   every step. It carries `executionId`, `workflowName`, `startedAt`, the current
   `attempt`, free-form `metadata`, and `engineState` (`@internal` bookkeeping).
 - **`engineState`** lives on the context so a step's compensation finalizer can
-  increment `compensationsRun` / `compensationsFailed`, which the workflow result
-  then reports. Steps must not read or mutate it.
+  increment `compensationsRun` / `compensationsFailed` and collect
+  `compensationErrors`, which the workflow result then reports. Steps must not
+  read or mutate it.
 - **Errors flow as the Effect error channel.** Step-level errors are
   `StepExecutionError | StepTimeoutError`. At the workflow boundary, if a step
   recorded `engineState.retriesExceeded` (retries exhausted), that
@@ -109,7 +110,9 @@ no-ops.
   every `ttlMs/2` unless `autoExtend: false`; a failed *release* is logged and
   swallowed (the TTL frees the lock) so it never discards the workflow result.
 - **Compensation never masks the original error.** Compensation failures are
-  logged, counted in `compensationsFailed`, and swallowed (`Effect.catchAll → Effect.void`).
+  logged, counted in `compensationsFailed`, collected (in occurrence order) in
+  `compensationErrors`, and swallowed (`Effect.catchAll → Effect.void`) — the
+  workflow's own error is never replaced.
 - **`compensated` is true only if at least one compensation ran successfully**
   (`engineState.compensationsRun > 0`).
 - **`executionId` is always unique** (`nanoid`), even under a lock — the `lockId`

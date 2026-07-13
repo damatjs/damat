@@ -7,7 +7,7 @@ import {
   DEFAULT_RETRY_POLICY,
 } from "../src/index";
 import { DEFAULT_STEP_CONFIG } from "../src/config";
-import type { WorkflowContext, StepDefinition } from "../src/types";
+import type { WorkflowContext } from "../src/types";
 
 // -----------------------------------------------------------------------------
 // Effect helpers: executeStep returns an Effect requiring a Scope, so we run it
@@ -54,23 +54,18 @@ describe("step/create: createStep", () => {
   });
 
   it("includes compensate when supplied", () => {
-    const comp = async () => { };
+    const comp = async () => {};
     const step = createStep<number, number>("s", async (n) => n, comp);
     expect(step.compensate).toBe(comp);
   });
 
   it("overrides individual config fields and deep-merges the retry policy", () => {
-    const step = createStep<number, number>(
-      "s",
-      async (n) => n,
-      undefined,
-      {
-        timeoutMs: 1234,
-        description: "my step",
-        idempotent: false,
-        retry: { maxAttempts: 3, initialDelayMs: 5 }, // partial override
-      },
-    );
+    const step = createStep<number, number>("s", async (n) => n, undefined, {
+      timeoutMs: 1234,
+      description: "my step",
+      idempotent: false,
+      retry: { maxAttempts: 3, initialDelayMs: 5 }, // partial override
+    });
 
     expect(step.config.timeoutMs).toBe(1234);
     expect(step.config.description).toBe("my step");
@@ -115,11 +110,14 @@ describe("step/execute: success path", () => {
   it("passes input and a context (with attempt) into invoke", async () => {
     let seenInput: unknown;
     let seenCtx: WorkflowContext | undefined;
-    const step = createStep<{ id: number }, boolean>("ctx", async (input, c) => {
-      seenInput = input;
-      seenCtx = c;
-      return true;
-    });
+    const step = createStep<{ id: number }, boolean>(
+      "ctx",
+      async (input, c) => {
+        seenInput = input;
+        seenCtx = c;
+        return true;
+      },
+    );
     await runStep(executeStep(step, { id: 99 }, ctx()));
 
     expect(seenInput).toEqual({ id: 99 });
@@ -211,7 +209,12 @@ describe("step/execute: retry behavior", () => {
       },
       undefined,
       {
-        retry: { maxAttempts: 2, initialDelayMs: 1, maxDelayMs: 50, backoffMultiplier: 2 },
+        retry: {
+          maxAttempts: 2,
+          initialDelayMs: 1,
+          maxDelayMs: 50,
+          backoffMultiplier: 2,
+        },
         timeoutMs: 5000,
       },
     );
@@ -233,7 +236,9 @@ describe("step/execute: retry behavior", () => {
         throw new Error("nope");
       },
       undefined,
-      { retry: { maxAttempts: 3, initialDelayMs: 1, isRetryable: () => false } },
+      {
+        retry: { maxAttempts: 3, initialDelayMs: 1, isRetryable: () => false },
+      },
     );
     await runStep(executeStep(step, 1, ctx()));
     expect(calls).toBe(1);
@@ -395,7 +400,9 @@ describe("step/execute: compensation finalizer", () => {
     const program = Effect.scoped(
       Effect.gen(function* () {
         yield* executeStep(step, 1, ctx());
-        return yield* Effect.fail(new StepExecutionError("ds", "primary failure"));
+        return yield* Effect.fail(
+          new StepExecutionError("ds", "primary failure"),
+        );
       }),
     );
     const exit = await Effect.runPromiseExit(program);
@@ -477,7 +484,9 @@ describe("step/execute: per-call config override", () => {
       undefined,
       { timeoutMs: 20 }, // on its own this would time out the 60ms task
     );
-    const exit = await runStep(executeStep(step, 1, ctx(), { timeoutMs: 1000 }));
+    const exit = await runStep(
+      executeStep(step, 1, ctx(), { timeoutMs: 1000 }),
+    );
 
     expect(Exit.isSuccess(exit)).toBe(true);
     if (Exit.isSuccess(exit)) expect(exit.value).toBe("made it");
