@@ -5,6 +5,31 @@ import { QueryResultRow } from "@damatjs/orm-type";
 export type ModelsMap = Record<string, ModelDefinition>;
 export type TypesMap = Record<string, QueryResultRow>;
 
+/**
+ * Per-call opt-in read caching (the Next.js fetch-cache model). Only honored
+ * when the service was created with `cache` in its config AND Redis is
+ * initialized — otherwise the read goes straight to the database. `true`
+ * uses the service's default TTL.
+ */
+export interface CacheReadOptions {
+  /** Time to live in seconds (default: the service config's defaultTtl, 60). */
+  ttl?: number;
+  /**
+   * Extra invalidation tags for this entry. Every entry always carries the
+   * implicit `model:<name>` tag, which writes to the model invalidate
+   * automatically; custom tags are invalidated via `invalidateCacheTags()`.
+   */
+  tags?: string[];
+}
+
+/** Service-level switch that enables the read-cache machinery (opt-in). */
+export interface ServiceCacheConfig {
+  /** Default TTL in seconds for `cache: true` reads (default: 60). */
+  defaultTtl?: number;
+  /** Cache-key namespace, e.g. the module id (default: "svc"). */
+  prefix?: string;
+}
+
 export interface FindOptions<Cols extends string = string> {
   select?: Cols[];
   where?: Record<string, unknown>;
@@ -23,6 +48,8 @@ export interface FindOptions<Cols extends string = string> {
    * filters `deleted_at IS NULL`; set this to see archived rows too.
    */
   withDeleted?: boolean;
+  /** Opt into Redis read caching for this call (see {@link CacheReadOptions}). */
+  cache?: boolean | CacheReadOptions;
 }
 
 /**
@@ -97,12 +124,16 @@ export interface CountOptions {
   where?: Record<string, unknown>;
   /** Count soft-deleted rows too (default: only `deleted_at IS NULL`). */
   withDeleted?: boolean;
+  /** Opt into Redis read caching for this call (see {@link CacheReadOptions}). */
+  cache?: boolean | CacheReadOptions;
 }
 
 export interface ExistsOptions {
   where: Record<string, unknown>;
   /** Consider soft-deleted rows too (default: only `deleted_at IS NULL`). */
   withDeleted?: boolean;
+  /** Opt into Redis read caching for this call (see {@link CacheReadOptions}). */
+  cache?: boolean | CacheReadOptions;
 }
 
 export interface ModuleServiceConfig<
@@ -113,6 +144,24 @@ export interface ModuleServiceConfig<
   models: TModels;
   credentialsSchema?: TCredentialsSchema;
   types?: TTypes;
+  /**
+   * Emit one debug-level `query` log ({ model, method, durationMs }) per CRUD
+   * call. Off by default; no SQL text or parameter values are ever logged.
+   */
+  logQueries?: boolean;
+  /**
+   * Enable the opt-in Redis read cache for this service's models. Reads are
+   * only cached when the individual call also passes a `cache` option; writes
+   * (create/update/delete/…) then invalidate the model's cached reads
+   * automatically. Requires an initialized Redis (reads fall through to the
+   * database when it is missing or down).
+   */
+  cache?: ServiceCacheConfig;
+  /**
+   * Emit `<model>.created|updated|deleted` on the global event bus
+   * (@damatjs/events) after every successful write. Off by default.
+   */
+  events?: boolean;
 }
 
 export type ToCamelCase<S extends string> =

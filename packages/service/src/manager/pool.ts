@@ -138,4 +138,17 @@ export class PoolManager {
     this.entityManager = null;
     this.connectionManager = null;
   }
+
+  /**
+   * Drain and end the pg pool, then clear all references. Idempotent: a
+   * second call (or a close after reset) is a no-op, and a pool someone else
+   * already ended is not ended twice (pg throws on double end()).
+   */
+  static async close(): Promise<void> {
+    const pool = this.pool;
+    this.reset();
+    if (pool && !pool.ended) {
+      await pool.end();
+    }
+  }
 }

@@ -3,6 +3,9 @@ import type { ModelDefinition } from "@damatjs/orm-model";
 import type { TransactionOptions } from "@damatjs/orm-type";
 import { PoolManager } from "../manager/pool";
 import { ModelMethods } from "./methods";
+import { withQueryLogging } from "./logging";
+import { withTaggedCache } from "./cache";
+import { withModelEvents } from "./events";
 import { ModuleServiceConfig, ModelsMap, ToCamelCase } from "./type";
 import { toCamelCase } from "@/util/string";
 
@@ -38,7 +41,13 @@ export function ModuleService<
 
       for (const [modelName, model] of Object.entries(models)) {
         entityManager.registerModel(modelName, model as ModelDefinition);
-        const methods = new ModelMethods(model as ModelDefinition, modelName, entityManager);
+        let methods = new ModelMethods(model as ModelDefinition, modelName, entityManager);
+        // Layering: cache innermost (so events fire after invalidation and a
+        // query-log line covers hits and misses alike), then events, logging
+        // outermost.
+        if (config.cache) methods = withTaggedCache(methods, modelName, config.cache);
+        if (config.events) methods = withModelEvents(methods, modelName);
+        if (config.logQueries) methods = withQueryLogging(methods, modelName);
         modelMethodsMap.set(modelName, methods);
       }
     }

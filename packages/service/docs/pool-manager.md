@@ -43,7 +43,8 @@ The static getters/setters (`pool`, `entityManager`, `connectionManager`) proxy 
 | `hasEntityManager` | `() => boolean` | `entityManager !== null`. |
 | `healthCheck` | `() => Promise<boolean>` | If a connection manager exists, returns its `healthCheck().connected`; otherwise runs `SELECT 1 as ok` against the pool. Returns `false` on any failure (and `false` when uninitialized with no connection manager). |
 | `getStats` | `() => PoolManagerStats` | If a connection manager exists, maps `getPoolStats()`; otherwise reads `pool.totalCount/idleCount/waitingCount`. **Throws if the pool is not initialized and there is no connection manager** (it calls `getPool()`). |
-| `reset` | `() => void` | Clears `pool`, `entityManager`, and `connectionManager` to `null`. |
+| `reset` | `() => void` | Clears `pool`, `entityManager`, and `connectionManager` to `null`. Does **not** end the pool. |
+| `close` | `() => Promise<void>` | Drains and ends the pg pool, then clears all state. Idempotent: it calls `reset()` *before* `pool.end()`, so a second `close()` (or a `close()` after `reset()`) is a no-op, and a pool someone else already ended is skipped via `pool.ended` (pg throws on double `end()`). |
 
 ```ts
 interface PoolManagerStats { totalConnections: number; idleConnections: number; waitingCount: number; }
@@ -68,9 +69,10 @@ In the monorepo this is called by `@damatjs/framework`'s `initDatabase` (`packag
 startup:   PoolManager.setup({ pool, logger, connectionManager })   // pool + entity manager ready
 runtime:   PoolManager.getPgEntityManager()  // read by services / ModelMethods
 shutdown:  connectionManager.disconnect(); PoolManager.reset()
+           // or, when nothing else owns the pool: await PoolManager.close()
 ```
 
-The framework's `closeDatabase()` disconnects the connection manager and calls `PoolManager.reset()`.
+The framework's `closeDatabase()` disconnects the connection manager and calls `PoolManager.reset()` — the connection manager owns and ends the pool there. `close()` is the standalone path: when `PoolManager` holds the only reference (tests, scripts that called `setup` with a bare `pg.Pool`), it drains and ends the pool itself.
 
 ## Gotchas
 
@@ -78,3 +80,4 @@ The framework's `closeDatabase()` disconnects the connection manager and calls `
 - **`healthCheck()` returns `false`, never throws.** When uninitialized with no connection manager it returns `false`; the pool-path is wrapped in `try/catch`.
 - **One pool per process.** This is intentional and shared globally. Do not try to run multiple independent pools through `PoolManager`; use the underlying `pg.Pool` directly if you need that.
 - **`reset()` is for teardown / test isolation.** After `reset()`, services constructed earlier hold a `ModelMethods` bound to an entity manager that is now detached. `defineModule().init()` re-constructs services against the *current* pool — call it again after a reset (the framework's module init does).
+- **`reset()` drops references; `close()` ends the pool.** After a bare `reset()` the pool object keeps its connections alive — whoever created it must still `end()` it. Use `close()` when `PoolManager` is the last owner and you want the connections gone (`tests/manager/pool.close.test.ts` covers the idempotency cases).

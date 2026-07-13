@@ -81,14 +81,18 @@ await svc.user.delete({ where: { id: user.id }, cascade: true });
 
 | Export | Kind | Summary |
 | --- | --- | --- |
-| `ModuleService(config)` | factory | Builds an abstract base class from `{ models, credentialsSchema? }`. Returns a class with `em`, `getModels`, `transaction()`, and one `ModelMethods` accessor per model (camelCased key). |
+| `ModuleService(config)` | factory | Builds an abstract base class from `{ models, credentialsSchema?, cache?, logQueries?, events? }`. Returns a class with `em`, `getModels`, `transaction()`, and one `ModelMethods` accessor per model (camelCased key). |
 | `ModelMethods<T>` | class | The per-model CRUD surface: `create`, `createMany`, `upsert`, `upsertMany`, `find`, `findById`, `findOne`, `findMany`, `update`, `updateOne`, `delete` (optional `cascade`), `softDelete` (optional `cascade`), `restore`, `count`, `exists`, plus relation loading and transaction binding. |
-| `PoolManager` | static class | Process-wide holder of the `Pool`, `PgEntityManager`, and `ConnectionManager`. `setup`, `getPool`, `getPgEntityManager`, `getConnectionManager`, `healthCheck`, `getStats`, `isInitialized`, `reset`. State lives on `globalThis` so duplicate package copies share one pool. |
+| `PoolManager` | static class | Process-wide holder of the `Pool`, `PgEntityManager`, and `ConnectionManager`. `setup`, `getPool`, `getPgEntityManager`, `getConnectionManager`, `healthCheck`, `getStats`, `isInitialized`, `reset`, `close` (drains and ends the pg pool; idempotent). State lives on `globalThis` so duplicate package copies share one pool. |
 | `defineModule(name, definition)` | factory | Wraps a service class + credentials loader into a `ModuleInstance` whose `.service` is a lazy `Proxy`. Returns `{ name, service, credentials, init }`. |
 | `ModuleDefinition<TService>` | type | `{ service: new (credentials) => TService; credentials: (env) => any }`. |
 | `ModuleInstance<TService>` | type | `{ name; service; credentials; init() }`. |
 | `ModuleRegistry` | interface | Empty interface apps augment via declaration merging so `getModule("user")` (in the framework) is typed. |
 | `ModuleServiceConfig`, `ModelsMap`, `FindOptions`, `CreateOptions`, `CreateManyOptions`, `UpsertOptions`, `UpsertManyOptions`, `UpdateOptions`, `DeleteOptions`, `SoftDeleteOptions`, `CountOptions`, `ExistsOptions`, `ToCamelCase` | types | Configuration and per-method option types for the service layer. |
+| `withTaggedCache(methods, model, config)`, `modelCacheTag(model)` | function | The opt-in Redis read cache (applied automatically by `ModuleService` when the config carries `cache`) and the implicit invalidation tag a model's cached reads carry. |
+| `CacheReadOptions`, `ServiceCacheConfig` | types | Per-call `cache: { ttl?, tags? }` read options and the service-level cache switch `{ defaultTtl?, prefix? }`. |
+| `withModelEvents(methods, model)`, `modelEventName(model, kind)` | function | The opt-in CRUD event wrapper (applied automatically when the config carries `events: true`) and the `<model>.<kind>` name a write emits. |
+| `ModelEventPayload` | type | `{ model, method, result }` — the payload every model CRUD event carries. |
 | `PoolManagerStats`, `ConnectionManagerLike` | types | Pool statistics and the minimal connection-manager shape `PoolManager` accepts. |
 | `toCamelCase(name)` | internal util | Lowercases the first character only (`"UserService"` → `"userService"`); used internally to derive accessor names. Lives in `src/util/string.ts` and is **not** re-exported from `@damatjs/services`. |
 
@@ -119,6 +123,82 @@ than intended:
   `updated_at`/`updatedAt` column with the current time unless you set it
   explicitly. Auto-timestamps are `timestamp with time zone` (sub-second),
   not `date`.
+
+## Read caching (opt-in, Redis-backed)
+
+The Next.js fetch-cache model applied to the service layer: nothing is cached
+by default, a read opts in per call, and writes invalidate automatically.
+
+```ts
+// 1. Enable the machinery on the service (off without this):
+class UserService extends ModuleService({
+  models,
+  cache: { defaultTtl: 60, prefix: "user" }, // seconds; prefix namespaces keys
+}) {}
+
+// 2. Choose per read where the data comes from:
+await svc.user.findMany({ where: { active: true } });                  // DB, as always
+await svc.user.findMany({ where: { active: true }, cache: true });     // cached, defaultTtl
+await svc.user.findMany({
+  where: { active: true },
+  cache: { ttl: 300, tags: ["homepage"] },                             // time-based + custom tag
+});
+
+// 3. Writes invalidate the model's cached reads automatically:
+await svc.user.create({ data: { … } });   // drops every cached `user` read
+
+// 4. Manual reset (custom tags / cross-model groups):
+import { invalidateCacheTags } from "@damatjs/redis"; // re-exported by @damatjs/framework
+await invalidateCacheTags(["homepage"]);
+```
+
+Semantics worth knowing:
+
+- Works on `find`/`findMany`/`findById`/`findOne`/`count`/`exists`; every
+  entry carries the implicit `model:<name>` tag plus any custom `tags`.
+- All of `create/createMany/upsert/upsertMany/update/updateOne/delete/`
+  `softDelete/restore` invalidate the model tag after they succeed.
+- **Fail-open**: Redis missing or down never breaks a read — it falls through
+  to the database with a debug log. Reads inside `transaction()` always hit
+  the database (a transaction must see its own writes).
+- `null` results are not cached (a cached `null` would be indistinguishable
+  from a miss); `false`/`0` results are.
+- Keys are stable hashes of the (cache-stripped) call arguments — the same
+  filter written in a different key order addresses the same entry.
+
+## Query logging & model events (opt-in)
+
+Two more per-service config switches, both off by default:
+
+```ts
+class UserService extends ModuleService({
+  models,
+  logQueries: true,   // one debug `query` log per CRUD call
+  events: true,       // <model>.created|updated|deleted on the global bus
+}) {}
+```
+
+- **`logQueries: true`** — every CRUD call emits one debug-level `query` log
+  with `{ model, method, durationMs }` (also when the call throws). No SQL
+  text or parameter values are ever logged — payloads may carry PII.
+- **`events: true`** — every **successful** write emits a
+  `<model>.created|updated|deleted` event on the `@damatjs/events` global bus
+  with payload `{ model, method, result }`. `create`/`createMany` →
+  `created`; `update`/`updateOne`/`upsert`/`upsertMany`/`restore` →
+  `updated`; `delete`/`softDelete` → `deleted`. Emission is awaited before
+  the write call returns; subscriber errors are isolated by the bus, never
+  thrown back into the write.
+
+```ts
+import { getEventBus } from "@damatjs/events";
+getEventBus().on("user.created", async (payload) => {
+  // { model: "user", method: "create", result: <the created row(s)> }
+});
+```
+
+The wrappers stack cache innermost → events → logging outermost, so a
+`query` log line covers cache hits and misses alike, and events fire after
+the write's cache invalidation has run.
 
 ## How it fits
 

@@ -40,6 +40,7 @@ export function defineModule<TService extends object>(name, definition) {
   const parseCredentials = definition.credentials(process.env);  // eager: load creds now
 
   const init = () => {
+    getLogger().debug("instance setup", { module: name });        // one debug line per (re)construction
     instance = new definition.service(parseCredentials);          // construct against CURRENT pool
     return instance;
   };
