@@ -166,6 +166,51 @@ describe("createRateLimitMiddleware", () => {
       expect(await res.text()).toBe("reached");
       expect(logCalls.some((l) => l.level === "error" && /Rate limit check failed/.test(l.msg))).toBe(true);
     });
+
+    it("fails closed with 503 RATE_LIMIT_UNAVAILABLE when failClosed is set", async () => {
+      const ioredis = getRedisClient().client as any;
+      ioredis.eval = () => {
+        throw new Error("redis eval failed");
+      };
+
+      const app = new Hono();
+      app.use("*", createRateLimitMiddleware(rl(10, "1m", { failClosed: true })));
+      let reached = false;
+      app.get("/", (c) => {
+        reached = true;
+        return c.text("should not reach");
+      });
+
+      const res = await app.request("/");
+      expect(res.status).toBe(503);
+      expect(reached).toBe(false);
+      const body = (await res.json()) as any;
+      expect(body.success).toBe(false);
+      expect(body.error.code).toBe("RATE_LIMIT_UNAVAILABLE");
+      expect(body.meta.requestId).toBe("unknown");
+      expect(logCalls.some((l) => l.level === "error" && /Rate limit check failed/.test(l.msg))).toBe(true);
+    });
+
+    it("honors failClosed from a tier config (effectiveConfig wins)", async () => {
+      const globalConfig = rl(100, "1h", {
+        getUserTier: async () => rl(3, "10s", { failClosed: true }),
+      });
+      const ioredis = getRedisClient().client as any;
+      ioredis.eval = () => {
+        throw new Error("redis eval failed");
+      };
+
+      const app = new Hono();
+      app.use("*", async (c, next) => {
+        c.set("userId", "u1");
+        await next();
+      });
+      app.use("*", createRateLimitMiddleware(rl(10), globalConfig));
+      app.get("/", (c) => c.text("ok"));
+
+      const res = await app.request("/");
+      expect(res.status).toBe(503);
+    });
   });
 
   describe("identifier precedence (apiKey > userId > ip)", () => {

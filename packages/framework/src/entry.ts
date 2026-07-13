@@ -7,7 +7,19 @@ import { loadConfigAsync } from './config';
 
 export async function start(cwd: string = process.cwd()): Promise<void> {
   const config = await loadConfigAsync(cwd);
+
+  // Lifecycle hooks are awaited and fail startup when they throw — a broken
+  // hook must never boot a half-configured server.
+  const hooks = config.hooks;
+  if (hooks?.beforeServices) {
+    await hooks.beforeServices({ config: config.projectConfig, logger: getLogger() });
+  }
+
   const services = await initializeServices(config);
+
+  if (hooks?.afterServices) {
+    await hooks.afterServices({ config: config.projectConfig, logger: getLogger() });
+  }
 
   const healthCheck = services.healthChecks
     ? { version: "2.0.0", checks: services.healthChecks }
@@ -21,6 +33,9 @@ export async function start(cwd: string = process.cwd()): Promise<void> {
     routesDir,
     projectConfig: config.projectConfig,
     healthCheck,
+    hooks,
+    ...(services.auth ? { authHandlers: services.auth.handlers } : {}),
+    ...(services.auth?.mountRoutes ? { authRoutes: services.auth.mountRoutes } : {}),
   });
 
   const logger = getLogger();

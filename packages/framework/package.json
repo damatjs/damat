@@ -75,12 +75,16 @@
     "@damatjs/orm-connector": "workspace:*",
     "@damatjs/orm-type": "workspace:*",
     "@damatjs/workflow-engine": "workspace:*",
+    "@damatjs/events": "workspace:*",
+    "@damatjs/jobs": "workspace:*",
     "@damatjs/redis": "workspace:*",
     "@hono/node-server": "^1.13.7"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "workspace:*",
+    "@damatjs/auth": "workspace:*",
     "@types/bun": "1.3.9",
+    "hono": "^4.12.0",
     "typescript": "^5.9.3"
   },
   "scripts": {
@@ -88,6 +92,7 @@
     "dev": "bun run build --watch",
     "watch": "tsc --watch",
     "test": "bun test",
-    "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)"
+    "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)",
+    "lint": "oxlint src"
   }
 }

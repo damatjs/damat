@@ -60,6 +60,11 @@ mock.module("@damatjs/services", () => ({
     reset: () => {
       resetCalls++;
     },
+    // Present so this process-global stub still satisfies the auth wiring's
+    // pool probe (`PoolManager.isInitialized()`) if this mock leaks into a
+    // sibling test file (mock.module is process-wide).
+    isInitialized: () => false,
+    getPool: () => undefined,
   },
 }));
 

@@ -1,5 +1,6 @@
 export * from "./bootstrap";
 export * from "./config";
+export * from "./context";
 export * from "./server";
 export * from "./shutdown";
 export * from "./entry";
@@ -9,3 +10,5 @@ export { getModule, hasModule, clearModules, getAllModules, initModules, registe
 
 export * from "@damatjs/services";
 export * from "@damatjs/link";
+export * from "@damatjs/events";
+export * from "@damatjs/jobs";

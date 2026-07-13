@@ -20,7 +20,7 @@ export function createRateLimitMiddleware(
     const redis = getRedis();
 
     const apiKey = c.req.header("x-api-key");
-    const userId = c.get("userId") as string | undefined;
+    const userId = c.get("userId");
     const forwardedFor = c.req.header("x-forwarded-for");
     const firstIp = forwardedFor?.split(",")[0];
     const ip = firstIp ? firstIp.trim() : "unknown";
@@ -86,6 +86,16 @@ export function createRateLimitMiddleware(
       return next();
     } catch (err) {
       logger.error("Rate limit check failed", err instanceof Error ? err : undefined);
+      if (effectiveConfig.failClosed ?? config.failClosed) {
+        return c.json({
+          success: false,
+          error: {
+            code: "RATE_LIMIT_UNAVAILABLE",
+            message: "Rate limiting is unavailable. Please try again later.",
+          },
+          meta: { requestId: c.get("requestId") || "unknown", timestamp: new Date().toISOString() },
+        }, 503);
+      }
       return next();
     }
   };

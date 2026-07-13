@@ -1,4 +1,6 @@
+import type { Hono } from "@damatjs/deps/hono";
 import { ProjectConfig } from './config';
+import type { LifecycleHooks } from './config';
 import type { AuthMiddlewareOptions } from "./middleware/auth";
 
 export type { Logger, ILogger } from "@damatjs/logger";
@@ -11,7 +13,7 @@ export interface ServerConfig {
 }
 
 export interface HealthCheckFn {
-  (): Promise<{ status: string; latency?: number, data?: any }>;
+  (): Promise<{ status: string; latency?: number, data?: unknown }>;
 }
 
 export interface HealthCheckConfig {
@@ -27,10 +29,13 @@ export interface BootstrapOptions {
   projectConfig: ProjectConfig;
   healthCheck?: HealthCheckConfig | undefined;
   authHandlers?: AuthMiddlewareOptions | undefined;
+  /** Mount provider-owned auth routes (Better Auth's `/api/auth/*`) before the file router. */
+  authRoutes?: ((app: Hono) => void) | undefined;
+  hooks?: LifecycleHooks | undefined;
 }
 
 export interface BootstrapResult {
-  app: any;
+  app: Hono;
   config: ServerConfig;
 }
 

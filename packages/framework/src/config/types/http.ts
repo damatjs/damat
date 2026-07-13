@@ -18,6 +18,11 @@ export interface HttpConfig {
 export interface HttpRateLimitConfig {
   requests: number;
   window: string;
+  /**
+   * When true, requests are rejected with 503 if the rate-limit backend is
+   * unreachable. Defaults to false (fail-open: the request proceeds unlimited).
+   */
+  failClosed?: boolean | undefined;
   getUserTier?: ((userId: string) => Promise<HttpRateLimitConfig | null>) | undefined;
   getApiKeyTier?: ((apiKey: string) => Promise<HttpRateLimitConfig | null>) | undefined;
 }

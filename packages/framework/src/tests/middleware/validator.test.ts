@@ -1,8 +1,11 @@
 import { describe, it, expect } from "bun:test";
 import { Hono } from "@damatjs/deps/hono";
-import { z, ZodError } from "@damatjs/deps/zod";
+import { z } from "@damatjs/deps/zod";
 import { ValidationError } from "@damatjs/types";
-import { validate, createValidatorMiddleware } from "../../middleware/validator";
+import {
+  validate,
+  createValidatorMiddleware,
+} from "../../middleware/validator";
 
 describe("validate", () => {
   it("returns parsed data for valid input", () => {
@@ -36,14 +39,20 @@ describe("validate", () => {
 describe("createValidatorMiddleware", () => {
   type ErrBody = {
     success: boolean;
-    error: { code: string; message: string; details: Array<{ path: string; message: string }> };
+    error: {
+      code: string;
+      message: string;
+      details: Array<{ path: string; message: string }>;
+    };
   };
 
   it("passes a valid POST body and reaches the handler", async () => {
     const app = new Hono();
     app.post(
       "/users",
-      createValidatorMiddleware({ body: z.object({ name: z.string() }) } as never),
+      createValidatorMiddleware({
+        body: z.object({ name: z.string() }),
+      } as never),
       (c) => c.json({ ok: true }),
     );
 
@@ -60,7 +69,9 @@ describe("createValidatorMiddleware", () => {
     const app = new Hono();
     app.post(
       "/users",
-      createValidatorMiddleware({ body: z.object({ name: z.string() }) } as never),
+      createValidatorMiddleware({
+        body: z.object({ name: z.string() }),
+      } as never),
       (c) => c.json({ ok: true }),
     );
 
@@ -80,7 +91,9 @@ describe("createValidatorMiddleware", () => {
     const app = new Hono();
     app.post(
       "/users",
-      createValidatorMiddleware({ body: z.object({ name: z.string() }) } as never),
+      createValidatorMiddleware({
+        body: z.object({ name: z.string() }),
+      } as never),
       (c) => c.json({ ok: true }),
     );
 
@@ -165,7 +178,9 @@ describe("createValidatorMiddleware", () => {
     const app = new Hono();
     app.get(
       "/users/:id",
-      createValidatorMiddleware({ params: z.object({ id: z.string() }) } as never),
+      createValidatorMiddleware({
+        params: z.object({ id: z.string() }),
+      } as never),
       (c) => c.json({ ok: true }),
     );
 
@@ -178,7 +193,9 @@ describe("createValidatorMiddleware", () => {
     const app = new Hono();
     app.get(
       "/users/:id",
-      createValidatorMiddleware({ params: z.object({ id: z.coerce.number() }) } as never),
+      createValidatorMiddleware({
+        params: z.object({ id: z.coerce.number() }),
+      } as never),
       (c) => c.json({ ok: true }),
     );
 
@@ -217,8 +234,13 @@ describe("createValidatorMiddleware", () => {
   }
 
   it("throws 'Query is required' when the parsed query is missing", async () => {
-    const mw = createValidatorMiddleware({ query: z.object({ q: z.string() }) } as never);
-    const { c, captured } = fakeContext("GET", { query: undefined, params: {} });
+    const mw = createValidatorMiddleware({
+      query: z.object({ q: z.string() }),
+    } as never);
+    const { c, captured } = fakeContext("GET", {
+      query: undefined,
+      params: {},
+    });
     await mw(c as never, (async () => {}) as never);
     expect(captured.status).toBe(400);
     const payload = captured.payload as ErrBody;
@@ -234,13 +256,24 @@ describe("createValidatorMiddleware", () => {
         },
       },
     } as never);
-    const { c } = fakeContext("POST", { query: {}, params: {}, json: { a: 1 } });
-    await expect(mw(c as never, (async () => {}) as never)).rejects.toThrow(boom);
+    const { c } = fakeContext("POST", {
+      query: {},
+      params: {},
+      json: { a: 1 },
+    });
+    await expect(mw(c as never, (async () => {}) as never)).rejects.toThrow(
+      boom,
+    );
   });
 
   it("throws 'Params is required' when the parsed params are missing", async () => {
-    const mw = createValidatorMiddleware({ params: z.object({ id: z.string() }) } as never);
-    const { c, captured } = fakeContext("GET", { query: {}, params: undefined });
+    const mw = createValidatorMiddleware({
+      params: z.object({ id: z.string() }),
+    } as never);
+    const { c, captured } = fakeContext("GET", {
+      query: {},
+      params: undefined,
+    });
     await mw(c as never, (async () => {}) as never);
     expect(captured.status).toBe(400);
     const payload = captured.payload as ErrBody;

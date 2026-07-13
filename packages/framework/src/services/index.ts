@@ -3,6 +3,9 @@ import { initLogger, closeLogger } from "./logger";
 import { initDatabase, closeDatabase, getConnectionManager } from "./database";
 import { AppConfig } from "../config";
 import { disconnectRedis, getRedis, initRedis, connectRedis } from "./redis";
+import { connectEventBroadcast, disconnectEventBroadcast } from "@damatjs/events";
+import { JobWorker } from "@damatjs/jobs";
+import { initAuth } from "./auth";
 import { initModules, getAllModules, getModule } from "./moduleService";
 import { resolveLinkModuleEntries, setLinkModuleResolver } from "@damatjs/link";
 
@@ -74,6 +77,25 @@ export async function initializeServices(
     });
   }
 
+  // Cross-process event broadcasting (opt-in; local events need no config).
+  if (config.services?.events?.broadcast) {
+    if (config.projectConfig.redisUrl) {
+      const channel = config.services.events.channel;
+      await connectEventBroadcast(channel ? { channel } : {});
+      instances.shutdownHandlers.push({
+        name: "event-broadcast",
+        handler: async () => {
+          await disconnectEventBroadcast();
+          logger.info("Event broadcast disconnected");
+        },
+      });
+    } else {
+      logger.warn(
+        "services.events.broadcast is set but projectConfig.redisUrl is not — events stay in-process",
+      );
+    }
+  }
+
   // Modules plus any cross-module link directories (registered as `link`
   // module(s)) are initialised together, so `getModule("link")` resolves the
   // link service alongside the rest.
@@ -92,6 +114,49 @@ export async function initializeServices(
   // Let the link service hydrate linked rows by calling other modules'
   // services. No-op when no link module is registered.
   setLinkModuleResolver((id: string) => getModule(id));
+
+  // Auth provider (opt-in). Built after the database so a persisting provider
+  // (Better Auth) can receive the app's pool. Nothing is imported when
+  // `services.auth` is unset.
+  const auth = await initAuth(config, logger);
+  if (auth) {
+    instances.auth = auth;
+    if (auth.shutdown) {
+      instances.shutdownHandlers.push({
+        name: "auth",
+        handler: async () => {
+          await auth.shutdown!();
+          logger.info("Auth provider shut down");
+        },
+      });
+    }
+  }
+
+  // The job worker starts AFTER module init so every module's defineJob()
+  // has registered before the first dequeue.
+  const jobsConfig = config.services?.jobs;
+  if (jobsConfig?.worker) {
+    if (config.projectConfig.redisUrl) {
+      const worker = new JobWorker({
+        ...(jobsConfig.queueName !== undefined ? { queueName: jobsConfig.queueName } : {}),
+        ...(jobsConfig.concurrency !== undefined ? { concurrency: jobsConfig.concurrency } : {}),
+        ...(jobsConfig.pollIntervalMs !== undefined
+          ? { pollIntervalMs: jobsConfig.pollIntervalMs }
+          : {}),
+      });
+      worker.start();
+      instances.shutdownHandlers.push({
+        name: "job-worker",
+        handler: async () => {
+          await worker.stop();
+        },
+      });
+    } else {
+      logger.warn(
+        "services.jobs.worker is set but projectConfig.redisUrl is not — no jobs will run",
+      );
+    }
+  }
 
   instances.shutdownHandlers.push({
     name: "logger",

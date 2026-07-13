@@ -1,6 +1,7 @@
 import { Hono } from "@damatjs/deps/hono";
 import { createFileRouter } from "../router";
 import { setupMiddleware, notFoundHandler } from "../middleware";
+import { handleError } from "../middleware/error/handleError";
 import { createRootRoute, createApiRoutesRoute, createHealthRoute } from "../handlers";
 import type { BootstrapOptions, BootstrapResult } from "../types";
 import { getLogger } from '../services';
@@ -10,7 +11,9 @@ export async function bootstrap(options: BootstrapOptions): Promise<BootstrapRes
     routesDir,
     projectConfig,
     healthCheck,
-    authHandlers
+    authHandlers,
+    authRoutes,
+    hooks
   } = options;
 
   const logger = getLogger();
@@ -19,11 +22,24 @@ export async function bootstrap(options: BootstrapOptions): Promise<BootstrapRes
 
   const app = new Hono();
 
+  // Hono v4 routes handler-thrown errors straight to onError — they never
+  // unwind through middleware, so the errorHandler middleware alone cannot
+  // give them the framework's JSON error envelope. Install both.
+  app.onError((err, c) => handleError(c, err, logger));
+
   setupMiddleware({
     app,
     logger,
     corsConfig: projectConfig.http.corsConfig
   });
+
+  // Provider-owned auth endpoints (Better Auth sign-in/session) mount before
+  // the file router so `/api/auth/*` is served by the provider, not the router.
+  if (authRoutes) authRoutes(app);
+
+  // The app exists but no routes are registered yet. A throwing hook fails
+  // startup — never boot a half-configured server.
+  if (hooks?.beforeRoutes) await hooks.beforeRoutes({ config: projectConfig, logger, app });
 
   const fileRouter = await createFileRouter({
     routesDir,
@@ -44,6 +60,9 @@ export async function bootstrap(options: BootstrapOptions): Promise<BootstrapRes
 
   if (healthCheck)
     app.route("", createHealthRoute(healthCheck, projectConfig.http.api?.healthCheckRouter));
+
+  // Every route is registered; the 404 handler has not been installed yet.
+  if (hooks?.afterRoutes) await hooks.afterRoutes({ config: projectConfig, logger, app });
 
   app.notFound(notFoundHandler);
 
