@@ -31,6 +31,7 @@
   "scripts": {
     "build": "exit 0",
     "start": "bun run bin/damat-mcp.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "lint": "oxlint src bin"
   }
 }

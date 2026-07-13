@@ -68,6 +68,8 @@ migrations.
 | `module_info` | Full registry details for one ref (e.g. `damatjs/user@0.2.0`) — read before installing. |
 | `list_installed` | Scan the app's `src/modules` for installed modules (via their `module.json`). |
 | `add_module` | Install a module by running `damat module add <source>` (registry ref, path, github shorthand, or git URL). Path/git sources are refused unless `allowUnverified: true` is passed; dependency lifecycle scripts stay off unless `allowScripts: true`. |
+| `remove_module` | Remove an installed module by running `damat module remove <id>` — deletes its files, deregisters it from `damat.config.ts`, drops its tsconfig alias. Refused while other modules depend on it unless `force: true`; use `dryRun: true` first to show what would be deleted. |
+| `update_module` | Update an installed module by running `damat module update <id>` — re-fetches from the recorded source, shows a version/file diff, and force-reinstalls with `yes: true` (overwrites local edits; get user approval first). |
 
 Installs are default-deny for anything a registry has not verified: the
 assistant must set `allowUnverified` explicitly (after the user approved that

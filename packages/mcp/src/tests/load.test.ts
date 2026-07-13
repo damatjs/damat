@@ -3,13 +3,14 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { loadRegistryIndex, lookupEntry } from "../registry/load";
+import { clearRegistryCache, loadRegistryIndex, lookupEntry } from "../registry/load";
 import type { RegistryIndex } from "../registry/types";
 
 let tmp: string;
 
 beforeEach(() => {
   tmp = mkdtempSync(join(tmpdir(), "mcp-registry-"));
+  clearRegistryCache();
 });
 
 afterEach(() => {
@@ -86,12 +87,89 @@ describe("loadRegistryIndex — URL", () => {
     expect(Object.keys(index.modules)).toContain("damatjs/user");
   });
 
-  test("throws on a non-ok HTTP response", async () => {
+  test("404 explains the registry was not found and points at the env var", async () => {
     globalThis.fetch = (async () =>
       new Response("nope", { status: 404 })) as typeof fetch;
     await expect(
       loadRegistryIndex("https://example.com/registry.json"),
-    ).rejects.toThrow(/fetch failed \(404\)/);
+    ).rejects.toThrow(/not found \(404\).*DAMAT_MODULE_REGISTRY/);
+  });
+
+  test("5xx is reported as a registry server error", async () => {
+    globalThis.fetch = (async () =>
+      new Response("boom", { status: 503 })) as typeof fetch;
+    await expect(
+      loadRegistryIndex("https://example.com/registry.json"),
+    ).rejects.toThrow(/server error \(503\)/);
+  });
+
+  test("other non-ok statuses keep the generic fetch-failed message", async () => {
+    globalThis.fetch = (async () =>
+      new Response("go away", { status: 403 })) as typeof fetch;
+    await expect(
+      loadRegistryIndex("https://example.com/registry.json"),
+    ).rejects.toThrow(/fetch failed \(403\)/);
+  });
+
+  test("a network failure is reported as could-not-reach", async () => {
+    globalThis.fetch = (async () => {
+      throw new Error("ECONNREFUSED");
+    }) as typeof fetch;
+    await expect(
+      loadRegistryIndex("https://example.com/registry.json"),
+    ).rejects.toThrow(/Could not reach registry.*ECONNREFUSED/);
+  });
+
+  test("an aborted fetch is reported as a timeout", async () => {
+    globalThis.fetch = (async () => {
+      const err = new Error("aborted");
+      err.name = "TimeoutError";
+      throw err;
+    }) as typeof fetch;
+    await expect(
+      loadRegistryIndex("https://example.com/registry.json"),
+    ).rejects.toThrow(/timed out after 10s/);
+  });
+
+  test("a non-JSON body is reported as invalid JSON", async () => {
+    globalThis.fetch = (async () =>
+      new Response("<html>oops</html>", { status: 200 })) as typeof fetch;
+    await expect(
+      loadRegistryIndex("https://example.com/registry.json"),
+    ).rejects.toThrow(/did not return valid JSON/);
+  });
+
+  test("caches a fetched index and re-fetches after clearRegistryCache", async () => {
+    let calls = 0;
+    globalThis.fetch = (async () => {
+      calls++;
+      return new Response(JSON.stringify(sampleIndex), { status: 200 });
+    }) as typeof fetch;
+
+    await loadRegistryIndex("https://example.com/registry.json");
+    await loadRegistryIndex("https://example.com/registry.json");
+    expect(calls).toBe(1); // second call served from cache
+
+    clearRegistryCache();
+    await loadRegistryIndex("https://example.com/registry.json");
+    expect(calls).toBe(2);
+  });
+
+  test("drops malformed entries but keeps valid ones", async () => {
+    globalThis.fetch = (async () =>
+      new Response(
+        JSON.stringify({
+          modules: {
+            good: { source: "github:acme/good" },
+            "no-source": { description: "missing source" },
+            "not-an-object": "nope",
+            "null-entry": null,
+          },
+        }),
+        { status: 200 },
+      )) as typeof fetch;
+    const index = await loadRegistryIndex("https://example.com/registry.json");
+    expect(Object.keys(index.modules)).toEqual(["good"]);
   });
 });
 

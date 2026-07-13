@@ -107,7 +107,7 @@ afterAll(() => {
 
 describe("startModuleApp", () => {
   test("boots on an ephemeral port without a database and stops cleanly", async () => {
-    const { pkg, src } = makeModulePackage();
+    const { pkg } = makeModulePackage();
     try {
       const running = await startModuleApp({ packageDir: pkg, port: 0 });
       expect(running.manifest.name).toBe("widget");
@@ -123,7 +123,7 @@ describe("startModuleApp", () => {
   });
 
   test("applies migrations when DATABASE_URL is set (real PoolManager + fake pool)", async () => {
-    const { pkg, src } = makeModulePackage({ migrationsDir: true });
+    const { pkg } = makeModulePackage({ migrationsDir: true });
     process.env.DATABASE_URL = "postgres://fake-never-dialed/db";
     // start.ts reads the pool from PoolManager (which initializeServices would
     // normally populate). We seed it with a fake pool so the real

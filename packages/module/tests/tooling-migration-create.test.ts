@@ -43,7 +43,7 @@ function makeModulePackage(): { pkg: string; src: string } {
 
 describe("createModuleMigration", () => {
   test("generates a migration file when models differ from the snapshot", async () => {
-    const { pkg, src } = makeModulePackage();
+    const { pkg } = makeModulePackage();
     try {
       const result = await createModuleMigration(pkg);
       expect(result.hasChanges).toBe(true);
