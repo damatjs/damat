@@ -414,6 +414,15 @@
         "typescript": "^5.9.3",
       },
     },
+    "packages/installer": {
+      "name": "@damatjs/installer",
+      "version": "0.6.0",
+      "devDependencies": {
+        "@damatjs/typescript-config": "workspace:*",
+        "@types/bun": "1.3.9",
+        "typescript": "^5.9.3",
+      },
+    },
     "packages/link": {
       "name": "@damatjs/link",
       "version": "0.6.0",
@@ -779,6 +788,8 @@
     "@damatjs/events": ["@damatjs/events@workspace:packages/core/events"],
 
     "@damatjs/framework": ["@damatjs/framework@workspace:packages/framework"],
+
+    "@damatjs/installer": ["@damatjs/installer@workspace:packages/installer"],
 
     "@damatjs/jobs": ["@damatjs/jobs@workspace:packages/core/jobs"],
 
@@ -1701,6 +1712,8 @@
     "@damatjs/events/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@damatjs/framework/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "@damatjs/installer/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@damatjs/jobs/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
