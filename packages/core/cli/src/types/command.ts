@@ -1,11 +1,11 @@
-import type { ILogger } from "@damatjs/logger";
 import type { CommandOption } from "./commandOption";
+import type { CliLogger } from "./io";
 
 export interface CommandContext {
   command: string;
   args: string[];
   options: Record<string, unknown>;
-  logger: ILogger;
+  logger: CliLogger;
   cwd: string;
 }
 

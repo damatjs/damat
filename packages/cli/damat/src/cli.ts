@@ -1,46 +1,36 @@
 #!/usr/bin/env bun
 import { runCli, reportError, getExitCode } from "@damatjs/cli";
-import { Logger } from "@damatjs/logger";
-import {
-  authCommand,
-  buildCommand,
-  cloneCommand,
-  createCommand,
-  devCommand,
-  kitCommand,
-  startCommand,
-  codegenCommand,
-  barrelCommand,
-  moduleCommand,
-} from "./command";
+import { damatCommands } from "./capabilities";
 import { CLI_VERSION } from "./version.generated";
+import { createDamatRuntime } from "./runtime";
 
-runCli({
-  name: "damat",
-  version: CLI_VERSION,
-  description: "Damat CLI - Development and build tool for Damat.js",
-  commands: [
-    createCommand,
-    cloneCommand,
-    devCommand,
-    startCommand,
-    buildCommand,
-    codegenCommand,
-    barrelCommand,
-    moduleCommand,
-    kitCommand,
-    authCommand,
-  ],
-  banner: {
-    title: "Damat CLI",
-    subtitle: "Development and build tool for Damat.js",
-    style: "boxed",
+const runtime = createDamatRuntime();
+
+runCli(
+  {
+    name: "damat",
+    version: CLI_VERSION,
+    description: "Damat CLI - Development and build tool for Damat.js",
+    commands: damatCommands,
+    banner: {
+      title: "Damat CLI",
+      subtitle: "Development and build tool for Damat.js",
+      style: "boxed",
+    },
+    verbose: { enabled: true },
   },
-}).catch((error) => {
-  // Last-resort net so setup/dispatch failures surface a readable error
-  // instead of a raw unhandled-rejection dump.
-  reportError(new Logger({ timestamp: false }), error, {
-    prefix: "Fatal error",
+  runtime,
+)
+  .then((result) => {
+    process.exitCode = result.exitCode;
+  })
+  .catch((error) => {
+    // Last-resort net so setup/dispatch failures surface a readable error
+    // instead of a raw unhandled-rejection dump.
+    reportError(runtime.logger, runtime.output, error, {
+      prefix: "Fatal error",
+      verbose:
+        runtime.args.includes("--verbose") || Boolean(runtime.env.DAMAT_DEBUG),
+    });
+    process.exitCode = getExitCode(error);
   });
-  process.exit(getExitCode(error));
-});

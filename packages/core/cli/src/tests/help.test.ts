@@ -1,156 +1,67 @@
-import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { printDefaultHelp, printCommandSpecificHelp } from "../help";
-import type { CliConfig, Command } from "../types";
+import { describe, expect, test } from "bun:test";
+import { printCommandSpecificHelp, printDefaultHelp } from "../help";
+import type { CliDefinition, Command } from "../types";
+import { createRuntimeFixture } from "./runtimeFixture";
 
-describe("Help Printer", () => {
-  let consoleOutput: string[] = [];
-  let originalLog: typeof console.log;
+const command: Command = {
+  name: "build",
+  description: "Build the project",
+  aliases: ["b"],
+  usage: "build <target>",
+  examples: ["cli build app"],
+  options: [{ name: "output", description: "Output", default: "dist" }],
+  subcommands: [
+    {
+      name: "watch",
+      description: "Watch files",
+      handler: async () => ({ exitCode: 0 }),
+    },
+  ],
+  handler: async () => ({ exitCode: 0 }),
+};
 
-  beforeEach(() => {
-    consoleOutput = [];
-    originalLog = console.log;
-    console.log = (...args: unknown[]) => {
-      consoleOutput.push(args.join(" "));
-    };
-  });
-
-  afterEach(() => {
-    console.log = originalLog;
-  });
-
-  test("should print default help with CLI name", () => {
-    const config: CliConfig = {
-      name: "test-cli",
+describe("help output", () => {
+  test("default help writes description, commands, and global options", () => {
+    const fixture = createRuntimeFixture();
+    const config: CliDefinition = {
+      name: "cli",
       version: "1.0.0",
-      commands: [],
-    };
-
-    printDefaultHelp(config, []);
-
-    const output = consoleOutput.join("\n");
-    expect(output).toContain("test-cli");
-    expect(output).toContain("Usage:");
-  });
-
-  test("should list all commands", () => {
-    const config: CliConfig = {
-      name: "test-cli",
-      version: "1.0.0",
-      commands: [],
-    };
-
-    const commands: Command[] = [
-      {
-        name: "build",
-        description: "Build the project",
-        handler: async () => ({ exitCode: 0 }),
-      },
-      {
-        name: "test",
-        description: "Run tests",
-        handler: async () => ({ exitCode: 0 }),
-      },
-    ];
-
-    printDefaultHelp(config, commands);
-
-    const output = consoleOutput.join("\n");
-    expect(output).toContain("build");
-    expect(output).toContain("Build the project");
-    expect(output).toContain("test");
-    expect(output).toContain("Run tests");
-  });
-
-  test("should show global options", () => {
-    const config: CliConfig = {
-      name: "test-cli",
-      version: "1.0.0",
-      commands: [],
-    };
-
-    printDefaultHelp(config, []);
-
-    const output = consoleOutput.join("\n");
-    expect(output).toContain("--help");
-    expect(output).toContain("--version");
-  });
-
-  test("should show verbose option when enabled", () => {
-    const config: CliConfig = {
-      name: "test-cli",
-      version: "1.0.0",
+      description: "A CLI",
+      commands: [command],
       verbose: { enabled: true },
-      commands: [],
     };
-
-    printDefaultHelp(config, []);
-
-    const output = consoleOutput.join("\n");
+    printDefaultHelp(config, [command], fixture.runtime.output);
+    const output = fixture.messages.join("\n");
+    expect(output).toContain("Usage: cli");
+    expect(output).toContain("A CLI");
+    expect(output).toContain("aliases: b");
     expect(output).toContain("--verbose");
   });
 
-  test("should print command-specific help", () => {
-    const config: CliConfig = {
-      name: "test-cli",
-      version: "1.0.0",
-      commands: [],
-    };
+  test("default help omits command and verbose sections by default", () => {
+    const fixture = createRuntimeFixture();
+    const config: CliDefinition = { name: "cli", version: "1", commands: [] };
+    printDefaultHelp(config, [], fixture.runtime.output);
+    const output = fixture.messages.join("\n");
+    expect(output).not.toContain("Commands:");
+    expect(output).not.toContain("--verbose");
+  });
 
-    const command: Command = {
-      name: "build",
-      description: "Build the project",
-      options: [
-        { name: "output", description: "Output directory", default: "dist" },
-      ],
-      handler: async () => ({ exitCode: 0 }),
-    };
-
-    printCommandSpecificHelp(config, command);
-
-    const output = consoleOutput.join("\n");
-    expect(output).toContain("build");
-    expect(output).toContain("Build the project");
+  test("command help writes usage, options, examples, and subcommands", () => {
+    const fixture = createRuntimeFixture();
+    printCommandSpecificHelp({ name: "cli" }, command, fixture.runtime.output);
+    const output = fixture.messages.join("\n");
+    expect(output).toContain("Usage: cli build <target>");
     expect(output).toContain("--output");
-    expect(output).toContain("Output directory");
-  });
-
-  test("should show command aliases", () => {
-    const config: CliConfig = {
-      name: "test-cli",
-      version: "1.0.0",
-      commands: [],
-    };
-
-    const command: Command = {
-      name: "build",
-      description: "Build the project",
-      aliases: ["b", "bld"],
-      handler: async () => ({ exitCode: 0 }),
-    };
-
-    printDefaultHelp(config, [command]);
-
-    const output = consoleOutput.join("\n");
-    expect(output).toContain("aliases:");
-  });
-
-  test("should show command examples", () => {
-    const config: CliConfig = {
-      name: "test-cli",
-      version: "1.0.0",
-      commands: [],
-    };
-
-    const command: Command = {
-      name: "build",
-      description: "Build the project",
-      examples: ["test-cli build --output=dist", "test-cli build -o build"],
-      handler: async () => ({ exitCode: 0 }),
-    };
-
-    printCommandSpecificHelp(config, command);
-
-    const output = consoleOutput.join("\n");
     expect(output).toContain("Examples:");
+    expect(output).toContain("Subcommands:");
+  });
+
+  test("command help generates usage and omits empty sections", () => {
+    const fixture = createRuntimeFixture();
+    const minimal = { ...command, usage: undefined, options: undefined,
+      examples: undefined, subcommands: undefined };
+    printCommandSpecificHelp({ name: "cli" }, minimal, fixture.runtime.output);
+    expect(fixture.messages.join("\n")).toContain("cli build [options]");
   });
 });

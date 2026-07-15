@@ -1,5 +1,4 @@
-import { Logger } from "@damatjs/logger";
-import type { CliConfig, CommandContext, CommandOption } from "../types";
+import type { CliRuntime, CommandContext, CommandOption } from "../types";
 
 /**
  * Parse raw argv tokens against a command's option definitions.
@@ -73,20 +72,16 @@ export function parseCommandArgs(
 
 export function buildCommandContext(
   commandName: string,
+  rawArgs: readonly string[],
   options: Record<string, unknown>,
-  logger: Logger,
-  _config: CliConfig,
+  runtime: Pick<CliRuntime, "cwd" | "logger">,
 ): CommandContext {
-  const positionalArgs = extractPositionalArgs(
-    process.argv.slice(2).filter((a) => a !== commandName),
-  );
-
   return {
     command: commandName,
-    args: positionalArgs,
+    args: extractPositionalArgs([...rawArgs]),
     options,
-    logger,
-    cwd: process.cwd(),
+    logger: runtime.logger,
+    cwd: runtime.cwd,
   };
 }
 

@@ -1,0 +1,33 @@
+{
+  "name": "@damatjs/cli-kit",
+  "description": "Framework-neutral code kit CLI capability",
+  "version": "0.6.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
+  "engines": { "bun": ">=1.1.0" },
+  "publishConfig": { "access": "public" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/damatjs/damat",
+    "directory": "packages/cli/kit"
+  },
+  "files": ["dist"],
+  "license": "MIT",
+  "dependencies": {
+    "@damatjs/cli": "workspace:*",
+    "@damatjs/cli-support": "workspace:*"
+  },
+  "devDependencies": {
+    "@damatjs/typescript-config": "workspace:*",
+    "@types/bun": "1.3.9",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
+    "check-types": "tsc --noEmit",
+    "test": "bun test",
+    "lint": "oxlint src"
+  }
+}

@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { loadConfig, clearConfigCache } from "../config";
+import { loadConfig } from "../config";
 import { writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -8,13 +8,11 @@ describe("Config Loader", () => {
   let testDir: string;
 
   beforeEach(() => {
-    clearConfigCache();
     testDir = join(tmpdir(), `damat-cli-test-${Date.now()}`);
     mkdirSync(testDir, { recursive: true });
   });
 
   afterEach(() => {
-    clearConfigCache();
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true, force: true });
     }
@@ -89,32 +87,11 @@ describe("Config Loader", () => {
     expect(result).toEqual({ source: "secondary" });
   });
 
-  test("should cache loaded config", async () => {
-    const configPath = join(testDir, "cached.config.ts");
-    writeFileSync(configPath, "export default { cached: true };");
-
-    const result1 = await loadConfig({ file: "cached.config.ts" }, testDir);
-    const result2 = await loadConfig({ file: "cached.config.ts" }, testDir);
-
-    expect(result1).toBe(result2);
-  });
-
-  test("should clear cache", async () => {
-    const configPath = join(testDir, "clear.config.ts");
-    writeFileSync(configPath, "export default { value: 1 };");
-
-    const result1 = await loadConfig({ file: "clear.config.ts" }, testDir);
-    clearConfigCache();
-    const result2 = await loadConfig({ file: "clear.config.ts" }, testDir);
-
-    expect(result1).toEqual(result2);
-  });
-
   test("should handle absolute paths", async () => {
     const configPath = join(testDir, "absolute.config.ts");
     writeFileSync(configPath, "export default { absolute: true };");
 
-    const result = await loadConfig({ file: configPath });
+    const result = await loadConfig({ file: configPath }, testDir);
     expect(result).toEqual({ absolute: true });
   });
 });

@@ -1,0 +1,1 @@
+export { modulePublishCommand } from "./command";

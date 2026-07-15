@@ -7,6 +7,8 @@
     "test": "turbo run test",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check:lines": "bun scripts/check-code-lines.ts packages backend apps scripts",
+    "check:lines:cli": "bun scripts/check-code-lines.ts packages/core/cli packages/cli/support packages/cli/app packages/cli/kit packages/cli/module packages/cli/codegen packages/cli/damat",
     "check-types": "turbo run check-types",
     "changeset": "changeset",
     "version-packages": "changeset version",

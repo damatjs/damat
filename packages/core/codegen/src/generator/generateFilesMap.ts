@@ -8,12 +8,14 @@ import { DEFAULT_AUTO_FIELDS } from "@/defaults";
 import { generateTableFile } from "./generateTableFile";
 import { generateZodFile } from "./generateZodFile";
 import { tableToFileName } from "./helpers";
-import { getLogger, ILogger } from "@damatjs/logger";
+import { getLogger, type ILogger } from "@damatjs/logger";
+
+type GenerationLogger = Pick<ILogger, "debug" | "info">;
 
 export function generateFilesMap(
   schema: ModuleSchema,
   options: GenerateTypesOptions = {},
-  loggerData?: ILogger,
+  loggerData?: GenerationLogger,
 ): GeneratedFilesMap {
   const logger = loggerData ?? getLogger();
 

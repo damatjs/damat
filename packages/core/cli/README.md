@@ -1,10 +1,13 @@
 # @damatjs/cli
 
-> The general CLI framework powering Damat's command-line tools: declarative command/subcommand registry, argument & option parsing, validation, help, and banners.
+> A framework-neutral, embeddable TypeScript command runtime with declarative commands, validation, help, and optional presentation.
 
-`@damatjs/cli` turns a single declarative config object into a runnable CLI. You describe commands, options, and handlers; it parses `process.argv` (via [cac](https://github.com/cacjs/cac)), validates and coerces options, dispatches to your handler with a typed `CommandContext`, loads optional project config, and renders help and a banner. It is the `core` framework that the user-facing `@damatjs/damat-cli` and `@damatjs/orm-cli` migration CLI are built on.
+`@damatjs/cli` turns a `CliDefinition` into one isolated command invocation. The
+caller may inject arguments, cwd, environment, structured logging, and text
+output. Each run owns its registry and, when requested, its project-config
+cache. It returns a result instead of terminating the host process.
 
-Part of the [Damat](../../../README.md) monorepo · [Full guide](../../../docs/GUIDE.md) · [Internals](./docs/README.md)
+Part of the [Damat](../../../README.md) monorepo · [Internals](./docs/README.md)
 
 ## Install
 
@@ -12,156 +15,134 @@ Part of the [Damat](../../../README.md) monorepo · [Full guide](../../../docs/G
 bun add @damatjs/cli
 ```
 
-Inside this monorepo it is a workspace dependency — reference it as `"@damatjs/cli": "*"` in the consuming package's `package.json`.
-
-## When to use
-
-Use it to build a CLI when you want:
-
-- A **declarative** command tree (commands, aliases, subcommands) instead of hand-wiring a parser.
-- Typed **option parsing** with `string`/`number`/`boolean` coercion, defaults, and required-option validation.
-- Auto-generated **help** (default + per-command) and an optional **banner**.
-- Optional **project config loading** (`*.config.ts`/`.json`/custom) injected into your handler.
-- Consistent logging via `@damatjs/logger`.
-
-It is **not** the place for non-CLI argument parsing inside a library, and it deliberately omits middleware/hooks, interactive prompts, and shell-completion generation. It also **calls `process.exit`** itself after a command runs — it owns the process lifecycle, so don't embed it inside a long-lived server.
+The package depends only on `cac`. It does not depend on Damat framework,
+logger, environment, or process-lifecycle packages.
 
 ## Quick start
 
 ```ts
-#!/usr/bin/env bun
-// bin.ts
 import { runCli } from "@damatjs/cli";
 
-runCli({
+const result = await runCli({
   name: "my-cli",
   version: "1.0.0",
-  description: "My awesome CLI tool",
   commands: [
     {
       name: "hello",
-      description: "Say hello to someone",
-      options: [
-        {
-          name: "name",
-          alias: "n",
-          type: "string",
-          description: "Name to greet",
-          default: "World",
-        },
-        {
-          name: "loud",
-          type: "boolean",
-          description: "Shout the greeting",
-          default: false,
-        },
-      ],
+      description: "Say hello",
+      options: [{ name: "name", alias: "n", type: "string", default: "World" }],
       handler: async (ctx) => {
-        const name = ctx.options.name as string;
-        const loud = ctx.options.loud as boolean;
-        ctx.logger.info(
-          loud ? `HELLO, ${name.toUpperCase()}!` : `Hello, ${name}!`,
-        );
+        ctx.logger.info(`Hello, ${String(ctx.options.name)}!`);
         return { exitCode: 0 };
       },
     },
   ],
 });
+
+process.exitCode = result.exitCode;
 ```
 
-```bash
-bun bin.ts hello --name Alice
-bun bin.ts hello -n Bob --loud
-bun bin.ts hello --help
+`runCli` uses process-backed defaults only when an override is absent. An
+embedded host can supply a complete runtime:
+
+```ts
+const result = await runCli(definition, {
+  args: ["build", "--target", "server"],
+  cwd: "/workspace",
+  env: { MODE: "test" },
+  logger: myLogger,
+  output: { write: (message = "") => messages.push(message) },
+});
 ```
 
-The real `damat` CLI uses the same shape — see `packages/cli/damat/src/cli.ts`.
+## Runtime and results
 
-## API
+```ts
+interface CliRuntime {
+  args: readonly string[];
+  cwd: string;
+  env: Readonly<Record<string, string | undefined>>;
+  logger: CliLogger;
+  output: CliOutput;
+}
 
-All exports come from the single entry point `@damatjs/cli` (no subpath exports).
+interface CliRunResult {
+  exitCode: number;
+  command?: string;
+}
+```
 
-### Entry point
+`createRuntime(overrides)` fills omitted values from `process` and
+dependency-free console adapters. `runCli(definition, runtime)` always resolves to a
+`CliRunResult` for normal command, help, validation, configuration, and handler
+outcomes. Setup errors such as a missing definition name still reject.
 
-| Export                      | Kind     | Summary                                                   |
-| --------------------------- | -------- | --------------------------------------------------------- |
-| `runCli(config: CliConfig)` | function | Build, parse, and dispatch the CLI. Calls `process.exit`. |
+## Presentation policy
 
-### Registry
+Help and banner text use `CliOutput`; leveled messages use `CliLogger`.
+Presentation is opt-in:
 
-| Export                 | Kind     | Summary                                               |
-| ---------------------- | -------- | ----------------------------------------------------- |
-| `getRegistry()`        | function | Get the singleton `CommandRegistry`.                  |
-| `registerCommand(cmd)` | function | Register a command (and its subcommands/aliases).     |
-| `getCommand(name)`     | function | Look up a command by name/alias.                      |
-| `getAllCommands()`     | function | All registered commands (deduped).                    |
-| `clearRegistry()`      | function | Reset the registry (called at the start of `runCli`). |
+- A banner renders only when `banner` is an object.
+- The global verbose option exists only when `verbose.enabled === true`.
+- Error detail depends on an explicit `verbose` value, not an environment name.
 
-### Config loading
+```ts
+const definition = {
+  name: "my-cli",
+  version: "1.0.0",
+  banner: { style: "boxed", title: "My CLI" },
+  verbose: { enabled: true },
+  commands,
+};
+```
 
-| Export                         | Kind     | Summary                                      |
-| ------------------------------ | -------- | -------------------------------------------- |
-| `loadConfig<T>(loader?, cwd?)` | function | Load + cache a project config file.          |
-| `clearConfigCache()`           | function | Drop the cached config.                      |
-| `withConfig<T>(loader)`        | function | `{ get, clear }` helper around `loadConfig`. |
+## Invocation-local state
 
-### Help & output
+`createCommandRegistry()` returns a new registry. `runCli` creates one per call,
+so concurrent invocations cannot share commands or aliases.
 
-| Export                                                                      | Kind      | Summary                               |
-| --------------------------------------------------------------------------- | --------- | ------------------------------------- |
-| `printDefaultHelp(config, commands)`                                        | function  | Render the top-level help.            |
-| `printCommandSpecificHelp(config, cmd)`                                     | function  | Render help for one command.          |
-| `formatCommandLine(cmd)`, `formatOptionLine(opt)`, `formatCommandHelp(...)` | functions | Help-line formatters.                 |
-| `printBanner(config, banner?)`                                              | function  | Render boxed/minimal/none banner.     |
-| `printError`, `printSuccess`, `printInfo`, `printSection`                   | functions | Logger-backed console output helpers. |
+`defineCliCapability({ name, commands })` gives command packages a shared
+contract. `composeCliCapabilities(capabilities)` flattens their commands in the
+provided order. Package tests can import `runCapabilityTest` from
+`@damatjs/cli/testing` to execute a capability with in-memory runtime I/O.
 
-### Validation (also run automatically by `runCli`)
+Project configuration is opt-in through `definition.configLoader`. Without a
+loader, `runCli` creates no config accessor and handlers receive no
+`ctx.options.config`. `loadConfig(loader, cwd)` and `withConfig(loader, cwd)`
+remain available to consumers that need direct project-config loading.
 
-| Export                                                           | Kind      | Summary                                                        |
-| ---------------------------------------------------------------- | --------- | -------------------------------------------------------------- |
-| `validateOptions(options, defs, cmdName)`                        | function  | Throw `MissingRequiredOptionError` for unmet required options. |
-| `applyDefaults(options, defs)`                                   | function  | Fill in option defaults.                                       |
-| `coerceOptions(options, defs)`, `coerceOptionValue(value, type)` | functions | Coerce values to `string`/`number`/`boolean`.                  |
+## Main exports
 
-### Key types
+| Export                                                        | Purpose                                                   |
+| ------------------------------------------------------------- | --------------------------------------------------------- |
+| `runCli(definition, runtime?)`                                | Parse and dispatch one invocation; return `CliRunResult`. |
+| `createRuntime(overrides?)`                                   | Fill a neutral runtime with process-backed defaults.      |
+| `createCommandRegistry()`                                     | Create an isolated command registry.                      |
+| `defineCliCapability(value)`                                  | Define an independently composable command package.       |
+| `composeCliCapabilities(values)`                              | Flatten capability commands in order.                     |
+| `loadConfig(loader, cwd)`                                     | Load one project configuration value.                     |
+| `withConfig(loader, cwd)`                                     | Create an accessor-local config cache.                    |
+| `executeCommand(...)`                                         | Run the shared validation/config/handler pipeline.        |
+| `printDefaultHelp`, `printCommandSpecificHelp`, `printBanner` | Write presentation through `CliOutput`.                   |
+| `reportError`, `getExitCode`                                  | Render explicit diagnostics and map errors to results.    |
 
-| Export                                                                              | Kind      | Summary                                                                                                |
-| ----------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------ |
-| `CliConfig`                                                                         | interface | Top-level config (`name`, `version`, `commands`, `banner`, `verbose`, `configLoader`, `onError`, ...). |
-| `Command`                                                                           | interface | `name`, `description`, `aliases?`, `usage?`, `examples?`, `options?`, `subcommands?`, `handler`.       |
-| `CommandOption`                                                                     | interface | `name`, `alias?`, `description`, `type?`, `default?`, `required?`.                                     |
-| `CommandContext`                                                                    | interface | `command`, `args`, `options`, `logger`, `cwd` — passed to every handler.                               |
-| `CommandResult`                                                                     | interface | `{ exitCode: number }` returned by handlers.                                                           |
-| `CommandRegistry`                                                                   | interface | `register`/`get`/`getAll`/`has`.                                                                       |
-| `BannerConfig`, `VerboseConfig`, `ConfigLoader`, `HelpTemplateFn`, `ErrorHandlerFn` | types     | Config sub-shapes.                                                                                     |
+Types include `CliDefinition`, `CliRuntime`, `CliRunResult`, `CliLogger`, `CliOutput`,
+`Command`, `CommandContext`, `CommandOption`, and `CommandRegistry`.
 
-### Errors
+## Executable ownership
 
-| Export                       | Kind  | Summary                                   |
-| ---------------------------- | ----- | ----------------------------------------- |
-| `CliError`                   | class | Base error with `exitCode` (default `1`). |
-| `CommandNotFoundError`       | class | Unknown command.                          |
-| `MissingRequiredOptionError` | class | Required option absent.                   |
-| `ConfigLoadError`            | class | Config file failed to load.               |
-| `CommandRegistrationError`   | class | Duplicate command/alias on registration.  |
-
-## How it fits
-
-**Depends on**
-
-- `cac` — underlying argv parser.
-- `dotenv` — declared dependency for env loading by consumers.
-- `@damatjs/logger` — `Logger`/`ILogger` for handler logging and output helpers.
-
-**Depended on by (in repo)**
-
-- `@damatjs/damat-cli` (`packages/cli/damat`) — the user-facing `damat` CLI; re-exports this package and defines `dev`/`build`/`start`/`module` commands.
-- `@damatjs/orm-cli` (`packages/orm/cli`) — migration/generate commands.
+Executable packages own their process policy. The Damat executable creates its
+runtime in `packages/cli/damat/src/runtime.ts`, explicitly enables Damat's banner
+and verbose behavior, awaits `runCli`, and assigns `process.exitCode`.
 
 ## Documentation
 
-- [Internals (maintainers)](./docs/README.md)
-- [Full guide](../../../docs/GUIDE.md)
+- [Internals](./docs/README.md)
+- [Run loop and config](./docs/run.md)
+- [Registry](./docs/registry.md)
+- [Help and banner](./docs/help.md)
+- [Output and validation](./docs/output-and-validation.md)
+- [Command model](./docs/command-model.md)
 
 ## License
 

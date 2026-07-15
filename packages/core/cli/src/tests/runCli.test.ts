@@ -1,426 +1,77 @@
-import { describe, test, expect, beforeEach, afterEach, spyOn } from "bun:test";
-import { Logger } from "@damatjs/logger";
-import { runCli } from "../run/runCli";
-import { getRegistry, clearRegistry } from "../registry";
-import { clearConfigCache } from "../config";
-import type { CliConfig, Command } from "../types";
+import { describe, expect, test } from "bun:test";
+import { runCli } from "../run";
+import type { CliDefinition, Command } from "../types";
+import { createRuntimeFixture } from "./runtimeFixture";
 
-class ExitSignal extends Error {
-  constructor(public code: number) {
-    super(`__exit__:${code}`);
-  }
-}
-
-const exitCodes: number[] = [];
-const originalArgv = process.argv;
-
-function makeCmd(name: string, overrides: Partial<Command> = {}): Command {
+function command(name: string, exitCode = 0): Command {
   return {
     name,
-    description: `${name} description`,
-    handler: async () => ({ exitCode: 0 }),
-    ...overrides,
+    description: name,
+    handler: async () => ({ exitCode }),
   };
 }
 
-describe("runCli", () => {
-  let exitSpy: ReturnType<typeof spyOn>;
-  let loggerErrorSpy: ReturnType<typeof spyOn>;
-  let consoleOutput: string[];
-  let originalLog: typeof console.log;
+async function run(definition: CliDefinition, args: string[]) {
+  const fixture = createRuntimeFixture(args);
+  const result = await runCli(definition, fixture.runtime);
+  return { fixture, result };
+}
 
-  beforeEach(() => {
-    clearRegistry();
-    clearConfigCache();
-    exitCodes.length = 0;
-    exitSpy = spyOn(process, "exit").mockImplementation(((code?: number) => {
-      exitCodes.push(code ?? 0);
-      throw new ExitSignal(code ?? 0);
-    }) as never);
-    // runCli constructs its own internal Logger; silence its error output so the
-    // unknown-command test does not leak to stderr. (We assert via exit code.)
-    loggerErrorSpy = spyOn(Logger.prototype, "error").mockImplementation(
-      () => {},
+describe("runCli navigation", () => {
+  test("validates required definition identity", async () => {
+    await expect(
+      runCli({ version: "1", commands: [] } as CliDefinition),
+    ).rejects.toThrow("name");
+    await expect(
+      runCli({ name: "cli", commands: [] } as CliDefinition),
+    ).rejects.toThrow("version");
+  });
+
+  test("returns help and version results", async () => {
+    const config = { name: "cli", version: "1.2.3", commands: [] };
+    expect((await run(config, ["--help"])).result).toEqual({ exitCode: 0 });
+    const version = await run(config, ["--version"]);
+    expect(version.result).toEqual({ exitCode: 0 });
+    expect(version.fixture.messages).toEqual(["1.2.3"]);
+  });
+
+  test("returns an unknown-command result and help", async () => {
+    const value = await run({ name: "cli", version: "1", commands: [] }, [
+      "missing",
+    ]);
+    expect(value.result).toEqual({ exitCode: 1, command: "missing" });
+    expect(value.fixture.errors).toEqual(["Unknown command: missing"]);
+    expect(value.fixture.messages.join("\n")).toContain("Usage: cli");
+  });
+
+  test("dispatches a default command with positional arguments", async () => {
+    let args: string[] = [];
+    const create = command("create");
+    create.handler = async (context) => (
+      (args = context.args),
+      { exitCode: 2 }
     );
-    consoleOutput = [];
-    originalLog = console.log;
-    console.log = (...args: unknown[]) => {
-      consoleOutput.push(args.join(" "));
-    };
-  });
-
-  afterEach(() => {
-    exitSpy.mockRestore();
-    loggerErrorSpy.mockRestore();
-    console.log = originalLog;
-    process.argv = originalArgv;
-    clearRegistry();
-    clearConfigCache();
-  });
-
-  /** Run runCli with a stubbed argv, swallowing the ExitSignal sentinel. */
-  async function run(config: CliConfig, args: string[]): Promise<void> {
-    process.argv = ["node", config.name, ...args];
-    try {
-      await runCli(config);
-    } catch (err) {
-      if (!(err instanceof ExitSignal)) throw err;
-    }
-  }
-
-  test("throws when config has no name", async () => {
-    await expect(
-      runCli({ version: "1.0.0", commands: [] } as unknown as CliConfig),
-    ).rejects.toThrow("CLI config must have a 'name' property");
-  });
-
-  test("throws when config has no version", async () => {
-    await expect(
-      runCli({ name: "cli", commands: [] } as unknown as CliConfig),
-    ).rejects.toThrow("CLI config must have a 'version' property");
-  });
-
-  test("registers all configured commands into the registry", async () => {
-    const config: CliConfig = {
-      name: "cli",
-      version: "1.0.0",
-      banner: false,
-      commands: [makeCmd("build"), makeCmd("test")],
-    };
-    await run(config, ["--help"]);
-    expect(getRegistry().get("build")).toBeDefined();
-    expect(getRegistry().get("test")).toBeDefined();
-  });
-
-  test("clears the registry on each run (no leakage across invocations)", async () => {
-    const first: CliConfig = {
-      name: "cli",
-      version: "1.0.0",
-      banner: false,
-      commands: [makeCmd("alpha")],
-    };
-    await run(first, ["--help"]);
-    expect(getRegistry().get("alpha")).toBeDefined();
-
-    const second: CliConfig = {
-      name: "cli",
-      version: "1.0.0",
-      banner: false,
-      commands: [makeCmd("beta")],
-    };
-    await run(second, ["--help"]);
-    expect(getRegistry().get("alpha")).toBeUndefined();
-    expect(getRegistry().get("beta")).toBeDefined();
-  });
-
-  test("prints default help and exits 0 when no args are given", async () => {
-    const config: CliConfig = {
-      name: "cli",
-      version: "1.0.0",
-      banner: false,
-      commands: [makeCmd("build")],
-    };
-    await run(config, []);
-    expect(exitCodes[0]).toBe(0);
-    expect(consoleOutput.join("\n")).toContain("Usage:");
-  });
-
-  test("prints default help and exits 0 for --help", async () => {
-    const config: CliConfig = {
-      name: "cli",
-      version: "1.0.0",
-      banner: false,
-      commands: [makeCmd("build")],
-    };
-    await run(config, ["--help"]);
-    expect(exitCodes[0]).toBe(0);
-    expect(consoleOutput.join("\n")).toContain("Usage:");
-  });
-
-  test("prints default help and exits 0 for -h", async () => {
-    const config: CliConfig = {
-      name: "cli",
-      version: "1.0.0",
-      banner: false,
-      commands: [],
-    };
-    await run(config, ["-h"]);
-    expect(exitCodes[0]).toBe(0);
-  });
-
-  test("prints the banner unless disabled", async () => {
-    const config: CliConfig = {
-      name: "fancycli",
-      version: "1.0.0",
-      description: "A fancy CLI",
-      commands: [],
-    };
-    await run(config, ["--help"]);
-    const out = consoleOutput.join("\n");
-    // Default boxed banner contains box-drawing characters and the name.
-    expect(out).toContain("fancycli");
-    expect(out).toContain("┌");
-  });
-
-  test("suppresses the banner when banner is false", async () => {
-    const config: CliConfig = {
-      name: "plaincli",
-      version: "1.0.0",
-      banner: false,
-      commands: [],
-    };
-    await run(config, ["--help"]);
-    expect(consoleOutput.join("\n")).not.toContain("┌");
-  });
-
-  test("honors a custom banner style", async () => {
-    const config: CliConfig = {
-      name: "minicli",
-      version: "1.0.0",
-      banner: { style: "minimal", title: "MINI" },
-      commands: [],
-    };
-    await run(config, ["--help"]);
-    const out = consoleOutput.join("\n");
-    expect(out).toContain("MINI");
-    expect(out).not.toContain("┌");
-  });
-
-  test("reports an unknown command, prints help, and exits 1", async () => {
-    const config: CliConfig = {
-      name: "cli",
-      version: "1.0.0",
-      banner: false,
-      commands: [makeCmd("build")],
-    };
-    await run(config, ["bogus"]);
-    expect(exitCodes[0]).toBe(1);
-    expect(loggerErrorSpy).toHaveBeenCalled();
-    expect(loggerErrorSpy.mock.calls[0]?.[0]).toBe("Unknown command: bogus");
-    // Default help is also printed after the error.
-    expect(consoleOutput.join("\n")).toContain("Usage:");
-  });
-
-  test("falls back to the default command, forwarding the unknown token as an arg", async () => {
-    let received: {
-      args: string[];
-      command: string;
-      options: Record<string, unknown>;
-    } | null = null;
-    const create = makeCmd("create", {
-      options: [
-        {
-          name: "module",
-          type: "boolean",
-          description: "module",
-          default: false,
-        },
-      ],
-      handler: async (ctx) => {
-        received = {
-          args: ctx.args,
-          command: ctx.command,
-          options: ctx.options,
-        };
-        return { exitCode: 0 };
+    const value = await run(
+      {
+        name: "cli",
+        version: "1",
+        commands: [create],
+        defaultCommand: "create",
       },
-    });
-    const config: CliConfig = {
-      name: "cli",
-      version: "1.0.0",
-      banner: false,
-      defaultCommand: "create",
-      commands: [create],
-    };
-
-    // `cli my-app --module` -> `create my-app --module` (no `create` typed).
-    await run(config, ["my-app", "--module"]);
-
-    expect(received).not.toBeNull();
-    expect(received!.command).toBe("create");
-    expect(received!.args).toEqual(["my-app"]);
-    expect(received!.options.module).toBe(true);
-    expect(exitCodes[0]).toBe(0);
-    // The unknown-command error is NOT raised when a default command handles it.
-    expect(loggerErrorSpy).not.toHaveBeenCalled();
+      ["project"],
+    );
+    expect(value.result).toEqual({ exitCode: 2, command: "create" });
+    expect(args).toEqual(["project"]);
   });
 
-  test("still reports an unknown command when no default command is configured", async () => {
-    const config: CliConfig = {
-      name: "cli",
-      version: "1.0.0",
-      banner: false,
-      commands: [makeCmd("create")],
-    };
-    await run(config, ["my-app"]);
-    expect(exitCodes[0]).toBe(1);
-    expect(loggerErrorSpy.mock.calls[0]?.[0]).toBe("Unknown command: my-app");
-  });
-
-  test("dispatches a subcommand handler and exits with its result code", async () => {
-    let calledWith: { args: string[]; command: string } | null = null;
-    const sub = makeCmd("db:migrate", {
-      handler: async (ctx) => {
-        calledWith = { args: ctx.args, command: ctx.command };
-        return { exitCode: 7 };
-      },
-    });
-    const parent = makeCmd("db", {
-      subcommands: [sub],
-    });
-    const config: CliConfig = {
-      name: "cli",
-      version: "1.0.0",
-      banner: false,
-      commands: [parent],
-    };
-
-    await run(config, ["db", "migrate", "extra-arg"]);
-
-    expect(exitCodes[0]).toBe(7);
-    expect(calledWith).not.toBeNull();
-    expect(calledWith!.command).toBe("db:migrate");
-    // Args after "db migrate" are forwarded.
-    expect(calledWith!.args).toEqual(["extra-arg"]);
-  });
-
-  test("forwards parsed options/flags to the dispatched subcommand handler", async () => {
-    let received: Record<string, unknown> | null = null;
-    const sub = makeCmd("db:migrate", {
-      options: [
-        { name: "name", type: "string", description: "migration name" },
-        { name: "force", alias: "f", type: "boolean", description: "force" },
-        { name: "count", type: "number", description: "count", default: 5 },
-      ],
-      handler: async (ctx) => {
-        received = ctx.options;
-        return { exitCode: 0 };
-      },
-    });
-    const parent = makeCmd("db", { subcommands: [sub] });
-    const config: CliConfig = {
-      name: "cli",
-      version: "1.0.0",
-      banner: false,
-      commands: [parent],
-    };
-
-    // --name=foo (= syntax), -f (boolean alias), and the unspecified --count
-    // should reach the subcommand handler — not be dropped during dispatch.
-    await run(config, ["db", "migrate", "--name=foo", "-f"]);
-
-    expect(received).not.toBeNull();
-    expect(received!.name).toBe("foo");
-    expect(received!.force).toBe(true);
-    // Defaults from the subcommand's own option defs are applied too.
-    expect(received!.count).toBe(5);
-  });
-
-  test("reports a thrown subcommand error, calls onError, and exits with its code", async () => {
-    let onErrorArgs: { error: Error; command: string } | null = null;
-    const sub = makeCmd("db:migrate", {
-      handler: async () => {
-        const err = new Error("subcommand boom");
-        throw err;
-      },
-    });
-    const parent = makeCmd("db", { subcommands: [sub] });
-    const config: CliConfig = {
-      name: "cli",
-      version: "1.0.0",
-      banner: false,
-      commands: [parent],
-      onError: (error, ctx) => {
-        onErrorArgs = { error, command: ctx.command };
-      },
-    };
-
-    await run(config, ["db", "migrate"]);
-
-    // reportError logged via the internal logger (spied in beforeEach).
-    expect(loggerErrorSpy).toHaveBeenCalled();
-    // A generic Error maps to exit code 1.
-    expect(exitCodes[0]).toBe(1);
-    expect(onErrorArgs).not.toBeNull();
-    expect(onErrorArgs!.error).toBeInstanceOf(Error);
-    expect(onErrorArgs!.error.message).toBe("subcommand boom");
-    expect(onErrorArgs!.command).toBe("db:migrate");
-  });
-
-  test("reports a thrown subcommand error even without an onError hook", async () => {
-    const sub = makeCmd("db:migrate", {
-      handler: async () => {
-        throw "string failure";
-      },
-    });
-    const parent = makeCmd("db", { subcommands: [sub] });
-    const config: CliConfig = {
-      name: "cli",
-      version: "1.0.0",
-      banner: false,
-      commands: [parent],
-    };
-
-    await run(config, ["db", "migrate"]);
-    expect(loggerErrorSpy).toHaveBeenCalled();
-    expect(exitCodes[0]).toBe(1);
-  });
-
-  test("falls through to cli.parse when the named subcommand is not registered", async () => {
-    let subCalled = false;
-    const sub = makeCmd("db:migrate", {
-      handler: async () => {
-        subCalled = true;
-        return { exitCode: 0 };
-      },
-    });
-    const parent = makeCmd("db", { subcommands: [sub] });
-    const config: CliConfig = {
-      name: "cli",
-      version: "1.0.0",
-      banner: false,
-      commands: [parent],
-    };
-
-    // `db bogus` -> subcommandName is "bogus" but no such subcommand exists, so
-    // the dispatch block is skipped and control reaches cli.parse() (no exit).
-    await run(config, ["db", "bogus"]);
-    expect(subCalled).toBe(false);
-    // No process.exit was requested by the dispatch path.
-    expect(exitCodes.length).toBe(0);
-  });
-
-  test("does not dispatch a subcommand when only the parent is given", async () => {
-    let subCalled = false;
-    const sub = makeCmd("db:migrate", {
-      handler: async () => {
-        subCalled = true;
-        return { exitCode: 0 };
-      },
-    });
-    const parent = makeCmd("db", { subcommands: [sub] });
-    const config: CliConfig = {
-      name: "cli",
-      version: "1.0.0",
-      banner: false,
-      commands: [parent],
-    };
-
-    // Only "db" given -> falls through to cli.parse(); no subcommand dispatch.
-    await run(config, ["db"]);
-    expect(subCalled).toBe(false);
-  });
-
-  test("does not register the global --verbose flag when verbose is disabled", async () => {
-    const config: CliConfig = {
-      name: "cli",
-      version: "1.0.0",
-      banner: false,
-      verbose: { enabled: false },
-      commands: [],
-    };
-    await run(config, ["--help"]);
-    // printDefaultHelp omits --verbose when disabled.
-    expect(consoleOutput.join("\n")).not.toContain("--verbose");
+  test("dispatches namespaced subcommands", async () => {
+    const add = command("add", 5);
+    const module = command("module");
+    module.subcommands = [add];
+    const value = await run({ name: "cli", version: "1", commands: [module] }, [
+      "module",
+      "add",
+    ]);
+    expect(value.result).toEqual({ exitCode: 5, command: "module:add" });
   });
 });

@@ -100,7 +100,12 @@ Returns a `GeneratedFilesMap`:
 - For each table: `<table>.ts` (via `generateTableFile`) and `<table>.zod.ts` (via `generateZodFile`). Filenames use `tableToFileName` (`order_item` → `order-item`).
 - `index.ts` — re-exports `./enums` (if present) and, per table, `./<table>` and `./<table>.zod`.
 
-Accepts an optional injected `ILogger` (falls back to `getLogger()`). Verified file set for a 2-table+enum module (from `tests/codegen.test.ts`): `enums.ts`, `product.ts`, `order-item.ts`, `index.ts` (plus the `.zod.ts` files), and `index.ts` containing `export * from "./enums";` etc. When there are no enums, `enums.ts` is omitted and the index doesn't reference it.
+Accepts an optional injected logger with `debug` and `info` methods (falls back
+to `getLogger()`). Verified file set for a 2-table+enum module (from
+`tests/codegen.test.ts`): `enums.ts`, `product.ts`, `order-item.ts`, `index.ts`
+(plus the `.zod.ts` files), and `index.ts` containing
+`export * from "./enums";` etc. When there are no enums, `enums.ts` is omitted
+and the index doesn't reference it.
 
 ## Edge cases & gotchas
 

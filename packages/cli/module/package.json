@@ -1,0 +1,44 @@
+{
+  "name": "@damatjs/cli-module",
+  "description": "Damat module authoring and installation CLI capability",
+  "version": "0.6.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@damatjs/cli": "workspace:*",
+    "@damatjs/cli-support": "workspace:*",
+    "@damatjs/codegen": "workspace:*",
+    "@damatjs/framework": "workspace:*",
+    "@damatjs/load-env": "workspace:*",
+    "@damatjs/module": "workspace:*",
+    "@damatjs/orm-cli": "workspace:*"
+  },
+  "devDependencies": {
+    "@damatjs/typescript-config": "workspace:*",
+    "@types/bun": "1.3.9",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "rm -rf tsconfig.tsbuildinfo dist && bun scripts/embedAgents.ts && tsc",
+    "check-types": "tsc --noEmit",
+    "test": "bun test",
+    "lint": "oxlint src scripts"
+  }
+}

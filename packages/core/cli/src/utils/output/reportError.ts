@@ -1,72 +1,61 @@
-import type { ILogger } from "@damatjs/logger";
 import { CliError } from "../../errors";
+import type { CliLogger, CliOutput } from "../../types";
 
 export interface ReportErrorOptions {
-  /**
-   * Force verbose output on/off. When omitted, verbosity is auto-detected from
-   * `--verbose` on the command line or the `DAMAT_DEBUG` environment variable.
-   */
   verbose?: boolean;
-  /** Headline prefix, e.g. "Command failed" or "Failed to load config". */
   prefix?: string;
 }
 
-/**
- * Whether the CLI should print full stack traces. Detected from the global
- * `--verbose` flag or `DAMAT_DEBUG=1` so callers don't have to thread the flag
- * through every layer (the flag is global and not part of any command's option
- * definitions, so it is otherwise dropped during option coercion).
- */
-export function isVerbose(override?: boolean): boolean {
-  if (typeof override === "boolean") return override;
-  return process.argv.includes("--verbose") || Boolean(process.env.DAMAT_DEBUG);
-}
-
-/** Resolve the process exit code for a thrown value (honors CliError.exitCode). */
 export function getExitCode(error: unknown): number {
   return error instanceof CliError ? error.exitCode : 1;
 }
 
-function formatLabel(err: Error): string {
-  // Plain "Error" adds no signal, so only surface meaningful error type names.
-  const name = err.name && err.name !== "Error" ? `${err.name}: ` : "";
-  return `${name}${err.message}`;
+export function reportError(
+  logger: CliLogger,
+  error: unknown,
+  options?: ReportErrorOptions,
+): void;
+export function reportError(
+  logger: CliLogger,
+  output: CliOutput,
+  error: unknown,
+  options: ReportErrorOptions,
+): void;
+export function reportError(
+  logger: CliLogger,
+  outputOrError: CliOutput | unknown,
+  errorOrOptions?: unknown,
+  explicitOptions?: ReportErrorOptions,
+): void {
+  const explicitOutput = isOutput(outputOrError);
+  const output = explicitOutput
+    ? outputOrError
+    : { write: (message = "") => logger.info(message) };
+  const error = explicitOutput ? errorOrOptions : outputOrError;
+  const options = (explicitOutput ? explicitOptions : errorOrOptions) as
+    | ReportErrorOptions
+    | undefined;
+  const verbose = options?.verbose ?? false;
+  const normalized = error instanceof Error ? error : new Error(String(error));
+  const label = formatLabel(normalized);
+  logger.error(options?.prefix ? `${options.prefix}: ${label}` : label,
+    verbose ? normalized : undefined);
+
+  let cause: unknown = (normalized as { cause?: unknown }).cause;
+  for (let depth = 0; cause && depth < 5; depth++) {
+    const current = cause instanceof Error ? cause : new Error(String(cause));
+    logger.error(`↳ caused by: ${formatLabel(current)}`,
+      verbose ? current : undefined);
+    cause = (current as { cause?: unknown }).cause;
+  }
+  if (!verbose) output.write("Run again with --verbose for the full stack trace.");
 }
 
-/**
- * Render a thrown value as a clear, structured CLI error:
- *  - a headline ("<prefix>: <Type>: <message>")
- *  - every `error.cause` in the chain on its own "↳ caused by:" line
- *  - full stack trace(s) only when verbose (via the logger's error formatter)
- *  - a hint pointing at --verbose when not verbose
- *
- * The stack is shown by passing the Error to `logger.error()` — the logger's
- * formatter already renders the name, message and dimmed stack.
- */
-export function reportError(
-  logger: ILogger,
-  error: unknown,
-  options: ReportErrorOptions = {},
-): void {
-  const verbose = isVerbose(options.verbose);
-  const err = error instanceof Error ? error : new Error(String(error));
+function isOutput(value: unknown): value is CliOutput {
+  return typeof value === "object" && value !== null && "write" in value;
+}
 
-  const headline = options.prefix
-    ? `${options.prefix}: ${formatLabel(err)}`
-    : formatLabel(err);
-  logger.error(headline, verbose ? err : undefined);
-
-  // Walk the cause chain (capped to avoid pathological/cyclic chains).
-  let cause: unknown = (err as { cause?: unknown }).cause;
-  for (let depth = 0; cause && depth < 5; depth++) {
-    const c = cause instanceof Error ? cause : new Error(String(cause));
-    logger.error(`↳ caused by: ${formatLabel(c)}`, verbose ? c : undefined);
-    cause = (c as { cause?: unknown }).cause;
-  }
-
-  if (!verbose) {
-    console.error(
-      "Run again with --verbose (or set DAMAT_DEBUG=1) for the full stack trace.",
-    );
-  }
+function formatLabel(error: Error): string {
+  const name = error.name && error.name !== "Error" ? `${error.name}: ` : "";
+  return `${name}${error.message}`;
 }

@@ -88,6 +88,11 @@ snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
 ### CLIs & AI
 
 - [`damat-cli`](./damat-cli/) — `@damatjs/damat-cli`
+- [`cli-app`](./cli-app/) — `@damatjs/cli-app`
+- [`cli-codegen`](./cli-codegen/) — `@damatjs/cli-codegen`
+- [`cli-kit`](./cli-kit/) — `@damatjs/cli-kit`
+- [`cli-module`](./cli-module/) — `@damatjs/cli-module`
+- [`cli-support`](./cli-support/) — `@damatjs/cli-support`
 - [`orm-cli`](./orm-cli/) — `@damatjs/orm-cli`
 - [`create-damat-app`](./create-damat-app/) — `@damatjs/create-damat-app` (retired 0.7 — use `bunx @damatjs/damat-cli create`)
 - [`mcp`](./mcp/) — `@damatjs/mcp`

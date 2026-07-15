@@ -10,6 +10,7 @@ and `@damatjs/orm-cli` are built on — it is not the `damat` command itself.
 
 | Version | Summary                                                                                                                                         | Upgrade notes         |
 | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| Unreleased | Framework-neutral runtime injection, invocation-local state, returned results, and opt-in presentation. | [Unreleased →](./next.md) |
 | 0.3.6   | `parseCommandArgs` understands `--no-<flag>` to negate a boolean option on subcommands, matching top-level (cac) parsing.                       | [0.3.6 →](./0.3.6.md) |
 | 0.1.4   | Adds `defaultCommand` to the framework — a CLI can run its primary command without the user typing its name (powers `create-damat-app <name>`). | [0.1.4 →](./0.1.4.md) |
 | 0.1.3   | Version sync with the cross-module links release; no framework API change (only `package.json`/changelog touched).                              | —                     |

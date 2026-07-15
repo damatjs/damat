@@ -1,0 +1,1 @@
+export { moduleUpdateCommand } from "./command";

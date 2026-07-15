@@ -1,0 +1,1 @@
+export { moduleRemoveCommand } from "./command";

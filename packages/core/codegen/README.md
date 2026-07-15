@@ -88,7 +88,8 @@ for (const [name, contents] of files) {
 
 - `@damatjs/orm-type` — `ColumnSchema`, `ColumnType`, `ModuleSchema`, `EnumSchema`, `RelationSchema`.
 - `@damatjs/orm-model` — workspace dependency.
-- `@damatjs/logger` (peer) — `getLogger`/`ILogger` for progress logging; the file-per-table generator accepts an injected logger.
+- `@damatjs/logger` (peer) — supplies the default logger. The file-per-table
+  generator also accepts any injected logger with `debug` and `info` methods.
 
 It performs **no I/O** and opens **no database connection**.
 

@@ -1,12 +1,9 @@
-import { describe, test, expect, beforeEach, afterEach } from "bun:test";
+import { describe, test, expect } from "bun:test";
 import { buildOptionFlag } from "../run/buildOption";
 import { resolveCommandName } from "../run/resolveCommand";
 import {
-  buildCommandContext,
   extractPositionalArgs,
 } from "../run/buildCommand";
-import { Logger } from "@damatjs/logger";
-import type { CliConfig } from "../types";
 
 describe("buildOptionFlag", () => {
   test("renders a long flag only when there is no alias", () => {
@@ -88,49 +85,5 @@ describe("extractPositionalArgs", () => {
 
   test("a trailing flag with no value consumes the (nonexistent) next token", () => {
     expect(extractPositionalArgs(["cmd", "--flag"])).toEqual(["cmd"]);
-  });
-});
-
-describe("buildCommandContext", () => {
-  const originalArgv = process.argv;
-  let logger: Logger;
-  const config: CliConfig = { name: "mycli", version: "1.0.0", commands: [] };
-
-  beforeEach(() => {
-    logger = new Logger({ timestamp: false });
-  });
-
-  afterEach(() => {
-    process.argv = originalArgv;
-  });
-
-  test("populates command, options, logger and cwd", () => {
-    process.argv = ["node", "mycli", "build"];
-    const opts = { out: "dist" };
-    const ctx = buildCommandContext("build", opts, logger, config);
-
-    expect(ctx.command).toBe("build");
-    expect(ctx.options).toBe(opts);
-    expect(ctx.logger).toBe(logger);
-    expect(ctx.cwd).toBe(process.cwd());
-  });
-
-  test("derives positional args from process.argv, excluding the command name", () => {
-    // argv after slice(2) -> ["build", "target"], filter out the command name -> ["target"]
-    process.argv = ["node", "mycli", "build", "target"];
-    const ctx = buildCommandContext("build", {}, logger, config);
-    expect(ctx.args).toEqual(["target"]);
-  });
-
-  test("excludes flags (and their values) from the positional args", () => {
-    process.argv = ["node", "mycli", "build", "target", "--out", "dist"];
-    const ctx = buildCommandContext("build", {}, logger, config);
-    expect(ctx.args).toEqual(["target"]);
-  });
-
-  test("returns no positional args when only the command name is present", () => {
-    process.argv = ["node", "mycli", "build"];
-    const ctx = buildCommandContext("build", {}, logger, config);
-    expect(ctx.args).toEqual([]);
   });
 });

@@ -1,120 +1,59 @@
-import { cac } from "cac";
-import { Logger } from "@damatjs/logger";
-import type { CliConfig, CommandResult } from "../types";
-import { getRegistry, clearRegistry } from "../registry";
-import { reportError, getExitCode } from "../utils/output";
+import type { CliDefinition, CliRunResult, CliRuntime } from "../types";
+import { withConfig } from "../config";
 import { printDefaultHelp } from "../help";
+import { createCommandRegistry } from "../registry";
+import { createRuntime } from "../runtime";
 import { printBanner } from "../utils/banner";
-import { handleHelpCommand } from "./helpCommand";
-import { registerSingleCommand } from "./registerCommand";
-import { resolveCommandName } from "./resolveCommand";
-import { buildCommandContext, parseCommandArgs } from "./buildCommand";
+import { createCli } from "./createCli";
+import { dispatchManual } from "./dispatchManual";
 
-export async function runCli(config: CliConfig): Promise<void> {
-  if (!config.name) {
-    throw new Error("CLI config must have a 'name' property");
+export async function runCli(
+  definition: CliDefinition,
+  overrides: Partial<CliRuntime> = {},
+): Promise<CliRunResult> {
+  validateDefinition(definition);
+  const runtime = createRuntime(overrides);
+  const registry = createCommandRegistry();
+  for (const command of definition.commands) registry.register(command);
+  const project = definition.configLoader
+    ? withConfig(definition.configLoader, runtime.cwd)
+    : undefined;
+  const cli = createCli(definition, runtime, registry, project);
+
+  if (typeof definition.banner === "object") {
+    printBanner(definition, runtime.output, definition.banner);
   }
-  if (!config.version) {
-    throw new Error("CLI config must have a 'version' property");
+  if (
+    runtime.args.length === 0 ||
+    runtime.args[0] === "--help" ||
+    runtime.args[0] === "-h"
+  ) {
+    printDefaultHelp(definition, registry.getAll(), runtime.output);
+    return { exitCode: 0 };
   }
-
-  clearRegistry();
-
-  const cli = cac(config.name);
-  const logger = new Logger({ timestamp: false });
-
-  cli.version(config.version);
-  cli.help();
-
-  const verboseEnabled = config.verbose?.enabled !== false;
-  if (verboseEnabled) {
-    cli.option("--verbose", "Enable verbose output");
-  }
-
-  for (const cmd of config.commands) {
-    getRegistry().register(cmd);
-  }
-
-  handleHelpCommand(cli, config, logger);
-
-  for (const cmd of getRegistry().getAll()) {
-    registerSingleCommand(cli, cmd, config, logger);
+  if (runtime.args[0] === "--version" || runtime.args[0] === "-v") {
+    runtime.output.write(definition.version);
+    return { exitCode: 0 };
   }
 
-  const args = process.argv.slice(2);
-  const commandName = resolveCommandName(args);
+  const manual = await dispatchManual(definition, runtime, registry, project);
+  if (manual) return manual;
+  cli.parse(["bun", definition.name, ...runtime.args], { run: false });
+  const matched = (await cli.runMatchedCommand()) as CliRunResult | undefined;
+  if (matched) return matched;
 
-  const shouldShowBanner = config.banner !== false;
-  if (shouldShowBanner && config.banner) {
-    printBanner(config, config.banner);
-  } else if (shouldShowBanner) {
-    printBanner(config);
+  const command = runtime.args[0]!;
+  runtime.logger.error(`Unknown command: ${command}`);
+  runtime.output.write();
+  printDefaultHelp(definition, registry.getAll(), runtime.output);
+  return { exitCode: 1, command };
+}
+
+function validateDefinition(definition: CliDefinition): void {
+  if (!definition.name) {
+    throw new Error("CLI definition must have a 'name' property");
   }
-
-  if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
-    printDefaultHelp(config, getRegistry().getAll());
-    process.exit(0);
+  if (!definition.version) {
+    throw new Error("CLI definition must have a 'version' property");
   }
-
-  if (commandName) {
-    const cmd = getRegistry().get(commandName);
-    if (!cmd) {
-      // The first token isn't a known command. If a default command is
-      // configured, treat the whole arg list as that command's arguments
-      // (e.g. `create-tool my-app` -> `create my-app`). Aliases are
-      // registered as commands, so this only ever catches genuine arguments.
-      const fallback = config.defaultCommand
-        ? getRegistry().get(config.defaultCommand)
-        : undefined;
-      if (fallback) {
-        const { options, positional } = parseCommandArgs(
-          args,
-          fallback.options,
-        );
-        const ctx = buildCommandContext(fallback.name, options, logger, config);
-        const result = await fallback.handler({ ...ctx, args: positional });
-        process.exit(result.exitCode);
-      }
-
-      logger.error(`Unknown command: ${commandName}`);
-      console.log("");
-      printDefaultHelp(config, getRegistry().getAll());
-      process.exit(1);
-    }
-
-    const subcommandName =
-      cmd.subcommands && args.length > 1 ? args[1] : undefined;
-    if (subcommandName) {
-      const fullName = `${cmd.name}:${subcommandName}`;
-      const subcmd =
-        getRegistry().get(fullName) || getRegistry().get(subcommandName);
-
-      if (subcmd && subcmd !== cmd) {
-        const { options, positional } = parseCommandArgs(
-          args.slice(2),
-          subcmd.options,
-        );
-        const ctx = buildCommandContext(fullName, options, logger, config);
-        let result: CommandResult;
-        try {
-          result = await subcmd.handler({
-            ...ctx,
-            args: positional,
-          });
-        } catch (error) {
-          reportError(logger, error, { prefix: "Command failed" });
-          if (config.onError) {
-            config.onError(
-              error instanceof Error ? error : new Error(String(error)),
-              { ...ctx, args: positional },
-            );
-          }
-          process.exit(getExitCode(error));
-        }
-        process.exit(result.exitCode);
-      }
-    }
-  }
-
-  cli.parse();
 }

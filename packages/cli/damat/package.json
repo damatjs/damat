@@ -30,13 +30,11 @@
   "author": "Abel Lamesgen",
   "dependencies": {
     "@damatjs/cli": "workspace:*",
-    "@damatjs/logger": "workspace:*",
-    "@damatjs/load-env": "workspace:*",
-    "@damatjs/framework": "workspace:*",
-    "@damatjs/module": "workspace:*",
-    "@damatjs/codegen": "workspace:*",
-    "@damatjs/orm-cli": "workspace:*",
-    "@damatjs/link": "workspace:*"
+    "@damatjs/cli-app": "workspace:*",
+    "@damatjs/cli-codegen": "workspace:*",
+    "@damatjs/cli-kit": "workspace:*",
+    "@damatjs/cli-module": "workspace:*",
+    "@damatjs/logger": "workspace:*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "workspace:*",
@@ -44,11 +42,12 @@
     "typescript": "^5.9.3"
   },
   "scripts": {
-    "build": "rm -rf tsconfig.tsbuildinfo dist && bun scripts/embedAgents.ts && bun scripts/embedVersion.ts && tsc && chmod +x dist/cli.js",
+    "build": "rm -rf tsconfig.tsbuildinfo dist && bun scripts/embedVersion.ts && tsc && chmod +x dist/cli.js",
+    "check-types": "tsc --noEmit",
     "test": "bun test",
     "dev": "bun run build --watch",
     "postinstall": "chmod +x dist/cli.js || true",
-    "prepublishOnly": "test -f dist/cli.js && test -f dist/command/module/scaffold/agents.generated.js || (echo 'Error: build artifacts missing (dist/cli.js or embedded AGENTS guide). Run bun run build first.' && exit 1)",
+    "prepublishOnly": "test -f dist/cli.js || (echo 'Error: dist/cli.js is missing. Run bun run build first.' && exit 1)",
     "lint": "oxlint src"
   }
 }

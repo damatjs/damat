@@ -2,7 +2,10 @@ import { BannerConfig } from "./banner";
 import type { Command } from "./command";
 import type { CommandContext } from "./command";
 
-export type HelpTemplateFn = (config: CliConfig, commands: Command[]) => string;
+export type HelpTemplateFn = (
+  definition: CliDefinition,
+  commands: Command[],
+) => string;
 
 export type ErrorHandlerFn = (
   error: Error,
@@ -19,7 +22,7 @@ export interface ConfigLoader {
   load?: (filePath: string) => Promise<unknown>;
 }
 
-export interface CliConfig {
+export interface CliDefinition {
   name: string;
   version: string;
   description?: string;
