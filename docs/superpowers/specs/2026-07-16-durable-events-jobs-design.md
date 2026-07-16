@@ -2,8 +2,8 @@
 
 ## Status
 
-Approved for implementation planning on 2026-07-16, including the selectable
-server and worker runtime amendment.
+Approved for implementation planning on 2026-07-16, including selectable
+runtime modes and the operational visibility amendment.
 
 ## Goal
 
@@ -12,7 +12,8 @@ durable events while keeping ordinary events lightweight. Redis remains an
 optional wake-up transport. One application build can run as an HTTP server, a
 dedicated job worker, a dedicated durable-event worker, a combined worker, or
 an all-in-one process. The framework also provides explicit system migrations,
-crash recovery, and at-least-once delivery with idempotency support.
+crash recovery, at-least-once delivery with idempotency support, and a complete
+operational record suitable for tables, detail views, metrics, and controls.
 
 ## Scope
 
@@ -24,6 +25,7 @@ This design delivers Phase 7 of the Damat v1 roadmap:
 - fenced leases, heartbeat, cancellation, retry, reconciliation, and retention;
 - idempotency APIs;
 - `server`, selectable `worker`, and `all` framework runtime modes;
+- persisted lifecycle activity, progress, structured logs, and inspection APIs;
 - explicit system migrations and actionable startup failures;
 - repository lint and formatter cleanup required before feature work.
 
@@ -45,6 +47,8 @@ infrastructure:
 - fenced lease value objects and SQL helpers;
 - transactional idempotency storage;
 - retention batch helpers;
+- pagination, time-range, and operational summary primitives;
+- structured work-log and redaction contracts;
 - shared durability errors and test fixtures.
 
 It does not define jobs, event handlers, HTTP routes, pipelines, or framework
@@ -59,6 +63,7 @@ The jobs package owns:
 - job-run, attempt, schedule, and deduplication migration descriptors;
 - PostgreSQL repositories and state transitions;
 - the job worker and job reconciler;
+- job activity, progress, logs, metrics, and administrative operations;
 - optional Redis wake-up publishing and subscription.
 
 ### `@damatjs/events`
@@ -71,6 +76,7 @@ ordinary events. It additionally owns:
 - outbox publishing;
 - outbox and delivery migration descriptors;
 - routing and delivery workers;
+- delivery activity, progress, logs, metrics, and administrative operations;
 - retry, dead-letter, inspection, and retention behavior.
 
 There is no implicit forwarding between `EventBus.emit()` and durable events.
@@ -112,6 +118,20 @@ Database-only side effects use one transaction for the idempotency row, domain
 writes, and completion. External providers must receive the same idempotency key
 because no local database can make a remote side effect exactly once.
 
+### Worker registry
+
+`_damat_workers` stores each running worker process:
+
+- stable process instance ID and selected capabilities;
+- hostname, process ID, application metadata, and deployment metadata;
+- start, last heartbeat, stopping, and stopped timestamps;
+- configured concurrency and current in-flight count.
+
+Worker processes register before polling, update heartbeats and load in bounded
+intervals, mark graceful shutdown, and become visibly stale after heartbeat
+expiry. The registry supports worker tables and capacity summaries without
+making it part of claim correctness; fenced work leases remain authoritative.
+
 ### Job runs
 
 `_damat_job_runs` stores:
@@ -124,6 +144,7 @@ because no local database can make a remote side effect exactly once.
 - lease owner, lease token, lease expiry, and heartbeat timestamp;
 - cancellation request and completion timestamps;
 - optional schedule ID, scheduled occurrence time, and deduplication key;
+- latest JSON progress, optional JSON result summary, and correlation ID;
 - structured last-error data and lifecycle timestamps.
 
 Indexes prioritize due work by queue, status, `available_at`, priority, and
@@ -136,10 +157,35 @@ time.
 
 - run ID, attempt number, worker ID, and lease token;
 - start, heartbeat, and finish timestamps;
+- processing duration and optional JSON result summary;
 - terminal attempt outcome;
 - structured error data.
 
 The unique key is run ID plus attempt number.
+
+### Job activity and logs
+
+`_damat_job_activity` is the immutable lifecycle timeline. Each row stores:
+
+- run ID and optional attempt number;
+- transition type, previous status, and next status;
+- worker ID, lease token, and event timestamp;
+- reason, duration, and structured JSON metadata;
+- actor metadata for manual cancellation, retry, pause, or resume operations.
+
+It records enqueue, claim, progress, heartbeat loss, lease recovery, retry
+scheduling, cancellation, success, dead letter, manual retry, and retention
+decisions.
+
+`_damat_job_logs` stores bounded structured log entries:
+
+- run ID, attempt number, timestamp, level, message, and JSON context;
+- worker ID plus correlation and trace identifiers;
+- sequence number for stable pagination.
+
+Log limits apply per run and attempt. When a configured count or byte limit is
+reached, the worker records one truncation activity entry rather than allowing
+unbounded database growth.
 
 ### Job schedules
 
@@ -181,10 +227,35 @@ outbox insert atomic.
 - persisted retry values and attempt count;
 - availability and retention timestamps;
 - fenced lease and heartbeat fields;
+- latest JSON progress and optional JSON result summary;
 - structured last-error data and lifecycle timestamps.
 
 The unique key is event ID plus consumer name. One consumer failure cannot
 rerun a consumer that already succeeded.
+
+### Event attempts, activity, and logs
+
+`_damat_event_delivery_attempts` stores one immutable execution attempt per
+delivery, including worker and lease identity, start/finish time, duration,
+outcome, result summary, and structured error.
+
+`_damat_event_activity` stores the immutable routing and delivery timeline:
+publish, routing, pending, claim, progress, lease recovery, retry, cancellation,
+success, dead letter, and manual retry.
+
+`_damat_event_logs` stores bounded, ordered structured logs scoped to event,
+consumer, delivery, and attempt.
+
+### Operational controls
+
+`_damat_work_controls` stores durable pause state by work kind and scope:
+
+- job queue or durable-event consumer identity;
+- paused state, reason, actor metadata, and timestamps.
+
+Workers check controls before claims. Pausing prevents new claims but does not
+terminate work already running. Every pause and resume is written to the
+relevant activity timeline.
 
 ## Query and Transaction Contract
 
@@ -219,10 +290,23 @@ optional executor.
 
 The handler receives `(payload, context)`. `JobRunContext` contains the run ID,
 attempt number, maximum attempts, queue, metadata, lease-aware cancellation
-signal, and idempotency helpers. It no longer exposes the Redis `QueueJob` type.
+signal, idempotency helpers, and:
+
+```ts
+progress(value: number | Record<string, unknown>, metadata?): Promise<void>;
+log(level: WorkLogLevel, message: string, context?): Promise<void>;
+```
+
+`progress` updates the current run snapshot and writes a rate-limited history
+entry when the value changes. `log` writes a structured work log and may mirror
+it to the application logger. Neither operation can extend or replace a lost
+lease. Handlers may return a JSON-safe result summary; `undefined` stores no
+result and a non-serializable result fails completion visibly. The context no
+longer exposes the Redis `QueueJob` type.
 
 Inspection APIs expose run, attempt, schedule, cancellation, dead-letter retry,
-and list operations. Raw Redis queue access is not part of the v1 job API.
+pause, resume, logs, activity, summaries, and list operations. Raw Redis queue
+access is not part of the v1 job API.
 
 ### Claim and execution
 
@@ -265,7 +349,8 @@ when reconcilers overlap or restart.
 
 `defineDurableEventHandler(name, consumerName, handler, options)` registers a
 stable named consumer. Consumer names must be unique per event. Durable wildcard
-handlers are rejected.
+handlers are rejected. Its context provides the same cancellation, idempotency,
+progress, structured-log, and JSON-safe result behavior as a job context.
 
 `publishDurableEvent(name, payload, options)` inserts an outbox row and returns
 the durable event record. Options include metadata, correlation, causation,
@@ -292,6 +377,93 @@ The API guarantees atomic deduplication for database effects performed with the
 provided executor. For remote calls, handlers must also pass the key to a
 provider that supports idempotency. Documentation states this boundary
 explicitly and never claims general exactly-once execution.
+
+## Operational Visibility
+
+Operational state is part of the durable domain model. It is not reconstructed
+from console output and does not depend on Redis streams.
+
+Every state transition updates the current work row and appends its activity row
+in the same PostgreSQL transaction. A dashboard can therefore use current tables
+for fast lists and immutable activity for the detailed timeline without the two
+sources disagreeing.
+
+### Headless inspection clients
+
+Jobs and events expose typed inspection clients rather than automatic HTTP
+routes. Applications may mount their own authenticated administration API or
+connect a future Damat dashboard.
+
+List queries support cursor pagination, stable sorting, and filters for:
+
+- lifecycle status and availability time;
+- queue, job name, event name, and consumer;
+- worker identity and active or stale lease;
+- creation, start, finish, and failure time ranges;
+- correlation, causation, schedule, and deduplication identifiers.
+
+Detail queries return:
+
+- payload and metadata according to visibility policy;
+- current state, progress, result summary, and timing;
+- attempts and retry schedule;
+- structured errors;
+- ordered activity and structured logs;
+- lease and worker history;
+- manual cancellation, retry, pause, and resume history.
+
+### Operational summaries
+
+SQL-backed summary APIs provide:
+
+- current counts grouped by status;
+- completion, failure, retry, cancellation, and recovery counts;
+- processing and waiting-duration distributions;
+- oldest waiting age and next scheduled work;
+- active workers, active leases, and stale leases;
+- worker capabilities, concurrency, in-flight load, and heartbeat age;
+- dead-letter totals and recent failure groups;
+- throughput grouped by time bucket, queue, job, event, or consumer.
+
+These summaries are the stable data contract for later tables, charts, alerts,
+and external telemetry adapters. Phase 7 does not ship a visual dashboard or add
+an OpenTelemetry dependency.
+
+### Progress and structured logs
+
+Progress is a current snapshot plus a bounded history:
+
+- the latest value is stored on the run or delivery for fast table rendering;
+- changed values append activity according to a configurable minimum interval;
+- terminal progress is always recorded;
+- progress writes require the current fenced lease.
+
+Work logs are separate from the general application log:
+
+- they are scoped to one run or delivery and one attempt;
+- entries use `debug`, `info`, `warn`, or `error`;
+- ordering uses database sequence values, not clock time alone;
+- configured key and path redaction is applied before persistence;
+- count, byte, age, and terminal-state retention limits are configurable;
+- inspection results expose when logs were truncated or redacted.
+
+Payloads and results remain available to the worker as required for execution.
+Inspection visibility can independently be `full`, `metadata`, or `hidden`, with
+configured redacted paths applied before data leaves the inspection client.
+
+### Administrative operations
+
+Headless APIs support:
+
+- cancel queued or running work;
+- retry dead-lettered work while preserving previous history;
+- pause and resume a job queue or durable-event consumer;
+- inspect schedules and enable or disable them;
+- request bounded retention cleanup.
+
+Each operation requires actor metadata from the caller and appends an immutable
+activity entry. Damat does not expose unauthenticated administration endpoints
+automatically.
 
 ## Redis Wake-Ups
 
@@ -380,8 +552,9 @@ DAMAT_RUNTIME_MODE=worker DAMAT_WORKER_TYPES=jobs,events
 DAMAT_RUNTIME_MODE=all DAMAT_WORKER_TYPES=jobs,events
 ```
 
-`services.durability` configures polling, leases, heartbeat, retention batch
-sizes, and Redis wake-ups. `services.jobs` configures job workers and schedules.
+`services.durability` configures polling, leases, heartbeat, retention batches,
+Redis wake-ups, progress sampling, structured-log limits, redaction, and
+inspection visibility. `services.jobs` configures job workers and schedules.
 `services.events` keeps ordinary Redis broadcast settings and adds explicit
 durable-event worker settings.
 
@@ -430,8 +603,9 @@ passes:
 - move due retry rows back into claimable state;
 - create due schedule occurrences;
 - remove expired deduplication and idempotency records;
-- delete terminal attempts, runs, deliveries, and outbox rows according to
-  configured retention.
+- delete terminal attempts, runs, deliveries, outbox rows, activity, and logs
+  according to configured retention;
+- preserve the current pause controls and active-work records.
 
 Each pass is safe with multiple reconcilers and after process restarts.
 
@@ -445,6 +619,12 @@ Each pass is safe with multiple reconcilers and after process restarts.
 - Unknown job or consumer definitions produce visible dead letters.
 - Migration, database, or invalid configuration failures abort startup.
 - Wake-up transport failures warn and fall back to polling.
+- Progress or work-log writes from a stale lease cannot mutate durable work.
+  The stale worker logs locally, while the reconciler or new claimant records
+  the authoritative lease-recovery activity.
+- Operational log truncation is visible and never fails the handler.
+- A non-limit work-log persistence failure is not swallowed; the handler loses
+  successful completion and follows normal retry or recovery behavior.
 - Shutdown timeout warns and leaves work recoverable through lease expiry.
 - No failure path silently creates tables, drops history, or reports success.
 
@@ -480,6 +660,10 @@ Cover:
 - lease-token matching;
 - schedule validation and next occurrences;
 - idempotency duplicate results;
+- cursor pagination and stable ordering;
+- progress sampling, log limits, and redaction;
+- operational summary time buckets;
+- worker heartbeat and stale-state calculation;
 - runtime-mode defaults and validation;
 - Redis wake-up fallback.
 
@@ -495,6 +679,12 @@ Cover:
 - overlapping schedule reconcilers creating one occurrence;
 - event fan-out with independent consumer outcomes;
 - idempotent database side effects;
+- atomic current-state and activity transitions;
+- ordered progress and structured-log persistence;
+- worker registration, load heartbeat, graceful stop, and stale detection;
+- pause/resume controls preventing new claims;
+- inspection filtering, timelines, summaries, and actor history;
+- log truncation and retention without handler failure;
 - retention and reconciliation batches;
 - recovery after simulated worker and Redis loss.
 
@@ -514,6 +704,7 @@ Cover:
 - ordered shutdown and grace timeout;
 - existing ephemeral event compatibility;
 - typed job and durable-event declaration merging;
+- no automatic unauthenticated administration routes;
 - package builds, type checks, lints, and public exports.
 
 ### Phase exit verification
@@ -525,6 +716,8 @@ The phase is complete only when:
 - Redis-loss tests show polling recovery;
 - worker-crash tests show lease recovery;
 - idempotent database-effect tests show no duplicate side effect;
+- inspection tests show complete current, retry, failure, and activity views;
+- progress, logs, metrics, and controls remain correct across recovery;
 - full repository build, lint, type checks, tests, formatting, and line checks
   pass.
 
@@ -545,14 +738,17 @@ testable tasks:
 1. repository cleanup preflight;
 2. durability package contracts, migration catalog, and readiness;
 3. transactional idempotency;
-4. job storage and enqueue/inspection APIs;
-5. job claims, worker, retries, cancellation, and dead letters;
-6. schedules, reconciliation, retention, and Redis wake-ups;
-7. durable event outbox and named consumer APIs;
-8. event routing and delivery workers;
-9. framework runtime modes, worker selection, startup validation, and ordered
-   shutdown;
-10. integration tests, living docs, release records, and full verification.
+4. worker registry, activity, structured logs, controls, and inspection query
+   primitives;
+5. job storage and enqueue/inspection APIs;
+6. job claims, worker, progress, retries, cancellation, and dead letters;
+7. schedules, reconciliation, retention, and Redis wake-ups;
+8. durable event outbox and named consumer APIs;
+9. event routing, delivery workers, activity, progress, and logs;
+10. operational summaries and administrative inspection clients;
+11. framework runtime modes, worker selection, startup validation, and ordered
+    shutdown;
+12. integration tests, living docs, release records, and full verification.
 
 Each checkpoint is reported to the user and requires approval before the next
 implementation task begins.
