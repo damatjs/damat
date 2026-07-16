@@ -200,6 +200,9 @@ unbounded database growth.
 The schema reserves a schedule-kind value for future cron support, but v1
 validation rejects cron schedules.
 
+`_damat_job_schedule_activity` immutably records creation, edits,
+enable/disable actions, occurrence creation, and actor metadata.
+
 ### Job deduplication
 
 `_damat_job_deduplication` uniquely maps queue, job name, and deduplication key
@@ -252,6 +255,11 @@ consumer, delivery, and attempt.
 
 - job queue or durable-event consumer identity;
 - paused state, reason, actor metadata, and timestamps.
+
+`_damat_work_control_activity` immutably records every pause and resume.
+`_damat_maintenance_activity` records actor-attributed bounded retention
+requests and their outcomes. Job schedule enable/disable actions use the job
+schedule activity timeline.
 
 Workers check controls before claims. Pausing prevents new claims but does not
 terminate work already running. Every pause and resume is written to the
@@ -718,8 +726,9 @@ The phase is complete only when:
 - idempotent database-effect tests show no duplicate side effect;
 - inspection tests show complete current, retry, failure, and activity views;
 - progress, logs, metrics, and controls remain correct across recovery;
-- full repository build, lint, type checks, tests, formatting, and line checks
-  pass.
+- full repository build, lint, type checks, tests, and formatting pass;
+- the line checker reports zero violations for every new or touched code file.
+  Repository-wide legacy decomposition remains the dedicated Phase 12 gate.
 
 ## Documentation and Release Records
 
