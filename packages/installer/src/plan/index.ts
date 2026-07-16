@@ -2,6 +2,7 @@ export { createInstallPlan } from "./create";
 export type { CreateInstallPlanInput } from "./create";
 export { createFileOperations } from "./files";
 export { createPackageOperations } from "./packages";
+export { createDamatPackageOperations } from "./damat-package";
 export { analyzeOwnership } from "./ownership";
 export type { OwnershipReport } from "./ownership";
 export type { OwnershipIssue } from "./collisions";

@@ -4,6 +4,9 @@ import type { InstallerLock } from "../types/lockfile";
 import type { InstallerPlan } from "../types/plan";
 import type { InstallMode, InstallRecipe } from "../types/recipe";
 import type { VerificationPolicy } from "../types/security";
+import type { PackageBackend } from "../types/manifest";
+import { selectPackageBackend } from "../package-backend";
+import { createDamatPackageOperations } from "./damat-package";
 import { createFileOperations } from "./files";
 import { createPackageOperations } from "./packages";
 import { evaluatePlanSecurity } from "./security";
@@ -13,6 +16,9 @@ export interface CreateInstallPlanInput {
   artifact: ResolvedArtifact;
   recipe: InstallRecipe;
   mode?: InstallMode;
+  packageBackend?: PackageBackend;
+  supportedPackageBackends?: PackageBackend[];
+  experimentalPackage?: boolean;
   lock: InstallerLock;
   securityPolicy?: VerificationPolicy;
 }
@@ -20,10 +26,13 @@ export interface CreateInstallPlanInput {
 export function createInstallPlan(
   input: CreateInstallPlanInput,
 ): InstallerPlan {
+  const supportedModes = input.packageBackend === "damat"
+    ? [...new Set([...input.artifact.supportedModes, "package" as const])]
+    : input.artifact.supportedModes;
   const mode = selectInstallMode(
     input.mode,
     input.recipe,
-    input.artifact.supportedModes,
+    supportedModes,
   );
   const security = evaluatePlanSecurity(
     input.artifact,
@@ -31,6 +40,16 @@ export function createInstallPlan(
     mode,
     input.securityPolicy ?? "warn",
   );
+  const packageBackend = selectPackageBackend({
+    mode,
+    ...(input.packageBackend && { requested: input.packageBackend }),
+    ...(input.supportedPackageBackends && {
+      supported: input.supportedPackageBackends,
+    }),
+    ...(input.experimentalPackage !== undefined && {
+      experimentalPackage: input.experimentalPackage,
+    }),
+  });
   void input.lock;
   return {
     schemaVersion: 1,
@@ -40,6 +59,7 @@ export function createInstallPlan(
     kind: input.recipe.kind,
     ...(input.recipe.version && { version: input.recipe.version }),
     mode,
+    ...(packageBackend && { packageBackend }),
     provenance: input.artifact.provenance,
     artifactIntegrity: input.artifact.integrity,
     recipeIntegrity: hashRecipe(input.recipe),
@@ -48,7 +68,9 @@ export function createInstallPlan(
     operations:
       mode === "source"
         ? createFileOperations(input.artifact, input.recipe)
-        : createPackageOperations(input.artifact, input.recipe),
+        : packageBackend === "damat"
+          ? createDamatPackageOperations(input.artifact, input.recipe)
+          : createPackageOperations(input.artifact, input.recipe),
     warnings: security.warnings,
   };
 }

@@ -1,7 +1,7 @@
 import { isAbsolute, normalize, sep } from "node:path";
 import { verificationPolicy, type VerificationPolicy } from "@damatjs/module";
 
-// Same rule the module.json manifest enforces (MODULE_NAME_PATTERN in
+// Same rule the module manifest enforces (MODULE_NAME_PATTERN in
 // @damatjs/module): ids are a single kebab-case segment. Anything else —
 // separators, "..", drive letters — could escape <app>/<modulesDir>/<id>.
 const MODULE_ID_PATTERN = /^[a-z][a-z0-9-]*$/;

@@ -17,6 +17,8 @@ await runCli({
 
 It provides `create`, `clone`, `dev`, `start`, and `build`. Configuration is
 optional: commands only read `damat.config.ts` when the operation needs it.
+Created backends include a receiver `damat.json` for modules, routes,
+workflows, jobs, events, pipelines, links, tests, migrations, models, and types.
 
 - [Internals](./docs/README.md)
 - [CLI framework](../../core/cli/README.md)

@@ -29,9 +29,8 @@ the package, and everything outside it is somebody else's decision:
 - **Testable.** Because it carries its own migrations and a credentials loader,
   the harness can boot it against a real Postgres — no server, no app — and you
   can exercise the service directly.
-- **Shippable.** A `module.json` manifest next to its entry file makes it
-  portable: `damat module add <source>` can drop it into any Damat app, register
-  it, sync its env vars, and install its npm dependencies.
+- **Shippable.** A root `damat.json` provider profile makes it portable:
+  `damat module add <source>` can safely place its capabilities into any backend.
 
 Keeping a module narrow is the whole point. A module that tries to wire itself
 into other modules stops being shareable — it can now only live in the one app
@@ -105,7 +104,7 @@ A standalone module package looks like this:
 
 ```
 my-module/
-├── module.json            # the portable manifest (the contract for `damat module add`)
+├── damat.json             # universal install profile + module runtime metadata
 ├── module.config.ts       # optional: standalone-app overrides for `damat module dev`
 ├── package.json           # the module's own npm deps (just @damatjs/module + its packages)
 └── src/
@@ -266,7 +265,7 @@ export const load = (env: NodeJS.ProcessEnv) => ({
 });
 ```
 
-Every env var the loader reads should be declared in `module.json`'s `env` array
+Every env var the loader reads should be declared in `damat.json`'s `module.env` array
 so installs can sync `.env.example` and warn about anything missing.
 
 ## The tooling loop
@@ -373,50 +372,42 @@ Notes that matter:
 The full harness contract (`bootModule`, `withModule`, options, teardown) is in
 [harness.md](../../packages/module/docs/harness.md).
 
-## Package it: `module.json`
+## Package it: `damat.json`
 
-Ship a `module.json` next to your entry file. It is the contract
-`damat module add` reads to copy the source in, register it, sync env vars, and
-install npm packages. Keep it focused on **what this module is and needs** — not
-on what it should be wired to.
+Ship a root `damat.json`. It declares the source capabilities the installer may
+own, safe fallback destinations, optional package support, advisory integration
+instructions, and module runtime metadata. It never contains executable hooks.
 
 ```jsonc
 {
-  "name": "user", // module id: registry key + default dir name (kebab-case)
-  "version": "0.2.0", // semver
-  "description": "Auth, sessions and accounts.",
-  "author": "Abel <a@b.co>", // string OR { name, email?, url? }
-
-  "env": [
-    // every env var the credentials loader reads
-    {
-      "name": "BETTER_AUTH_SECRET",
-      "required": true,
-      "description": "Min 32-char secret for Better Auth",
-      "example": "change-me-min-32-characters-long", // written to .env.example
+  "schemaVersion": 1,
+  "kind": "module",
+  "name": "user",
+  "version": "1.0.0",
+  "install": {
+    "modes": ["source", "package"],
+    "default": "source",
+    "provides": {
+      "module": { "from": "src/**", "fallbackTo": "src/modules/{id}" }
     },
-  ],
-  "packages": {
-    // npm packages the host app must install
-    "better-auth": "^1.4.18", //   name -> semver range
+    "packages": { "better-auth": "^1.4.18" }
   },
-
-  "pairsWith": ["organization"], // NON-BINDING hint: a comment for the backend owner
-
-  "registry": {
-    // publishing metadata
-    "namespace": "damatjs",
-    "keywords": ["auth", "users"],
-    "license": "MIT",
-  },
+  "module": {
+    "entry": "./src/index.ts",
+    "models": "./src/models",
+    "migrations": "./src/migrations",
+    "env": [{ "name": "BETTER_AUTH_SECRET", "required": true }],
+    "pairsWith": ["organization"],
+    "registry": { "namespace": "damatjs", "license": "MIT" }
+  }
 }
 ```
 
 `name` is more than a label: it is the registry key, the default install
 directory name, **and** the module's migration namespace, so make it globally
-meaningful. `packages` is a name → semver-**range** map (npm deps), distinct from
+meaningful. `install.packages` is a name → semver range map, distinct from
 module relationships. The full field reference is in
-[MODULES.md](../../MODULES.md) and
+[MODULES.md](../../packages/module/MODULES.md) and
 [manifest.md](../../packages/module/docs/manifest.md).
 
 ### Stay self-contained: `pairsWith`, not hard deps

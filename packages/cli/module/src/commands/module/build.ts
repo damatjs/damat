@@ -25,7 +25,7 @@ export const moduleBuildCommand: Command = {
       name: "validate",
       type: "boolean",
       description:
-        "Check the module.json contract + registry readiness (use --no-validate to skip)",
+        "Check the damat.json contract + registry readiness (use --no-validate to skip)",
       default: true,
     },
   ],

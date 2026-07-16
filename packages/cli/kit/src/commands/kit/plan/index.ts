@@ -1,4 +1,1 @@
-export * from "./buildKitPlan";
-export * from "./glob";
-export * from "./listKitFiles";
-export * from "./types";
+export { kitPlanCommand } from "./command";

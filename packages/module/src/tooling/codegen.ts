@@ -10,7 +10,7 @@ export type ModuleCodegenResult = RunModuleCodegenResult;
 /**
  * Generate a standalone module package's types + zod + registry + CRUD scaffold.
  *
- * This is a thin manifest resolver: it reads `module.json` to find the module's
+ * This is a thin manifest resolver: it reads the module manifest to find its
  * paths, then hands **resolved inputs** to the shared, agnostic
  * `@damatjs/codegen` core. Both trees are **flat by table** here
  * (`api/routes/<resource>` and `workflows/<resource>`) — a module is a

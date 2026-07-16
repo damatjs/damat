@@ -26,7 +26,7 @@ describe("damat auth init better-auth — scaffold", () => {
       "/app/src/modules/auth/models/index.ts",
       "/app/src/modules/auth/service.ts",
       "/app/src/modules/auth/index.ts",
-      "/app/src/modules/auth/module.json",
+      "/app/src/modules/auth/damat.json",
       "/app/src/modules/auth/README.md",
     ]) {
       expect(writeCalls.some((c) => c.path === file)).toBe(true);

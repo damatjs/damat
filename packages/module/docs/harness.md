@@ -81,7 +81,7 @@ to a specific `@damatjs/services` version.
 interface BootModuleOptions {
   databaseUrl?: string; // default: process.env.DATABASE_URL
   database?: DbPoolConfigWithExtras; // full pool config; takes precedence over databaseUrl
-  moduleDir?: string; // abs path to dir with module.json + migrations
+  moduleDir?: string; // abs path to dir with damat.json + migrations
   migrate?: boolean; // apply migrations on boot; default: true when moduleDir set
   logger?: ILogger;
 }
@@ -94,7 +94,7 @@ interface BootedModule<TService> {
   service: TService; // call your model/methods on it
   pool: Pool;
   connection: ConnectionManager;
-  manifest: ModuleManifest | null; // parsed module.json when moduleDir was given
+  manifest: ModuleManifest | null; // parsed manifest when moduleDir was given
   teardown(): Promise<void>; // close db + reset shared state — always call
 }
 ```

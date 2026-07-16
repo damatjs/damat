@@ -84,7 +84,7 @@ version history.
 | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
 | [`@damatjs/framework`](./packages/framework/README.md)             | App framework: config, file-based router, server, bootstrap, middleware, shutdown        |
 | [`@damatjs/services`](./packages/service/README.md)                | `ModuleService` (auto CRUD), `PoolManager`, `defineModule`                               |
-| [`@damatjs/module`](./packages/module/README.md)                   | The module system: authoring surface, `module.json` contract, dev/test harness, registry |
+| [`@damatjs/module`](./packages/module/README.md)                   | The module system: authoring surface, `damat.json` contract, dev/test harness, registry  |
 | [`@damatjs/link`](./packages/link/README.md)                       | Cross-module links: junction tables, `create`/`dismiss`/`fetch`/`graph` across modules   |
 | [`@damatjs/workflow-engine`](./packages/workflow-engine/README.md) | Saga workflow engine on Effect-TS                                                        |
 

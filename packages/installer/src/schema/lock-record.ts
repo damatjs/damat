@@ -7,6 +7,7 @@ import {
   requiredString,
 } from "./assert";
 import { parseInstallMode } from "./mode";
+import type { PackageBackend } from "../types";
 import { parseOwnedFiles, parseOwnedPackages } from "./owned";
 import { parseProvenance } from "./provenance";
 import { parseUsageHints } from "./recipe-parts";
@@ -16,6 +17,7 @@ const RECORD_KEYS = [
   "kind",
   "version",
   "mode",
+  "packageBackend",
   "provenance",
   "artifactIntegrity",
   "recipeIntegrity",
@@ -37,6 +39,11 @@ function parseVerification(value: unknown): VerificationStatus {
   throw new TypeError("verification is invalid");
 }
 
+function parsePackageBackend(value: unknown): PackageBackend {
+  if (value === "node" || value === "damat") return value;
+  throw new TypeError("packageBackend is invalid");
+}
+
 export function parseInstallationRecord(value: unknown): InstallationRecord {
   const record = assertRecord(value, "installation");
   rejectUnknownKeys(record, RECORD_KEYS);
@@ -46,6 +53,9 @@ export function parseInstallationRecord(value: unknown): InstallationRecord {
     kind: requiredString(record, "kind"),
     ...(version && { version }),
     mode: parseInstallMode(record.mode),
+    ...(record.packageBackend !== undefined && {
+      packageBackend: parsePackageBackend(record.packageBackend),
+    }),
     provenance: parseProvenance(record.provenance),
     artifactIntegrity: requiredString(record, "artifactIntegrity"),
     recipeIntegrity: requiredString(record, "recipeIntegrity"),

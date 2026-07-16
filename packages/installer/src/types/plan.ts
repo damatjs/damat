@@ -1,5 +1,6 @@
 import type { ArtifactProvenance } from "./lockfile";
 import type { InstallMode } from "./recipe";
+import type { PackageBackend } from "./manifest";
 import type { UsageHint } from "./recipe";
 import type { VerificationStatus } from "./security";
 
@@ -24,6 +25,7 @@ export interface InstallerPlan {
   kind: string;
   version?: string;
   mode: InstallMode;
+  packageBackend?: PackageBackend;
   provenance: ArtifactProvenance;
   artifactIntegrity: string;
   recipeIntegrity: string;

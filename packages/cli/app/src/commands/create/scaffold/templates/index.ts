@@ -1,5 +1,6 @@
 export { packageJsonTemplate } from "./packageJson";
 export { damatConfigTemplate } from "./damatConfig";
+export { damatManifestTemplate } from "./damatManifest";
 export { tsconfigTemplate } from "./tsconfig";
 export { envExampleTemplate, envTemplate, dbName } from "./env";
 export {

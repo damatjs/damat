@@ -1,6 +1,7 @@
 import type { OriginRequest } from "./origin";
 import type { InstallMode, UsageHint } from "./recipe";
 import type { VerificationStatus } from "./security";
+import type { PackageBackend } from "./manifest";
 
 export interface ArtifactProvenance {
   request: OriginRequest;
@@ -24,6 +25,7 @@ export interface InstallationRecord {
   kind: string;
   version?: string;
   mode: InstallMode;
+  packageBackend?: PackageBackend;
   provenance: ArtifactProvenance;
   artifactIntegrity: string;
   recipeIntegrity: string;

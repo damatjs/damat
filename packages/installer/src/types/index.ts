@@ -1,3 +1,4 @@
+export type * from "./manifest";
 export type * from "./lockfile";
 export type { OriginRequest } from "./origin";
 export type * from "./plan";

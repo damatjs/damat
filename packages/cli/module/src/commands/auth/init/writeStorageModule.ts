@@ -13,7 +13,7 @@ export function writeStorageModule(targetDir: string) {
     "models/index.ts": modelsTemplate(),
     "service.ts": serviceTemplate(),
     "index.ts": indexTemplate(),
-    "module.json": manifestTemplate(),
+    "damat.json": manifestTemplate(),
     "README.md": readmeTemplate(),
   };
   mkdirSync(join(targetDir, "migrations"), { recursive: true });

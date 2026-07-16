@@ -7,7 +7,7 @@ You build and test it **standalone**, then install it into a backend with
 \`damat module add <path>\`, which splits it across the app's layers.
 
 > Read **[\`AGENTS.md\`](./AGENTS.md)** for the full authoring guide — the layout,
-> the \`module.json\` contract, and the rules below in depth.
+> the \`damat.json\` contract, and the rules below in depth.
 
 ## The layering (the one rule)
 
@@ -53,7 +53,7 @@ bun run build              # type-check + contract validate — the release gate
   \`@damatjs/workflow-engine\`, route types ← \`@damatjs/framework/router\`, \`z\` ←
   \`@damatjs/deps/zod\`. \`@damatjs/module\` itself is only the contract/config/tooling.
 - **No cross-module internals:** store foreign ids as plain columns; if it pairs
-  with another module leave a non-binding \`pairsWith\` hint in \`module.json\`.
+  with another module leave a non-binding \`pairsWith\` hint in \`damat.json\`.
 - **The table name is the source of truth:** \`collectModels([...])\` derives each
   service accessor from the model's table name (\`model("items")\` → \`service.items\`).
 

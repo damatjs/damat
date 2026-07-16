@@ -2,94 +2,77 @@
 
 # 14. Installing existing modules
 
-`damat module add <source>` installs a module shadcn-style: it reads the module's
-`module.json`, **splits the module across the app's layers** (below), registers it
-in `damat.config.ts`, adds its portable tsconfig aliases, regenerates the workflow
-barrels, syncs required env vars into `.env.example`, and installs the npm packages
-it needs.
-
-## The layer split
-
-A module is authored **flat** (`workflows/<table>`, `api/routes/<table>`,
-`links/models/`, `tests/`); on install a `<moduleId>/` segment is added so two
-modules never collide:
-
-| In the module package                              | Lands in the app                                                 |
-| -------------------------------------------------- | ---------------------------------------------------------------- |
-| models, service, config, types, migrations, `lib/` | `src/modules/<moduleId>/`                                        |
-| `api/routes/<table>/`                              | `src/api/routes/<moduleId>/<table>/` (URL `/<moduleId>/<table>`) |
-| `workflows/<table>/`                               | `src/workflows/<moduleId>/<table>/`                              |
-| `links/models/<x>.ts`                              | `src/links/<moduleId>/models/<x>.ts`                             |
-| `tests/`                                           | `tests/<moduleId>/`                                              |
-
-Generated routes import workflows from the bare `@workflows` barrel, which the
-install wires up via the `@workflows` / `@workflows/*` and `@<moduleId>/*` tsconfig
-paths it adds.
-
-## Installing from a source
-
-The source can be a registry ref, a local path, a github shorthand, or a git URL:
+`damat module add <source>` reads a provider `damat.json`, matches its named
+capabilities to the backend's optional receiver profile, and creates one
+transactional installation plan. The source may be a registry ref, local path
+or directory, Git/GitHub source, npm artifact, or tarball.
 
 ```bash
-# from a registry ref (requires DAMAT_MODULE_REGISTRY)
-damat module add damatjs/user@0.2.0
+damat module plan ./modules/user
+damat module add ./modules/user
+damat module list
+damat module update user --yes
+damat module remove user --yes
+```
 
-# from a local path
-damat module add ./packages/modules/user
+Source is the default and stable mode. It installs editable files, records
+checksums and immutable provenance in `damat.lock.json`, blocks collisions,
+backs up only confirmed modified owned files, and scans for remaining usage
+before removal.
 
-# from a github shorthand or git URL
-damat module add damatjs/modules/user
-damat module add https://github.com/damatjs/modules.git#main
+## Profiles and overrides
 
-# then apply the module's migrations and restart the dev server
+The provider declares `install.provides`; a backend created by `damat create`
+declares `install.accepts`. Destination selection is:
+
+1. `--target capability=path`
+2. matching receiver accept
+3. provider `fallbackTo`
+4. a named planning error
+
+A backend `damat.json` is optional when every provider capability has a
+fallback or the caller supplies overrides. Use `--mode source|package` to
+override the provider default.
+
+## User-owned integration
+
+The installer never edits `damat.config.ts`, `tsconfig.json`, `.env*`, route or
+workflow barrels, or call sites. Add/update/remove reports the exact integration
+work declared by the provider. The user or AI owns those shared files.
+
+After a source install, review those notices, register the module, apply its
+migrations, and restart the backend:
+
+```bash
 bun damat-orm migrate:up
 ```
 
-Add `--dry-run` to preview every file placement before writing anything.
+## Package backends
 
-## Managing installed modules
+Package mode is early alpha and requires `--experimental-package` plus an
+explicit or default backend:
 
 ```bash
-damat module list                 # what's installed in this app (+ provenance)
-damat module add <src> --force    # overwrite an existing module (incl. shipped link files)
-damat module add <src> --name x   # install under a different id
-damat module remove <id>          # uninstall: delete files, deregister config, drop aliases
-damat module update <id>          # re-fetch from the recorded source, diff, reinstall
+damat module add npm:@acme/user@1.0.0 \
+  --mode package --package-backend node --experimental-package
+
+damat module add ./modules/user \
+  --mode package --package-backend damat --experimental-package
 ```
 
-- **`remove`** is the inverse of `add`: it deletes the module's files, deregisters
-  it from `damat.config.ts`, and drops its tsconfig alias. It **refuses** while
-  another installed module depends on it (unless `--force`); `--dry-run` previews
-  the deletion and `--clean-env` also strips the module's block from
-  `.env.example` (never `.env`). Database tables and applied migrations are _not_
-  rolled back.
-- **`update`** re-resolves the source `add` recorded in `damat.config.ts`, shows a
-  version + file diff (flagging any locally edited files it would overwrite), and
-  reinstalls when you confirm with `--yes`.
+Node delegates to the target's Bun/npm/pnpm/Yarn installation. Damat stores a
+self-contained immutable artifact under `.damat/packages`; artifacts with
+external runtime dependencies are rejected. The framework accepts both package
+locations through `ModuleConfig.resolve`.
 
-## Module-shipped links
+## Trust
 
-A module can ship cross-module link files (a real `defineLink`) under
-`links/models/`. On `add` they split into `src/links/<moduleId>/`, the owner index
+Registry installs preserve owner, verification, integrity, and pinned source
+metadata. Rejected and revoked entries are always blocked. Configure registry
+resolution with `DAMAT_REGISTRY` or the compatibility
+`DAMAT_MODULE_REGISTRY`. Direct origins are recorded as unverified provenance.
 
-- top-level aggregator are regenerated, and `links: "./src/links"` is ensured in
-  `damat.config.ts`. The link is **dormant** until you run
-  `damat-orm migrate:create link:<moduleId>` + `migrate:up`, and harmless if its
-  target module isn't installed. The copied files are yours to edit (e.g. to point
-  at a target installed under a different id) — a re-install won't clobber them
-  unless you pass `--force`. See
-  [§17.3 → Links shipped by a module](./17-composing-and-linking-modules.md#links-shipped-by-a-module).
-
-## Trust & verification
-
-Registry installs carry an owner + verification status; the install gate is
-controlled by `DAMAT_MODULE_VERIFY` (`off` / `warn` / `require`).
-`rejected`/`revoked` modules are always blocked. Path and git sources are trusted
-as-is (you pointed at them). Details in [MODULES.md](../../MODULES.md).
-
-Prefer to drive this from an AI assistant? See the
-[next chapter](./15-installing-modules-with-ai.md).
-
----
+Legacy `module.json` remains readable during the 0.x migration window. New
+module scaffolds write only root `damat.json`.
 
 Prev: [← Authoring a module](./13-authoring-modules.md) · [Guide home](../GUIDE.md) · Next: [Publishing modules →](./14b-publishing-modules.md)

@@ -1,14 +1,19 @@
 # Module CLI internals
 
-The package exports two capabilities so a composer can position `module` and
-`auth` independently. Command metadata, handlers, trust decisions, planning,
-filesystem work, and network work are separated into small named files.
+The package exports independent `module` and `auth` capabilities.
 
-Shared module helpers are grouped by config parsing, copy layout, source
-resolution, dependency safety, environment synchronization, and path guards.
-The test harness uses mutable mock state with a reset hook registered by every
-small test file, preventing state leakage while keeping all characterization
-coverage.
+Module installation uses three small layers:
+
+- `profile/` loads `damat.json`, normalizes legacy `module.json`, supplies Damat
+  capability fallbacks, and builds advisory integration instructions.
+- `shared/` resolves every origin through `@damatjs/installer`, matches the
+  receiving backend, builds add/update plans, executes transactions, and
+  reports integration work.
+- `add`, `plan`, `list`, `update`, and `remove` are thin command adapters.
+
+Installation commands never call the legacy config, TypeScript, environment,
+copy-layout, or package helpers. Those helpers remain only where separate
+authoring/provider commands still depend on them. npm-shaped publication is
+absent; registry publication belongs to later Git automation.
 
 `scripts/embedAgents.ts` embeds the scaffold guide before build.
-`scripts/verify-link-split.ts` performs the real-filesystem link-layout check.

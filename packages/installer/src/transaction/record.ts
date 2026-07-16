@@ -7,6 +7,7 @@ export function recordFromPlan(plan: InstallerPlan): InstallationRecord {
     kind: plan.kind,
     ...(plan.version && { version: plan.version }),
     mode: plan.mode,
+    ...(plan.packageBackend && { packageBackend: plan.packageBackend }),
     provenance: plan.provenance,
     artifactIntegrity: plan.artifactIntegrity,
     recipeIntegrity: plan.recipeIntegrity,

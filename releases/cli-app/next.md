@@ -12,6 +12,10 @@ executable package. They are exported with a stable command order from
 Configuration remains optional. A command reads a Damat config only when its
 operation requires one.
 
+New applications include a receiver `damat.json` with accepted capability
+targets for modules, routes, workflows, jobs, events, pipelines, links, tests,
+migrations, models, and types. The receiver file is optional at install time.
+
 ## Breaking
 
 - None for `damat` users; the executable composes this capability.

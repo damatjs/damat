@@ -2,9 +2,14 @@ export interface ModuleConfigObject {
   [x: string]: ModuleConfig;
 }
 
+export type ModuleResolveLocation =
+  | string
+  | { type: "package"; name: string }
+  | { type: "damat"; path: string };
+
 export interface ModuleConfig {
   id?: string;
-  resolve: string;
+  resolve: ModuleResolveLocation;
   options?: Record<string, unknown>;
   /** Provenance recorded when the module was installed via `damat module add`. */
   source?: ModuleSource;

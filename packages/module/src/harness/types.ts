@@ -20,7 +20,7 @@ export interface BootModuleOptions {
   /** Full pool config — takes precedence over databaseUrl */
   database?: DbPoolConfigWithExtras;
   /**
-   * Absolute path to the module directory (containing module.json and
+   * Absolute path to the module directory (containing damat.json and
    * migrations). Enables migration running and manifest reporting.
    */
   moduleDir?: string;
@@ -34,7 +34,7 @@ export interface BootedModule<TService> {
   service: TService;
   pool: Pool;
   connection: ConnectionManager;
-  /** Parsed module.json, when moduleDir was provided */
+  /** Parsed module manifest, when moduleDir was provided. */
   manifest: ModuleManifest | null;
   /** Close the database and reset shared state. Always call when done. */
   teardown(): Promise<void>;

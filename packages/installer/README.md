@@ -19,6 +19,7 @@ the boundary before planning an installation:
 ```ts
 import {
   parseInstallRecipe,
+  parseDamatManifest,
   parseInstallerLock,
   parseOriginRequest,
 } from "@damatjs/installer";
@@ -35,6 +36,15 @@ const recipe = parseInstallRecipe({
   kind: "provider",
   install: { modes: ["source", "package"], default: "source" },
   mappings: [{ from: "src/**", to: "src/providers/auth" }],
+});
+
+const manifest = parseDamatManifest({
+  schemaVersion: 1,
+  kind: "kit",
+  name: "auth-provider",
+  install: {
+    provides: { feature: { from: "src/**", fallbackTo: "src/auth-provider" } },
+  },
 });
 ```
 
@@ -77,12 +87,22 @@ is available.
 
 ## Planning
 
+`damat.json` is the bidirectional public profile: providers declare named
+`install.provides` capabilities and receivers declare matching
+`install.accepts` destinations. `createProfileRecipe` resolves CLI target
+overrides first, then receiver paths, then provider fallbacks.
+
 `createInstallPlan` applies mode precedence in this order: caller override,
 recipe default, then `source`. An unsupported explicit mode fails instead of
 falling back. Source plans map artifact files through declarative glob rules and
 carry a checksum for every write. Package plans carry immutable package
 references plus declared supporting packages. Plans are serializable and do not
 mutate the project.
+
+Package mode requires `experimentalPackage: true`. The Node backend delegates
+immutable package references to the detected package manager. The Damat alpha
+backend stores self-contained artifacts under `.damat/packages/<id>` and
+rejects external runtime dependencies. Unsupported explicit backends fail.
 
 ## Ownership and journals
 
@@ -129,7 +149,7 @@ unapproved dependency scripts deny installation.
 
 `parseInstallerLock` validates `damat.lock.json` data. Each installation record
 contains immutable origin identity, artifact and recipe integrity, verification
-status, install mode, owned file checksums, owned packages, and advisory usage
+status, install mode, optional package backend, owned file checksums, owned packages, and advisory usage
 hints. Shared package ownership is represented by each owning installation
 recording the same package reference.
 

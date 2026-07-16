@@ -1,211 +1,101 @@
-# Damat modules — the `module.json` contract
+# Damat modules — the `damat.json` contract
 
-A **module** is a self-contained vertical slice of a backend: its own models,
-migrations, service, config, and workflows. What makes a module _portable_ —
-installable into any Damat app with `damat module add` and, in future,
-discoverable through the module registry — is a small manifest file,
-**`module.json`**, that ships next to the module's `index.ts`.
+A module is a self-contained backend capability. Its root `damat.json` uses the
+same bidirectional installation schema as applications and kits. In a source
+artifact, `install.provides` declares named file capabilities. In a receiving
+backend, `install.accepts` declares their destinations.
 
-This is the authoritative reference for that contract. The types live in
-[`@damatjs/module`](./packages/module/README.md) (`src/manifest/types.ts`); the
-authoring/runtime details are in
-[the module package internals](./packages/module/docs/README.md).
-
----
-
-## Where it lives
-
-A standalone module package looks like this:
-
-```
-my-module/
-├── module.json            # the manifest (this document)
-├── module.config.ts       # optional standalone-app overrides
-├── package.json           # the module's own npm deps
-└── src/
-    ├── index.ts           # default-exports defineModule(...)
-    ├── models/            # ORM model definitions
-    ├── migrations/        # SQL migrations
-    ├── workflows/         # workflow definitions
-    ├── links/             # optional: dormant cross-module defineLink files
-    └── types/             # generated row types + zod schemas
-```
-
-`damat module add <source>` reads `module.json` to:
-
-1. **split the module across the app's layers**, grouping each tree by module id:
-   models/service/config/types/migrations → `src/modules/<id>`,
-   `api/routes/<table>` → `src/api/routes/<id>/<table>`,
-   `workflows/<table>` → `src/workflows/<id>/<table>`,
-   `links/models/<x>` → `src/links/<id>/models/<x>`, and `tests/` → `tests/<id>`,
-2. register it in `damat.config.ts`, add its `@<id>/*` + `@workflows` tsconfig
-   aliases, and regenerate the workflow barrels,
-3. write required env vars to `.env.example` (and warn about missing ones),
-4. install the npm packages the module needs.
-
----
-
-## Fields
-
-```jsonc
+```json
 {
-  // Required ----------------------------------------------------------------
-  "name": "user", // module id: registry key + default dir name (kebab-case)
-
-  // Identity ----------------------------------------------------------------
-  "version": "0.2.0", // semver
-  "description": "Auth, sessions and accounts.",
-  "author": "Abel <a@b.co> (https://…)", // string OR { name, email?, url? }
-
-  // Wiring ------------------------------------------------------------------
-  "env": [
-    // env vars the credentials loader reads
-    {
-      "name": "BETTER_AUTH_SECRET",
-      "required": true, // default true; fails to start without it
-      "description": "Min 32-char secret for Better Auth",
-      "example": "change-me-min-32-characters-long", // written to .env.example
+  "$schema": "https://damat.dev/schemas/damat-v1.json",
+  "schemaVersion": 1,
+  "kind": "module",
+  "name": "user",
+  "version": "1.0.0",
+  "install": {
+    "modes": ["source", "package"],
+    "default": "source",
+    "packageBackends": ["node", "damat"],
+    "provides": {
+      "module": { "from": "src/**", "fallbackTo": "src/modules/{id}" },
+      "routes": {
+        "from": "src/api/routes/**",
+        "fallbackTo": "src/modules/{id}/api/routes"
+      }
     },
-  ],
-  "packages": {
-    // npm packages the host app must install
-    "better-auth": "^1.4.18", //   name -> semver range
+    "packages": { "zod": "^4" },
+    "usageHints": [{ "token": "user" }],
+    "instructions": {
+      "add": ["Add user to damat.config.ts."],
+      "remove": ["Remove user from damat.config.ts after reviewing usage."]
+    }
   },
-  "pairsWith": ["organization"], // non-binding hint: modules this pairs well with
-  // "modules": ["organization"], // rare: a HARD dependency — prefer pairsWith
-
-  // Layout overrides (omit to use the standard layout) ----------------------
-  "paths": {
-    "entry": "./index.ts",
-    "models": "./models",
-    "migrations": "./migrations",
-    "workflows": "./workflows",
-    "types": "./types",
-  },
-
-  // Registry publishing metadata (optional today) ---------------------------
-  "registry": {
-    "namespace": "damatjs", // publisher/org
-    "keywords": ["auth", "users"],
-    "license": "MIT",
-    "repository": "https://github.com/damatjs/modules",
-    "homepage": "https://github.com/damatjs/modules/tree/main/user",
-  },
+  "module": {
+    "description": "Users and sessions",
+    "entry": "./src/index.ts",
+    "models": "./src/models",
+    "migrations": "./src/migrations",
+    "routes": "./src/api/routes",
+    "workflows": "./src/workflows",
+    "jobs": "./src/jobs",
+    "events": "./src/events",
+    "pipelines": "./src/pipelines",
+    "links": "./src/links",
+    "tests": "./tests",
+    "types": "./src/types",
+    "env": [{ "name": "USER_SECRET", "required": true }],
+    "pairsWith": ["organization"],
+    "registry": { "namespace": "damatjs", "license": "MIT" }
+  }
 }
 ```
 
-### Field summary
+## Installation rules
 
-| Field         | Type                    | Required | Notes                                                                                                                                                        |
-| ------------- | ----------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `name`        | string                  | ✅       | Module id; registry key and default install directory.                                                                                                       |
-| `version`     | string                  | —        | Semver. Required to publish to the registry.                                                                                                                 |
-| `description` | string                  | —        | Shown on install and in the registry.                                                                                                                        |
-| `author`      | string \| object        | —        | `"Name <email> (url)"` or `{ name, email?, url? }`. Mirrored by the registry; **not** the verified owner.                                                    |
-| `env`         | `ModuleEnvVar[]`        | —        | Each: `{ name, required?, description?, example? }`. Drives `.env.example` sync.                                                                             |
-| `packages`    | `Record<string,string>` | —        | npm deps installed into the host app on `add`.                                                                                                               |
-| `pairsWith`   | `string[]`              | —        | Non-binding hint: modules this one pairs well with. A comment for the backend owner — never enforced or installed. **Prefer this** to express relationships. |
-| `modules`     | `string[]`              | —        | **Rare.** A hard dependency on other modules (install only _warns_ if missing). A module should stay self-contained — reach for `pairsWith` instead.         |
-| `paths`       | object                  | —        | Overrides for `entry`/`models`/`migrations`/`workflows`/`types`.                                                                                             |
-| `registry`    | object                  | —        | `namespace`, `keywords`, `license`, `repository`, `homepage`.                                                                                                |
+Destination selection is CLI `--target capability=path`, then the receiver's
+matching accept, then the provider's `fallbackTo`. `{id}` is the only template.
+All paths must remain relative and may not contain parent traversal or
+backslashes.
 
-**Standard layout** (used when `paths` is omitted): `entry ./index.ts`,
-`models ./models`, `migrations ./migrations`, `workflows ./workflows`,
-`types ./types`.
+Source mode is stable and produces editable, checksum-owned files. The
+installer records provenance and ownership in `damat.lock.json`, backs up only
+modified owned files when confirmed, and warns about usage before removal.
 
-> **Composition is the backend owner's job.** A module is a single-purpose unit;
-> it should not decide what it is plugged into. Use `pairsWith` (or `description`)
-> to _suggest_ pairings, and leave wiring to the app. `modules` is an escape hatch
-> for genuine hard dependencies only.
->
-> A module **may** ship a **dormant link file** under `links/models/` (a real
-> `defineLink`). It is not declared in `module.json` — the file itself is the
-> source of truth. On `damat module add` it splits into the app's
-> `src/links/<moduleId>/`, but it creates nothing until the backend owner runs
-> `damat-orm migrate:create link:<moduleId>` + `migrate:up`. The module never
-> imports the other module and never activates the connection — the owner stays in
-> control. (See the guide chapter on composing & linking modules.)
+The installer does not edit `damat.config.ts`, `tsconfig.json`, `.env*`, route
+or workflow barrels, or application call sites. Manifest instructions and
+usage hints report that user/AI-owned work.
 
----
+Node and Damat package backends are early alpha and require
+`--experimental-package`. Node delegates to the target package manager. Damat
+stores self-contained immutable artifacts in `.damat/packages`; external
+runtime dependencies are rejected.
 
-## Validation & readiness
+## Runtime metadata
 
-`@damatjs/module` ships a validator with two modes:
+The `module` object may declare `entry`, `models`, `migrations`, `routes`,
+`workflows`, `jobs`, `events`, `pipelines`, `links`, `tests`, generated `types`,
+environment declarations, module dependencies, pairing hints, author,
+description, and registry metadata. `@damatjs/module` normalizes this object to
+the existing `ModuleManifest` API.
 
-```ts
-import { validateModuleDir } from "@damatjs/module";
+Legacy `module.json` is a read-only compatibility fallback during the 0.x
+migration window. New scaffolds write only root `damat.json`. Legacy fields map
+as follows: identity stays top-level; `packages` moves to `install.packages`;
+`paths`, `env`, `modules`, `pairsWith`, author, description, and registry data
+move under `module`.
 
-const report = validateModuleDir("./src/modules/user");
-// report.errors   → block installing (missing entry, broken manifest, …)
-// report.warnings → block publishing  (missing version, license, namespace, …)
-```
-
-`damat module validate` runs the same check from the CLI. Author your module
-_registry-ready_ (no warnings) even before the hosted registry exists.
-
----
-
-## Registry references & trust
-
-Once published, modules are addressed by **ref**:
-
-```
-user                  name only        (default namespace, latest version)
-user@0.2.0            pinned version
-damatjs/user          namespaced
-damatjs/user@latest   namespaced + tag
-```
-
-The registry index maps each ref to a fetchable **source** plus trust metadata
-(verifiable **owner** + **verification** status) that the registry backend
-stamps — an author cannot self-verify. At install time the **verification
-gate** applies a policy from the environment:
-
-| `DAMAT_MODULE_VERIFY` | Behavior                                 |
-| --------------------- | ---------------------------------------- |
-| `off`                 | install anything, say nothing            |
-| `warn` _(default)_    | install anything, warn when not verified |
-| `require`             | only install `verified` modules          |
-
-A `rejected` or `revoked` module is **always** blocked, regardless of policy.
-Configure the registry location with `DAMAT_MODULE_REGISTRY` (an index URL, a
-`registry.json` path, or a directory containing one). The full registry schema
-is documented in
-[`@damatjs/module` → registry internals](./packages/module/docs/registry.md).
-
----
-
-## Installing a module
+## Commands
 
 ```bash
-# from a registry ref (needs DAMAT_MODULE_REGISTRY)
-damat module add damatjs/user@0.2.0
-
-# from a local path
-damat module add ./modules/user
-
-# from github shorthand or a git URL
-damat module add damatjs/modules/user
-damat module add https://github.com/damatjs/modules.git#main
-
-# then apply the module's migrations and restart
-bun damat-orm migrate:up
+damat module init user
+damat module validate
+damat module plan ./user
+damat module add ./user
+damat module list
+damat module update user
+damat module remove user
 ```
 
-AI assistants can do all of this through the
-[`@damatjs/mcp`](./packages/mcp/README.md) server — see
-[the guide](./docs/GUIDE.md).
-
-## Authoring a module
-
-```bash
-damat module init my-module     # scaffold a standalone module package
-cd my-module
-damat module dev                # run the module as a live app
-damat module migration:create   # diff models -> migration
-damat module codegen            # generate row types + zod schemas
-damat module validate           # contract + registry readiness
-```
-
-See [the guide's authoring chapter](./docs/GUIDE.md) and
-[`@damatjs/module`](./packages/module/README.md) for the full workflow.
+Registry refs use `DAMAT_REGISTRY` or the compatibility
+`DAMAT_MODULE_REGISTRY`. Git-hosted automation will own publication; the CLI
+does not provide an npm-shaped publish command.

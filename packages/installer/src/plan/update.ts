@@ -5,6 +5,7 @@ import { hashFile } from "../integrity";
 import type { InstallerLock } from "../types/lockfile";
 import type { InstallMode, InstallRecipe } from "../types/recipe";
 import type { ResolvedArtifact } from "../origin";
+import type { PackageBackend } from "../types/manifest";
 import { createInstallPlan } from "./create";
 
 export interface UpdateInput {
@@ -13,6 +14,9 @@ export interface UpdateInput {
   recipe: InstallRecipe;
   lock: InstallerLock;
   mode?: InstallMode;
+  packageBackend?: PackageBackend;
+  supportedPackageBackends?: PackageBackend[];
+  experimentalPackage?: boolean;
   confirmModified?: boolean;
 }
 

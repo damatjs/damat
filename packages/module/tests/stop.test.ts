@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import net from "node:net";
 import { serve, Hono } from "@damatjs/deps/hono";
-import { closeServer } from "../src/runtime/start";
+import { closeServer, resolveServerPort } from "../src/runtime/server";
 
 /**
  * Guards the harness teardown contract: `closeServer` (used by
@@ -18,9 +18,10 @@ describe("closeServer", () => {
     const app = new Hono();
     app.post("/x", (c) => c.json({ ok: true })); // never reads the request body
 
+    const selectedPort = await resolveServerPort(0);
     const { server, port } = await new Promise<{ server: any; port: number }>(
       (resolve) => {
-        const handle = serve({ fetch: app.fetch, port: 0 }, (info: any) =>
+        const handle = serve({ fetch: app.fetch, port: selectedPort }, (info: any) =>
           resolve({ server: handle, port: info.port }),
         );
       },

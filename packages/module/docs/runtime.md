@@ -19,7 +19,7 @@ function startModuleApp(
 Step by step (`start.ts`):
 
 1. `packageDir = options.packageDir ?? process.cwd()`.
-2. `moduleDir = locateModuleDir(packageDir)` — finds `module.json` (see below).
+2. `moduleDir = locateModuleDir(packageDir)` — finds the module manifest.
 3. `manifest = readModuleManifest(moduleDir)`.
 4. `moduleConfig = await loadModuleConfig(packageDir)` (the author's `module.config.ts`).
 5. `config = buildModuleAppConfig({ moduleDir, manifest, moduleConfig, port? })`.
@@ -55,11 +55,11 @@ The entry point `damat module dev` generates dev-entry files for. It just calls
 function locateModuleDir(packageDir: string): string;
 ```
 
-Finds the dir holding `module.json`:
+Finds the directory holding a module manifest:
 
-1. `<packageDir>/src` if `src/module.json` exists (package layout).
-2. else `<packageDir>` if `module.json` exists (legacy in-app layout).
-3. else throw `"No module.json found in <pkg> or <pkg>/src — not a damat module package"`.
+1. Check the package root for `damat.json` or legacy `module.json`.
+2. Check `<packageDir>/src` for either filename.
+3. Throw a clear error when neither location contains a manifest.
 
 Used by the runtime _and_ the tooling (`createModuleMigration`, `generateModuleTypes`).
 
@@ -120,7 +120,7 @@ interface ModuleServerHandle {
 ## Gotchas
 
 - The runtime reads config from **two** places: `module.config.ts` from
-  `packageDir`, and `module.json` from `moduleDir` (`src/` or root). They are not
+  `packageDir`, and the module manifest from `moduleDir` (`src/` or root). They are not
   the same directory in the package layout.
 - Migrations only run when `databaseUrl` is non-empty — an app started without
   `DATABASE_URL` serves routes but skips migrating (the empty-string default makes

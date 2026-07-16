@@ -2,17 +2,23 @@
 
 ## What changed
 
-The framework-neutral `kit` command is now an independent capability. It keeps
-local and Git sources, dry-run placement previews, safe editable-source copy,
-install records, and optional package installation.
+The framework-neutral `kit` command is now an independent capability backed by
+the shared transactional installer. It accepts local, Git, registry, npm, and
+tarball origins and supports add, plan, list, update, and remove.
 
-Manifest validation, planning, copying, and record updates are separated into
-small single-purpose units.
+New kits use the universal `damat.json` profile. Legacy `damat-kit.json` remains
+readable during 0.x. Receiver config is optional; CLI target overrides take
+precedence over receiver mappings, then the artifact profile.
+
+Source mode is stable. Node and Damat package backends require the explicit
+experimental package flag.
 
 ## Breaking
 
-- None for `damat` users; the executable composes this capability.
+- New kit scaffolds write `damat.json`; tools that only read `damat-kit.json`
+  must migrate.
 
 ## Action required
 
-Custom CLIs can compose `kitCliCapability` directly.
+Custom CLIs can compose `kitCliCapability` directly. Existing legacy manifests
+can be migrated without changing their source files first.

@@ -14,6 +14,7 @@ export {
   initModules,
   registerModule,
 } from "./services/moduleService";
+export { resolveModuleImport } from "./services/moduleLocation";
 
 export * from "@damatjs/services";
 export * from "@damatjs/link";

@@ -1,9 +1,10 @@
+import { join } from "node:path";
 import type { AppConfig, ProjectConfig } from "@damatjs/framework";
 import type { ModuleManifest } from "../manifest/types";
 import type { ModuleAppConfig } from "../config/types";
 
 export interface BuildModuleAppConfigInput {
-  /** Directory holding module.json (the module's source dir) */
+  /** Directory holding the module manifest and source entry. */
   moduleDir: string;
   manifest: ModuleManifest;
   /** Author overrides from module.config.ts */
@@ -53,7 +54,9 @@ export function buildModuleAppConfig(
     projectConfig,
     modules: {
       [manifest.name]: {
-        resolve: moduleDir,
+        resolve: manifest.paths?.entry
+          ? join(moduleDir, manifest.paths.entry)
+          : moduleDir,
         id: manifest.name,
       },
     },

@@ -51,6 +51,7 @@ export function createRemovePlan(input: RemoveInput): InstallerPlan {
     kind: record.kind,
     ...(record.version && { version: record.version }),
     mode: record.mode,
+    ...(record.packageBackend && { packageBackend: record.packageBackend }),
     provenance: record.provenance,
     artifactIntegrity: record.artifactIntegrity,
     recipeIntegrity: record.recipeIntegrity,

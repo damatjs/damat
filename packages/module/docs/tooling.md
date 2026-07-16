@@ -135,8 +135,8 @@ console.log(`generated ${files.length} files in ${outputDir}`);
 ## How they relate
 
 Both share the same front end — `locateModuleDir` + `readModuleManifest` — so they
-work on a module package laid out with `src/module.json` or the legacy
-root-`module.json`. They are deliberately thin: all real work lives in the ORM
+work on a module package with root `damat.json`, while still reading legacy
+`module.json` layouts during 0.x. They are deliberately thin: all real work lives in the ORM
 packages (`orm-migration`, `orm-model`, `codegen`). This package's job is to
 make those usable _for a single module package_ without app config.
 

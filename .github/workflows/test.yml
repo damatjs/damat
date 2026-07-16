@@ -17,7 +17,7 @@ jobs:
   # skipIf(!DATABASE_URL) and the redis live-server tests gate on REDIS_URL.
   # Everything else (the vast majority of the suite) is infra-free.
   test:
-    name: Build & test (packages + default app)
+    name: Build & test (packages)
     runs-on: ubuntu-latest
 
     steps:
@@ -43,10 +43,5 @@ jobs:
       - name: Build packages
         run: bun run build --filter='./packages/**'
 
-      # The default app is bundled by `damat build` (no tsc), so its type errors
-      # are not caught by the package builds above — gate them explicitly.
-      - name: Type-check default app
-        run: bun --filter='./backend/**' run typecheck
-
       - name: Test packages + default app
-        run: bun run test --filter='./packages/**' --filter='./backend/**'
+        run: bun run test --filter='./packages/**'

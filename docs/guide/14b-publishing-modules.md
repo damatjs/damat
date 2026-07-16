@@ -1,96 +1,42 @@
 [Damat Guide](../GUIDE.md) › Publishing modules
 
-# 14b. Publishing modules & running a registry
+# 14b. Git-driven registry releases
 
-You've [authored a module](./13-authoring-modules.md) and others can already
-install it straight from git. This chapter covers the next step: listing it in
-a registry so it installs by name, with an owner and a verification status.
+The CLI does not publish modules. Damat distribution is designed around Git
+sources and immutable tags: validate and build a module, push a tag, then let
+registry automation create or update the hosted package record.
 
-## What a registry is
+```bash
+damat module validate
+damat module build
+git tag user-v1.0.0
+git push origin user-v1.0.0
+```
 
-A registry is just a JSON index mapping module refs to sources. The CLI and
-the [MCP server](./15-installing-modules-with-ai.md) read it from
-`DAMAT_MODULE_REGISTRY`, which accepts:
-
-- a URL — e.g. `https://registry.damatjs.com/index.json`
-- a local path to a `registry.json`
-- a directory containing one
-
-## The index format
+The current registry index maps `namespace/name@version` to an immutable
+origin. `DAMAT_REGISTRY` and `DAMAT_MODULE_REGISTRY` accept an index URL, a
+`registry.json` path, or a directory containing that file.
 
 ```json
 {
   "modules": {
     "damatjs/user": {
-      "source": "https://github.com/damatjs/modules.git#main",
-      "description": "Authentication, sessions and accounts.",
-      "latest": "0.2.0",
+      "source": "github:damatjs/user",
       "versions": {
-        "0.1.0": "https://github.com/damatjs/modules.git#user-v0.1.0",
-        "0.2.0": {
-          "source": "https://github.com/damatjs/modules.git#user-v0.2.0"
-        }
+        "1.0.0": { "source": "github:damatjs/user#user-v1.0.0" }
       },
-      "owner": { "namespace": "damatjs", "verified": true },
+      "owner": { "namespace": "damatjs" },
       "verification": {
         "status": "verified",
-        "verifiedBy": "registry.damatjs.com"
-      },
-      "keywords": ["auth", "users", "sessions"],
-      "license": "MIT",
-      "repository": "https://github.com/damatjs/modules"
+        "integrity": "sha256:..."
+      }
     }
   }
 }
 ```
 
-Entry keys are `namespace/name` (or a bare `name`). Each version maps to a git
-source — usually a tag per release (`#user-v0.2.0`), so published versions are
-immutable while `latest` advances.
-
-## Publishing a version
-
-1. Validate and build the module: `damat module validate && damat module build`.
-2. Tag the release in your module's repo (e.g. `billing-v0.1.0`).
-3. Add or update the entry in the registry index: bump `latest`, add the
-   version → tag mapping.
-
-For the public registry at
-[registry.damatjs.com](https://registry.damatjs.com), the index lives in the
-[`damatjs/damat`](https://github.com/damatjs/damat) monorepo at
-`apps/registry/data/registry.json` — open a pull request that adds your entry.
-New entries start as `"verification": { "status": "unverified" }`; the registry
-operators review and mark entries `verified`.
-
-## Verification statuses
-
-| Status                 | Meaning                                 | Install behavior       |
-| ---------------------- | --------------------------------------- | ---------------------- |
-| `verified`             | Reviewed; source pinned by the registry | installs cleanly       |
-| `unverified`           | Listed, not reviewed                    | subject to your policy |
-| `pending`              | Review in progress                      | subject to your policy |
-| `rejected` / `revoked` | Blocked by the registry                 | **always refused**     |
-
-The consumer-side policy is `DAMAT_MODULE_VERIFY`:
-
-- `off` — install anything the registry serves
-- `warn` _(default)_ — install, but print what you're trusting
-- `require` — only `verified` entries install
-
-Path and git sources bypass the registry entirely and require
-`--allow-unverified` — you pointed at them, so you own the trust decision.
-
-## Running your own registry
-
-Nothing about the index is special to damatjs.com — host the JSON anywhere
-(static file server, S3, your own app) and point `DAMAT_MODULE_REGISTRY` at
-it. A private registry for your organization is a single static file:
-
-```bash
-export DAMAT_MODULE_REGISTRY=https://modules.internal.acme.dev/index.json
-damat module add acme/billing
-```
-
----
+Git tags are the stable release boundary. Branch-driven preview automation and
+fully automatic registry creation are later registry work. There is no npm-like
+`damat module publish` gateway flow to maintain in a module package.
 
 Prev: [← Installing existing modules](./14-installing-modules.md) · [Guide home](../GUIDE.md) · Next: [Installing modules with AI →](./15-installing-modules-with-ai.md)

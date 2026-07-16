@@ -62,7 +62,7 @@ interface RegistryModuleEntry {
   name?: string; // informational; the index key is authoritative
   source: string; // default fetchable source: git url, github shorthand, or path
   description?: string;
-  author?: RegistryAuthor; // mirrored from module.json (display/search)
+  author?: RegistryAuthor; // mirrored from damat.json (display/search)
   owner?: RegistryOwner; // verifiable owner — the trust anchor (backend-assigned)
   verification?: RegistryVerification; // trust stamp (absent ⇒ unverified)
   versions?: Record<string, RegistryVersionEntry | string>; // per version/tag; string ⇒ { source }
@@ -102,7 +102,7 @@ const VERIFICATION_STATUSES: readonly VerificationStatus[]; // the same five, fo
 ### Two planes of control
 
 - **Author plane** — `name/version/author/license/keywords/repository`, declared
-  in `module.json`. The registry mirrors these for search/display.
+  in `damat.json`. The registry mirrors these for search/display.
 - **Registry plane** — `owner` and `verification`, assigned/stamped by the
   backend. **An author cannot self-verify.** These are the trust anchor.
 
@@ -273,4 +273,4 @@ if (!ref) {
 - `rejected`/`revoked` ignore policy entirely — there is no env override to install
   them. The only escape is a direct path/git source.
 - The trust anchor is `owner` + `verification` from the **registry plane**, not the
-  `author` an author declares in `module.json`. Don't conflate them.
+  `author` an author declares in `damat.json`. Don't conflate them.

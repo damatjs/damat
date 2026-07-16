@@ -48,10 +48,16 @@ export default defineConfig({
   },
   modules: {
     user: { resolve: "./src/modules/user", id: "user" },
+    billing: { resolve: { type: "package", name: "@acme/billing" } },
+    audit: { resolve: { type: "damat", path: "audit/index.ts" } },
   },
   links: "./src/links",
 });
 ```
+
+String module locations are project-relative editable source. Package
+locations import a Node package specifier. Damat locations are constrained to
+the project's `.damat/packages` store; traversal outside it is rejected.
 
 `links` points at a directory whose `index.ts` default-exports `defineLinkModule(...)` and exports `models`. The framework registers it as a `link` module, so cross-module links boot, migrate, and type-generate alongside your modules.
 

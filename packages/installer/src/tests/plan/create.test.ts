@@ -64,6 +64,7 @@ describe("createInstallPlan", () => {
         packages: { zod: "^4", alpha: "1" },
       },
       mode: "package",
+      experimentalPackage: true,
       lock,
     });
     expect(plan.operations).toEqual([

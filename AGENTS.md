@@ -37,11 +37,14 @@ reference backend.
    Full rules: [Documentation & releases standard](./docs/DOCUMENTATION-STANDARD.md).
 6. **Tests live next to code** (`src/tests/`, `tests/`, or `*.test.ts`). Run the
    package's `test` script.
-7. **Small, single-purpose files — readability is the highest priority.** No file
-   over ~100 lines; split by concern and subdivide long functions into sibling
-   files/folders rather than piling logic into one file. Don't re-export what a
-   package already provides (e.g. a `ModuleService` accessor's CRUD) — call it
-   directly; only write genuinely new, domain-specific code.
+7. **Small, single-purpose files — readability is the highest priority.** Every
+   code file must stay at 100 physical lines or fewer, including production code,
+   tests, scripts, fixtures, and generated code. Before a file crosses the limit,
+   split it by concern into clearly named sibling files or subfolders and
+   explicitly import/call those units. Generated output must be emitted in named
+   chunks rather than receiving an exemption. Don't re-export what a package
+   already provides (e.g. a `ModuleService` accessor's CRUD) — call it directly;
+   only write genuinely new, domain-specific code.
 
 ---
 

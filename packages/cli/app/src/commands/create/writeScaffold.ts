@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   damatConfigTemplate,
+  damatManifestTemplate,
   envExampleTemplate,
   envTemplate,
   gitignoreTemplate,
@@ -26,6 +27,7 @@ export function writeScaffold(
   const files: Record<string, string> = {
     "package.json": packageJsonTemplate(name, version),
     "damat.config.ts": damatConfigTemplate(name),
+    "damat.json": damatManifestTemplate(name),
     "tsconfig.json": tsconfigTemplate(),
     ".env.example": envExampleTemplate(name),
     ".env": envTemplate(name, secrets),
@@ -39,6 +41,10 @@ export function writeScaffold(
     "src/modules",
     "src/api/routes",
     "src/workflows",
+    "src/jobs",
+    "src/events",
+    "src/pipelines",
+    "src/links",
     "tests",
   ]) {
     mkdirSync(join(targetDir, dir), { recursive: true });

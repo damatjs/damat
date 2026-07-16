@@ -27,7 +27,8 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@damatjs/cli": "workspace:*"
+    "@damatjs/cli": "workspace:*",
+    "@damatjs/installer": "workspace:*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "workspace:*",

@@ -9,7 +9,7 @@
  *   - RouteHandler / RouteValidator           → @damatjs/framework/router
  *   - z                                       → @damatjs/deps/zod
  *
- * - Contract:   ModuleManifest (module.json) + validation
+ * - Contract:   ModuleManifest (damat.json, with legacy fallback) + validation
  * - Config:     defineModuleConfig — the only thing a module author sets up
  * - Runtime:    startModuleApp / runModuleEntry — a module package runs as a
  *               live app on its own, powered by the framework

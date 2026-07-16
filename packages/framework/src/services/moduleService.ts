@@ -1,7 +1,6 @@
-import path from "node:path";
-import { pathToFileURL } from "node:url";
 import type { ModuleConfig } from "../config";
 import type { ModuleInstance, ModuleRegistry } from "@damatjs/services";
+import { moduleLocationId, resolveModuleImport } from "./moduleLocation";
 
 const moduleRegistry = new Map<string, ModuleInstance<any>>();
 
@@ -51,19 +50,17 @@ export async function initModules(
   cwd: string,
 ): Promise<void> {
   for (const moduleConfig of modules) {
-    const modulePath = path.resolve(cwd, moduleConfig.resolve);
-    const moduleUrl = pathToFileURL(modulePath).href;
-
-    const moduleExports = await import(moduleUrl);
+    const moduleImport = resolveModuleImport(moduleConfig.resolve, cwd);
+    const moduleExports = await import(moduleImport);
     const moduleInstance = moduleExports.default;
 
     if (!moduleInstance || typeof moduleInstance.init !== "function") {
       throw new Error(
-        `Module at "${moduleConfig.resolve}" must default-export the result of defineModule()`,
+        `Module at "${moduleImport}" must default-export the result of defineModule()`,
       );
     }
 
-    const moduleId = moduleConfig.id ?? path.basename(moduleConfig.resolve);
+    const moduleId = moduleConfig.id ?? moduleLocationId(moduleConfig.resolve);
 
     registerModule(moduleId, moduleInstance);
   }

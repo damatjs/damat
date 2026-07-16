@@ -8,7 +8,7 @@ working on **this one module**.
 > **The rule that shapes everything: a module is a single-purpose blade.** It does
 > one thing well and stays independent. It must **not** import another module's code
 > or decide what it is plugged into or what it "needs". If it pairs naturally with
-> another module, leave a **non-binding `pairsWith` hint** in `src/module.json`. It
+> another module, leave a **non-binding `pairsWith` hint** in `damat.json`. It
 > MAY also ship a **dormant link file** under `src/links/` (a `defineLink` the
 > _backend owner_ activates by migrating) — but it never imports the other module and
 > never creates the connection itself. Building the app (what to combine, when to
@@ -33,8 +33,8 @@ working on **this one module**.
 ├── tsconfig.json
 ├── module.config.ts      # defineModuleConfig — module-local runtime config
 ├── .env.example          # DATABASE_URL
+├── damat.json            # portable install + module contract
 └── src/
-    ├── module.json       # the portable contract (name, version, env, registry, pairsWith)
     ├── index.ts          # defineModule(...) — the module's public definition
     ├── service.ts        # ModuleService({ models, credentialsSchema }); models = collectModels([...])
     ├── config/
@@ -59,7 +59,7 @@ bun run migration:create  # diff models -> a SQL migration in src/migrations
 bun run migration:run     # apply this module's migrations to DATABASE_URL
 bun run migration:status  # show applied vs pending migrations for DATABASE_URL
 bun run codegen           # generate row types + zod schemas
-bun run validate          # check the module.json contract + registry-readiness
+bun run validate          # check the damat.json contract + registry-readiness
 bun run typecheck         # tsc --noEmit
 bun run build             # type-check + contract validate (the release gate)
 bun test                  # the contract test + your own tests
@@ -296,7 +296,7 @@ export class WidgetService extends ModuleService({
 
 `schema/index.ts` is a zod schema for the config your module needs; `load.ts`
 reads it from `process.env`; `index.ts` exports `{ schema, load }`. Declare any
-env vars in `src/module.json`'s `env` array so installers know to set them.
+env vars in `damat.json`'s `module.env` array so installers can report them.
 
 ```ts
 // src/config/schema/index.ts
@@ -375,26 +375,23 @@ export const POST: RouteHandler = async (c) => {
 };
 ```
 
-On install the app's `damat module add` relocates each resource into the app's
-own `src/api/routes` / `src/workflows`.
+In source mode, `damat module add` copies the declared capabilities. It reports
+host wiring locations but never edits shared config, barrels, env, or call sites.
 
 ---
 
-## The `module.json` contract (`src/module.json`)
+## The `damat.json` contract
 
 This is what makes the module installable and discoverable.
 
-| Field         | Type                                            | Notes                                                                                                                                                            |
-| ------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`        | string (required)                               | module id; kebab-case (`widget`, `user-management`).                                                                                                             |
-| `version`     | string                                          | semver; required to publish to a registry.                                                                                                                       |
-| `description` | string                                          | shown on install and in the registry.                                                                                                                            |
-| `author`      | string \| object                                | `"Name <email> (url)"` or `{ name, email?, url? }`.                                                                                                              |
-| `env`         | `{ name, required?, description?, example? }[]` | env vars; drives `.env.example` sync.                                                                                                                            |
-| `packages`    | `Record<string,string>`                         | npm deps the host app installs.                                                                                                                                  |
-| `pairsWith`   | `string[]`                                      | **Non-binding** hint: modules this one pairs well with. A comment for the backend owner — never enforced or installed. **Prefer this** to express relationships. |
-| `paths`       | object                                          | layout overrides (`entry`/`models`/`migrations`/`workflows`/`types`).                                                                                            |
-| `registry`    | object                                          | `namespace`, `keywords`, `license`, `repository`, `homepage`.                                                                                                    |
+| Field | Purpose |
+| --- | --- |
+| `schemaVersion`, `kind`, `name`, `version` | Universal identity. `kind` is `module`. |
+| `install.default` | Default mode; source is recommended. |
+| `install.provides` | Named capability paths copied by source mode. |
+| `install.packages` | Package dependencies required by the artifact. |
+| `install.instructions` | Advisory host wiring and cleanup guidance. |
+| `module` | Module paths, env, registry fields, and `pairsWith`. |
 
 **Do not** add a `modules` (hard dependency) array unless it is genuinely
 unavoidable — a module should stay self-contained. To suggest a relationship, use
@@ -402,20 +399,24 @@ unavoidable — a module should stay self-contained. To suggest a relationship, 
 
 ```jsonc
 {
+  "schemaVersion": 1,
+  "kind": "module",
   "name": "user-management",
   "version": "0.1.0",
-  "description": "Workspaces, teams, and memberships.",
-  "env": [
-    { "name": "API_KEY_SECRET", "required": true, "example": "min-16-chars" },
-  ],
-  "pairsWith": ["user"], // hint only — not a dependency
-  "registry": { "namespace": "you", "license": "MIT", "keywords": ["teams"] },
+  "install": {
+    "default": "source",
+    "provides": { "module": { "from": "src/**" } }
+  },
+  "module": {
+    "description": "Workspaces, teams, and memberships.",
+    "pairsWith": ["user"]
+  }
 }
 ```
 
 ## Testing
 
-`tests/contract.test.ts` validates the `module.json` contract. For behavior, use
+`tests/contract.test.ts` validates the `damat.json` contract. For behavior, use
 the harness — no app or server needed:
 
 ```ts
@@ -444,8 +445,8 @@ module per process.
 
 Run `bun run build` — it **type-checks** the module (`tsc --noEmit`) and runs the
 contract **validate** in one gate; it must exit clean. Keep going until `validate`
-reports **no warnings** too — then it's registry-ready. Publish to your registry,
-or just push to git / keep it local; an app installs it with
+reports **no warnings** too — then it is ready for a Git-tagged registry release,
+a Git branch, or a local path. An app installs it with
 `damat module add <ref | path | git-url>`.
 
 ---

@@ -3,7 +3,7 @@ import type { ModuleAuthor, ModuleEnvVar, ModuleManifest } from "./types";
 const MODULE_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
 
 /**
- * Validate a parsed module.json. Returns the manifest typed, or throws
+ * Validate the normalized legacy-shaped module runtime contract, or throw
  * with a message suitable for CLI output.
  */
 export function validateModuleManifest(raw: unknown): ModuleManifest {

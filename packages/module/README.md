@@ -1,11 +1,11 @@
 # @damatjs/module
 
-> The Damat module system in one package: authoring surface, the portable `module.json` contract, a standalone dev/test harness, module-as-app runtime, and registry tooling.
+> The Damat module system in one package: authoring surface, the portable `damat.json` contract, a standalone dev/test harness, module-as-app runtime, and registry tooling.
 
 A Damat _module_ is a self-contained vertical slice — models + migrations +
 service + config + workflows + routes. This package is the heart of Damat's
 composability: it lets you **author, run, and test a module on its own** (no
-backend app), ship it with a `module.json` manifest, and install it into any
+backend app), ship it with a `damat.json` manifest, and install it into any
 Damat app with `damat module add` (and, later, straight from a module registry).
 It is the single dependency a module package needs — it re-exports everything
 from defining a module to running it as a live HTTP app.
@@ -33,7 +33,7 @@ Use it when:
 - You want to **develop or test a module standalone** against a real Postgres, without spinning up a backend (`bootModule` / `withModule`).
 - You want to **run one module as a live app** — full framework HTTP stack, just this module registered (`startModuleApp`, what `damat module dev` boots).
 - You build **tooling**: generate a module's types, create a diff migration, or apply/inspect a module's own migrations against `DATABASE_URL` — all with no `damat.config.ts` (`generateModuleTypes`, `createModuleMigration`, `runModuleMigration`, `runModuleMigrationStatus`).
-- You implement **module distribution**: parse/format module refs, read & validate `module.json`, check registry-readiness, resolve & verify entries against a registry index.
+- You implement **module distribution**: parse/format module refs, read and validate `damat.json` with legacy `module.json` fallback, check registry-readiness, and resolve verified registry entries.
 
 Skip it when:
 
@@ -115,7 +115,7 @@ harness and for the runtime when serving. In test suites gate DB tests with
 | `z`                                                                                                       | re-export | Zod validation.                                                                                                                                          |
 | `defineModuleConfig`                                                                                      | function  | Type-safe helper for `module.config.ts`.                                                                                                                 |
 | `loadModuleConfig`                                                                                        | function  | Load a package's `module.config.ts` (empty config if absent).                                                                                            |
-| `readModuleManifest`, `validateModuleManifest`                                                            | function  | Read / validate a `module.json` into a `ModuleManifest`.                                                                                                 |
+| `readModuleManifest`, `validateModuleManifest`                                                            | function  | Read universal `damat.json` or legacy `module.json` into a `ModuleManifest`.                                                                             |
 | `bootModule`, `withModule`                                                                                | function  | Boot a module standalone (with migrations) for dev/test; auto-teardown variant.                                                                          |
 | `startModuleApp`, `runModuleEntry`                                                                        | function  | Run one module as a live HTTP app; `damat module dev` entry.                                                                                             |
 | `createModuleMigration`, `generateModuleTypes`                                                            | function  | Diff-migration & codegen for a standalone module package.                                                                                                |
@@ -129,7 +129,7 @@ harness and for the runtime when serving. In test suites gate DB tests with
 
 Key types: `ModuleManifest` (+ `ModuleEnvVar`, `ModuleAuthor`, `ModuleManifestPaths`, `ModuleRegistryMeta`), `ModuleAppConfig`, `BootModuleOptions` / `BootedModule`, `StartModuleAppOptions` / `RunningModuleApp`, `ModuleRef`, `ModuleValidationReport`, `RegistryIndex` / `RegistryModuleEntry` (back-compat alias `RegistryIndexEntry`) / `RegistryVersionEntry` / `RegistryOwner` / `RegistryAuthor` / `RegistryVerification`, `ResolvedRegistryModule`, `VerificationStatus` / `VerificationPolicy`, `LinkService` / `LinkDefinition` / `LinkEndpoint` / `LinkOptions` / `LinkRowRef` / `LinkModelRef`.
 
-See the [`module.json` reference](../../MODULES.md) for the full manifest contract.
+See the [`damat.json` reference](./MODULES.md) for the full manifest contract.
 
 ## How it fits
 
@@ -149,7 +149,7 @@ Depended on by (in-repo):
 
 - [Internals & maintainer guide](./docs/README.md)
 - [Damat full guide](../../docs/GUIDE.md)
-- [`module.json` manifest reference](../../MODULES.md)
+- [`damat.json` manifest reference](./MODULES.md)
 
 ## License
 

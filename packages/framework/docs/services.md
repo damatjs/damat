@@ -95,7 +95,10 @@ async function initModules(modules: ModuleConfig[], cwd): Promise<void>;
 
 - **`registerModule(name, module)`** calls `module.init()` (constructs the service against the now-initialized pool) before storing it.
 - **`getModule(name)`** returns the registered instance's `.service` (or `null`). Typed via the augmentable `ModuleRegistry` (from `@damatjs/services`); without augmentation, use `getModule<UserModuleService>("user")`.
-- **`initModules(modules, cwd)`** for each `ModuleConfig`: resolves `cwd + resolve` to a `file://` URL, dynamic-imports it, takes the **default export**, requires it to have an `init` function (else throws "must default-export the result of defineModule()"), derives `id` from `config.id ?? basename(resolve)`, and `registerModule`s it.
+- **`initModules(modules, cwd)`** resolves string locations as project-relative
+  file URLs, `{ type: "package", name }` as Node package specifiers, and
+  `{ type: "damat", path }` inside `.damat/packages`. It then imports the
+  default export, requires an `init` function, derives an id, and registers it.
 - **Cross-module links register as a `link` module.** `initializeServices` appends the entries from `resolveLinkModuleEntries(config.links, cwd)` to the list it passes to `initModules`, so a link directory boots through the same path as any other module and `getModule("link")` returns the link service (`create`/`dismiss`/`fetch` plus a nested `graph` query). `setLinkModuleResolver` then lets that service call other modules' services by id.
 
 ## `ServiceInstances` (`types.ts`)

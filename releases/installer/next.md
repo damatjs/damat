@@ -40,6 +40,13 @@ a headless package with strict runtime validation.
   revoked, mismatched, executable, unsafe-archive, and unapproved-script cases.
 - Cross-origin content parity and Bun/npm/pnpm/Yarn execution and rollback
   parity tests.
+- Strict universal `damat.json` manifests for applications, modules, kits, and
+  packages, with named provided and accepted capabilities.
+- Install-profile matching and deterministic capability-to-target recipes.
+- CLI override → manifest default → source mode precedence.
+- Explicit experimental package backend selection recorded in plans and locks.
+- An experimental Damat package store under `.damat/packages/<id>` with no
+  dependency lifecycle scripts and no host `package.json` mutation.
 
 ## Breaking
 
@@ -47,7 +54,8 @@ a headless package with strict runtime validation.
 
 ## Action required
 
-None for application users. CLI capability migration happens separately.
+Package-mode callers must opt in explicitly and select a supported backend.
+Source mode remains the stable default.
 
 ## References
 

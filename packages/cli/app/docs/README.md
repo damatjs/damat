@@ -11,3 +11,7 @@
 
 The package depends on CLI contracts and explicit support helpers. It does not
 import the Damat executable composer, module, kit, or codegen capabilities.
+
+The create scaffold writes an optional receiver `damat.json` whose accepts map
+defines the backend's module, route, workflow, job, event, pipeline, link,
+test, migration, model, and generated-type locations.

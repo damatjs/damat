@@ -15,6 +15,12 @@ outside the executable composer.
 - Safe package name/range validation and script-disabled installation defaults.
 - Explicit rejection of package names beginning with a command-line flag.
 - Shared Git URL and GitHub shorthand parsing for source-based capabilities.
+- Universal artifact origin parsing for local paths, file URLs, Git, GitHub,
+  registry refs, npm refs, and tarballs.
+- Generic registry resolution using `DAMAT_REGISTRY` or the compatible
+  `DAMAT_MODULE_REGISTRY` setting.
+- Shared adapters that connect CLI options, logging, acquisition, planning, and
+  transactional execution to `@damatjs/installer`.
 
 ## Breaking
 

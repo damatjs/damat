@@ -31,6 +31,7 @@
     "!dist/**/__mocks__"
   ],
   "dependencies": {
+    "@damatjs/installer": "workspace:*",
     "@damatjs/deps": "workspace:*",
     "@damatjs/framework": "workspace:*",
     "@damatjs/logger": "workspace:*",
