@@ -35,7 +35,8 @@ Do **not** use it when:
 
 - You only need to manage the connection/pool — that's `@damatjs/orm-connector`.
 - You want the all-in-one facade — depend on `@damatjs/orm-main` (re-exports this package and the connector).
-- You need migrations or codegen — see `@damatjs/orm-processor` / `@damatjs/codegen`.
+- You need migrations or schema generation — see `@damatjs/orm-processor`,
+  `@damatjs/schema-codegen`, and `@damatjs/module-generator`.
 
 ## Quick start
 

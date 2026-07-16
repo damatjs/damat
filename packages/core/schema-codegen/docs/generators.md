@@ -1,6 +1,7 @@
 # Generators
 
-Sources: [`src/generator/`](../src/generator), [`src/utils/`](../src/utils), [`src/relation/`](../src/relation)
+Sources: [`src/generator/`](../src/generator), [`src/render/`](../src/render),
+[`src/relation/`](../src/relation)
 
 ## Responsibility
 
@@ -12,7 +13,7 @@ Compose the per-column primitives (`columnToTsType`, `columnToZodSchema`) plus e
 ## Options
 
 ```ts
-// src/utils/typeOptions.ts
+// src/types/options.ts
 interface GenerateTypesOptions {
   autoFields?: string[]; // extra column names to omit from New* types
   banner?: string | false; // leading comment; false = none; default = "// This file is auto-generated..."
@@ -22,7 +23,7 @@ type GeneratedFilesMap = Map<string, string>; // filename → file contents
 
 `autoFields` is merged with `DEFAULT_AUTO_FIELDS` (`id`, `createdAt`, `created_at`, `updatedAt`, `updated_at`).
 
-## Per-table type builders (`src/utils/`)
+## Per-table type builders (`src/render/`)
 
 ### `generateRowInterface(table, relations)` — `rowInterface.ts`
 
@@ -36,7 +37,7 @@ Emits `export type New<Pascal> = { ... };`. Skips any column in `autoFields`, an
 
 Emits `export type Update<Pascal> = Partial<Omit<<Pascal>, '<pk>'>>;` (omitting the primary-key column(s); multiple PKs become `'a' | 'b'`). With no PK, falls back to `Partial<<Pascal>>`.
 
-## Enums (`src/utils/enum.ts`)
+## Enums (`src/render/enums.ts`)
 
 - `generateEnumTypes(schema)` → `string[]` of `export type <Name>Enum = 'a' | 'b';` lines (used by `generateTypes`).
 - `generateEnumsFile(schema, banner)` → full `enums.ts` contents, or `null` when the module has no enums.
@@ -53,7 +54,7 @@ Emits `export type Update<Pascal> = Partial<Omit<<Pascal>, '<pk>'>>;` (omitting 
 
 Verified (from `tests/relation.test.ts`): a `belongsTo` with `linkedBy: ["user_id"]` and `to: "users"` yields `  user?: User;`; a `hasMany` with `from: "posts"`, `to: "posts"` yields `  posts?: Post[];`.
 
-## Zod schema builders (`src/utils/zodSchemas.ts`)
+## Zod schema builders (`src/render/zod/`)
 
 Each takes `(table, ...)` and returns `string[]`. Enum columns whose values are known are replaced with `z.enum(['a','b'])` (looked up in `allEnums`).
 
@@ -65,7 +66,7 @@ Each takes `(table, ...)` and returns `string[]`. Enum columns whose values are 
 
 `generateIdZodSchema` and `generateParamsZodSchema` share one internal PK→Zod mapper, so the bare id schema and the params id value never diverge.
 
-## Combined output (`generator/generateTypes.ts`)
+## Combined output (`generator/generateTypes.ts`, `generateZodTypes.ts`)
 
 ### `generateTypes(schema, options?)`
 
@@ -78,7 +79,8 @@ Each takes `(table, ...)` and returns `string[]`. Enum columns whose values are 
 
 Same skeleton but the first section is `import { z } from "@damatjs/deps/zod";`, then per table the Zod builders (new / update / query / id / params). Empty sections are filtered out.
 
-Both log start/completion via `getLogger()` (`@damatjs/logger`).
+Both accept the package's optional structural `GenerationLogger`. Omitting it
+uses a no-op logger, so rendering has no logging dependency.
 
 ## Per-file output (`generator/generateTableFile.ts`, `generateZodFile.ts`)
 
@@ -100,9 +102,9 @@ Returns a `GeneratedFilesMap`:
 - For each table: `<table>.ts` (via `generateTableFile`) and `<table>.zod.ts` (via `generateZodFile`). Filenames use `tableToFileName` (`order_item` → `order-item`).
 - `index.ts` — re-exports `./enums` (if present) and, per table, `./<table>` and `./<table>.zod`.
 
-Accepts an optional injected logger with `debug` and `info` methods (falls back
-to `getLogger()`). Verified file set for a 2-table+enum module (from
-`tests/codegen.test.ts`): `enums.ts`, `product.ts`, `order-item.ts`, `index.ts`
+Accepts an optional injected logger with `debug` and `info` methods. Verified
+file sets live under `src/tests/generator/`: `enums.ts`, `product.ts`,
+`order-item.ts`, `index.ts`
 (plus the `.zod.ts` files), and `index.ts` containing
 `export * from "./enums";` etc. When there are no enums, `enums.ts` is omitted
 and the index doesn't reference it.

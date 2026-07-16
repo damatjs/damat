@@ -125,6 +125,10 @@ extends each module's entity with the linked module's type — via a sibling
 `<table>.links.ts` that merges onto the base interface (the model-generated
 `<table>.ts` stays untouched):
 
+`@damatjs/cli-codegen` coordinates this augmentation around
+`@damatjs/module-generator`; the base schema files come from
+`@damatjs/schema-codegen`.
+
 ```ts
 // modules/user/types/users.links.ts  (auto-generated)
 import type { Organizations } from "../../organization/types";

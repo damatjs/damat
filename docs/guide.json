@@ -321,14 +321,20 @@
           ]
         },
         {
+          "name": "@damatjs/module-generator",
+          "description": "Damat module discovery, code generation, scaffolding, and barrels",
+          "dir": "packages/module-generator",
+          "readme": "packages/module-generator/README.md",
+          "docsIndex": "packages/module-generator/docs/README.md",
+          "docs": ["packages/module-generator/docs/README.md"]
+        },
+        {
           "name": "@damatjs/link",
           "description": "Cross-module links for Damat — define relationships between two modules, generate the junction table, migrate it, and query linked records across modules.",
           "dir": "packages/link",
           "readme": "packages/link/README.md",
           "docsIndex": "packages/link/docs/README.md",
-          "docs": [
-            "packages/link/docs/README.md"
-          ]
+          "docs": ["packages/link/docs/README.md"]
         },
         {
           "name": "@damatjs/workflow-engine",
@@ -435,15 +441,15 @@
           ]
         },
         {
-          "name": "@damatjs/codegen",
-          "description": "Damatjs codegen — agnostic type + zod + CRUD scaffold generation",
-          "dir": "packages/core/codegen",
-          "readme": "packages/core/codegen/README.md",
-          "docsIndex": "packages/core/codegen/docs/README.md",
+          "name": "@damatjs/schema-codegen",
+          "description": "Pure TypeScript and Zod source generation from Damat module schemas",
+          "dir": "packages/core/schema-codegen",
+          "readme": "packages/core/schema-codegen/README.md",
+          "docsIndex": "packages/core/schema-codegen/docs/README.md",
           "docs": [
-            "packages/core/codegen/docs/README.md",
-            "packages/core/codegen/docs/generators.md",
-            "packages/core/codegen/docs/type-mapping.md"
+            "packages/core/schema-codegen/docs/README.md",
+            "packages/core/schema-codegen/docs/generators.md",
+            "packages/core/schema-codegen/docs/type-mapping.md"
           ]
         },
         {
@@ -469,6 +475,19 @@
             "packages/orm/type/docs/connection-and-query.md",
             "packages/orm/type/docs/schema-types.md"
           ]
+        }
+      ]
+    },
+    {
+      "group": "Compatibility",
+      "packages": [
+        {
+          "name": "@damatjs/codegen",
+          "description": "Compatibility facade for Damat code generation",
+          "dir": "packages/core/codegen",
+          "readme": "packages/core/codegen/README.md",
+          "docsIndex": "packages/core/codegen/docs/README.md",
+          "docs": ["packages/core/codegen/docs/README.md"]
         }
       ]
     },
@@ -512,9 +531,7 @@
           "dir": "packages/core/events",
           "readme": "packages/core/events/README.md",
           "docsIndex": "packages/core/events/docs/README.md",
-          "docs": [
-            "packages/core/events/docs/README.md"
-          ]
+          "docs": ["packages/core/events/docs/README.md"]
         },
         {
           "name": "@damatjs/jobs",
@@ -522,9 +539,7 @@
           "dir": "packages/core/jobs",
           "readme": "packages/core/jobs/README.md",
           "docsIndex": "packages/core/jobs/docs/README.md",
-          "docs": [
-            "packages/core/jobs/docs/README.md"
-          ]
+          "docs": ["packages/core/jobs/docs/README.md"]
         },
         {
           "name": "@damatjs/load-env",
@@ -550,7 +565,7 @@
         },
         {
           "name": "@damatjs/cli",
-          "description": "General CLI framework for DamatJS",
+          "description": "Framework-neutral embeddable TypeScript command runtime",
           "dir": "packages/core/cli",
           "readme": "packages/core/cli/README.md",
           "docsIndex": "packages/core/cli/docs/README.md",
@@ -633,13 +648,15 @@
           "dir": "packages/cli/damat",
           "readme": "packages/cli/damat/README.md",
           "docsIndex": "packages/cli/damat/docs/README.md",
-          "docs": [
-            "packages/cli/damat/docs/README.md",
-            "packages/cli/damat/docs/commands.md",
-            "packages/cli/damat/docs/kit-commands.md",
-            "packages/cli/damat/docs/module-commands.md",
-            "packages/cli/damat/docs/scaffolding.md"
-          ]
+          "docs": ["packages/cli/damat/docs/README.md"]
+        },
+        {
+          "name": "@damatjs/cli-codegen",
+          "description": "Damat application code generation CLI capability",
+          "dir": "packages/cli/codegen",
+          "readme": "packages/cli/codegen/README.md",
+          "docsIndex": "packages/cli/codegen/docs/README.md",
+          "docs": ["packages/cli/codegen/docs/README.md"]
         },
         {
           "name": "@damatjs/orm-cli",
@@ -660,9 +677,7 @@
           "dir": "packages/mcp",
           "readme": "packages/mcp/README.md",
           "docsIndex": "packages/mcp/docs/README.md",
-          "docs": [
-            "packages/mcp/docs/README.md"
-          ]
+          "docs": ["packages/mcp/docs/README.md"]
         }
       ]
     }

@@ -13,8 +13,7 @@ filesystem orchestration and CRUD scaffolding. It now has a dedicated package,
 The package consumes `ModuleSchema` values and returns source strings or
 in-memory file maps. It performs no model discovery, filesystem writes,
 framework integration, or database access. `@damatjs/codegen` re-exports the
-same pure API while it continues to own application orchestration and
-scaffolding.
+same pure API during the compatibility window.
 
 ## Added
 
@@ -31,9 +30,12 @@ scaffolding.
 
 ## Action required
 
-None — existing consumers can continue importing from `@damatjs/codegen`.
-Consumers that only need pure schema rendering may depend directly on
-`@damatjs/schema-codegen`.
+1. Add `@damatjs/schema-codegen` to packages that render TypeScript or Zod from
+   `ModuleSchema`.
+2. Replace pure generation imports from `@damatjs/codegen` with
+   `@damatjs/schema-codegen`.
+3. Existing facade imports continue to resolve during the v1 compatibility
+   window.
 
 ## References
 

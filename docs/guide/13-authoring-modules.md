@@ -280,13 +280,19 @@ damat module migration:status    # show this module's applied vs pending migrati
 damat module codegen            # generate row types + zod schemas into types/
 ```
 
+The `damat` command adapter calls `@damatjs/module-generator`, which discovers
+the module models and consumes pure schema output from
+`@damatjs/schema-codegen`. Generated types and registries are replaceable;
+CRUD steps, workflows, and routes are scaffolded only when missing.
+
 `migration:create` writes a migration only when the models actually differ from
 the recorded snapshot; if they already match, nothing is written. To test the
 module against a real database, set `DATABASE_URL` in your `.env` and run
 `migration:run` — it connects, applies only this module's migrations (tracked
 under the module's name, so it's idempotent), and disconnects; `migration:status`
-reports which are applied vs pending. `codegen` overwrites the `types/`
-directory — treat it as generated output, not hand-edited source. Details on
+reports which are applied vs pending. `codegen` overwrites generated types and
+the registry, but preserves existing scaffold files. Treat the generated type
+files as replaceable output. Details on
 these are in [tooling.md](../../packages/module/docs/tooling.md).
 
 ## Test it in isolation with the harness

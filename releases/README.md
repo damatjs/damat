@@ -61,6 +61,7 @@ snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
 - [`services`](./services/) — `@damatjs/services`
 - [`module`](./module/) — `@damatjs/module`
 - [`module-generator`](./module-generator/) — `@damatjs/module-generator`
+  (Damat discovery, filesystem output, registries, scaffolds, barrels)
 - [`link`](./link/) — `@damatjs/link`
 - [`workflow-engine`](./workflow-engine/) — `@damatjs/workflow-engine`
 - [`installer`](./installer/) — `@damatjs/installer`
@@ -73,8 +74,9 @@ snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
 - [`orm-connector`](./orm-connector/) — `@damatjs/orm-connector`
 - [`orm-migration`](./orm-migration/) — `@damatjs/orm-migration`
 - [`orm-processor`](./orm-processor/) — `@damatjs/orm-processor`
-- [`codegen`](./codegen/) — `@damatjs/codegen`
-- [`schema-codegen`](./schema-codegen/) — `@damatjs/schema-codegen`
+- [`codegen`](./codegen/) — `@damatjs/codegen` (compatibility facade)
+- [`schema-codegen`](./schema-codegen/) — `@damatjs/schema-codegen` (pure schema
+  rendering)
 - [`orm-core`](./orm-core/) — `@damatjs/orm-core`
 - [`orm-type`](./orm-type/) — `@damatjs/orm-type`
 

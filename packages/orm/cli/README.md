@@ -1,14 +1,13 @@
 # @damatjs/orm-cli
 
-> `damat-orm` — the standalone CLI for Damat ORM migrations and code generation.
+> `damat-orm` — the standalone CLI for Damat ORM migrations.
 
 `@damatjs/orm-cli` ships the `damat-orm` binary: a small, config-driven command
-line tool that runs module migrations and generates TypeScript types from your
-ORM model definitions. It reads `damat.config.ts` to discover modules, the
-cross-module links under `links`, and the database URL, then delegates the real
-work to the `@damatjs/orm-*` packages. It is built on the shared `@damatjs/cli`
-runner, so commands, options, banner, and help formatting come from the same
-framework as the rest of the Damat CLIs.
+line tool that runs module migrations. It reads `damat.config.ts` to discover
+modules, the cross-module links under `links`, and the database URL, then
+delegates the real work to the `@damatjs/orm-*` packages. It is built on the
+shared `@damatjs/cli` runner, so commands, options, banner, and help formatting
+come from the same framework as the rest of the Damat CLIs.
 
 Part of the [Damat](../../../README.md) monorepo · [Full guide](../../../docs/GUIDE.md) · [Internals](./docs/README.md)
 
@@ -48,7 +47,8 @@ subcommand prints the available subcommands.
 >
 > **Type generation lives elsewhere.** `damat-orm` is migrations-only — generate
 > row types/zod/registry with `damat codegen <module>` (in an app) or
-> `damat module codegen` (in a module package), both over `@damatjs/codegen`.
+> `damat module codegen` (in a module package). Both commands use
+> `@damatjs/module-generator`, which consumes `@damatjs/schema-codegen`.
 
 All migration commands honor a resolved module's declared migration directory,
 including immutable packages whose SQL lives below `src/migrations`.
@@ -85,9 +85,9 @@ tables that join models living in different modules.
 
 ## When to use
 
-- **Use `damat-orm`** when you want to drive migrations and type generation
-  directly — in CI, scripts, or a non-Damat-app project that still uses the
-  Damat ORM and a `damat.config.ts`.
+- **Use `damat-orm`** when you want to drive migrations directly — in CI,
+  scripts, or a non-Damat-app project that still uses the Damat ORM and a
+  `damat.config.ts`.
 - **Inside a full Damat backend**, the `damat` CLI (`@damatjs/damat-cli`) is the
   day-to-day entry point; it shells out to `bun damat-orm migrate:up` after
   installing a module. Both read the same `damat.config.ts`.
@@ -158,8 +158,9 @@ Notes grounded in the source:
   (`runMigrations`, `createInitialMigration`, `createDiffMigration`,
   `getMigrationStatus`, `discoverModels`, `discoverAllMigrations`).
 - `@damatjs/orm-processor` — `snapshotExist` (initial-vs-diff decision).
-- `@damatjs/orm-model` — `toModuleSchema` (builds the schema for codegen).
-- `@damatjs/codegen` — `generateFilesMap` (turns a schema into type files).
+- `@damatjs/orm-model` — schema construction used by the unregistered internal
+  type-generation handler.
+- `@damatjs/schema-codegen` — pure file-map generation used by that handler.
 - `@damatjs/link` — `resolveLinkMigrationModules` (discovers `link:<owner>`
   migration modules) and `renderLinkAugmentations` (the `<table>.links.ts`
   files woven into linked modules' generated types).

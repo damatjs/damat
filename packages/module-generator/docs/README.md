@@ -21,6 +21,10 @@ code generation. Pure schema rendering remains in `@damatjs/schema-codegen`.
 5. CRUD steps, workflows, and routes are written only when absent.
 6. Workflow barrels are rebuilt depth-first with stable sorted exports.
 
+`@damatjs/cli-codegen` supplies app configuration, link augmentation, and
+command reporting around this flow. `@damatjs/module` calls the same owner for
+standalone module tooling.
+
 ## Invariants
 
 - Existing scaffold files are never overwritten.
@@ -30,3 +34,7 @@ code generation. Pure schema rendering remains in `@damatjs/schema-codegen`.
 - Alias mode keeps generated imports portable between standalone modules and
   installed backends.
 - Barrel output is deterministic and always reflects the current directory.
+- Scaffold and barrel failures are reported as warnings after generated types
+  and the registry have been written.
+- App-owned registries use service imports; immutable package registries derive
+  the service type from the resolved module entry.

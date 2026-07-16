@@ -7,7 +7,8 @@ speaks. It defines the interfaces and unions that describe a database
 connection, a serialized schema (columns, tables, enums, foreign keys,
 constraints, indexes, relations, modules), and the JSON descriptors for queries.
 It ships **only types** — no runtime code, no classes, no functions — so it can
-be imported anywhere (model DSL, query builder, migration engine, CLI, codegen)
+be imported anywhere (model DSL, query builder, migration engine, CLI, schema
+generation)
 without pulling in implementation. It sits at the very bottom of the ORM stack:
 everything depends on it, it depends on almost nothing.
 
@@ -177,8 +178,9 @@ driver types from `@damatjs/deps` and four type groups: `connection`, `model`,
   builders that produce `TableSchema` / `ModuleSchema`.
 - [`@damatjs/orm-core`](../core) — registry & logger.
 - `@damatjs/orm-pg`, `@damatjs/orm-processor`, `@damatjs/orm-connector`,
-  `@damatjs/orm-migration`, `@damatjs/codegen`, `@damatjs/orm-cli` — the
-  driver, query, migration, and tooling layers.
+  `@damatjs/orm-migration`, `@damatjs/schema-codegen`,
+  `@damatjs/module-generator`, `@damatjs/orm-cli` — the driver, query,
+  migration, generation, and tooling layers.
 - `@damatjs/framework`, `@damatjs/module`, `@damatjs/service` — higher-level
   framework packages.
 

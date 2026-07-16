@@ -43,11 +43,11 @@ src/links/
    `discoverModels` reads each owner's `models` export, so
    `migrate:create link:<owner>` / `migrate:up` create the junction tables from
    `links/<owner>/migrations`.
-3. **Types.** `damat codegen <module>` (over `@damatjs/codegen`) skips `kind: "link"`
-   modules and instead, after generating a module's model types, aggregates all
-   links, finds those the module participates in, and writes a `<table>.links.ts`
-   augmentation into the module's `types/` (see `codegen.ts`). Junction tables get
-   **no** generated types.
+3. **Types.** `@damatjs/cli-codegen` calls `@damatjs/module-generator` for
+   `damat codegen <module>`, skips `kind: "link"` modules, then aggregates all
+   links and writes a `<table>.links.ts` augmentation into each participating
+   module's generated `types/`. Pure base types come from
+   `@damatjs/schema-codegen`. Junction tables get **no** generated types.
 4. **Boot.** `@damatjs/framework`'s `initializeServices` registers the aggregated
    top-level `links` dir as the single `link` module (via `resolveLinkModuleEntries`),
    so `getModule("link")` resolves one link service over every owner's links. It

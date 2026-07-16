@@ -4,8 +4,8 @@ Source: `src/tooling/migration.ts`, `src/tooling/codegen.ts`.
 
 Helpers that operate on a **standalone module package** — no `damat.config.ts`
 required. They locate the module dir, read its manifest, and drive the ORM
-migration/codegen packages directly. The `damat` CLI calls these for a module
-package's own migrate/codegen commands.
+migration and module-generator owners directly. The `damat` CLI calls these for
+a module package's own migrate/codegen commands.
 
 `createModuleMigration` (diff → SQL) and `generateModuleTypes` work offline
 against the model files and snapshot. `runModuleMigration` and
@@ -116,16 +116,17 @@ function generateModuleTypes(
 ): Promise<ModuleCodegenResult>;
 ```
 
-Generates TypeScript row types + zod schemas for the module's models
-(`codegen.ts`):
+Generates TypeScript row types + Zod schemas, the registry, and missing CRUD
+scaffolds for the module's models (`codegen.ts`):
 
 1. `moduleDir = locateModuleDir(packageDir)`; `manifest = readModuleManifest(moduleDir)`.
-2. `models = await discoverModels(moduleDir)` (from `@damatjs/orm-migration`).
-3. `schema = toModuleSchema(manifest.name, models)` (from `@damatjs/orm-model`).
-4. `filesMap = generateFilesMap(schema, {}, logger)` (from `@damatjs/codegen`).
-5. `outputDir = join(moduleDir, manifest.paths?.types ?? "./types")`; `mkdir -p` it.
-6. Write each `[fileName, content]` from the map into `outputDir`.
-7. Return `{ outputDir, files }` (the filenames written).
+2. Resolve the manifest's types and workflows paths plus the standard API route
+   path.
+3. Call `runCodegen` from `@damatjs/module-generator` with portable module and
+   workflow aliases.
+4. The generator discovers models, uses `@damatjs/schema-codegen`, regenerates
+   types and the registry, creates missing scaffolds, and rebuilds barrels.
+5. Return its output directory, generated files, and scaffolded files.
 
 ```ts
 const { outputDir, files } = await generateModuleTypes(process.cwd(), logger);
@@ -135,10 +136,11 @@ console.log(`generated ${files.length} files in ${outputDir}`);
 ## How they relate
 
 Both share the same front end — `locateModuleDir` + `readModuleManifest` — so they
-work on a module package with root `damat.json`, while still reading legacy
-`module.json` layouts during 0.x. They are deliberately thin: all real work lives in the ORM
-packages (`orm-migration`, `orm-model`, `codegen`). This package's job is to
-make those usable _for a single module package_ without app config.
+work on a module package with root `damat.json`, while still reading supported
+legacy manifest layouts. They are deliberately thin: migration work lives in
+the ORM packages and generation lives in `@damatjs/module-generator`. This
+package makes those owners usable _for a single module package_ without app
+config.
 
 ## Gotchas
 
@@ -154,5 +156,5 @@ make those usable _for a single module package_ without app config.
   migrations is the harness/runtime's job (`applyModuleMigrations`, see
   [harness.md](./harness.md)); the tooling functions are the explicit
   CLI-invoked path.
-- Re-running codegen overwrites files in the types dir; treat that dir as
-  generated output, not hand-edited source.
+- Re-running codegen overwrites generated types and the registry, but never
+  overwrites existing CRUD scaffold files.

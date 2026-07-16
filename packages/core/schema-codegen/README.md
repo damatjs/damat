@@ -51,6 +51,8 @@ const files = generateFilesMap(schema);
 - `GenerationLogger` is the optional structural `debug`/`info` logging surface.
 
 See [the internals guide](./docs/README.md) for the source layout and invariants.
+Detailed references cover [generators](./docs/generators.md) and
+[type mapping](./docs/type-mapping.md).
 
 ## License
 

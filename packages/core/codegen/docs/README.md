@@ -1,71 +1,22 @@
 # @damatjs/codegen internals
 
-Maintainer-facing documentation for `@damatjs/codegen`. For the public overview and quick start, see the [package README](../README.md).
+`@damatjs/codegen` is a compatibility boundary with no implementation of its
+own.
 
-The codegen package is a **pure string factory**. It takes a `ModuleSchema` and produces TypeScript source as strings — interfaces, mutation types, enum unions, relation fields, and Zod schemas. It never writes files and never connects to a database; callers (the ORM CLI, the module system) decide where the output goes.
+## Source map
 
-There are two conceptual halves:
+| Path                              | Responsibility                                  |
+| --------------------------------- | ----------------------------------------------- |
+| `src/index.ts`                    | Re-export both owner-package runtime APIs.      |
+| `src/types/index.ts`              | Re-export both owner-package type APIs.         |
+| `src/tests/compatibility.test.ts` | Prove facade exports are owner export identity. |
 
-1. **Type mapping** — per-column primitives: `ColumnSchema` → a TS type string, or → a Zod schema string.
-2. **Generators** — compose those primitives (plus relations and enums) into whole files or file maps.
+## Ownership
 
-## Module map
+- Pure schema rendering belongs to
+  [`@damatjs/schema-codegen`](../../schema-codegen/docs/README.md).
+- Damat discovery and filesystem generation belong to
+  [`@damatjs/module-generator`](../../../module-generator/docs/README.md).
 
-| File / dir                           | Responsibility                                                                                                                  |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| `src/index.ts`                       | Barrel: re-exports `columnToTsType`, `columnToZodSchema`, `defaults`, `generator`, `relation`.                                  |
-| `src/columnToTsType.ts`              | `ColumnSchema` → TypeScript type string (enum alias, array, nullable, parenthesization). → [type-mapping.md](./type-mapping.md) |
-| `src/columnToZodSchema.ts`           | `ColumnSchema` → Zod schema string (base validator per pg type). → [type-mapping.md](./type-mapping.md)                         |
-| `src/utils/pgTypeToTsBase.ts`        | The big `ColumnType` → base TS string switch; `enumTypeToTsBase` for value unions.                                              |
-| `src/defaults.ts`                    | `DEFAULT_AUTO_FIELDS` — columns excluded from `New*` types.                                                                     |
-| `src/utils/stringConvertor.ts`       | `toPascalCase`, `toCamelCase`, `toEnumTypeName`.                                                                                |
-| `src/utils/typeOptions.ts`           | `GenerateTypesOptions`, `GeneratedFilesMap`.                                                                                    |
-| `src/utils/rowInterface.ts`          | `generateRowInterface` — the table row interface (columns + relation fields).                                                   |
-| `src/utils/newType.ts`               | `generateNewType` — the `New*` insert type.                                                                                     |
-| `src/utils/updateType.ts`            | `generateUpdateType` — the `Update*` partial type.                                                                              |
-| `src/utils/enum.ts`                  | `generateEnumTypes`, `generateEnumsFile`, `getTableEnums`.                                                                      |
-| `src/utils/zodSchemas.ts`            | `generateNewZodSchema`, `generateUpdateZodSchema`, `generateQueryZodSchema`, `generateIdZodSchema`, `generateParamsZodSchema`.  |
-| `src/relation/map.ts`                | `buildRelationMap` — group relations by `fromTable`.                                                                            |
-| `src/relation/relationFields.ts`     | `relationFields` — optional loaded-relation interface fields.                                                                   |
-| `src/generator/generateTypes.ts`     | `generateTypes` (combined types file) + `generateZodTypes` (combined Zod file). → [generators.md](./generators.md)              |
-| `src/generator/generateTableFile.ts` | `generateTableFile` — one table's `.ts` with imports. → [generators.md](./generators.md)                                        |
-| `src/generator/generateZodFile.ts`   | `generateZodFile` — one table's Zod `.ts`. → [generators.md](./generators.md)                                                   |
-| `src/generator/generateFilesMap.ts`  | `generateFilesMap` — the file-per-table layout. → [generators.md](./generators.md)                                              |
-| `src/generator/helpers.ts`           | `tableToFileName` (`_`→`-`), `getRelationImports`.                                                                              |
-
-## Architecture overview
-
-```
-ModuleSchema
-   │
-   ├── per column ──► columnToTsType  ──► pgTypeToTsBase / toEnumTypeName
-   │                  columnToZodSchema ─► (inline pg-type switch)
-   │
-   ├── per table  ──► generateRowInterface / generateNewType / generateUpdateType
-   │                  generate{New,Update,Query,Id,Params}ZodSchema
-   │                  relationFields (from buildRelationMap / getRelationImports)
-   │
-   └── per module ──► generateTypes / generateZodTypes  (single file)
-                      generateFilesMap                  (file-per-table map)
-```
-
-## Naming conventions (enforced by `stringConvertor.ts`)
-
-- Table → type name: `toPascalCase` (`order_item` → `OrderItem`).
-- Enum name → alias: `toEnumTypeName` = PascalCase + `Enum` suffix (`product_status` → `ProductStatusEnum`).
-- Table → filename: `tableToFileName` replaces `_` with `-` (`order_item` → `order-item.ts`).
-- Zod schema/const names use `toCamelCase` of the PascalCase type (`order_item` → `orderItem...Schema`).
-
-## Invariants & design decisions
-
-- **Pure, no I/O.** Every function returns strings or a `Map<string,string>`. Disk writes belong to the caller.
-- **Type strings target what the `pg` driver actually returns at runtime**, not the conceptually ideal type — e.g. `bigint` → `bigint`, `bytea` → `Buffer`, `timestamp` → `Date`, geometric/range types → inline object literals. See [type-mapping.md](./type-mapping.md).
-- **Nullability and arrays are applied by `columnToTsType`, not by the base mapper.** `pgTypeToTsBase`/the Zod switch return the _base_ type; wrapping (`Array<...>`, `| null`, `z.array(...)`) happens one layer up.
-- **Auto-managed and timestamp/soft-delete columns are filtered consistently.** `New*` types and `new` Zod schemas omit `DEFAULT_AUTO_FIELDS` plus `deleted_at`/`created_at`/`updated_at`; update schemas also skip primary keys.
-- **Enum columns resolve to the named alias for TS**, but Zod inlines the literal value union (`z.enum([...])`) when the enum values are known.
-- **Relation fields are optional** (`field?: Type`) because they are only present when explicitly loaded.
-
-## Split docs
-
-- [type-mapping.md](./type-mapping.md) — `columnToTsType`, `columnToZodSchema`, `pgTypeToTsBase`, enum/array/nullable handling.
-- [generators.md](./generators.md) — interface/`New`/`Update` builders, Zod builders, relations, single-file vs file-map output, options.
+The facade must stay silent, contain no generation logic, and remain unused by
+other packages in this repository.

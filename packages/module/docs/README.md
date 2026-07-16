@@ -13,7 +13,8 @@ The module system, gathered into one package, organized by concern:
 - **Config** — `module.config.ts`, the only thing a module author configures.
 - **Harness** — boot a module standalone for dev/test (no server).
 - **Runtime** — run one module package as a live HTTP app.
-- **Tooling** — migrations + codegen for a standalone module package.
+- **Tooling** — migrations plus `@damatjs/module-generator` integration for a
+  standalone module package.
 - **Registry** — refs, readiness, resolution, and the verification/trust gate.
 
 Everything is re-exported from `src/index.ts` via the concern barrels.

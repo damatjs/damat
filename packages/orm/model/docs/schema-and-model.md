@@ -140,8 +140,8 @@ Generates an `export interface` string for the model's **row shape**:
 This emits the _base_ row type only — it does not add timestamp/soft-delete
 columns (those are added in `toTableSchema()`, not here) and uses the raw enum
 type name. The richer per-table files in `src/tests/__snapshots__/generated/`
-(with `NewX`/`UpdateX` and `…Enum` suffixed names) come from a separate codegen
-module that is not part of this package's `src/` (see
+(with `NewX`/`UpdateX` and `…Enum` suffixed names) come from
+`@damatjs/schema-codegen` (see
 [type-inference.md](./type-inference.md)).
 
 ## `toModuleSchema()` (`src/schema/toModuleSchema.ts`)

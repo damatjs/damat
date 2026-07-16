@@ -7,8 +7,8 @@ Maintainer-facing reference for the `damat-orm` CLI. Read alongside the
 
 - [migrate-commands.md](./migrate-commands.md) — `migrate:up`, `migrate:status`,
   `migrate:list`, `migrate:create`.
-- [generate-commands.md](./generate-commands.md) — legacy `generate:types`
-  (unregistered; type generation moved to `damat codegen`).
+- [generate-commands.md](./generate-commands.md) — the unregistered
+  `generate:types` source and the public owner commands.
 - [config-and-paths.md](./config-and-paths.md) — `loadModules`,
   `loadDatabaseUrl`, `requireDatabaseUrl`, and the `resolve*Path` helpers.
 
@@ -21,7 +21,7 @@ Maintainer-facing reference for the `damat-orm` CLI. Read alongside the
 | `src/cli/index.ts`            | Re-exports `runCli` and `./types`                                                                                                                                                                                                                        |
 | `src/cli/types.ts`            | `ModulesMap`, `OrmCliOptions`, `Logger`, and re-exported `Command`/`CommandContext`/`CommandResult`/`CommandOption` + `OrmModule`/`OrmModuleContainer`                                                                                                   |
 | `src/cli/registry.ts`         | A standalone in-memory `CommandRegistry` impl (`getRegistry`, `registerCommand`, `getCommand`, `getAllCommands`)                                                                                                                                         |
-| `src/cli/commands/index.ts`   | Aggregates the top-level command list: `[generateCommand, migrateCommand]`                                                                                                                                                                               |
+| `src/cli/commands/index.ts`   | Aggregates the top-level command list: `[migrateCommand]`                                                                                                                                                                                                |
 | `src/cli/commands/migrate/*`  | The `migrate` group: `index.ts` (parent) + `up`, `status`, `list`, `create`                                                                                                                                                                              |
 | `src/cli/commands/generate/*` | The `generate` group: `index.ts` (parent) + `types`                                                                                                                                                                                                      |
 | `src/cli/config/index.ts`     | `requireDatabaseUrl(logger)` — reads `process.env.DATABASE_URL`, exits 1 if missing                                                                                                                                                                      |
@@ -41,10 +41,9 @@ bin.ts
         │  (from @damatjs/cli — parses argv, resolves command/subcommand,
         │   coerces+validates options, prints banner/help, calls handler)
         ▼
-   allCommands = [ generateCommand, migrateCommand ]
+   allCommands = [migrateCommand]
         │
-        ├─ migrateCommand.subcommands = [up, status, list, create]
-        └─ generateCommand.subcommands = [types]
+        └─ migrateCommand.subcommands = [up, status, list, create]
               │
               ▼  each handler(ctx):
         loadModules("damat.config.ts", ctx.cwd)   ← from src/cli/utils/load.ts
@@ -53,7 +52,6 @@ bin.ts
               │
               ▼  dynamic import of the ORM package that does the work:
         @damatjs/orm-migration | @damatjs/orm-processor
-        @damatjs/orm-model     | @damatjs/codegen
         @damatjs/link          | @damatjs/deps/pg (Pool)
 ```
 
@@ -71,8 +69,8 @@ Every handler returns `{ exitCode: number }` and reports via `ctx.logger`
 - A **parent** command (`migrate`) has no real work — its handler just lists
   subcommands. The dispatchable commands are the leaves (`migrate:up`,
   `migrate:create`, …). Note the leaf `name` values use the colon form
-  (`migrate:up`), matching how users type them. (The `generate` group is no
-  longer registered — type generation moved to `damat codegen`.)
+  (`migrate:up`), matching how users type them. The `generate` directory is not
+  registered by this command list.
 
 > `src/cli/registry.ts` is a self-contained `CommandRegistry` (map-backed,
 > throws on duplicate names). It is exported for programmatic/embedding use but

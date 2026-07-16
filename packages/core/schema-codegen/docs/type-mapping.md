@@ -1,6 +1,7 @@
 # Type mapping
 
-Sources: [`src/columnToTsType.ts`](../src/columnToTsType.ts), [`src/utils/pgTypeToTsBase.ts`](../src/utils/pgTypeToTsBase.ts), [`src/columnToZodSchema.ts`](../src/columnToZodSchema.ts)
+Sources: [`src/type-mapping/ts/`](../src/type-mapping/ts),
+[`src/type-mapping/zod/`](../src/type-mapping/zod)
 
 ## Responsibility
 
@@ -40,7 +41,8 @@ export function pgTypeToTsBase(type: ColumnType): string;
 export function enumTypeToTsBase(enumValues?: string[]): string;
 ```
 
-A `switch` over every `ColumnType` returning the **base** TS string the `pg` driver materializes at runtime. Highlights (not exhaustive — see the source for all cases):
+Focused maps cover every `ColumnType` and return the **base** TS string the `pg`
+driver materializes at runtime. Highlights:
 
 | pg type(s)                                                                 | TS base                                                                                                                        |
 | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
@@ -77,7 +79,9 @@ A `switch` over every `ColumnType` returning the **base** TS string the `pg` dri
 export const columnToZodSchema = (col: ColumnSchema): string
 ```
 
-Calls an internal `getZodBaseType(type, col)` switch, then wraps in `z.array(...)` if `col.array`. It does **not** add `.optional()` or `.nullable()` — the schema generators add those based on column nullability/defaults. Notable mappings:
+Calls the focused Zod mapping groups, then wraps in `z.array(...)` if
+`col.array`. It does **not** add `.optional()` or `.nullable()` — the schema
+generators add those based on column nullability/defaults. Notable mappings:
 
 | pg type(s)                                                                                                            | Zod base                                                                                     |
 | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
@@ -104,6 +108,7 @@ Calls an internal `getZodBaseType(type, col)` switch, then wraps in `z.array(...
 
 ## Safe extension
 
-- Adding a new `ColumnType`: add a `case` to `pgTypeToTsBase` **and** to `getZodBaseType` in `columnToZodSchema.ts` (both switches are over the same union; the Zod one has a `default: z.unknown()`, the TS one is exhaustive and will type-error on a missing case once the union grows).
+- Adding a new `ColumnType`: add it to the matching TypeScript and Zod mapping
+  groups and extend the focused mapping tests.
 - To change runtime expectations (e.g. parse `numeric` as `string` to avoid float loss), edit only the base mappers; `columnToTsType`'s array/nullable wrapping stays correct.
 - Keep nullability/array decoration in `columnToTsType` / the `z.array` wrap, not in the base switches.

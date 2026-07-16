@@ -2,7 +2,8 @@
 
 These types describe the serialized, JSON-able form of a Damat schema. They are
 produced by the fluent builders in `@damatjs/orm-model` and consumed by the
-registry (`@damatjs/orm-core`), the migration/DDL engine, and codegen. Editing
+registry (`@damatjs/orm-core`), the migration/DDL engine, and
+`@damatjs/schema-codegen`. Editing
 anything here ripples through every one of those packages.
 
 All types in this group are exported from `src/model/index.ts` and re-exported by
@@ -76,7 +77,7 @@ export interface ModuleSchema {
 
 This is the top-level snapshot for a module (a group of related tables). It is
 what gets serialized to `module.snap.json`, fed to the migration diff engine, and
-passed to codegen.
+passed to schema generation.
 
 ## `EnumSchema` (`enum.ts`)
 

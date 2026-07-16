@@ -1,15 +1,14 @@
 # Generate commands
 
-> **Moved.** Type generation is no longer a `damat-orm` command — `damat-orm` is
-> migrations-only (`src/cli/commands/index.ts` registers only `migrate`). The same
-> pipeline now runs via **`damat codegen <module>`** (in an app) and
-> **`damat module codegen`** (in a module package), both over `@damatjs/codegen`'s
-> `runCodegen`/`runModuleCodegen`. The `src/cli/commands/generate/` files described
-> below are unregistered legacy code kept for reference; the pipeline is unchanged.
+`damat-orm` is migrations-only: `src/cli/commands/index.ts` registers only
+`migrate`. Public type generation runs through **`damat codegen <module>`** in
+an app or **`damat module codegen`** in a module package. Those commands use
+`@damatjs/module-generator`, which owns discovery, output, registries,
+scaffolds, and barrels.
 
-The `generate` group lives in `src/cli/commands/generate/`. The leaf
-`generate:types` is no longer wired into the `damat-orm` CLI; its pipeline is the
-one `damat codegen` runs:
+The unregistered `src/cli/commands/generate/types.ts` handler is narrower: it
+uses `@damatjs/schema-codegen` directly for a pure file map, augments links, and
+writes only generated types.
 
 ```
 damat codegen <module>  → discoverModels → toModuleSchema → generateFilesMap
@@ -36,7 +35,7 @@ moduleConfig.resolve)` (= `<resolve>/models`); error if it does not exist.
 5. **Build schema**: `schema = toModuleSchema(moduleName, models)` (from
    `@damatjs/orm-model`).
 6. **Generate files**: `filesMap = generateFilesMap(schema, {}, ctx.logger)`
-   (from `@damatjs/codegen`) — a `Map<fileName, content>` that includes an
+   (from `@damatjs/schema-codegen`) — a `Map<fileName, content>` that includes an
    `index.ts` plus one file per table.
 7. **Weave link augmentations**: `augmentWithLinks(...)` inspects every
    `link:<owner>` module in the container, and for each link this module
@@ -76,7 +75,7 @@ bun damat codegen user
   `ctx.logger`; per-codegen options are not surfaced through the CLI yet.
 - Files are written verbatim from the map keys — codegen owns the file naming
   (e.g. `index.ts` + per-table files). The CLI does not post-process them.
-- Like the migrate commands, `@damatjs/codegen`, `@damatjs/orm-model`,
+- Like the migrate commands, `@damatjs/schema-codegen`, `@damatjs/orm-model`,
   `@damatjs/orm-migration`, and `@damatjs/link` are loaded via `await import(...)`
   inside the handler.
 - **Link modules don't generate types** — `generate:types link:<owner>` is a

@@ -1,7 +1,7 @@
-# Type inference & codegen helpers
+# Type inference helpers
 
-Covers how PostgreSQL types map to TypeScript, how enum/row types are emitted, the
-string-case helpers, and the state of the codegen scripts. Source:
+Covers how PostgreSQL types map to TypeScript inside the model DSL, how
+enum/row types are emitted, and the string-case helpers. Source:
 `src/utils/pgTypeToTsBase.ts`, `src/utils/stringConvertor.ts`, the `toTsType()`
 methods, and `scripts/`.
 
@@ -87,28 +87,26 @@ new EnumBuilder(["draft", "active"])
 so a column referencing this enum renders as `product_status` (or
 `product_status | null`).
 
-## Codegen scripts (`scripts/`) — current state
+## Internal scripts
 
-| Script                          | npm script         | State                                                                                                                                                                                           |
-| ------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `scripts/generate-snapshots.ts` | `bun run snapshot` | **Works.** Builds the e-commerce fixture module via `toModuleSchema()` and writes `src/tests/__snapshots__/module.snap.json`. Run after intentional schema-shape changes.                       |
-| `scripts/generate-types.ts`     | `bun run codegen`  | **Stale / broken.** It imports `../src/codegen/index` and `generateFilesMap`, but there is **no `src/codegen/` directory** in this package. Running `codegen` will fail to resolve that import. |
+| Script                          | Role                                                                                                |
+| ------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `scripts/generate-snapshots.ts` | Builds the e-commerce fixture schema and writes `src/tests/__snapshots__/module.snap.json`.         |
+| `scripts/generate-types.ts`     | Unsupported internal fixture script; complete file generation belongs to `@damatjs/schema-codegen`. |
 
-The committed files under `src/tests/__snapshots__/generated/types/` (with
-`export interface Order`, `export type NewOrder`, `export type UpdateOrder`, and
-`…Enum`-suffixed enum aliases) were produced by that missing `generateFilesMap`
-codegen — a richer emitter than `ModelDefinition.toTsType()`. Treat those files
-as historical fixtures, not as output you can regenerate from this package today.
+The committed files under `src/tests/__snapshots__/generated/types/` exercise a
+richer file layout than `ModelDefinition.toTsType()`. Treat them as fixtures,
+not as the supported generation surface of this package.
 
 Practical guidance for maintainers:
 
 - The reliable, in-package row-type emitter is `ModelDefinition.toTsType()`
   (base interface only; raw enum names; no `New`/`Update` variants).
-- Full file-per-table codegen (insert/update types, `…Enum` naming via
-  `toEnumTypeName`) lives in the separate `@damatjs/codegen` package — that is
-  where `generateFilesMap`-style logic belongs. If you intend to restore the
-  `codegen` script here, point it at that package or recreate `src/codegen/`;
-  don't assume it currently runs.
+- Full file-per-table generation (insert/update types, `…Enum` naming via
+  `toEnumTypeName`) lives in `@damatjs/schema-codegen`. Damat model discovery,
+  filesystem output, registries, and scaffolds live in
+  `@damatjs/module-generator`. Do not extend `ModelDefinition.toTsType()` into a
+  competing generator.
 
 ## Extending
 

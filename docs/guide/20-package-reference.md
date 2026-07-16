@@ -19,9 +19,11 @@ Start from the [package map](./01-introduction.md#the-package-map), or jump in:
   [connector](../../packages/orm/connector/README.md) ·
   [migration](../../packages/orm/migration/README.md) ·
   [processor](../../packages/orm/processor/README.md) ·
-  [codegen](../../packages/core/codegen/README.md) ·
+  [schema-codegen](../../packages/core/schema-codegen/README.md) ·
   [core](../../packages/orm/core/README.md) ·
   [type](../../packages/orm/type/README.md)
+- **Generation:** [module-generator](../../packages/module-generator/README.md) ·
+  [codegen compatibility facade](../../packages/core/codegen/README.md)
 - **Core:** [logger](../../packages/core/logger/README.md) ·
   [redis](../../packages/core/redis/README.md) ·
   [events](../../packages/core/events/README.md) ·
@@ -31,6 +33,7 @@ Start from the [package map](./01-introduction.md#the-package-map), or jump in:
   [cli](../../packages/core/cli/README.md) ·
   [deps](../../packages/deps/README.md)
 - **CLIs & AI:** [damat-cli](../../packages/cli/damat/README.md) ·
+  [cli-codegen](../../packages/cli/codegen/README.md) ·
   [orm-cli](../../packages/orm/cli/README.md) ·
   [mcp](../../packages/mcp/README.md)
 - **Reference app:** [@damatjs/default](../../backend/default/README.md)

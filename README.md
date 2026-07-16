@@ -80,27 +80,29 @@ version history.
 
 ### Framework & app
 
-| Package                                                            | Description                                                                              |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| [`@damatjs/framework`](./packages/framework/README.md)             | App framework: config, file-based router, server, bootstrap, middleware, shutdown        |
-| [`@damatjs/services`](./packages/service/README.md)                | `ModuleService` (auto CRUD), `PoolManager`, `defineModule`                               |
-| [`@damatjs/module`](./packages/module/README.md)                   | The module system: authoring surface, `damat.json` contract, dev/test harness, registry  |
-| [`@damatjs/link`](./packages/link/README.md)                       | Cross-module links: junction tables, `create`/`dismiss`/`fetch`/`graph` across modules   |
-| [`@damatjs/workflow-engine`](./packages/workflow-engine/README.md) | Saga workflow engine on Effect-TS                                                        |
+| Package                                                              | Description                                                                             |
+| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| [`@damatjs/framework`](./packages/framework/README.md)               | App framework: config, file-based router, server, bootstrap, middleware, shutdown       |
+| [`@damatjs/services`](./packages/service/README.md)                  | `ModuleService` (auto CRUD), `PoolManager`, `defineModule`                              |
+| [`@damatjs/module`](./packages/module/README.md)                     | The module system: authoring surface, `damat.json` contract, dev/test harness, registry |
+| [`@damatjs/module-generator`](./packages/module-generator/README.md) | Model discovery, generated registries, CRUD scaffolds, and workflow barrels             |
+| [`@damatjs/link`](./packages/link/README.md)                         | Cross-module links: junction tables, `create`/`dismiss`/`fetch`/`graph` across modules  |
+| [`@damatjs/workflow-engine`](./packages/workflow-engine/README.md)   | Saga workflow engine on Effect-TS                                                       |
 
 ### ORM
 
-| Package                                                        | Description                                                                  |
-| -------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| [`@damatjs/orm`](./packages/orm/main/README.md)                | Umbrella re-export of the ORM packages                                       |
-| [`@damatjs/orm-model`](./packages/orm/model/README.md)         | Fluent model / columns DSL                                                   |
-| [`@damatjs/orm-pg`](./packages/orm/pg/README.md)               | PostgreSQL execution: EntityManager, Repository, query builder, transactions |
-| [`@damatjs/orm-connector`](./packages/orm/connector/README.md) | Connection / pool manager                                                    |
-| [`@damatjs/orm-migration`](./packages/orm/migration/README.md) | Module-aware migration system                                                |
-| [`@damatjs/orm-processor`](./packages/orm/processor/README.md) | Schema snapshot, diff, and SQL generation                                    |
-| [`@damatjs/codegen`](./packages/core/codegen/README.md)        | TypeScript types from models                                                 |
-| [`@damatjs/orm-core`](./packages/orm/core/README.md)           | Model registry + query logging                                               |
-| [`@damatjs/orm-type`](./packages/orm/type/README.md)           | Shared ORM types                                                             |
+| Package                                                               | Description                                                                  |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| [`@damatjs/orm`](./packages/orm/main/README.md)                       | Umbrella re-export of the ORM packages                                       |
+| [`@damatjs/orm-model`](./packages/orm/model/README.md)                | Fluent model / columns DSL                                                   |
+| [`@damatjs/orm-pg`](./packages/orm/pg/README.md)                      | PostgreSQL execution: EntityManager, Repository, query builder, transactions |
+| [`@damatjs/orm-connector`](./packages/orm/connector/README.md)        | Connection / pool manager                                                    |
+| [`@damatjs/orm-migration`](./packages/orm/migration/README.md)        | Module-aware migration system                                                |
+| [`@damatjs/orm-processor`](./packages/orm/processor/README.md)        | Schema snapshot, diff, and SQL generation                                    |
+| [`@damatjs/schema-codegen`](./packages/core/schema-codegen/README.md) | Pure TypeScript and Zod source generation from module schemas                |
+| [`@damatjs/codegen`](./packages/core/codegen/README.md)               | Compatibility facade for the code-generation owner packages                  |
+| [`@damatjs/orm-core`](./packages/orm/core/README.md)                  | Model registry + query logging                                               |
+| [`@damatjs/orm-type`](./packages/orm/type/README.md)                  | Shared ORM types                                                             |
 
 ### Core
 
@@ -127,11 +129,12 @@ version history.
 
 ### CLIs & AI
 
-| Package                                                | Binary      | Description                                    |
-| ------------------------------------------------------ | ----------- | ---------------------------------------------- |
-| [`@damatjs/damat-cli`](./packages/cli/damat/README.md) | `damat`     | Dev/build + the `module` command group         |
-| [`@damatjs/orm-cli`](./packages/orm/cli/README.md)     | `damat-orm` | Migrations & codegen                           |
-| [`@damatjs/mcp`](./packages/mcp/README.md)             | `damat-mcp` | MCP server: discover & install modules with AI |
+| Package                                                    | Binary      | Description                                    |
+| ---------------------------------------------------------- | ----------- | ---------------------------------------------- |
+| [`@damatjs/damat-cli`](./packages/cli/damat/README.md)     | `damat`     | Dev/build + the `module` command group         |
+| [`@damatjs/cli-codegen`](./packages/cli/codegen/README.md) | capability  | `damat codegen` and `damat barrel` adapters    |
+| [`@damatjs/orm-cli`](./packages/orm/cli/README.md)         | `damat-orm` | Migrations                                     |
+| [`@damatjs/mcp`](./packages/mcp/README.md)                 | `damat-mcp` | MCP server: discover & install modules with AI |
 
 ### Reference app
 

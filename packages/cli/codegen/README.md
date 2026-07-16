@@ -16,4 +16,7 @@ an aggregate index or individual model files. Package registry types derive the
 service from the resolved default module entry and require no package-root
 exports. `barrel` regenerates workflow barrels.
 
+The capability is a command adapter over `@damatjs/module-generator`. Pure
+schema source comes from `@damatjs/schema-codegen` through that generator.
+
 See [internals](./docs/README.md).

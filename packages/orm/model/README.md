@@ -9,7 +9,8 @@ metadata — it produces a serializable `TableSchema` (and, grouped, a
 `ModuleSchema`) that the rest of the stack turns into migrations, queries, and
 generated TypeScript row types. It carries no SQL execution of its own. This is
 the package you interact with most when modelling a domain; everything downstream
-(registry, query builder, migration engine, codegen) consumes its output.
+(registry, query builder, migration engine, and schema generators) consumes its
+output.
 
 Part of the [Damat](../../../README.md) monorepo · [Full guide](../../../docs/GUIDE.md) · [Internals](./docs/README.md)
 
@@ -178,10 +179,9 @@ Everything from [`@damatjs/orm-type`](../type) (e.g. `ColumnType`, `TableSchema`
 model code rarely needs to import `@damatjs/orm-type` directly.
 
 > **Note:** the package's `exports` map only has `.`. There is no `codegen`
-> subpath export — the row-type generator that emits files (the `NewX`/`UpdateX`
-> snapshot files) lives outside `src/` and the `codegen` npm script references a
-> module not present in this package's source. Row-type emission you can rely on
-> from this package is `ModelDefinition.toTsType()`.
+> subpath export. Use `@damatjs/schema-codegen` for complete `ModuleSchema` to
+> TypeScript/Zod source generation; row-type emission from this package itself
+> is limited to `ModelDefinition.toTsType()`.
 
 ## How it fits
 
@@ -194,8 +194,9 @@ model code rarely needs to import `@damatjs/orm-type` directly.
 
 - [`@damatjs/orm-core`](../core) — registers `ModelDefinition`s.
 - `@damatjs/orm-pg` — builds queries from `ModelDefinition` and relation builders.
-- `@damatjs/orm-processor`, `@damatjs/orm-migration`, `@damatjs/codegen`,
-  `@damatjs/orm-cli`, `@damatjs/orm-main`.
+- `@damatjs/orm-processor`, `@damatjs/orm-migration`,
+  `@damatjs/schema-codegen`, `@damatjs/module-generator`, `@damatjs/orm-cli`,
+  `@damatjs/orm-main`.
 - `@damatjs/module`, `@damatjs/service`.
 
 ## Documentation

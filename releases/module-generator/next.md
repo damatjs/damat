@@ -27,9 +27,12 @@ surfaces for compatibility.
 
 ## Action required
 
-None — existing consumers can keep importing from `@damatjs/codegen`. New
-consumers that need Damat generation without the pure rendering facade may
-depend directly on `@damatjs/module-generator`.
+1. Add `@damatjs/module-generator` to packages that discover Damat models,
+   write registries, scaffold CRUD, or rebuild barrels.
+2. Replace those imports from `@damatjs/codegen` with
+   `@damatjs/module-generator`.
+3. Existing facade imports continue to resolve during the v1 compatibility
+   window.
 
 ## References
 

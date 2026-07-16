@@ -16,7 +16,7 @@ schema objects (`@damatjs/orm-type` shapes). No SQL is executed here.
 | [relations.md](./relations.md)                             | `Relation` base, `BelongsTo` / `HasMany` / `HasOne`, target resolution, and the relation validators.                    |
 | [indexes-and-constraints.md](./indexes-and-constraints.md) | `IndexBuilder`, `ConstraintBuilder`, `cleanupIndexSchema`, auto-naming.                                                 |
 | [schema-and-model.md](./schema-and-model.md)               | `ModelDefinition`, `model()`, `toTableSchema()`, `toModuleSchema()`, the global model registry, timestamps/soft-delete. |
-| [type-inference.md](./type-inference.md)                   | `pgTypeToTsBase`, `toTsType()`, enum type emission, the string-case helpers, and the (stale) codegen scripts.           |
+| [type-inference.md](./type-inference.md)                   | `pgTypeToTsBase`, `toTsType()`, enum type emission, string-case helpers, and generation ownership.                      |
 
 ## Module map
 
@@ -48,7 +48,7 @@ schema objects (`@damatjs/orm-type` shapes). No SQL is executed here.
 | `src/utils/registry.ts`                       | Global table-name → `ModelDefinition` registry.                                                       |
 | `src/errors/*.ts`                             | `OrmError` hierarchy + `transformPgError`. **Not exported from `src/index.ts`** (see note below).     |
 | `src/tests/`                                  | Bun tests + e-commerce fixtures + committed snapshot/generated types.                                 |
-| `scripts/`                                    | `generate-snapshots.ts` (works) and `generate-types.ts` (imports a missing `src/codegen` — stale).    |
+| `scripts/`                                    | Internal fixture snapshot and type-generation scripts.                                                |
 
 ## Architecture overview
 

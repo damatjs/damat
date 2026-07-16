@@ -40,7 +40,7 @@ type-safe.
         └───────────────────────────────────────┘
                           ▲
        depended on by everything else in the ORM stack
-   (orm-model, orm-core, orm-pg, orm-migration, codegen, …)
+   (orm-model, orm-core, orm-pg, orm-migration, schema-codegen, …)
 ```
 
 There is exactly one published entry point (`exports["."]`). Consumers import
@@ -59,7 +59,7 @@ them straight when editing:
    `EnumSchema`. These describe the JSON-able output of those builders
    (`model().toTableSchema()` / `toModuleSchema()`).
 
-The snapshot types are the contract the migration engine, codegen, and registry
+The snapshot types are the contract the migration engine, schema generator, and registry
 read. The query descriptor types (`SelectDescriptor` & friends) are a third,
 independent representation used by the query builder and executor.
 

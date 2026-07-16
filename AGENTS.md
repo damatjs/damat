@@ -65,13 +65,15 @@ damat/
     ├── service/               # @damatjs/services — ModuleService, PoolManager, defineModule
     ├── link/                  # @damatjs/link — cross-module links (junction tables, fetch, graph query)
     ├── module/                # @damatjs/module — the module system (authoring, manifest, harness, runtime, registry)
+    ├── module-generator/      # @damatjs/module-generator — discovery, output, registries, CRUD, barrels
     ├── workflow-engine/       # @damatjs/workflow-engine — saga engine (Effect-TS)
     ├── deps/                  # @damatjs/deps — pinned external re-exports
     ├── typescript-config/     # @damatjs/typescript-config — shared tsconfig
     ├── mcp/                   # @damatjs/mcp — MCP server for module install
     ├── core/
     │   ├── cli/               # @damatjs/cli — general CLI framework
-    │   ├── codegen/           # @damatjs/codegen — TypeScript types + zod + CRUD scaffold from models
+    │   ├── schema-codegen/    # @damatjs/schema-codegen — pure ModuleSchema to TypeScript/Zod source
+    │   ├── codegen/           # @damatjs/codegen — compatibility facade only
     │   ├── env/               # @damatjs/load-env — .env cascade loader
     │   ├── logger/            # @damatjs/logger — structured logging
     │   ├── redis/             # @damatjs/redis — cache/queue/lock/session/rate-limit
@@ -92,8 +94,9 @@ damat/
     │   ├── processor/         # @damatjs/orm-processor — snapshot/diff/SQL generation
     │   ├── core/              # @damatjs/orm-core — registry + query logging
     │   ├── type/              # @damatjs/orm-type — shared ORM types
-    │   └── cli/               # @damatjs/orm-cli — `damat-orm` migrations/codegen
+    │   └── cli/               # @damatjs/orm-cli — `damat-orm` migrations
     └── cli/
+        ├── codegen/           # @damatjs/cli-codegen — codegen and barrel command adapters
         └── damat/             # @damatjs/damat-cli — `damat` dev/build/module CLI
 ```
 
