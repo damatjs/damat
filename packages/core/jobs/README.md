@@ -8,6 +8,14 @@ and crash redelivery — all on `@damatjs/redis`'s `RedisQueue`.
 
 Part of the [Damat](../../../README.md) monorepo.
 
+The package also owns the PostgreSQL system migrations for durable job runs,
+attempts, activity, logs, schedules, and deduplication. When
+`services.jobs` is configured, `damat-orm migrate:up` selects the shared
+durability catalog first and the jobs catalog second. Apply those migrations
+before starting job services. The public producer and worker API below remains
+the Redis-backed runtime surface; the PostgreSQL client is internal until the
+worker cutover is complete.
+
 ## Install
 
 ```bash

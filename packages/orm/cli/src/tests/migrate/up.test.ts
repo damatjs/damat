@@ -10,6 +10,7 @@ import {
   writeConfig,
   writeThrowingConfig,
 } from "./fixture";
+import { systemMigrationKeys } from "./systemMigrationKeys";
 
 setupMigrateFixture();
 
@@ -33,7 +34,12 @@ test.serial("up allows system migrations without modules", async () => {
   const { ctx } = context();
   expect((await (await loadUp()).handler(ctx)).exitCode).toBe(0);
   expect(state.runArgs.modules).toEqual({});
-  expect(state.runArgs.options.systemMigrations).toHaveLength(2);
+  expect(systemMigrationKeys(state.runArgs.options.systemMigrations)).toEqual([
+    "@damatjs/durability:001",
+    "@damatjs/durability:002",
+    "@damatjs/jobs:001",
+    "@damatjs/jobs:002",
+  ]);
 });
 
 test.serial(
@@ -59,7 +65,7 @@ test.serial(
     expect((await (await loadUp()).handler(ctx)).exitCode).toBe(0);
     expect(state.runArgs.pool).toBeInstanceOf(FakePool);
     expect(state.runArgs.modules.user.resolve).toBe(USER);
-    expect(state.runArgs.options.systemMigrations).toHaveLength(2);
+    expect(state.runArgs.options.systemMigrations).toHaveLength(4);
     expect(state.ends).toBe(1);
     expect(logged(calls, "success", /completed successfully/)).toBe(true);
   },

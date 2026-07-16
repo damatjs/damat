@@ -41,6 +41,7 @@
     "@damatjs/durability": "workspace:*",
     "@damatjs/logger": "workspace:*",
     "@damatjs/installer": "workspace:*",
+    "@damatjs/jobs": "workspace:*",
     "@damatjs/orm-migration": "workspace:*",
     "@damatjs/orm-processor": "workspace:*",
     "@damatjs/orm-model": "workspace:*",

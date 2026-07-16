@@ -9,6 +9,7 @@ import {
   USER,
   writeConfig,
 } from "./fixture";
+import { systemMigrationKeys } from "./systemMigrationKeys";
 
 setupMigrateFixture();
 
@@ -53,7 +54,14 @@ test.serial("status reports all modules and system owners", async () => {
   ];
   const { ctx, calls } = context();
   expect((await (await loadStatus()).handler(ctx)).exitCode).toBe(0);
-  expect(state.statusArgs.options.systemMigrations).toHaveLength(2);
+  expect(
+    systemMigrationKeys(state.statusArgs.options.systemMigrations),
+  ).toEqual([
+    "@damatjs/durability:001",
+    "@damatjs/durability:002",
+    "@damatjs/jobs:001",
+    "@damatjs/jobs:002",
+  ]);
   expect(logged(calls, "success", /durability: 2 applied/)).toBe(true);
   expect(logged(calls, "info", /post: 1 applied, 1 pending/)).toBe(true);
   expect(state.ends).toBe(1);

@@ -9,6 +9,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./migrations": {
+      "types": "./dist/migrations/index.d.ts",
+      "default": "./dist/migrations/index.js"
     }
   },
   "engines": {
@@ -31,6 +35,8 @@
   ],
   "author": "Abel Lamesgen",
   "dependencies": {
+    "@damatjs/deps": "workspace:*",
+    "@damatjs/durability": "workspace:*",
     "@damatjs/logger": "workspace:*",
     "@damatjs/redis": "workspace:*"
   },

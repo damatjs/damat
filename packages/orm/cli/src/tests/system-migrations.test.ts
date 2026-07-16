@@ -22,8 +22,15 @@ async function load(services: string) {
   return loadSystemMigrations("damat.config.ts", root);
 }
 
-test("selects shared migrations when jobs are enabled", async () => {
-  expect(await load("jobs: {}")).toHaveLength(2);
+test("selects shared then jobs migrations when jobs are enabled", async () => {
+  expect(
+    (await load("jobs: {}")).map(({ owner, id }) => `${owner}:${id}`),
+  ).toEqual([
+    "@damatjs/durability:001",
+    "@damatjs/durability:002",
+    "@damatjs/jobs:001",
+    "@damatjs/jobs:002",
+  ]);
 });
 
 test("selects shared migrations when durable events are enabled", async () => {

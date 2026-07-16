@@ -338,6 +338,8 @@
       "name": "@damatjs/jobs",
       "version": "0.6.0",
       "dependencies": {
+        "@damatjs/deps": "workspace:*",
+        "@damatjs/durability": "workspace:*",
         "@damatjs/logger": "workspace:*",
         "@damatjs/redis": "workspace:*",
       },
@@ -529,6 +531,7 @@
         "@damatjs/deps": "workspace:*",
         "@damatjs/durability": "workspace:*",
         "@damatjs/installer": "workspace:*",
+        "@damatjs/jobs": "workspace:*",
         "@damatjs/link": "workspace:*",
         "@damatjs/logger": "workspace:*",
         "@damatjs/orm-migration": "workspace:*",

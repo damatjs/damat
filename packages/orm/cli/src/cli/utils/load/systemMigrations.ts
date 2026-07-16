@@ -15,7 +15,12 @@ export async function loadSystemMigrations(
     if (!jobsEnabled && !durableEventsEnabled) return [];
     const { collectSystemMigrations, durabilitySystemMigrations } =
       await import("@damatjs/durability");
-    return collectSystemMigrations([durabilitySystemMigrations]);
+    const catalogs = [durabilitySystemMigrations];
+    if (jobsEnabled) {
+      const { jobsSystemMigrations } = await import("@damatjs/jobs/migrations");
+      catalogs.push(jobsSystemMigrations);
+    }
+    return collectSystemMigrations(catalogs);
   } catch (error) {
     wrapLoadError(error, `Failed to load system migrations from '${filePath}'`);
   }

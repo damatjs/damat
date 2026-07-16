@@ -53,10 +53,11 @@ subcommand prints the available subcommands.
 All migration commands honor a resolved module's declared migration directory,
 including immutable packages whose SQL lives below `src/migrations`.
 
-When jobs or durable events are enabled, `migrate:up` automatically applies the
-shared durability system catalog before module migrations. The all-module
-`migrate:status` view includes each enabled system owner. A module-scoped status
-request remains limited to that module.
+When durable events are enabled, `migrate:up` applies the shared durability
+system catalog before module migrations. Enabling jobs selects that shared
+catalog followed by the jobs catalog, in stable order. The all-module
+`migrate:status` view includes each enabled system owner. A module-scoped
+status request remains limited to that module.
 
 ### Cross-module links
 

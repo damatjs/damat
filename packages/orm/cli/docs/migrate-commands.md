@@ -134,5 +134,6 @@ bun damat-orm migrate:create link:user  # junction tables for the user owner's l
 - The heavy ORM packages are loaded with `await import(...)` inside each handler,
   not at module top level — preserve that for fast CLI startup.
 - `loadSystemMigrations` selects the shared durability catalog when
-  `services.jobs` or `services.events.durable` is enabled. Jobs and events add
-  their own catalogs through this selector.
+  `services.jobs` or `services.events.durable` is enabled. Jobs additionally
+  selects `@damatjs/jobs` after the shared catalog. Catalog collection sorts by
+  migration order, owner, and ID, so CLI selection is deterministic.

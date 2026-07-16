@@ -7,7 +7,8 @@ explicit entry, model, and migration paths. `migrate:list` preserves resolved
 package migration directories.
 
 `migrate:up` selects the shared durability catalog when jobs or durable events
-are enabled. All-status output includes system migration owners, including in
+are enabled. Jobs then selects its own catalog in stable order after shared
+durability. All-status output includes system migration owners, including in
 applications that do not declare feature modules.
 
 ## Action required

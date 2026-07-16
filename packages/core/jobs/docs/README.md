@@ -2,21 +2,48 @@
 
 Maintainer-facing documentation. For usage see the [package README](../README.md).
 
-This package is the background-job layer on top of `@damatjs/redis`'s `RedisQueue`: a
-`globalThis` registry of job definitions, an `enqueueJob` producer, and a polling
-`JobWorker` consumer with retry/backoff/dead-letter semantics. Four small source files,
-one flat barrel — no subpath exports.
+This package currently exposes the Redis-backed producer and worker while also
+owning the internal PostgreSQL persistence foundation used by the durable
+worker. The package root remains the compatibility surface. Only the migration
+catalog is exported as a subpath so `@damatjs/orm-cli` can apply it.
 
 ## Module map
 
-| File              | Responsibility                                                                                                                                                      |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/index.ts`    | Barrel re-exporting everything below.                                                                                                                               |
-| `src/types.ts`    | `JobMap` (declaration-merge target), `JobName`/`JobPayload`, `JobEnvelope`, `JobHandler`, `JobOptions`/`JobDefinition`, `DEFAULT_JOB_OPTIONS`, `DEFAULT_JOB_QUEUE`. |
-| `src/registry.ts` | `defineJob` + the `globalThis` definition registry (`getJobDefinition`, `getAllJobDefinitions`, `clearJobDefinitions`).                                             |
-| `src/enqueue.ts`  | `enqueueJob`, plus the per-queue-name `RedisQueue` cache (`getJobQueue`, `clearJobQueues`).                                                                         |
-| `src/worker.ts`   | `JobWorker` — poll loop, concurrency, retry math, dead-lettering, graceful stop.                                                                                    |
-| `tests/`          | `bun:test` suites — `registry.test.ts` is pure; `enqueue.test.ts` / `worker.test.ts` need a live Redis.                                                             |
+| Area                | Responsibility                                                  |
+| ------------------- | --------------------------------------------------------------- |
+| Root source files   | Current Redis-backed public API and worker.                     |
+| `src/definitions/`  | Internal durable definition defaults and process-wide registry. |
+| `src/migrations/`   | Ordered PostgreSQL jobs system-migration catalog.               |
+| `src/repositories/` | SQL rows, normalized domain mappers, and storage operations.    |
+| `src/client/`       | Internal enqueue, inspection, cancellation, and retry clients.  |
+| `tests/storage/`    | PostgreSQL schema, enqueue, deduplication, and read tests.      |
+
+## PostgreSQL storage foundation
+
+The jobs catalog follows the shared durability catalog and creates:
+
+- `_damat_job_runs`, attempts, immutable activity, and bounded log storage;
+- schedules plus immutable schedule activity;
+- queue/name/key deduplication records with optional expiration.
+
+Run payloads, metadata, progress, result summaries, errors, actors, and log
+context use native `JSONB`. All lifecycle timestamps use `TIMESTAMPTZ`.
+Priority is numeric and lower values sort first. The due-work index orders by
+queue, status, availability, priority, and creation time.
+
+Enqueue is one transaction: an optional deduplication claim, the run insert,
+and the immutable `enqueued` activity row either all commit or all roll back.
+A supplied executor must be an active Damat transaction wrapper. Without one,
+the configured durability client opens the transaction. Active deduplication
+keys return the existing normalized run; expired keys atomically take ownership
+of a new run.
+
+Repository mutations return mapped domain records rather than PostgreSQL row
+shapes. Activity timelines order by their identity column, preserving committed
+write order even when transaction timestamps overlap or move backward.
+
+The internal client is intentionally not re-exported from `src/index.ts`.
+Changing the package root and worker together is a separate atomic cutover.
 
 ## Architecture overview
 
@@ -142,7 +169,8 @@ it through `defineJob`'s merge, and honor it in `enqueueJob` and/or `JobWorker.p
 
 `tests/registry.test.ts` is a pure unit test. `tests/enqueue.test.ts` and
 `tests/worker.test.ts` are integration tests needing a reachable Redis (`REDIS_URL` or
-`localhost:6379`), like the `@damatjs/redis` suites.
+`localhost:6379`), like the `@damatjs/redis` suites. `tests/storage/` needs a
+disposable PostgreSQL database through `DATABASE_URL`.
 
 ## Related docs
 

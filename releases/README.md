@@ -83,6 +83,7 @@ snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
 ### Core
 
 - [`durability`](./durability/) — `@damatjs/durability`
+- [`jobs`](./jobs/) — `@damatjs/jobs`
 - [`logger`](./logger/) — `@damatjs/logger`
 - [`redis`](./redis/) — `@damatjs/redis`
 - [`load-env`](./load-env/) — `@damatjs/load-env`
