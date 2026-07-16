@@ -8,7 +8,9 @@ event, and pipeline providers load before the job worker starts.
 
 Job service initialization now configures the PostgreSQL durability client and
 starts the fenced durable worker without requiring Redis. The queue option is
-named `queue`.
+named `queue`. Configuring `services.jobs` without
+`projectConfig.databaseUrl` now fails startup instead of warning and silently
+disabling the service.
 
 ## Action required
 

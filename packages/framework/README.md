@@ -104,7 +104,7 @@ export default defineConfig({
   },
   services: {
     events: { broadcast: true }, // cross-process event delivery via Redis pub/sub (needs redisUrl)
-    jobs: { worker: true, concurrency: 4 }, // run the background job worker in this process (needs redisUrl)
+    jobs: { worker: true, concurrency: 4 }, // durable worker in this process (needs databaseUrl)
   },
 });
 ```

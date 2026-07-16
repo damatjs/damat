@@ -18,14 +18,15 @@ export async function finishClaim(
   input: FinishInput,
 ): Promise<void> {
   const terminal = input.status !== "retry_wait";
-  const updated = await executor.query(
+  const updated = await executor.query<{ progress: unknown }>(
     `UPDATE "_damat_job_runs" SET "status"=$4, "result"=$5::jsonb,
        "last_error"=$6::jsonb, "available_at"=COALESCE($7,"available_at"),
        "lease_owner"=NULL, "lease_token"=NULL, "lease_expires_at"=NULL,
        "heartbeat_at"=NULL, "updated_at"=NOW(),
        "completed_at"=CASE WHEN $8 THEN NOW() ELSE NULL END
      WHERE "id"=$1 AND "status"='running' AND "lease_owner"=$2
-       AND "lease_token"=$3 AND "lease_expires_at">NOW()`,
+       AND "lease_token"=$3 AND "lease_expires_at">NOW()
+     RETURNING "progress"`,
     [
       claim.id,
       claim.workerId,
@@ -39,7 +40,12 @@ export async function finishClaim(
   );
   if (updated.rowCount !== 1) throw new JobLeaseLostError(claim.id);
   await closeAttempt(executor, claim, input);
-  await appendFinishActivity(executor, claim, input.status);
+  await appendFinishActivity(
+    executor,
+    claim,
+    input.status,
+    terminal ? updated.rows[0]?.progress : undefined,
+  );
 }
 
 async function closeAttempt(
@@ -68,6 +74,7 @@ async function appendFinishActivity(
   executor: DurabilityExecutor,
   claim: ClaimedJobRun,
   status: JobRunStatus,
+  progress?: unknown,
 ): Promise<void> {
   await appendJobActivity(executor, {
     runId: claim.id,
@@ -77,5 +84,6 @@ async function appendFinishActivity(
     nextStatus: status,
     workerId: claim.workerId,
     leaseToken: claim.leaseToken,
+    ...(progress === undefined ? {} : { metadata: { progress } }),
   });
 }

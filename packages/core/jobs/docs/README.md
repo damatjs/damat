@@ -72,18 +72,23 @@ Success, retry, cancellation, and dead-letter transitions each:
 4. commit together.
 
 Retries calculate the next availability from the policy copied onto the run.
+An invalid or overflowing availability date forces a visible dead letter
+instead of leaving a leased run in retry limbo.
 Success rechecks cancellation under the same transaction, so a late
-cancellation cannot be overwritten by a normal completion.
+cancellation cannot be overwritten by a normal completion. Terminal activity
+copies the latest progress snapshot so inspection does not depend on sampling.
 
 ## Worker lifecycle
 
 `JobWorker.start()` is idempotent. It registers a worker record before polling,
-fills only free concurrency, and reports in-flight load. `stop({ graceMs })`
-stops claims, awaits any pending registration, marks the worker as stopping,
-waits for active handlers up to the grace period, and marks it stopped.
+fills only free concurrency, and reports in-flight load on a heartbeat cadence
+that is independent from polling. Transient poll and registry heartbeat errors
+schedule bounded retries while the worker remains active.
 
-An unfinished handler is not falsely cancelled during shutdown. Its lease
-eventually expires and another worker can recover it.
+`stop({ graceMs })` stops claims, awaits an in-flight poll, marks the worker as
+stopping, and waits for active handlers up to the grace period. It then aborts
+unfinished handler signals and their execution heartbeats, so the leases can
+expire. The worker record is not marked stopped until those handlers settle.
 
 ## Registry invariant
 

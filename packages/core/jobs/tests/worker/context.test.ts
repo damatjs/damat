@@ -6,7 +6,9 @@ import { prepareWorkerTest, queuedRun } from "./context";
 
 beforeEach(prepareWorkerTest);
 
-async function context() {
+async function context(
+  options: Parameters<typeof createJobRunContext>[2] = {},
+) {
   const item = await queuedRun();
   const [claim] = await claimJobRuns({
     queue: item.queue,
@@ -19,6 +21,7 @@ async function context() {
     context: createJobRunContext(claim!, new AbortController(), {
       redaction: { keys: ["token"] },
       progressMinimumIntervalMs: 0,
+      ...options,
     }),
   };
 }
@@ -54,4 +57,20 @@ test("logs are ordered, redacted, and fenced", async () => {
     new AbortController(),
   );
   await expect(stale.log("info", "stale")).rejects.toThrow(/lease/i);
+});
+
+test("log byte limits match PostgreSQL jsonb storage size", async () => {
+  const message = "x";
+  const data = { first: 1, second: 2 };
+  const compactBytes = new TextEncoder().encode(
+    message + JSON.stringify(data),
+  ).byteLength;
+  const current = await context({
+    logLimits: { maxCount: 10, maxBytes: compactBytes },
+  });
+  await current.context.log("info", message, data);
+  expect(await listJobLogs(current.claim.id)).toEqual([]);
+  expect((await listJobActivity(current.claim.id)).at(-1)).toMatchObject({
+    type: "logs_truncated",
+  });
 });

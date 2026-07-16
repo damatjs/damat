@@ -76,3 +76,13 @@ test("manual retry returns a dead letter to queued state", async () => {
     nextStatus: "queued",
   });
 });
+
+test("cancel and retry reject non-transactional executors", async () => {
+  const executor = { query: async () => ({ rows: [], rowCount: 0 }) };
+  await expect(
+    cancelJobRun(crypto.randomUUID(), { executor: executor as never }),
+  ).rejects.toThrow(/transaction/i);
+  await expect(
+    retryJobRun(crypto.randomUUID(), { executor: executor as never }),
+  ).rejects.toThrow(/transaction/i);
+});

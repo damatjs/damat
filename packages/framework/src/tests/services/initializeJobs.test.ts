@@ -27,11 +27,13 @@ test("jobs configure PostgreSQL durability without requiring Redis", async () =>
   expect(state.stopped).toBe(1);
 });
 
-test("jobs warn and stay disabled without a database", () => {
+test("jobs fail startup without a database", () => {
   const value = config();
   delete value.projectConfig.databaseUrl;
   value.services = { jobs: { worker: true } };
-  initializeJobs(value, instances(), logger as never);
+  expect(() => initializeJobs(value, instances(), logger as never)).toThrow(
+    /databaseUrl/,
+  );
   expect(state.workers).toEqual([]);
-  expect(state.warnings[0]).toContain("databaseUrl");
+  expect(state.warnings).toEqual([]);
 });

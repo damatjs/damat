@@ -68,3 +68,23 @@ test("non-serializable results fail completion visibly", async () => {
   const failed = await execute(() => cyclic, 1);
   expect(failed.run?.status).toBe("dead_lettered");
 });
+
+test("class instance results fail completion visibly", async () => {
+  const failed = await execute(() => new Date(), 1);
+  expect(failed.run?.status).toBe("dead_lettered");
+});
+
+test("non-error throws are serialized into visible failures", async () => {
+  const failed = await execute(() => {
+    throw "plain failure";
+  }, 1);
+  expect(failed.run?.status).toBe("dead_lettered");
+  const error = await pool.query(
+    `SELECT "last_error" FROM "_damat_job_runs" WHERE "id"=$1`,
+    [failed.claim.id],
+  );
+  expect(error.rows[0]?.last_error).toEqual({
+    name: "Error",
+    message: "plain failure",
+  });
+});

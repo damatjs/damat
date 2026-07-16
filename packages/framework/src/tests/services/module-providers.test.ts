@@ -39,3 +39,48 @@ test("loads workflow, job, event, and pipeline providers in order", async () => 
     "pipelines",
   ]);
 });
+
+test("loads a provider declared as a direct file", async () => {
+  root = mkdtempSync(join(tmpdir(), "damat-provider-file-"));
+  const provider = join(root, "jobs.ts");
+  writeFileSync(provider, "globalThis.__damatProviders = ['jobs']");
+  await loadModuleProviders(
+    new Map([
+      [
+        "billing",
+        {
+          root,
+          manifest: { name: "billing" },
+          entry: join(root, "index.ts"),
+          location: root,
+          mutable: false,
+          jobs: provider,
+        } as any,
+      ],
+    ]),
+  );
+  expect((globalThis as any).__damatProviders).toEqual(["jobs"]);
+});
+
+test("wraps provider directories without a conventional entry", async () => {
+  root = mkdtempSync(join(tmpdir(), "damat-provider-missing-"));
+  const provider = join(root, "jobs");
+  mkdirSync(provider);
+  await expect(
+    loadModuleProviders(
+      new Map([
+        [
+          "billing",
+          {
+            root,
+            manifest: { name: "billing" },
+            entry: join(root, "index.ts"),
+            location: root,
+            mutable: false,
+            jobs: provider,
+          } as any,
+        ],
+      ]),
+    ),
+  ).rejects.toThrow(/Failed to load jobs provider.*no index/i);
+});

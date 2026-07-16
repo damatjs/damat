@@ -62,6 +62,7 @@ const worker = new JobWorker({
   queue: "mail",
   concurrency: 4,
   pollIntervalMs: 1_000,
+  registryHeartbeatIntervalMs: 5_000,
 });
 
 worker.start();
@@ -81,7 +82,10 @@ services: {
 
 The worker starts after modules register their definitions. `start()` is
 idempotent. `stop()` stops new claims, marks the worker as stopping, waits up to
-the grace period, and leaves unfinished leases recoverable.
+the grace period, then aborts unfinished handler signals and stops renewing
+their leases. The registry remains `stopping` while handler code is still
+running and changes to `stopped` only after it settles. Poll and registry
+heartbeat failures retry on a bounded cadence while the worker remains active.
 
 ## Delivery semantics
 
@@ -90,11 +94,14 @@ the grace period, and leaves unfinished leases recoverable.
 - Every heartbeat and terminal transition matches run, worker, lease token,
   and lease expiry. A stale worker cannot finish reclaimed work.
 - Failures use persisted exponential backoff and become dead letters after the
-  final attempt. Unknown definitions dead-letter immediately.
+  final attempt. An invalid or overflowing retry date dead-letters rather than
+  retaining a stuck lease. Unknown definitions dead-letter immediately.
 - Queued work cancels immediately. Running cancellation reaches the handler
   through `context.signal`; completion also rechecks the request atomically.
 - Handler results must be JSON-safe. Invalid results fail visibly through the
   normal retry/dead-letter path.
+- Terminal activity includes the latest persisted progress snapshot. Structured
+  log byte limits use the same PostgreSQL `jsonb` representation that is stored.
 
 ## Inspection and administration
 

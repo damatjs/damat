@@ -34,6 +34,14 @@
   definition registry. Handler context no longer exposes Redis queue records.
 - Raw `getJobQueue` and `clearJobQueues` exports are removed. PostgreSQL is the
   canonical job store; Redis is not required by the worker.
+- Worker polling and registry heartbeats recover from transient failures on
+  independent bounded retry loops.
+- Graceful stop now waits for an in-flight poll, starts no post-stop handlers,
+  aborts unfinished execution heartbeats after grace expires, and keeps the
+  registry in `stopping` until active handler code settles.
+- Log byte caps use PostgreSQL's stored `jsonb` size, terminal activity captures
+  the latest progress snapshot, and overflowing retry dates dead-letter without
+  retaining a lease.
 
 ## Action required
 

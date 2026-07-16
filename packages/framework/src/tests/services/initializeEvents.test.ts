@@ -19,6 +19,7 @@ test("event broadcast remains independently Redis-backed", async () => {
   expect(services.shutdownHandlers.map(({ name }) => name)).toEqual([
     "event-broadcast",
   ]);
+  await services.shutdownHandlers[0]!.handler();
 });
 
 test("event broadcast warns without Redis", async () => {

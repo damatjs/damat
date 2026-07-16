@@ -8,6 +8,7 @@ import { DEFAULT_JOB_OPTIONS } from "../definitions/defaults";
 import { getJobDefinition } from "../definitions/registry";
 import type { JobName, JobPayload } from "../definitions/types";
 import { validateEnqueue } from "../validation/enqueue";
+import { requireDeduplicatedRun } from "./deduplication-result";
 import {
   appendJobActivity,
   claimJobDeduplication,
@@ -54,8 +55,7 @@ async function enqueueWith(
     });
     if (!claim.acquired) {
       const existing = await findJobRun(claim.runId, executor);
-      if (existing) return existing;
-      throw new Error(`Deduplicated job run ${claim.runId} was not found`);
+      return requireDeduplicatedRun(existing, claim.runId);
     }
   }
   const inserted = await insertJobRun(executor, run);

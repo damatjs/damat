@@ -9,8 +9,6 @@ import { appendJobActivity } from "../repositories";
 import { assertCurrentLease } from "../worker/fence";
 import type { ClaimedJobRun } from "../worker/types";
 
-const encoder = new TextEncoder();
-
 export async function recordJobLog(
   claim: ClaimedJobRun,
   level: WorkLogLevel,
@@ -22,19 +20,24 @@ export async function recordJobLog(
   await getDurabilityClient().transaction(async (executor) => {
     await assertCurrentLease(executor, claim);
     const data = redactValue(context, redaction) as Record<string, unknown>;
-    const size = encoder.encode(message + JSON.stringify(data)).byteLength;
-    const totals = await executor.query<{ count: string; bytes: string }>(
+    const totals = await executor.query<{
+      count: string;
+      bytes: string;
+      candidate_bytes: string;
+    }>(
       `SELECT COUNT(*)::text AS "count",
        COALESCE(SUM(OCTET_LENGTH("message")+OCTET_LENGTH("context"::text)),0)::text
-         AS "bytes"
+         AS "bytes",
+       (OCTET_LENGTH($3::text)+OCTET_LENGTH(($4::jsonb)::text))::text
+         AS "candidate_bytes"
        FROM "_damat_job_logs"
        WHERE "run_id" = $1 AND "attempt_number" = $2`,
-      [claim.id, claim.attemptCount],
+      [claim.id, claim.attemptCount, message, JSON.stringify(data)],
     );
     const total = totals.rows[0]!;
     if (
       +total.count >= limits.maxCount ||
-      +total.bytes + size > limits.maxBytes
+      +total.bytes + +total.candidate_bytes > limits.maxBytes
     ) {
       await recordTruncation(executor, claim);
       return;

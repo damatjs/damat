@@ -1,41 +1,50 @@
-import {
-  heartbeatWorker,
-  markWorkerStopping,
-  stopWorker,
-} from "@damatjs/durability";
 import { getLogger } from "@damatjs/logger";
-import { DEFAULT_JOB_QUEUE } from "../definitions/defaults";
-import { registerJobWorker } from "./boot";
-import { executeJobClaim } from "./execute";
-import { pollJobClaims } from "./poll";
-import { waitForJobDrain } from "./stop";
-import type { JobWorkerOptions } from "./types";
-
-type RequiredOption =
-  | "queue"
-  | "concurrency"
-  | "pollIntervalMs"
-  | "leaseMs"
-  | "heartbeatIntervalMs";
+import { ActiveExecutions } from "./active";
+import { workerDependencies, type WorkerDependencies } from "./dependencies";
+import { resolveWorkerOptions } from "./options";
+import { WorkerPollLoop } from "./poll-loop";
+import { WorkerRegistryHeartbeat } from "./registry-heartbeat";
+import { WorkerShutdown } from "./shutdown";
+import type { ClaimedJobRun, JobWorkerOptions } from "./types";
 
 export class JobWorker {
   readonly id: string;
-  private readonly options: Required<Pick<JobWorkerOptions, RequiredOption>> &
-    JobWorkerOptions;
   private running = false;
-  private timer?: ReturnType<typeof setTimeout>;
-  private active = new Set<Promise<void>>();
-  private bootTask: Promise<void> | undefined;
-  constructor(options: JobWorkerOptions = {}) {
+  private registered = false;
+  private bootTask?: Promise<void>;
+  private stopTask?: Promise<void>;
+  private readonly options;
+  private readonly active: ActiveExecutions;
+  private readonly poll: WorkerPollLoop;
+  private readonly heartbeat: WorkerRegistryHeartbeat;
+  private readonly shutdown: WorkerShutdown;
+
+  constructor(
+    options: JobWorkerOptions = {},
+    private readonly dependencies: WorkerDependencies = workerDependencies,
+  ) {
     this.id = options.workerId ?? crypto.randomUUID();
-    this.options = {
-      ...options,
-      queue: options.queue ?? DEFAULT_JOB_QUEUE,
-      concurrency: options.concurrency ?? 1,
-      pollIntervalMs: options.pollIntervalMs ?? 1_000,
-      leaseMs: options.leaseMs ?? 30_000,
-      heartbeatIntervalMs: options.heartbeatIntervalMs ?? 10_000,
-    };
+    this.options = resolveWorkerOptions(options);
+    this.shutdown = new WorkerShutdown(
+      this.id,
+      dependencies,
+      () => this.active,
+    );
+    this.active = new ActiveExecutions(() => void this.shutdown.onEmpty());
+    const count = () => this.active.size;
+    this.poll = new WorkerPollLoop(
+      this.id,
+      this.options,
+      dependencies,
+      count,
+      (claim) => this.startClaim(claim),
+    );
+    this.heartbeat = new WorkerRegistryHeartbeat(
+      this.id,
+      this.options,
+      dependencies,
+      count,
+    );
   }
 
   start(): void {
@@ -50,13 +59,9 @@ export class JobWorker {
 
   async stop(options: { graceMs?: number } = {}): Promise<void> {
     if (!this.running && !this.bootTask) return;
-    this.running = false;
-    if (this.timer) clearTimeout(this.timer);
-    await this.bootTask?.catch(() => {});
-    await markWorkerStopping({ id: this.id }).catch(() => {});
-    await waitForJobDrain(this.active, options.graceMs ?? 30_000);
-    await stopWorker({ id: this.id }).catch(() => {});
-    this.bootTask = undefined;
+    if (this.stopTask) return this.stopTask;
+    this.stopTask = this.stopInternal(options.graceMs ?? 30_000);
+    return this.stopTask;
   }
 
   get isRunning(): boolean {
@@ -64,35 +69,27 @@ export class JobWorker {
   }
 
   private async boot(): Promise<void> {
-    await registerJobWorker({
+    await this.dependencies.register({
       id: this.id,
       queue: this.options.queue,
       concurrency: this.options.concurrency,
     });
-    await this.tick();
+    this.registered = true;
+    if (!this.running) return;
+    this.poll.start();
+    this.heartbeat.start();
   }
 
-  private async tick(): Promise<void> {
-    if (!this.running) return;
-    const capacity = this.options.concurrency - this.active.size;
-    const claims = await pollJobClaims(this.options, this.id, this.active.size);
-    for (const claim of claims)
-      this.track(executeJobClaim(claim, this.options));
-    await heartbeatWorker({ id: this.id, inFlight: this.active.size });
-    if (!this.running) return;
-    this.timer = setTimeout(
-      () =>
-        void this.tick().catch((error) =>
-          getLogger().error("Job worker poll failed", error),
-        ),
-      claims.length === capacity && capacity > 0
-        ? 0
-        : this.options.pollIntervalMs,
-    );
+  private async stopInternal(graceMs: number): Promise<void> {
+    this.running = false;
+    await Promise.all([this.poll.stop(), this.heartbeat.stop()]);
+    await this.bootTask?.catch(() => {});
+    if (!this.registered) return;
+    await this.shutdown.begin(graceMs);
   }
 
-  private track(task: Promise<void>): void {
-    const tracked = task.finally(() => this.active.delete(tracked));
-    this.active.add(tracked);
+  private startClaim(claim: ClaimedJobRun): void {
+    if (!this.running) return;
+    this.active.track(this.dependencies.startExecution(claim, this.options));
   }
 }

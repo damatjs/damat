@@ -1,5 +1,6 @@
 import { getDurabilityClient } from "@damatjs/durability";
 import { finishClaim } from "./finish";
+import { calculateRetryDate } from "./retry-date";
 import type { ClaimedJobRun } from "./types";
 
 export async function completeJobFailure(
@@ -16,22 +17,18 @@ export async function completeJobFailure(
     );
     const cancelled = current.rows[0]?.cancelled === true;
     const exhausted = claim.attemptCount >= claim.maxAttempts;
+    const retryAt = calculateRetryDate(claim);
     const status = cancelled
       ? "cancelled"
-      : options.forceDeadLetter || exhausted
+      : options.forceDeadLetter || exhausted || !retryAt
         ? "dead_lettered"
         : "retry_wait";
     const error = cancelled ? undefined : serializeError(cause);
-    const delay =
-      claim.backoffMs *
-      Math.pow(claim.backoffMultiplier, claim.attemptCount - 1);
     await finishClaim(executor, claim, {
       status,
       outcome: status,
       ...(error ? { error } : {}),
-      ...(status === "retry_wait"
-        ? { availableAt: new Date(Date.now() + delay) }
-        : {}),
+      ...(status === "retry_wait" && retryAt ? { availableAt: retryAt } : {}),
     });
     return status;
   });

@@ -12,15 +12,14 @@ import type { ServiceInstances } from "../types";
 export function initializeJobs(
   config: AppConfig,
   instances: ServiceInstances,
-  logger: ILogger,
+  _logger: ILogger,
 ): void {
   const jobs = config.services?.jobs;
   if (!jobs) return;
   if (!config.projectConfig.databaseUrl) {
-    logger.warn(
-      "services.jobs requires projectConfig.databaseUrl — durable jobs are disabled",
+    throw new Error(
+      "services.jobs requires projectConfig.databaseUrl for durable storage",
     );
-    return;
   }
   const client = createDurabilityClient({
     pool: PoolManager.getPool() as DurabilityPool,

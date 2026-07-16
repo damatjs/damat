@@ -70,7 +70,9 @@ export function logRow(): JobLogRow {
   };
 }
 
-export function scheduleRow(): JobScheduleRow {
+export function scheduleRow(
+  overrides: Partial<JobScheduleRow> = {},
+): JobScheduleRow {
   const now = new Date();
   return {
     id: crypto.randomUUID(),
@@ -93,5 +95,6 @@ export function scheduleRow(): JobScheduleRow {
     deduplication_ttl_ms: null,
     created_at: now,
     updated_at: now,
+    ...overrides,
   };
 }

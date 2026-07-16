@@ -40,7 +40,8 @@ Steps:
 After module initialization, configured `services.jobs` creates the durability
 client from the initialized PostgreSQL pool. When `worker: true`, it starts the
 fenced job worker and registers its staged stop handler. Redis is not required
-for durable job execution.
+for durable job execution. Configuring `services.jobs` without
+`projectConfig.databaseUrl` fails startup instead of silently disabling jobs.
 
 `bootstrap` wraps `instances.healthChecks` as `{ version: "2.0.0", checks }` for the `/health` route; `entry` `registerShutdown`s every handler.
 
@@ -119,7 +120,7 @@ interface ServiceInstances {
 ## Gotchas
 
 - **Order is enforced here.** The pool is set up (`initDatabase` → `PoolManager.setup`) before modules are initialized (`initModules` → `init()` → service construction, which requires the pool). Don't reorder these steps.
-- **No DB / no Redis is a valid config.** Omitting `databaseUrl`/`redisUrl` skips that subsystem; health reports `"not configured"` and rate limiting is disabled.
+- **No DB / no Redis is valid until a dependent service is enabled.** Omitting either URL skips that subsystem; health reports `"not configured"` and rate limiting is disabled. `services.jobs` is the exception: once configured, `databaseUrl` is required and startup fails without it.
 - **Health-check `database` placeholder.** `initializeServices` first sets a stub `database`/`redis` health check (status `"Ideal"`) and then overwrites it with the real one when configured. The stub is never user-visible if a DB is configured.
 - **Module default export must be a `defineModule` result.** Anything else throws during `initModules`.
 - **Redis surface comes entirely from `@damatjs/redis`.** Document/extend Redis behaviour there, not here — this file is a one-line re-export.

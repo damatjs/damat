@@ -3,7 +3,9 @@
 ## Outcome
 
 Implemented the durable PostgreSQL job worker and atomically replaced the
-Redis-backed package root and framework initializer.
+Redis-backed package root and framework initializer. The review follow-up also
+hardened worker shutdown, recovery loops, observability limits, retry overflow,
+and framework startup requirements.
 
 ## RED evidence
 
@@ -19,6 +21,18 @@ old worker RedisNotInitializedError
 This confirmed the tests exercised the missing durable worker and the split
 definition registry rather than existing behavior.
 
+Review-hardening RED runs then confirmed:
+
+```text
+4 worker lifecycle regressions failed
+framework jobs initializer did not throw without databaseUrl
+log byte cap, terminal progress, and retry overflow regressions failed
+```
+
+The added cancellation execution test found one adjacent ordering defect:
+initial heartbeat cancellation aborted the signal before persisting the
+cancelled terminal state.
+
 ## Architecture delivered
 
 - Concurrent due-work claims use `FOR UPDATE SKIP LOCKED`.
@@ -31,31 +45,49 @@ definition registry rather than existing behavior.
   transactional idempotency.
 - Success, retry, cancellation, and dead letter close run, attempt, and activity
   atomically. JSON-unsafe results follow the visible failure path.
-- `JobWorker.start()` is idempotent. Staged stop awaits registration, stops
-  claims, bounds the active drain, and leaves unfinished leases recoverable.
+- `JobWorker.start()` is idempotent. Polling and registry heartbeat use
+  independent bounded recovery loops.
+- Staged stop awaits registration and an in-flight poll, starts no post-stop
+  handlers, marks the registry stopping, and bounds the active drain.
+- A grace timeout aborts active handler signals and execution heartbeats.
+  Unfinished leases become recoverable, while the registry is marked stopped
+  only after handler code settles.
+- Log caps use PostgreSQL's stored `jsonb` byte representation. Terminal
+  activity includes the latest progress snapshot.
+- Invalid retry dates dead-letter without retaining a stuck lease. Log
+  persistence and terminal-transition failures remain visible and contained.
+- Pre-handler cancellation now persists the cancelled state before honoring
+  the aborted execution signal.
+- Cancellation observed while a handler is running settles even when handler
+  code ignores its abort signal and returns normally.
+- Calling `stop()` before `start()` is a no-op and does not poison a later
+  worker lifecycle.
 - The package root now uses one durable `JobMap` and definition registry,
   durable enqueue/inspection clients, and no raw Redis queue exports.
 - Framework jobs configure PostgreSQL durability and no longer require Redis.
+  Configuring them without `projectConfig.databaseUrl` fails startup.
 
 ## GREEN evidence
 
 ```text
-DATABASE_URL=... bun test packages/core/jobs
-49 pass, 0 fail, 148 expect() calls
+DATABASE_URL=... bun test --timeout 20000
+74 pass, 0 fail, 179 expect() calls
+100% functions, 100% lines
 
-bun test framework initializer suites
-5 pass, 0 fail, 11 expect() calls
+DATABASE_URL=... bun test
+262 pass, 0 fail, 597 expect() calls
+100% functions, 100% lines
 
-bun run build --filter=@damatjs/jobs
-4 successful, 0 failed
+bun run build  # @damatjs/jobs
+passed
 
-bun run build --filter=@damatjs/framework
-21 successful, 0 failed
+bun run build  # @damatjs/framework
+passed
 
-bun run lint --filter=@damatjs/jobs
+bun run lint  # @damatjs/jobs
 0 errors
 
-bun run lint --filter=@damatjs/framework
+bun run lint  # @damatjs/framework
 0 errors
 
 Prettier check, changed-file 100-line gate, git diff --check
@@ -67,12 +99,11 @@ merging against `@damatjs/jobs`.
 
 ## Commit
 
-Commit message: `feat: add fenced PostgreSQL job workers`
+Original commit: `6b48716 feat: add fenced PostgreSQL job workers`
 
-The exact hash is reported by the task runner immediately after commit creation.
+Follow-up commit message: `fix: harden PostgreSQL job worker lifecycle`
 
 ## Baseline note
 
-Repository-wide baseline failures documented by the controller remain outside
-this task. All Task 6 focused tests, builds, lints, formatting, and line gates
-pass.
+The PostgreSQL container remains running. The isolated verification database
+and role are removed after the final audit.

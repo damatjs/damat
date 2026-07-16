@@ -27,6 +27,8 @@ export interface JobWorkerOptions {
   pollIntervalMs?: number;
   leaseMs?: number;
   heartbeatIntervalMs?: number;
+  registryHeartbeatIntervalMs?: number;
+  retryIntervalMs?: number;
   progressMinimumIntervalMs?: number;
   logLimits?: WorkLogLimits;
   redaction?: RedactionOptions;

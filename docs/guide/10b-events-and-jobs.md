@@ -135,7 +135,7 @@ Semantics worth knowing:
 
 - **Retries** — a failing job re-queues with exponential backoff
   (`backoffMs * multiplier^(attempt-1)`) until `maxAttempts`, then dead-letters
-  into the queue's `failed` set with the error preserved.
+  as a durable run with its final status, attempt history, and error preserved.
 - **At-least-once** — expired fenced leases recover jobs a crashed worker had
   claimed, so handlers should be idempotent.
 - **Unknown jobs** (enqueued but not `defineJob`'d in the worker process)
