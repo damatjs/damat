@@ -18,7 +18,7 @@ export type ModelAccessors<TModels extends ModelsMap> = {
   ]: ModelMethods;
 };
 
-interface ModelAccessorOptions {
+export interface ModelAccessorOptions {
   cache?: ServiceCacheConfig;
   events?: boolean;
   logQueries?: boolean;
@@ -40,6 +40,33 @@ export function createModelMethods(
     methods.set(name, accessor);
   }
   return methods;
+}
+
+export function createStableModelAccessors(
+  models: ModelsMap,
+  resolve: (name: string) => ModelMethods,
+): Map<string, ModelMethods> {
+  return new Map(
+    Object.keys(models).map((name) => [
+      name,
+      createStableAccessor(() => resolve(name)),
+    ]),
+  );
+}
+
+function createStableAccessor(resolve: () => ModelMethods): ModelMethods {
+  return new Proxy({} as ModelMethods, {
+    get(_target, property) {
+      const current = resolve();
+      const value = Reflect.get(current, property, current);
+      if (typeof value !== "function") return value;
+      return (...args: unknown[]) => {
+        const active = resolve();
+        const method = Reflect.get(active, property, active);
+        return Reflect.apply(method, active, args);
+      };
+    },
+  });
 }
 
 export function registerModels(models: ModelsMap, em: PgEntityManager): void {

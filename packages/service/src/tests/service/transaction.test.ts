@@ -51,11 +51,16 @@ describe("ModuleService transactions", () => {
       service.transaction(async (executor) => {
         const methods = service.user;
         await barrier();
-        return { executor, methods, active: service.inTransaction };
+        const rows = await (methods as any).findMany();
+        return { executor, methods, rows, active: service.inTransaction };
       });
     const [first, second] = await Promise.all([run(), run()]);
     expect(first.executor).not.toBe(second.executor);
-    expect(first.methods).not.toBe(second.methods);
+    expect(first.methods).toBe(second.methods);
+    expect([first.rows[0].scope, second.rows[0].scope].sort()).toEqual([
+      "tx-1",
+      "tx-2",
+    ]);
     expect(first.active).toBe(true);
     expect(second.active).toBe(true);
     expect(service.inTransaction).toBe(false);

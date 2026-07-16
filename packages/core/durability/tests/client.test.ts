@@ -3,6 +3,7 @@ import {
   clearDurabilityClient,
   createDurabilityClient,
   getDurabilityClient,
+  isTransactionalExecutor,
   setDurabilityClient,
 } from "../src";
 
@@ -39,12 +40,30 @@ test("runs a callback in BEGIN and COMMIT", async () => {
   expect(recording.releases()).toBe(1);
 });
 
+test("marks only transaction callback executors", async () => {
+  const recording = createRecordingPool();
+  const durability = createDurabilityClient({ pool: recording.pool });
+  let captured;
+  expect(isTransactionalExecutor(recording.pool)).toBe(false);
+  await durability.transaction(async (executor) => {
+    captured = executor;
+    expect(isTransactionalExecutor(executor)).toBe(true);
+  });
+  expect(isTransactionalExecutor(captured!)).toBe(false);
+});
+
 test("rolls back and releases when a callback fails", async () => {
   const recording = createRecordingPool(true);
   const durability = createDurabilityClient({ pool: recording.pool });
+  let captured;
   await expect(
-    durability.transaction(async (tx) => tx.query("SELECT 1")),
+    durability.transaction(async (tx) => {
+      captured = tx;
+      expect(isTransactionalExecutor(tx)).toBe(true);
+      return tx.query("SELECT 1");
+    }),
   ).rejects.toThrow("query failed");
+  expect(isTransactionalExecutor(captured!)).toBe(false);
   expect(recording.sql).toEqual(["BEGIN", "SELECT 1", "ROLLBACK"]);
   expect(recording.releases()).toBe(1);
 });

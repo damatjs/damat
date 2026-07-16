@@ -23,8 +23,9 @@ await durability.transaction(async (executor) => {
 });
 ```
 
-`DurabilityExecutor` accepts a PostgreSQL pool, pool client, or compatible ORM
-transaction executor. The default client uses
+`DurabilityExecutor` is the structural query contract accepted by durability
+APIs. A PostgreSQL pool, pool client, or compatible ORM executor can implement
+it. The default client uses
 `Symbol.for("damatjs.durability.client")`; standalone consumers may pass a
 client directly instead.
 
@@ -50,11 +51,21 @@ the same PostgreSQL transaction as the operation. Concurrent duplicates wait
 for that transaction and replay the completed value. Failures roll back the
 claim with the database work, while an expired key may be claimed again.
 
-Pass `executor` when the caller already owns a transaction. Without one,
-`withIdempotency` uses the configured default durability client. The guarantee
-covers database effects performed through the supplied executor. Remote
-providers must receive the same idempotency key; a local transaction cannot
-make an external side effect exactly once.
+Pass `executor` when the caller already owns a transaction. A supplied executor
+must be the active callback executor from `createDurabilityClient().transaction`
+or another Damat transaction owner such as `ModuleService.transaction`.
+Unmarked pools and inactive executors are rejected before the claim query.
+Without an executor, `withIdempotency` uses the configured default client.
+
+Transaction-adapter authors can use `markTransactionalExecutor` and
+`unmarkTransactionalExecutor` around their callback. The marker is active only
+for that callback and is cleared after both commit and rollback paths. These
+helpers connect an adapter to the runtime contract; application code should not
+use them to bless a pool.
+
+The guarantee covers database effects performed through the supplied executor.
+Remote providers must receive the same idempotency key; a local transaction
+cannot make an external side effect exactly once.
 
 ## System migrations
 

@@ -9,6 +9,11 @@
 - Transaction state uses AsyncLocalStorage instead of a mutable service flag.
 - Base model accessors are owned per service instance, and overlapping
   transactions receive independent accessor maps.
+- Stable model accessors and captured methods resolve the active transaction at
+  invocation time, then fall back to base methods after the callback.
+- Transaction callback executors are marked only while active for safe
+  composition with `withIdempotency`.
+- Transaction options are forwarded to the ORM transaction.
 
 ## Before
 
@@ -18,9 +23,10 @@ observe another call's executor or repositories.
 
 ## After
 
-Each asynchronous transaction chain has its own executor and accessor map.
-Use the callback executor for raw SQL or APIs such as transactional
-idempotency:
+Each asynchronous transaction chain has its own executor and method map.
+Stable accessors resolve that map when a method is called, so retaining an
+accessor does not retain a completed transaction. Use the callback executor for
+raw SQL or APIs such as transactional idempotency:
 
 ```ts
 await service.transaction(async (executor) => {
@@ -33,4 +39,5 @@ await service.transaction(async (executor) => {
 ## Action required
 
 No change is required for zero-argument callbacks. Code that needs to compose
-durable database writes may accept and pass the new executor.
+durable database writes may accept and pass the new executor while the callback
+is active. Do not retain it for later use.

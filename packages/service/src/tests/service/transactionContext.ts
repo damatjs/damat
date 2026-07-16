@@ -12,19 +12,27 @@ export function fakeModel(name: string) {
 export function initializeTransactions() {
   let sequence = 0;
   const transactions: object[] = [];
+  let txOptions: unknown;
   const em = {
     registerModel: mock(() => {}),
-    getRepository: mock(() => ({ scope: "base" })),
-    transaction: mock(async (callback: (tx: object) => Promise<unknown>) => {
-      const id = ++sequence;
-      const tx = {
-        id,
-        query: mock(async () => ({ rows: [{ id }], rowCount: 1 })),
-        getRepository: mock(() => ({ scope: `tx-${id}` })),
-      };
-      transactions.push(tx);
-      return callback(tx);
-    }),
+    getRepository: mock(() => ({
+      findMany: mock(async () => [{ scope: "base" }]),
+    })),
+    transaction: mock(
+      async (callback: (tx: object) => Promise<unknown>, options?: unknown) => {
+        txOptions = options;
+        const id = ++sequence;
+        const tx = {
+          id,
+          query: mock(async () => ({ rows: [{ id }], rowCount: 1 })),
+          getRepository: mock(() => ({
+            findMany: mock(async () => [{ scope: `tx-${id}` }]),
+          })),
+        };
+        transactions.push(tx);
+        return callback(tx);
+      },
+    ),
   };
   PoolManager.setup({
     pool: {} as never,
@@ -32,7 +40,7 @@ export function initializeTransactions() {
     connectionManager: null as never,
   });
   PoolManager.setEntityManager(em as never);
-  return { em, transactions };
+  return { em, transactions, txOptions: () => txOptions };
 }
 
 export function createBarrier(size: number): () => Promise<void> {

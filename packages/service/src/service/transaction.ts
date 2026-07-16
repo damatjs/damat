@@ -1,5 +1,9 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import type { DurabilityExecutor } from "@damatjs/durability";
+import {
+  markTransactionalExecutor,
+  type DurabilityExecutor,
+  unmarkTransactionalExecutor,
+} from "@damatjs/durability";
 import type {
   PgEntityManager,
   TransactionalEntityManager,
@@ -41,11 +45,17 @@ export class ServiceTransactions {
     const active = this.active;
     if (active) return callback(active.executor);
     return em.transaction(async (transaction) => {
-      const executor = transaction as DurabilityExecutor;
-      return this.storage.run(
-        { executor, methods: createMethods(transaction) },
-        () => callback(executor),
+      const executor = markTransactionalExecutor(
+        transaction as DurabilityExecutor,
       );
+      try {
+        return await this.storage.run(
+          { executor, methods: createMethods(transaction) },
+          () => callback(executor),
+        );
+      } finally {
+        unmarkTransactionalExecutor(executor);
+      }
     }, options);
   }
 }

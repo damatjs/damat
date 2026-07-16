@@ -10,7 +10,8 @@ Maintainer notes for the service layer. Three concerns: the `ModuleService` fact
 | `src/manager/pool.ts`           | `PoolManager` — process-wide holder of `Pool` / `PgEntityManager` / `ConnectionManager`, with state on `globalThis`. Plus `PoolManagerStats`, `ConnectionManagerLike`.         |
 | `src/manager/index.ts`          | Re-exports `./pool`.                                                                                                                                                           |
 | `src/service/module.ts`         | `ModuleService(config)` — the small class factory and public service surface.                                                                                                  |
-| `src/service/modelAccessors.ts` | Per-instance and transaction-bound `ModelMethods` construction and prototype accessors.                                                                                        |
+| `src/service/moduleState.ts`    | Per-instance base methods, stable accessors, and transaction state.                                                                                                            |
+| `src/service/modelAccessors.ts` | `ModelMethods` construction and call-time-resolving stable accessors.                                                                                                          |
 | `src/service/transaction.ts`    | AsyncLocalStorage transaction context, nesting, and executor isolation.                                                                                                        |
 | `src/service/methods.ts`        | `ModelMethods<T>` — the per-model CRUD implementation (delegates to `PgRepository`) + relation loading.                                                                        |
 | `src/service/cache.ts`          | `withTaggedCache`, `modelCacheTag` — the opt-in, Redis-backed read cache as a `Proxy` over `ModelMethods`.                                                                     |
@@ -53,15 +54,19 @@ The order matters; the framework enforces it at boot:
 1. **Pool setup.** Something (the framework's `initDatabase`, or a test) calls `PoolManager.setup({ pool, logger, connectionManager })`. This constructs the `PgEntityManager` and stores all three on `globalThis`.
 2. **Module registration.** The framework imports each module's default export (a `ModuleInstance` from `defineModule`) and calls `init()`, which **constructs** the service for the first time.
 3. **Service construction.** The generated `ModuleService` constructor parses credentials, asserts the pool is initialized, registers each model, and creates a per-instance base `ModelMethods` map with the configured wrappers.
-4. **Use.** Accessing `service.<model>` returns the current async transaction's bound accessor when present, otherwise the service instance's base accessor.
+4. **Use.** Accessing `service.<model>` returns a stable proxy. Each method call
+   resolves the current async transaction's methods when present, otherwise the
+   service instance's base methods.
 
 ## Request / call flow (per method)
 
 `service.user.findMany({ where, include })`:
 
-1. The `user` accessor returns the cached `ModelMethods` for that model.
-2. `findMany` calls `getRepository()` — returns the transactional repository if a transaction is active, else the entity manager's repository.
-3. The repository runs the query; if `include` is set, `loadRelations` walks the model's `RelationSchema[]` and issues follow-up queries per relation (`belongsTo` / `hasMany` / `hasOne`).
+1. The `user` accessor returns its stable per-service proxy.
+2. The proxy resolves the current transaction's `ModelMethods` when
+   `findMany` is called, otherwise the base methods.
+3. `findMany` calls `getRepository()` — returns the transactional repository if a transaction is active, else the entity manager's repository.
+4. The repository runs the query; if `include` is set, `loadRelations` walks the model's `RelationSchema[]` and issues follow-up queries per relation (`belongsTo` / `hasMany` / `hasOne`).
 
 ## Invariants & design decisions
 
@@ -72,8 +77,14 @@ The order matters; the framework enforces it at boot:
 - **Relation FK conventions are by-convention.** `loadRelation` infers FK column names (`<model>_id`) from relation metadata; non-standard FK naming will not resolve. See `module-service.md`.
 - **Opt-in wrappers layer cache → events → logging.** Cache is innermost, logging outermost. So one `query` log line covers a cache hit and a database read alike, and a write's event fires only after the write succeeded and its cache invalidation ran. All three are `Proxy` wrappers over `ModelMethods`; with no config flag set nothing is wrapped and every call behaves exactly as before. Details in `module-service.md`.
 - **Transaction state is async-local and per service instance.** Nested calls
-  reuse one executor and accessor map, while concurrent calls cannot overwrite
-  each other's executor or transaction-bound repositories.
+  reuse one executor and method map, while concurrent calls cannot overwrite
+  each other's executor or transaction-bound repositories. Stable accessors
+  resolve that state at method-call time and fall back to base methods outside
+  the callback.
+- **Transaction executors have a bounded active lifetime.** The executor passed
+  to the callback is marked for durability composition, then unmarked after
+  success or rollback. Retained executors cannot later bypass idempotency's
+  transaction requirement.
 - **`ModuleRegistry` is the typing seam.** Apps augment it via declaration merging so the framework's `getModule("user")` is typed. The interface ships empty.
 
 ## Build note

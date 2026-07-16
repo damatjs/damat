@@ -1,5 +1,6 @@
 export * from "./client/create";
 export * from "./client/global";
+export * from "./client/transactional";
 export * from "./client/types";
 export * from "./errors";
 export * from "./idempotency";

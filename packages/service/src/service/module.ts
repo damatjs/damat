@@ -7,10 +7,9 @@ import {
   createModelMethods,
   defineModelAccessors,
   type ModelAccessors,
-  registerModels,
   resolveModelMethods,
 } from "./modelAccessors";
-import { ServiceTransactions } from "./transaction";
+import { createModuleState } from "./moduleState";
 import type { ModelMethods } from "./methods";
 import type { ModuleServiceConfig, ModelsMap } from "./type";
 
@@ -19,18 +18,7 @@ export function ModuleService<
   TCredentialsSchema extends z.ZodObject<z.ZodRawShape> | undefined = undefined,
 >(config: ModuleServiceConfig<TModels, TCredentialsSchema>) {
   const { models } = config;
-  const methodsByService = new WeakMap<object, Map<string, ModelMethods>>();
-  const transactionsByService = new WeakMap<object, ServiceTransactions>();
-  const getTransactions = (service: object) => {
-    const state = transactionsByService.get(service);
-    if (!state) throw new Error("Service transaction state is unavailable");
-    return state;
-  };
-  const getMethods = (service: object) => {
-    const methods = methodsByService.get(service);
-    if (!methods) throw new Error("Service model methods are unavailable");
-    return methods;
-  };
+  const state = createModuleState(models, config);
 
   abstract class GeneratedModuleService {
     credentials?: TCredentialsSchema extends z.ZodTypeAny
@@ -50,9 +38,7 @@ export function ModuleService<
         );
       }
       this.models = Object.values(models);
-      registerModels(models, this.em);
-      methodsByService.set(this, createModelMethods(models, this.em, config));
-      transactionsByService.set(this, new ServiceTransactions());
+      state.initialize(this, this.em);
     }
 
     get em() {
@@ -62,21 +48,23 @@ export function ModuleService<
       return this.models;
     }
     get inTransaction(): boolean {
-      return getTransactions(this).inTransaction;
+      return state.transactions(this).inTransaction;
     }
     [resolveModelMethods](name: string): ModelMethods {
-      return getTransactions(this).resolve(name, getMethods(this));
+      return state.accessor(this, name);
     }
     transaction<R>(
       callback: (executor: DurabilityExecutor) => Promise<R>,
       options?: TransactionOptions,
     ): Promise<R> {
-      return getTransactions(this).run(
-        this.em,
-        (tx) => createModelMethods(models, this.em, config, tx),
-        callback,
-        options,
-      );
+      return state
+        .transactions(this)
+        .run(
+          this.em,
+          (tx) => createModelMethods(models, this.em, config, tx),
+          callback,
+          options,
+        );
     }
   }
 

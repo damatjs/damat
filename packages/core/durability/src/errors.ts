@@ -12,6 +12,15 @@ export class IdempotencyInProgressError extends Error {
   }
 }
 
+export class TransactionalExecutorRequiredError extends Error {
+  constructor() {
+    super(
+      "A supplied idempotency executor must be an active transaction executor",
+    );
+    this.name = "TransactionalExecutorRequiredError";
+  }
+}
+
 export interface MissingSystemMigration {
   owner: string;
   id: string;

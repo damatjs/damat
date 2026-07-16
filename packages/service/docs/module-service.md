@@ -1,8 +1,9 @@
 # `ModuleService` & generated CRUD
 
-Source: `src/service/module.ts`, `src/service/modelAccessors.ts`,
-`src/service/transaction.ts`, `src/service/methods.ts`, `src/service/type.ts`,
-`src/service/cache.ts`, `src/service/events.ts`, `src/service/logging.ts`.
+Source: `src/service/module.ts`, `src/service/moduleState.ts`,
+`src/service/modelAccessors.ts`, `src/service/transaction.ts`,
+`src/service/methods.ts`, `src/service/type.ts`, `src/service/cache.ts`,
+`src/service/events.ts`, `src/service/logging.ts`.
 
 ## Responsibility
 
@@ -69,10 +70,12 @@ The returned `abstract class GeneratedModuleService` has:
 ### Per-model accessors
 
 For each model, `modelAccessors.ts` defines a camel-cased prototype getter.
-The getter resolves through the current AsyncLocalStorage context. It returns
-the transaction-bound accessor map inside `transaction()` and the instance's
-base map otherwise. Both maps retain the configured cache, event, and logging
-wrappers.
+The getter returns one stable proxy per service instance and model. Function
+properties on that proxy resolve through the current AsyncLocalStorage context
+when they are called, not when the accessor or method is captured. Calls inside
+`transaction()` use the transaction-bound methods; calls before or after use
+the instance's base methods. Both method maps retain the configured cache,
+event, and logging wrappers.
 
 ### `transaction(callback, options?)`
 
@@ -86,9 +89,13 @@ transaction<R>(
 - A top-level call opens `em.transaction`, builds a transaction-bound accessor
   map, and passes the structural query executor to the callback.
 - A nested call reads the active AsyncLocalStorage context and reuses the exact
-  executor and accessor objects without opening another transaction.
+  executor and method objects without opening another transaction.
 - Concurrent calls on one service instance receive independent contexts,
   executors, and accessor maps. Service instances also never share base maps.
+- The callback executor is marked as an active durability transaction executor
+  only until the callback settles. It is unmarked after success or rollback.
+- `options` are forwarded to `PgEntityManager.transaction`, including
+  transaction isolation settings.
 - A callback that declares no parameter remains assignable and behaves as it
   did previously.
 

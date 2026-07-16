@@ -36,6 +36,23 @@ test("runs the first operation in the idempotency transaction", async () => {
   }
 });
 
+test("rejects an unmarked supplied executor before claiming", async () => {
+  let queries = 0;
+  const executor = {
+    query: async () => {
+      queries += 1;
+      return { rows: [], rowCount: 0 };
+    },
+  };
+  await expect(
+    withIdempotency(
+      { scope: uniqueScope("unmarked"), key: "same", executor },
+      async () => ({ saved: true }),
+    ),
+  ).rejects.toThrow(/active transaction/i);
+  expect(queries).toBe(0);
+});
+
 test("replaces an expired completed key", async () => {
   const scope = uniqueScope("expired");
   try {
