@@ -3,14 +3,28 @@ import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { readInstallerLock } from "@damatjs/installer";
-import { kitAddCommand, kitListCommand, kitRemoveCommand } from "../commands/kit";
+import {
+  kitAddCommand,
+  kitListCommand,
+  kitRemoveCommand,
+} from "../commands/kit";
 
 const logger = {
   messages: [] as string[],
-  debug() {}, success(message: string) { this.messages.push(message); },
-  skip() {}, warn(message: string) { this.messages.push(message); },
-  error(message: string) { this.messages.push(message); },
-  info(message: string) { this.messages.push(message); },
+  debug() {},
+  success(message: string) {
+    this.messages.push(message);
+  },
+  skip() {},
+  warn(message: string) {
+    this.messages.push(message);
+  },
+  error(message: string) {
+    this.messages.push(message);
+  },
+  info(message: string) {
+    this.messages.push(message);
+  },
 };
 
 function fixture(name = "feature", project?: string) {
@@ -18,15 +32,26 @@ function fixture(name = "feature", project?: string) {
   const target = project ?? mkdtempSync(join(tmpdir(), "kit-target-"));
   mkdirSync(join(source, "src"));
   writeFileSync(join(source, "src/index.ts"), "export const feature = true;");
-  writeFileSync(join(source, "damat.json"), JSON.stringify({
-    schemaVersion: 1, kind: "kit", name,
-    install: { provides: { files: { from: "src/**", fallbackTo: "src/{id}" } } },
-  }));
+  writeFileSync(
+    join(source, "damat.json"),
+    JSON.stringify({
+      schemaVersion: 1,
+      kind: "kit",
+      name,
+      install: {
+        provides: { files: { from: "src/**", fallbackTo: "src/{id}" } },
+      },
+    }),
+  );
   return { source, project: target };
 }
 
 const context = (cwd: string, args: string[], options = {}) => ({
-  command: "kit", cwd, args, options, logger,
+  command: "kit",
+  cwd,
+  args,
+  options,
+  logger,
 });
 
 describe("kit install commands", () => {
@@ -38,15 +63,20 @@ describe("kit install commands", () => {
     expect(readInstallerLock(project).installations.feature?.kind).toBe("kit");
 
     const second = fixture("alpha", project);
-    expect((await kitAddCommand.handler(context(project, [second.source]))).exitCode)
-      .toBe(0);
+    expect(
+      (await kitAddCommand.handler(context(project, [second.source]))).exitCode,
+    ).toBe(0);
 
     logger.messages = [];
-    expect((await kitListCommand.handler(context(project, []))).exitCode).toBe(0);
+    expect((await kitListCommand.handler(context(project, []))).exitCode).toBe(
+      0,
+    );
     expect(logger.messages).toContain("feature");
     expect(logger.messages).toContain("alpha");
 
-    expect((await kitRemoveCommand.handler(context(project, ["feature"]))).exitCode).toBe(0);
+    expect(
+      (await kitRemoveCommand.handler(context(project, ["feature"]))).exitCode,
+    ).toBe(0);
     expect(existsSync(join(project, "src/feature/index.ts"))).toBeFalse();
   });
 });

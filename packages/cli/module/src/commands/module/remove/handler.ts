@@ -9,7 +9,9 @@ export interface RemoveDependencies {
 }
 
 const dependencies: RemoveDependencies = {
-  readLock: readInstallerLock, create: createRemovePlan, execute: executeModulePlan,
+  readLock: readInstallerLock,
+  create: createRemovePlan,
+  execute: executeModulePlan,
 };
 
 export function createModuleRemoveHandler(

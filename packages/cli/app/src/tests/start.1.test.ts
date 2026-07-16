@@ -2,7 +2,13 @@
 // Bun.spawn dispatcher + the node:fs / load-env mocks BEFORE any command source
 // is evaluated, so `../start` snapshots the dispatcher/mock (not the real ones).
 // See setup.ts for the full rationale.
-import { state, spawnCalls, loadEnvCalls, mockExistsSync, resetMocks } from "./setup";
+import {
+  state,
+  spawnCalls,
+  loadEnvCalls,
+  mockExistsSync,
+  resetMocks,
+} from "./setup";
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { createContext } from "./helpers";
 import type { Command } from "@damatjs/cli";
@@ -78,5 +84,4 @@ describe("startCommand.handler", () => {
     expect(call.cwd).toBe(CWD);
     expect(call.cmd).toEqual(["bun", "run", "/project/.damat/dist/entry.js"]);
   });
-
 });

@@ -6,11 +6,7 @@ export interface CliLogger {
   success(message: string, context?: CliLogContext): void;
   skip(message: string, context?: CliLogContext): void;
   warn(message: string, context?: CliLogContext): void;
-  error(
-    message: string,
-    error?: unknown,
-    context?: CliLogContext,
-  ): void;
+  error(message: string, error?: unknown, context?: CliLogContext): void;
 }
 
 export interface CliOutput {

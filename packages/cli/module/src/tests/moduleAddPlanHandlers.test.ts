@@ -6,7 +6,10 @@ import { artifact, manifest, plan } from "./fixtures/installer";
 
 function resolved(cleanup = mock(() => {})) {
   return {
-    artifact: artifact(cleanup), provider: manifest(), plan: plan(), options: {},
+    artifact: artifact(cleanup),
+    provider: manifest(),
+    plan: plan(),
+    options: {},
     recipe: { schemaVersion: 1 as const, id: "billing", kind: "module" },
   };
 }
@@ -24,7 +27,9 @@ describe("module add handler", () => {
     const execute = mock(async () => {});
     const { ctx } = createContext({}, { args: ["source"] });
     const handler = createModuleAddHandler({
-      build: mock(async () => resolved(cleanup)), execute, report: mock(() => {}),
+      build: mock(async () => resolved(cleanup)),
+      execute,
+      report: mock(() => {}),
     } as never);
     expect((await handler(ctx)).exitCode).toBe(0);
     expect(execute).toHaveBeenCalledTimes(1);
@@ -35,12 +40,16 @@ describe("module add handler", () => {
     const report = mock(() => {});
     const dry = createContext({ "dry-run": true }, { args: ["source"] });
     const handler = createModuleAddHandler({
-      build: mock(async () => resolved()), execute: mock(async () => {}), report,
+      build: mock(async () => resolved()),
+      execute: mock(async () => {}),
+      report,
     } as never);
     expect((await handler(dry.ctx)).exitCode).toBe(0);
     expect(report).toHaveBeenCalledTimes(1);
     const failing = createModuleAddHandler({
-      build: mock(async () => { throw new Error("bad"); }),
+      build: mock(async () => {
+        throw new Error("bad");
+      }),
     } as never);
     expect((await failing(dry.ctx)).exitCode).toBe(1);
   });
@@ -49,17 +58,23 @@ describe("module add handler", () => {
 describe("module plan handler", () => {
   test("handles missing sources, success, and errors", async () => {
     const empty = createContext({});
-    expect((await createModulePlanHandler({} as never)(empty.ctx)).exitCode).toBe(1);
+    expect(
+      (await createModulePlanHandler({} as never)(empty.ctx)).exitCode,
+    ).toBe(1);
     const cleanup = mock(() => {});
     const ready = createContext({}, { args: ["source"] });
     const report = mock(() => {});
     const success = createModulePlanHandler({
-      build: mock(async () => resolved(cleanup)), report,
+      build: mock(async () => resolved(cleanup)),
+      report,
     } as never);
     expect((await success(ready.ctx)).exitCode).toBe(0);
     expect(cleanup).toHaveBeenCalledTimes(1);
     const failing = createModulePlanHandler({
-      build: mock(async () => { throw new Error("bad"); }), report,
+      build: mock(async () => {
+        throw new Error("bad");
+      }),
+      report,
     } as never);
     expect((await failing(ready.ctx)).exitCode).toBe(1);
   });

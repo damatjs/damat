@@ -5,7 +5,8 @@ import type { DamatManifest } from "../types";
 
 export function readDamatManifest(root: string): DamatManifest {
   const path = join(root, DAMAT_MANIFEST_FILENAME);
-  if (!existsSync(path)) throw new Error(`${DAMAT_MANIFEST_FILENAME} not found`);
+  if (!existsSync(path))
+    throw new Error(`${DAMAT_MANIFEST_FILENAME} not found`);
   let input: unknown;
   try {
     input = JSON.parse(readFileSync(path, "utf8"));

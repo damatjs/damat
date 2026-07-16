@@ -59,8 +59,13 @@ describe("help output", () => {
 
   test("command help generates usage and omits empty sections", () => {
     const fixture = createRuntimeFixture();
-    const minimal = { ...command, usage: undefined, options: undefined,
-      examples: undefined, subcommands: undefined };
+    const minimal = {
+      ...command,
+      usage: undefined,
+      options: undefined,
+      examples: undefined,
+      subcommands: undefined,
+    };
     printCommandSpecificHelp({ name: "cli" }, minimal, fixture.runtime.output);
     expect(fixture.messages.join("\n")).toContain("cli build [options]");
   });

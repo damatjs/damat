@@ -73,5 +73,4 @@ describe("buildCommand.handler", () => {
     ]);
     expect(call.cmd).not.toContain("--minify"); // minify=false
   });
-
 });

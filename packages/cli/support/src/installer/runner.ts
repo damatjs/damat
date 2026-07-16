@@ -8,13 +8,21 @@ interface SpawnedCommand {
 
 type SpawnCommand = (
   command: string[],
-  options: { cwd: string; env: Record<string, string>; stdout: "pipe"; stderr: "pipe" },
+  options: {
+    cwd: string;
+    env: Record<string, string>;
+    stdout: "pipe";
+    stderr: "pipe";
+  },
 ) => SpawnedCommand;
 
-function commandEnvironment(extra?: Record<string, string>): Record<string, string> {
+function commandEnvironment(
+  extra?: Record<string, string>,
+): Record<string, string> {
   return Object.fromEntries(
-    Object.entries({ ...process.env, ...extra })
-      .filter((entry): entry is [string, string] => entry[1] !== undefined),
+    Object.entries({ ...process.env, ...extra }).filter(
+      (entry): entry is [string, string] => entry[1] !== undefined,
+    ),
   );
 }
 

@@ -26,14 +26,11 @@ export interface CreateInstallPlanInput {
 export function createInstallPlan(
   input: CreateInstallPlanInput,
 ): InstallerPlan {
-  const supportedModes = input.packageBackend === "damat"
-    ? [...new Set([...input.artifact.supportedModes, "package" as const])]
-    : input.artifact.supportedModes;
-  const mode = selectInstallMode(
-    input.mode,
-    input.recipe,
-    supportedModes,
-  );
+  const supportedModes =
+    input.packageBackend === "damat"
+      ? [...new Set([...input.artifact.supportedModes, "package" as const])]
+      : input.artifact.supportedModes;
+  const mode = selectInstallMode(input.mode, input.recipe, supportedModes);
   const security = evaluatePlanSecurity(
     input.artifact,
     input.recipe,

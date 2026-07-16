@@ -27,13 +27,25 @@ describe("matchProfiles", () => {
       overrides: { targets: { workflows: "custom/{id}" } },
     });
     expect(matches).toEqual([
-      { capability: "routes", from: "routes/**", to: "app/routes/billing", source: "receiver" },
-      { capability: "workflows", from: "workflows/**", to: "custom/billing", source: "override" },
+      {
+        capability: "routes",
+        from: "routes/**",
+        to: "app/routes/billing",
+        source: "receiver",
+      },
+      {
+        capability: "workflows",
+        from: "workflows/**",
+        to: "custom/billing",
+        source: "override",
+      },
     ]);
   });
 
   test("uses fallback without receiver and names unmatched capability", () => {
-    expect(matchProfiles({ provider }).every((match) => match.source === "fallback")).toBeTrue();
+    expect(
+      matchProfiles({ provider }).every((match) => match.source === "fallback"),
+    ).toBeTrue();
     const unmatched = structuredClone(provider);
     delete unmatched.install?.provides?.routes.fallbackTo;
     expect(() => matchProfiles({ provider: unmatched })).toThrow("routes");

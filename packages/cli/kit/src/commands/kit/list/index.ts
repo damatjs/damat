@@ -9,11 +9,13 @@ export const kitListCommand: Command = {
       .filter((record) => record.kind === "kit")
       .sort((left, right) => left.artifactId.localeCompare(right.artifactId));
     if (!kits.length) ctx.logger.info("No kits installed");
-    kits.forEach((kit) => ctx.logger.info(kit.artifactId, {
-      mode: kit.mode,
-      ...(kit.packageBackend && { packageBackend: kit.packageBackend }),
-      ...(kit.version && { version: kit.version }),
-    }));
+    kits.forEach((kit) =>
+      ctx.logger.info(kit.artifactId, {
+        mode: kit.mode,
+        ...(kit.packageBackend && { packageBackend: kit.packageBackend }),
+        ...(kit.version && { version: kit.version }),
+      }),
+    );
     return { exitCode: 0 };
   },
 };

@@ -1,6 +1,13 @@
 // setup.ts installs the process-global node:fs + node:child_process mocks and
 // MUST be imported before the source under test (see its header comment).
-import { state, writeCalls, rmCalls, spawnSyncCalls, mockSpawnSync, resetMocks } from "./setup";
+import {
+  state,
+  writeCalls,
+  rmCalls,
+  spawnSyncCalls,
+  mockSpawnSync,
+  resetMocks,
+} from "./setup";
 import { describe, test, expect, beforeEach } from "bun:test";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -82,5 +89,4 @@ describe("damat clone — extras", () => {
       logger.success.mock.calls.some((c) => String(c[0]).includes('"renamed"')),
     ).toBe(true);
   });
-
 });

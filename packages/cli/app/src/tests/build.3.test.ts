@@ -62,5 +62,4 @@ describe("buildCommand.handler", () => {
     });
     expect(logger.success).toHaveBeenCalledWith("Build complete!");
   });
-
 });

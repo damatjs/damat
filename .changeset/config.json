@@ -7,8 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": [
-    "@damatjs/typescript-config",
-    "@damatjs/default"
-  ]
+  "ignore": ["@damatjs/typescript-config", "@damatjs/default"]
 }

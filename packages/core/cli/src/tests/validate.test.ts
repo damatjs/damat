@@ -9,13 +9,11 @@ describe("validateOptions", () => {
   ];
 
   test("accepts provided and defaulted required options", () => {
-    expect(() => validateOptions({ name: "test" }, required, "test")).not.toThrow();
     expect(() =>
-      validateOptions(
-        {},
-        [{ ...required[0]!, default: "default" }],
-        "test",
-      ),
+      validateOptions({ name: "test" }, required, "test"),
+    ).not.toThrow();
+    expect(() =>
+      validateOptions({}, [{ ...required[0]!, default: "default" }], "test"),
     ).not.toThrow();
   });
 

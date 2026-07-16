@@ -10,3 +10,5 @@
 //   const auth = getAuth();
 //   return auth.handler(c.req.raw);
 // };
+
+export {};

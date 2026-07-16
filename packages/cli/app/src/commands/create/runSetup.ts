@@ -4,11 +4,13 @@ import { gitAvailable } from "@damatjs/cli-support";
 
 function run(cmd: string, args: string[], cwd: string): boolean {
   try {
-    return spawnSync(cmd, args, {
-      cwd,
-      stdio: "pipe",
-      encoding: "utf-8",
-    }).status === 0;
+    return (
+      spawnSync(cmd, args, {
+        cwd,
+        stdio: "pipe",
+        encoding: "utf-8",
+      }).status === 0
+    );
   } catch {
     return false;
   }
@@ -28,7 +30,9 @@ export function initializeGit(target: string, logger: CliLogger): void {
   if (ok) {
     logger.success("Initialized git repository");
   } else {
-    logger.warn("Could not initialize git — run `git init` yourself when ready");
+    logger.warn(
+      "Could not initialize git — run `git init` yourself when ready",
+    );
   }
 }
 

@@ -20,7 +20,8 @@ export function resolveModuleImport(
   if (typeof location === "string")
     return pathToFileURL(resolve(cwd, location)).href;
   if (location.type === "package") {
-    if (!location.name.trim()) throw new Error("package module name is required");
+    if (!location.name.trim())
+      throw new Error("package module name is required");
     return location.name;
   }
   return damatImport(location.path, cwd);

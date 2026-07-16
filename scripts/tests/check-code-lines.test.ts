@@ -19,7 +19,9 @@ function fixture(): string {
 }
 
 function lines(count: number): string {
-  return Array.from({ length: count }, (_, index) => `line ${index}`).join("\n");
+  return Array.from({ length: count }, (_, index) => `line ${index}`).join(
+    "\n",
+  );
 }
 
 test("accepts 100 lines and rejects 101 lines", () => {

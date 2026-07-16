@@ -5,7 +5,6 @@ registerReset(resetContext);
 import { describe, it, expect } from "./context";
 
 describe("installModuleSplit", () => {
-
   it("exposes the same layout via moduleLayoutPaths (install/remove single source of truth)", async () => {
     const { moduleLayoutPaths } =
       await import("../../commands/module/helpers/copy");

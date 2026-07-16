@@ -38,5 +38,7 @@
 //   return auth;
 // }
 
+export {};
+
 // export type Auth = ReturnType<typeof createAuth>;
 // export type Session = Auth extends { $Infer: { Session: infer S } } ? S : never;

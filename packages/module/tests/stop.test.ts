@@ -21,8 +21,9 @@ describe("closeServer", () => {
     const selectedPort = await resolveServerPort(0);
     const { server, port } = await new Promise<{ server: any; port: number }>(
       (resolve) => {
-        const handle = serve({ fetch: app.fetch, port: selectedPort }, (info: any) =>
-          resolve({ server: handle, port: info.port }),
+        const handle = serve(
+          { fetch: app.fetch, port: selectedPort },
+          (info: any) => resolve({ server: handle, port: info.port }),
         );
       },
     );

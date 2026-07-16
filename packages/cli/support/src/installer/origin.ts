@@ -31,7 +31,11 @@ export function originFromArgument(
   if (source.startsWith("registry:"))
     return { type: "registry", ref: source.slice(9) };
   if (source.startsWith("npm:")) return npmOrigin(source.slice(4));
-  if (source.startsWith("github:") || source.startsWith("git:") || source.includes(".git"))
+  if (
+    source.startsWith("github:") ||
+    source.startsWith("git:") ||
+    source.includes(".git")
+  )
     return gitOrigin(source);
   if (/^https?:\/\/.+\.(?:tgz|tar\.gz)(?:#.+)?$/.test(source))
     return { type: "tarball", url: source };

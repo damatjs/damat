@@ -17,7 +17,9 @@ import type { Command } from "@damatjs/cli";
 
 // Import the source AFTER setup installed the fakes (setup is imported first
 // above). This binds `devCommand` for the assertions below.
-const { devCommand } = (await import("../commands/dev")) as { devCommand: Command };
+const { devCommand } = (await import("../commands/dev")) as {
+  devCommand: Command;
+};
 
 const CWD = "/project";
 let clearSpy: ReturnType<typeof spyOn>;
@@ -81,5 +83,4 @@ describe("devCommand.handler", () => {
     await devCommand.handler(ctx);
     expect(clearSpy).toHaveBeenCalledTimes(1);
   });
-
 });

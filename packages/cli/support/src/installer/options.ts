@@ -19,7 +19,8 @@ function targets(value: unknown): Record<string, string> | undefined {
       throw new Error("target must use capability=path");
     const [capability, ...rest] = item.split("=");
     const path = rest.join("=");
-    if (!capability || !path) throw new Error("target must use capability=path");
+    if (!capability || !path)
+      throw new Error("target must use capability=path");
     return [capability, path] as const;
   });
   return Object.fromEntries(entries);
@@ -32,7 +33,9 @@ export function installerOptions(ctx: CommandContext): {
 } {
   const mode = optionalChoice(ctx.options.mode, "mode", ["source", "package"]);
   const packageBackend = optionalChoice(
-    ctx.options["package-backend"], "package backend", ["node", "damat"],
+    ctx.options["package-backend"],
+    "package backend",
+    ["node", "damat"],
   );
   const parsedTargets = targets(ctx.options.target);
   return {

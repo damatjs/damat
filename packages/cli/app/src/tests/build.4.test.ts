@@ -2,7 +2,13 @@
 // Bun.spawn dispatcher + the node:fs / load-env mocks BEFORE any command source
 // is evaluated, so `../build` snapshots the dispatcher/mock (not the real ones).
 // See setup.ts for the full rationale.
-import { state, copyCalls, mockReaddirSync, mockStatSync, resetMocks } from "./setup";
+import {
+  state,
+  copyCalls,
+  mockReaddirSync,
+  mockStatSync,
+  resetMocks,
+} from "./setup";
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { createContext } from "./helpers";
 import type { Command } from "@damatjs/cli";
@@ -57,5 +63,4 @@ describe("buildCommand.handler", () => {
     );
     expect(copyCalls.some((c) => c.src === "/project/src/app.ts")).toBe(true);
   });
-
 });

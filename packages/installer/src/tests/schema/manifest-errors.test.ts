@@ -9,9 +9,9 @@ describe("damat manifest validation", () => {
   });
 
   test("rejects unknown and executable-looking fields", () => {
-    expect(() => parseDamatManifest({ ...base, postinstall: "run.sh" })).toThrow(
-      "unknown field: postinstall",
-    );
+    expect(() =>
+      parseDamatManifest({ ...base, postinstall: "run.sh" }),
+    ).toThrow("unknown field: postinstall");
     expect(() =>
       parseDamatManifest({ ...base, install: { hooks: { add: "run.sh" } } }),
     ).toThrow("unknown field: hooks");

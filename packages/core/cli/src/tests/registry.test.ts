@@ -47,9 +47,9 @@ describe("CommandRegistry", () => {
     expect(() => registry.register(command("build"))).toThrow(
       "command already registered",
     );
-    expect(() => registry.register(command("test", { aliases: ["b"] }))).toThrow(
-      "alias 'b' already registered",
-    );
+    expect(() =>
+      registry.register(command("test", { aliases: ["b"] })),
+    ).toThrow("alias 'b' already registered");
   });
 
   test("clear removes every registration", () => {

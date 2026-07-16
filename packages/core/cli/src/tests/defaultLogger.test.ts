@@ -36,12 +36,7 @@ describe("DefaultCliLogger", () => {
     logger.error("detailed", error, context);
 
     expect(output).toHaveBeenNthCalledWith(1, "plain");
-    expect(output).toHaveBeenNthCalledWith(
-      2,
-      "detailed",
-      error,
-      context,
-    );
+    expect(output).toHaveBeenNthCalledWith(2, "detailed", error, context);
     output.mockRestore();
   });
 });

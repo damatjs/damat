@@ -5,7 +5,6 @@ registerReset(resetContext);
 import { fsState, writeCalls, describe, it, expect } from "./context";
 
 describe("readModuleConfigEntry", () => {
-
   it("round-trips what registerModuleInConfig writes", async () => {
     fsState.existsMap = { "/app/damat.config.ts": true };
     fsState.readFileMap = {

@@ -12,9 +12,15 @@ describe("runInstallerCommand", () => {
         stderr: new Response("err").body!,
       };
     };
-    const result = await runInstallerCommand({
-      command: "bun", args: ["add", "pkg"], cwd: "/app", env: { A: "1" },
-    }, spawn);
+    const result = await runInstallerCommand(
+      {
+        command: "bun",
+        args: ["add", "pkg"],
+        cwd: "/app",
+        env: { A: "1" },
+      },
+      spawn,
+    );
     expect(result).toEqual({ exitCode: 3, stdout: "out", stderr: "err" });
     expect(received).toMatchObject({
       command: ["bun", "add", "pkg"],

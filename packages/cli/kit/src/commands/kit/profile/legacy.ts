@@ -15,7 +15,10 @@ export function normalizeLegacyKit(legacy: LegacyKit): DamatManifest {
   const provides = Object.fromEntries(
     mappings.map((mapping, index) => [
       index === 0 ? "files" : `files-${index + 1}`,
-      { from: mapping.from, fallbackTo: mapping.to } satisfies ProvidedCapability,
+      {
+        from: mapping.from,
+        fallbackTo: mapping.to,
+      } satisfies ProvidedCapability,
     ]),
   );
   if (legacy.fallback)

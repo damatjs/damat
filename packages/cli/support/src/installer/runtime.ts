@@ -22,7 +22,10 @@ export function createInstallerPorts(_ctx: CommandContext): AcquisitionPorts {
 export function createInstallerRuntime(ctx: CommandContext): InstallerRuntime {
   const manager = ctx.options["package-manager"];
   const packageManager =
-    manager === "bun" || manager === "npm" || manager === "pnpm" || manager === "yarn"
+    manager === "bun" ||
+    manager === "npm" ||
+    manager === "pnpm" ||
+    manager === "yarn"
       ? manager
       : undefined;
   return {

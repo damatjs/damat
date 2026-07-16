@@ -5,7 +5,9 @@ import { createRuntimeFixture } from "./runtimeFixture";
 
 test("runCli returns a result without terminating its host", async () => {
   const fixture = createRuntimeFixture(["build"]);
-  const exit = spyOn(process, "exit").mockImplementation(() => undefined as never);
+  const exit = spyOn(process, "exit").mockImplementation(
+    () => undefined as never,
+  );
   const config: CliDefinition = {
     name: "cli",
     version: "1.0.0",

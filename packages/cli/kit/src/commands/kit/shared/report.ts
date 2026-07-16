@@ -12,8 +12,9 @@ export function reportKitPlan(
     operations: plan.operations.length,
   });
   plan.warnings.forEach((warning) => ctx.logger.warn(warning));
-  const instructions = plan.action === "remove"
-    ? provider?.install?.instructions?.remove
-    : provider?.install?.instructions?.add;
+  const instructions =
+    plan.action === "remove"
+      ? provider?.install?.instructions?.remove
+      : provider?.install?.instructions?.add;
   instructions?.forEach((instruction) => ctx.logger.info(instruction));
 }

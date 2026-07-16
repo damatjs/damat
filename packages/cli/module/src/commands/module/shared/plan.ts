@@ -1,6 +1,9 @@
 import type { CommandContext } from "@damatjs/cli";
 import {
-  createInstallPlan, createUpdatePlan, readInstallerLock, type OriginRequest,
+  createInstallPlan,
+  createUpdatePlan,
+  readInstallerLock,
+  type OriginRequest,
 } from "@damatjs/installer";
 import { resolveModuleInstall } from "./resolve";
 
@@ -40,8 +43,7 @@ export async function buildModuleInstallPlan(
     experimentalPackage: Boolean(ctx.options["experimental-package"]),
     confirmModified: Boolean(ctx.options.yes),
   };
-  const plan = action === "update"
-    ? await deps.update(input)
-    : deps.install(input);
+  const plan =
+    action === "update" ? await deps.update(input) : deps.install(input);
   return { ...resolved, plan };
 }

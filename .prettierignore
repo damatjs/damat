@@ -1,0 +1,11 @@
+apps/docs
+apps/web
+apps/registry
+.superpowers
+**/dist
+**/.damat
+**/.next
+**/coverage
+**/.turbo
+**/node_modules
+**/logs

@@ -76,5 +76,4 @@ describe("buildCommand.handler", () => {
     expect(copyCalls).toHaveLength(0);
     expect(logger.success).not.toHaveBeenCalled();
   });
-
 });

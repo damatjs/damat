@@ -384,14 +384,14 @@ host wiring locations but never edits shared config, barrels, env, or call sites
 
 This is what makes the module installable and discoverable.
 
-| Field | Purpose |
-| --- | --- |
-| `schemaVersion`, `kind`, `name`, `version` | Universal identity. `kind` is `module`. |
-| `install.default` | Default mode; source is recommended. |
-| `install.provides` | Named capability paths copied by source mode. |
-| `install.packages` | Package dependencies required by the artifact. |
-| `install.instructions` | Advisory host wiring and cleanup guidance. |
-| `module` | Module paths, env, registry fields, and `pairsWith`. |
+| Field                                      | Purpose                                              |
+| ------------------------------------------ | ---------------------------------------------------- |
+| `schemaVersion`, `kind`, `name`, `version` | Universal identity. `kind` is `module`.              |
+| `install.default`                          | Default mode; source is recommended.                 |
+| `install.provides`                         | Named capability paths copied by source mode.        |
+| `install.packages`                         | Package dependencies required by the artifact.       |
+| `install.instructions`                     | Advisory host wiring and cleanup guidance.           |
+| `module`                                   | Module paths, env, registry fields, and `pairsWith`. |
 
 **Do not** add a `modules` (hard dependency) array unless it is genuinely
 unavoidable — a module should stay self-contained. To suggest a relationship, use
@@ -405,12 +405,12 @@ unavoidable — a module should stay self-contained. To suggest a relationship, 
   "version": "0.1.0",
   "install": {
     "default": "source",
-    "provides": { "module": { "from": "src/**" } }
+    "provides": { "module": { "from": "src/**" } },
   },
   "module": {
     "description": "Workspaces, teams, and memberships.",
-    "pairsWith": ["user"]
-  }
+    "pairsWith": ["user"],
+  },
 }
 ```
 

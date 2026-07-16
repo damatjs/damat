@@ -28,8 +28,9 @@ export async function buildKitInstallPlan(
     experimentalPackage: Boolean(ctx.options["experimental-package"]),
     confirmModified: Boolean(ctx.options.yes),
   };
-  const plan = action === "update"
-    ? await createUpdatePlan(input)
-    : createInstallPlan(input);
+  const plan =
+    action === "update"
+      ? await createUpdatePlan(input)
+      : createInstallPlan(input);
   return { ...resolved, plan };
 }

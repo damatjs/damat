@@ -26,10 +26,13 @@ export function loadModuleProfile(
 ): DamatManifest {
   if (io.exists(join(root, DAMAT_MANIFEST_FILENAME))) {
     const manifest = io.universal(root);
-    if (manifest.kind !== "module") throw new Error("damat.json kind must be module");
+    if (manifest.kind !== "module")
+      throw new Error("damat.json kind must be module");
     return manifest;
   }
-  const legacyRoot = io.exists(join(root, "module.json")) ? root : join(root, "src");
+  const legacyRoot = io.exists(join(root, "module.json"))
+    ? root
+    : join(root, "src");
   const prefix = legacyRoot === root ? "" : "src/";
   return normalizeLegacyModule(io.legacy(legacyRoot), prefix);
 }

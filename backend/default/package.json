@@ -14,9 +14,9 @@
     "test": "bun test",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix",
-    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src tests damat.config.ts",
+    "lint:fix": "oxlint --fix src tests damat.config.ts",
+    "check-types": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "engines": {

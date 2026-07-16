@@ -1,9 +1,4 @@
-import {
-  existsSync,
-  readFileSync,
-  readdirSync,
-  statSync,
-} from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { extname, relative, resolve } from "node:path";
 
 export interface LineViolation {
@@ -11,22 +6,16 @@ export interface LineViolation {
   lines: number;
 }
 
-const codeExtensions = new Set([
-  ".ts",
-  ".tsx",
-  ".js",
-  ".jsx",
-  ".mjs",
-  ".cjs",
-]);
+const codeExtensions = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
 const ignoredDirectories = new Set(["node_modules", "dist", ".git", ".turbo"]);
 
-export function findLineViolations(
-  paths: readonly string[],
-): LineViolation[] {
+export function findLineViolations(paths: readonly string[]): LineViolation[] {
   const files = paths.flatMap((path) => collectCodeFiles(resolve(path)));
   return files
-    .map((path) => ({ path: relative(process.cwd(), path), lines: count(path) }))
+    .map((path) => ({
+      path: relative(process.cwd(), path),
+      lines: count(path),
+    }))
     .filter((entry) => entry.lines > 100)
     .sort((left, right) => left.path.localeCompare(right.path));
 }

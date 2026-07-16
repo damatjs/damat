@@ -1,8 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-  DAMAT_MANIFEST_FILENAME,
-  parseDamatManifest,
-} from "../../index";
+import { DAMAT_MANIFEST_FILENAME, parseDamatManifest } from "../../index";
 
 describe("damat manifest", () => {
   test("parses a bidirectional provider and receiver", () => {
@@ -30,7 +27,11 @@ describe("damat manifest", () => {
 
   test("accepts an application receiver without install config", () => {
     expect(
-      parseDamatManifest({ schemaVersion: 1, kind: "application", name: "api" }),
+      parseDamatManifest({
+        schemaVersion: 1,
+        kind: "application",
+        name: "api",
+      }),
     ).toEqual({ schemaVersion: 1, kind: "application", name: "api" });
   });
 });

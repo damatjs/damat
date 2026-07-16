@@ -77,5 +77,4 @@ describe("buildCommand.handler — type-check gate", () => {
     expect(spawnCalls[0]!.cmd[0]).toBe("bun"); // the entry bundle, not `bunx tsc`
     expect(spawnCalls[0]!.cmd).toContain("/project/.damat/build-entry.ts");
   });
-
 });

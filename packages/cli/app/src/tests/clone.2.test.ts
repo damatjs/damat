@@ -66,5 +66,4 @@ describe("damat clone — validation", () => {
     expect(spawned()).toHaveLength(0);
     expect(spawnSyncCalls).toHaveLength(1);
   });
-
 });

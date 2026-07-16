@@ -11,17 +11,22 @@ describe("module plan construction", () => {
     const expected = plan();
     const install = mock(() => expected);
     const resolved = {
-      artifact: artifact(), provider: manifest(),
+      artifact: artifact(),
+      provider: manifest(),
       recipe: { schemaVersion: 1, id: "billing", kind: "module" },
       options: { mode: "source" as const, packageBackend: "damat" as const },
     };
     const result = await buildModuleInstallPlan(ctx, "/source", "add", {
-      resolve: mock(async () => resolved), install,
-      update: mock(async () => expected), readLock: mock(() => lock()),
+      resolve: mock(async () => resolved),
+      install,
+      update: mock(async () => expected),
+      readLock: mock(() => lock()),
     });
     expect(result.plan).toBe(expected);
     expect(install.mock.calls[0]?.[0]).toMatchObject({
-      mode: "source", packageBackend: "damat", confirmModified: true,
+      mode: "source",
+      packageBackend: "damat",
+      confirmModified: true,
       supportedPackageBackends: ["node", "damat"],
     });
   });
@@ -32,11 +37,18 @@ describe("module plan construction", () => {
     const update = mock(async () => expected);
     await buildModuleInstallPlan(ctx, request, "update", {
       resolve: mock(async () => ({
-        artifact: artifact(), provider: { ...manifest(), install: undefined },
-        recipe: { schemaVersion: 1, id: "billing", kind: "module" }, options: {},
-      })), install: mock(() => expected), update, readLock: mock(() => lock()),
+        artifact: artifact(),
+        provider: { ...manifest(), install: undefined },
+        recipe: { schemaVersion: 1, id: "billing", kind: "module" },
+        options: {},
+      })),
+      install: mock(() => expected),
+      update,
+      readLock: mock(() => lock()),
     });
-    expect(update.mock.calls[0]?.[0]).toMatchObject({ experimentalPackage: true });
+    expect(update.mock.calls[0]?.[0]).toMatchObject({
+      experimentalPackage: true,
+    });
   });
 });
 
@@ -61,7 +73,8 @@ describe("module plan reporting and execution", () => {
     const execute = mock(async () => {});
     const runtime = { now: () => "now" };
     await executeModulePlan(ctx, plan(), manifest(), {
-      execute: execute as never, runtime: mock(() => runtime as never),
+      execute: execute as never,
+      runtime: mock(() => runtime as never),
     });
     expect(execute).toHaveBeenCalledWith(expect.anything(), runtime);
   });

@@ -11,9 +11,23 @@ export const DAMAT_MANIFEST_FILENAME = "damat.json";
 const KINDS: DamatKind[] = ["application", "module", "kit", "package"];
 const NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const MODULE_KEYS = [
-  "entry", "models", "migrations", "routes", "workflows", "jobs", "events",
-  "pipelines", "links", "tests", "types", "env", "modules", "pairsWith",
-  "author", "registry", "description",
+  "entry",
+  "models",
+  "migrations",
+  "routes",
+  "workflows",
+  "jobs",
+  "events",
+  "pipelines",
+  "links",
+  "tests",
+  "types",
+  "env",
+  "modules",
+  "pairsWith",
+  "author",
+  "registry",
+  "description",
 ];
 
 function parseModule(value: unknown): Record<string, unknown> {
@@ -25,7 +39,13 @@ function parseModule(value: unknown): Record<string, unknown> {
 export function parseDamatManifest(input: unknown): DamatManifest {
   const record = assertRecord(input, "manifest");
   rejectUnknownKeys(record, [
-    "$schema", "schemaVersion", "kind", "name", "version", "install", "module",
+    "$schema",
+    "schemaVersion",
+    "kind",
+    "name",
+    "version",
+    "install",
+    "module",
   ]);
   if (record.schemaVersion !== 1)
     throw new TypeError("schemaVersion must be 1");
@@ -43,7 +63,9 @@ export function parseDamatManifest(input: unknown): DamatManifest {
     kind,
     name,
     ...(version && { version }),
-    ...(record.install !== undefined && { install: parseInstallProfile(record.install) }),
+    ...(record.install !== undefined && {
+      install: parseInstallProfile(record.install),
+    }),
     ...(record.module !== undefined && { module: parseModule(record.module) }),
   };
 }

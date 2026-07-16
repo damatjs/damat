@@ -1,6 +1,12 @@
 // setup.ts installs the process-global node:fs + node:child_process mocks and
 // MUST be imported before the source under test (see its header comment).
-import { state, writeCalls, spawnSyncCalls, mockSpawnSync, resetMocks } from "./setup";
+import {
+  state,
+  writeCalls,
+  spawnSyncCalls,
+  mockSpawnSync,
+  resetMocks,
+} from "./setup";
 import { describe, test, expect, beforeEach } from "bun:test";
 import { createCommand } from "../commands/create";
 import { createContext } from "./helpers";
@@ -83,5 +89,4 @@ describe("damat create — git/install flags and failures", () => {
       ),
     ).toBe(true);
   });
-
 });

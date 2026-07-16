@@ -4,8 +4,7 @@ import { moduleInstallOptions } from "../shared";
 
 export const moduleAddCommand: Command = {
   name: "add",
-  description:
-    "Install a module from registry, path, Git, npm, or tarball",
+  description: "Install a module from registry, path, Git, npm, or tarball",
   usage: "damat module add <source> [options]",
   examples: [
     "damat module add user-management            # registry ref (DAMAT_MODULE_REGISTRY)",

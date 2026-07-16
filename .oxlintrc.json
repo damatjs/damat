@@ -3,5 +3,20 @@
   "categories": {
     "correctness": "error"
   },
-  "ignorePatterns": ["**/dist/**", "**/.next/**", "**/node_modules/**", "**/*.generated.ts"]
+  "rules": {
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "ignoreRestSiblings": true,
+        "varsIgnorePattern": "^_"
+      }
+    ]
+  },
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/.next/**",
+    "**/node_modules/**",
+    "**/*.generated.ts"
+  ]
 }

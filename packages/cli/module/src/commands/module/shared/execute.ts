@@ -1,5 +1,9 @@
 import type { CommandContext } from "@damatjs/cli";
-import { executePlan, type DamatManifest, type InstallerPlan } from "@damatjs/installer";
+import {
+  executePlan,
+  type DamatManifest,
+  type InstallerPlan,
+} from "@damatjs/installer";
 import { createInstallerRuntime } from "@damatjs/cli-support";
 import { reportModulePlan } from "./report";
 

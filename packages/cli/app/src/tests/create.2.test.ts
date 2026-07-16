@@ -77,5 +77,4 @@ describe("damat create — scaffold", () => {
     await runCreate(["my-api"], { dir: "apps/backend" }).result;
     expect(written("/base/apps/backend/package.json")).toBeDefined();
   });
-
 });

@@ -174,9 +174,7 @@
           "type": "btree"
         },
         {
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         }
       ],
       "foreignKeys": [
@@ -189,9 +187,7 @@
             }
           ],
           "referencedTable": "users",
-          "referencedColumns": [
-            "id"
-          ],
+          "referencedColumns": ["id"],
           "indexed": true
         }
       ],
@@ -358,9 +354,7 @@
           "type": "btree"
         },
         {
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         }
       ],
       "foreignKeys": [
@@ -373,9 +367,7 @@
             }
           ],
           "referencedTable": "users",
-          "referencedColumns": [
-            "id"
-          ],
+          "referencedColumns": ["id"],
           "indexed": true
         }
       ],
@@ -477,24 +469,16 @@
       "from": "user",
       "to": "users",
       "type": "belongsTo",
-      "mappedBy": [
-        "user"
-      ],
-      "linkedBy": [
-        "user_id"
-      ]
+      "mappedBy": ["user"],
+      "linkedBy": ["user_id"]
     },
     {
       "fromTable": "accounts",
       "from": "user",
       "to": "users",
       "type": "belongsTo",
-      "mappedBy": [
-        "user"
-      ],
-      "linkedBy": [
-        "user_id"
-      ]
+      "mappedBy": ["user"],
+      "linkedBy": ["user_id"]
     },
     {
       "fromTable": "users",

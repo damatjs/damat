@@ -19,13 +19,19 @@ export function createModuleUpdateHandler(
 ): Command["handler"] {
   return async (ctx) => {
     const name = ctx.args[0];
-    const record = name ? deps.readLock(ctx.cwd).installations[name] : undefined;
+    const record = name
+      ? deps.readLock(ctx.cwd).installations[name]
+      : undefined;
     if (!record || record.kind !== "module") {
       ctx.logger.error(`module installation not found: ${name ?? ""}`);
       return { exitCode: 1 };
     }
     try {
-      const resolved = await deps.build(ctx, record.provenance.request, "update");
+      const resolved = await deps.build(
+        ctx,
+        record.provenance.request,
+        "update",
+      );
       try {
         await deps.execute(ctx, resolved.plan, resolved.provider);
       } finally {

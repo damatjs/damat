@@ -2,11 +2,16 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { CommandContext } from "@damatjs/cli";
 import {
-  createProfileRecipe, DAMAT_MANIFEST_FILENAME, readDamatManifest,
-  resolveArtifact, type OriginRequest,
+  createProfileRecipe,
+  DAMAT_MANIFEST_FILENAME,
+  readDamatManifest,
+  resolveArtifact,
+  type OriginRequest,
 } from "@damatjs/installer";
 import {
-  createInstallerPorts, installerOptions, originFromArgument,
+  createInstallerPorts,
+  installerOptions,
+  originFromArgument,
 } from "@damatjs/cli-support";
 import { loadModuleProfile } from "../profile";
 
@@ -22,10 +27,14 @@ export interface ResolveDependencies {
 }
 
 const dependencies: ResolveDependencies = {
-  resolve: resolveArtifact, origin: originFromArgument,
-  ports: createInstallerPorts, loadProfile: loadModuleProfile,
-  exists: existsSync, readManifest: readDamatManifest,
-  options: installerOptions, recipe: createProfileRecipe,
+  resolve: resolveArtifact,
+  origin: originFromArgument,
+  ports: createInstallerPorts,
+  loadProfile: loadModuleProfile,
+  exists: existsSync,
+  readManifest: readDamatManifest,
+  options: installerOptions,
+  recipe: createProfileRecipe,
 };
 
 export async function resolveModuleInstall(

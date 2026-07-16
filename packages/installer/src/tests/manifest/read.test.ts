@@ -12,16 +12,21 @@ function root(): string {
   return value;
 }
 
-afterEach(() => roots.splice(0).forEach((path) => rmSync(path, { recursive: true })));
+afterEach(() =>
+  roots.splice(0).forEach((path) => rmSync(path, { recursive: true })),
+);
 
 describe("readDamatManifest", () => {
   test("reads and validates damat.json", () => {
     const path = root();
-    writeFileSync(join(path, "damat.json"), JSON.stringify({
-      schemaVersion: 1,
-      kind: "kit",
-      name: "search",
-    }));
+    writeFileSync(
+      join(path, "damat.json"),
+      JSON.stringify({
+        schemaVersion: 1,
+        kind: "kit",
+        name: "search",
+      }),
+    );
     expect(readDamatManifest(path).name).toBe("search");
   });
 

@@ -1,7 +1,4 @@
-import type {
-  AcceptedCapability,
-  ProvidedCapability,
-} from "../types/manifest";
+import type { AcceptedCapability, ProvidedCapability } from "../types/manifest";
 import { assertRecord, rejectUnknownKeys, requiredString } from "./assert";
 import { assertSafeRelativePath } from "./path";
 
@@ -20,33 +17,49 @@ function safeDestination(value: string, name: string): string {
   return value;
 }
 
-export function parseProvides(value: unknown): Record<string, ProvidedCapability> {
+export function parseProvides(
+  value: unknown,
+): Record<string, ProvidedCapability> {
   const capabilities = assertRecord(value, "provides");
   return Object.fromEntries(
     Object.entries(capabilities).map(([name, input]) => {
       assertCapability(name);
       const record = assertRecord(input, `provides.${name}`);
       rejectUnknownKeys(record, ["from", "fallbackTo"]);
-      const from = assertSafeRelativePath(requiredString(record, "from"), "from");
+      const from = assertSafeRelativePath(
+        requiredString(record, "from"),
+        "from",
+      );
       const fallback = record.fallbackTo;
-      return [name, {
-        from,
-        ...(fallback !== undefined && {
-          fallbackTo: safeDestination(requiredString(record, "fallbackTo"), "fallbackTo"),
-        }),
-      }];
+      return [
+        name,
+        {
+          from,
+          ...(fallback !== undefined && {
+            fallbackTo: safeDestination(
+              requiredString(record, "fallbackTo"),
+              "fallbackTo",
+            ),
+          }),
+        },
+      ];
     }),
   );
 }
 
-export function parseAccepts(value: unknown): Record<string, AcceptedCapability> {
+export function parseAccepts(
+  value: unknown,
+): Record<string, AcceptedCapability> {
   const capabilities = assertRecord(value, "accepts");
   return Object.fromEntries(
     Object.entries(capabilities).map(([name, input]) => {
       assertCapability(name);
       const record = assertRecord(input, `accepts.${name}`);
       rejectUnknownKeys(record, ["to"]);
-      return [name, { to: safeDestination(requiredString(record, "to"), "to") }];
+      return [
+        name,
+        { to: safeDestination(requiredString(record, "to"), "to") },
+      ];
     }),
   );
 }

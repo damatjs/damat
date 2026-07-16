@@ -9,8 +9,15 @@ import { parseProvides, parseAccepts } from "./capabilities";
 import { parseInstall, parseUsageHints } from "./recipe-parts";
 
 const KEYS = [
-  "modes", "default", "packageBackends", "provides", "accepts", "ignore",
-  "packages", "usageHints", "instructions",
+  "modes",
+  "default",
+  "packageBackends",
+  "provides",
+  "accepts",
+  "ignore",
+  "packages",
+  "usageHints",
+  "instructions",
 ];
 
 function parseBackends(value: unknown): PackageBackend[] {
@@ -38,21 +45,34 @@ function parseInstructions(value: unknown): InstallInstructions {
 export function parseInstallProfile(value: unknown): DamatInstallProfile {
   const record = assertRecord(value, "install");
   rejectUnknownKeys(record, KEYS);
-  const mode = record.modes === undefined
-    ? undefined
-    : parseInstall({ modes: record.modes, default: record.default });
+  const mode =
+    record.modes === undefined
+      ? undefined
+      : parseInstall({ modes: record.modes, default: record.default });
   if (record.default !== undefined && !mode)
     throw new TypeError("default requires modes");
   const profile: DamatInstallProfile = {
     ...(record.packageBackends !== undefined && {
       packageBackends: parseBackends(record.packageBackends),
     }),
-    ...(record.provides !== undefined && { provides: parseProvides(record.provides) }),
-    ...(record.accepts !== undefined && { accepts: parseAccepts(record.accepts) }),
-    ...(record.ignore !== undefined && { ignore: stringArray(record.ignore, "ignore") }),
-    ...(record.packages !== undefined && { packages: stringRecord(record.packages, "packages") }),
-    ...(record.usageHints !== undefined && { usageHints: parseUsageHints(record.usageHints) }),
-    ...(record.instructions !== undefined && { instructions: parseInstructions(record.instructions) }),
+    ...(record.provides !== undefined && {
+      provides: parseProvides(record.provides),
+    }),
+    ...(record.accepts !== undefined && {
+      accepts: parseAccepts(record.accepts),
+    }),
+    ...(record.ignore !== undefined && {
+      ignore: stringArray(record.ignore, "ignore"),
+    }),
+    ...(record.packages !== undefined && {
+      packages: stringRecord(record.packages, "packages"),
+    }),
+    ...(record.usageHints !== undefined && {
+      usageHints: parseUsageHints(record.usageHints),
+    }),
+    ...(record.instructions !== undefined && {
+      instructions: parseInstructions(record.instructions),
+    }),
   };
   if (mode) Object.assign(profile, mode);
   return profile;

@@ -1,6 +1,8 @@
 import { reportError, type Command } from "@damatjs/cli";
 import {
-  buildModuleInstallPlan, moduleInstallOptions, reportModulePlan,
+  buildModuleInstallPlan,
+  moduleInstallOptions,
+  reportModulePlan,
 } from "../shared";
 
 export interface ModulePlanDependencies {

@@ -101,12 +101,12 @@ export function readDamatManifest(root: string): DamatManifest;
 ```
 
 - [ ] Write schema tests for provider-only, receiver-only, combined, module
-  metadata, default/mode consistency, capability names, `{id}` destinations,
-  unsafe paths, unknown fields, and executable-field rejection.
+      metadata, default/mode consistency, capability names, `{id}` destinations,
+      unsafe paths, unknown fields, and executable-field rejection.
 - [ ] Run `bun test packages/installer/src/tests/schema/manifest.test.ts` and
-  verify RED on missing exports.
+      verify RED on missing exports.
 - [ ] Implement the types and small schema helpers. Reuse existing assertion,
-  safe-path, mode, package-map, and usage-hint parsers.
+      safe-path, mode, package-map, and usage-hint parsers.
 - [ ] Run the schema test and verify GREEN.
 - [ ] Write read tests for missing, malformed, and valid `damat.json`.
 - [ ] Implement strict manifest reading and public exports.
@@ -152,7 +152,7 @@ export function createProfileRecipe(input: MatchProfilesInput): InstallRecipe;
 - [ ] Write RED tests proving override > receiver > fallback > named error.
 - [ ] Implement destination expansion with only `{id}` and safe-path validation.
 - [ ] Write RED tests converting matches, modes, ignore, packages, and usage
-  hints into one deterministic `InstallRecipe`.
+      hints into one deterministic `InstallRecipe`.
 - [ ] Implement conversion without framework-specific capability names.
 - [ ] Run `bun test packages/installer/src/tests/profile packages/installer/src/tests/recipe`.
 
@@ -199,10 +199,10 @@ For `package + node`, retain immutable package-manager operations. For
 manifest declares unresolved external runtime packages.
 
 - [ ] Write RED tests for source rejecting a backend, package requiring a
-  supported explicit backend, and no backend fallback.
+      supported explicit backend, and no backend fallback.
 - [ ] Add backend selection and lock/plan parsing.
 - [ ] Write RED tests for project-local Damat package writes, update, remove,
-  rollback, and self-contained validation.
+      rollback, and self-contained validation.
 - [ ] Implement Damat package operations by reusing transactional file writes.
 - [ ] Run `bun test packages/installer/src/tests/plan packages/installer/src/tests/operations packages/installer/src/tests/transaction`.
 
@@ -237,13 +237,13 @@ Origin parsing accepts local paths, registry refs, Git/GitHub sources, npm
 references, and tarball URLs without choosing install mode.
 
 - [ ] Write RED origin grammar tests, including ambiguous bare refs and explicit
-  `npm:` / `registry:` / `file:` forms.
+      `npm:` / `registry:` / `file:` forms.
 - [ ] Implement pure argument parsing and structured command/fetch ports.
 - [ ] Write RED runtime tests for dry-run, manager selection, script policy, and
-  logger forwarding.
+      logger forwarding.
 - [ ] Implement the runtime adapter and exports.
 - [ ] Run `bun test packages/cli/support/src/tests/installer` plus the package
-  build/lint/type gate.
+      build/lint/type gate.
 
 ### Task 5: Stable Kit commands on the shared installer
 
@@ -281,10 +281,10 @@ references, and tarball URLs without choosing install mode.
 
 - [ ] Add RED profile/init tests, then implement legacy conversion and scaffold.
 - [ ] Add RED add/plan tests, then replace copy and `damat-kits.json` recording
-  with `resolveArtifact`, `createProfileRecipe`, and installer plans.
+      with `resolveArtifact`, `createProfileRecipe`, and installer plans.
 - [ ] Add RED list/update/remove tests and implement them through the engine.
 - [ ] Delete superseded Kit source/copy/record/plan code only after its new
-  characterization cases pass.
+      characterization cases pass.
 - [ ] Run the full `@damatjs/cli-kit` gate and the installer integration suite.
 
 ### Task 6: Module manifest and stable Module commands
@@ -319,15 +319,15 @@ references, and tarball URLs without choosing install mode.
 - List reads `damat.lock.json`, not directories or config provenance.
 
 - [ ] Add RED universal/legacy manifest parity tests, split the 100-line type
-  file, and implement normalization.
+      file, and implement normalization.
 - [ ] Add RED source plan tests covering every Damat capability and two receiver
-  layouts; implement the Damat profile.
+      layouts; implement the Damat profile.
 - [ ] Add RED byte-preservation tests for all shared integration files.
 - [ ] Replace Module handlers with generic plan/execute/report units.
 - [ ] Remove mutation helpers only after no command imports them and legacy
-  characterization coverage has migrated.
+      characterization coverage has migrated.
 - [ ] Run `bun test packages/module packages/cli/module/src/tests` and package
-  build/lint/type gates.
+      build/lint/type gates.
 
 ### Task 7: Alpha package resolution, scaffolds, and publish removal
 
@@ -350,9 +350,7 @@ references, and tarball URLs without choosing install mode.
 
 ```ts
 export type ModuleResolveLocation =
-  | string
-  | { type: "package"; name: string }
-  | { type: "damat"; path: string };
+  string | { type: "package"; name: string } | { type: "damat"; path: string };
 
 export function resolveModuleImport(
   location: ModuleResolveLocation,
@@ -367,9 +365,9 @@ through the app's package context. Damat locations must remain inside
 - [ ] Write RED path/package/Damat resolution and traversal tests.
 - [ ] Implement location parsing/import resolution in a focused file.
 - [ ] Add RED app/module scaffold tests for valid `damat.json` and required
-  directories; implement templates.
+      directories; implement templates.
 - [ ] Add RED capability tests proving `publish` is absent, then remove its
-  command, gateway, archive, metadata, validation, and tests.
+      command, gateway, archive, metadata, validation, and tests.
 - [ ] Run framework, CLI app, and CLI module gates.
 
 ### Task 8: Migration docs, release records, parity, and final gate
@@ -384,16 +382,16 @@ through the app's package context. Damat locations must remain inside
   `packages/installer/src/tests/integration/profiles/`.
 
 - [ ] Add parity fixtures proving Kit and Module source installs resolve the
-  same provider into two receiver layouts with exact rollback.
+      same provider into two receiver layouts with exact rollback.
 - [ ] Add alpha package parity for one self-contained module through Node and
-  Damat locations.
+      Damat locations.
 - [ ] Update living docs as current behavior only; put legacy migration and
-  alpha warnings in release notes and the dedicated migration section.
+      alpha warnings in release notes and the dedicated migration section.
 - [ ] Run focused package build/test/lint/type checks for Installer, CLI Support,
-  CLI Kit, Module, CLI Module, CLI App, and Framework.
+      CLI Kit, Module, CLI Module, CLI App, and Framework.
 - [ ] Run `bun run check:lines`, `bun run build`, `bun run test`,
-  `bun run check-types`, package dry-runs, and `git diff --check`.
+      `bun run check-types`, package dry-runs, and `git diff --check`.
 - [ ] Record any unrelated repository-wide lint failure separately; do not edit
-  unrelated packages to hide it.
+      unrelated packages to hide it.
 - [ ] Report Phase 4 with test counts, coverage, package-mode alpha limits, and
-  the exact uncommitted status. Do not commit or push.
+      the exact uncommitted status. Do not commit or push.

@@ -15,8 +15,17 @@ describe("backend receiver manifest", () => {
       name: "my-api",
     });
     expect(Object.keys(manifest.install.accepts)).toEqual([
-      "module", "routes", "workflows", "jobs", "events", "pipelines",
-      "links", "tests", "migrations", "models", "types",
+      "module",
+      "routes",
+      "workflows",
+      "jobs",
+      "events",
+      "pipelines",
+      "links",
+      "tests",
+      "migrations",
+      "models",
+      "types",
     ]);
   });
 });

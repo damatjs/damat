@@ -20,7 +20,12 @@ describe("loadConfig error and edge paths", () => {
     const configPath = join(testDir, "bad.config");
     writeFileSync(configPath, "x");
     const promise = loadConfig(
-      { file: "bad.config", load: async () => { throw new Error("exploded"); } },
+      {
+        file: "bad.config",
+        load: async () => {
+          throw new Error("exploded");
+        },
+      },
       testDir,
     );
     const error = (await promise.catch((value) => value)) as Error & {
@@ -50,13 +55,14 @@ describe("loadConfig error and edge paths", () => {
   });
 
   test("loads each request independently", async () => {
-    writeFileSync(join(testDir, "first.config.ts"), "export default { first: true };");
+    writeFileSync(
+      join(testDir, "first.config.ts"),
+      "export default { first: true };",
+    );
     expect(await loadConfig({ file: "first.config.ts" }, testDir)).toEqual({
       first: true,
     });
-    expect(
-      await loadConfig({ file: "missing.config.ts" }, testDir),
-    ).toBeNull();
+    expect(await loadConfig({ file: "missing.config.ts" }, testDir)).toBeNull();
   });
 
   test("awaits an async function export", async () => {

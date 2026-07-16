@@ -14,8 +14,9 @@ export function reportModulePlan(
   });
   plan.warnings.forEach((warning) => ctx.logger.warn(warning));
   const defaults = moduleInstructions(plan.installationId);
-  const instructions = plan.action === "remove"
-    ? provider?.install?.instructions?.remove ?? defaults.remove
-    : provider?.install?.instructions?.add ?? defaults.add;
+  const instructions =
+    plan.action === "remove"
+      ? (provider?.install?.instructions?.remove ?? defaults.remove)
+      : (provider?.install?.instructions?.add ?? defaults.add);
   instructions.forEach((instruction) => ctx.logger.info(instruction));
 }

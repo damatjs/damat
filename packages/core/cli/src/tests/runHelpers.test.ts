@@ -1,9 +1,7 @@
 import { describe, test, expect } from "bun:test";
 import { buildOptionFlag } from "../run/buildOption";
 import { resolveCommandName } from "../run/resolveCommand";
-import {
-  extractPositionalArgs,
-} from "../run/buildCommand";
+import { extractPositionalArgs } from "../run/buildCommand";
 
 describe("buildOptionFlag", () => {
   test("renders a long flag only when there is no alias", () => {

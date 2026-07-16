@@ -7,7 +7,10 @@ import { artifact, lock, manifest, plan, record } from "./fixtures/installer";
 
 function resolved(cleanup = mock(() => {})) {
   return {
-    artifact: artifact(cleanup), provider: manifest(), plan: plan("update"), options: {},
+    artifact: artifact(cleanup),
+    provider: manifest(),
+    plan: plan("update"),
+    options: {},
     recipe: { schemaVersion: 1 as const, id: "billing", kind: "module" },
   };
 }
@@ -18,9 +21,13 @@ describe("module list handler", () => {
     await createModuleListHandler(() => lock())(empty.ctx);
     expect(empty.logger.info).toHaveBeenCalledWith("No modules installed");
     const listed = createContext({});
-    await createModuleListHandler(() => lock(
-      record("module", "zeta"), record("kit", "ignored"), record("module", "alpha"),
-    ))(listed.ctx);
+    await createModuleListHandler(() =>
+      lock(
+        record("module", "zeta"),
+        record("kit", "ignored"),
+        record("module", "alpha"),
+      ),
+    )(listed.ctx);
     expect(listed.logger.info.mock.calls[0]?.[0]).toBe("alpha");
     expect(listed.logger.info.mock.calls[1]?.[0]).toBe("zeta");
   });
@@ -29,17 +36,24 @@ describe("module list handler", () => {
 describe("module remove handler", () => {
   test("handles missing names, success, and failures", async () => {
     const empty = createContext({});
-    expect((await createModuleRemoveHandler({} as never)(empty.ctx)).exitCode).toBe(1);
+    expect(
+      (await createModuleRemoveHandler({} as never)(empty.ctx)).exitCode,
+    ).toBe(1);
     const ready = createContext({ yes: true }, { args: ["billing"] });
     const create = mock(() => plan("remove"));
     const execute = mock(async () => {});
     const handler = createModuleRemoveHandler({
-      readLock: mock(() => lock(record())), create, execute,
+      readLock: mock(() => lock(record())),
+      create,
+      execute,
     } as never);
     expect((await handler(ready.ctx)).exitCode).toBe(0);
     expect(create.mock.calls[0]?.[0]).toHaveProperty("confirmModified", true);
     const failing = createModuleRemoveHandler({
-      readLock: mock(() => lock()), create: mock(() => { throw new Error("bad"); }),
+      readLock: mock(() => lock()),
+      create: mock(() => {
+        throw new Error("bad");
+      }),
       execute,
     } as never);
     expect((await failing(ready.ctx)).exitCode).toBe(1);
@@ -61,14 +75,19 @@ describe("module update handler", () => {
     const build = mock(async () => resolved(cleanup));
     const execute = mock(async () => {});
     const handler = createModuleUpdateHandler({
-      readLock: mock(() => lock(record())), build, execute,
+      readLock: mock(() => lock(record())),
+      build,
+      execute,
     } as never);
     expect((await handler(ready.ctx)).exitCode).toBe(0);
     expect(build.mock.calls[0]?.[2]).toBe("update");
     expect(cleanup).toHaveBeenCalledTimes(1);
     const failing = createModuleUpdateHandler({
       readLock: mock(() => lock(record())),
-      build: mock(async () => { throw new Error("bad"); }), execute,
+      build: mock(async () => {
+        throw new Error("bad");
+      }),
+      execute,
     } as never);
     expect((await failing(ready.ctx)).exitCode).toBe(1);
   });

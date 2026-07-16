@@ -85,9 +85,12 @@ describe("executeCommand", () => {
     const fixture = createRuntimeFixture();
     await executeCommand(
       { name: "x", description: "x", handler: async () => ({ exitCode: 0 }) },
-      "x", [], { verbose: true },
+      "x",
+      [],
+      { verbose: true },
       { ...base, verbose: { enabled: true, handler: "manual" } },
-      fixture.runtime, null,
+      fixture.runtime,
+      null,
     );
     expect(fixture.infos).toEqual([]);
     expect(fixture.debugs).toEqual(["Verbose mode enabled"]);
