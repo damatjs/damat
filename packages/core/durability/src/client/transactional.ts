@@ -1,4 +1,5 @@
 import type { DurabilityExecutor } from "./types";
+import { InactiveTransactionalExecutorError } from "../errors";
 
 const TRANSACTIONAL_EXECUTOR = Symbol.for(
   "damatjs.durability.transactionalExecutor",
@@ -11,11 +12,15 @@ type MarkedExecutor = DurabilityExecutor & {
 export function createTransactionalExecutor(
   target: DurabilityExecutor,
 ): DurabilityExecutor {
+  const state = { active: true };
   const executor: MarkedExecutor = {
-    query: (sql, params) => target.query(sql, params),
+    query: async (sql, params) => {
+      if (!state.active) throw new InactiveTransactionalExecutorError();
+      return target.query(sql, params);
+    },
   };
   Object.defineProperty(executor, TRANSACTIONAL_EXECUTOR, {
-    value: { active: true },
+    value: state,
     enumerable: false,
     configurable: false,
     writable: false,

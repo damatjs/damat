@@ -21,6 +21,13 @@ export class TransactionalExecutorRequiredError extends Error {
   }
 }
 
+export class InactiveTransactionalExecutorError extends Error {
+  constructor() {
+    super("The active transaction for this executor has ended");
+    this.name = "InactiveTransactionalExecutorError";
+  }
+}
+
 export interface MissingSystemMigration {
   owner: string;
   id: string;

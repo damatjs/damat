@@ -42,6 +42,10 @@ test("does not reactivate an old executor when the pool reuses its client", asyn
   await durability.transaction(async (second) => {
     expect(second).not.toBe(first);
     expect(isTransactionalExecutor(first!)).toBe(false);
+    await expect(first!.query("SELECT stale")).rejects.toThrow(
+      /active transaction/i,
+    );
+    expect(recording.sql).not.toContain("SELECT stale");
     await expect(
       withIdempotency(
         { scope: "reuse", key: "first", executor: first! },

@@ -11,7 +11,8 @@
 - Active transaction executor markers for composing idempotency with Damat
   transaction owners.
 - Fresh per-callback executor wrappers that remain invalid when an underlying
-  pool client or transaction manager is reused.
+  pool client or transaction manager is reused. Invalidated wrappers reject
+  direct queries before delegation.
 
 ## Changed
 

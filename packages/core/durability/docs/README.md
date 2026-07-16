@@ -21,6 +21,7 @@
 - A client transaction always releases its checked-out connection.
 - Only active Damat transaction callbacks expose fresh executor wrappers.
 - Wrappers are invalidated after both successful and failed callbacks.
+- Invalidated wrappers reject queries before delegating to their client.
 - Reusing an underlying client never reactivates an older wrapper.
 - `withIdempotency` rejects an unmarked supplied executor before querying.
 - An idempotency claim, operation, and completion share one transaction.

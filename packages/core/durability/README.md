@@ -61,8 +61,9 @@ Transaction-adapter authors can use `createTransactionalExecutor` to create a
 fresh query-delegating wrapper for each callback, then call
 `invalidateTransactionalExecutor` in `finally`. The wrapper is active only for
 that callback and stays invalid after both commit and rollback, even when the
-adapter reuses its underlying client. Application code should not create
-transaction wrappers itself.
+adapter reuses its underlying client. Queries through an invalidated wrapper
+fail before reaching that client. Application code should not create transaction
+wrappers itself.
 
 The guarantee covers database effects performed through the supplied executor.
 Remote providers must receive the same idempotency key; a local transaction
