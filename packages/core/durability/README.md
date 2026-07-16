@@ -72,26 +72,35 @@ cannot make an external side effect exactly once.
 
 ## Worker presence and controls
 
-`registerWorker`, `heartbeatWorker`, `stopWorker`, and `listWorkers` maintain an
-observational process registry. `listWorkers` calculates active, stale,
-stopping, and stopped states from heartbeat and shutdown timestamps. This data
-supports capacity views; it never authorizes work claims, which require fenced
-leases owned by the jobs or events package.
+`registerWorker`, `heartbeatWorker`, `markWorkerStopping`, `stopWorker`, and
+`listWorkers` maintain an observational process registry. Mark a process as
+stopping before drain begins, then call `stopWorker` after drain completes.
+Repeated shutdown calls preserve the first stopping and stopped timestamps.
+`listWorkers` calculates active, stale, stopping, and stopped states from
+heartbeat and shutdown timestamps. This data supports capacity views; it never
+authorizes work claims, which require fenced leases owned by jobs or events.
 
 `pauseWork` and `resumeWork` upsert the unique work-kind/scope control and append
-immutable actor-attributed activity in one transaction. Without an executor,
-the configured durability client opens that transaction. A supplied executor
-must be an active Damat transaction executor. Pausing prevents future claims
-but does not terminate work already running.
+immutable actor-attributed activity in one transaction. Activity identity
+records the serialized control-write order. Without an executor, the configured
+durability client opens that transaction. A supplied executor must be an active
+Damat transaction executor. Pausing prevents future claims but does not
+terminate work already running.
 
 ## Inspection primitives
 
-The package exports versioned opaque cursors containing a timestamp and UUID,
-progress sampling, visibility policies, aligned time buckets, UUID lease
-tokens, immutable key/path redaction, and newest-first bounded log retention.
-Cursor checksums detect malformed or modified cursor state; cursors are not an
-authentication boundary. Log limits report dropped counts and bytes so
-truncation remains visible without failing a handler.
+The package exports versioned opaque cursors containing a canonical ISO
+timestamp and UUID, progress sampling, visibility policies, aligned time
+buckets, UUID lease tokens, immutable key/path redaction, and chronological
+bounded log retention that keeps one contiguous newest suffix.
+
+`encodeCursor(position, signingKey)` and `decodeCursor(cursor, signingKey)`
+require the application to provide the same explicit HMAC key. Modified cursors
+and cursors signed by another key are rejected across processes. Cursor signing
+protects pagination state; it does not replace endpoint authentication. Log
+limits require finite nonnegative integer count and byte values and report
+dropped counts and bytes so truncation remains visible without failing a
+handler.
 
 ## System migrations
 

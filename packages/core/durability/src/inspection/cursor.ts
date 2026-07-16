@@ -1,53 +1,52 @@
+import {
+  signCursorPayload,
+  type CursorSigningKey,
+  verifyCursorSignature,
+} from "./cursorSigning";
+import { validateCursorPosition } from "./cursorValidation";
 import type { CursorPosition } from "./types";
 
 interface CursorData {
   v: number;
   t: string;
   i: string;
-  c: string;
 }
 
-function parseCursor(cursor: string): CursorData {
+function parseCursor(cursor: string, key: CursorSigningKey): CursorData {
+  const parts = cursor.split(".");
+  if (parts.length !== 2) throw new Error("Invalid cursor");
+  const [payload, signature] = parts as [string, string];
+  verifyCursorSignature(payload, signature, key);
   try {
-    const value = JSON.parse(Buffer.from(cursor, "base64url").toString());
-    if (!value || typeof value !== "object") throw new Error();
-    return value as CursorData;
+    const text = Buffer.from(payload, "base64url").toString();
+    const value = JSON.parse(text) as CursorData;
+    const canonical = Buffer.from(JSON.stringify(value)).toString("base64url");
+    if (canonical !== payload) throw new Error();
+    return value;
   } catch {
     throw new Error("Invalid cursor");
   }
 }
 
-export function encodeCursor(position: CursorPosition): string {
-  const data: CursorData = {
-    v: 1,
-    t: position.sortTimestamp,
-    i: position.id,
-    c: checksum(position),
-  };
-  return Buffer.from(JSON.stringify(data)).toString("base64url");
+export function encodeCursor(
+  position: CursorPosition,
+  key: CursorSigningKey,
+): string {
+  validateCursorPosition(position);
+  const data: CursorData = { v: 1, t: position.sortTimestamp, i: position.id };
+  const payload = Buffer.from(JSON.stringify(data)).toString("base64url");
+  return `${payload}.${signCursorPayload(payload, key)}`;
 }
 
-export function decodeCursor(cursor: string): CursorPosition {
-  const data = parseCursor(cursor);
+export function decodeCursor(
+  cursor: string,
+  key: CursorSigningKey,
+): CursorPosition {
+  const data = parseCursor(cursor, key);
   if (data.v !== 1) throw new Error("Unsupported cursor version");
-  if (data.c !== checksum({ sortTimestamp: data.t, id: data.i })) {
-    throw new Error("Invalid cursor");
-  }
-  const canonical = encodeCursor({ sortTimestamp: data.t, id: data.i });
-  if (canonical !== cursor) throw new Error("Invalid cursor");
-  if (Number.isNaN(Date.parse(data.t)) || !/^[0-9a-f-]{36}$/i.test(data.i)) {
-    throw new Error("Invalid cursor");
-  }
-  return { sortTimestamp: data.t, id: data.i };
-}
-
-function checksum(position: CursorPosition): string {
-  let hash = 2_166_136_261;
-  for (const character of `${position.sortTimestamp}\0${position.id}`) {
-    hash ^= character.charCodeAt(0);
-    hash = Math.imul(hash, 16_777_619);
-  }
-  return (hash >>> 0).toString(16).padStart(8, "0");
+  const position = { sortTimestamp: data.t, id: data.i };
+  validateCursorPosition(position);
+  return position;
 }
 
 export function compareCursorPositions(

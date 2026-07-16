@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import {
   heartbeatWorker,
   listWorkers,
+  markWorkerStopping,
   registerWorker,
   stopWorker,
 } from "../../src";
@@ -36,7 +37,7 @@ describe("worker repository", () => {
     });
   });
 
-  test("calculates stale state and records graceful stop", async () => {
+  test("calculates stale state and records graceful shutdown stages", async () => {
     const id = testId("worker");
     await registerWorker({
       id,
@@ -53,10 +54,20 @@ describe("worker repository", () => {
       now: new Date(Date.now() + 2_000),
     });
     expect(stale?.state).toBe("stale");
+    await markWorkerStopping({ id, executor: context.pool });
+    const [stopping] = await listWorkers({ executor: context.pool, ids: [id] });
+    expect(stopping?.state).toBe("stopping");
+    expect(stopping?.stoppedAt).toBeUndefined();
+    const firstStoppingAt = stopping?.stoppingAt;
+    await markWorkerStopping({ id, executor: context.pool });
     await stopWorker({ id, executor: context.pool });
     const [stopped] = await listWorkers({ executor: context.pool, ids: [id] });
     expect(stopped?.state).toBe("stopped");
-    expect(stopped?.stoppingAt).toBeInstanceOf(Date);
+    expect(stopped?.stoppingAt).toEqual(firstStoppingAt);
     expect(stopped?.stoppedAt).toBeInstanceOf(Date);
+    const firstStoppedAt = stopped?.stoppedAt;
+    await stopWorker({ id, executor: context.pool });
+    const [repeated] = await listWorkers({ executor: context.pool, ids: [id] });
+    expect(repeated?.stoppedAt).toEqual(firstStoppedAt);
   });
 });

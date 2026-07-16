@@ -45,7 +45,7 @@ export function mapControl(row: ControlRow): WorkControl {
     kind: row.work_kind,
     scope: row.scope,
     paused: row.paused,
-    ...(row.reason ? { reason: row.reason } : {}),
+    ...(row.reason !== null ? { reason: row.reason } : {}),
     actor: row.actor,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -58,7 +58,7 @@ export function mapActivity(row: ActivityRow): WorkControlActivity {
     kind: row.work_kind,
     scope: row.scope,
     action: row.action,
-    ...(row.reason ? { reason: row.reason } : {}),
+    ...(row.reason !== null ? { reason: row.reason } : {}),
     actor: row.actor,
     createdAt: row.created_at,
   };
@@ -68,8 +68,8 @@ export function mapMaintenance(row: MaintenanceRow): MaintenanceActivity {
   return {
     id: String(row.id),
     operation: row.operation,
-    ...(row.work_kind ? { kind: row.work_kind } : {}),
-    ...(row.scope ? { scope: row.scope } : {}),
+    ...(row.work_kind !== null ? { kind: row.work_kind } : {}),
+    ...(row.scope !== null ? { scope: row.scope } : {}),
     status: row.status,
     actor: row.actor,
     details: row.details,

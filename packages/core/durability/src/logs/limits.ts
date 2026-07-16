@@ -14,8 +14,13 @@ export function applyLogLimits(
   entries: WorkLogEntry[],
   limits: WorkLogLimits,
 ): LimitedWorkLogs {
-  if (limits.maxCount < 0 || limits.maxBytes < 0) {
-    throw new Error("Log limits cannot be negative");
+  if (
+    !Number.isSafeInteger(limits.maxCount) ||
+    !Number.isSafeInteger(limits.maxBytes) ||
+    limits.maxCount < 0 ||
+    limits.maxBytes < 0
+  ) {
+    throw new Error("Log limits must be finite nonnegative integers");
   }
   const retained: WorkLogEntry[] = [];
   let retainedBytes = 0;

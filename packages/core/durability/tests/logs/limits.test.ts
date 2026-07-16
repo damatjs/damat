@@ -30,3 +30,14 @@ test("log limits retain newest entries within count and bytes", () => {
   expect(applyLogLimits(gapped, { maxCount: 10, maxBytes: 100 }).entries)
     .toEqual([entries[2]]);
 });
+
+test("log limits require finite nonnegative integers", () => {
+  for (const invalid of [-1, 0.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+    expect(() =>
+      applyLogLimits(entries, { maxCount: invalid, maxBytes: 100 }),
+    ).toThrow("finite nonnegative integers");
+    expect(() =>
+      applyLogLimits(entries, { maxCount: 10, maxBytes: invalid }),
+    ).toThrow("finite nonnegative integers");
+  }
+});

@@ -1,28 +1,61 @@
+import { createHmac } from "node:crypto";
 import { describe, expect, test } from "bun:test";
 import { compareCursorPositions, decodeCursor, encodeCursor } from "../../src";
 
+const key = "cursor-test-key";
+const wrongKey = "wrong-cursor-key";
 const position = {
   sortTimestamp: "2026-07-16T10:00:00.000Z",
   id: "9ccbb858-1055-440d-99bd-8babbf1fb891",
 };
 
+function sign(payload: string, signingKey = key): string {
+  return createHmac("sha256", signingKey).update(payload).digest("base64url");
+}
+
+function signedData(data: object): string {
+  const payload = Buffer.from(JSON.stringify(data)).toString("base64url");
+  return `${payload}.${sign(payload)}`;
+}
+
 describe("inspection cursor", () => {
-  test("round trips a stable timestamp and UUID position", () => {
-    expect(decodeCursor(encodeCursor(position))).toEqual(position);
-    expect(encodeCursor(position)).toBe(encodeCursor(position));
+  test("round trips stable signed timestamp and UUID state", () => {
+    const cursor = encodeCursor(position, key);
+    expect(decodeCursor(cursor, key)).toEqual(position);
+    expect(cursor).toBe(encodeCursor(position, key));
   });
 
-  test("rejects tampering and unknown versions", () => {
-    const cursor = encodeCursor(position);
-    expect(() => decodeCursor(`${cursor}x`)).toThrow("Invalid cursor");
-    const changed = JSON.parse(Buffer.from(cursor, "base64url").toString());
-    changed.t = "2026-07-17T10:00:00.000Z";
-    const tampered = Buffer.from(JSON.stringify(changed)).toString("base64url");
-    expect(() => decodeCursor(tampered)).toThrow("Invalid cursor");
-    const unknown = Buffer.from(
-      JSON.stringify({ v: 2, t: position.sortTimestamp, i: position.id }),
-    ).toString("base64url");
-    expect(() => decodeCursor(unknown)).toThrow("Unsupported cursor version");
+  test("rejects altered payloads, signatures, and wrong keys", () => {
+    const cursor = encodeCursor(position, key);
+    const [payload, signature] = cursor.split(".");
+    const data = JSON.parse(Buffer.from(payload!, "base64url").toString());
+    data.t = "2026-07-17T10:00:00.000Z";
+    const altered = Buffer.from(JSON.stringify(data)).toString("base64url");
+    expect(() => decodeCursor(`${altered}.${signature}`, key)).toThrow(
+      "Invalid cursor signature",
+    );
+    expect(() => decodeCursor(`${payload}.${signature}x`, key)).toThrow();
+    expect(() => decodeCursor(cursor, wrongKey)).toThrow(
+      "Invalid cursor signature",
+    );
+  });
+
+  test("rejects unknown versions and noncanonical positions", () => {
+    expect(() =>
+      decodeCursor(
+        signedData({ v: 2, t: position.sortTimestamp, i: position.id }),
+        key,
+      ),
+    ).toThrow("Unsupported cursor version");
+    expect(() =>
+      encodeCursor({ ...position, sortTimestamp: "July 16, 2026" }, key),
+    ).toThrow("canonical ISO timestamp");
+    expect(() =>
+      encodeCursor({ ...position, id: "-".repeat(36) }, key),
+    ).toThrow("canonical UUID");
+    expect(() =>
+      encodeCursor({ ...position, id: position.id.toUpperCase() }, key),
+    ).toThrow("canonical UUID");
   });
 
   test("orders equal timestamps by UUID for stable pagination", () => {

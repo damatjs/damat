@@ -15,7 +15,7 @@ export async function listWorkControlActivity(
   const result = await executor.query<ActivityRow>(
     `SELECT * FROM "_damat_work_control_activity"
      WHERE "work_kind" = $1 AND "scope" = $2
-     ORDER BY "created_at" ASC, "id" ASC LIMIT $3`,
+     ORDER BY "id" ASC LIMIT $3`,
     [options.kind, options.scope, options.limit ?? 100],
   );
   return result.rows.map(mapActivity);

@@ -23,8 +23,20 @@ export async function stopWorker(
   const result = await workerExecutor(options.executor).query<QueryResultRow>(
     `UPDATE "_damat_workers" SET
        "stopping_at" = COALESCE("stopping_at", NOW()),
-       "stopped_at" = NOW(),
+       "stopped_at" = COALESCE("stopped_at", NOW()),
        "in_flight" = 0
+     WHERE "id" = $1`,
+    [options.id],
+  );
+  if (result.rowCount !== 1) throw new Error(`Worker not found: ${options.id}`);
+}
+
+export async function markWorkerStopping(
+  options: WorkerIdentityOptions,
+): Promise<void> {
+  const result = await workerExecutor(options.executor).query<QueryResultRow>(
+    `UPDATE "_damat_workers" SET
+       "stopping_at" = COALESCE("stopping_at", NOW())
      WHERE "id" = $1`,
     [options.id],
   );
