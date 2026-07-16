@@ -37,7 +37,6 @@
   "author": "Abel Lamesgen",
   "dependencies": {
     "@damatjs/cli": "workspace:*",
-    "@damatjs/codegen": "workspace:*",
     "@damatjs/deps": "workspace:*",
     "@damatjs/logger": "workspace:*",
     "@damatjs/installer": "workspace:*",
@@ -45,6 +44,7 @@
     "@damatjs/orm-processor": "workspace:*",
     "@damatjs/orm-model": "workspace:*",
     "@damatjs/orm-type": "workspace:*",
+    "@damatjs/schema-codegen": "workspace:*",
     "@damatjs/link": "workspace:*"
   },
   "devDependencies": {

@@ -1,5 +1,4 @@
 import { mock } from "bun:test";
-import * as realCodegen from "@damatjs/codegen";
 import * as realModule from "@damatjs/module";
 import { resetMocks } from "../setup";
 
@@ -90,8 +89,4 @@ mock.module("@damatjs/module", () => ({
   parseModuleRef: () => mm.parseRef,
   formatModuleRef: (ref: { name: string }) => ref.name,
   resolveRegistryEntry: async () => mm.registryRecord,
-}));
-mock.module("@damatjs/codegen", () => ({
-  ...realCodegen,
-  generateBarrels: () => ({ written: [] }),
 }));

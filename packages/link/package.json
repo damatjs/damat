@@ -40,10 +40,10 @@
   },
   "devDependencies": {
     "@damatjs/typescript-config": "workspace:*",
-    "@damatjs/codegen": "workspace:*",
     "@damatjs/orm-connector": "workspace:*",
     "@damatjs/orm-migration": "workspace:*",
     "@damatjs/orm-processor": "workspace:*",
+    "@damatjs/schema-codegen": "workspace:*",
     "@types/bun": "1.3.9",
     "tsc-alias": "^1.8.16",
     "typescript": "^5.9.3"

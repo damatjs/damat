@@ -24,7 +24,6 @@
   "dependencies": {
     "@damatjs/cli": "workspace:*",
     "@damatjs/cli-support": "workspace:*",
-    "@damatjs/codegen": "workspace:*",
     "@damatjs/framework": "workspace:*",
     "@damatjs/installer": "workspace:*",
     "@damatjs/load-env": "workspace:*",

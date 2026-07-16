@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { type Command, reportError } from "@damatjs/cli";
-import { generateBarrels } from "@damatjs/codegen";
+import { generateBarrels } from "@damatjs/module-generator";
 import { asToolingLogger } from "../../toolingLogger";
 
 /**

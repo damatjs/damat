@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { runCodegen } from "@damatjs/codegen";
+import { runCodegen } from "@damatjs/module-generator";
 import { asToolingLogger } from "../../toolingLogger";
 import { augmentWithLinks } from "./augmentWithLinks";
 import { codegenPaths } from "./modulePaths";
@@ -14,7 +14,7 @@ import { reportGeneration } from "./reportGeneration";
 /**
  * App-mode codegen for ONE module: generate its row types + zod + registry,
  * weave in cross-module link fields, and scaffold the CRUD slice. The actual
- * generation is the shared, agnostic `@damatjs/codegen` core; resolution
+ * generation is the shared `@damatjs/module-generator` core; resolution
  * (paths, links) lives here.
  *
  * Throws only if generation itself fails; eligibility (link / missing models)

@@ -2,7 +2,7 @@ import { describe, it, expect, mock, beforeEach } from "bun:test";
 import { resetMocks, state as fsState } from "../setup";
 import { createContext } from "../helpers";
 
-import * as realCodegen from "@damatjs/codegen";
+import * as realModuleGenerator from "@damatjs/module-generator";
 import * as realOrmCli from "@damatjs/orm-cli";
 
 type ModuleEntry = { resolve: string; kind?: string };
@@ -31,8 +31,8 @@ mock.module("@damatjs/orm-cli", () => ({
     return cg.modules;
   },
 }));
-mock.module("@damatjs/codegen", () => ({
-  ...realCodegen,
+mock.module("@damatjs/module-generator", () => ({
+  ...realModuleGenerator,
   runCodegen: async (opts: any) => {
     cg.runArgs = opts;
     cg.runArgsList.push(opts);
@@ -86,7 +86,7 @@ export {
   beforeEach,
   fsState,
   createContext,
-  realCodegen,
+  realModuleGenerator,
   realOrmCli,
   cg,
   getCmd,

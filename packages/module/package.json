@@ -35,7 +35,7 @@
     "@damatjs/deps": "workspace:*",
     "@damatjs/framework": "workspace:*",
     "@damatjs/logger": "workspace:*",
-    "@damatjs/codegen": "workspace:*",
+    "@damatjs/module-generator": "workspace:*",
     "@damatjs/orm-connector": "workspace:*",
     "@damatjs/orm-migration": "workspace:*",
     "@damatjs/orm-model": "workspace:*",

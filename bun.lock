@@ -197,8 +197,8 @@
       "version": "0.6.0",
       "dependencies": {
         "@damatjs/cli": "workspace:*",
-        "@damatjs/codegen": "workspace:*",
         "@damatjs/link": "workspace:*",
+        "@damatjs/module-generator": "workspace:*",
         "@damatjs/orm-cli": "workspace:*",
         "@damatjs/orm-migration": "workspace:*",
       },
@@ -248,7 +248,6 @@
       "dependencies": {
         "@damatjs/cli": "workspace:*",
         "@damatjs/cli-support": "workspace:*",
-        "@damatjs/codegen": "workspace:*",
         "@damatjs/framework": "workspace:*",
         "@damatjs/installer": "workspace:*",
         "@damatjs/load-env": "workspace:*",
@@ -448,10 +447,10 @@
         "@damatjs/services": "workspace:*",
       },
       "devDependencies": {
-        "@damatjs/codegen": "workspace:*",
         "@damatjs/orm-connector": "workspace:*",
         "@damatjs/orm-migration": "workspace:*",
         "@damatjs/orm-processor": "workspace:*",
+        "@damatjs/schema-codegen": "workspace:*",
         "@damatjs/typescript-config": "workspace:*",
         "@types/bun": "1.3.9",
         "tsc-alias": "^1.8.16",
@@ -472,11 +471,11 @@
       "name": "@damatjs/module",
       "version": "0.6.0",
       "dependencies": {
-        "@damatjs/codegen": "workspace:*",
         "@damatjs/deps": "workspace:*",
         "@damatjs/framework": "workspace:*",
         "@damatjs/installer": "workspace:*",
         "@damatjs/logger": "workspace:*",
+        "@damatjs/module-generator": "workspace:*",
         "@damatjs/orm-connector": "workspace:*",
         "@damatjs/orm-migration": "workspace:*",
         "@damatjs/orm-model": "workspace:*",
@@ -515,7 +514,6 @@
       },
       "dependencies": {
         "@damatjs/cli": "workspace:*",
-        "@damatjs/codegen": "workspace:*",
         "@damatjs/deps": "workspace:*",
         "@damatjs/installer": "workspace:*",
         "@damatjs/link": "workspace:*",
@@ -524,6 +522,7 @@
         "@damatjs/orm-model": "workspace:*",
         "@damatjs/orm-processor": "workspace:*",
         "@damatjs/orm-type": "workspace:*",
+        "@damatjs/schema-codegen": "workspace:*",
       },
       "devDependencies": {
         "@damatjs/typescript-config": "workspace:*",

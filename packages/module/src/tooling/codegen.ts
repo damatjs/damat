@@ -1,5 +1,8 @@
 import { join } from "node:path";
-import { runCodegen, type RunModuleCodegenResult } from "@damatjs/codegen";
+import {
+  runCodegen,
+  type RunModuleCodegenResult,
+} from "@damatjs/module-generator";
 import type { ILogger } from "@damatjs/logger";
 import { readModuleManifest } from "../manifest/read";
 import { DEFAULT_MODULE_PATHS } from "../manifest/types";
@@ -12,7 +15,7 @@ export type ModuleCodegenResult = RunModuleCodegenResult;
  *
  * This is a thin manifest resolver: it reads the module manifest to find its
  * paths, then hands **resolved inputs** to the shared, agnostic
- * `@damatjs/codegen` core. Both trees are **flat by table** here
+ * `@damatjs/module-generator` core. Both trees are **flat by table** here
  * (`api/routes/<resource>` and `workflows/<resource>`) — a module is a
  * single-purpose blade and owns no module-id namespace. `damat module add` adds
  * the `<moduleId>/` segment when it relocates these into a host app

@@ -1,6 +1,6 @@
 import { describe, test, expect } from "bun:test";
 import { toModuleSchema } from "@damatjs/orm-model";
-import { generateFilesMap } from "@damatjs/codegen";
+import { generateFilesMap } from "@damatjs/schema-codegen";
 import { defineLink } from "../defineLink";
 import { collectLinkModels } from "../registry";
 
