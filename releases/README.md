@@ -73,6 +73,7 @@ snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
 - [`orm-migration`](./orm-migration/) — `@damatjs/orm-migration`
 - [`orm-processor`](./orm-processor/) — `@damatjs/orm-processor`
 - [`codegen`](./codegen/) — `@damatjs/codegen`
+- [`schema-codegen`](./schema-codegen/) — `@damatjs/schema-codegen`
 - [`orm-core`](./orm-core/) — `@damatjs/orm-core`
 - [`orm-type`](./orm-type/) — `@damatjs/orm-type`
 

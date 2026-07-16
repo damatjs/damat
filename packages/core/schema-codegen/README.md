@@ -41,6 +41,12 @@ const files = generateFilesMap(schema);
 - `generateTypes` and `generateZodTypes` render combined module source.
 - `generateTableFile` and `generateZodFile` render one table.
 - `generateFilesMap` returns the file-per-table layout.
+- `generateEnumTypes`, `generateEnumsFile`, and `getTableEnums` render enums.
+- `generateRowInterface`, `generateNewType`, and `generateUpdateType` render
+  TypeScript fragments.
+- `generateNewZodSchema`, `generateUpdateZodSchema`,
+  `generateQueryZodSchema`, `generateIdZodSchema`, and
+  `generateParamsZodSchema` render focused Zod fragments.
 - `buildRelationMap` and `relationFields` render loaded relation fields.
 - `GenerationLogger` is the optional structural `debug`/`info` logging surface.
 
