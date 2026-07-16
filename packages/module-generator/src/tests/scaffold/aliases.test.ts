@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import * as moduleGenerator from "../../index";
 import { generateCrudScaffold } from "../../scaffold";
 import {
   tableToFileNameCodeGen,
@@ -65,4 +66,15 @@ test("scaffold naming preserves table words without pluralization", () => {
   expect(toCamelCaseCodeGen("order-line-items")).toBe("orderLineItems");
   expect(toCamelCaseCodeGen("multi word name")).toBe("multiWordName");
   expect(toCamelCaseCodeGen("accounts")).toBe("accounts");
+});
+
+test("keeps scaffold orchestration helpers internal", () => {
+  const internal = [
+    "generateTableScaffold",
+    "scaffoldImports",
+    "writeOnce",
+  ] as const;
+  for (const name of internal) {
+    expect(name in moduleGenerator).toBe(false);
+  }
 });
