@@ -41,6 +41,7 @@ test("stop absorbs an in-flight poll rejection", async () => {
 test("stop absorbs an in-flight registry heartbeat rejection", async () => {
   const heartbeat = deferred<void>();
   let heartbeatStarted = false;
+  let stoppedPersisted = false;
   const worker = createInternalJobWorker(
     workerOptions(),
     dependencies({
@@ -48,11 +49,15 @@ test("stop absorbs an in-flight registry heartbeat rejection", async () => {
         heartbeatStarted = true;
         return heartbeat.promise;
       },
+      stop: async () => {
+        stoppedPersisted = true;
+      },
     }) as never,
   );
   worker.start();
   await waitUntil(() => heartbeatStarted);
   const stopping = worker.stop();
+  await waitUntil(() => stoppedPersisted);
   heartbeat.reject(new Error("heartbeat stopped"));
   await stopping;
 });

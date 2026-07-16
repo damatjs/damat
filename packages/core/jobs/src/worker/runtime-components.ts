@@ -52,13 +52,12 @@ export class WorkerRuntimeComponents {
     this.wakeup.start();
   }
 
-  stop(): Promise<void[]> {
-    return Promise.all([
-      this.wakeup.stop(),
-      this.poll.stop(),
-      this.heartbeat.stop(),
-      this.reconciler.stop(),
-    ]);
+  stopClaims(): Promise<void[]> {
+    return Promise.all([this.wakeup.stop(), this.poll.stop()]);
+  }
+
+  stopMaintenance(): Promise<void[]> {
+    return Promise.all([this.heartbeat.stop(), this.reconciler.stop()]);
   }
 
   private startClaim(

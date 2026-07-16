@@ -61,10 +61,17 @@ export class JobWorkerRuntime {
   }
 
   private async stopInternal(graceMs: number): Promise<void> {
-    await this.components.stop();
+    await this.components.stopClaims();
     await this.bootTask?.catch(() => {});
-    if (!this.registered) return this.lifecycle.completeStop();
-    await this.components.shutdown.begin(graceMs);
+    if (!this.registered) {
+      await this.components.stopMaintenance();
+      return this.lifecycle.completeStop();
+    }
+    try {
+      await this.components.shutdown.begin(graceMs);
+    } finally {
+      await this.components.stopMaintenance();
+    }
     if (this.components.shutdown.isStopped) this.lifecycle.completeStop();
   }
 

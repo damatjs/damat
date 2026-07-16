@@ -108,10 +108,14 @@ waits up to the grace period, then aborts unfinished handler signals and stops
 renewing their leases. The registry remains `stopping` while handler code is
 still running and changes to `stopped` only after it settles and PostgreSQL
 persists that transition. Persistence failures reject `stop()` and a later
-`stop()` retries them.
+`stop()` retries them. Registry heartbeats and reconciliation remain active
+through the graceful drain phase, then stop before shutdown returns.
 
 The worker also owns bounded lease, retry, schedule, idempotency, and retention
 reconciliation. Expired leases, not worker-registry state, decide recovery.
+Recovery activity retains the expired worker and lease token. An immediately
+reclaimed run records that recovery to `queued`, then records a separate claim
+for the new worker and token.
 Periodic PostgreSQL polling always remains enabled.
 
 Configure enqueue-side wake-ups with `configureJobWakeupPublisher(redis)` and

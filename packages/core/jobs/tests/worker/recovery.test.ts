@@ -1,5 +1,10 @@
 import { beforeEach, expect, test } from "bun:test";
-import { cancelJobRun, getJobRun, listJobAttempts } from "../../src/client";
+import {
+  cancelJobRun,
+  getJobRun,
+  listJobActivity,
+  listJobAttempts,
+} from "../../src/client";
 import { claimJobRuns } from "../../src/worker/claim";
 import { claimOne, expireLease, prepareWorkerTest, queuedRun } from "./context";
 
@@ -29,6 +34,12 @@ test("expired final attempts dead-letter without exceeding max attempts", async 
   expect(await listJobAttempts(item.run.id)).toMatchObject([
     { attemptNumber: 1, outcome: "lost" },
   ]);
+  expect((await listJobActivity(item.run.id)).at(-1)).toMatchObject({
+    type: "lease_recovered",
+    nextStatus: "dead_lettered",
+    workerId: "worker-final",
+    leaseToken: claimed?.leaseToken,
+  });
 });
 
 test("expired cancellation requests settle without executing again", async () => {
@@ -46,5 +57,11 @@ test("expired cancellation requests settle without executing again", async () =>
   expect(await getJobRun(claimed.id)).toMatchObject({
     status: "cancelled",
     attemptCount: 1,
+  });
+  expect((await listJobActivity(claimed.id)).at(-1)).toMatchObject({
+    type: "lease_recovered",
+    nextStatus: "cancelled",
+    workerId: claimed.workerId,
+    leaseToken: claimed.leaseToken,
   });
 });

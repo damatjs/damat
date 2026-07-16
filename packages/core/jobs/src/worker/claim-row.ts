@@ -6,6 +6,8 @@ import type { ClaimedJobRun } from "./types";
 export interface ClaimCandidateRow extends JobRunRow {
   previous_status: "queued" | "retry_wait" | "running";
   cancellation_requested_at: Date | null;
+  lease_owner: string;
+  lease_token: string;
 }
 
 interface ClaimedRow extends JobRunRow, QueryResultRow {

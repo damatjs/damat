@@ -9,7 +9,7 @@ beforeAll(prepareWorkerTest);
 describe("expired job lease reconciliation", () => {
   test("recovers by lease expiry without consulting worker registry", async () => {
     const item = await queuedRun();
-    await claimJobRuns({
+    const [claimed] = await claimJobRuns({
       queue: item.queue,
       workerId: "missing-registry-worker",
       limit: 1,
@@ -33,6 +33,10 @@ describe("expired job lease reconciliation", () => {
       lease_token: null,
     });
     const activity = await listJobActivity(item.run.id);
-    expect(activity.at(-1)?.type).toBe("lease_recovered");
+    expect(activity.at(-1)).toMatchObject({
+      type: "lease_recovered",
+      workerId: "missing-registry-worker",
+      leaseToken: claimed?.leaseToken,
+    });
   });
 });

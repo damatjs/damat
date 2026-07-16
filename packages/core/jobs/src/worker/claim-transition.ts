@@ -27,7 +27,7 @@ export async function claimCandidate(
   await appendJobActivity(executor, {
     runId: claim.id,
     attemptNumber: claim.attemptCount,
-    type: row.previous_status === "running" ? "lease_recovered" : "claimed",
+    type: "claimed",
     previousStatus: row.previous_status,
     nextStatus: "running",
     workerId: claim.workerId,

@@ -45,7 +45,12 @@
   independent bounded retry loops.
 - Graceful stop now waits for an in-flight poll, starts no post-stop handlers,
   aborts unfinished execution heartbeats after grace expires, and keeps the
-  registry in `stopping` until active handler code settles.
+  registry in `stopping` until active handler code settles. Registry heartbeat
+  and reconciliation maintenance stay active during the drain and stop after
+  the graceful drain phase.
+- Expired-lease recovery now has one transition path for reconcilers and
+  claimers. Recovery activity preserves the expired worker and token; an
+  immediate reclaim records a distinct subsequent claim with its new identity.
 - Log byte caps use PostgreSQL's stored `jsonb` size, terminal activity captures
   the latest progress snapshot, and overflowing retry dates dead-letter without
   retaining a lease.

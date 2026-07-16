@@ -94,8 +94,10 @@ PostgreSQL signed integer, timer and duration values fit the runtime's
 
 `stop({ graceMs })` stops claims, awaits an in-flight poll, marks the worker as
 stopping, and waits for active handlers up to the grace period. Repeated calls
-while stop is pending share the same promise. It then aborts unfinished handler
-signals and their execution heartbeats, so the leases can expire. The worker
+while stop is pending share the same promise. Registry heartbeats and recovery
+reconciliation stay active during that drain. It then aborts unfinished handler
+signals and their execution heartbeats, so the leases can expire, and stops the
+maintenance loops after the graceful drain phase. The worker
 record is not marked stopped until those handlers settle and the database write
 succeeds. A persistence failure rejects or is logged for post-grace background
 finalization; either path leaves `stop()` retryable. Grace is validated before
@@ -112,7 +114,9 @@ not be recreated beside them.
 ## Reconciliation and wake-ups
 
 Every pass is bounded and safe under overlap. Expired leases close the old
-attempt and recover from the fenced lease alone. Due retries become claimable,
+attempt and recover from the fenced lease alone. Recovery activity preserves
+the expired worker and token. Immediate reclaim records a separate `claimed`
+transition from `queued` with the new identity. Due retries become claimable,
 schedule occurrences advance atomically, and expired deduplication,
 idempotency, and retained terminal runs are deleted in bounded batches.
 Queue-scoped retention records actor-attributed requested, completed, or failed

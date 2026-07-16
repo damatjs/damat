@@ -5,7 +5,7 @@ import {
   updateJobSchedule,
 } from "../../src/schedules";
 import { reconcileJobSchedules } from "../../src/worker/reconcileSchedules";
-import { pool, prepareSchedules, scheduleInput } from "./context";
+import { pool, prepareSchedules, scheduleInput, uniqueName } from "./context";
 import { durability } from "../storage/context";
 
 beforeAll(prepareSchedules);
@@ -34,11 +34,15 @@ describe("job schedules", () => {
   });
 
   test("overlapping reconcilers create one occurrence and advance it", async () => {
-    const created = await createJobSchedule(scheduleInput("interval"));
+    const queue = uniqueName("overlap");
+    const created = await createJobSchedule({
+      ...scheduleInput("interval"),
+      queue,
+    });
     const scheduledFor = created.nextOccurrenceAt!;
     const counts = await Promise.all([
-      reconcileJobSchedules({ limit: 10 }),
-      reconcileJobSchedules({ limit: 10 }),
+      reconcileJobSchedules({ limit: 10, queue }),
+      reconcileJobSchedules({ limit: 10, queue }),
     ]);
     expect(counts[0]! + counts[1]!).toBeGreaterThanOrEqual(1);
     const runs = await pool.query(

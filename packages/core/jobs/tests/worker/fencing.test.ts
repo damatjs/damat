@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from "bun:test";
-import { cancelJobRun } from "../../src/client";
+import { cancelJobRun, listJobActivity } from "../../src/client";
 import { claimJobRuns } from "../../src/worker/claim";
 import { heartbeatJobClaim } from "../../src/worker/heartbeat";
 import { completeJobSuccess } from "../../src/worker/succeed";
@@ -37,6 +37,22 @@ test("stale success is rejected and expired work can be reclaimed", async () => 
     leaseMs: 30_000,
   });
   expect(reclaimed?.attemptCount).toBe(2);
+  expect((await listJobActivity(claimed.id)).slice(-2)).toMatchObject([
+    {
+      type: "lease_recovered",
+      previousStatus: "running",
+      nextStatus: "queued",
+      workerId: claimed.workerId,
+      leaseToken: claimed.leaseToken,
+    },
+    {
+      type: "claimed",
+      previousStatus: "queued",
+      nextStatus: "running",
+      workerId: "worker-recovery",
+      leaseToken: reclaimed?.leaseToken,
+    },
+  ]);
   await expect(completeJobSuccess(claimed, undefined)).rejects.toThrow(
     /lease/i,
   );
