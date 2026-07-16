@@ -7,9 +7,12 @@ plan, list, update, and remove. Local paths, directories, Git, registries, npm,
 and tarballs share one origin and provenance contract.
 
 New module and auth-storage scaffolds write root `damat.json`; legacy
-`module.json` remains readable during 0.x. Source installs copy only declared
-capabilities and report host integration work without editing shared config,
-barrels, env files, or call sites.
+`module.json` remains readable during 0.x. Scaffolds omit redundant entry
+metadata and use conventional `src/index.ts` or sibling `index.ts` discovery.
+Fresh scaffolds now pass their generated contract test immediately, including
+safe root-relative test mappings and the declared generated-types directory.
+Source installs copy only declared capabilities and report host integration
+work without editing shared config, barrels, env files, or call sites.
 
 Package mode supports explicitly opted-in Node and Damat backends as early
 alpha. The npm-shaped `damat module publish` command has been removed; releases

@@ -33,9 +33,16 @@ export async function start(cwd: string = process.cwd()): Promise<void> {
   const routesDirPath =
     config.projectConfig.http.api?.entryRouterPath ?? `/src/api/routes`;
   const routesDir = `${cwd}/${routesDirPath}`;
+  const routeProviders = [...(services.resolvedModules ?? new Map())]
+    .filter(([, module]) => Boolean(module.routes))
+    .map(([id, module]) => ({
+      routesDir: module.routes!,
+      basePath: `/${id}`,
+    }));
 
   const { app, config: serverConfig } = await bootstrap({
     routesDir,
+    ...(routeProviders.length && { routeProviders }),
     projectConfig: config.projectConfig,
     healthCheck,
     hooks,

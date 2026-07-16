@@ -9,7 +9,6 @@ export function manifestTemplate(): string {
       module: {
         description:
           "Better Auth storage tables (user/session/account/verification).",
-        entry: "./index.ts",
         models: "./models",
         migrations: "./migrations",
       },

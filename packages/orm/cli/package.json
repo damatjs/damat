@@ -40,6 +40,7 @@
     "@damatjs/codegen": "workspace:*",
     "@damatjs/deps": "workspace:*",
     "@damatjs/logger": "workspace:*",
+    "@damatjs/installer": "workspace:*",
     "@damatjs/orm-migration": "workspace:*",
     "@damatjs/orm-processor": "workspace:*",
     "@damatjs/orm-model": "workspace:*",

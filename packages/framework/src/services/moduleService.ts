@@ -1,8 +1,11 @@
 import type { ModuleConfig } from "../config";
 import type { ModuleInstance, ModuleRegistry } from "@damatjs/services";
-import { moduleLocationId, resolveModuleImport } from "./moduleLocation";
+import { resolveModuleArtifact, type ResolvedModule } from "@damatjs/installer";
+import { moduleLocationId } from "./moduleLocation";
+import { pathToFileURL } from "node:url";
 
 const moduleRegistry = new Map<string, ModuleInstance<any>>();
+const resolvedModules = new Map<string, ResolvedModule>();
 
 export function registerModule(
   name: string,
@@ -39,10 +42,15 @@ export function hasModule(name: string): boolean {
 
 export function clearModules(): void {
   moduleRegistry.clear();
+  resolvedModules.clear();
 }
 
 export function getAllModules(): Map<string, ModuleInstance<any>> {
   return moduleRegistry;
+}
+
+export function getResolvedModules(): Map<string, ResolvedModule> {
+  return resolvedModules;
 }
 
 export async function initModules(
@@ -50,7 +58,9 @@ export async function initModules(
   cwd: string,
 ): Promise<void> {
   for (const moduleConfig of modules) {
-    const moduleImport = resolveModuleImport(moduleConfig.resolve, cwd);
+    const moduleId = moduleConfig.id ?? moduleLocationId(moduleConfig.resolve);
+    const resolved = resolveModuleArtifact(moduleConfig.resolve, cwd, moduleId);
+    const moduleImport = pathToFileURL(resolved.entry).href;
     const moduleExports = await import(moduleImport);
     const moduleInstance = moduleExports.default;
 
@@ -60,8 +70,7 @@ export async function initModules(
       );
     }
 
-    const moduleId = moduleConfig.id ?? moduleLocationId(moduleConfig.resolve);
-
     registerModule(moduleId, moduleInstance);
+    resolvedModules.set(moduleId, resolved);
   }
 }

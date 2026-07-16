@@ -63,7 +63,9 @@ damat module add ./modules/user \
 Node delegates to the target's Bun/npm/pnpm/Yarn installation. Damat stores a
 self-contained immutable artifact under `.damat/packages`; artifacts with
 external runtime dependencies are rejected. The framework accepts both package
-locations through `ModuleConfig.resolve`.
+locations through `ModuleConfig.resolve`, runs declared migrations in place,
+mounts declared routes, and loads workflow, job, event, and pipeline providers.
+Package mode remains early alpha; source mode is the stable, recommended path.
 
 ## Trust
 

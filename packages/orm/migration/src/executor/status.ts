@@ -39,7 +39,7 @@ export async function getModuleMigrationStatus(
   const tracker = new MigrationTracker(pool);
   await tracker.ensureTable();
 
-  const migrations = discoverModuleMigrations(moduleResolver.resolve);
+  const migrations = discoverModuleMigrations(moduleResolver);
 
   if (migrations.length === 0) {
     throw new Error(
@@ -59,7 +59,7 @@ async function moduleStatus(
   tracker: MigrationTracker,
   moduleResolver: OrmModule,
 ): Promise<ModuleMigrationStatus> {
-  const migrations = discoverModuleMigrations(moduleResolver.resolve);
+  const migrations = discoverModuleMigrations(moduleResolver);
   const applied = await tracker.getApplied(moduleResolver.name);
   const appliedNames = new Set(applied.map((a) => a.name));
 

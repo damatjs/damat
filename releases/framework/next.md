@@ -2,11 +2,11 @@
 
 ## Changed
 
-Module `resolve` locations may now be a source path, a Node package descriptor,
-or a Damat package-store descriptor. Damat package paths are constrained to the
-application's `.damat/packages` directory before dynamic import.
+Module locations now produce one resolved runtime surface. Packaged routes
+mount through external file-router providers, and declared workflow, job,
+event, and pipeline providers load before the job worker starts.
 
 ## Action required
 
-None for source-path users. Package-mode users should treat both backends as
-early alpha and keep explicit installation records.
+None for source users. Package modules need a valid `damat.json`; package mode
+remains early alpha.

@@ -50,6 +50,9 @@ subcommand prints the available subcommands.
 > row types/zod/registry with `damat codegen <module>` (in an app) or
 > `damat module codegen` (in a module package), both over `@damatjs/codegen`.
 
+All migration commands honor a resolved module's declared migration directory,
+including immutable packages whose SQL lives below `src/migrations`.
+
 ### Cross-module links
 
 When `damat.config.ts` declares `links` (a path, or list of paths, e.g.
@@ -129,9 +132,9 @@ bun damat codegen user
 
 Notes grounded in the source:
 
-- The config file name is fixed to `damat.config.ts`; module `resolve` paths are
-  resolved relative to the config file's directory and may be relative or
-  absolute.
+- The config file name is fixed to `damat.config.ts`. Source paths resolve
+  relative to it; Node and Damat descriptors resolve immutable artifact roots
+  and their manifest-declared migrations.
 - The database URL is read from `projectConfig.databaseUrl`, falling back to
   `services.database` (`connectionString`, or host/port/user/password/database
   fields used to build one).

@@ -6,6 +6,10 @@ Source: `src/router/` — `scanner/`, `builder.ts`, `helpers.ts`, `resolveMethod
 
 Turn a directory of `route.ts` files into a mounted Hono router. The router maps folder structure to URL paths, attaches per-route middleware, rate limiting, auth, and validation, and exposes introspection helpers.
 
+`bootstrap` may also receive `routeProviders`. Each provider uses the same file
+router and may set a `basePath`; packaged modules use `/<module-id>` so their
+flat route tree matches the URL of a source install.
+
 ## File convention
 
 - A route lives in a folder containing `route.ts` (or `route.js`). The folder path becomes the URL.

@@ -8,18 +8,17 @@ import {
 } from "./runModuleCodegen";
 
 /**
- * Dir-driven convenience over `runModuleCodegen`: discovers the module's models
- * (by importing `moduleResolver` and reading its `models` export), builds the
- * schema, then runs the shared codegen. Still agnostic — the caller resolves the
- * `moduleResolver` and output paths from whatever manifest/config it uses.
+ * Provider-driven convenience over `runModuleCodegen`: discovers models from
+ * an aggregate export or a directory of model files, builds the schema, then
+ * runs the shared codegen.
  */
 export interface RunCodegenOptions extends Omit<
   RunModuleCodegenOptions,
   "schema"
 > {
   /**
-   * Path that exports `models` (a module dir whose `index.ts` re-exports it, or
-   * the entry file). Passed straight to `discoverModels`.
+   * Models provider file/directory. Directories may contain an aggregate index
+   * or individual files exporting model definitions.
    */
   moduleResolver: string;
 }

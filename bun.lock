@@ -200,6 +200,7 @@
         "@damatjs/codegen": "workspace:*",
         "@damatjs/link": "workspace:*",
         "@damatjs/orm-cli": "workspace:*",
+        "@damatjs/orm-migration": "workspace:*",
       },
       "devDependencies": {
         "@damatjs/typescript-config": "workspace:*",
@@ -398,6 +399,7 @@
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/events": "workspace:*",
+        "@damatjs/installer": "workspace:*",
         "@damatjs/jobs": "workspace:*",
         "@damatjs/link": "workspace:*",
         "@damatjs/logger": "workspace:*",
@@ -490,6 +492,7 @@
         "@damatjs/cli": "workspace:*",
         "@damatjs/codegen": "workspace:*",
         "@damatjs/deps": "workspace:*",
+        "@damatjs/installer": "workspace:*",
         "@damatjs/link": "workspace:*",
         "@damatjs/logger": "workspace:*",
         "@damatjs/orm-migration": "workspace:*",

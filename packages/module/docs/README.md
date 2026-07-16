@@ -24,7 +24,7 @@ Everything is re-exported from `src/index.ts` via the concern barrels.
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `src/index.ts`     | Root barrel: re-exports every concern (`authoring`, `manifest`, `config`, `runtime`, `harness`, `tooling`, `registry`).                                                        |
 | `src/authoring.ts` | The authoring surface — re-exports `defineModule`/`ModuleService`/`model`/`columns`/workflow engine/route types/`z` from sibling packages. See [authoring.md](./authoring.md). |
-| `src/manifest/`    | Universal `damat.json` normalization plus legacy manifest compatibility. See [manifest.md](./manifest.md).                                                                   |
+| `src/manifest/`    | Universal `damat.json` normalization plus legacy manifest compatibility. See [manifest.md](./manifest.md).                                                                     |
 | `src/config/`      | `module.config.ts`: `defineModuleConfig`, `loadModuleConfig`, `ModuleAppConfig`. See [config.md](./config.md).                                                                 |
 | `src/harness/`     | Standalone dev/test: `bootModule`, `withModule`, db resolution, migration apply. See [harness.md](./harness.md).                                                               |
 | `src/runtime/`     | Module-as-app: `startModuleApp`, `runModuleEntry`, app-config build, module-dir location. See [runtime.md](./runtime.md).                                                      |
@@ -37,9 +37,11 @@ Everything is re-exported from `src/index.ts` via the concern barrels.
 | --------------------------------- | -------------------------------------------------------------------------------------------- |
 | `manifest/types/`                 | `ModuleManifest` & friends, `DEFAULT_MODULE_PATHS`.                                          |
 | `manifest/validate.ts`            | `validateModuleManifest` (throws CLI-friendly errors).                                       |
-| `manifest/read.ts`                | Prefer `damat.json`, normalize it, then fall back to legacy `module.json`.                    |
-| `manifest/damat.ts`               | Normalize universal module metadata into `ModuleManifest`.                                  |
-| `manifest/constants.ts`           | Legacy manifest filename retained for compatibility reads.                                  |
+| `manifest/read.ts`                | Prefer `damat.json`, normalize it, then fall back to legacy `module.json`.                   |
+| `manifest/damat.ts`               | Normalize universal module metadata into `ModuleManifest`.                                   |
+| `manifest/entry.ts`               | Resolve an explicit or conventional module runtime entry.                                    |
+| `manifest/resolver.ts`            | Expose the shared source/Node/Damat resolver and `ResolvedModule`.                           |
+| `manifest/constants.ts`           | Legacy manifest filename retained for compatibility reads.                                   |
 | `config/types.ts`                 | `ModuleAppConfig`.                                                                           |
 | `config/define.ts`                | `defineModuleConfig` (identity helper).                                                      |
 | `config/load.ts`                  | `loadModuleConfig` (dynamic import of the config file).                                      |
@@ -133,14 +135,15 @@ registry   ─ parseModuleRef → resolveRegistryEntry(DAMAT_MODULE_REGISTRY)
   registry metadata. Legacy `module.json` is read during the 0.x migration only.
 - **kebab-case module names.** `validateModuleManifest` enforces
   `/^[a-z][a-z0-9-]*$/`; the same pattern bounds the namespace/name in refs.
-- **Standard layout via `DEFAULT_MODULE_PATHS`.** Omit `paths` and the standard
-  `index.ts` / `models` / `migrations` / `workflows` / `types` apply.
+- **Convention-first entry.** Runtime discovery checks sibling `index.ts` /
+  `index.js`, then `src/index.ts` / `src/index.js`. `paths.entry` is an optional
+  override for non-standard layouts.
 - **Module dir may be root or `src/`.** `locateModuleDir` recognizes either
   manifest filename in both locations.
 - **Errors vs warnings** (`validateModuleDir`): errors block _install_
-  (missing entry, broken manifest, declared-but-missing dirs); warnings block
-  _publishing_ (missing version/description/author/license/namespace; models
-  without migrations).
+  (no resolvable entry, broken manifest, declared-but-missing dirs); warnings
+  block _publishing_ (missing version/description/author/license/namespace;
+  models without migrations).
 - **Two planes of trust** (registry): the author _declares_
   name/version/author/license/keywords/repository in `damat.json`; the registry
   _backend_ assigns `owner` and stamps `verification`. An author cannot

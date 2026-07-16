@@ -85,10 +85,9 @@ independent representation used by the query builder and executor.
   module representation — it would duplicate the hoisted data.
 - **Two unrelated `OrmModule`/`ModuleSchema` names exist.** `model/module.ts`
   exports `ModuleSchema` (schema snapshot). `migration/index.ts` exports
-  `OrmModule` (file manifest: `id`/`name`/`path`/`resolve`, plus an optional
-  `kind?: "module" | "link"` that lets the toolchain distinguish a cross-module
-  link directory from an ordinary module). They are different concepts; do not
-  conflate them.
+  `OrmModule` (artifact identity plus optional resolved entry/model/migration
+  paths, mutability, package name, and link-module `kind`). They are different
+  concepts; do not conflate them.
 - **Query descriptors are JSON-serializable.** `WhereConditionJson` /
   `OrderByJson` are the plain-object forms used in descriptors;
   `WhereClause`/`OrderByClause` are the builder-facing forms. Keep both in sync

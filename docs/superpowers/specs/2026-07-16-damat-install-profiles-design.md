@@ -52,7 +52,6 @@ Every application, module, or kit may contain `damat.json` at its root.
     }
   },
   "module": {
-    "entry": "./src/index.ts",
     "models": "./src/models",
     "migrations": "./src/migrations"
   }
@@ -175,10 +174,11 @@ package support, but an unsupported explicit backend fails without fallback.
 ## Module Runtime Metadata
 
 For `kind: "module"`, the optional `module` section replaces the portable
-runtime information currently held in `module.json`. It may identify entry,
-models, migrations, routes, workflows, jobs, events, pipelines, links, tests,
-generated types, environment declarations, module dependencies, pairing hints,
-author, and registry metadata.
+runtime information currently held in `module.json`. It may identify an
+optional non-standard entry override, models, migrations, routes, workflows,
+jobs, events, pipelines, links, tests, generated types, environment
+declarations, module dependencies, pairing hints, author, and registry
+metadata. Conventional `index.ts` or `src/index.ts` entries need no field.
 
 `damat module init` generates a provider profile and runtime section.
 Backend creation generates an application receiver profile. `damat kit init`

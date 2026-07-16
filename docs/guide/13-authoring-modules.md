@@ -388,20 +388,24 @@ instructions, and module runtime metadata. It never contains executable hooks.
     "modes": ["source", "package"],
     "default": "source",
     "provides": {
-      "module": { "from": "src/**", "fallbackTo": "src/modules/{id}" }
+      "module": { "from": "src/**", "fallbackTo": "src/modules/{id}" },
     },
-    "packages": { "better-auth": "^1.4.18" }
+    "packages": { "better-auth": "^1.4.18" },
   },
   "module": {
-    "entry": "./src/index.ts",
     "models": "./src/models",
     "migrations": "./src/migrations",
     "env": [{ "name": "BETTER_AUTH_SECRET", "required": true }],
     "pairsWith": ["organization"],
-    "registry": { "namespace": "damatjs", "license": "MIT" }
-  }
+    "registry": { "namespace": "damatjs", "license": "MIT" },
+  },
 }
 ```
+
+The standard `src/index.ts` entry is discovered automatically. Add
+`module.entry` only when the runtime entry uses a non-standard location, such
+as `./dist/index.js`. Existing `src/module.json` modules keep resolving
+`"./index.ts"` relative to `src/`.
 
 `name` is more than a label: it is the registry key, the default install
 directory name, **and** the module's migration namespace, so make it globally
@@ -443,11 +447,12 @@ It type-checks the whole module first (fails on any type error), then runs the
 same contract + registry-readiness check as `damat module validate`. Skip a step
 with `--no-typecheck` / `--no-validate` when you only want one.
 
-The validate pass runs two checks. **Errors** block installing (missing entry,
-broken manifest) — fix these first. **Warnings** block publishing (missing
-version, license, namespace, …) — clear them so the module is registry-ready even
-before a hosted registry exists. The same check is available programmatically as
-`validateModuleDir`, which is worth asserting on in your test suite (see above).
+The validate pass runs two checks. **Errors** block installing (no resolvable
+runtime entry, broken manifest) — fix these first. **Warnings** block publishing
+(missing version, license, namespace, …) — clear them so the module is
+registry-ready even before a hosted registry exists. The same check is
+available programmatically as `validateModuleDir`, which is worth asserting on
+in your test suite (see above).
 
 ## Stay in your lane
 

@@ -1,7 +1,8 @@
 # Runtime — module as a live app
 
 Source: `src/runtime/start.ts`, `src/runtime/entry.ts`,
-`src/runtime/appConfig.ts`, `src/runtime/locate.ts`, `src/runtime/types.ts`.
+`src/runtime/appConfig.ts`, `src/runtime/locate.ts`, `src/runtime/types.ts`, and
+`src/manifest/entry.ts`.
 
 The runtime runs **one module package as a live HTTP app** — the framework's full
 stack (middleware, file-based routes from the module's `api/routes` dir, health
@@ -21,20 +22,21 @@ Step by step (`start.ts`):
 1. `packageDir = options.packageDir ?? process.cwd()`.
 2. `moduleDir = locateModuleDir(packageDir)` — finds the module manifest.
 3. `manifest = readModuleManifest(moduleDir)`.
-4. `moduleConfig = await loadModuleConfig(packageDir)` (the author's `module.config.ts`).
-5. `config = buildModuleAppConfig({ moduleDir, manifest, moduleConfig, port? })`.
-6. `services = await initializeServices(config, packageDir)` — database + redis +
+4. `entry = resolveModuleEntry(moduleDir, manifest)`.
+5. `moduleConfig = await loadModuleConfig(packageDir)` (the author's `module.config.ts`).
+6. `config = buildModuleAppConfig({ moduleDir, manifest, entry, moduleConfig, port? })`.
+7. `services = await initializeServices(config, packageDir)` — database + redis +
    logger + this module's registration. `logger = getLogger()`.
-7. **Migrate** — if `config.projectConfig.databaseUrl` is set,
+8. **Migrate** — if `config.projectConfig.databaseUrl` is set,
    `applyModuleMigrations(PoolManager.getPool(), moduleDir, manifest, logger)`.
    The module owns its schema, applied before serving.
-8. **Health check** — if `services.healthChecks` exists, build
+9. **Health check** — if `services.healthChecks` exists, build
    `{ version: manifest.version ?? "0.0.0", checks }`.
-9. `bootstrap({ routesDir: join(moduleDir, "api", "routes"), projectConfig, healthCheck? })`
-   → `{ app, config: serverConfig }` (the Hono app).
-10. `serve({ fetch: app.fetch, port: serverConfig.port }, cb)` and resolve once
+10. `bootstrap({ routesDir: join(moduleDir, "api", "routes"), projectConfig, healthCheck? })`
+    → `{ app, config: serverConfig }` (the Hono app).
+11. `serve({ fetch: app.fetch, port: serverConfig.port }, cb)` and resolve once
     bound; log `"Module \"<name>\" running"` with the URL.
-11. Return `RunningModuleApp` — `{ app, server, port, manifest, stop }`.
+12. Return `RunningModuleApp` — `{ app, server, port, manifest, stop }`.
 
 `stop()` closes the server, then runs every `services.shutdownHandlers` handler
 (db/redis/logger), swallowing individual errors so they don't mask each other.
@@ -89,8 +91,12 @@ projectConfig = {
         ?? DEFAULT_MODULE_PORT,
   },
 };
-return { projectConfig, modules: { [manifest.name]: { resolve: moduleDir, id: manifest.name } } };
+return { projectConfig, modules: { [manifest.name]: { resolve: entry, id: manifest.name } } };
 ```
+
+The entry field is not required in `damat.json`. Runtime discovery checks
+`index.ts`, `index.js`, `src/index.ts`, and `src/index.js`; a declared entry
+overrides that convention.
 
 **Port precedence** (highest first): `options.port` → `PORT` env →
 `module.config.ts` `http.port` → `7654`. Pass `port: 0` for an ephemeral port

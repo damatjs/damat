@@ -31,6 +31,10 @@ describe("damat auth init better-auth — scaffold", () => {
     ]) {
       expect(writeCalls.some((c) => c.path === file)).toBe(true);
     }
+    const manifest = writeCalls.find((c) =>
+      c.path.endsWith("/auth/damat.json"),
+    );
+    expect(JSON.parse(manifest!.content).module.entry).toBeUndefined();
     // migrations dir created
     expect(
       mockMkdirSync.mock.calls.some((c) =>

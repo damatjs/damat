@@ -11,6 +11,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { MigrationInfo } from "../types";
+import type { OrmModule } from "@damatjs/orm-type";
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -30,9 +31,17 @@ import type { MigrationInfo } from "../types";
  * ```
  */
 export function discoverModuleMigrations(
-  moduleResolver: string,
+  moduleResolver: string | Pick<OrmModule, "resolve" | "migrations">,
 ): MigrationInfo[] {
-  const migrationsDir = path.join(moduleResolver, "migrations");
+  const resolver =
+    typeof moduleResolver === "string"
+      ? moduleResolver
+      : moduleResolver.resolve;
+  const migrationsDir =
+    typeof moduleResolver === "string"
+      ? path.join(moduleResolver, "migrations")
+      : (moduleResolver.migrations ??
+        path.join(moduleResolver.resolve, "migrations"));
 
   if (!fs.existsSync(migrationsDir)) {
     return [];
@@ -49,7 +58,7 @@ export function discoverModuleMigrations(
 
         return {
           name: file.replace(".sql", ""),
-          resolver: moduleResolver,
+          resolver,
           path: path.resolve(migrationsDir, file),
           timestamp,
           applied: false, // updated when cross-referenced with the DB tracker

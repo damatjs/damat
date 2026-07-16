@@ -15,7 +15,8 @@ modes requiring `--experimental-package`.
 The installer owns only files it adds. It never edits `damat.config.ts`,
 `tsconfig.json`, `.env*`, barrels, or call sites; commands report that work for
 the user or AI. Existing `module.json` files remain readable, while new module
-scaffolds write root `damat.json`. npm-shaped `module publish` is removed.
+scaffolds write root `damat.json` and rely on conventional `src/index.ts`
+discovery. npm-shaped `module publish` is removed.
 
 The package also owns module init/dev/build/validation, migrations, codegen,
 and the embedded authoring guide.

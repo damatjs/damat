@@ -28,12 +28,18 @@ export interface HealthCheckConfig {
 
 export interface BootstrapOptions {
   routesDir: string;
+  routeProviders?: RouteProvider[] | undefined;
   projectConfig: ProjectConfig;
   healthCheck?: HealthCheckConfig | undefined;
   authHandlers?: AuthMiddlewareOptions | undefined;
   /** Mount provider-owned auth routes (Better Auth's `/api/auth/*`) before the file router. */
   authRoutes?: ((app: Hono) => void) | undefined;
   hooks?: LifecycleHooks | undefined;
+}
+
+export interface RouteProvider {
+  routesDir: string;
+  basePath?: string | undefined;
 }
 
 export interface BootstrapResult {

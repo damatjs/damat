@@ -2,6 +2,7 @@ export * from "./backup";
 export * from "./integrity";
 export * from "./lockfile";
 export * from "./manifest";
+export * from "./module";
 export * from "./origin";
 export * from "./package-backend";
 export * from "./package-manager";

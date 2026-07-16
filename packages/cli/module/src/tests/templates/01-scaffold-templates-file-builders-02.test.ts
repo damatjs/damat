@@ -8,5 +8,6 @@ describe("scaffold/templates file builders", () => {
     expect(json.kind).toBe("module");
     expect(json.install.default).toBe("source");
     expect(json.module.models).toBe("./src/models");
+    expect(json.module.entry).toBeUndefined();
   });
 });

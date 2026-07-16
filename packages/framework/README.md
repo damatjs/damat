@@ -49,15 +49,18 @@ export default defineConfig({
   modules: {
     user: { resolve: "./src/modules/user", id: "user" },
     billing: { resolve: { type: "package", name: "@acme/billing" } },
-    audit: { resolve: { type: "damat", path: "audit/index.ts" } },
+    audit: { resolve: { type: "damat", path: "audit" } },
   },
   links: "./src/links",
 });
 ```
 
-String module locations are project-relative editable source. Package
-locations import a Node package specifier. Damat locations are constrained to
-the project's `.damat/packages` store; traversal outside it is rejected.
+String locations are project-relative editable source. Node and Damat package
+locations resolve the artifact root, read `damat.json`, and load the same entry
+and optional capabilities without copying them into app source. Packaged routes
+mount below `/<module-id>` in the API router; workflow, job, event, and pipeline
+providers load before the job worker starts. Damat paths stay in
+`.damat/packages`.
 
 `links` points at a directory whose `index.ts` default-exports `defineLinkModule(...)` and exports `models`. The framework registers it as a `link` module, so cross-module links boot, migrate, and type-generate alongside your modules.
 

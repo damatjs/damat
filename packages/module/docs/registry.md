@@ -184,7 +184,7 @@ Checks a module dir against the contract:
 - **Errors** (block _install_ — `damat module add` would fail / produce a broken app):
   - directory not found;
   - manifest unreadable/invalid (the `readModuleManifest` error message);
-  - entry file (`paths.entry`, default `./index.ts`) missing;
+  - no declared or conventional runtime entry exists;
   - any _explicitly declared_ `paths.{models,migrations,workflows,types}` dir that
     doesn't exist.
 - **Warnings** (block _publishing_ — works locally but not registry-ready):
@@ -193,8 +193,8 @@ Checks a module dir against the contract:
   - missing `registry.license`, `registry.namespace`.
 
 `valid === errors.length === 0`. (Covered by `tests/manifest.test.ts`: a complete
-module is valid with no warnings; missing entry is an error; registry gaps are
-warnings; models-without-migrations warns.)
+module is valid with no warnings; an absent runtime entry is an error; registry
+gaps are warnings; models-without-migrations warns.)
 
 ## The verification gate (`verify.ts`)
 

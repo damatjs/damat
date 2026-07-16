@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { existsSync, readdirSync } from "node:fs";
 import { readModuleManifest } from "../manifest/read";
+import { resolveModuleEntry } from "../manifest/entry";
 import { DEFAULT_MODULE_PATHS, type ModuleManifest } from "../manifest/types";
 import type { ModuleValidationReport } from "./types";
 
@@ -35,12 +36,10 @@ export function validateModuleDir(moduleDir: string): ModuleValidationReport {
 
   const paths = { ...DEFAULT_MODULE_PATHS, ...manifest.paths };
 
-  // Entry must exist — it's what damat.config.ts resolves
-  const entryPath = join(moduleDir, paths.entry);
-  if (!existsSync(entryPath)) {
-    errors.push(
-      `Entry "${paths.entry}" not found (must default-export defineModule(...))`,
-    );
+  try {
+    resolveModuleEntry(moduleDir, manifest);
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : String(error));
   }
 
   // Declared layout dirs must exist when explicitly set in the manifest

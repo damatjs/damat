@@ -17,7 +17,7 @@ Maintainer notes for the core framework. This index gives the module map, the en
 | `src/handlers/`             | Built-in routes: `/` info (`/damat`), route introspection (`/damat/api/routes`), `/health`. See [handlers.md](./handlers.md).                                                                                                                                                                                                                               |
 | `src/server/index.ts`       | `startServer` via `@hono/node-server`. See [server-and-shutdown.md](./server-and-shutdown.md).                                                                                                                                                                                                                                                              |
 | `src/shutdown/index.ts`     | Signal handlers + shutdown-handler registry. See [server-and-shutdown.md](./server-and-shutdown.md).                                                                                                                                                                                                                                                        |
-| `src/services/`             | Service wiring: `initializeServices`, logger, database (`PoolManager.setup`), redis (re-export), event broadcast + job worker (opt-in via `services.events`/`services.jobs`), module registry, and cross-module link wiring (`resolveLinkModuleEntries` / `setLinkModuleResolver`). See [services.md](./services.md).                                       |
+| `src/services/`             | Logger, database, Redis, resolved modules, module providers, auth, event broadcast, job worker, and cross-module link wiring. See [services.md](./services.md).                                                                                                                                                                                             |
 | `src/utils/windowParser.ts` | `parseWindowToMs("1m" \| "5m" \| "1h" \| "1d")` for rate-limit windows.                                                                                                                                                                                                                                                                                     |
 | `src/tests/`                | `bun:test` suites: health handler, router helpers/response, scanner (`folderToUrlPath`, `sortRoutes`), services (logger, redis).                                                                                                                                                                                                                            |
 
@@ -28,13 +28,14 @@ damat.config.ts (defineConfig)
         │ loadConfigAsync()
         │ hooks.beforeServices
         ▼
-initializeServices(config)  ── logger ── PostgreSQL pool (PoolManager.setup) ── Redis ── event broadcast ── modules + links (link module) ── job worker
-        │ returns { healthChecks, shutdownHandlers, modules }
+initializeServices(config)  ── logger ── database ── Redis ── event broadcast
+        │                     └─ modules + links ── providers ── auth ── job worker
+        │ returns { healthChecks, shutdownHandlers, modules, resolvedModules }
         │ hooks.afterServices
         ▼
-bootstrap({ routesDir, projectConfig, healthCheck, hooks })
+bootstrap({ routesDir, routeProviders, projectConfig, healthCheck, hooks })
         │ new Hono()  → onError → setupMiddleware → hooks.beforeRoutes
-        │             → createFileRouter (scan src/api/routes) → mount file router at /api
+        │             → app + external module file routers → mount at /api
         │             → dev + health routes  → hooks.afterRoutes  → notFound
         ▼ { app, config }
 setupShutdownHandlers(logger); register service shutdown handlers

@@ -44,6 +44,7 @@ export function scaffoldModule(targetDir: string, name: string) {
     "src/events",
     "src/pipelines",
     "src/links",
+    "src/types",
     "src/api/routes",
     "tests",
   ]) {

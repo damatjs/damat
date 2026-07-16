@@ -1,6 +1,7 @@
 import { pathToFileURL } from "node:url";
 import type { CliLogger } from "@damatjs/cli";
 import type { ResolvedLinkField } from "@damatjs/link";
+import { discoverModels } from "@damatjs/orm-migration";
 import type { ModuleContainer } from "./constant";
 
 export async function resolveLinkFields(
@@ -12,8 +13,16 @@ export async function resolveLinkFields(
   const loadModels = async (resolve: string): Promise<Record<string, any>> => {
     const cached = modelCache.get(resolve);
     if (cached) return cached;
-    const loaded = await import(pathToFileURL(resolve).href);
-    const models = (loaded.models ?? {}) as Record<string, any>;
+    let models: Record<string, any> = {};
+    try {
+      const loaded = await import(pathToFileURL(resolve).href);
+      if (loaded.models && typeof loaded.models === "object")
+        models = loaded.models;
+    } catch {
+      // provider directories without an index are scanned below
+    }
+    for (const model of await discoverModels(resolve))
+      models[model._tableName] ??= model;
     modelCache.set(resolve, models);
     return models;
   };
@@ -23,8 +32,9 @@ export async function resolveLinkFields(
   ): Promise<string | undefined> => {
     const entry = modules[moduleId];
     if (!entry) return undefined;
-    return (await loadModels(entry.resolve))[model]?._tableName as
-      string | undefined;
+    return (await loadModels(entry.models ?? entry.entry ?? entry.resolve))[
+      model
+    ]?._tableName;
   };
   const links: any[] = [];
   for (const entry of Object.values(modules).filter(

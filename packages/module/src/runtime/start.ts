@@ -3,6 +3,7 @@ import { bootstrap } from "@damatjs/framework";
 import { initializeServices, getLogger } from "@damatjs/framework/services";
 import { PoolManager } from "@damatjs/services";
 import { readModuleManifest } from "../manifest/read";
+import { resolveModuleEntry } from "../manifest/entry";
 import { loadModuleConfig } from "../config/load";
 import { applyModuleMigrations } from "../harness/migrate";
 import { locateModuleDir } from "./locate";
@@ -26,11 +27,13 @@ export async function startModuleApp(
   const packageDir = options.packageDir ?? process.cwd();
   const moduleDir = locateModuleDir(packageDir);
   const manifest = readModuleManifest(moduleDir);
+  const entry = resolveModuleEntry(moduleDir, manifest);
   const moduleConfig = await loadModuleConfig(packageDir);
 
   const config = buildModuleAppConfig({
     moduleDir,
     manifest,
+    entry,
     moduleConfig,
     ...(options.port !== undefined ? { port: options.port } : {}),
   });
@@ -63,9 +66,10 @@ export async function startModuleApp(
   const { server, port } = await startHttpServer(
     app.fetch,
     serverConfig.port,
-    (boundPort) => logger.info(`Module "${manifest.name}" running`, {
-      url: `http://localhost:${boundPort}`,
-    }),
+    (boundPort) =>
+      logger.info(`Module "${manifest.name}" running`, {
+        url: `http://localhost:${boundPort}`,
+      }),
   );
 
   return {

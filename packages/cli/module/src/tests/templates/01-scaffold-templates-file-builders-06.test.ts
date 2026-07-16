@@ -5,5 +5,7 @@ describe("scaffold/templates file builders", () => {
     const out = contractTestTemplate("user");
     expect(out).toContain("user module contract");
     expect(out).toContain("validateModuleDir");
+    expect(out).toContain('join(import.meta.dir, "../")');
+    expect(out).not.toContain('"../src"');
   });
 });

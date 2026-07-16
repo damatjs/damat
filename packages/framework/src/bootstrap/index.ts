@@ -1,5 +1,4 @@
 import { Hono } from "@damatjs/deps/hono";
-import { createFileRouter } from "../router";
 import { setupMiddleware, notFoundHandler } from "../middleware";
 import { handleError } from "../middleware/error/handleError";
 import {
@@ -9,12 +8,14 @@ import {
 } from "../handlers";
 import type { BootstrapOptions, BootstrapResult } from "../types";
 import { getLogger } from "../services";
+import { createBootstrapFileRouter } from "./fileRouter";
 
 export async function bootstrap(
   options: BootstrapOptions,
 ): Promise<BootstrapResult> {
   const {
     routesDir,
+    routeProviders = [],
     projectConfig,
     healthCheck,
     authHandlers,
@@ -48,12 +49,10 @@ export async function bootstrap(
   if (hooks?.beforeRoutes)
     await hooks.beforeRoutes({ config: projectConfig, logger, app });
 
-  const fileRouter = await createFileRouter({
+  const fileRouter = await createBootstrapFileRouter({
     routesDir,
-    debug: projectConfig.nodeEnv === "development",
-    logger,
-    rateLimit: projectConfig.http.rateLimit,
-    auth: projectConfig.http.auth,
+    routeProviders,
+    projectConfig,
     authHandlers,
   });
 

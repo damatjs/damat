@@ -21,3 +21,19 @@ export function registryAugmentation(
     `  }\n}\n`
   );
 }
+
+export function registryModuleAugmentation(
+  moduleId: string,
+  moduleName: string,
+  moduleImport: string,
+): string {
+  return (
+    "// This file is auto-generated. Do not edit it manually.\n" +
+    "// Re-generate by running: bun run codegen\n\n" +
+    `type ${moduleName} = typeof import("${moduleImport}").default;\n\n` +
+    `declare module "@damatjs/services" {\n` +
+    `  interface ModuleRegistry {\n` +
+    `    "${moduleId}": ${moduleName}["service"];\n` +
+    `  }\n}\n`
+  );
+}

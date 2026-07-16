@@ -18,7 +18,6 @@ export function manifestTemplate(name: string): string {
       },
       module: {
         description: `${name} module`,
-        entry: "./src/index.ts",
         models: "./src/models",
         migrations: "./src/migrations",
         routes: "./src/api/routes",

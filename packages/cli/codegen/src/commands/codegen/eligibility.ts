@@ -16,8 +16,8 @@ export function codegenEligibility(
     );
     return "skipped";
   }
-  if (existsSync(modelsPath(moduleConfig.resolve))) return null;
-  const message = `Models directory not found for '${moduleName}': ${modelsPath(moduleConfig.resolve)}`;
+  if (existsSync(modelsPath(moduleConfig))) return null;
+  const message = `Models directory not found for '${moduleName}': ${modelsPath(moduleConfig)}`;
   if (strict) {
     logger.error(message);
     return "error";

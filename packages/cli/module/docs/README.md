@@ -16,4 +16,8 @@ copy-layout, or package helpers. Those helpers remain only where separate
 authoring/provider commands still depend on them. npm-shaped publication is
 absent; registry publication belongs to later Git automation.
 
+Module and auth scaffolds omit redundant entry metadata. Standard
+`src/index.ts` or sibling `index.ts` entries are discovered by
+`@damatjs/module`; custom layouts declare an explicit override.
+
 `scripts/embedAgents.ts` embeds the scaffold guide before build.

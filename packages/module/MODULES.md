@@ -32,7 +32,6 @@ backend, `install.accepts` declares their destinations.
   },
   "module": {
     "description": "Users and sessions",
-    "entry": "./src/index.ts",
     "models": "./src/models",
     "migrations": "./src/migrations",
     "routes": "./src/api/routes",
@@ -77,6 +76,11 @@ The `module` object may declare `entry`, `models`, `migrations`, `routes`,
 environment declarations, module dependencies, pairing hints, author,
 description, and registry metadata. `@damatjs/module` normalizes this object to
 the existing `ModuleManifest` API.
+
+`entry` is optional. Runtime discovery checks `index.ts`, `index.js`,
+`src/index.ts`, and `src/index.js` in order. Declare `entry` only for a
+non-standard layout such as `./dist/index.js`. Declared paths are relative to
+the directory containing the manifest.
 
 Legacy `module.json` is a read-only compatibility fallback during the 0.x
 migration window. New scaffolds write only root `damat.json`. Legacy fields map

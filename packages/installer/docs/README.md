@@ -24,6 +24,7 @@ point is `src/index.ts`; it exports runtime parsers and TypeScript contracts.
 | `src/transaction/`      | Exclusive markers and lean inverse journals.                    |
 | `src/package-manager/`  | Structured Bun, npm, pnpm, and Yarn target adapters.            |
 | `src/package-backend/`  | Explicit Node/Damat backend selection and alpha gating.         |
+| `src/module/`           | Uniform source/Node/Damat module runtime resolution.            |
 | `src/usage/`            | Advisory usage scanning with managed-path exclusions.           |
 | `src/backup/`           | Modified-owned-file backups and exact restoration.              |
 
@@ -35,6 +36,10 @@ point is `src/index.ts`; it exports runtime parsers and TypeScript contracts.
 - Installation IDs use lowercase kebab-case.
 - Install modes are `source` or `package`; a recipe default must appear in its
   declared modes.
+- Declared module runtime paths must exist inside the artifact root. Omitted
+  optional capabilities remain absent.
+- Manifest validation errors never fall back to convention-only source mode.
+- Node module descriptors use package names, not filesystem paths or traversal.
 - Package backends are `node` or `damat` and are independent of install mode.
 - Provider capabilities match receiver capabilities by name; only `{id}` may
   appear in a destination template.

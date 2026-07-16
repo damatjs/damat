@@ -50,6 +50,11 @@ The `module` object accepts `entry`, `models`, `migrations`, `routes`,
 `readModuleManifest` normalizes these fields into the runtime-facing
 `ModuleManifest`. Install packages come from `install.packages`.
 
+`entry` is optional. `resolveModuleEntry` first honours a declared override,
+then checks `index.ts`, `index.js`, `src/index.ts`, and `src/index.js`. This
+keeps existing `src/module.json` modules using `"./index.ts"` compatible while
+allowing new root `damat.json` modules to omit redundant metadata.
+
 ## Reading
 
 `readModuleManifest(moduleDir)` uses this order:

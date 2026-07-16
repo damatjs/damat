@@ -80,6 +80,10 @@ for (const [name, contents] of files) {
 | `relationFields(relations)`                            | function            | Optional loaded-relation interface fields.                                                     |
 | `GenerateTypesOptions`, `GeneratedFilesMap`            | types               | Options (`autoFields`, `banner`) and the files-map result type.                                |
 
+`runModuleCodegen` accepts `serviceImport` for a named service class or
+`moduleTypeImport` to derive the service type from a resolved default module
+entry.
+
 **Subpath exports:** `@damatjs/codegen/types` is declared in `package.json` (maps to `dist/types/index.js`). It is a build-output subpath; the public, source-backed surface is the root `.` export above.
 
 ## How it fits

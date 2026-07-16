@@ -1,6 +1,7 @@
 import { type Command, reportError } from "@damatjs/cli";
 import { loadModules } from "@/cli/utils/load";
 import { OrmModuleContainer } from "@/cli/types";
+import { migrationSources } from "./sources";
 
 const migrateList: Command = {
   name: "migrate:list",
@@ -25,7 +26,7 @@ const migrateList: Command = {
     ctx.logger.info("Modules with migrations:");
 
     const allMigrations = discoverAllMigrations(
-      Object.values(modules).map((m) => m.resolve),
+      migrationSources(Object.values(modules)),
     );
     const moduleMap = new Map<string, number>();
 

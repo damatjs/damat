@@ -70,9 +70,9 @@ console.log(status.modules);
 | `createMigration(moduleName, modulesDir?, opts?)`           | function     | Auto-picks initial vs diff based on whether a snapshot exists; returns a path or `DiffMigrationResult`.       |
 | `createInitialMigration(moduleName, moduleResolver, opts?)` | function     | Baseline migration: full `CREATE` SQL from all models, saves first snapshot. Returns the file path.           |
 | `createDiffMigration(moduleName, moduleResolver, opts?)`    | function     | Diff migration vs the saved snapshot; returns `DiffMigrationResult` (may be `filePath: null`).                |
-| `discoverModuleMigrations(moduleResolver)`                  | function     | Scan `<resolver>/migrations/` for `Migration*.sql`; returns sorted `MigrationInfo[]`.                         |
-| `discoverAllMigrations(resolvers[])`                        | function     | Discover across resolvers, sorted by timestamp.                                                               |
-| `discoverModels(moduleResolver, logger?)`                   | function     | `import()` a module and return its `ModelDefinition[]` (throws if none).                                      |
+| `discoverModuleMigrations(moduleResolver)`                  | function     | Scan `<resolver>/migrations/` or an explicit resolved migrations directory; returns sorted files.             |
+| `discoverAllMigrations(resolvers[])`                        | function     | Discover across roots or resolved descriptors, sorted by timestamp.                                           |
+| `discoverModels(moduleResolver, logger?)`                   | function     | Load an aggregate models export or scan a models-provider directory.                                          |
 | `runMigrations(pool, moduleContainer)`                      | function     | Ensure tracker table, bootstrap DB, run pending per module, transactional. Returns `ModuleMigrationResult[]`. |
 | `getMigrationStatus(pool, resolvers[])`                     | function     | Applied/pending counts + `MigrationInfo[]` per module.                                                        |
 | `getModuleMigrationStatus(pool, resolver)`                  | function     | Same, for one module (throws if it has no migrations).                                                        |

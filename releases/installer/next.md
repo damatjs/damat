@@ -47,6 +47,10 @@ a headless package with strict runtime validation.
 - Explicit experimental package backend selection recorded in plans and locks.
 - An experimental Damat package store under `.damat/packages/<id>` with no
   dependency lifecycle scripts and no host `package.json` mutation.
+- Uniform source, Node package, and Damat package module resolution into one
+  validated `ResolvedModule` runtime surface.
+- Strict package-name validation, realpath containment, and no compatibility
+  fallback for malformed manifests.
 
 ## Breaking
 

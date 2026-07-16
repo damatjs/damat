@@ -9,7 +9,7 @@ This package coordinates the full migration lifecycle for a **module-based** app
 | File / dir       | Responsibility                                                                                                                                                                                                                               |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/index.ts`   | Barrel: re-exports discovery, executor, generator, tracker, and logger helpers.                                                                                                                                                              |
-| `src/discovery/` | Find what exists. `moduleMigrations.ts` scans a module's `migrations/` for `Migration*.sql`; `allMigrations.ts` aggregates across modules; `models.ts` dynamically `import()`s a module's `models`. → [discovery.md](./discovery.md)         |
+| `src/discovery/` | Find migrations from roots/resolved descriptors and models from aggregate providers or individual model files. → [discovery.md](./discovery.md)                                                                                              |
 | `src/executor/`  | Apply migrations. `run.ts` (`runMigrations`) orchestrates; `migration.ts` (`executeMigration`) runs one file in a transaction; `bootstrap.ts` installs DB prerequisites; `status.ts` reports applied/pending. → [executor.md](./executor.md) |
 | `src/generator/` | Create new migration files. `index.ts` (`createMigration`) picks initial vs diff; `initialMigration.ts` and `diffMigration.ts` build the SQL via the processor and write `.sql` + snapshot. → [generator.md](./generator.md)                 |
 | `src/tracker/`   | `MigrationTracker` class: owns the `_damat_migration_logs` table. → [tracker.md](./tracker.md)                                                                                                                                               |
@@ -34,9 +34,13 @@ interface OrmModuleContainer {
 ```
 
 - `name` — the module name; used as the `module` key in the log table.
-- `resolve` — the path/identifier the discovery and model loaders operate on. `discoverModuleMigrations(resolver.resolve)` looks for `<resolve>/migrations/`, and `discoverModels` does `import(resolver.resolve)` expecting a `models` export.
+- `resolve` — the artifact root used by editable-source tooling.
+- `entry` / `models` / `migrations` — optional absolute paths produced by
+  module resolution. Migration execution prefers `migrations`, so immutable
+  packages run SQL without copying it into app source.
 
-> Several discovery/status functions take a bare resolver **string** rather than an `OrmModule`; only `runMigrations` takes the full `OrmModuleContainer`. See each split doc for the exact signature.
+Migration discovery accepts either a bare resolver string or a resolved
+descriptor carrying an explicit migrations directory.
 
 ## Migration file convention
 

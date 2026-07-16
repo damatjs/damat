@@ -120,10 +120,14 @@ Exit gate:
 
 ## Phase 5: Packaged Module Runtime
 
+Status: Complete
+
 Tasks:
 
-1. Define module package exports for entry, manifest, models, migrations, routes, workflows, jobs, events, and pipelines.
-2. Add a module resolver that treats source directories and package exports uniformly.
+1. Formalize convention-first module entry discovery and optional runtime paths
+   in `damat.json`.
+2. Add a module resolver that treats source directories and installed package
+   roots uniformly without requiring `package.json.exports`.
 3. Load packaged migrations without copying package contents into the app.
 4. Add external route providers to the framework router.
 5. Load packaged workflows/jobs/events/pipelines during framework bootstrap.
