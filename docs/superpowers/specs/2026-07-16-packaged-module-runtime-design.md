@@ -1,6 +1,6 @@
 # Damat Module Runtime Surface Design
 
-**Status:** Approved for implementation planning  
+**Status:** Revised for compatibility review
 **Phase:** Damat v1 roadmap, Phase 5  
 **Primary packages:** `@damatjs/module`, `@damatjs/framework`,
 `@damatjs/orm`, `@damatjs/codegen`
@@ -22,9 +22,10 @@ runtime manifest.
 - Source and package modules expose the same runtime surface.
 - `package.json` is package-manager metadata, not a Damat manifest.
 - Damat does not require or interpret `package.json.exports`.
-- A module entry is required; every other runtime capability is optional.
+- A runnable entry is required after resolution, but no entry field is required.
 - Missing optional capabilities are normal and require no placeholder files.
-- Paths are relative to the artifact root and may not escape it.
+- Declared paths are relative to their manifest directory and may not escape
+  the artifact root.
 - Runtime discovery does not copy package contents into application source.
 - Source mode receives the stable v1 guarantees and documentation emphasis.
 - Package mode remains explicit early alpha throughout this phase.
@@ -43,7 +44,6 @@ A module declares its complete Damat surface in root `damat.json`:
   "name": "billing",
   "version": "1.0.0",
   "module": {
-    "entry": "./src/index.ts",
     "models": "./src/models",
     "migrations": "./src/migrations",
     "routes": "./src/api/routes",
@@ -57,7 +57,7 @@ A module declares its complete Damat surface in root `damat.json`:
 
 For `kind: "module"`:
 
-- `module.entry` is required and points to the module's default runtime entry.
+- `module.entry` is an optional override for a non-standard runtime entry.
 - `module.models` is an optional model discovery location.
 - `module.migrations` is an optional SQL migration location.
 - `module.routes` is an optional file-router location.
@@ -68,8 +68,24 @@ For `kind: "module"`:
 - Existing `links`, `tests`, and `types` paths remain authoring and integration
   metadata; they are not framework bootstrap providers in Phase 5.
 
-The manifest itself always lives at the artifact root. There is no separate
-manifest export or manifest path field.
+New modules use root `damat.json`. Existing modules with `src/module.json`
+remain valid. Every declared path is resolved from the directory containing
+that manifest, preserving existing values such as `"entry": "./index.ts"`.
+There is no separate manifest export or manifest path field.
+
+## Entry Discovery
+
+The resolver locates a concrete runtime entry without requiring manifest
+metadata:
+
+1. Use the declared `module.entry` or legacy `paths.entry`, if present.
+2. Otherwise check `index.ts` and `index.js` beside the located manifest.
+3. For a root manifest, also check `src/index.ts` and `src/index.js`.
+4. Fail only when none of those files exists.
+
+An explicit entry remains useful for compiled or non-standard layouts, such as
+`"./dist/index.js"`. It is always relative to the manifest directory and must
+remain inside the artifact root.
 
 ## Artifact Root
 
@@ -83,11 +99,12 @@ Every runtime operation begins with a resolved artifact root:
 
 Once the root is known, all three modes use the same steps:
 
-1. Read `<root>/damat.json`.
-2. Require `kind: "module"` and a safe `module.entry`.
-3. Resolve declared runtime paths against the root.
-4. Reject absolute paths, parent traversal, and resolved paths outside the root.
-5. Return absent optional capabilities as absent rather than errors.
+1. Locate root `damat.json` or a supported legacy manifest.
+2. Require a normalized module manifest.
+3. Discover or resolve the concrete runtime entry.
+4. Resolve declared capability paths from the manifest directory.
+5. Reject absolute paths, parent traversal, and paths outside the artifact.
+6. Return absent optional capabilities as absent rather than errors.
 
 Package discovery details belong to the resolver implementation, not the
 manifest schema.
@@ -135,7 +152,7 @@ branches on source versus package after resolution.
 
 ## Loading Boundaries
 
-The required entry is imported as the module's runtime service definition.
+The resolved entry is imported as the module's runtime service definition.
 Optional capability paths are loaded only by the subsystem that owns them:
 
 - ORM migration discovery reads `migrations`.
@@ -151,10 +168,11 @@ not provide.
 
 ## Compatibility
 
-Legacy `module.json` remains readable during the existing 0.x compatibility
-window. Normalization supplies the conventional entry path when the legacy
-manifest does not declare one. New module scaffolds continue writing only root
-`damat.json` and always declare `module.entry`.
+Legacy `module.json` remains readable during the existing compatibility window.
+The current library layout is preserved: `src/module.json` may declare
+`"entry": "./index.ts"`, and that path resolves from `src/`. New module
+scaffolds write root `damat.json` but omit `module.entry` when the conventional
+`src/index.ts` entry is used.
 
 The Phase 5 runtime does not add new package publication, registry automation,
 package export generation, or package dependency resolution. Package mode
@@ -164,11 +182,10 @@ continues to require the existing experimental opt-in.
 
 Resolution fails before runtime initialization when:
 
-- `damat.json` is missing or malformed.
+- No supported manifest is found, or the located manifest is malformed.
 - The artifact is not `kind: "module"`.
-- `module.entry` is missing.
 - A declared path is absolute, uses parent traversal, or escapes the root.
-- The required entry does not exist.
+- No declared or conventional runtime entry exists.
 - A declared optional capability path does not exist.
 
 Errors identify the module, capability, and resolved location. An omitted
@@ -178,8 +195,9 @@ optional capability is not an error.
 
 Task-level tests cover:
 
-- Valid manifests with entry-only and full runtime surfaces.
-- Required entry validation.
+- Valid manifests with omitted, conventional, and overridden entries.
+- Root `damat.json` resolving `src/index.ts`.
+- Existing `src/module.json` resolving a sibling `index.ts`.
 - Safe relative path resolution and traversal rejection.
 - Optional capability omission.
 - Declared-but-missing capability errors.
@@ -195,7 +213,7 @@ type checking, lint, build, documentation checks, and the 100-line checker.
 
 Phase 5 remains split into the roadmap's approval gates:
 
-1. Formalize the `damat.json` runtime surface and validation.
+1. Formalize the optional entry override and conventional discovery rules.
 2. Resolve source and package artifact roots into one `ResolvedModule`.
 3. Load migrations directly from resolved modules.
 4. Add external route providers.
