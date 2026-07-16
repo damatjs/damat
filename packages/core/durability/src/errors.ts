@@ -13,9 +13,9 @@ export class IdempotencyInProgressError extends Error {
 }
 
 export class TransactionalExecutorRequiredError extends Error {
-  constructor() {
+  constructor(operation = "idempotency") {
     super(
-      "A supplied idempotency executor must be an active transaction executor",
+      `A supplied ${operation} executor must be an active transaction executor`,
     );
     this.name = "TransactionalExecutorRequiredError";
   }

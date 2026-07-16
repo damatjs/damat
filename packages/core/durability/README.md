@@ -4,8 +4,9 @@ Shared PostgreSQL contracts for durable Damat infrastructure.
 
 The package provides a structural query interface, a transaction client,
 versioned system-migration descriptors, the shared durability migration
-catalog, and startup readiness checks. Jobs, durable events, and framework
-runtime behavior build on this package without making it own their domain APIs.
+catalog, worker presence, operational controls, and shared inspection
+primitives. Jobs, durable events, and framework runtime behavior build on this
+package without making it own their domain APIs.
 
 ## Client
 
@@ -68,6 +69,29 @@ wrappers itself.
 The guarantee covers database effects performed through the supplied executor.
 Remote providers must receive the same idempotency key; a local transaction
 cannot make an external side effect exactly once.
+
+## Worker presence and controls
+
+`registerWorker`, `heartbeatWorker`, `stopWorker`, and `listWorkers` maintain an
+observational process registry. `listWorkers` calculates active, stale,
+stopping, and stopped states from heartbeat and shutdown timestamps. This data
+supports capacity views; it never authorizes work claims, which require fenced
+leases owned by the jobs or events package.
+
+`pauseWork` and `resumeWork` upsert the unique work-kind/scope control and append
+immutable actor-attributed activity in one transaction. Without an executor,
+the configured durability client opens that transaction. A supplied executor
+must be an active Damat transaction executor. Pausing prevents future claims
+but does not terminate work already running.
+
+## Inspection primitives
+
+The package exports versioned opaque cursors containing a timestamp and UUID,
+progress sampling, visibility policies, aligned time buckets, UUID lease
+tokens, immutable key/path redaction, and newest-first bounded log retention.
+Cursor checksums detect malformed or modified cursor state; cursors are not an
+authentication boundary. Log limits report dropped counts and bytes so
+truncation remains visible without failing a handler.
 
 ## System migrations
 
