@@ -2,15 +2,17 @@
 
 ## Status
 
-Approved for implementation planning on 2026-07-16.
+Approved for implementation planning on 2026-07-16, including the selectable
+server and worker runtime amendment.
 
 ## Goal
 
 Make PostgreSQL the durable source of truth for Damat jobs and explicitly
 durable events while keeping ordinary events lightweight. Redis remains an
-optional wake-up transport. The framework supports separate API and worker
-processes, explicit system migrations, crash recovery, and at-least-once
-delivery with idempotency support.
+optional wake-up transport. One application build can run as an HTTP server, a
+dedicated job worker, a dedicated durable-event worker, a combined worker, or
+an all-in-one process. The framework also provides explicit system migrations,
+crash recovery, and at-least-once delivery with idempotency support.
 
 ## Scope
 
@@ -21,7 +23,7 @@ This design delivers Phase 7 of the Damat v1 roadmap:
 - transactional durable-event outbox and per-consumer delivery;
 - fenced leases, heartbeat, cancellation, retry, reconciliation, and retention;
 - idempotency APIs;
-- `api`, `worker`, and `all` framework runtime roles;
+- `server`, selectable `worker`, and `all` framework runtime modes;
 - explicit system migrations and actionable startup failures;
 - repository lint and formatter cleanup required before feature work.
 
@@ -76,8 +78,9 @@ There is no implicit forwarding between `EventBus.emit()` and durable events.
 ### `@damatjs/framework`
 
 The framework composes configuration, database access, optional Redis wake-ups,
-workers, readiness checks, and ordered shutdown. It re-exports the public
-durability, jobs, and events surfaces but does not duplicate their logic.
+selectable worker capabilities, readiness checks, HTTP serving, and ordered
+shutdown. It re-exports the public durability, jobs, and events surfaces but
+does not duplicate their logic.
 
 ### ORM migration packages
 
@@ -302,24 +305,80 @@ when Redis is absent, disconnected, or loses a message.
 Redis outage logs a warning and reduces responsiveness to the poll interval. It
 does not fail a PostgreSQL write or make durable work unavailable.
 
-## Framework Configuration and Runtime Roles
+## Framework Runtime Modes
+
+The same project build and container image support every runtime shape. Process
+selection changes through configuration or environment variables; no separate
+worker application or generated entry point is required.
 
 The top-level app config gains:
 
 ```ts
 runtime?: {
-  role?: "api" | "worker" | "all";
+  mode?: "server" | "worker" | "all";
+  workers?: Array<"jobs" | "events">;
   shutdownGraceMs?: number;
 }
 ```
 
-The default role is `all`.
+The default mode is `all`. When `runtime.workers` is omitted, the framework
+selects the durable worker capabilities enabled under `services`. An application
+with no durable services therefore keeps its existing HTTP-only behavior.
 
-- `api`: initializes shared services, modules, durable publishers, and HTTP;
-  it does not start job, outbox, delivery, schedule, or reconciliation loops.
-- `worker`: initializes shared services and modules, then starts configured
-  durable workers; it does not build or serve the HTTP router.
-- `all`: starts both sets for local development and compatibility.
+- `server`: initializes shared services, modules, durable publishers, and HTTP.
+  It can enqueue jobs and publish durable events but starts no background worker
+  loops.
+- `worker`: initializes shared services and modules, then starts only the worker
+  capabilities selected by `runtime.workers`. It does not build or serve the
+  HTTP router.
+- `all`: starts HTTP and the selected worker capabilities. This remains the
+  local-development and backward-compatible default.
+
+The first worker capabilities are:
+
+- `jobs`: job claims, job execution, schedules, job reconciliation, and job
+  retention;
+- `events`: outbox routing, durable-event delivery, event reconciliation, and
+  event retention.
+
+The worker list is extensible. Phase 8 can add `pipelines` without introducing a
+new runtime mode.
+
+### Environment overrides
+
+Environment variables override `damat.config.ts` independently:
+
+```bash
+DAMAT_RUNTIME_MODE=server
+DAMAT_WORKER_TYPES=jobs,events
+```
+
+- `DAMAT_RUNTIME_MODE` accepts `server`, `worker`, or `all`.
+- `DAMAT_WORKER_TYPES` is a comma-separated list of worker capabilities.
+- Whitespace and duplicate worker names are normalized.
+- Unknown modes or worker names fail startup with an actionable error.
+- `worker` requires at least one enabled worker capability.
+- `all` may run with zero workers when no durable service is enabled.
+- `server` always starts zero workers, even if a worker list is configured.
+
+This supports:
+
+```bash
+# HTTP only
+DAMAT_RUNTIME_MODE=server
+
+# jobs only, no HTTP
+DAMAT_RUNTIME_MODE=worker DAMAT_WORKER_TYPES=jobs
+
+# durable events only, no HTTP
+DAMAT_RUNTIME_MODE=worker DAMAT_WORKER_TYPES=events
+
+# jobs and durable events, no HTTP
+DAMAT_RUNTIME_MODE=worker DAMAT_WORKER_TYPES=jobs,events
+
+# HTTP plus all configured workers
+DAMAT_RUNTIME_MODE=all DAMAT_WORKER_TYPES=jobs,events
+```
 
 `services.durability` configures polling, leases, heartbeat, retention batch
 sizes, and Redis wake-ups. `services.jobs` configures job workers and schedules.
@@ -336,12 +395,18 @@ that do not enable durability keep database configuration optional.
 Startup order is:
 
 1. load config and logger;
-2. initialize PostgreSQL and optional Redis;
-3. initialize modules and register job/event definitions;
-4. validate required system-migration versions;
-5. initialize durable clients;
-6. start worker loops for `worker` or `all`;
-7. build and start HTTP for `api` or `all`.
+2. resolve runtime mode and worker capabilities from config and environment;
+3. initialize PostgreSQL and optional Redis;
+4. initialize modules and register job/event definitions;
+5. validate required system-migration versions;
+6. initialize durable clients;
+7. start only the selected worker loops for `worker` or `all`;
+8. build and start HTTP only for `server` or `all`.
+
+An explicitly selected worker capability that is not enabled in `services`
+fails startup instead of silently doing nothing. Multiple containers may run
+the same worker capability safely because PostgreSQL claims use `SKIP LOCKED`
+and fenced leases.
 
 Shutdown handlers execute in explicit phases rather than concurrently:
 
@@ -358,7 +423,8 @@ Each shutdown failure is logged and later phases still run.
 
 ## Reconciliation and Retention
 
-A worker-role reconciler performs bounded, repeatable passes:
+Each selected worker capability runs its bounded, repeatable reconciliation
+passes:
 
 - reclaim expired job and delivery leases;
 - move due retry rows back into claimable state;
@@ -414,7 +480,7 @@ Cover:
 - lease-token matching;
 - schedule validation and next occurrences;
 - idempotency duplicate results;
-- config role defaults and validation;
+- runtime-mode defaults and validation;
 - Redis wake-up fallback.
 
 ### PostgreSQL integration tests
@@ -439,7 +505,11 @@ is unavailable. Phase completion requires running them against PostgreSQL.
 
 Cover:
 
-- `api`, `worker`, and `all` boot behavior;
+- `server`, jobs-only worker, events-only worker, combined worker, and `all`
+  boot behavior;
+- environment precedence, normalization, and invalid runtime selection;
+- server mode never starting a worker loop;
+- worker mode never building or serving HTTP;
 - missing database and missing-migration startup errors;
 - ordered shutdown and grace timeout;
 - existing ephemeral event compatibility;
@@ -480,7 +550,8 @@ testable tasks:
 6. schedules, reconciliation, retention, and Redis wake-ups;
 7. durable event outbox and named consumer APIs;
 8. event routing and delivery workers;
-9. framework runtime roles, startup validation, and ordered shutdown;
+9. framework runtime modes, worker selection, startup validation, and ordered
+   shutdown;
 10. integration tests, living docs, release records, and full verification.
 
 Each checkpoint is reported to the user and requires approval before the next
