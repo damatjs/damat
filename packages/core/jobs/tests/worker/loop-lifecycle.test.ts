@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { JobWorker } from "../../src/worker/loop";
+import { createInternalJobWorker } from "../../src/worker/internal";
 import {
   claim,
   deferred,
@@ -21,7 +21,7 @@ test("grace timeout aborts work and delays the stopped state", async () => {
     }),
     stop: async () => stopped++,
   });
-  const worker = new JobWorker(workerOptions(), deps as never);
+  const worker = createInternalJobWorker(workerOptions(), deps as never);
   worker.start();
   await waitUntil(() => polls > 0);
   await worker.stop({ graceMs: 2 });
@@ -45,7 +45,7 @@ test("stop waits for an in-flight poll and starts no new work", async () => {
       return { promise: Promise.resolve(), abort: () => {} };
     },
   });
-  const worker = new JobWorker(workerOptions(), deps as never);
+  const worker = createInternalJobWorker(workerOptions(), deps as never);
   worker.start();
   await waitUntil(() => pollStarted);
   const stopping = worker.stop({ graceMs: 2 });
@@ -54,8 +54,8 @@ test("stop waits for an in-flight poll and starts no new work", async () => {
   expect(executions).toBe(0);
 });
 
-test("boot and registry shutdown failures remain explicit but bounded", async () => {
-  const bootFailure = new JobWorker(
+test("boot failures remain explicit and bounded", async () => {
+  const bootFailure = createInternalJobWorker(
     workerOptions(),
     dependencies({
       register: async () => {
@@ -66,20 +66,4 @@ test("boot and registry shutdown failures remain explicit but bounded", async ()
   bootFailure.start();
   await waitUntil(() => !bootFailure.isRunning);
   await bootFailure.stop();
-
-  const shutdownFailure = new JobWorker(
-    workerOptions(),
-    dependencies({
-      markStopping: async () => {
-        throw new Error("mark failed");
-      },
-      stop: async () => {
-        throw new Error("stop failed");
-      },
-    }) as never,
-  );
-  shutdownFailure.start();
-  await Bun.sleep(2);
-  await shutdownFailure.stop();
-  await shutdownFailure.stop();
 });

@@ -33,6 +33,12 @@ The added cancellation execution test found one adjacent ordering defect:
 initial heartbeat cancellation aborted the signal before persisting the
 cancelled terminal state.
 
+The final lifecycle review added a focused RED run with 19 failures. It showed
+that restart was accepted, pending stop calls did not share one promise,
+registry persistence failures were swallowed, background finalization was not
+observable or retryable, invalid options were accepted, and the emitted public
+constructor exposed the dependency seam.
+
 ## Architecture delivered
 
 - Concurrent due-work claims use `FOR UPDATE SKIP LOCKED`.
@@ -45,8 +51,8 @@ cancelled terminal state.
   transactional idempotency.
 - Success, retry, cancellation, and dead letter close run, attempt, and activity
   atomically. JSON-unsafe results follow the visible failure path.
-- `JobWorker.start()` is idempotent. Polling and registry heartbeat use
-  independent bounded recovery loops.
+- `JobWorker.start()` is idempotent while running. Polling and registry
+  heartbeat use independent bounded recovery loops.
 - Staged stop awaits registration and an in-flight poll, starts no post-stop
   handlers, marks the registry stopping, and bounds the active drain.
 - A grace timeout aborts active handler signals and execution heartbeats.
@@ -62,6 +68,15 @@ cancelled terminal state.
   code ignores its abort signal and returns normally.
 - Calling `stop()` before `start()` is a no-op and does not poison a later
   worker lifecycle.
+- Worker instances are one-shot. Restart during or after stopping throws
+  synchronously, while repeated starts remain idempotent only when running.
+- Pending stop calls share one promise. Registry transition failures reject or
+  are logged for background completion, never produce a false stopped state,
+  and remain retryable.
+- Worker options are validated synchronously, including heartbeat/lease safety
+  and a 25-second registry heartbeat ceiling below the stale-worker window.
+- The public declaration exposes only `constructor(options?: JobWorkerOptions)`;
+  dependency injection lives behind a non-root-exported internal factory.
 - The package root now uses one durable `JobMap` and definition registry,
   durable enqueue/inspection clients, and no raw Redis queue exports.
 - Framework jobs configure PostgreSQL durability and no longer require Redis.
@@ -71,7 +86,7 @@ cancelled terminal state.
 
 ```text
 DATABASE_URL=... bun test --timeout 20000
-74 pass, 0 fail, 179 expect() calls
+95 pass, 0 fail, 209 expect() calls
 100% functions, 100% lines
 
 DATABASE_URL=... bun test

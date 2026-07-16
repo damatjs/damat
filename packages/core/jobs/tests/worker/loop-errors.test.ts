@@ -1,5 +1,5 @@
 import { test } from "bun:test";
-import { JobWorker } from "../../src/worker/loop";
+import { createInternalJobWorker } from "../../src/worker/internal";
 import {
   claim,
   deferred,
@@ -10,7 +10,7 @@ import {
 
 test("execution rejection is observed and released from capacity", async () => {
   let polls = 0;
-  const worker = new JobWorker(
+  const worker = createInternalJobWorker(
     workerOptions(),
     dependencies({
       poll: async () => (polls++ === 0 ? [claim] : []),
@@ -27,7 +27,7 @@ test("execution rejection is observed and released from capacity", async () => {
 
 test("stop absorbs an in-flight poll rejection", async () => {
   const polling = deferred<(typeof claim)[]>();
-  const worker = new JobWorker(
+  const worker = createInternalJobWorker(
     workerOptions(),
     dependencies({ poll: () => polling.promise }) as never,
   );
@@ -41,7 +41,7 @@ test("stop absorbs an in-flight poll rejection", async () => {
 test("stop absorbs an in-flight registry heartbeat rejection", async () => {
   const heartbeat = deferred<void>();
   let heartbeatStarted = false;
-  const worker = new JobWorker(
+  const worker = createInternalJobWorker(
     workerOptions(),
     dependencies({
       heartbeat: () => {

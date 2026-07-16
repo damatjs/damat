@@ -1,5 +1,6 @@
 import { DEFAULT_JOB_QUEUE } from "../definitions/defaults";
 import type { JobWorkerOptions } from "./types";
+import { validateWorkerOptions } from "./validate-options";
 
 export type ResolvedWorkerOptions = JobWorkerOptions & {
   queue: string;
@@ -14,7 +15,8 @@ export type ResolvedWorkerOptions = JobWorkerOptions & {
 export function resolveWorkerOptions(
   options: JobWorkerOptions,
 ): ResolvedWorkerOptions {
-  return {
+  validateWorkerOptions(options);
+  const resolved = {
     ...options,
     queue: options.queue ?? DEFAULT_JOB_QUEUE,
     concurrency: options.concurrency ?? 1,
@@ -24,4 +26,8 @@ export function resolveWorkerOptions(
     registryHeartbeatIntervalMs: options.registryHeartbeatIntervalMs ?? 5_000,
     retryIntervalMs: Math.min(options.retryIntervalMs ?? 1_000, 5_000),
   };
+  if (resolved.heartbeatIntervalMs >= resolved.leaseMs) {
+    throw new Error("heartbeatIntervalMs must be less than leaseMs");
+  }
+  return resolved;
 }

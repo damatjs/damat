@@ -1,11 +1,11 @@
 import { expect, test } from "bun:test";
-import { JobWorker } from "../../src/worker/loop";
+import { createInternalJobWorker } from "../../src/worker/internal";
 import { dependencies, waitUntil, workerOptions } from "./loop-fixture";
 
 test("stop before start remains a no-op", async () => {
   let polls = 0;
   let stopped = 0;
-  const worker = new JobWorker(
+  const worker = createInternalJobWorker(
     workerOptions(),
     dependencies({
       poll: async () => (polls++, []),

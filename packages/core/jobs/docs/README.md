@@ -80,15 +80,21 @@ copies the latest progress snapshot so inspection does not depend on sampling.
 
 ## Worker lifecycle
 
-`JobWorker.start()` is idempotent. It registers a worker record before polling,
-fills only free concurrency, and reports in-flight load on a heartbeat cadence
-that is independent from polling. Transient poll and registry heartbeat errors
-schedule bounded retries while the worker remains active.
+`JobWorker.start()` is idempotent only while the same worker is running. Worker
+instances are one-shot: `start()` rejects synchronously once stopping begins or
+after the worker stops. It registers a worker record before polling, fills only
+free concurrency, and reports in-flight load on a heartbeat cadence independent
+from polling. Construction validates identity, concurrency, timing, progress,
+and log-limit options. Registry heartbeat cadence cannot exceed 25 seconds and
+the job heartbeat must remain shorter than the claim lease.
 
 `stop({ graceMs })` stops claims, awaits an in-flight poll, marks the worker as
-stopping, and waits for active handlers up to the grace period. It then aborts
-unfinished handler signals and their execution heartbeats, so the leases can
-expire. The worker record is not marked stopped until those handlers settle.
+stopping, and waits for active handlers up to the grace period. Repeated calls
+while stop is pending share the same promise. It then aborts unfinished handler
+signals and their execution heartbeats, so the leases can expire. The worker
+record is not marked stopped until those handlers settle and the database write
+succeeds. A persistence failure rejects or is logged for post-grace background
+finalization; either path leaves `stop()` retryable.
 
 ## Registry invariant
 

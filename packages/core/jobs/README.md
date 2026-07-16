@@ -80,12 +80,22 @@ services: {
 },
 ```
 
-The worker starts after modules register their definitions. `start()` is
-idempotent. `stop()` stops new claims, marks the worker as stopping, waits up to
-the grace period, then aborts unfinished handler signals and stops renewing
-their leases. The registry remains `stopping` while handler code is still
-running and changes to `stopped` only after it settles. Poll and registry
-heartbeat failures retry on a bounded cadence while the worker remains active.
+The worker starts after modules register their definitions. Calling `start()`
+again while that worker is running is idempotent. A worker instance is one-shot:
+after stop begins, another `start()` throws synchronously; construct a new
+worker to run again. `stop()` stops new claims, marks the worker as stopping,
+waits up to the grace period, then aborts unfinished handler signals and stops
+renewing their leases. The registry remains `stopping` while handler code is
+still running and changes to `stopped` only after it settles and PostgreSQL
+persists that transition. Persistence failures reject `stop()` and a later
+`stop()` retries them.
+
+Worker options are validated when the worker is constructed. Queue and supplied
+worker IDs must be non-empty, concurrency and log limits must be positive
+integers, timing values must be finite and positive, and the progress interval
+may also be zero. The job heartbeat must be shorter than its lease. Registry
+heartbeats are capped at 25 seconds, below the durability registry's 30-second
+stale window.
 
 ## Delivery semantics
 

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { JobWorker } from "../../src/worker/loop";
+import { createInternalJobWorker } from "../../src/worker/internal";
 import {
   claim,
   deferred,
@@ -16,7 +16,7 @@ test("a transient poll failure retries while the worker is running", async () =>
       return [];
     },
   });
-  const worker = new JobWorker(workerOptions(), deps as never);
+  const worker = createInternalJobWorker(workerOptions(), deps as never);
   worker.start();
   await waitUntil(() => polls >= 2);
   expect(worker.isRunning).toBe(true);
@@ -33,7 +33,7 @@ test("registry heartbeat retries independently from a slow poll", async () => {
       if (heartbeats === 1) throw new Error("temporary heartbeat failure");
     },
   });
-  const worker = new JobWorker(workerOptions(), deps as never);
+  const worker = createInternalJobWorker(workerOptions(), deps as never);
   worker.start();
   await waitUntil(() => heartbeats >= 2);
   polling.resolve([]);

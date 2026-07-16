@@ -42,10 +42,21 @@
 - Log byte caps use PostgreSQL's stored `jsonb` size, terminal activity captures
   the latest progress snapshot, and overflowing retry dates dead-letter without
   retaining a lease.
+- Worker instances are explicitly one-shot. Running `start()` calls remain
+  idempotent, while restart during or after stop now throws synchronously.
+- Stop persistence errors are no longer swallowed. Pending callers share the
+  same stop promise, failures remain retryable, and background finalization
+  failures are logged without falsely marking the worker stopped.
+- Public worker construction validates identities, concurrency, timing,
+  heartbeat-to-lease safety, progress cadence, and log limits. Registry
+  heartbeat cadence is capped at 25 seconds, below the stale-worker window.
+- The public `JobWorker` constructor accepts only worker options; dependency
+  injection moved to an internal, non-root-exported test seam.
 
 ## Action required
 
 Run `bun run db:migrate` after enabling `services.jobs`. This applies the shared
 durability catalog followed by the jobs catalog. Replace `queueName` with
 `queue`, replace string Redis priorities with numeric priorities, and migrate
-raw queue inspection to the headless job clients.
+raw queue inspection to the headless job clients. Construct a new `JobWorker`
+instead of restarting a worker instance that has begun stopping.
