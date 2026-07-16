@@ -299,6 +299,18 @@
         "typescript": "^5.9.3",
       },
     },
+    "packages/core/durability": {
+      "name": "@damatjs/durability",
+      "version": "0.6.0",
+      "dependencies": {
+        "@damatjs/deps": "workspace:*",
+      },
+      "devDependencies": {
+        "@damatjs/typescript-config": "workspace:*",
+        "@types/bun": "1.3.9",
+        "typescript": "^5.9.3",
+      },
+    },
     "packages/core/env": {
       "name": "@damatjs/load-env",
       "version": "0.6.0",
@@ -515,6 +527,7 @@
       "dependencies": {
         "@damatjs/cli": "workspace:*",
         "@damatjs/deps": "workspace:*",
+        "@damatjs/durability": "workspace:*",
         "@damatjs/installer": "workspace:*",
         "@damatjs/link": "workspace:*",
         "@damatjs/logger": "workspace:*",
@@ -582,6 +595,7 @@
       "version": "0.6.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
+        "@damatjs/durability": "workspace:*",
         "@damatjs/logger": "workspace:*",
         "@damatjs/orm-model": "workspace:*",
         "@damatjs/orm-processor": "workspace:*",
@@ -815,6 +829,8 @@
     "@damatjs/deps": ["@damatjs/deps@workspace:packages/deps"],
 
     "@damatjs/docs": ["@damatjs/docs@workspace:apps/docs"],
+
+    "@damatjs/durability": ["@damatjs/durability@workspace:packages/core/durability"],
 
     "@damatjs/events": ["@damatjs/events@workspace:packages/core/events"],
 
@@ -1743,6 +1759,8 @@
     "@damatjs/docs/@types/node": ["@types/node@20.19.43", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-6oYBAi5ikg4Pl+kGsoYtawUMBT2zZMCvPNF7pVLnHZfd1zf38DRiWn/gT01RYCdUqkv7Fhr+C9ot4/tb+2sVvA=="],
 
     "@damatjs/docs/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "@damatjs/durability/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@damatjs/events/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 

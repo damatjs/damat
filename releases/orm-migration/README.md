@@ -6,7 +6,7 @@ Change history for this package. For how it works **now**, read the
 
 | Version       | Summary                                                                                                                                                                            | Upgrade notes         |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
-| Unreleased    | Explicit resolved package migration directories                                                                                                                                    | [next →](./next.md)   |
+| Unreleased    | Resolved package migrations plus ordered inline system migrations                                                                                                                  | [next →](./next.md)   |
 | 0.6.0         | Advisory-lock serialization of concurrent runs, non-transactional execution for `CONCURRENTLY`/`ADD VALUE` statements, status API keyed by module name                             | [0.6.0 →](./0.6.0.md) |
 | 0.5.0         | Per-module discovery sorts numerically by timestamp (matches all-module discovery) — consistent migration order across entry points                                                | [0.5.0 →](./0.5.0.md) |
 | 0.1.4 – 0.4.1 | Lockstep bumps — no change to this package's own behavior                                                                                                                          | —                     |

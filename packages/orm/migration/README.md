@@ -21,6 +21,7 @@ Use this package to:
 - Generate a migration for a module from its current models (`createMigration` / `createInitialMigration` / `createDiffMigration`).
 - Discover the migration files declared by one or more modules (`discoverModuleMigrations`, `discoverAllMigrations`).
 - Apply pending migrations transactionally (`runMigrations`).
+- Apply ordered inline system migrations before module migrations.
 - Report which migrations are applied vs pending (`getMigrationStatus`, `getModuleMigrationStatus`).
 - Inspect or maintain the migration log table directly (`MigrationTracker`).
 
@@ -48,38 +49,42 @@ await createMigration("user", "src/modules/user");
 
 // 2. Apply pending migrations. Pass a pg Pool and a module container.
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const results = await runMigrations(pool, {
+const modules = {
   user: {
     id: "user",
     name: "user",
     path: "src/modules/user",
     resolve: "src/modules/user",
   },
+};
+const results = await runMigrations(pool, modules, {
+  systemMigrations,
 });
 results.forEach((r) => console.log(r.success, r.applied));
 
 // 3. Check status (per module resolver path).
-const status = await getMigrationStatus(pool, ["src/modules/user"]);
+const status = await getMigrationStatus(pool, modules, { systemMigrations });
 console.log(status.modules);
 ```
 
 ## API
 
-| Export                                                      | Kind         | Summary                                                                                                       |
-| ----------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------- |
-| `createMigration(moduleName, modulesDir?, opts?)`           | function     | Auto-picks initial vs diff based on whether a snapshot exists; returns a path or `DiffMigrationResult`.       |
-| `createInitialMigration(moduleName, moduleResolver, opts?)` | function     | Baseline migration: full `CREATE` SQL from all models, saves first snapshot. Returns the file path.           |
-| `createDiffMigration(moduleName, moduleResolver, opts?)`    | function     | Diff migration vs the saved snapshot; returns `DiffMigrationResult` (may be `filePath: null`).                |
-| `discoverModuleMigrations(moduleResolver)`                  | function     | Scan `<resolver>/migrations/` or an explicit resolved migrations directory; returns sorted files.             |
-| `discoverAllMigrations(resolvers[])`                        | function     | Discover across roots or resolved descriptors, sorted by timestamp.                                           |
-| `discoverModels(moduleResolver, logger?)`                   | function     | Load an aggregate models export or scan a models-provider directory.                                          |
-| `runMigrations(pool, moduleContainer)`                      | function     | Ensure tracker table, bootstrap DB, run pending per module, transactional. Returns `ModuleMigrationResult[]`. |
-| `getMigrationStatus(pool, resolvers[])`                     | function     | Applied/pending counts + `MigrationInfo[]` per module.                                                        |
-| `getModuleMigrationStatus(pool, resolver)`                  | function     | Same, for one module (throws if it has no migrations).                                                        |
-| `MigrationTracker`                                          | class        | CRUD over `_damat_migration_logs` (`ensureTable`, `getApplied`, `recordApplied`, `recordReverted`).           |
-| `bootstrapDatabase(pool)`                                   | function     | Idempotent DB setup: `pgcrypto` + `generate_id(prefix)` function.                                             |
-| `log`, `separator`, `successBanner`, `errorBanner`          | functions    | Migration logging helpers (re-exported from `@damatjs/logger`).                                               |
-| `MigrationTracker`, `AppliedMigration`                      | class / type | The tracker and its applied-row type.                                                                         |
+| Export                                                      | Kind         | Summary                                                                                                 |
+| ----------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------- |
+| `createMigration(moduleName, modulesDir?, opts?)`           | function     | Auto-picks initial vs diff based on whether a snapshot exists; returns a path or `DiffMigrationResult`. |
+| `createInitialMigration(moduleName, moduleResolver, opts?)` | function     | Baseline migration: full `CREATE` SQL from all models, saves first snapshot. Returns the file path.     |
+| `createDiffMigration(moduleName, moduleResolver, opts?)`    | function     | Diff migration vs the saved snapshot; returns `DiffMigrationResult` (may be `filePath: null`).          |
+| `discoverModuleMigrations(moduleResolver)`                  | function     | Scan `<resolver>/migrations/` or an explicit resolved migrations directory; returns sorted files.       |
+| `discoverAllMigrations(resolvers[])`                        | function     | Discover across roots or resolved descriptors, sorted by timestamp.                                     |
+| `discoverModels(moduleResolver, logger?)`                   | function     | Load an aggregate models export or scan a models-provider directory.                                    |
+| `runMigrations(pool, moduleContainer, options?)`            | function     | Run optional system migrations first, then module migrations, under one advisory lock.                  |
+| `getMigrationStatus(pool, moduleContainer, options?)`       | function     | Applied/pending counts for system owners and modules.                                                   |
+| `getModuleMigrationStatus(pool, resolver)`                  | function     | Same, for one module (throws if it has no migrations).                                                  |
+| `MigrationTracker`                                          | class        | CRUD over `_damat_migration_logs` (`ensureTable`, `getApplied`, `recordApplied`, `recordReverted`).     |
+| `bootstrapDatabase(pool)`                                   | function     | Idempotent DB setup: `pgcrypto` + `generate_id(prefix)` function.                                       |
+| `log`, `separator`, `successBanner`, `errorBanner`          | functions    | Migration logging helpers (re-exported from `@damatjs/logger`).                                         |
+| `MigrationTracker`, `AppliedMigration`                      | class / type | The tracker and its applied-row type.                                                                   |
+| `runSystemMigrations`, `getSystemMigrationStatus`           | functions    | Execute and inspect ordered inline system migrations through the shared tracker.                        |
 
 `MigrationInfo`, `ModuleMigrationResult`, `ModuleMigrationStatus`, `MigrationStatus`, and `DatabaseConfig` are internal types: they describe the shapes returned by the functions above (so you get them through inference) but are not re-exported as named types from the package root. `executeMigration` is likewise internal — `runMigrations` is the entry point for applying migrations.
 

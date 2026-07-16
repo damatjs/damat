@@ -10,6 +10,7 @@ import { MigrationTracker } from "../tracker";
 import { bootstrapDatabase } from "./bootstrap";
 import { OrmModuleContainer } from "@damatjs/orm-type";
 import { runModuleMigrations } from "./moduleRun";
+import { type MigrationRunOptions, runSystemMigrations } from "../system/run";
 
 /**
  * Arbitrary-but-stable app-level advisory lock key so concurrent deploys
@@ -27,6 +28,7 @@ const MIGRATION_LOCK_KEY = "8123946152146164013";
 export async function runMigrations(
   pool: Pool,
   moduleResolvers: OrmModuleContainer,
+  options: MigrationRunOptions = {},
 ): Promise<ModuleMigrationResult[]> {
   // The lock lives on a dedicated session so Postgres auto-releases it if
   // this process dies mid-run; it must be taken before ensureTable so even
@@ -39,7 +41,12 @@ export async function runMigrations(
     await tracker.ensureTable();
     await bootstrapDatabase(pool);
 
-    const results: ModuleMigrationResult[] = [];
+    const results = await runSystemMigrations(
+      pool,
+      options.systemMigrations ?? [],
+      tracker,
+    );
+    if (results.some((result) => !result.success)) return results;
     for (const moduleResolver of Object.values(moduleResolvers)) {
       results.push(await runModuleMigrations(pool, moduleResolver, tracker));
     }

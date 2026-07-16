@@ -3,7 +3,7 @@
 > `damat-orm` — the standalone CLI for Damat ORM migrations.
 
 `@damatjs/orm-cli` ships the `damat-orm` binary: a small, config-driven command
-line tool that runs module migrations. It reads `damat.config.ts` to discover
+line tool that runs system and module migrations. It reads `damat.config.ts` to discover
 modules, the cross-module links under `links`, and the database URL, then
 delegates the real work to the `@damatjs/orm-*` packages. It is built on the
 shared `@damatjs/cli` runner, so commands, options, banner, and help formatting
@@ -52,6 +52,11 @@ subcommand prints the available subcommands.
 
 All migration commands honor a resolved module's declared migration directory,
 including immutable packages whose SQL lives below `src/migrations`.
+
+When jobs or durable events are enabled, `migrate:up` automatically applies the
+shared durability system catalog before module migrations. The all-module
+`migrate:status` view includes each enabled system owner. A module-scoped status
+request remains limited to that module.
 
 ### Cross-module links
 

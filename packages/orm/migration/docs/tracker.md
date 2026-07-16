@@ -12,7 +12,7 @@ Created idempotently by `ensureTable()`:
 
 ```sql
 CREATE TABLE IF NOT EXISTS "_damat_migration_logs" (
-  "id"                TEXT        PRIMARY KEY,           -- "<module>_<name>"
+  "id"                TEXT        PRIMARY KEY,
   "module"            TEXT        NOT NULL,
   "name"              TEXT        NOT NULL,              -- migration file name (no .sql)
   "applied_at"        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -30,7 +30,8 @@ CREATE INDEX IF NOT EXISTS "idx__damat_migration_logs_status" ON "_damat_migrati
 The `module` column plus the `UNIQUE (module, name)` constraint is what makes tracking **per module**:
 
 - "Which migrations are applied for module X?" is `WHERE module = X AND status = 'applied'`.
-- Two different modules may both have a migration named `Migration..._Initial` without collision — the synthetic primary key `id = "<module>_<name>"` and the composite unique key keep them distinct.
+- Two different owners may use the same migration name. The composite unique
+  key is authoritative; the synthetic id length-prefixes the owner boundary.
 - The `idx_..._module` and `idx_..._status` indexes back the hot-path filters used during `runMigrations` and status reporting.
 
 ## Class API
@@ -55,14 +56,14 @@ interface AppliedMigration {
 
 Returns rows with `status = 'applied'`, ordered by `applied_at` ascending. With a `moduleName`, filters to that module (`WHERE status = 'applied' AND module = $1`); without it, returns applied migrations across **all** modules. The executor turns the result into a `Set` of `name`s to compute the pending set.
 
-### `recordApplied(module, name, executionTimeMs): Promise<void>`
+### `recordApplied(module, name, executionTimeMs, executor?): Promise<void>`
 
-Upsert keyed on `id = "<module>_<name>"`:
+Upsert keyed on `UNIQUE (module, name)`:
 
 ```sql
 INSERT INTO "_damat_migration_logs" (id, module, name, execution_time_ms, status)
 VALUES ($1, $2, $3, $4, 'applied')
-ON CONFLICT (id) DO UPDATE SET
+ON CONFLICT (module, name) DO UPDATE SET
   applied_at        = NOW(),
   reverted_at       = NULL,
   execution_time_ms = $4,
@@ -70,24 +71,27 @@ ON CONFLICT (id) DO UPDATE SET
 ```
 
 Re-applying a previously reverted migration flips `status` back to `'applied'`, clears `reverted_at`, and refreshes `applied_at` and the timing.
+Passing an executor writes through that transaction. System migrations use this
+to commit their inline SQL and tracker row atomically.
 
 ### `recordReverted(module, name): Promise<void>`
 
 ```sql
 UPDATE "_damat_migration_logs"
 SET reverted_at = NOW(), status = 'reverted'
-WHERE id = $1;     -- id = "<module>_<name>"
+WHERE module = $1 AND name = $2;
 ```
 
 Marks a migration reverted. Note: the migration runner (`runMigrations`) never calls this — it is provided for a caller-implemented revert flow.
 
 ## Edge cases & gotchas
 
-- **`id` is `"<module>_<name>"`.** A module name containing an underscore plus a migration name could in principle collide with another module/name pair; in practice names are `Migration<14-digit>_<Label>`, so collisions are unlikely but not structurally impossible.
+- **The synthetic id is collision-free.** It length-prefixes the module name;
+  reads and upserts still use `(module, name)`.
 - **`getApplied` ordering is by `applied_at`, not by migration timestamp.** For the pending computation only membership matters, but if you rely on order, sort by `name` instead.
 - **`recordReverted` is a no-op for unknown ids.** If `id` doesn't exist, the `UPDATE` affects zero rows silently.
-- **Table name is a private constant** (`TABLE_NAME = "_damat_migration_logs"`); the class also stores `this.tableName` but always uses the same value.
-- **No connection management.** The tracker uses `pool.query` directly (no explicit transaction); each call is autocommitted.
+- **No connection management.** The tracker accepts a structural query
+  executor. The caller owns pool or transaction lifecycle.
 
 ## Safe extension
 

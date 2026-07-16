@@ -9,6 +9,8 @@ import type { MigrationStatus, ModuleMigrationStatus } from "../types";
 import { discoverModuleMigrations } from "../discovery";
 import { MigrationTracker } from "../tracker";
 import { OrmModuleContainer, OrmModule } from "@damatjs/orm-type";
+import type { MigrationRunOptions } from "../system";
+import { getSystemMigrationStatus } from "../system";
 
 /**
  * Get migration status for all modules.
@@ -16,11 +18,15 @@ import { OrmModuleContainer, OrmModule } from "@damatjs/orm-type";
 export async function getMigrationStatus(
   pool: Pool,
   moduleResolvers: OrmModuleContainer,
+  options: MigrationRunOptions = {},
 ): Promise<MigrationStatus> {
   const tracker = new MigrationTracker(pool);
   await tracker.ensureTable();
 
-  const result: ModuleMigrationStatus[] = [];
+  const result = await getSystemMigrationStatus(
+    tracker,
+    options.systemMigrations ?? [],
+  );
 
   for (const moduleResolver of Object.values(moduleResolvers)) {
     result.push(await moduleStatus(tracker, moduleResolver));

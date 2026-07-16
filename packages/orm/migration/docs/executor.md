@@ -14,6 +14,7 @@ Source: [`run.ts`](../src/executor/run.ts)
 export async function runMigrations(
   pool: Pool,
   moduleResolvers: OrmModuleContainer,
+  options?: MigrationRunOptions,
 ): Promise<ModuleMigrationResult[]>;
 ```
 
@@ -21,7 +22,13 @@ Steps:
 
 1. `const tracker = new MigrationTracker(pool); await tracker.ensureTable();` — create the log table/indexes if missing.
 2. `await bootstrapDatabase(pool);` — install idempotent DB prerequisites (see below).
-3. For each `OrmModule` in `Object.values(moduleResolvers)`, call the internal `runModuleMigrations(pool, module, tracker)` and collect a `ModuleMigrationResult`.
+3. Run `options.systemMigrations` in global order through the same tracker.
+4. Stop immediately if a system migration fails.
+5. Run each module through `runModuleMigrations`.
+
+System migrations contain inline SQL and are tracked by `(owner, id)`. Their
+results precede module results. Calls without `systemMigrations` retain the
+module-only result shape.
 
 ### `runModuleMigrations` (internal, per module)
 
@@ -90,7 +97,8 @@ Source: [`status.ts`](../src/executor/status.ts)
 ```ts
 export async function getMigrationStatus(
   pool: Pool,
-  modulesResolvers: string[],
+  moduleResolvers: OrmModuleContainer,
+  options?: MigrationRunOptions,
 ): Promise<MigrationStatus>;
 export async function getModuleMigrationStatus(
   pool: Pool,
@@ -98,7 +106,8 @@ export async function getModuleMigrationStatus(
 ): Promise<{ module: ModuleMigrationStatus }>;
 ```
 
-Both `ensureTable()` first, then per resolver:
+Both `ensureTable()` first. All-status calls prepend one entry for each system
+owner, then report every module:
 
 - `discoverModuleMigrations(resolver)` and `tracker.getApplied(resolver)`.
 - Set each `MigrationInfo.applied` flag from the applied-name `Set`.
@@ -118,12 +127,14 @@ interface MigrationStatus {
 }
 ```
 
-> Status takes resolver **strings** and uses the resolver as both the discovery path and the `module` key passed to `tracker.getApplied`. To match what `runMigrations` writes (which keys by `OrmModule.name`), the resolver string passed to status must equal the module `name` used at run time, or the applied set won't line up. Keep `name` and `resolve` consistent, or pass the value that was used as `module` when recording.
+> Module status uses `module.resolve` for discovery and `module.name` for the
+> tracker key, matching `runMigrations`.
 
 ## Edge cases & gotchas
 
 - **Whole-file execution.** The entire `.sql` is sent in one `client.query`. Statements that cannot run inside a transaction (e.g. `CREATE INDEX CONCURRENTLY`, some `ALTER TYPE ... ADD VALUE` forms) will fail under the surrounding `BEGIN`/`COMMIT`. Generated SQL avoids `CONCURRENTLY`; hand-written migrations needing it must be split out.
-- **Stop-on-failure is per module, not global.** One module failing does not prevent other modules in the container from running (the loop in `runMigrations` continues), but it does stop that module's remaining migrations.
+- **System failure is global.** A failed system migration prevents later system
+  and module migrations. Module failures remain isolated to that module.
 - **No down/revert path.** `runMigrations` only applies forward. `tracker.recordReverted` exists for callers that implement revert separately.
 - **Caller owns the pool.** Nothing here calls `pool.end()`.
 
