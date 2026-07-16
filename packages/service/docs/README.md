@@ -82,9 +82,10 @@ The order matters; the framework enforces it at boot:
   resolve that state at method-call time and fall back to base methods outside
   the callback.
 - **Transaction executors have a bounded active lifetime.** The executor passed
-  to the callback is marked for durability composition, then unmarked after
-  success or rollback. Retained executors cannot later bypass idempotency's
-  transaction requirement.
+  to each top-level callback is a fresh wrapper for durability composition,
+  then invalidated after success or rollback. Retained executors cannot later
+  bypass idempotency's transaction requirement, even if the ORM reuses its
+  underlying transaction manager.
 - **`ModuleRegistry` is the typing seam.** Apps augment it via declaration merging so the framework's `getModule("user")` is typed. The interface ships empty.
 
 ## Build note

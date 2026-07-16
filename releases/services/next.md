@@ -13,6 +13,8 @@
   invocation time, then fall back to base methods after the callback.
 - Transaction callback executors are marked only while active for safe
   composition with `withIdempotency`.
+- Top-level transactions use fresh executor wrappers, so reuse of an underlying
+  ORM transaction manager cannot reactivate a captured executor.
 - Transaction options are forwarded to the ORM transaction.
 
 ## Before

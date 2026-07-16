@@ -57,11 +57,12 @@ or another Damat transaction owner such as `ModuleService.transaction`.
 Unmarked pools and inactive executors are rejected before the claim query.
 Without an executor, `withIdempotency` uses the configured default client.
 
-Transaction-adapter authors can use `markTransactionalExecutor` and
-`unmarkTransactionalExecutor` around their callback. The marker is active only
-for that callback and is cleared after both commit and rollback paths. These
-helpers connect an adapter to the runtime contract; application code should not
-use them to bless a pool.
+Transaction-adapter authors can use `createTransactionalExecutor` to create a
+fresh query-delegating wrapper for each callback, then call
+`invalidateTransactionalExecutor` in `finally`. The wrapper is active only for
+that callback and stays invalid after both commit and rollback, even when the
+adapter reuses its underlying client. Application code should not create
+transaction wrappers itself.
 
 The guarantee covers database effects performed through the supplied executor.
 Remote providers must receive the same idempotency key; a local transaction

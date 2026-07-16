@@ -4,8 +4,8 @@ import type {
   DurabilityPool,
 } from "./types";
 import {
-  markTransactionalExecutor,
-  unmarkTransactionalExecutor,
+  createTransactionalExecutor,
+  invalidateTransactionalExecutor,
 } from "./transactional";
 
 export function createDurabilityClient(options: {
@@ -22,7 +22,7 @@ export function createDurabilityClient(options: {
       let executor: DurabilityExecutor | undefined;
       try {
         await client.query("BEGIN");
-        executor = markTransactionalExecutor(client);
+        executor = createTransactionalExecutor(client);
         const result = await callback(executor);
         await client.query("COMMIT");
         return result;
@@ -34,7 +34,7 @@ export function createDurabilityClient(options: {
         }
         throw error;
       } finally {
-        if (executor) unmarkTransactionalExecutor(executor);
+        if (executor) invalidateTransactionalExecutor(executor);
         client.release();
       }
     },

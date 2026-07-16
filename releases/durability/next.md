@@ -10,6 +10,8 @@
   concurrent duplicate serialization, and runtime JSON-result validation.
 - Active transaction executor markers for composing idempotency with Damat
   transaction owners.
+- Fresh per-callback executor wrappers that remain invalid when an underlying
+  pool client or transaction manager is reused.
 
 ## Changed
 
@@ -23,5 +25,6 @@ Run `bun run db:migrate` before enabling durable jobs or events.
 
 Configure a default durability client or pass the executor received by an
 active Damat transaction callback when calling `withIdempotency`. Custom
-transaction adapters must mark the executor only for the callback lifetime.
+transaction adapters must create and invalidate a fresh wrapper for every
+callback.
 Propagate the same key to external providers when they support idempotency.

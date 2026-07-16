@@ -5,30 +5,9 @@ import {
   getDurabilityClient,
   isTransactionalExecutor,
   setDurabilityClient,
+  withIdempotency,
 } from "../src";
-
-function createRecordingPool(fail = false) {
-  const sql: string[] = [];
-  let releases = 0;
-  const client = {
-    query: async (statement: string) => {
-      sql.push(statement);
-      if (fail && statement === "SELECT 1") throw new Error("query failed");
-      return { rows: [], rowCount: 0 };
-    },
-    release: () => {
-      releases += 1;
-    },
-  };
-  return {
-    pool: {
-      query: client.query,
-      connect: async () => client,
-    },
-    sql,
-    releases: () => releases,
-  };
-}
+import { createRecordingPool } from "./clientContext";
 
 afterEach(clearDurabilityClient);
 
@@ -50,6 +29,32 @@ test("marks only transaction callback executors", async () => {
     expect(isTransactionalExecutor(executor)).toBe(true);
   });
   expect(isTransactionalExecutor(captured!)).toBe(false);
+});
+
+test("does not reactivate an old executor when the pool reuses its client", async () => {
+  const recording = createRecordingPool();
+  const durability = createDurabilityClient({ pool: recording.pool });
+  let first;
+  await durability.transaction(async (executor) => {
+    first = executor;
+    expect(isTransactionalExecutor(recording.client)).toBe(false);
+  });
+  await durability.transaction(async (second) => {
+    expect(second).not.toBe(first);
+    expect(isTransactionalExecutor(first!)).toBe(false);
+    await expect(
+      withIdempotency(
+        { scope: "reuse", key: "first", executor: first! },
+        async () => ({ accepted: false }),
+      ),
+    ).rejects.toThrow(/active transaction/i);
+    await expect(
+      withIdempotency(
+        { scope: "reuse", key: "second", executor: second },
+        async () => ({ accepted: true }),
+      ),
+    ).resolves.toEqual({ value: { accepted: true }, replayed: false });
+  });
 });
 
 test("rolls back and releases when a callback fails", async () => {

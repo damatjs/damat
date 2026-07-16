@@ -19,8 +19,9 @@
 
 - The package never opens a PostgreSQL pool; callers own pool lifecycle.
 - A client transaction always releases its checked-out connection.
-- Only active Damat transaction callbacks expose marked executors.
-- Transaction markers are cleared after both successful and failed callbacks.
+- Only active Damat transaction callbacks expose fresh executor wrappers.
+- Wrappers are invalidated after both successful and failed callbacks.
+- Reusing an underlying client never reactivates an older wrapper.
 - `withIdempotency` rejects an unmarked supplied executor before querying.
 - An idempotency claim, operation, and completion share one transaction.
 - Completed duplicates replay the stored JSON result without rerunning work.

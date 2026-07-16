@@ -113,9 +113,10 @@ of the current asynchronous call chain rather than a mutable instance flag.
 Model accessors are stable proxies that resolve the active repository when a
 method is called. An accessor or method captured before a transaction therefore
 uses that transaction inside its callback, and an accessor retained afterward
-falls back to the base repository. The callback executor is marked as active
-only for the transaction lifetime, so it can be passed to
-`withIdempotency`; retaining it after success or rollback is rejected.
+falls back to the base repository. Each top-level transaction receives a fresh
+active executor wrapper, so it can be passed to `withIdempotency`; retaining it
+after success or rollback is rejected even when the ORM reuses its underlying
+transaction manager.
 `TransactionOptions`, including the isolation level, are forwarded to the ORM.
 
 ## API

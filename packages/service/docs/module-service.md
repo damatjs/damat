@@ -92,8 +92,9 @@ transaction<R>(
   executor and method objects without opening another transaction.
 - Concurrent calls on one service instance receive independent contexts,
   executors, and accessor maps. Service instances also never share base maps.
-- The callback executor is marked as an active durability transaction executor
-  only until the callback settles. It is unmarked after success or rollback.
+- Each top-level callback receives a fresh durability executor wrapper. It is
+  invalidated after success or rollback and cannot be reactivated by reuse of
+  the underlying ORM transaction manager.
 - `options` are forwarded to `PgEntityManager.transaction`, including
   transaction isolation settings.
 - A callback that declares no parameter remains assignable and behaves as it

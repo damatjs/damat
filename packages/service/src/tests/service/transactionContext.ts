@@ -9,10 +9,22 @@ export function fakeModel(name: string) {
   } as never;
 }
 
-export function initializeTransactions() {
+export function initializeTransactions(config?: {
+  reuseTransaction?: boolean;
+}) {
   let sequence = 0;
   const transactions: object[] = [];
   let txOptions: unknown;
+  const reusedTransaction = createTransaction(0);
+  function createTransaction(id: number) {
+    return {
+      id,
+      query: mock(async () => ({ rows: [{ id }], rowCount: 1 })),
+      getRepository: mock(() => ({
+        findMany: mock(async () => [{ scope: `tx-${id}` }]),
+      })),
+    };
+  }
   const em = {
     registerModel: mock(() => {}),
     getRepository: mock(() => ({
@@ -22,13 +34,9 @@ export function initializeTransactions() {
       async (callback: (tx: object) => Promise<unknown>, options?: unknown) => {
         txOptions = options;
         const id = ++sequence;
-        const tx = {
-          id,
-          query: mock(async () => ({ rows: [{ id }], rowCount: 1 })),
-          getRepository: mock(() => ({
-            findMany: mock(async () => [{ scope: `tx-${id}` }]),
-          })),
-        };
+        const tx = config?.reuseTransaction
+          ? reusedTransaction
+          : createTransaction(id);
         transactions.push(tx);
         return callback(tx);
       },
