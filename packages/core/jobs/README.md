@@ -95,7 +95,10 @@ worker IDs must be non-empty, concurrency and log limits must be positive
 integers, timing values must be finite and positive, and the progress interval
 may also be zero. The job heartbeat must be shorter than its lease. Registry
 heartbeats are capped at 25 seconds, below the durability registry's 30-second
-stale window.
+stale window. Concurrency is capped at PostgreSQL's signed 32-bit maximum;
+timers are capped at 2,147,483,647 ms; log limits must be safe integers.
+`stop({ graceMs })` applies the same timer ceiling and accepts zero for an
+immediate abort.
 
 ## Delivery semantics
 

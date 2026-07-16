@@ -7,6 +7,7 @@ import { WorkerPollLoop } from "./poll-loop";
 import { WorkerRegistryHeartbeat } from "./registry-heartbeat";
 import { WorkerShutdown } from "./shutdown";
 import type { ClaimedJobRun, JobWorkerOptions } from "./types";
+import { validateStopGrace } from "./validate-options";
 
 export class JobWorkerRuntime {
   readonly id: string;
@@ -53,6 +54,7 @@ export class JobWorkerRuntime {
   }
 
   stop(options: { graceMs?: number } = {}): Promise<void> {
+    validateStopGrace(options.graceMs);
     return this.lifecycle.stop(() =>
       this.stopInternal(options.graceMs ?? 30_000),
     );

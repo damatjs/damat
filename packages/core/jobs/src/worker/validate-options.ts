@@ -1,11 +1,19 @@
 import type { JobWorkerOptions } from "./types";
 
 export const MAX_REGISTRY_HEARTBEAT_INTERVAL_MS = 25_000;
+const INT32_MAX = 2_147_483_647;
+const TIMER_MAX = 2_147_483_647;
 
-function positive(name: string, value: number, integer = false): void {
+function positive(
+  name: string,
+  value: number,
+  integer = false,
+  maximum = Number.MAX_SAFE_INTEGER,
+): void {
   if (
     !Number.isFinite(value) ||
     value <= 0 ||
+    value > maximum ||
     (integer && !Number.isInteger(value))
   ) {
     throw new Error(
@@ -25,7 +33,7 @@ function validateStrings(options: JobWorkerOptions): void {
 
 function validateNumbers(options: JobWorkerOptions): void {
   if (options.concurrency !== undefined) {
-    positive("concurrency", options.concurrency, true);
+    positive("concurrency", options.concurrency, true, INT32_MAX);
   }
   for (const name of [
     "pollIntervalMs",
@@ -35,10 +43,13 @@ function validateNumbers(options: JobWorkerOptions): void {
     "registryHeartbeatIntervalMs",
   ] as const) {
     const value = options[name];
-    if (value !== undefined) positive(name, value);
+    if (value !== undefined) positive(name, value, false, TIMER_MAX);
   }
   const progress = options.progressMinimumIntervalMs;
-  if (progress !== undefined && (!Number.isFinite(progress) || progress < 0)) {
+  if (
+    progress !== undefined &&
+    (!Number.isFinite(progress) || progress < 0 || progress > TIMER_MAX)
+  ) {
     throw new Error("progressMinimumIntervalMs must be a nonnegative number");
   }
 }
@@ -60,5 +71,12 @@ export function validateWorkerOptions(options: JobWorkerOptions): void {
     throw new Error(
       `registryHeartbeatIntervalMs must be at most ${MAX_REGISTRY_HEARTBEAT_INTERVAL_MS}`,
     );
+  }
+}
+
+export function validateStopGrace(graceMs: number | undefined): void {
+  if (graceMs === undefined) return;
+  if (!Number.isFinite(graceMs) || graceMs < 0 || graceMs > TIMER_MAX) {
+    throw new Error(`graceMs must be between 0 and ${TIMER_MAX}`);
   }
 }

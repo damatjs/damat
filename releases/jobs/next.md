@@ -50,6 +50,10 @@
 - Public worker construction validates identities, concurrency, timing,
   heartbeat-to-lease safety, progress cadence, and log limits. Registry
   heartbeat cadence is capped at 25 seconds, below the stale-worker window.
+- Concurrency is bounded by PostgreSQL's signed 32-bit range, timers and
+  durations by the runtime's 2,147,483,647 ms timeout maximum, and log limits
+  by JavaScript's safe-integer range. Graceful-stop duration validates
+  synchronously before lifecycle mutation and accepts zero for immediate abort.
 - The public `JobWorker` constructor accepts only worker options; dependency
   injection moved to an internal, non-root-exported test seam.
 

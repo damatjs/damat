@@ -39,6 +39,11 @@ registry persistence failures were swallowed, background finalization was not
 observable or retryable, invalid options were accepted, and the emitted public
 constructor exposed the dependency seam.
 
+The final numeric-bound RED run produced 8 failures: PostgreSQL concurrency,
+runtime timers, progress duration, safe log limits, and graceful-stop duration
+were not bounded. It also confirmed invalid stop input returned a promise after
+mutating lifecycle state instead of throwing synchronously.
+
 ## Architecture delivered
 
 - Concurrent due-work claims use `FOR UPDATE SKIP LOCKED`.
@@ -75,6 +80,9 @@ constructor exposed the dependency seam.
   and remain retryable.
 - Worker options are validated synchronously, including heartbeat/lease safety
   and a 25-second registry heartbeat ceiling below the stale-worker window.
+- Concurrency, runtime durations, and log limits are bounded by their actual
+  PostgreSQL, timer, and safe-integer representations. Stop grace validates
+  before lifecycle mutation and permits zero for immediate abort.
 - The public declaration exposes only `constructor(options?: JobWorkerOptions)`;
   dependency injection lives behind a non-root-exported internal factory.
 - The package root now uses one durable `JobMap` and definition registry,
@@ -85,6 +93,10 @@ constructor exposed the dependency seam.
 ## GREEN evidence
 
 ```text
+bun test numeric-bounds + stop-validation + options-validation
+27 pass, 0 fail, 29 expect() calls
+numeric validation: 100% functions, 100% lines
+
 DATABASE_URL=... bun test --timeout 20000
 95 pass, 0 fail, 209 expect() calls
 100% functions, 100% lines
@@ -120,5 +132,12 @@ Follow-up commit message: `fix: harden PostgreSQL job worker lifecycle`
 
 ## Baseline note
 
-The PostgreSQL container remains running. The isolated verification database
-and role are removed after the final audit.
+The shared PostgreSQL container was left untouched. The isolated verification
+database and role were removed after the full database audit.
+
+For the final numeric-only follow-up, both Docker contexts became unavailable
+with `Cannot connect to the Docker daemon` before a fresh database rerun and
+cleanup could be confirmed. The changed validation paths passed 27 focused
+tests with 100% validation coverage; the immediately preceding unchanged
+database behavior passed 95 tests at 100% coverage. When Docker recovers,
+remove any `damat_task6_hardening` role left by the interrupted setup attempt.
