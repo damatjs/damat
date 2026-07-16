@@ -1,6 +1,6 @@
 {
   "name": "@damatjs/jobs",
-  "description": "Background job & worker layer for Damat apps, on the Redis-backed queue",
+  "description": "Durable PostgreSQL background jobs and fenced workers for Damat apps",
   "version": "0.6.0",
   "type": "module",
   "main": "dist/index.js",
@@ -37,8 +37,7 @@
   "dependencies": {
     "@damatjs/deps": "workspace:*",
     "@damatjs/durability": "workspace:*",
-    "@damatjs/logger": "workspace:*",
-    "@damatjs/redis": "workspace:*"
+    "@damatjs/logger": "workspace:*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "workspace:*",

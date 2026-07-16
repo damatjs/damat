@@ -11,6 +11,10 @@
 - Internal run, attempt, activity, log, cancellation, and retry clients.
 - Pre-SQL validation for identifiers, PostgreSQL integer ranges, safe
   millisecond values, delays, and deduplication expiration dates.
+- Fenced PostgreSQL workers with concurrent `SKIP LOCKED` claims, durable
+  heartbeats, cancellation signals, progress, structured logs, JSON results,
+  retries, dead letters, and staged graceful stop.
+- The durable enqueue and headless inspection clients at the package root.
 
 ## Changed
 
@@ -26,9 +30,14 @@
   schedule policy constraints reject negative values.
 - Repeating cancellation of a running job preserves the first request
   timestamp and does not duplicate activity.
+- `JobMap`, `defineJob`, and registry access now resolve to the durable
+  definition registry. Handler context no longer exposes Redis queue records.
+- Raw `getJobQueue` and `clearJobQueues` exports are removed. PostgreSQL is the
+  canonical job store; Redis is not required by the worker.
 
 ## Action required
 
 Run `bun run db:migrate` after enabling `services.jobs`. This applies the shared
-durability catalog followed by the jobs catalog. Continue using the existing
-public Redis-backed producer and worker API until the durable worker cutover.
+durability catalog followed by the jobs catalog. Replace `queueName` with
+`queue`, replace string Redis priorities with numeric priorities, and migrate
+raw queue inspection to the headless job clients.

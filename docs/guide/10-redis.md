@@ -73,12 +73,10 @@ Workflows build on the same primitive via
 
 ## Job queue
 
-`RedisQueue` is the **low-level** typed queue with status tracking, priorities,
-and retry accounting. Most apps want the higher-level
-[`@damatjs/jobs`](./10b-events-and-jobs.md#background-jobs) layer built on it —
-`defineJob` / `enqueueJob` / `JobWorker`, which adds a worker loop, exponential
-backoff, and dead-lettering. Reach for `RedisQueue` directly only when you need
-raw control:
+`RedisQueue` is a low-level Redis queue with status tracking and retry
+accounting. Durable application jobs use the separate PostgreSQL-backed
+[`@damatjs/jobs`](./10b-events-and-jobs.md#background-jobs) layer. Reach for
+`RedisQueue` directly only for explicitly ephemeral Redis queue use cases:
 
 ```ts
 import { RedisQueue, type QueueJob } from "@damatjs/redis";

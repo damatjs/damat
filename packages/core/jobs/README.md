@@ -1,111 +1,116 @@
 # @damatjs/jobs
 
-> Background job & worker layer for Damat apps, on the Redis-backed queue.
+Durable PostgreSQL background jobs for Damat applications.
 
-Define jobs as code, enqueue them from anywhere (with priority and delay), and
-run them in worker processes with retries, exponential backoff, dead-lettering,
-and crash redelivery — all on `@damatjs/redis`'s `RedisQueue`.
+Jobs persist their run, retry policy, attempts, progress, structured logs,
+activity, cancellation, result, and errors. Workers use fenced leases and
+`FOR UPDATE SKIP LOCKED`, so several processes can safely poll the same queue.
 
-Part of the [Damat](../../../README.md) monorepo.
-
-The package also owns the PostgreSQL system migrations for durable job runs,
-attempts, activity, logs, schedules, and deduplication. When
-`services.jobs` is configured, `damat-orm migrate:up` selects the shared
-durability catalog first and the jobs catalog second. Apply those migrations
-before starting job services. The public producer and worker API below remains
-the Redis-backed runtime surface; the PostgreSQL client is internal until the
-worker cutover is complete.
-
-The durable schema enforces paired schedule occurrences, valid attempt
-references, nonnegative timing policies, and historical schedule retention.
-The internal durable client validates identifiers and numeric ranges before
-issuing SQL.
-
-## Install
+## Install and migrate
 
 ```bash
-bun add @damatjs/jobs   # re-exported by @damatjs/framework
+bun add @damatjs/jobs
+bun run db:migrate
 ```
 
-## Quick start
+Framework applications configure `projectConfig.databaseUrl` and
+`services.jobs`. Redis is not required; a later optional wake-up transport can
+reduce polling latency without becoming the source of truth.
+
+## Define and enqueue
 
 ```ts
-import { defineJob, enqueueJob, JobWorker } from "@damatjs/jobs";
+import { defineJob, enqueueJob } from "@damatjs/jobs";
 
-// Type your jobs once (declaration merging):
 declare module "@damatjs/jobs" {
   interface JobMap {
-    "send-welcome-email": { userId: string };
+    "send-welcome": { userId: string };
   }
 }
 
-// 1. Define (in the code the worker process imports):
 defineJob(
-  "send-welcome-email",
-  async ({ userId }) => {
+  "send-welcome",
+  async ({ userId }, context) => {
+    await context.progress(25, { phase: "render" });
+    await context.log("info", "Sending welcome", { userId });
     await mailer.sendWelcome(userId);
+    return { sent: true };
   },
-  { maxAttempts: 5, backoffMs: 2000 },
+  { queue: "mail", maxAttempts: 5, backoffMs: 2_000 },
 );
 
-// 2. Enqueue (from any process — API, workflow step, cron):
-await enqueueJob("send-welcome-email", { userId: "u1" });
-await enqueueJob(
-  "send-welcome-email",
-  { userId: "u2" },
+const run = await enqueueJob(
+  "send-welcome",
+  { userId: "u1" },
   {
-    priority: "high",
-    delayMs: 60_000, // deliver in a minute
+    priority: 10,
+    metadata: { source: "signup" },
   },
 );
-
-// 3. Work (framework apps set services.jobs.worker instead):
-const worker = new JobWorker({ concurrency: 4 });
-worker.start();
-// … await worker.stop() on shutdown (waits for in-flight jobs)
 ```
 
-## Semantics
+`enqueueJob` may receive an active durability transaction executor so the
+domain write and enqueue commit together. Without one it uses the configured
+durability client.
 
-- **Retries**: a failing job re-queues with exponential backoff
-  (`backoffMs * multiplier^(attempt-1)`) until `maxAttempts`, then
-  dead-letters into the queue's `failed` set with the error preserved.
-- **Delayed jobs** ride the queue's score — the worker simply doesn't see
-  them until they're due.
-- **Crash safety**: the queue's visibility timeout (default 30s here)
-  redelivers jobs a dead worker claimed — handlers should be idempotent
-  (at-least-once delivery).
-- **Unknown jobs** (no `defineJob` in the worker process) dead-letter
-  immediately with a clear error — deploy the defining code, don't guess.
-- **Inspection**: `getJobQueue().getStats()` / `.getJob(id)` / `.cancelJob(id)`
-  are the raw `RedisQueue` surface underneath.
-
-In framework apps:
+## Run a worker
 
 ```ts
-// damat.config.ts — the worker starts after module init (so every module's
-// defineJob is registered) and stops gracefully on shutdown.
-services: { jobs: { worker: true, concurrency: 4 } }
+import { JobWorker } from "@damatjs/jobs";
+
+const worker = new JobWorker({
+  queue: "mail",
+  concurrency: 4,
+  pollIntervalMs: 1_000,
+});
+
+worker.start();
+await worker.stop({ graceMs: 30_000 });
 ```
 
-## API
+Framework apps normally use:
 
-| Export                                                                                                 | Kind         | Summary                                                                                                                                              |
-| ------------------------------------------------------------------------------------------------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `defineJob(name, handler, options?)`                                                                   | function     | Register a job (unique name). Options: `maxAttempts` (3), `backoffMs` (1000), `backoffMultiplier` (2), `priority` ("normal").                        |
-| `enqueueJob(name, payload, options?)`                                                                  | function     | Queue a run: `priority`, `delayMs`, `maxAttempts`, `queueName`, `client`. Returns the queued job.                                                    |
-| `JobWorker`                                                                                            | class        | `start()`, `stop()` (graceful), `isRunning`, `process(job)`. Options: `concurrency`, `pollIntervalMs`, `queueName`, `visibilityTimeoutMs`, `client`. |
-| `getJobQueue(options?)` / `clearJobQueues()`                                                           | function     | The shared per-name `RedisQueue` instances.                                                                                                          |
-| `getJobDefinition` / `getAllJobDefinitions` / `clearJobDefinitions`                                    | function     | Registry access (state on `globalThis`).                                                                                                             |
-| `JobMap`                                                                                               | interface    | Augment to type job payloads.                                                                                                                        |
-| `JobHandler`, `JobOptions`, `JobDefinition`, `JobEnvelope`, `DEFAULT_JOB_QUEUE`, `DEFAULT_JOB_OPTIONS` | types/consts | Shapes and defaults.                                                                                                                                 |
+```ts
+projectConfig: {
+  databaseUrl: process.env.DATABASE_URL,
+},
+services: {
+  jobs: { worker: true, queue: "mail", concurrency: 4 },
+},
+```
 
-## How it fits
+The worker starts after modules register their definitions. `start()` is
+idempotent. `stop()` stops new claims, marks the worker as stopping, waits up to
+the grace period, and leaves unfinished leases recoverable.
 
-**Depends on**: `@damatjs/redis` (`RedisQueue`), `@damatjs/logger`. **Used
-by**: `@damatjs/framework` (worker lifecycle + re-export). Multi-step
-processes with compensation belong in `@damatjs/workflow-engine`; a job
-handler is a fine place to `execute()` a workflow.
+## Delivery semantics
+
+- Delivery is at least once; handlers should make side effects idempotent.
+- Claims, attempts, and activity are created in one transaction.
+- Every heartbeat and terminal transition matches run, worker, lease token,
+  and lease expiry. A stale worker cannot finish reclaimed work.
+- Failures use persisted exponential backoff and become dead letters after the
+  final attempt. Unknown definitions dead-letter immediately.
+- Queued work cancels immediately. Running cancellation reaches the handler
+  through `context.signal`; completion also rechecks the request atomically.
+- Handler results must be JSON-safe. Invalid results fail visibly through the
+  normal retry/dead-letter path.
+
+## Inspection and administration
+
+The package exposes headless clients rather than unauthenticated routes:
+
+- `getJobRun`, `listJobRuns`, `listJobAttempts`;
+- `listJobActivity`, `listJobLogs`;
+- `cancelJobRun`, `retryJobRun`.
+
+Applications decide how to authenticate and present these records.
+
+## Public definition API
+
+`JobMap`, `defineJob`, `getJobDefinition`, `getAllJobDefinitions`, and
+`clearJobDefinitions` use one process-wide registry. Raw Redis queue access is
+not part of the jobs API.
 
 ## License
 

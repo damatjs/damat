@@ -84,10 +84,9 @@ transport for you.
 
 ## Background jobs
 
-Jobs are named units of work executed by a worker, built on
-[`RedisQueue`](./10-redis.md#job-queue). You get retries with exponential
-backoff, dead-lettering, delayed delivery, and crash redelivery without writing
-queue code.
+Jobs are named units of work persisted in PostgreSQL and executed by fenced
+workers. You get retries with exponential backoff, dead-lettering, delayed
+delivery, durable progress and logs, cancellation, and crash recovery.
 
 ```ts
 import { defineJob, enqueueJob } from "@damatjs/framework";
@@ -102,8 +101,10 @@ declare module "@damatjs/jobs" {
 // 1. Define — in code the worker process imports (a module is a good home):
 defineJob(
   "send-welcome-email",
-  async ({ userId }) => {
+  async ({ userId }, context) => {
+    await context.progress(50);
     await mailer.sendWelcome(userId);
+    return { sent: true };
   },
   { maxAttempts: 5, backoffMs: 2000 },
 );
@@ -114,7 +115,7 @@ await enqueueJob(
   "send-welcome-email",
   { userId: "u2" },
   {
-    priority: "high",
+    priority: 10,
     delayMs: 60_000, // deliver in a minute
   },
 );
@@ -126,7 +127,7 @@ To execute jobs, a process needs a worker. In a framework app, enable it in
 
 ```ts
 services: {
-  jobs: { worker: true, concurrency: 4 },   // also: queueName, pollIntervalMs
+  jobs: { worker: true, concurrency: 4 },   // also: queue, pollIntervalMs
 },
 ```
 
@@ -135,12 +136,12 @@ Semantics worth knowing:
 - **Retries** — a failing job re-queues with exponential backoff
   (`backoffMs * multiplier^(attempt-1)`) until `maxAttempts`, then dead-letters
   into the queue's `failed` set with the error preserved.
-- **At-least-once** — a visibility timeout redelivers jobs a crashed worker had
+- **At-least-once** — expired fenced leases recover jobs a crashed worker had
   claimed, so handlers should be idempotent.
 - **Unknown jobs** (enqueued but not `defineJob`'d in the worker process)
   dead-letter immediately with a clear error.
-- **Inspection** — `getJobQueue().getStats()` / `.getJob(id)` / `.cancelJob(id)`
-  expose the raw queue underneath.
+- **Inspection** — `getJobRun`, `listJobRuns`, `listJobAttempts`,
+  `listJobActivity`, and `listJobLogs` expose durable headless records.
 
 ## Jobs vs workflows (and where events fit)
 

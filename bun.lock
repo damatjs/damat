@@ -341,7 +341,6 @@
         "@damatjs/deps": "workspace:*",
         "@damatjs/durability": "workspace:*",
         "@damatjs/logger": "workspace:*",
-        "@damatjs/redis": "workspace:*",
       },
       "devDependencies": {
         "@damatjs/typescript-config": "workspace:*",
@@ -419,6 +418,7 @@
       "version": "0.6.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
+        "@damatjs/durability": "workspace:*",
         "@damatjs/events": "workspace:*",
         "@damatjs/installer": "workspace:*",
         "@damatjs/jobs": "workspace:*",

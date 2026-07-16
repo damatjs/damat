@@ -1,3 +1,5 @@
+import type { JobRunContext } from "../context/types";
+
 export interface JobMap {}
 
 export type JobName = (keyof JobMap & string) | (string & {});
@@ -7,7 +9,7 @@ export type JobPayload<K extends string> = K extends keyof JobMap
 
 export type JobHandler<T = unknown> = (
   payload: T,
-  context: unknown,
+  context: JobRunContext,
 ) => unknown | Promise<unknown>;
 
 export interface JobOptions {

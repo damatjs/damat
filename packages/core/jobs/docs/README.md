@@ -1,192 +1,93 @@
 # @damatjs/jobs — Internals
 
-Maintainer-facing documentation. For usage see the [package README](../README.md).
-
-This package currently exposes the Redis-backed producer and worker while also
-owning the internal PostgreSQL persistence foundation used by the durable
-worker. The package root remains the compatibility surface. Only the migration
-catalog is exported as a subpath so `@damatjs/orm-cli` can apply it.
+Maintainer notes for the PostgreSQL job runtime. See the package README for the
+public usage surface.
 
 ## Module map
 
-| Area                | Responsibility                                                  |
-| ------------------- | --------------------------------------------------------------- |
-| Root source files   | Current Redis-backed public API and worker.                     |
-| `src/definitions/`  | Internal durable definition defaults and process-wide registry. |
-| `src/migrations/`   | Ordered PostgreSQL jobs system-migration catalog.               |
-| `src/repositories/` | SQL rows, normalized domain mappers, and storage operations.    |
-| `src/client/`       | Internal enqueue, inspection, cancellation, and retry clients.  |
-| `tests/storage/`    | PostgreSQL schema, enqueue, deduplication, and read tests.      |
+| Area             | Responsibility                                           |
+| ---------------- | -------------------------------------------------------- |
+| `definitions/`   | Typed definitions, defaults, and global registry.        |
+| `client/`        | Enqueue, read, cancel, retry, activity, and log clients. |
+| `repositories/`  | SQL records, mappers, and storage primitives.            |
+| `context/`       | Fenced progress, structured logs, results, idempotency.  |
+| `worker/`        | Claims, heartbeats, execution, outcomes, loop, and stop. |
+| `migrations/`    | Ordered jobs system-migration catalog.                   |
+| `tests/storage/` | Persistence and database-invariant tests.                |
+| `tests/worker/`  | Concurrent claims, fencing, outcomes, context, and stop. |
 
-## PostgreSQL storage foundation
+## Claim transaction
 
-The jobs catalog follows the shared durability catalog and creates:
+`claimJobRuns` opens one durability transaction and selects due work with:
 
-- `_damat_job_runs`, attempts, immutable activity, and bounded log storage;
-- schedules plus immutable schedule activity;
-- queue/name/key deduplication records with optional expiration.
-
-Run payloads, metadata, progress, result summaries, errors, actors, and log
-context use native `JSONB`. All lifecycle timestamps use `TIMESTAMPTZ`.
-Priority is numeric and lower values sort first. The due-work index orders by
-queue, status, availability, priority, and creation time.
-
-Job names, queues, deduplication keys, numeric policies, delay ranges, and
-deduplication expiration dates are validated before SQL. Integer-backed values
-must fit PostgreSQL `INTEGER`; millisecond values must be safe JavaScript
-integers and are stored as `BIGINT`. Database checks independently reject
-negative durations and schedule policies.
-
-Enqueue is one transaction: an optional deduplication claim, the run insert,
-and the immutable `enqueued` activity row either all commit or all roll back.
-A supplied executor must be an active Damat transaction wrapper. Without one,
-the configured durability client opens the transaction. Active deduplication
-keys return the existing normalized run; expired keys atomically take ownership
-of a new run.
-
-Repository mutations return mapped domain records rather than PostgreSQL row
-shapes. Optional text fields preserve empty strings. `BIGINT` millisecond
-values are converted only when they fit a safe JavaScript integer. Activity
-timelines order by their identity column, preserving insertion order even when
-timestamps overlap or move backward.
-
-Scheduled runs persist `schedule_id` and `scheduled_for` together. The pair is
-unique for a schedule occurrence, and a schedule with persisted runs cannot be
-deleted. Attempt-scoped activity and logs must reference an existing attempt;
-run-level activity leaves the attempt number null.
-
-The internal client is intentionally not re-exported from `src/index.ts`.
-Changing the package root and worker together is a separate atomic cutover.
-
-## Architecture overview
-
-```
-  defineJob("send-email", handler, opts)      enqueueJob("send-email", payload, opts)
-        │                                            │  QueueJob{ data: {job, payload} }
-        ▼                                            ▼
-  registry (globalThis Map) ◄─── lookup ───  getJobQueue() ── RedisQueue "damat-jobs"
-        ▲                                            ▲   (sorted set, score = due time)
-        │ getJobDefinition(job.data.job)             │
-        └──────────── JobWorker.tick() ── dequeue(capacity) ── process(job)
-                            │                                     ├─ ok → completed
-                            └ setTimeout(next tick)               ├─ fail < max → retrying + delay
-                                                                  └─ fail ≥ max → failed (dead-letter)
+```sql
+FOR UPDATE SKIP LOCKED
 ```
 
-### One shared queue, `{job, payload}` envelope
+Rows sort by availability, priority, creation time, and ID. Durable queue
+controls are checked in the same query. Each accepted row receives a unique
+lease token, increments its attempt count, inserts the immutable attempt, and
+appends claim activity before commit.
 
-Every job rides a single `RedisQueue` named `"damat-jobs"` (`DEFAULT_JOB_QUEUE`) unless
-`queueName` is overridden. The queue payload is a `JobEnvelope` — `{ job: name, payload }`
-— so the worker can route each dequeued item to its handler by name. Trade-off vs a
-queue-per-job design: one worker drains everything and priorities interleave globally
-across job types, at the cost of not being able to scale or pause one job type
-independently. When that matters, `queueName` (on `defineJob`'s consumers: `enqueueJob`
-and `JobWorker`) gives you a second queue with its own worker — the registry is shared
-either way.
+Expired running work closes the previous attempt as `lost`. A recoverable row
+gets a new fenced attempt. An exhausted row dead-letters without exceeding
+`max_attempts`; a cancellation-requested row settles as cancelled without
+executing handler code again.
 
-`getJobQueue()` caches one `RedisQueue` instance per queue name on `globalThis`
-(`Symbol.for("damatjs.jobs.queues")`), shared by enqueuers and workers in the process.
-Default `visibilityTimeoutMs` here is 30s (passed to `RedisQueue`).
+## Fencing and heartbeats
 
-### The `globalThis` registry (`registry.ts`)
+Every progress, log, heartbeat, success, retry, cancellation, or dead-letter
+write matches:
 
-Definitions live in a `Map` on `globalThis` under `Symbol.for("damatjs.jobs.registry")`
-— same pattern (and same rationale) as the event bus and `PoolManager`: a linked dev
-copy of the package next to an installed copy must still see one registry, because a
-worker can only execute jobs whose definitions it can look up. **Definitions are code,
-not data**: the worker process must _import_ the modules that call `defineJob` — the
-framework's module init does this for installed modules, which is why the framework
-starts the worker _after_ module init. `defineJob` throws on duplicate names.
+- run ID;
+- `running` status;
+- worker ID;
+- lease token;
+- a lease expiry later than the database clock.
 
-### Enqueue resolution order (`enqueue.ts`)
+Heartbeat renews both the run lease and attempt heartbeat. It returns the
+persisted cancellation state so the execution loop can abort the handler's
+signal. Progress and logs never extend a lease.
 
-`enqueueJob(name, payload, options)` builds a `QueueJob<JobEnvelope>` with a random UUID
-id and resolves each knob as **call option → definition option → package default**:
+## Execution context
 
-- `priority`: `options.priority ?? definition?.options.priority ?? "normal"`
-- `maxAttempts`: `options.maxAttempts ?? definition?.options.maxAttempts ?? 3`
-- `delay`: only set when `options.delayMs` is given.
+`createJobRunContext` provides the stable handler contract:
 
-The definition is looked up but **not required** — an API process may enqueue a job that
-only the worker process defines; it then simply gets package defaults for anything not
-passed explicitly.
+- identity, attempt, queue, metadata, and cancellation signal;
+- `progress` for the current snapshot and sampled activity;
+- `log` for bounded ordered entries with configured redaction;
+- `withIdempotency` for transactionally protected database effects.
 
-### Worker loop (`worker.ts`)
+Log truncation creates one activity record per attempt. Persistence failures
+propagate into the handler execution and therefore follow ordinary failure
+semantics. Results are recursively checked as JSON-safe before completion.
 
-`start()` is idempotent and returns immediately; the loop is an async `tick()` chain:
+## Atomic outcomes
 
-1. Compute free capacity (`concurrency - inFlight.size`, default concurrency 1).
-2. `dequeue(capacity)` from the queue; each job's `process()` promise is tracked in the
-   `inFlight` set (self-removing via `.finally`). A dequeue error is logged and retried
-   next poll.
-3. Schedule the next tick: **immediately (delay 0) when the batch came back full**
-   (`dequeued === capacity && dequeued > 0` — there is likely more waiting), otherwise
-   after `pollIntervalMs` (default 1000).
+Success, retry, cancellation, and dead-letter transitions each:
 
-`stop()` flips `running`, clears the pending timer, then `await Promise.allSettled(inFlight)`
-— it drains in-flight jobs rather than abandoning them. Delayed/backoff jobs are
-invisible to `dequeue` until their score is due; jobs claimed by a crashed worker are
-redelivered by the queue's visibility timeout.
+1. update the fenced run and clear its lease;
+2. close the current immutable attempt;
+3. append lifecycle activity;
+4. commit together.
 
-### Retry math and dead-lettering (`process()`)
+Retries calculate the next availability from the policy copied onto the run.
+Success rechecks cancellation under the same transaction, so a late
+cancellation cannot be overwritten by a normal completion.
 
-`process()` never throws. On handler failure at attempt `n` (= `job.attempts + 1`):
+## Worker lifecycle
 
-- if `n >= maxAttempts` (job's own value, else the definition's): `updateStatus` to
-  `"failed"` with the error and `completedAt` — the queue's `failed` set is the
-  dead-letter store.
-- else: `updateStatus` to `"retrying"` with
-  `delay = backoffMs * backoffMultiplier^(n-1)` (defaults 1000ms × 2^… → 1s, 2s, 4s…).
-  The delay **rides the queue score**: `RedisQueue.updateStatus` re-queues
-  `retrying`/`pending` jobs with `score = Date.now() + delay - priorityBoost`, so this
-  only works because `@damatjs/redis`'s `updateStatus` honors `job.delay` on re-queue —
-  don't "simplify" that away.
+`JobWorker.start()` is idempotent. It registers a worker record before polling,
+fills only free concurrency, and reports in-flight load. `stop({ graceMs })`
+stops claims, awaits any pending registration, marks the worker as stopping,
+waits for active handlers up to the grace period, and marks it stopped.
 
-**Unknown job names** (no `defineJob` in this process) dead-letter immediately with a
-descriptive error — the fix is deploying the defining code, not retrying.
+An unfinished handler is not falsely cancelled during shutdown. Its lease
+eventually expires and another worker can recover it.
 
-## Invariants & design decisions
+## Registry invariant
 
-- **At-least-once delivery.** Visibility-timeout redelivery means a job that a worker
-  claimed but didn't complete (crash, stall past 30s) runs again — handlers must be
-  idempotent. There is deliberately no exactly-once machinery.
-- **Producer and consumer are decoupled** through the envelope + registry: enqueuers
-  don't need definitions; workers don't need the enqueuing code.
-- **All shared state is on `globalThis`** (registry, queue cache) under `Symbol.for`
-  keys, for the duplicate-package-copy reason above.
-- **The worker owns no queue mechanics.** Scoring, priority, delay, visibility timeout,
-  and the pending/processing/completed/failed sets all live in
-  [`RedisQueue`](../../redis/docs/queue.md); this package only decides _status
-  transitions_ via `updateStatus`.
-
-## Safe extension (quick reference)
-
-**Add a job option:** extend `JobOptions` + `DEFAULT_JOB_OPTIONS` in `types.ts`, thread
-it through `defineJob`'s merge, and honor it in `enqueueJob` and/or `JobWorker.process`
-(keep the option > definition > default order).
-
-**Gotchas:**
-
-- A handler that outlives the visibility timeout (default 30s) gets redelivered while
-  still running — raise `visibilityTimeoutMs` (on both enqueuer and worker options if
-  they construct the queue independently, since the first `getJobQueue()` call for a
-  name wins and caches).
-- `enqueueJob`'s returned `QueueJob` is the _submitted_ snapshot; later status changes
-  live in Redis (`getJobQueue().getJob(id)`).
-- `worker.process()` reads `backoffMs`/`backoffMultiplier` from the **definition** only —
-  there is no per-enqueue backoff override (unlike `maxAttempts`/`priority`).
-- `clearJobDefinitions()`/`clearJobQueues()` are test helpers; clearing definitions under
-  a live worker turns every in-flight retry into an unknown-job dead-letter.
-
-## Tests
-
-`tests/registry.test.ts` is a pure unit test. `tests/enqueue.test.ts` and
-`tests/worker.test.ts` are integration tests needing a reachable Redis (`REDIS_URL` or
-`localhost:6379`), like the `@damatjs/redis` suites. `tests/storage/` needs a
-disposable PostgreSQL database through `DATABASE_URL`.
-
-## Related docs
-
-- [Package README](../README.md)
-- [@damatjs/redis queue internals](../../redis/docs/queue.md) — scoring, visibility timeout, status sets.
-- [@damatjs/events internals](../../events/docs/README.md) — fire-and-forget counterpart to durable jobs.
+The package root re-exports `definitions/registry.ts` and
+`definitions/types.ts` directly. There is only one `JobMap` declaration target
+and one global `defineJob` registry; the removed Redis compatibility files must
+not be recreated beside them.

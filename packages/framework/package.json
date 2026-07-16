@@ -70,6 +70,7 @@
     "@damatjs/logger": "workspace:*",
     "@damatjs/installer": "workspace:*",
     "@damatjs/deps": "workspace:*",
+    "@damatjs/durability": "workspace:*",
     "@damatjs/types": "workspace:*",
     "@damatjs/services": "workspace:*",
     "@damatjs/link": "workspace:*",

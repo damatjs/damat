@@ -118,9 +118,9 @@ interface ServicesConfig {
     channel?: string; // pub/sub channel, default "damat-events"
   };
   jobs?: {
-    // background job worker (@damatjs/jobs); requires redisUrl
+    // durable PostgreSQL jobs; requires databaseUrl
     worker?: boolean; // only worker:true processes execute jobs
-    queueName?: string; // default "damat-jobs"
+    queue?: string; // default "damat-jobs"
     concurrency?: number; // default 1
     pollIntervalMs?: number; // default 1000
   };
@@ -155,6 +155,6 @@ Each lifecycle hook is awaited at its stage; a hook that throws fails startup lo
 - **Config is cached process-wide.** A second `loadConfigAsync` returns the first result regardless of `cwd`. Call `clearConfigCache()` in tests to reload.
 - **`projectConfig` is mandatory and validated lightly.** The loader only checks that `config.projectConfig` exists; everything else is trusted by type, not runtime-validated.
 - **`http.api.bathUrl` is a typo'd, unused field** preserved in the source type; don't depend on it.
-- **`databaseUrl`/`redisUrl` are optional.** Omit `databaseUrl` and no pool is created (health reports `"not configured"`); omit `redisUrl` and rate limiting is skipped (the middleware no-ops when Redis is absent). `services.events.broadcast` and `services.jobs.worker` also require `redisUrl` — without it they log a warning and stay off.
+- **`databaseUrl`/`redisUrl` are optional until a dependent service is enabled.** Omit `databaseUrl` and no pool is created; durable `services.jobs` requires it and stays disabled with a warning when absent. Omit `redisUrl` and rate limiting is skipped. Event broadcast requires Redis, while durable jobs do not.
 - **`rateLimit.failClosed` flips the outage behaviour.** By default a failing rate-limit check passes the request through (fail-open); with `failClosed: true` the middleware returns 503 `RATE_LIMIT_UNAVAILABLE` instead. See [middleware.md](./middleware.md).
 - **`links` is a directory path, not a module map.** It accepts a single path or an array of paths; each must point at a directory whose `index.ts` default-exports `defineLinkModule(...)` and exports `models`. The framework turns these into `link` module entries and initializes them with the rest of the modules — no manual `modules` entry is needed.

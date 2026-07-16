@@ -7,10 +7,14 @@ import type { JobRunStatus } from "./run-types";
 
 export interface AppendActivityInput {
   runId: string;
+  attemptNumber?: number;
   type: string;
   previousStatus?: JobRunStatus;
   nextStatus?: JobRunStatus;
+  workerId?: string;
+  leaseToken?: string;
   reason?: string;
+  durationMs?: number;
   metadata?: Record<string, unknown>;
   actor?: Record<string, unknown>;
 }
@@ -21,15 +25,20 @@ export async function appendJobActivity(
 ): Promise<JobActivity> {
   const result = await executor.query<JobActivityRow>(
     `INSERT INTO "_damat_job_activity"
-       ("run_id","type","previous_status","next_status","reason","metadata","actor")
-     VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb)
+       ("run_id","attempt_number","type","previous_status","next_status",
+        "worker_id","lease_token","reason","duration_ms","metadata","actor")
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11::jsonb)
      RETURNING *`,
     [
       input.runId,
+      input.attemptNumber ?? null,
       input.type,
       input.previousStatus ?? null,
       input.nextStatus ?? null,
+      input.workerId ?? null,
+      input.leaseToken ?? null,
       input.reason ?? null,
+      input.durationMs ?? null,
       JSON.stringify(input.metadata ?? {}),
       JSON.stringify(input.actor ?? {}),
     ],

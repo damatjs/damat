@@ -47,7 +47,7 @@ startServer(app, config, logger)  → @hono/node-server serve(...)
 
 1. **Load config** — `loadConfigAsync(cwd)` dynamically imports `damat.config.ts`, validates it has `projectConfig`, and caches it.
 2. **`hooks.beforeServices`** — if configured, awaited before any service init; a throwing hook fails startup.
-3. **Init services** — `initializeServices(config)`: creates the global logger; if `databaseUrl` is set, connects the pool and calls `PoolManager.setup(...)`; if `redisUrl` is set, inits + connects Redis; connects the event broadcast (if `services.events.broadcast`); imports and registers each module plus any `links` directories (registered as a `link` module via `resolveLinkModuleEntries`), and wires the link resolver (`setLinkModuleResolver`); starts the job worker (if `services.jobs.worker`, after module init). Returns `healthChecks` and `shutdownHandlers`.
+3. **Init services** — `initializeServices(config)`: creates the global logger; connects configured PostgreSQL and Redis services; connects optional event broadcast; imports modules and links; wires the link resolver; configures durable jobs from PostgreSQL and starts their worker after definitions load when `services.jobs.worker` is true. Returns `healthChecks` and `shutdownHandlers`.
 4. **`hooks.afterServices`** — if configured, awaited once services are up.
 5. **Resolve routes dir** — `config.projectConfig.http.api?.entryRouterPath ?? "/src/api/routes"`, joined with `cwd`.
 6. **Bootstrap the app** — `bootstrap({ routesDir, projectConfig, healthCheck, hooks })` builds the Hono app (running `hooks.beforeRoutes`/`hooks.afterRoutes` around route registration).

@@ -37,6 +37,11 @@ Steps:
 5. **Link resolver** — `setLinkModuleResolver((id) => getModule(id))` so the link service can hydrate linked rows by calling other modules' services. No-op when no link module is registered.
 6. Always push a `logger` shutdown handler (`closeLogger()`), registered last.
 
+After module initialization, configured `services.jobs` creates the durability
+client from the initialized PostgreSQL pool. When `worker: true`, it starts the
+fenced job worker and registers its staged stop handler. Redis is not required
+for durable job execution.
+
 `bootstrap` wraps `instances.healthChecks` as `{ version: "2.0.0", checks }` for the `/health` route; `entry` `registerShutdown`s every handler.
 
 ## Logger (`logger.ts`)

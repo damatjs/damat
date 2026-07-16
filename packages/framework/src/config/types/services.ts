@@ -40,7 +40,8 @@ export interface ServicesConfig {
     channel?: string;
   };
   /**
-   * Background job worker (@damatjs/jobs). Requires `projectConfig.redisUrl`.
+   * Durable PostgreSQL job capability (@damatjs/jobs). Requires
+   * `projectConfig.databaseUrl`.
    * Enqueueing works from any process; only processes with `worker: true`
    * execute jobs (they must import the code that `defineJob`s them — module
    * init does this for installed modules).
@@ -48,7 +49,7 @@ export interface ServicesConfig {
   jobs?: {
     worker?: boolean;
     /** Queue to poll (default "damat-jobs"). */
-    queueName?: string;
+    queue?: string;
     /** Jobs processed simultaneously (default 1). */
     concurrency?: number;
     /** Idle wait between polls, ms (default 1000). */
