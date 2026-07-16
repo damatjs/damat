@@ -1,10 +1,7 @@
 import type { ModuleSchema } from "@damatjs/orm-type";
 import type { ILogger } from "@damatjs/logger";
 import { getLogger } from "@damatjs/logger";
-import {
-  generateFilesMap,
-  type GenerationLogger,
-} from "@damatjs/schema-codegen";
+import { generateFilesMap } from "@damatjs/schema-codegen";
 import type { ScaffoldAliases } from "@/scaffold";
 import { writeGeneratedOutput } from "./writeOutput";
 import { scaffoldOutput } from "./scaffoldOutput";
@@ -45,7 +42,7 @@ export interface RunModuleCodegenOptions {
    */
   augmentFilesMap?: (
     filesMap: Map<string, string>,
-    logger: GenerationLogger,
+    logger: ILogger,
   ) => void | Promise<void>;
 }
 

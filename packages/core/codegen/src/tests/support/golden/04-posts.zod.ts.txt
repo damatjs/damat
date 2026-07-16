@@ -1,0 +1,45 @@
+import { z } from "@damatjs/deps/zod";
+
+import type { PostStatusEnum } from "./enums";
+
+export const newPostsSchema = z.object({
+  status: z.enum(['draft', 'published']),
+  summary: z.string().nullable().optional(),
+  tags: z.array(z.string()),
+  author_id: z.string().uuid(),
+}).strict();
+
+export type NewPostsInput = z.infer<typeof newPostsSchema>;
+
+export const updatePostsSchema = z.object({
+  status: z.enum(['draft', 'published']).optional(),
+  summary: z.string().nullable().optional(),
+  tags: z.array(z.string()).optional(),
+  author_id: z.string().uuid().optional(),
+}).strict();
+
+export type UpdatePostsInput = z.infer<typeof updatePostsSchema>;
+
+export const PostsQuerySchema = z.object({
+  id: z.string().uuid().optional(),
+  status: z.enum(['draft', 'published']).optional(),
+  summary: z.string().nullable().optional(),
+  tags: z.array(z.string()).optional(),
+  author_id: z.string().uuid().optional(),
+  limit: z.coerce.number().int().positive().optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+  orderBy: z.string().optional(),
+  orderDir: z.enum(['asc', 'desc']).optional(),
+}).strict();
+
+export type PostsQuery = z.infer<typeof PostsQuerySchema>;
+
+export const PostsIdSchema = z.string().uuid();
+
+export type PostsId = z.infer<typeof PostsIdSchema>;
+
+export const PostsParamsSchema = z.object({
+  id: z.string().uuid(),
+}).strict();
+
+export type PostsParams = z.infer<typeof PostsParamsSchema>;

@@ -16,7 +16,8 @@ code generation. Pure schema rendering remains in `@damatjs/schema-codegen`.
 
 1. `runCodegen` optionally discovers model definitions and builds a schema.
 2. `runModuleCodegen` asks `@damatjs/schema-codegen` for a deterministic file map.
-3. The map may be augmented before generated type files are overwritten.
+3. The map may be augmented before generated type files are overwritten. The
+   hook receives the full Damat `ILogger` surface.
 4. Registry output is regenerated with the type files.
 5. CRUD steps, workflows, and routes are written only when absent.
 6. Workflow barrels are rebuilt depth-first with stable sorted exports.

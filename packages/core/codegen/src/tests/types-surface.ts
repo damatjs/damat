@@ -43,3 +43,10 @@ export type LegacyTypesMatchOwners = [
   Assert<Same<LegacyRunModuleCodegenResult, RunModuleCodegenResult>>,
   Assert<Same<LegacyScaffoldAliases, ScaffoldAliases>>,
 ];
+
+export const legacyLoggerCallback: NonNullable<
+  LegacyRunModuleCodegenOptions["augmentFilesMap"]
+> = (_files, logger) => {
+  logger.warn("legacy callback warning");
+  logger.error("legacy callback error");
+};

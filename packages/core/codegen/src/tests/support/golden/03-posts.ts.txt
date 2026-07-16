@@ -1,0 +1,21 @@
+import type { PostStatusEnum } from "./enums";
+import type { Users } from "./users";
+
+export interface Posts {
+  id: string;
+  status: PostStatusEnum;
+  summary: string | null;
+  tags: Array<string>;
+  author_id: string;
+  // loaded relations
+  author?: Users;
+}
+
+export type NewPosts = {
+  status: PostStatusEnum;
+  summary?: string | null;
+  tags: Array<string>;
+  author_id: string;
+};
+
+export type UpdatePosts = Partial<Omit<Posts, 'id'>>;

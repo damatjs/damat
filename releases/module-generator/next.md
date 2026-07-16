@@ -20,6 +20,7 @@ surfaces for compatibility.
 - Scaffold-once CRUD steps, workflows, collection routes, and id routes.
 - Portable alias import rendering and deterministic recursive barrels.
 - App-owned and immutable-package registry declaration renderers.
+- File-map augmentation hooks receive the full Damat logger surface.
 
 ## Breaking
 

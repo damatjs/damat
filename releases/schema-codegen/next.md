@@ -19,7 +19,7 @@ same pure API during the compatibility window.
 
 - TypeScript and Zod column mapping, fragment renderers, combined generators,
   per-table generators, and deterministic file-map generation.
-- Enum, relation, naming, row, mutation, query, identity, and params helpers
+- Enum, relation, row, mutation, query, identity, and params helpers
   exported from the package root.
 - An optional structural logger using only `debug` and `info`.
 
