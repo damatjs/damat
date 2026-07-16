@@ -42,7 +42,8 @@
   "dependencies": {
     "@damatjs/orm-migration": "workspace:*",
     "@damatjs/orm-model": "workspace:*",
-    "@damatjs/orm-type": "workspace:*"
+    "@damatjs/orm-type": "workspace:*",
+    "@damatjs/schema-codegen": "workspace:*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "workspace:*",

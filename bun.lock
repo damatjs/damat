@@ -293,6 +293,7 @@
         "@damatjs/orm-migration": "workspace:*",
         "@damatjs/orm-model": "workspace:*",
         "@damatjs/orm-type": "workspace:*",
+        "@damatjs/schema-codegen": "workspace:*",
       },
       "devDependencies": {
         "@damatjs/logger": "workspace:*",
@@ -356,6 +357,19 @@
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/logger": "workspace:*",
+      },
+      "devDependencies": {
+        "@damatjs/typescript-config": "workspace:*",
+        "@types/bun": "1.3.9",
+        "tsc-alias": "^1.8.16",
+        "typescript": "^5.9.3",
+      },
+    },
+    "packages/core/schema-codegen": {
+      "name": "@damatjs/schema-codegen",
+      "version": "0.6.0",
+      "dependencies": {
+        "@damatjs/orm-type": "workspace:*",
       },
       "devDependencies": {
         "@damatjs/typescript-config": "workspace:*",
@@ -833,6 +847,8 @@
     "@damatjs/registry": ["@damatjs/registry@workspace:apps/registry"],
 
     "@damatjs/registry-client": ["@damatjs/registry-client@workspace:packages/registry-client"],
+
+    "@damatjs/schema-codegen": ["@damatjs/schema-codegen@workspace:packages/core/schema-codegen"],
 
     "@damatjs/services": ["@damatjs/services@workspace:packages/service"],
 
@@ -1749,6 +1765,8 @@
     "@damatjs/registry/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@damatjs/registry-client/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "@damatjs/schema-codegen/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@damatjs/services/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
