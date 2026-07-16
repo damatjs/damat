@@ -36,6 +36,10 @@ Do **not** use it to:
 ```ts
 import { Pool } from "@damatjs/deps/pg";
 import {
+  collectSystemMigrations,
+  durabilitySystemMigrations,
+} from "@damatjs/durability";
+import {
   createMigration,
   runMigrations,
   getMigrationStatus,
@@ -57,12 +61,13 @@ const modules = {
     resolve: "src/modules/user",
   },
 };
+const systemMigrations = collectSystemMigrations([durabilitySystemMigrations]);
 const results = await runMigrations(pool, modules, {
   systemMigrations,
 });
 results.forEach((r) => console.log(r.success, r.applied));
 
-// 3. Check status (per module resolver path).
+// 3. Check system and module status with the same catalog.
 const status = await getMigrationStatus(pool, modules, { systemMigrations });
 console.log(status.modules);
 ```
@@ -79,7 +84,7 @@ console.log(status.modules);
 | `discoverModels(moduleResolver, logger?)`                   | function     | Load an aggregate models export or scan a models-provider directory.                                    |
 | `runMigrations(pool, moduleContainer, options?)`            | function     | Run optional system migrations first, then module migrations, under one advisory lock.                  |
 | `getMigrationStatus(pool, moduleContainer, options?)`       | function     | Applied/pending counts for system owners and modules.                                                   |
-| `getModuleMigrationStatus(pool, resolver)`                  | function     | Same, for one module (throws if it has no migrations).                                                  |
+| `getModuleMigrationStatus(pool, moduleDescriptor)`          | function     | Same, for one module (throws if it has no migrations).                                                  |
 | `MigrationTracker`                                          | class        | CRUD over `_damat_migration_logs` (`ensureTable`, `getApplied`, `recordApplied`, `recordReverted`).     |
 | `bootstrapDatabase(pool)`                                   | function     | Idempotent DB setup: `pgcrypto` + `generate_id(prefix)` function.                                       |
 | `log`, `separator`, `successBanner`, `errorBanner`          | functions    | Migration logging helpers (re-exported from `@damatjs/logger`).                                         |

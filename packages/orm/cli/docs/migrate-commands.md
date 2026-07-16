@@ -3,7 +3,9 @@
 The `migrate` group lives in `src/cli/commands/migrate/`. The parent
 `migrate` command (`index.ts`) only lists its subcommands; the real work is in
 the four leaves. All four call `loadModules("damat.config.ts", ctx.cwd)` and bail
-with `exitCode: 1` if the config is missing or has no modules.
+with `exitCode: 1` if the config is missing. `migrate:list` and
+`migrate:create` require modules. `migrate:up` and `migrate:status` can instead
+operate on selected system migrations when the module map is empty.
 
 `loadModules` returns ordinary modules **and** cross-module link migration
 modules (one `link:<owner>` per `src/links/<owner>` directory declared under
@@ -26,8 +28,8 @@ Run all pending migrations across every module.
 
 Behaviour:
 
-1. Load modules and enabled built-in system migrations; error if modules are
-   empty.
+1. Load modules and enabled built-in system migrations; error only when both
+   sets are empty.
 2. `loadDatabaseUrl("damat.config.ts", ctx.cwd)` → `{ databaseUrl }`; error if
    empty/falsy.
 3. `const pool = new Pool({ connectionString: databaseUrl })` (from
@@ -51,10 +53,12 @@ positional `module` arg is also accepted (`ctx.options.module || ctx.args[0]`).
 
 Behaviour:
 
-1. Load modules, enabled system migrations, and the database URL.
+1. Load modules and enabled system migrations; error only when both sets are
+   empty, then load the database URL.
 2. Open a `Pool`.
 3. **Scoped** (a module name was given): look up `modules[moduleName]` (error if
-   absent), then `getModuleMigrationStatus(pool, moduleConfig.resolve)`. Logs
+   absent), then `getModuleMigrationStatus(pool, moduleConfig)`. The full
+   descriptor preserves both the migration discovery path and tracker name. Logs
    `"<name>: <applied> applied, <pending> pending"` (level `success` when
    `pending === 0`, else `info`), then each migration (`success` if applied).
 4. **All modules** (no name): call `getMigrationStatus(pool, modules, {
