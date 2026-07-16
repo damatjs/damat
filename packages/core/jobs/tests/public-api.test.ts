@@ -17,5 +17,10 @@ test("package root exposes one durable definition registry", () => {
   expect(jobs.enqueueJob).toBeFunction();
   expect(jobs.JobWorker).toBeFunction();
   expect(jobs.getJobRun).toBeFunction();
+  expect(jobs.createJobSchedule).toBeFunction();
+  expect(jobs.updateJobSchedule).toBeFunction();
+  expect(jobs.listJobSchedules).toBeFunction();
+  expect(jobs.runJobRetention).toBeFunction();
+  expect(jobs.configureJobWakeupPublisher).toBeFunction();
   expectTypeOf<JobPayload<"typed-test">>().toEqualTypeOf<{ id: string }>();
 });

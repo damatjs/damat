@@ -21,6 +21,7 @@
   sampling, visibility types, and UUID lease-token creation.
 - Immutable nested key/path redaction and chronological bounded work-log
   retention with explicit dropped-count and dropped-byte reporting.
+- Ordered bounded cleanup for expired idempotency keys.
 
 ## Changed
 

@@ -4,6 +4,7 @@ import type {
   WorkLogLimits,
 } from "@damatjs/durability";
 import type { DurabilityClient } from "@damatjs/durability";
+import type { JobWakeupRedis } from "../wakeup";
 import type { JobRun } from "../repositories";
 
 export interface ClaimedJobRun extends JobRun {
@@ -32,6 +33,11 @@ export interface JobWorkerOptions {
   progressMinimumIntervalMs?: number;
   logLimits?: WorkLogLimits;
   redaction?: RedactionOptions;
+  reconcileIntervalMs?: number;
+  reconcileBatchSize?: number;
+  retentionIntervalMs?: number;
+  retentionMs?: number;
+  wakeupRedis?: JobWakeupRedis;
 }
 
 export interface ExecuteJobOptions extends JobWorkerOptions {

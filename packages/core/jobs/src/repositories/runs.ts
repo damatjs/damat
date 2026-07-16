@@ -10,9 +10,9 @@ export async function insertJobRun(
     `INSERT INTO "_damat_job_runs" (
        "id","name","queue","payload","metadata","priority","available_at",
        "max_attempts","backoff_ms","backoff_multiplier",
-       "deduplication_key","correlation_id"
+       "deduplication_key","correlation_id","schedule_id","scheduled_for"
      ) VALUES (
-       $1,$2,$3,$4::jsonb,$5::jsonb,$6,$7,$8,$9,$10,$11,$12
+       $1,$2,$3,$4::jsonb,$5::jsonb,$6,$7,$8,$9,$10,$11,$12,$13,$14
      ) RETURNING *`,
     [
       run.id,
@@ -27,6 +27,8 @@ export async function insertJobRun(
       run.backoffMultiplier,
       run.deduplicationKey ?? null,
       run.correlationId ?? null,
+      run.scheduleId ?? null,
+      run.scheduledFor ?? null,
     ],
   );
   return mapJobRun(result.rows[0]!);

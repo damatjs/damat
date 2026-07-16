@@ -63,3 +63,14 @@ test("schedule mapper preserves every optional policy field", () => {
     deduplicationTtlMs: 5_000,
   });
 });
+
+test("run mapper exposes its scheduled occurrence identity", () => {
+  const scheduledFor = new Date();
+  const scheduleId = crypto.randomUUID();
+  expect(
+    mapJobRun(runRow({ schedule_id: scheduleId, scheduled_for: scheduledFor })),
+  ).toMatchObject({
+    scheduleId,
+    scheduledFor,
+  });
+});

@@ -1,3 +1,4 @@
+export * from "./cleanup";
 export type {
   IdempotencyOptions,
   IdempotencyResult,

@@ -8,6 +8,7 @@ import { DEFAULT_JOB_OPTIONS } from "../definitions/defaults";
 import { getJobDefinition } from "../definitions/registry";
 import type { JobName, JobPayload } from "../definitions/types";
 import { validateEnqueue } from "../validation/enqueue";
+import { publishJobWakeup } from "../wakeup/publisher";
 import { requireDeduplicatedRun } from "./deduplication-result";
 import {
   appendJobActivity,
@@ -31,9 +32,11 @@ export async function enqueueJob<K extends JobName>(
     }
     return enqueueWith(options.executor, name, payload, options);
   }
-  return getDurabilityClient().transaction((executor) =>
+  const run = await getDurabilityClient().transaction((executor) =>
     enqueueWith(executor, name, payload, options),
   );
+  await publishJobWakeup(run.queue);
+  return run;
 }
 
 async function enqueueWith(

@@ -20,6 +20,8 @@ export interface JobRunRow extends QueryResultRow {
   result: JsonValue | null;
   correlation_id: string | null;
   deduplication_key: string | null;
+  schedule_id?: string | null;
+  scheduled_for?: Date | null;
   cancellation_requested_at: Date | null;
   created_at: Date;
   updated_at: Date;
@@ -49,6 +51,8 @@ export function mapJobRun(row: JobRunRow): JobRun {
     ...(row.deduplication_key !== null
       ? { deduplicationKey: row.deduplication_key }
       : {}),
+    ...(row.schedule_id != null ? { scheduleId: row.schedule_id } : {}),
+    ...(row.scheduled_for != null ? { scheduledFor: row.scheduled_for } : {}),
     ...(row.cancellation_requested_at
       ? { cancellationRequestedAt: row.cancellation_requested_at }
       : {}),

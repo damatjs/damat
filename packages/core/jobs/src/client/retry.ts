@@ -9,6 +9,7 @@ import {
   transitionJobRun,
   type JobRun,
 } from "../repositories";
+import { publishJobWakeup } from "../wakeup/publisher";
 
 export interface RetryJobRunOptions {
   actor?: Record<string, unknown>;
@@ -21,7 +22,11 @@ export async function retryJobRun(
 ): Promise<JobRun | undefined> {
   const execute = (executor: DurabilityExecutor) =>
     retryWith(executor, id, options);
-  if (!options.executor) return getDurabilityClient().transaction(execute);
+  if (!options.executor) {
+    const run = await getDurabilityClient().transaction(execute);
+    if (run) await publishJobWakeup(run.queue);
+    return run;
+  }
   if (!isTransactionalExecutor(options.executor)) {
     throw new TransactionalExecutorRequiredError();
   }

@@ -41,9 +41,15 @@ function validateNumbers(options: JobWorkerOptions): void {
     "leaseMs",
     "heartbeatIntervalMs",
     "registryHeartbeatIntervalMs",
+    "reconcileIntervalMs",
+    "retentionIntervalMs",
+    "retentionMs",
   ] as const) {
     const value = options[name];
     if (value !== undefined) positive(name, value, false, TIMER_MAX);
+  }
+  if (options.reconcileBatchSize !== undefined) {
+    positive("reconcileBatchSize", options.reconcileBatchSize, true, INT32_MAX);
   }
   const progress = options.progressMinimumIntervalMs;
   if (

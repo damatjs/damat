@@ -15,6 +15,13 @@
   heartbeats, cancellation signals, progress, structured logs, JSON results,
   retries, dead letters, and staged graceful stop.
 - The durable enqueue and headless inspection clients at the package root.
+- One-time and fixed-interval schedule creation, updates, listing, atomic
+  occurrence reconciliation, optional deduplication TTL, and cron rejection.
+- Bounded lease, retry, deduplication, terminal-history, and idempotency
+  reconciliation owned by each job worker.
+- Actor-attributed retention request outcomes in maintenance activity.
+- Optional Redis wake-up publication and a dedicated duplicated subscriber,
+  with PostgreSQL polling retained as the fallback.
 
 ## Changed
 
@@ -56,6 +63,9 @@
   synchronously before lifecycle mutation and accepts zero for immediate abort.
 - The public `JobWorker` constructor accepts only worker options; dependency
   injection moved to an internal, non-root-exported test seam.
+- Package-owned enqueue, retry, and schedule transactions publish wake-ups only
+  after commit. Caller-owned transactions rely on periodic polling because
+  their commit is outside the package boundary.
 
 ## Action required
 

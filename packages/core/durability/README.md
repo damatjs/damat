@@ -58,6 +58,9 @@ or another Damat transaction owner such as `ModuleService.transaction`.
 Unmarked pools and inactive executors are rejected before the claim query.
 Without an executor, `withIdempotency` uses the configured default client.
 
+`cleanupExpiredIdempotency({ limit, before, executor })` removes expired keys
+in an ordered batch capped at 500 rows. Unexpired keys are preserved.
+
 Transaction-adapter authors can use `createTransactionalExecutor` to create a
 fresh query-delegating wrapper for each callback, then call
 `invalidateTransactionalExecutor` in `finally`. The wrapper is active only for

@@ -12,6 +12,8 @@ public usage surface.
 | `repositories/`  | SQL records, mappers, and storage primitives.            |
 | `context/`       | Fenced progress, structured logs, results, idempotency.  |
 | `worker/`        | Claims, heartbeats, execution, outcomes, loop, and stop. |
+| `schedules/`     | Once/interval validation, mutation, and occurrences.     |
+| `wakeup/`        | Best-effort Redis publication and subscription.          |
 | `migrations/`    | Ordered jobs system-migration catalog.                   |
 | `tests/storage/` | Persistence and database-invariant tests.                |
 | `tests/worker/`  | Concurrent claims, fencing, outcomes, context, and stop. |
@@ -106,3 +108,18 @@ The package root re-exports `definitions/registry.ts` and
 `definitions/types.ts` directly. There is only one `JobMap` declaration target
 and one global `defineJob` registry; the removed Redis compatibility files must
 not be recreated beside them.
+
+## Reconciliation and wake-ups
+
+Every pass is bounded and safe under overlap. Expired leases close the old
+attempt and recover from the fenced lease alone. Due retries become claimable,
+schedule occurrences advance atomically, and expired deduplication,
+idempotency, and retained terminal runs are deleted in bounded batches.
+Queue-scoped retention records actor-attributed requested, completed, or failed
+maintenance activity; completion commits with its deletions.
+
+Redis wake-ups carry only `{ kind: "jobs", queue }`. Publishers run after
+package-owned PostgreSQL transactions commit. Mutations using a caller-owned
+executor do not publish because the package cannot observe that outer commit.
+The duplicated subscriber can wake the claim loop early, while periodic
+PostgreSQL polling remains active and authoritative.

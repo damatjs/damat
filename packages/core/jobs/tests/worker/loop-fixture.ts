@@ -41,6 +41,8 @@ export function dependencies(overrides: Record<string, unknown> = {}) {
     heartbeat: async () => {},
     markStopping: async () => {},
     stop: async () => {},
+    reconcile: async () => {},
+    subscribeWakeups: async () => async () => {},
     startExecution: () => ({
       promise: Promise.resolve(),
       abort: () => {},

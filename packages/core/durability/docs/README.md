@@ -31,6 +31,7 @@
 - `withIdempotency` rejects an unmarked supplied executor before querying.
 - An idempotency claim, operation, and completion share one transaction.
 - Completed duplicates replay the stored JSON result without rerunning work.
+- Expired idempotency cleanup is ordered and bounded to at most 500 rows.
 - Database idempotency does not claim exactly-once remote side effects.
 - Worker registry state is observational; fenced leases remain authoritative.
 - Heartbeat age is calculated at inspection time from a caller-selected clock.

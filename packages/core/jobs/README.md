@@ -14,8 +14,8 @@ bun run db:migrate
 ```
 
 Framework applications configure `projectConfig.databaseUrl` and
-`services.jobs`. Redis is not required; a later optional wake-up transport can
-reduce polling latency without becoming the source of truth.
+`services.jobs`. Redis is not required. Optional Redis wake-ups reduce polling
+latency without becoming the source of truth.
 
 ## Define and enqueue
 
@@ -52,6 +52,26 @@ const run = await enqueueJob(
 `enqueueJob` may receive an active durability transaction executor so the
 domain write and enqueue commit together. Without one it uses the configured
 durability client.
+
+## Schedule jobs
+
+```ts
+import { createJobSchedule, listJobSchedules } from "@damatjs/jobs";
+
+await createJobSchedule({
+  name: "daily-cleanup",
+  jobName: "cleanup",
+  payload: {},
+  schedule: { kind: "interval", everyMs: 86_400_000 },
+});
+
+const schedules = await listJobSchedules({ enabled: true });
+```
+
+One-time and fixed-interval schedules are supported. Cron is rejected. Each
+occurrence and the schedule's next occurrence advance in one transaction.
+Unique schedule/time identities make overlapping reconcilers idempotent.
+Optional schedule deduplication suppresses runs until its TTL expires.
 
 ## Run a worker
 
@@ -90,6 +110,17 @@ still running and changes to `stopped` only after it settles and PostgreSQL
 persists that transition. Persistence failures reject `stop()` and a later
 `stop()` retries them.
 
+The worker also owns bounded lease, retry, schedule, idempotency, and retention
+reconciliation. Expired leases, not worker-registry state, decide recovery.
+Periodic PostgreSQL polling always remains enabled.
+
+Configure enqueue-side wake-ups with `configureJobWakeupPublisher(redis)` and
+pass a Redis-compatible client as `wakeupRedis` to a worker. The worker uses a
+dedicated duplicated subscriber. Missing Redis, malformed messages, and
+publish failures only reduce responsiveness to the polling interval. Mutations
+inside a caller-owned transaction suppress wake-ups because the package cannot
+observe the outer commit.
+
 Worker options are validated when the worker is constructed. Queue and supplied
 worker IDs must be non-empty, concurrency and log limits must be positive
 integers, timing values must be finite and positive, and the progress interval
@@ -123,6 +154,9 @@ The package exposes headless clients rather than unauthenticated routes:
 - `getJobRun`, `listJobRuns`, `listJobAttempts`;
 - `listJobActivity`, `listJobLogs`;
 - `cancelJobRun`, `retryJobRun`.
+- `createJobSchedule`, `updateJobSchedule`, `listJobSchedules`;
+- `runJobRetention`, which requires actor metadata and records maintenance
+  request outcomes.
 
 Applications decide how to authenticate and present these records.
 

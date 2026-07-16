@@ -25,6 +25,8 @@ export interface JobRun {
   result?: JsonValue;
   correlationId?: string;
   deduplicationKey?: string;
+  scheduleId?: string;
+  scheduledFor?: Date;
   cancellationRequestedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -58,6 +60,8 @@ export interface NewJobRun {
   backoffMultiplier: number;
   deduplicationKey?: string;
   correlationId?: string;
+  scheduleId?: string;
+  scheduledFor?: Date;
 }
 
 export interface ListJobRunsOptions {

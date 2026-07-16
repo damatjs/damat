@@ -7,6 +7,7 @@ export class WorkerPollLoop {
   private enabled = false;
   private timer?: ReturnType<typeof setTimeout>;
   private inFlight: Promise<ClaimedJobRun[]> | undefined;
+  private wakeRequested = false;
 
   constructor(
     private readonly id: string,
@@ -27,6 +28,16 @@ export class WorkerPollLoop {
     await this.inFlight?.catch(() => {});
   }
 
+  wake(): void {
+    if (!this.enabled) return;
+    if (this.inFlight) {
+      this.wakeRequested = true;
+      return;
+    }
+    if (this.timer) clearTimeout(this.timer);
+    void this.run();
+  }
+
   private async run(): Promise<void> {
     if (!this.enabled) return;
     const active = this.activeCount();
@@ -42,6 +53,11 @@ export class WorkerPollLoop {
       this.schedule(this.options.retryIntervalMs);
     } finally {
       this.inFlight = undefined;
+      if (this.wakeRequested) {
+        this.wakeRequested = false;
+        if (this.timer) clearTimeout(this.timer);
+        this.schedule(0);
+      }
     }
   }
 

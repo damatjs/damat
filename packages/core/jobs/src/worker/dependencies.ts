@@ -8,6 +8,12 @@ import { startJobExecution, type JobExecution } from "./execute";
 import type { ResolvedWorkerOptions } from "./options";
 import { pollJobClaims } from "./poll";
 import type { ClaimedJobRun } from "./types";
+import { reconcileJobWork, type JobReconcilePassOptions } from "./reconciler";
+import {
+  startJobWakeupSubscriber,
+  type JobWakeupRedis,
+  type StopJobWakeupSubscriber,
+} from "../wakeup";
 
 export interface WorkerDependencies {
   register(input: {
@@ -27,6 +33,11 @@ export interface WorkerDependencies {
   heartbeat(id: string, inFlight: number): Promise<void>;
   markStopping(id: string): Promise<void>;
   stop(id: string): Promise<void>;
+  reconcile(options: JobReconcilePassOptions): Promise<void>;
+  subscribeWakeups(
+    redis: JobWakeupRedis,
+    wake: (queue: string) => void,
+  ): Promise<StopJobWakeupSubscriber>;
 }
 
 export const workerDependencies: WorkerDependencies = {
@@ -36,4 +47,6 @@ export const workerDependencies: WorkerDependencies = {
   heartbeat: (id, inFlight) => heartbeatWorker({ id, inFlight }),
   markStopping: (id) => markWorkerStopping({ id }),
   stop: (id) => stopWorker({ id }),
+  reconcile: reconcileJobWork,
+  subscribeWakeups: startJobWakeupSubscriber,
 };

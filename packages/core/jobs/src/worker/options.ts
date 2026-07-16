@@ -10,6 +10,10 @@ export type ResolvedWorkerOptions = JobWorkerOptions & {
   heartbeatIntervalMs: number;
   registryHeartbeatIntervalMs: number;
   retryIntervalMs: number;
+  reconcileIntervalMs: number;
+  reconcileBatchSize: number;
+  retentionIntervalMs: number;
+  retentionMs: number;
 };
 
 export function resolveWorkerOptions(
@@ -25,6 +29,10 @@ export function resolveWorkerOptions(
     heartbeatIntervalMs: options.heartbeatIntervalMs ?? 10_000,
     registryHeartbeatIntervalMs: options.registryHeartbeatIntervalMs ?? 5_000,
     retryIntervalMs: Math.min(options.retryIntervalMs ?? 1_000, 5_000),
+    reconcileIntervalMs: options.reconcileIntervalMs ?? 5_000,
+    reconcileBatchSize: options.reconcileBatchSize ?? 100,
+    retentionIntervalMs: options.retentionIntervalMs ?? 3_600_000,
+    retentionMs: options.retentionMs ?? 604_800_000,
   };
   if (resolved.heartbeatIntervalMs >= resolved.leaseMs) {
     throw new Error("heartbeatIntervalMs must be less than leaseMs");
