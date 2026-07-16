@@ -28,6 +28,34 @@ transaction executor. The default client uses
 `Symbol.for("damatjs.durability.client")`; standalone consumers may pass a
 client directly instead.
 
+## Transactional idempotency
+
+```ts
+import { withIdempotency } from "@damatjs/durability";
+
+const result = await withIdempotency(
+  { scope: "payment.capture", key: requestId },
+  async (executor) => {
+    await executor.query(
+      "INSERT INTO payment_attempts (id, status) VALUES ($1, $2)",
+      [requestId, "captured"],
+    );
+    return { captured: true };
+  },
+);
+```
+
+The first caller claims the scope/key pair and stores its JSON-safe result in
+the same PostgreSQL transaction as the operation. Concurrent duplicates wait
+for that transaction and replay the completed value. Failures roll back the
+claim with the database work, while an expired key may be claimed again.
+
+Pass `executor` when the caller already owns a transaction. Without one,
+`withIdempotency` uses the configured default durability client. The guarantee
+covers database effects performed through the supplied executor. Remote
+providers must receive the same idempotency key; a local transaction cannot
+make an external side effect exactly once.
+
 ## System migrations
 
 `durabilitySystemMigrations` declares the shared idempotency, worker, control,

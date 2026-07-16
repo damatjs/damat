@@ -1,139 +1,89 @@
 import { z } from "@damatjs/deps/zod";
+import type { DurabilityExecutor } from "@damatjs/durability";
 import type { ModelDefinition } from "@damatjs/orm-model";
 import type { TransactionOptions } from "@damatjs/orm-type";
 import { PoolManager } from "../manager/pool";
-import { ModelMethods } from "./methods";
-import { withQueryLogging } from "./logging";
-import { withTaggedCache } from "./cache";
-import { withModelEvents } from "./events";
-import { ModuleServiceConfig, ModelsMap, ToCamelCase } from "./type";
-import { toCamelCase } from "@/util/string";
+import {
+  createModelMethods,
+  defineModelAccessors,
+  type ModelAccessors,
+  registerModels,
+  resolveModelMethods,
+} from "./modelAccessors";
+import { ServiceTransactions } from "./transaction";
+import type { ModelMethods } from "./methods";
+import type { ModuleServiceConfig, ModelsMap } from "./type";
 
 export function ModuleService<
   TModels extends ModelsMap,
   TCredentialsSchema extends z.ZodObject<z.ZodRawShape> | undefined = undefined,
 >(config: ModuleServiceConfig<TModels, TCredentialsSchema>) {
   const { models } = config;
-
-  const modelMethodsMap = new Map<string, ModelMethods<any>>();
+  const methodsByService = new WeakMap<object, Map<string, ModelMethods>>();
+  const transactionsByService = new WeakMap<object, ServiceTransactions>();
+  const getTransactions = (service: object) => {
+    const state = transactionsByService.get(service);
+    if (!state) throw new Error("Service transaction state is unavailable");
+    return state;
+  };
+  const getMethods = (service: object) => {
+    const methods = methodsByService.get(service);
+    if (!methods) throw new Error("Service model methods are unavailable");
+    return methods;
+  };
 
   abstract class GeneratedModuleService {
     credentials?: TCredentialsSchema extends z.ZodTypeAny
       ? z.infer<TCredentialsSchema>
       : undefined;
-    inTransaction: boolean = false;
     models: ModelDefinition[] = [];
 
     constructor(passedCredentials?: unknown) {
       if (config.credentialsSchema) {
-        const result = config.credentialsSchema.parse(passedCredentials);
-        this.credentials = result as any;
+        this.credentials = config.credentialsSchema.parse(
+          passedCredentials,
+        ) as never;
       }
-
-      this.models = Object.values(models);
-
       if (!PoolManager.isInitialized()) {
         throw new Error(
           "PoolManager not initialized. Call PoolManager.setup(pool) before creating service instances.",
         );
       }
-
-      const entityManager = PoolManager.getPgEntityManager();
-
-      for (const [modelName, model] of Object.entries(models)) {
-        entityManager.registerModel(modelName, model as ModelDefinition);
-        let methods = new ModelMethods(
-          model as ModelDefinition,
-          modelName,
-          entityManager,
-        );
-        // Layering: cache innermost (so events fire after invalidation and a
-        // query-log line covers hits and misses alike), then events, logging
-        // outermost.
-        if (config.cache)
-          methods = withTaggedCache(methods, modelName, config.cache);
-        if (config.events) methods = withModelEvents(methods, modelName);
-        if (config.logQueries) methods = withQueryLogging(methods, modelName);
-        modelMethodsMap.set(modelName, methods);
-      }
+      this.models = Object.values(models);
+      registerModels(models, this.em);
+      methodsByService.set(this, createModelMethods(models, this.em, config));
+      transactionsByService.set(this, new ServiceTransactions());
     }
 
     get em() {
       return PoolManager.getPgEntityManager();
     }
-
     get getModels() {
       return this.models;
     }
-
-    async transaction<R>(
-      callback: () => Promise<R>,
+    get inTransaction(): boolean {
+      return getTransactions(this).inTransaction;
+    }
+    [resolveModelMethods](name: string): ModelMethods {
+      return getTransactions(this).resolve(name, getMethods(this));
+    }
+    transaction<R>(
+      callback: (executor: DurabilityExecutor) => Promise<R>,
       options?: TransactionOptions,
     ): Promise<R> {
-      if (this.inTransaction) {
-        return callback();
-      }
-
-      const em = PoolManager.getPgEntityManager();
-
-      return em.transaction(async (tx) => {
-        this.inTransaction = true;
-
-        for (const [modelName] of Object.entries(models)) {
-          const methods = modelMethodsMap.get(modelName);
-          if (methods) {
-            methods.setTransactionalEm(tx);
-          }
-        }
-
-        try {
-          const result = await callback();
-          return result;
-        } finally {
-          this.inTransaction = false;
-
-          for (const [modelName] of Object.entries(models)) {
-            const methods = modelMethodsMap.get(modelName);
-            if (methods) {
-              methods.setTransactionalEm(null);
-            }
-          }
-        }
-      }, options);
+      return getTransactions(this).run(
+        this.em,
+        (tx) => createModelMethods(models, this.em, config, tx),
+        callback,
+        options,
+      );
     }
   }
 
-  type ModelAccessors = {
-    [
-      K in keyof TModels as K extends string ? ToCamelCase<K> : never
-    ]: ModelMethods;
-  };
-
-  for (const [modelName, modelDef] of Object.entries(models)) {
-    const accessorName = toCamelCase(modelName);
-    const model = modelDef as ModelDefinition;
-
-    Object.defineProperty(GeneratedModuleService.prototype, accessorName, {
-      get(): ModelMethods {
-        const existingMethods = modelMethodsMap.get(modelName);
-        if (existingMethods) {
-          return existingMethods;
-        }
-
-        const entityManager = PoolManager.getPgEntityManager();
-        const newMethods = new ModelMethods(model, modelName, entityManager);
-        modelMethodsMap.set(modelName, newMethods);
-
-        return newMethods;
-      },
-      enumerable: true,
-      configurable: true,
-    });
-  }
-
+  defineModelAccessors(GeneratedModuleService.prototype, models);
   return GeneratedModuleService as abstract new (
     credentials?: TCredentialsSchema extends z.ZodObject<z.ZodRawShape>
       ? z.infer<TCredentialsSchema>
       : undefined,
-  ) => GeneratedModuleService & ModelAccessors;
+  ) => GeneratedModuleService & ModelAccessors<TModels>;
 }

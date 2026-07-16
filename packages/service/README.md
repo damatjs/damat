@@ -90,11 +90,31 @@ const byId = await svc.user.findById(user.id);
 await svc.user.delete({ where: { id: user.id }, cascade: true });
 ```
 
+## Transactions
+
+`transaction` passes a structural PostgreSQL executor to its callback. Existing
+zero-argument callbacks remain valid:
+
+```ts
+await svc.transaction(async (executor) => {
+  await svc.user.create({ data: { email: "a@b.com" } });
+  await executor.query("INSERT INTO audit_records (action) VALUES ($1)", [
+    "user.created",
+  ]);
+});
+```
+
+Nested calls reuse the active executor and transaction-bound model accessors.
+AsyncLocalStorage isolates overlapping calls, so concurrent transactions on one
+service instance never share an executor or `ModelMethods`. Different service
+instances also own separate base accessors. `inTransaction` reports the state
+of the current asynchronous call chain rather than a mutable instance flag.
+
 ## API
 
 | Export                                                                                                                                                                                                                               | Kind          | Summary                                                                                                                                                                                                                                                                                                                          |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ModuleService(config)`                                                                                                                                                                                                              | factory       | Builds an abstract base class from `{ models, credentialsSchema?, cache?, logQueries?, events? }`. Returns a class with `em`, `getModels`, `transaction()`, and one `ModelMethods` accessor per model (camelCased key).                                                                                                          |
+| `ModuleService(config)`                                                                                                                                                                                                              | factory       | Builds an abstract base class from `{ models, credentialsSchema?, cache?, logQueries?, events? }`. Returns a class with `em`, `getModels`, executor-aware `transaction()`, and one ModelMethods accessor per model (camelCased key).                                                                                             |
 | `ModelMethods<T>`                                                                                                                                                                                                                    | class         | The per-model CRUD surface: `create`, `createMany`, `upsert`, `upsertMany`, `find`, `findById`, `findOne`, `findMany`, `update`, `updateOne`, `delete` (optional `cascade`), `softDelete` (optional `cascade`), `restore`, `count`, `exists`, plus relation loading and transaction binding.                                     |
 | `PoolManager`                                                                                                                                                                                                                        | static class  | Process-wide holder of the `Pool`, `PgEntityManager`, and `ConnectionManager`. `setup`, `getPool`, `getPgEntityManager`, `getConnectionManager`, `healthCheck`, `getStats`, `isInitialized`, `reset`, `close` (drains and ends the pg pool; idempotent). State lives on `globalThis` so duplicate package copies share one pool. |
 | `defineModule(name, definition)`                                                                                                                                                                                                     | factory       | Wraps a service class + credentials loader into a `ModuleInstance` whose `.service` is a lazy `Proxy`. Returns `{ name, service, credentials, init }`.                                                                                                                                                                           |
@@ -215,7 +235,11 @@ the write's cache invalidation has run.
 
 ## How it fits
 
-- **Dependencies:** `@damatjs/orm-pg` (`PgEntityManager`, `PgRepository`, transactions), `@damatjs/orm-model` (`ModelDefinition`), `@damatjs/orm-type`, `@damatjs/orm-connector`, `@damatjs/deps` (zod), `@damatjs/types`, `@damatjs/logger`.
+- **Dependencies:** `@damatjs/durability` (`DurabilityExecutor`),
+  `@damatjs/orm-pg` (`PgEntityManager`, `PgRepository`, transactions),
+  `@damatjs/orm-model` (`ModelDefinition`), `@damatjs/orm-type`,
+  `@damatjs/orm-connector`, `@damatjs/deps` (zod), `@damatjs/types`, and
+  `@damatjs/logger`.
 - **In-repo dependents:** `@damatjs/framework` depends on it and re-exports it; the framework's `PoolManager.setup(...)` (in `services/database.ts`) initializes the pool this package reads, and `registerModule` calls each module's `init()`.
 
 ## Documentation

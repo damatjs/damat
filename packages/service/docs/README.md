@@ -4,24 +4,26 @@ Maintainer notes for the service layer. Three concerns: the `ModuleService` fact
 
 ## Module map
 
-| File / dir               | Responsibility                                                                                                                                                                 |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/index.ts`           | Barrel: `export * from "./manager" "./module" "./service"`.                                                                                                                    |
-| `src/manager/pool.ts`    | `PoolManager` — process-wide holder of `Pool` / `PgEntityManager` / `ConnectionManager`, with state on `globalThis`. Plus `PoolManagerStats`, `ConnectionManagerLike`.         |
-| `src/manager/index.ts`   | Re-exports `./pool`.                                                                                                                                                           |
-| `src/service/module.ts`  | `ModuleService(config)` — the factory that builds the abstract base class with per-model accessors and `transaction()`.                                                        |
-| `src/service/methods.ts` | `ModelMethods<T>` — the per-model CRUD implementation (delegates to `PgRepository`) + relation loading.                                                                        |
-| `src/service/cache.ts`   | `withTaggedCache`, `modelCacheTag` — the opt-in, Redis-backed read cache as a `Proxy` over `ModelMethods`.                                                                     |
-| `src/service/events.ts`  | `withModelEvents`, `modelEventName`, `ModelEventPayload` — opt-in `<model>.created\|updated\|deleted` events on the `@damatjs/events` global bus.                              |
-| `src/service/logging.ts` | `withQueryLogging` — opt-in debug-level `query` log per CRUD call. **Not** in the barrel; internal to the factory.                                                             |
-| `src/service/type.ts`    | Option types (`FindOptions`, `CreateOptions`, ...), `ModuleServiceConfig` (incl. the `cache` / `logQueries` / `events` switches), `ModelsMap`, `ToCamelCase`, `MAX_PAGE_SIZE`. |
-| `src/service/index.ts`   | Re-exports `./cache` `./events` `./methods` `./module` `./type` (not `./logging`).                                                                                             |
-| `src/module/define.ts`   | `defineModule(name, definition)` — wraps a service class into a `ModuleInstance` with a lazy `Proxy` service.                                                                  |
-| `src/module/type.ts`     | `ModuleDefinition`, `ModuleInstance`, `ModuleCredentials`, `ModuleRegistry` (augmentation point).                                                                              |
-| `src/module/index.ts`    | Re-exports `./define` `./type`.                                                                                                                                                |
-| `src/util/string.ts`     | `toCamelCase` (first-char lowercase).                                                                                                                                          |
-| `src/util/index.ts`      | Re-exports `./string`.                                                                                                                                                         |
-| `src/tests/**`           | `bun:test` suites for the pool (incl. lifecycle and `close`), `defineModule`, methods, cascade, cache, events, logging, types, and `toCamelCase`.                              |
+| File / dir                      | Responsibility                                                                                                                                                                 |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/index.ts`                  | Barrel: `export * from "./manager" "./module" "./service"`.                                                                                                                    |
+| `src/manager/pool.ts`           | `PoolManager` — process-wide holder of `Pool` / `PgEntityManager` / `ConnectionManager`, with state on `globalThis`. Plus `PoolManagerStats`, `ConnectionManagerLike`.         |
+| `src/manager/index.ts`          | Re-exports `./pool`.                                                                                                                                                           |
+| `src/service/module.ts`         | `ModuleService(config)` — the small class factory and public service surface.                                                                                                  |
+| `src/service/modelAccessors.ts` | Per-instance and transaction-bound `ModelMethods` construction and prototype accessors.                                                                                        |
+| `src/service/transaction.ts`    | AsyncLocalStorage transaction context, nesting, and executor isolation.                                                                                                        |
+| `src/service/methods.ts`        | `ModelMethods<T>` — the per-model CRUD implementation (delegates to `PgRepository`) + relation loading.                                                                        |
+| `src/service/cache.ts`          | `withTaggedCache`, `modelCacheTag` — the opt-in, Redis-backed read cache as a `Proxy` over `ModelMethods`.                                                                     |
+| `src/service/events.ts`         | `withModelEvents`, `modelEventName`, `ModelEventPayload` — opt-in `<model>.created\|updated\|deleted` events on the `@damatjs/events` global bus.                              |
+| `src/service/logging.ts`        | `withQueryLogging` — opt-in debug-level `query` log per CRUD call. **Not** in the barrel; internal to the factory.                                                             |
+| `src/service/type.ts`           | Option types (`FindOptions`, `CreateOptions`, ...), `ModuleServiceConfig` (incl. the `cache` / `logQueries` / `events` switches), `ModelsMap`, `ToCamelCase`, `MAX_PAGE_SIZE`. |
+| `src/service/index.ts`          | Re-exports `./cache` `./events` `./methods` `./module` `./type` (not `./logging`).                                                                                             |
+| `src/module/define.ts`          | `defineModule(name, definition)` — wraps a service class into a `ModuleInstance` with a lazy `Proxy` service.                                                                  |
+| `src/module/type.ts`            | `ModuleDefinition`, `ModuleInstance`, `ModuleCredentials`, `ModuleRegistry` (augmentation point).                                                                              |
+| `src/module/index.ts`           | Re-exports `./define` `./type`.                                                                                                                                                |
+| `src/util/string.ts`            | `toCamelCase` (first-char lowercase).                                                                                                                                          |
+| `src/util/index.ts`             | Re-exports `./string`.                                                                                                                                                         |
+| `src/tests/**`                  | `bun:test` suites for the pool (incl. lifecycle and `close`), `defineModule`, methods, cascade, cache, events, logging, types, and `toCamelCase`.                              |
 
 ## Architecture overview
 
@@ -50,8 +52,8 @@ The order matters; the framework enforces it at boot:
 
 1. **Pool setup.** Something (the framework's `initDatabase`, or a test) calls `PoolManager.setup({ pool, logger, connectionManager })`. This constructs the `PgEntityManager` and stores all three on `globalThis`.
 2. **Module registration.** The framework imports each module's default export (a `ModuleInstance` from `defineModule`) and calls `init()`, which **constructs** the service for the first time.
-3. **Service construction.** The generated `ModuleService` constructor parses credentials, asserts the pool is initialized, grabs the entity manager, and for each model calls `entityManager.registerModel(name, model)` and creates a `ModelMethods` — wrapped in the opt-in `Proxy` layers (`withTaggedCache` if `config.cache`, `withModelEvents` if `config.events`, `withQueryLogging` if `config.logQueries`).
-4. **Use.** Accessing `service.<model>` returns the corresponding `ModelMethods`; calling `service.<model>.create(...)` delegates to a `PgRepository` obtained from the entity manager (or the transactional EM if inside `transaction()`).
+3. **Service construction.** The generated `ModuleService` constructor parses credentials, asserts the pool is initialized, registers each model, and creates a per-instance base `ModelMethods` map with the configured wrappers.
+4. **Use.** Accessing `service.<model>` returns the current async transaction's bound accessor when present, otherwise the service instance's base accessor.
 
 ## Request / call flow (per method)
 
@@ -69,6 +71,9 @@ The order matters; the framework enforces it at boot:
 - **Accessor names are camelCased model keys.** `toCamelCase` only lowercases the first character (`account` → `account`, `Verification` → `verification`, `APIKey` → `aPIKey`). It does **not** convert snake_case or kebab-case (see `module-service.md` gotchas).
 - **Relation FK conventions are by-convention.** `loadRelation` infers FK column names (`<model>_id`) from relation metadata; non-standard FK naming will not resolve. See `module-service.md`.
 - **Opt-in wrappers layer cache → events → logging.** Cache is innermost, logging outermost. So one `query` log line covers a cache hit and a database read alike, and a write's event fires only after the write succeeded and its cache invalidation ran. All three are `Proxy` wrappers over `ModelMethods`; with no config flag set nothing is wrapped and every call behaves exactly as before. Details in `module-service.md`.
+- **Transaction state is async-local and per service instance.** Nested calls
+  reuse one executor and accessor map, while concurrent calls cannot overwrite
+  each other's executor or transaction-bound repositories.
 - **`ModuleRegistry` is the typing seam.** Apps augment it via declaration merging so the framework's `getModule("user")` is typed. The interface ships empty.
 
 ## Build note

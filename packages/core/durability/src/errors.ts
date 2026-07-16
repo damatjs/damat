@@ -5,6 +5,13 @@ export class DurabilityNotConfiguredError extends Error {
   }
 }
 
+export class IdempotencyInProgressError extends Error {
+  constructor(scope: string, key: string) {
+    super(`Idempotency operation is still running: ${scope}/${key}`);
+    this.name = "IdempotencyInProgressError";
+  }
+}
+
 export interface MissingSystemMigration {
   owner: string;
   id: string;

@@ -32,6 +32,7 @@
   "author": "Abel Lamesgen",
   "dependencies": {
     "@damatjs/deps": "workspace:*",
+    "@damatjs/durability": "workspace:*",
     "@damatjs/orm-pg": "workspace:*",
     "@damatjs/orm-model": "workspace:*",
     "@damatjs/orm-type": "workspace:*",

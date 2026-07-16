@@ -2,6 +2,7 @@ export * from "./client/create";
 export * from "./client/global";
 export * from "./client/types";
 export * from "./errors";
+export * from "./idempotency";
 export * from "./migrations/catalog";
 export * from "./migrations/readiness";
 export * from "./migrations/types";

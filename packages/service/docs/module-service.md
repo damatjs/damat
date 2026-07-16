@@ -1,6 +1,8 @@
 # `ModuleService` & generated CRUD
 
-Source: `src/service/module.ts`, `src/service/methods.ts`, `src/service/type.ts`, `src/service/cache.ts`, `src/service/events.ts`, `src/service/logging.ts`.
+Source: `src/service/module.ts`, `src/service/modelAccessors.ts`,
+`src/service/transaction.ts`, `src/service/methods.ts`, `src/service/type.ts`,
+`src/service/cache.ts`, `src/service/events.ts`, `src/service/logging.ts`.
 
 ## Responsibility
 
@@ -49,78 +51,46 @@ The returned `abstract class GeneratedModuleService` has:
 | Member                       | Type                                       | Behaviour                                                   |
 | ---------------------------- | ------------------------------------------ | ----------------------------------------------------------- |
 | `credentials`                | `z.infer<TCredentialsSchema> \| undefined` | Set in the constructor if `credentialsSchema` was provided. |
-| `inTransaction`              | `boolean`                                  | Tracks whether a `transaction()` is currently active.       |
+| `inTransaction`              | `boolean`                                  | True in the current async transaction context.              |
 | `models`                     | `ModelDefinition[]`                        | `Object.values(config.models)`.                             |
 | `em` (getter)                | `PgEntityManager`                          | `PoolManager.getPgEntityManager()`.                         |
 | `getModels` (getter)         | `ModelDefinition[]`                        | Returns `this.models`.                                      |
 | `transaction(cb, options?)`  | `Promise<R>`                               | Runs `cb` inside a DB transaction (see below).              |
 | `<modelKey>` (one per model) | `ModelMethods`                             | Per-model CRUD accessor; key is `toCamelCase(modelName)`.   |
 
-### Constructor steps (`module.ts:27-53`)
-
-```ts
-constructor(passedCredentials?: unknown) {
-  if (config.credentialsSchema) {
-    this.credentials = config.credentialsSchema.parse(passedCredentials);
-  }
-  this.models = Object.values(models);
-  if (!PoolManager.isInitialized()) {
-    throw new Error("PoolManager not initialized. Call PoolManager.setup(pool) before creating service instances.");
-  }
-  const entityManager = PoolManager.getPgEntityManager();
-  for (const [modelName, model] of Object.entries(models)) {
-    entityManager.registerModel(modelName, model);
-    let methods = new ModelMethods(model, modelName, entityManager);
-    // Layering: cache innermost (so events fire after invalidation and a
-    // query-log line covers hits and misses alike), then events, logging
-    // outermost.
-    if (config.cache) methods = withTaggedCache(methods, modelName, config.cache);
-    if (config.events) methods = withModelEvents(methods, modelName);
-    if (config.logQueries) methods = withQueryLogging(methods, modelName);
-    modelMethodsMap.set(modelName, methods);
-  }
-}
-```
+### Constructor steps
 
 1. **Validate credentials** with zod (`.parse`, so it throws `ZodError` on bad input) — only if a schema was supplied.
 2. **Assert the pool is initialized** — throws otherwise.
-3. **Register each model** with the entity manager and create a `ModelMethods` for it, cached in a `modelMethodsMap` (a `Map` closed over by the factory).
+3. **Register each model** with the entity manager and create a per-service
+   base `ModelMethods` map.
 4. **Apply the opt-in wrappers** in a fixed order — cache innermost, then events, logging outermost. Each is a `Proxy` over the previous layer; with none of the three config switches set, the bare `ModelMethods` goes into the map unchanged.
 
-### Per-model accessors (`module.ts:105-125`)
+### Per-model accessors
 
-For each model, the factory defines a getter on the prototype named `toCamelCase(modelName)`:
+For each model, `modelAccessors.ts` defines a camel-cased prototype getter.
+The getter resolves through the current AsyncLocalStorage context. It returns
+the transaction-bound accessor map inside `transaction()` and the instance's
+base map otherwise. Both maps retain the configured cache, event, and logging
+wrappers.
 
-```ts
-Object.defineProperty(GeneratedModuleService.prototype, accessorName, {
-  get(): ModelMethods {
-    const existing = modelMethodsMap.get(modelName);
-    if (existing) return existing;
-    // fallback: create on demand if not yet cached
-    const methods = new ModelMethods(
-      model,
-      modelName,
-      PoolManager.getPgEntityManager(),
-    );
-    modelMethodsMap.set(modelName, methods);
-    return methods;
-  },
-  enumerable: true,
-  configurable: true,
-});
-```
-
-So `service.user` returns the `ModelMethods` for the `user` model. Note that the on-demand fallback constructs a **bare** `ModelMethods` — no cache/events/logging wrappers. It only triggers when the accessor is reached before any instance's constructor populated the map, so in normal use (construct, then access) you always get the wrapped object.
-
-### `transaction(callback, options?)` (`module.ts:64-98`)
+### `transaction(callback, options?)`
 
 ```ts
-async transaction<R>(callback: () => Promise<R>, options?: TransactionOptions): Promise<R>
+transaction<R>(
+  callback: (executor: DurabilityExecutor) => Promise<R>,
+  options?: TransactionOptions,
+): Promise<R>
 ```
 
-- If already `inTransaction`, just runs `callback()` (no nesting — joins the outer transaction).
-- Otherwise opens `em.transaction(async tx => { ... })`, sets `inTransaction = true`, and calls `methods.setTransactionalEm(tx)` on **every** model's `ModelMethods` so all CRUD inside the callback uses the same transactional entity manager.
-- In `finally`, resets `inTransaction = false` and clears the transactional EM on every model (`setTransactionalEm(null)`).
+- A top-level call opens `em.transaction`, builds a transaction-bound accessor
+  map, and passes the structural query executor to the callback.
+- A nested call reads the active AsyncLocalStorage context and reuses the exact
+  executor and accessor objects without opening another transaction.
+- Concurrent calls on one service instance receive independent contexts,
+  executors, and accessor maps. Service instances also never share base maps.
+- A callback that declares no parameter remains assignable and behaves as it
+  did previously.
 
 ## `ModelMethods<T>` — the CRUD surface
 
@@ -143,7 +113,7 @@ Source: `src/service/methods.ts`. Constructed with `(model, modelName, entityMan
 | `restore`            | `({ where, returning? }) => Promise<T[]>`                              | `repo.update` setting the model's `_deletedAtField` (default `deleted_at`) to `null`                                                   |
 | `count`              | `(options?: CountOptions) => Promise<number>`                          | `repo.count(where)`                                                                                                                    |
 | `exists`             | `(options: ExistsOptions) => Promise<boolean>`                         | `repo.exists(where)`                                                                                                                   |
-| `setTransactionalEm` | `(tx \| null) => void`                                                 | sets/clears the transactional EM (called by `transaction()`)                                                                           |
+| `setTransactionalEm` | `(tx \| null) => void`                                                 | binds an accessor to a transaction; used while constructing transaction-bound methods and by standalone cascade handling               |
 | `getModelDefinition` | `() => ModelDefinition`                                                | introspection                                                                                                                          |
 
 ### Cascade delete (`delete`/`softDelete` with `cascade: true`)
@@ -335,7 +305,9 @@ internal to the factory.
 
 - **`toCamelCase` only lowercases the first character.** Accessor for a model keyed `"user_profile"` is `service.user_profile` (the underscore is kept). Choose model keys that read well as JS identifiers (`account`, `verification`, `apiKey`). It does not convert snake_case/kebab-case/PascalCase fully.
 - **Construct after the pool is up.** Instantiating a generated service before `PoolManager.setup(...)` throws. The framework guarantees ordering; in tests, call `PoolManager.setup(...)` (or use a harness) before `new YourService(...)`.
-- **`modelMethodsMap` is per-factory-call, shared across instances.** Each call to `ModuleService({...})` closes over its own `Map`. Two instances of the same generated class share that map — fine in practice (the methods are stateless except for the transactional-EM flag, which `transaction()` sets/clears synchronously around the callback). Avoid running two concurrent `transaction()` calls on two instances of the _same_ class, since they share the `ModelMethods` objects.
+- **Model methods are isolated.** Each service instance owns its base accessor
+  map, and every top-level transaction owns a separate transaction-bound map.
+  Overlapping transactions are safe on the same instance.
 - **Writes are validated against the model's columns.** `create`/`createMany`/`update` call `this._validateData(...)`, which builds (and caches) a zod schema from the model's `toTableSchema().columns` (`getValidationSchema`/`columnToZodType`) and `.parse`s the payload — so it **throws** `ZodError` on type-mismatched data. Auto-generated columns (primary key, autoincrement), columns with a default, and nullable columns are optional; nullable columns also accept `null`. Updates validate in `partial` mode, so only the supplied fields are checked. Column types with no single JS representation (json/jsonb, bytea, ranges, network, geometric, …) map to `z.any()` and are effectively unchecked.
 - **`relation FK naming is convention-based.** Non-standard FK column names won't be resolved by `loadRelation`; for those, load manually or extend the relation metadata.
 - **Events and cache invalidation fire per call, not per commit.** Neither `withModelEvents` nor the cache's write-invalidation checks for an active transaction: inside `transaction()`, a write emits its event and invalidates the model tag as soon as _that call_ returns — before the transaction commits. A later rollback does not un-emit or re-populate. (Cached _reads_ do bypass the cache in-transaction; writes are the asymmetric case.)
