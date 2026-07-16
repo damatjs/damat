@@ -108,6 +108,7 @@ function runModuleMigrationStatus(
 interface ModuleCodegenResult {
   outputDir: string;
   files: string[];
+  scaffolded: string[];
 }
 
 function generateModuleTypes(

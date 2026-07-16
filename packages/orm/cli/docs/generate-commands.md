@@ -8,12 +8,17 @@ scaffolds, and barrels.
 
 The unregistered `src/cli/commands/generate/types.ts` handler is narrower: it
 uses `@damatjs/schema-codegen` directly for a pure file map, augments links, and
-writes only generated types.
+writes only generated types. It is internal source, not a callable
+`damat-orm` or `damat` command.
 
 ```
-damat codegen <module>  → discoverModels → toModuleSchema → generateFilesMap
-                            → augmentWithLinks → write
+generate:types (unregistered) → discoverModels → toModuleSchema
+                              → generateFilesMap → augmentWithLinks → write
 ```
+
+The public `damat codegen` command follows the `@damatjs/module-generator`
+pipeline described above, including registry generation, scaffold-once CRUD,
+and workflow barrel rebuilding.
 
 ## `generate:types <module>` — `src/cli/commands/generate/types.ts`
 
@@ -50,8 +55,8 @@ moduleConfig.resolve)` (= `<resolve>/models`); error if it does not exist.
 Any thrown error → `logger.error("Failed to generate types: …")`, return `1`.
 Success → `0`.
 
-```bash
-bun damat codegen user
+```text
+internal generate:types handler for "user"
 # Output: <project>/src/modules/user/types
 # Files: index.ts, <table>.ts, ...
 ```
