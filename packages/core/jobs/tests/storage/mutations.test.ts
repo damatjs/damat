@@ -53,6 +53,13 @@ test("running cancellation records a request without stealing the lease", async 
     previousStatus: "running",
     nextStatus: "running",
   });
+  const firstActivityCount = (await listJobActivity(run.id)).length;
+  await Bun.sleep(10);
+  const repeated = await cancelJobRun(run.id);
+  expect(repeated?.cancellationRequestedAt).toEqual(
+    requested?.cancellationRequestedAt,
+  );
+  expect(await listJobActivity(run.id)).toHaveLength(firstActivityCount);
 });
 
 test("manual retry returns a dead letter to queued state", async () => {

@@ -7,6 +7,7 @@ import {
 import { DEFAULT_JOB_OPTIONS } from "../definitions/defaults";
 import { getJobDefinition } from "../definitions/registry";
 import type { JobName, JobPayload } from "../definitions/types";
+import { validateEnqueue } from "../validation/enqueue";
 import {
   appendJobActivity,
   claimJobDeduplication,
@@ -22,6 +23,7 @@ export async function enqueueJob<K extends JobName>(
   payload: JobPayload<K>,
   options: EnqueueJobOptions = {},
 ): Promise<JobRun> {
+  validateEnqueue(name, options);
   if (options.executor) {
     if (!isTransactionalExecutor(options.executor)) {
       throw new TransactionalExecutorRequiredError();

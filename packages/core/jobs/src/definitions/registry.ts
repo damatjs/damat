@@ -6,6 +6,7 @@ import type {
   JobOptions,
   JobPayload,
 } from "./types";
+import { validateDefinition } from "../validation/definition";
 
 const REGISTRY = Symbol.for("damatjs.jobs.durableDefinitions");
 type GlobalRegistry = typeof globalThis & {
@@ -23,13 +24,21 @@ export function defineJob<K extends JobName>(
   handler: JobHandler<JobPayload<K>>,
   options: JobOptions = {},
 ): JobDefinition<JobPayload<K>> {
+  validateDefinition(name, options);
   if (registry().has(name)) {
     throw new Error(`Job "${name}" is already defined`);
   }
   const definition: JobDefinition<JobPayload<K>> = {
     name,
     handler,
-    options: { ...DEFAULT_JOB_OPTIONS, ...options },
+    options: {
+      queue: options.queue ?? DEFAULT_JOB_OPTIONS.queue,
+      priority: options.priority ?? DEFAULT_JOB_OPTIONS.priority,
+      maxAttempts: options.maxAttempts ?? DEFAULT_JOB_OPTIONS.maxAttempts,
+      backoffMs: options.backoffMs ?? DEFAULT_JOB_OPTIONS.backoffMs,
+      backoffMultiplier:
+        options.backoffMultiplier ?? DEFAULT_JOB_OPTIONS.backoffMultiplier,
+    },
   };
   registry().set(name, definition as JobDefinition);
   return definition;

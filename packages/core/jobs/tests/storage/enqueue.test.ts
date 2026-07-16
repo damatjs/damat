@@ -55,6 +55,17 @@ test("enqueue persists delay and call-site overrides", async () => {
   });
 });
 
+test("enqueue stores millisecond policies beyond integer range", async () => {
+  const run = await enqueueJob(
+    uniqueName("bigint-ms"),
+    {},
+    {
+      backoffMs: 2_592_000_000,
+    },
+  );
+  expect(run.backoffMs).toBe(2_592_000_000);
+});
+
 test("supplied transaction executor owns enqueue atomicity", async () => {
   const name = uniqueName("rollback");
   let id = "";

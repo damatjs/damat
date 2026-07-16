@@ -38,6 +38,9 @@ async function cancelWith(
 ): Promise<JobRun | undefined> {
   const current = await lockJobRun(executor, id);
   if (!current) return undefined;
+  if (current.status === "running" && current.cancellationRequestedAt) {
+    return current;
+  }
   const cancellable =
     current.status === "queued" || current.status === "retry_wait";
   const cancelled = cancellable

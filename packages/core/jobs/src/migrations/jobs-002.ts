@@ -11,11 +11,11 @@ CREATE TABLE "_damat_job_schedules" (
   "payload" JSONB NOT NULL, "metadata" JSONB NOT NULL DEFAULT '{}'::jsonb,
   "queue" TEXT NOT NULL, "priority" INTEGER NOT NULL DEFAULT 100,
   "max_attempts" INTEGER NOT NULL DEFAULT 3,
-  "backoff_ms" INTEGER NOT NULL DEFAULT 1000,
+  "backoff_ms" BIGINT NOT NULL DEFAULT 1000,
   "backoff_multiplier" DOUBLE PRECISION NOT NULL DEFAULT 2,
-  "run_at" TIMESTAMPTZ, "interval_ms" INTEGER,
+  "run_at" TIMESTAMPTZ, "interval_ms" BIGINT,
   "next_occurrence_at" TIMESTAMPTZ, "last_occurrence_at" TIMESTAMPTZ,
-  "deduplication_key" TEXT, "deduplication_ttl_ms" INTEGER,
+  "deduplication_key" TEXT, "deduplication_ttl_ms" BIGINT,
   "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT "_damat_job_schedules_pkey" PRIMARY KEY ("id"),
@@ -25,7 +25,13 @@ CREATE TABLE "_damat_job_schedules" (
   CONSTRAINT "_damat_job_schedules_interval_check"
     CHECK ("interval_ms" IS NULL OR "interval_ms" > 0),
   CONSTRAINT "_damat_job_schedules_max_attempts_check"
-    CHECK ("max_attempts" > 0)
+    CHECK ("max_attempts" > 0),
+  CONSTRAINT "_damat_job_schedules_backoff_ms_check"
+    CHECK ("backoff_ms" >= 0),
+  CONSTRAINT "_damat_job_schedules_backoff_multiplier_check"
+    CHECK ("backoff_multiplier" >= 1),
+  CONSTRAINT "_damat_job_schedules_deduplication_ttl_ms_check"
+    CHECK ("deduplication_ttl_ms" IS NULL OR "deduplication_ttl_ms" >= 0)
 );
 CREATE INDEX "_damat_job_schedule_due_idx" ON "_damat_job_schedules"
   ("enabled", "next_occurrence_at");
@@ -60,7 +66,7 @@ CREATE INDEX "_damat_job_deduplication_expires_idx"
 
 ALTER TABLE "_damat_job_runs"
   ADD CONSTRAINT "_damat_job_runs_schedule_fkey" FOREIGN KEY ("schedule_id")
-  REFERENCES "_damat_job_schedules" ("id") ON DELETE SET NULL;
+  REFERENCES "_damat_job_schedules" ("id") ON DELETE NO ACTION;
 CREATE UNIQUE INDEX "_damat_job_schedule_occurrence_uidx"
   ON "_damat_job_runs" ("schedule_id", "scheduled_for")
   WHERE "schedule_id" IS NOT NULL;

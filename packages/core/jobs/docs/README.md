@@ -31,6 +31,12 @@ context use native `JSONB`. All lifecycle timestamps use `TIMESTAMPTZ`.
 Priority is numeric and lower values sort first. The due-work index orders by
 queue, status, availability, priority, and creation time.
 
+Job names, queues, deduplication keys, numeric policies, delay ranges, and
+deduplication expiration dates are validated before SQL. Integer-backed values
+must fit PostgreSQL `INTEGER`; millisecond values must be safe JavaScript
+integers and are stored as `BIGINT`. Database checks independently reject
+negative durations and schedule policies.
+
 Enqueue is one transaction: an optional deduplication claim, the run insert,
 and the immutable `enqueued` activity row either all commit or all roll back.
 A supplied executor must be an active Damat transaction wrapper. Without one,
@@ -39,8 +45,15 @@ keys return the existing normalized run; expired keys atomically take ownership
 of a new run.
 
 Repository mutations return mapped domain records rather than PostgreSQL row
-shapes. Activity timelines order by their identity column, preserving committed
-write order even when transaction timestamps overlap or move backward.
+shapes. Optional text fields preserve empty strings. `BIGINT` millisecond
+values are converted only when they fit a safe JavaScript integer. Activity
+timelines order by their identity column, preserving insertion order even when
+timestamps overlap or move backward.
+
+Scheduled runs persist `schedule_id` and `scheduled_for` together. The pair is
+unique for a schedule occurrence, and a schedule with persisted runs cannot be
+deleted. Attempt-scoped activity and logs must reference an existing attempt;
+run-level activity leaves the attempt number null.
 
 The internal client is intentionally not re-exported from `src/index.ts`.
 Changing the package root and worker together is a separate atomic cutover.

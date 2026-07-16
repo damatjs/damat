@@ -9,6 +9,8 @@
 - Transactional enqueue with delay, numeric priority, retry overrides,
   metadata, correlation IDs, and atomic deduplication replay.
 - Internal run, attempt, activity, log, cancellation, and retry clients.
+- Pre-SQL validation for identifiers, PostgreSQL integer ranges, safe
+  millisecond values, delays, and deduplication expiration dates.
 
 ## Changed
 
@@ -16,6 +18,14 @@
   order.
 - Supplying an executor to a job mutation requires an active Damat transaction
   wrapper before any SQL is issued.
+- Millisecond policy and duration columns use `BIGINT`; mapping rejects values
+  outside JavaScript's safe integer range.
+- Scheduled runs require `schedule_id` and `scheduled_for` together, retain
+  their referenced schedule, and remain unique per occurrence.
+- Attempt-scoped activity and logs require an existing attempt. Duration and
+  schedule policy constraints reject negative values.
+- Repeating cancellation of a running job preserves the first request
+  timestamp and does not duplicate activity.
 
 ## Action required
 

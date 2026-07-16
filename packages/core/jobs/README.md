@@ -16,6 +16,11 @@ before starting job services. The public producer and worker API below remains
 the Redis-backed runtime surface; the PostgreSQL client is internal until the
 worker cutover is complete.
 
+The durable schema enforces paired schedule occurrences, valid attempt
+references, nonnegative timing policies, and historical schedule retention.
+The internal durable client validates identifiers and numeric ranges before
+issuing SQL.
+
 ## Install
 
 ```bash

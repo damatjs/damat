@@ -1,6 +1,7 @@
 import type { QueryResultRow } from "@damatjs/deps/pg";
 import type { JsonValue } from "@damatjs/durability";
 import type { JobRunStatus } from "./run-types";
+import type { PostgresInteger } from "./safe-number";
 
 export interface JobAttemptRow extends QueryResultRow {
   id: string;
@@ -11,7 +12,7 @@ export interface JobAttemptRow extends QueryResultRow {
   started_at: Date;
   heartbeat_at: Date | null;
   finished_at: Date | null;
-  duration_ms: number | null;
+  duration_ms: PostgresInteger | null;
   result: JsonValue | null;
   outcome: string | null;
   error: Record<string, unknown> | null;
@@ -28,7 +29,7 @@ export interface JobActivityRow extends QueryResultRow {
   lease_token: string | null;
   occurred_at: Date;
   reason: string | null;
-  duration_ms: number | null;
+  duration_ms: PostgresInteger | null;
   metadata: Record<string, unknown>;
   actor: Record<string, unknown>;
 }

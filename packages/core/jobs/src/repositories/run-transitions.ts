@@ -29,6 +29,7 @@ export async function requestJobCancellation(
     `UPDATE "_damat_job_runs"
      SET "cancellation_requested_at" = NOW(), "updated_at" = NOW()
      WHERE "id" = $1 AND "status" = 'running'
+       AND "cancellation_requested_at" IS NULL
      RETURNING *`,
     [id],
   );

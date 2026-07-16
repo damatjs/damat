@@ -1,6 +1,7 @@
 import type { QueryResultRow } from "@damatjs/deps/pg";
 import type { JsonValue } from "@damatjs/durability";
 import type { JobRun, JobRunStatus } from "./run-types";
+import { mapSafeInteger, type PostgresInteger } from "./safe-number";
 
 export interface JobRunRow extends QueryResultRow {
   id: string;
@@ -13,7 +14,7 @@ export interface JobRunRow extends QueryResultRow {
   available_at: Date;
   attempt_count: number;
   max_attempts: number;
-  backoff_ms: number;
+  backoff_ms: PostgresInteger;
   backoff_multiplier: number;
   progress: JsonValue | null;
   result: JsonValue | null;
@@ -38,12 +39,14 @@ export function mapJobRun(row: JobRunRow): JobRun {
     availableAt: row.available_at,
     attemptCount: row.attempt_count,
     maxAttempts: row.max_attempts,
-    backoffMs: row.backoff_ms,
+    backoffMs: mapSafeInteger(row.backoff_ms, "job run backoff_ms"),
     backoffMultiplier: row.backoff_multiplier,
     ...(row.progress !== null ? { progress: row.progress } : {}),
     ...(row.result !== null ? { result: row.result } : {}),
-    ...(row.correlation_id ? { correlationId: row.correlation_id } : {}),
-    ...(row.deduplication_key
+    ...(row.correlation_id !== null
+      ? { correlationId: row.correlation_id }
+      : {}),
+    ...(row.deduplication_key !== null
       ? { deduplicationKey: row.deduplication_key }
       : {}),
     ...(row.cancellation_requested_at
