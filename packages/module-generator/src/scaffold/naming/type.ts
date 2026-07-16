@@ -1,6 +1,6 @@
 /**
  * Naming derived for one table's CRUD scaffold. These mirror the names that
- * `@damatjs/codegen` emits in `types/` so generated steps/workflows/routes
+ * `@damatjs/schema-codegen` emits in `types/` so generated steps/workflows/routes
  * can import the generated row types and zod schemas by their exact names.
  */
 export interface CrudNames {

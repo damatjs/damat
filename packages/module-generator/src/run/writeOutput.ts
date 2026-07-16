@@ -4,7 +4,7 @@ import {
   registryAugmentation,
   registryModuleAugmentation,
   resolveServiceClassName,
-} from "../scaffold";
+} from "../registry";
 import { toPascalCase } from "../scaffold/naming";
 
 interface WriteOutputOptions {

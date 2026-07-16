@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { readFileSync } from "node:fs";
-import { toPascalCase } from "./naming";
+import { toPascalCase } from "../scaffold/naming";
 
 /**
  * Resolve a module's service class name by reading `service.ts`

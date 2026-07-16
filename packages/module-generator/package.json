@@ -1,7 +1,7 @@
 {
-  "name": "@damatjs/codegen",
-  "description": "Compatibility facade for Damat schema and module generation",
-  "version": "2.1.0",
+  "name": "@damatjs/module-generator",
+  "description": "Damat module discovery, code generation, scaffolding, and barrels",
+  "version": "0.6.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,10 +9,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./types": {
-      "types": "./dist/types/index.d.ts",
-      "default": "./dist/types/index.js"
     }
   },
   "engines": {
@@ -24,20 +20,18 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/damatjs/damat",
-    "directory": "packages/core/codegen"
+    "directory": "packages/module-generator"
   },
   "license": "MIT",
   "files": [
     "dist",
-    "!dist/tests",
-    "!dist/**/__tests__",
-    "!dist/**/__fixtures__",
-    "!dist/**/__mocks__",
-    "!dist/**/__snapshots__"
+    "!dist/**/tests"
   ],
-  "author": "Abel Lamesgen",
   "dependencies": {
-    "@damatjs/module-generator": "workspace:*",
+    "@damatjs/logger": "workspace:*",
+    "@damatjs/orm-migration": "workspace:*",
+    "@damatjs/orm-model": "workspace:*",
+    "@damatjs/orm-type": "workspace:*",
     "@damatjs/schema-codegen": "workspace:*"
   },
   "devDependencies": {
@@ -48,10 +42,7 @@
   },
   "scripts": {
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc && tsc-alias",
-    "dev": "bun run build --watch",
-    "watch": "tsc --watch",
     "test": "bun test ./src/tests",
-    "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)",
     "lint": "oxlint src"
   }
 }

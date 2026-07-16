@@ -60,6 +60,7 @@ snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
 - [`framework`](./framework/) — `@damatjs/framework`
 - [`services`](./services/) — `@damatjs/services`
 - [`module`](./module/) — `@damatjs/module`
+- [`module-generator`](./module-generator/) — `@damatjs/module-generator`
 - [`link`](./link/) — `@damatjs/link`
 - [`workflow-engine`](./workflow-engine/) — `@damatjs/workflow-engine`
 - [`installer`](./installer/) — `@damatjs/installer`

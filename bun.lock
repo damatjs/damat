@@ -290,20 +290,14 @@
       "name": "@damatjs/codegen",
       "version": "2.1.0",
       "dependencies": {
-        "@damatjs/orm-migration": "workspace:*",
-        "@damatjs/orm-model": "workspace:*",
-        "@damatjs/orm-type": "workspace:*",
+        "@damatjs/module-generator": "workspace:*",
         "@damatjs/schema-codegen": "workspace:*",
       },
       "devDependencies": {
-        "@damatjs/logger": "workspace:*",
         "@damatjs/typescript-config": "workspace:*",
         "@types/bun": "1.3.9",
         "tsc-alias": "^1.8.16",
         "typescript": "^5.9.3",
-      },
-      "peerDependencies": {
-        "@damatjs/logger": "workspace:*",
       },
     },
     "packages/core/env": {
@@ -493,6 +487,23 @@
       "devDependencies": {
         "@damatjs/typescript-config": "workspace:*",
         "@types/bun": "1.3.9",
+        "typescript": "^5.9.3",
+      },
+    },
+    "packages/module-generator": {
+      "name": "@damatjs/module-generator",
+      "version": "0.6.0",
+      "dependencies": {
+        "@damatjs/logger": "workspace:*",
+        "@damatjs/orm-migration": "workspace:*",
+        "@damatjs/orm-model": "workspace:*",
+        "@damatjs/orm-type": "workspace:*",
+        "@damatjs/schema-codegen": "workspace:*",
+      },
+      "devDependencies": {
+        "@damatjs/typescript-config": "workspace:*",
+        "@types/bun": "1.3.9",
+        "tsc-alias": "^1.8.16",
         "typescript": "^5.9.3",
       },
     },
@@ -823,6 +834,8 @@
     "@damatjs/mcp": ["@damatjs/mcp@workspace:packages/mcp"],
 
     "@damatjs/module": ["@damatjs/module@workspace:packages/module"],
+
+    "@damatjs/module-generator": ["@damatjs/module-generator@workspace:packages/module-generator"],
 
     "@damatjs/orm": ["@damatjs/orm@workspace:packages/orm/main"],
 
@@ -1745,6 +1758,8 @@
     "@damatjs/load-env/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@damatjs/module/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "@damatjs/module-generator/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@damatjs/orm-cli/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 

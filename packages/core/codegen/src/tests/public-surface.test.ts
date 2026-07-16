@@ -15,8 +15,17 @@ const rendererExports = [
   "generateParamsZodSchema",
 ] as const;
 
-test("re-exports the pure renderer surface from schema-codegen", () => {
-  for (const exportName of rendererExports) {
+const generatorExports = [
+  "runCodegen",
+  "runModuleCodegen",
+  "generateCrudScaffold",
+  "generateBarrels",
+  "registryAugmentation",
+  "registryModuleAugmentation",
+] as const;
+
+test("re-exports both replacement package surfaces", () => {
+  for (const exportName of [...rendererExports, ...generatorExports]) {
     expect(codegen[exportName]).toBeFunction();
   }
 });
