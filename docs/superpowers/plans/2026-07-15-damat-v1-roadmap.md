@@ -140,6 +140,8 @@ Exit gate:
 
 ## Phase 6: Codegen Split and Rename
 
+Status: Complete
+
 Tasks:
 
 1. Extract pure model-to-TypeScript/Zod generation into `@damatjs/schema-codegen`.

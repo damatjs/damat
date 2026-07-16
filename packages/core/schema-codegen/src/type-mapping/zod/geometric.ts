@@ -10,10 +10,7 @@ export const geometricZodTypes = new Map<ColumnType, string>([
     "box",
     "z.object({ x1: z.number(), y1: z.number(), x2: z.number(), y2: z.number() })",
   ],
-  [
-    "circle",
-    "z.object({ x: z.number(), y: z.number(), radius: z.number() })",
-  ],
+  ["circle", "z.object({ x: z.number(), y: z.number(), radius: z.number() })"],
   ["line", "z.string()"],
   ["path", "z.string()"],
   ["polygon", "z.string()"],

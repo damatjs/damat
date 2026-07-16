@@ -19,10 +19,7 @@ const groups = [
   postgresZodTypes,
 ];
 
-export function getZodBaseType(
-  type: ColumnType,
-  column: ColumnSchema,
-): string {
+export function getZodBaseType(type: ColumnType, column: ColumnSchema): string {
   if (["text", "character", "character varying"].includes(type)) {
     return column.length ? `z.string().max(${column.length})` : "z.string()";
   }

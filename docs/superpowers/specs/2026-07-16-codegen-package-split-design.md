@@ -1,6 +1,7 @@
 # Damat Codegen Package Split Design
 
-**Status:** Approved  
+**Status:** Implemented
+
 **Phase:** Damat v1 roadmap, Phase 6  
 **Primary packages:** `@damatjs/schema-codegen`,
 `@damatjs/module-generator`, `@damatjs/cli-codegen`, `@damatjs/codegen`
