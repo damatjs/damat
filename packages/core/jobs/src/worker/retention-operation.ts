@@ -11,6 +11,7 @@ export function retentionDetails(
   batchSize: number,
 ): Record<string, unknown> {
   return {
+    requestId: options.requestId ?? crypto.randomUUID(),
     batchSize,
     terminalBefore: options.terminalBefore?.toISOString() ?? null,
     deduplicationBefore: options.deduplicationBefore?.toISOString() ?? null,
@@ -28,7 +29,7 @@ export function performJobRetention(
     const result = {
       deletedDeduplication: await deleteExpiredDeduplication(
         executor,
-        options.deduplicationBefore ?? new Date(),
+        options.deduplicationBefore!,
         limit,
         options.queue,
       ),

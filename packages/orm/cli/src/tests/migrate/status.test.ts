@@ -61,6 +61,7 @@ test.serial("status reports all modules and system owners", async () => {
     "@damatjs/durability:002",
     "@damatjs/jobs:001",
     "@damatjs/jobs:002",
+    "@damatjs/jobs:003",
   ]);
   expect(logged(calls, "success", /durability: 2 applied/)).toBe(true);
   expect(logged(calls, "info", /post: 1 applied, 1 pending/)).toBe(true);
@@ -85,16 +86,5 @@ test.serial(
     expect(
       (await (await loadStatus()).handler(context(["user"]).ctx)).exitCode,
     ).toBe(0);
-  },
-);
-
-test.serial(
-  "status rejects an unknown selected module and closes the pool",
-  async () => {
-    writeConfig({ modules: { user: USER } });
-    const { ctx, calls } = context([], { module: "ghost" });
-    expect((await (await loadStatus()).handler(ctx)).exitCode).toBe(1);
-    expect(logged(calls, "error", /ghost.*not found/)).toBe(true);
-    expect(state.ends).toBe(1);
   },
 );

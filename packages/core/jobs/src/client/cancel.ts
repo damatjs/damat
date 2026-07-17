@@ -3,6 +3,7 @@ import {
   isTransactionalExecutor,
   TransactionalExecutorRequiredError,
   type DurabilityExecutor,
+  type WorkActor,
 } from "@damatjs/durability";
 import {
   appendJobActivity,
@@ -14,7 +15,7 @@ import {
 
 export interface CancelJobRunOptions {
   reason?: string;
-  actor?: Record<string, unknown>;
+  actor?: WorkActor;
   executor?: DurabilityExecutor;
 }
 
@@ -38,7 +39,10 @@ async function cancelWith(
 ): Promise<JobRun | undefined> {
   const current = await lockJobRun(executor, id);
   if (!current) return undefined;
-  if (current.status === "running" && current.cancellationRequestedAt) {
+  if (
+    (current.status === "running" || current.status === "cancelled") &&
+    current.cancellationRequestedAt
+  ) {
     return current;
   }
   const cancellable =

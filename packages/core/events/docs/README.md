@@ -20,6 +20,7 @@ and reject wildcards.
 | `src/durable/migrations/`   | Ordered outbox, delivery, attempt, activity, and log catalogs; exported by `@damatjs/events/migrations`.            |
 | `src/durable/repositories/` | SQL writes, reads, row mapping, and public durable record types.                                                    |
 | `src/durable/client/`       | Transactional publish plus outbox/activity inspection.                                                              |
+| `src/durable/inspection/`   | Headless event queries, visibility/redaction, summaries, and audited operations.                                    |
 | `src/durable/router/`       | Transactional `SKIP LOCKED` outbox claims, consumer snapshots, fan-out, routing activity, and polling.              |
 | `src/durable/worker/`       | Pair-scoped delivery claims, fenced execution, reconciliation, retention, registry state, and shutdown.             |
 | `src/durable/wakeup/`       | Strict optional router/exact-consumer wake messages; PostgreSQL polling remains authoritative.                      |
@@ -150,8 +151,8 @@ event plus consumer. Attempts, activity, and logs use foreign keys that prevent
 attempt or consumer history from pointing at a different delivery. Retention starts
 at availability, so delayed events cannot expire before becoming eligible.
 
-The catalog owns migrations `001`, `002`, and `003`, ordered after shared durability and
-jobs. `@damatjs/orm-cli` selects shared plus events for
+The catalog owns outbox, history, retention-integrity, and inspection-index
+migrations, ordered after shared durability and jobs. `@damatjs/orm-cli` selects shared plus events for
 `services.events.durable`, or shared plus jobs plus events when both features are
 enabled. Run migrations before publishing.
 
@@ -159,8 +160,54 @@ The router claims bounded due outbox batches with `FOR UPDATE SKIP LOCKED`.
 Consumer rows, one event-scoped `routed` activity, and `routed_at` commit together;
 zero-consumer events still become routed. Fan-out resolves explicit consumer retry
 overrides against the policy copied onto the outbox row, not the registry's current
-defaults. Migration `003` repairs and constrains delivery retention so it cannot
-precede availability.
+defaults. Delivery retention is repaired and constrained so it cannot precede
+availability.
+
+### Inspection boundary
+
+`createDurableEventInspectionClient` is transport-free. Frameworks may expose it
+through HTTP, RPC, MCP, or an internal dashboard without coupling the durable
+core to authorization or routing. Construction requires a cursor signing key
+and accepts a durability client, visibility, redaction, and worker-staleness
+threshold.
+
+List queries aggregate by outbox event and apply delivery-aware predicates with
+`EXISTS`, avoiding duplicate events when several consumers match. Operational
+views are derived from stored state: upcoming, processing, retrying, failed, and
+completed. Recovery is a separate activity-derived flag. Pagination orders by a
+millisecond timestamp and UUID and signs both values.
+
+Detail reads run in one repeatable-read transaction. They combine the immutable
+event, current deliveries, attempt history, logs, activity, referenced workers,
+and consumer-control history. Payload/result visibility is independent from
+operational evidence: errors, progress, attempts, logs, activity, workers, and
+controls stay inspectable and are recursively redacted.
+
+Control history is fetched in global activity-ID order with one fixed 501-row
+query across all consumers,
+returns at most 500 entries, and sets `controlHistoryTruncated` when the extra
+row exists. Summary worker records are also redacted. Active and stale workers
+remain diagnostic records, but only active workers contribute capacity;
+stopping and stopped workers are excluded.
+
+Summary windows and bucket counts are bounded before SQL runs. Current state,
+history throughput, processing duration, waiting duration, lease health, worker
+load, oldest/next work, and dead-letter groups are merged into one response.
+Dead-letter status totals cover the full range while the ordered group list is
+capped at 20 entries.
+
+Each new claim snapshots its effective availability and wait duration into the
+attempt row. Waiting distributions use these immutable values and exclude
+legacy attempts whose wait is unknown. Retry activity also retains the effective
+schedule, so later delivery updates do not erase earlier timing evidence.
+
+Administrative changes validate an explicit actor before querying. Delivery
+transitions lock the delivery row before its parent event; retention locks
+candidate deliveries in deterministic order before revalidating their parents.
+Consumer controls use a transaction advisory lock. Retry is limited to dead letters, preserves
+history, clears current execution fields, and never shortens retention.
+Cancellation, controls, and retention append correlated audit rows. Exact
+retry/resume wake-ups publish only after the database transaction commits.
 
 Delivery workers select exact `(event, consumer)` pairs using JSON-encoded stable
 scopes. A claim moves one delivery to `running`, creates its attempt, and appends
@@ -213,10 +260,11 @@ publishing do not execute consumers on their own.
 ## Tests
 
 `tests/bus.test.ts` and `tests/global.test.ts` are pure unit tests.
-`tests/broadcast.test.ts` exercises a mocked Redis boundary. `tests/durable/` and
-`tests/durable-worker/` need an isolated PostgreSQL database and cover schema
+`tests/broadcast.test.ts` exercises a mocked Redis boundary. `tests/durable/`,
+`tests/durable-worker/`, and `tests/inspection/` need an isolated PostgreSQL database and cover schema
 integrity, transactions, routing overlap, fencing, recovery, retention, wake-ups,
-shutdown, registry behavior, and the no-bridge ephemeral invariant.
+shutdown, registry behavior, inspection, administration, and the no-bridge
+ephemeral invariant.
 
 ## Related docs
 

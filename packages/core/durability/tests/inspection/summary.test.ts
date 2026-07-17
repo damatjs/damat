@@ -17,3 +17,17 @@ test("time buckets align timestamps and include every requested interval", () =>
     new Date("2026-07-16T10:10:00Z"),
   ]);
 });
+
+test("time buckets use a half-open range", () => {
+  const instant = new Date("2026-07-16T10:00:00.500Z");
+  expect(
+    createTimeBuckets({ from: instant, to: instant, intervalMs: 1_000 }),
+  ).toEqual([]);
+  expect(
+    createTimeBuckets({
+      from: new Date("2026-07-16T10:00:00Z"),
+      to: new Date("2026-07-16T10:00:01Z"),
+      intervalMs: 1_000,
+    }),
+  ).toEqual([new Date("2026-07-16T10:00:00Z")]);
+});

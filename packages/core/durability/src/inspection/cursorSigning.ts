@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 export type CursorSigningKey = string | Uint8Array;
 
-function validateKey(key: CursorSigningKey): void {
+export function validateCursorSigningKey(key: CursorSigningKey): void {
   const length = typeof key === "string" ? key.length : key.byteLength;
   if (length === 0) throw new Error("Cursor signing key cannot be empty");
 }
@@ -11,7 +11,7 @@ export function signCursorPayload(
   payload: string,
   key: CursorSigningKey,
 ): string {
-  validateKey(key);
+  validateCursorSigningKey(key);
   return createHmac("sha256", key).update(payload).digest("base64url");
 }
 

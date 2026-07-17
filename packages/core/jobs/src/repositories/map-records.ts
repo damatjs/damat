@@ -10,6 +10,10 @@ export function mapJobAttempt(row: JobAttemptRow): JobAttempt {
     workerId: row.worker_id,
     leaseToken: row.lease_token,
     startedAt: row.started_at,
+    ...(row.available_at ? { availableAt: row.available_at } : {}),
+    ...(row.wait_ms !== null
+      ? { waitMs: mapSafeInteger(row.wait_ms, "attempt wait_ms") }
+      : {}),
     ...(row.heartbeat_at ? { heartbeatAt: row.heartbeat_at } : {}),
     ...(row.finished_at ? { finishedAt: row.finished_at } : {}),
     ...(row.duration_ms !== null

@@ -20,3 +20,13 @@ export interface TimeBucketOptions {
   to: Date;
   intervalMs: number;
 }
+
+export interface WorkSummaryFilter extends TimeBucketOptions {
+  now?: Date;
+  staleAfterMs?: number;
+}
+
+export interface BoundedRetentionRequest {
+  terminalBefore?: Date;
+  batchSize?: number;
+}

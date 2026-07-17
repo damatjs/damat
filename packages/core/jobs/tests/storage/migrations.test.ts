@@ -9,6 +9,7 @@ test("jobs catalog has stable migration ownership and order", () => {
   ).toEqual([
     ["001", 300],
     ["002", 400],
+    ["003", 450],
   ]);
 });
 

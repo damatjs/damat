@@ -1,4 +1,4 @@
-import type { DurabilityExecutor } from "@damatjs/durability";
+import type { DurabilityExecutor, WorkActor } from "@damatjs/durability";
 import { jobExecutor } from "./executor";
 import { mapJobActivity } from "./map-records";
 import type { JobActivityRow } from "./record-rows";
@@ -16,7 +16,7 @@ export interface AppendActivityInput {
   reason?: string;
   durationMs?: number;
   metadata?: Record<string, unknown>;
-  actor?: Record<string, unknown>;
+  actor?: WorkActor | Record<string, unknown>;
 }
 
 export async function appendJobActivity(

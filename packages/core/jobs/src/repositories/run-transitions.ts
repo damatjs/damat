@@ -11,6 +11,9 @@ export async function transitionJobRun(
   const result = await executor.query<JobRunRow>(
     `UPDATE "_damat_job_runs"
      SET "status" = $3, "updated_at" = NOW(),
+       "cancellation_requested_at" = CASE WHEN $3 = 'cancelled'
+         THEN COALESCE("cancellation_requested_at",NOW())
+         ELSE "cancellation_requested_at" END,
        "completed_at" = CASE WHEN $3 IN ('cancelled','succeeded')
          THEN NOW() ELSE NULL END,
        "available_at" = CASE WHEN $3 = 'queued' THEN NOW() ELSE "available_at" END

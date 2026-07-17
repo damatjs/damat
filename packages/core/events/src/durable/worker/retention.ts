@@ -18,6 +18,7 @@ import {
 
 export interface EventRetentionOptions {
   actor: WorkActor;
+  requestId?: string;
   terminalBefore?: Date;
   batchSize?: number;
   consumers?: EventConsumerIdentity[];
@@ -35,13 +36,17 @@ export async function runEventRetention(
   validateEventRetentionActor(options.actor);
   const limit = resolveReconcileLimit(options.batchSize);
   const client = options.client ?? getDurabilityClient();
-  const details = eventRetentionDetails(options, limit);
-  await recordEventRetention(client, options.actor, "requested", details);
+  const resolved = {
+    ...options,
+    terminalBefore: options.terminalBefore ?? new Date(),
+  };
+  const details = eventRetentionDetails(resolved, limit);
+  await recordEventRetention(client, resolved.actor, "requested", details);
   try {
-    return await performEventRetention(client, options, limit, details);
+    return await performEventRetention(client, resolved, limit, details);
   } catch (error) {
     try {
-      await recordEventRetention(client, options.actor, "failed", {
+      await recordEventRetention(client, resolved.actor, "failed", {
         ...details,
         ...eventRetentionError(error),
       });

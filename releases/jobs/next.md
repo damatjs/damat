@@ -22,6 +22,10 @@
 - Actor-attributed retention request outcomes in maintenance activity.
 - Optional Redis wake-up publication and a dedicated duplicated subscriber,
   with PostgreSQL polling retained as the fallback.
+- Signed cursor job lists, repeatable-read detail timelines, bounded operational
+  summaries, and actor-audited headless administration.
+- Inspection indexes for cursor, status, queue, lineage, lease, terminal,
+  activity, and attempt summary paths in jobs system migration `003`.
 
 ## Changed
 
@@ -71,11 +75,39 @@
 - Package-owned enqueue, retry, and schedule transactions publish wake-ups only
   after commit. Caller-owned transactions rely on periodic polling because
   their commit is outside the package boundary.
+- Manual retry clears current progress, result, error, cancellation, completion,
+  and lease snapshots while preserving immutable attempt and activity history.
+- Operational summary time windows are half-open; current status, waiting,
+  lease, worker, and dead-letter state remains global rather than windowed.
+- Queue-control detail history is capped at 500 records and reports
+  `controlHistoryTruncated` instead of silently truncating.
+- Waiting duration measures `started_at - available_at`; worker capacity sums
+  active workers only, and grouped failure messages honor redaction.
+- Repeating a cancellation after its request was persisted is idempotent and
+  does not append duplicate activity.
+- Throughput is keyed by time bucket, queue, and job name. Worker summaries add
+  bounded active/stale capability, load, heartbeat, and visibility-aware
+  metadata records; stopping and stopped history is excluded.
+- The activity summary index now leads with `occurred_at` to match bounded
+  count scans before grouping by type.
+- Retention resolves its default deduplication cutoff once and reuses it across
+  request audit, deletion, and outcome audit; terminal cutoffs remain unchanged.
+- Waiting-duration samples are selected by half-open `started_at` ranges, so
+  runs crossing either side of the report window are attributed correctly.
+- Migration `003` adds attempt `available_at` and `wait_ms`; every claim captures
+  both atomically and summaries use immutable attempts. Retry activity preserves
+  each effective `availableAt`, including manual retries.
+- Existing attempts retain `NULL` wait timing and are excluded from waiting
+  distributions; the migration does not misrepresent unknown history as zero.
+- Inspection clients reject missing, empty string, and empty byte-array cursor
+  signing keys at creation instead of waiting for the first cursor operation.
+- Hidden inspection detail omits worker application and deployment metadata,
+  matching hidden worker summaries and the documented visibility contract.
 
 ## Action required
 
-Run `bun run db:migrate` after enabling `services.jobs`. This applies the shared
-durability catalog followed by the jobs catalog. Replace `queueName` with
-`queue`, replace string Redis priorities with numeric priorities, and migrate
-raw queue inspection to the headless job clients. Construct a new `JobWorker`
+Run `bun run db:migrate` after enabling or updating `services.jobs`. This applies
+the shared durability catalog followed by the jobs catalog. Replace `queueName`
+with `queue`, replace string Redis priorities with numeric priorities, and
+migrate raw queue inspection to the headless job clients. Construct a new `JobWorker`
 instead of restarting a worker instance that has begun stopping.

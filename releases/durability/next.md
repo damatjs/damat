@@ -22,6 +22,8 @@
 - Immutable nested key/path redaction and chronological bounded work-log
   retention with explicit dropped-count and dropped-byte reporting.
 - Ordered bounded cleanup for expired idempotency keys.
+- Shared work-actor validation plus bounded summary and retention request
+  contracts for jobs and durable-event inspection clients.
 
 ## Changed
 
@@ -32,8 +34,12 @@
   transaction executor so control state and its activity row cannot diverge.
 - Pause/resume activity is returned in serialized write order rather than
   transaction-start timestamp order.
-- Cursor APIs require an explicit signing key and canonical ISO timestamp/UUID.
+- Cursor APIs require an explicit nonempty signing key and canonical ISO
+  timestamp/UUID.
 - Work-log count and byte limits reject non-finite and fractional values.
+- Operational summary filters use half-open ranges and reject invalid dates,
+  fractional intervals, invalid stale thresholds, reversed ranges, and ranges
+  intersecting more than 1,000 buckets.
 
 ## Action required
 
@@ -49,3 +55,5 @@ for every claim. Run pause and resume inside an existing active Damat
 transaction only when composing them with other database work.
 Provide a stable application secret to both `encodeCursor` and `decodeCursor`;
 rotating that key invalidates existing pagination cursors.
+Validate the caller's actor before invoking an administrative mutation, and use
+bounded summary ranges when building operational views.

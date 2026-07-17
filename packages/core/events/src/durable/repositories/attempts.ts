@@ -12,6 +12,8 @@ export interface DurableEventDeliveryAttempt {
   workerId: string;
   leaseToken: string;
   startedAt: Date;
+  availableAt?: Date;
+  waitMs?: number;
   heartbeatAt?: Date;
   finishedAt?: Date;
   durationMs?: number;
@@ -28,6 +30,19 @@ export async function listDurableEventDeliveryAttempts(
     `SELECT * FROM "_damat_event_delivery_attempts"
      WHERE "delivery_id"=$1 ORDER BY "attempt_number"`,
     [deliveryId],
+  );
+  return result.rows.map(mapEventDeliveryAttempt);
+}
+
+export async function listEventDeliveryAttemptsBatch(
+  deliveryIds: string[],
+  executor: DurabilityExecutor,
+): Promise<DurableEventDeliveryAttempt[]> {
+  const result = await executor.query<EventDeliveryAttemptRow>(
+    `SELECT * FROM "_damat_event_delivery_attempts"
+     WHERE "delivery_id"=ANY($1::uuid[])
+     ORDER BY "delivery_id","attempt_number"`,
+    [deliveryIds],
   );
   return result.rows.map(mapEventDeliveryAttempt);
 }

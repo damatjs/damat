@@ -9,6 +9,7 @@ export function eventRetentionDetails(
   batchSize: number,
 ): Record<string, unknown> {
   return {
+    requestId: options.requestId ?? crypto.randomUUID(),
     batchSize,
     terminalBefore: (options.terminalBefore ?? new Date()).toISOString(),
     consumers: options.consumers ?? null,
@@ -17,7 +18,7 @@ export function eventRetentionDetails(
 
 export function performEventRetention(
   client: DurabilityClient,
-  options: EventRetentionOptions,
+  options: EventRetentionOptions & { terminalBefore: Date },
   limit: number,
   details: Record<string, unknown>,
 ): Promise<EventRetentionResult> {
@@ -25,7 +26,7 @@ export function performEventRetention(
     const result = {
       deletedEvents: await deleteExpiredDurableEvents(
         executor,
-        options.terminalBefore ?? new Date(),
+        options.terminalBefore,
         limit,
         encodeReconcileConsumers(options.consumers),
       ),

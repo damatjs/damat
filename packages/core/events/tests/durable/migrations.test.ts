@@ -10,6 +10,7 @@ test("events catalog has stable ownership and order", () => {
     ["001", 500],
     ["002", 600],
     ["003", 700],
+    ["004", 800],
   ]);
 });
 

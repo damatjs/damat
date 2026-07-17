@@ -14,6 +14,7 @@ public usage surface.
 | `worker/`        | Claims, heartbeats, execution, outcomes, loop, and stop. |
 | `schedules/`     | Once/interval validation, mutation, and occurrences.     |
 | `wakeup/`        | Best-effort Redis publication and subscription.          |
+| `inspection/`    | Cursor lists, snapshot detail, summaries, and admin.     |
 | `migrations/`    | Ordered jobs system-migration catalog.                   |
 | `tests/storage/` | Persistence and database-invariant tests.                |
 | `tests/worker/`  | Concurrent claims, fencing, outcomes, context, and stop. |
@@ -128,3 +129,44 @@ package-owned PostgreSQL transactions commit. Mutations using a caller-owned
 executor do not publish because the package cannot observe that outer commit.
 The duplicated subscriber can wake the claim loop early, while periodic
 PostgreSQL polling remains active and authoritative.
+
+## Operational inspection
+
+`createJobInspectionClient` resolves one durability client, explicit cursor
+signing key, metadata-first visibility, redaction policy, and stale-worker
+threshold. Missing, empty string, and empty byte-array signing keys fail during
+client creation.
+List SQL is fully parameterized and orders by the millisecond-truncated creation
+timestamp plus UUID. Recovery is derived from immutable activity and does not
+replace the current native status.
+
+Detail and summary assembly start a repeatable-read, read-only transaction.
+Details join the current row to attempts, activity, logs, lease/worker history,
+queue controls, and optional schedule history without mutating stored JSON.
+Queue-control history fetches one sentinel beyond its 500-record response cap
+and exposes `controlHistoryTruncated`, so bounded history is never silent.
+Summary ranges are half-open and limited to 1,000 buckets; current queue depth,
+wait age, leases, worker capacity, and dead-letter totals remain global state.
+Waiting duration starts at availability rather than creation and is selected by
+its half-open attempt-start window. Claims persist `available_at` and `wait_ms`
+on every immutable attempt, so later retry availability changes cannot erase
+earlier waits. Retry and manual-retry activity also retain each effective
+`availableAt`. Pre-migration attempts have no timing and are excluded from
+waiting percentiles. Capacity sums active workers only; heartbeat diagnostics
+consider active and stale workers.
+Active and stale worker records retain capability and load diagnostics while
+stopping and stopped history is excluded. Application and deployment metadata
+obey visibility and redaction. Throughput groups by time bucket, queue, and job
+name. Failure-group messages pass through the configured inspection redaction.
+The activity summary index leads with `occurred_at` for the half-open range scan
+before grouping by activity type.
+
+Administrative methods validate actors before SQL and lock records before state
+changes. Missing records and invalid transitions are typed errors. Queue controls
+use a transaction advisory lock so concurrent first-time pause requests serialize.
+Manual retry clears stale current snapshots and lease identity but retains all
+immutable attempts and activity. Resume, retry, and schedule enable wake workers
+only after their PostgreSQL transaction commits. Retention request and outcome
+activity share one request ID. Default deduplication cleanup resolves one cutoff
+before request auditing and reuses that exact value for deletion and outcome
+auditing; an optional terminal cutoff is likewise reused without recomputation.

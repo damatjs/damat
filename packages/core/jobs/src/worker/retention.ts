@@ -19,6 +19,7 @@ export interface JobRetentionOptions {
   actor: WorkActor;
   client?: DurabilityClient;
   queue?: string;
+  requestId?: string;
 }
 
 export interface JobRetentionResult {
@@ -33,7 +34,11 @@ export async function runJobRetention(
   validateRetentionActor(options.actor);
   const limit = reconcileLimit(options.batchSize);
   const client = options.client ?? getDurabilityClient();
-  const details = retentionDetails(options, limit);
+  const effectiveOptions = {
+    ...options,
+    deduplicationBefore: options.deduplicationBefore ?? new Date(),
+  };
+  const details = retentionDetails(effectiveOptions, limit);
   await recordJobRetention(
     client,
     options.actor,
@@ -42,7 +47,7 @@ export async function runJobRetention(
     options.queue,
   );
   try {
-    return await performJobRetention(client, options, limit, details);
+    return await performJobRetention(client, effectiveOptions, limit, details);
   } catch (error) {
     try {
       await recordJobRetention(

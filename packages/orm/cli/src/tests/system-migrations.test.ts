@@ -30,6 +30,7 @@ test("selects shared then jobs migrations when jobs are enabled", async () => {
     "@damatjs/durability:002",
     "@damatjs/jobs:001",
     "@damatjs/jobs:002",
+    "@damatjs/jobs:003",
   ]);
 });
 
@@ -44,6 +45,7 @@ test("selects shared then events migrations for durable events", async () => {
     "@damatjs/events:001",
     "@damatjs/events:002",
     "@damatjs/events:003",
+    "@damatjs/events:004",
   ]);
 });
 
@@ -55,6 +57,8 @@ test("orders shared, jobs, then events catalogs", async () => {
     "@damatjs/durability",
     "@damatjs/jobs",
     "@damatjs/jobs",
+    "@damatjs/jobs",
+    "@damatjs/events",
     "@damatjs/events",
     "@damatjs/events",
     "@damatjs/events",

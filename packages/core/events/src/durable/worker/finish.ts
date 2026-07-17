@@ -46,6 +46,14 @@ export async function finishEventDelivery(
   );
   if (updated.rowCount !== 1) throw new EventDeliveryLeaseLostError(claim.id);
   const durationMs = await closeEventDeliveryAttempt(executor, claim, input);
+  const schedule =
+    input.status === "retry_wait" && input.availableAt
+      ? {
+          availableAt: input.availableAt.toISOString(),
+          backoffMs: claim.backoffMs,
+          backoffMultiplier: claim.backoffMultiplier,
+        }
+      : undefined;
   await appendEventActivity(executor, {
     eventId: claim.eventId,
     deliveryId: claim.id,
@@ -58,9 +66,11 @@ export async function finishEventDelivery(
     leaseToken: claim.leaseToken,
     durationMs,
     ...(input.reason ? { reason: input.reason } : {}),
-    ...(terminal && updated.rows[0]?.progress !== null
-      ? { metadata: { progress: updated.rows[0]?.progress } }
-      : {}),
+    ...(schedule
+      ? { metadata: schedule }
+      : terminal && updated.rows[0]?.progress !== null
+        ? { metadata: { progress: updated.rows[0]?.progress } }
+        : {}),
   });
 }
 

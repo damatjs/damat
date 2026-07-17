@@ -29,3 +29,15 @@ export async function listDurableEventLogs(
   );
   return result.rows.map(mapDurableEventLog);
 }
+
+export async function listEventDeliveryLogsBatch(
+  deliveryIds: string[],
+  executor: DurabilityExecutor,
+): Promise<DurableEventLog[]> {
+  const result = await executor.query<DurableEventLogRow>(
+    `SELECT * FROM "_damat_event_logs" WHERE "delivery_id"=ANY($1::uuid[])
+     ORDER BY "delivery_id","attempt_number","sequence"`,
+    [deliveryIds],
+  );
+  return result.rows.map(mapDurableEventLog);
+}

@@ -37,15 +37,20 @@
 - Heartbeat age is calculated at inspection time from a caller-selected clock.
 - Stopping and stopped worker transitions are distinct and preserve first times.
 - Pause state is unique by work kind and scope.
+- Administration validates a nonblank actor and supported actor type before SQL.
 - Every pause or resume shares a transaction with its immutable activity row.
 - Control activity identity follows the serialized control-write order.
 - A supplied control executor must be an active Damat transaction executor.
 - Redaction clones arrays and objects instead of mutating handler-owned values.
 - Log limiting retains one contiguous newest suffix and reports truncation.
 - Log count and byte limits are finite nonnegative integers.
-- Cursors require an explicit HMAC key and canonical ISO timestamp/UUID values.
+- Cursors require an explicit nonempty HMAC key and canonical ISO
+  timestamp/UUID values.
 - Cursor signatures are verified before version and position decoding.
 - Cursor ordering uses timestamp first and UUID as the stable tie breaker.
+- Summary ranges are half-open, use valid dates and safe-integer intervals, and
+  intersect at most 1,000 buckets; optional clocks and stale thresholds are
+  validated too.
 - Progress terminal values are recorded regardless of the sampling interval.
 - Catalog owners must match every migration they contain.
 - Migration identity is the `(owner, id)` pair; duplicates are rejected.

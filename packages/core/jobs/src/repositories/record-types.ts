@@ -8,6 +8,8 @@ export interface JobAttempt {
   workerId: string;
   leaseToken: string;
   startedAt: Date;
+  availableAt?: Date;
+  waitMs?: number;
   heartbeatAt?: Date;
   finishedAt?: Date;
   durationMs?: number;

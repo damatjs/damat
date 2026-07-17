@@ -21,7 +21,9 @@ export async function claimEventDeliveryRow(
      WHERE "id"=$1 RETURNING *, $5::text AS "event_name",
        $6::jsonb AS "payload",$7::jsonb AS "metadata",
        $8::text AS "correlation_id",$9::text AS "causation_id",
-       $10::text AS "previous_status"`,
+       $10::text AS "previous_status",
+       GREATEST(0,EXTRACT(EPOCH FROM (NOW()-"available_at"))*1000)::bigint
+         AS "wait_ms"`,
     [
       row.id,
       options.workerId,
@@ -35,12 +37,20 @@ export async function claimEventDeliveryRow(
       row.previous_status,
     ],
   );
-  const claim = mapEventDeliveryClaim(result.rows[0]!);
+  const claimedRow = result.rows[0]!;
+  const claim = mapEventDeliveryClaim(claimedRow);
   await executor.query(
     `INSERT INTO "_damat_event_delivery_attempts"
-     ("delivery_id","attempt_number","worker_id","lease_token","heartbeat_at")
-     VALUES ($1,$2,$3,$4,NOW())`,
-    [claim.id, claim.attemptCount, claim.workerId, claim.leaseToken],
+     ("delivery_id","attempt_number","worker_id","lease_token","heartbeat_at",
+      "available_at","wait_ms") VALUES ($1,$2,$3,$4,NOW(),$5,$6)`,
+    [
+      claim.id,
+      claim.attemptCount,
+      claim.workerId,
+      claim.leaseToken,
+      claimedRow.available_at,
+      claimedRow.wait_ms,
+    ],
   );
   await appendEventActivity(executor, {
     eventId: claim.eventId,

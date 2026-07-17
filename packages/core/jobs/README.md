@@ -154,15 +154,50 @@ immediate abort.
 
 ## Inspection and administration
 
-The package exposes headless clients rather than unauthenticated routes:
+The package exposes a typed headless client rather than unauthenticated routes:
 
-- `getJobRun`, `listJobRuns`, `listJobAttempts`;
-- `listJobActivity`, `listJobLogs`;
-- `cancelJobRun`, `retryJobRun`.
-- `createJobSchedule`, `updateJobSchedule`, `listJobSchedules`;
-- `runJobRetention`, which requires actor metadata and records maintenance
-  request outcomes.
+```ts
+import { createJobInspectionClient } from "@damatjs/jobs";
 
+const jobs = createJobInspectionClient({
+  cursorSigningKey: process.env.INSPECTION_CURSOR_KEY!,
+  visibility: "metadata",
+  redaction: { keys: ["token", "password"] },
+});
+
+const page = await jobs.listRuns({
+  views: ["processing", "failed"],
+  limit: 50,
+});
+const detail = await jobs.getRun(page.items[0]!.id);
+```
+
+Lists use signed timestamp-and-UUID cursors. Native statuses remain unchanged;
+`upcoming`, `processing`, `retrying`, `failed`, and `completed` are derived
+views, while recovery is an independent flag. Detail reads use one
+repeatable-read snapshot and include attempts, activity, logs, leases, workers,
+queue controls, and schedule history. Visibility defaults to `metadata`;
+payload and result access requires `full`. Queue-control history returns at most
+500 entries and sets `controlHistoryTruncated` when more records exist.
+
+Operational summaries measure queue wait from `availableAt`, so intentional
+schedule delay is excluded, and attribute the sample to its half-open
+attempt-start window. Every immutable attempt captures `availableAt` and
+`waitMs` atomically from the run's current availability, preserving retry
+waits. Legacy attempts keep unknown timing omitted and are excluded from
+distributions rather than treated as zero. Capacity includes active workers
+only; active and stale counts plus heartbeat diagnostics exclude stopping and
+stopped workers.
+Active and stale per-worker records expose capabilities, state, concurrency,
+in-flight load, and heartbeat age; stopped and stopping history is excluded.
+Application and deployment metadata follow inspection visibility and redaction.
+Throughput rows are grouped by bucket, queue, and job name.
+Configured redaction also applies to grouped failure messages.
+
+Bounded summaries expose current status, wait, lease, worker, and dead-letter
+state plus half-open time-window throughput, activity, and duration metrics.
+Administrative cancellation, retry, queue pause/resume, schedule enable/disable,
+and retention require a validated actor and append immutable audit history.
 Applications decide how to authenticate and present these records.
 
 ## Public definition API

@@ -14,6 +14,7 @@ test("events catalog appends delivery retention integrity migration", () => {
     "001",
     "002",
     "003",
+    "004",
   ]);
   expect(eventsSystemMigrations.migrations.at(-1)?.order).toBeGreaterThan(600);
 });

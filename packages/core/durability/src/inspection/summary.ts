@@ -11,9 +11,10 @@ export function createTimeBuckets(options: TimeBucketOptions): Date[] {
   if (options.to < options.from) throw new Error("Invalid time bucket range");
   const buckets: Date[] = [];
   const start = getTimeBucketStart(options.from, options.intervalMs).getTime();
+  if (options.to.getTime() === options.from.getTime()) return buckets;
   for (
     let value = start;
-    value <= options.to.getTime();
+    value < options.to.getTime();
     value += options.intervalMs
   ) {
     buckets.push(new Date(value));

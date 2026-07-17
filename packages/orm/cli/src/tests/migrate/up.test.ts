@@ -39,6 +39,7 @@ test.serial("up allows system migrations without modules", async () => {
     "@damatjs/durability:002",
     "@damatjs/jobs:001",
     "@damatjs/jobs:002",
+    "@damatjs/jobs:003",
   ]);
 });
 
@@ -65,7 +66,7 @@ test.serial(
     expect((await (await loadUp()).handler(ctx)).exitCode).toBe(0);
     expect(state.runArgs.pool).toBeInstanceOf(FakePool);
     expect(state.runArgs.modules.user.resolve).toBe(USER);
-    expect(state.runArgs.options.systemMigrations).toHaveLength(4);
+    expect(state.runArgs.options.systemMigrations).toHaveLength(5);
     expect(state.ends).toBe(1);
     expect(logged(calls, "success", /completed successfully/)).toBe(true);
   },

@@ -10,6 +10,8 @@ export interface JobAttemptRow extends QueryResultRow {
   worker_id: string;
   lease_token: string;
   started_at: Date;
+  available_at: Date | null;
+  wait_ms: PostgresInteger | null;
   heartbeat_at: Date | null;
   finished_at: Date | null;
   duration_ms: PostgresInteger | null;

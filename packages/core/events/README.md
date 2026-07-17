@@ -138,6 +138,59 @@ applies shared durability migrations followed by `@damatjs/events` migrations.
 Standalone migration tooling can import `eventsSystemMigrations` from
 `@damatjs/events/migrations`.
 
+## Durable inspection and operations
+
+The inspection client is a headless API for an admin UI, CLI, or automation. It
+does not register HTTP routes. Lists are event-level, while each detail includes
+delivery attempts, progress, errors, results, ordered logs, activity, workers,
+and pause/resume history. Control history is capped at 500 entries and exposes
+`controlHistoryTruncated` when more records exist.
+
+```ts
+import { createDurableEventInspectionClient } from "@damatjs/events";
+
+const operations = createDurableEventInspectionClient({
+  cursorSigningKey: process.env.INSPECTION_CURSOR_KEY!,
+  visibility: "metadata",
+  redaction: { keys: ["token", "secret"] },
+});
+
+const page = await operations.listEvents({
+  views: ["processing", "failed"],
+  consumers: ["welcome-email"],
+  limit: 50,
+});
+const detail = await operations.getEvent(page.items[0]!.id);
+const summary = await operations.getSummary({
+  from: new Date(Date.now() - 3_600_000),
+  to: new Date(),
+  intervalMs: 60_000,
+});
+```
+
+Signed cursors use the event timestamp plus UUID for stable pagination. Filters
+cover names, consumers, delivery states, operational views, recovery, workers,
+lease state, lineage identifiers, and lifecycle time ranges. Summaries expose
+current counts, throughput buckets, processing and waiting distributions, lease
+health, worker capacity, and grouped dead letters.
+Waiting distributions use immutable per-attempt wait measurements; attempts
+without a known measurement are excluded rather than treated as zero.
+Only active workers contribute usable capacity; stale workers remain visible
+for diagnosis, while stopping and stopped workers are omitted.
+Dead-letter totals remain complete in status counts; the ranked group list is
+deterministically capped at 20 entries.
+
+Visibility defaults to `"metadata"`. `"full"` includes payloads and results;
+`"hidden"` removes payloads, event metadata, and worker application/deployment
+metadata. Operational progress, errors,
+attempts, activity, and logs remain visible at every level and always pass
+through the configured redaction rules.
+
+Administrative methods require an explicit actor. They cancel waiting work or
+request cancellation of running work, retry dead letters, pause/resume an exact
+event-consumer pair, and run bounded retention. Changes and actor identity are
+audited in PostgreSQL; successful retry/resume wake-ups occur after commit.
+
 ## Cross-process broadcast (opt-in)
 
 ```ts
@@ -177,6 +230,7 @@ framework wires this automatically).
 | `getDurableEvent` / `listDurableEvents` / `listDurableEventActivity`                             | function  | Read durable outbox records and immutable event activity.                                                         |
 | `getDurableEventDelivery` / `listDurableEventDeliveries`                                         | function  | Read current per-consumer delivery lifecycle state.                                                               |
 | `listDurableEventDeliveryAttempts` / `listDurableEventLogs`                                      | function  | Read fenced attempt history and ordered structured work logs.                                                     |
+| `createDurableEventInspectionClient`                                                             | function  | Create the headless list, detail, summary, cancel, retry, control, and retention API.                             |
 | `configureEventWakeupPublisher` / `startEventWakeupSubscriber`                                   | function  | Optional strict Redis-compatible router and exact-consumer wake-up transport.                                     |
 | `DurableEventMap`, `DurableEventRecord`, `PublishDurableEventOptions`                            | types     | Typed durable payload, stored record, and publishing contract.                                                    |
 

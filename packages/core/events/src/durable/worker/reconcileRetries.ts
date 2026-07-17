@@ -13,6 +13,7 @@ interface RetryDeliveryRow {
   id: string;
   event_id: string;
   consumer: string;
+  available_at: Date;
 }
 
 export async function reconcileEventDeliveryRetries(
@@ -31,7 +32,7 @@ async function promote(
   selected: string | null,
 ): Promise<number> {
   const result = await executor.query<RetryDeliveryRow>(
-    `SELECT d."id",d."event_id",d."consumer"
+    `SELECT d."id",d."event_id",d."consumer",d."available_at"
      FROM "_damat_event_deliveries" d JOIN "_damat_event_outbox" o
        ON o."id"=d."event_id" WHERE d."status"='retry_wait'
        AND d."available_at"<=NOW() AND ($2::jsonb IS NULL OR EXISTS
@@ -55,6 +56,7 @@ async function promote(
       type: "retry_ready",
       previousStatus: "retry_wait",
       nextStatus: "pending",
+      metadata: { availableAt: row.available_at.toISOString() },
     });
   }
   return result.rows.length;

@@ -1,6 +1,11 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, test } from "bun:test";
-import { compareCursorPositions, decodeCursor, encodeCursor } from "../../src";
+import {
+  compareCursorPositions,
+  decodeCursor,
+  encodeCursor,
+  validateCursorSigningKey,
+} from "../../src";
 
 const key = "cursor-test-key";
 const wrongKey = "wrong-cursor-key";
@@ -19,6 +24,14 @@ function signedData(data: object): string {
 }
 
 describe("inspection cursor", () => {
+  test("rejects empty signing keys before cursor use", () => {
+    expect(() => validateCursorSigningKey("")).toThrow("cannot be empty");
+    expect(() => validateCursorSigningKey(new Uint8Array())).toThrow(
+      "cannot be empty",
+    );
+    expect(() => validateCursorSigningKey(new Uint8Array([1]))).not.toThrow();
+  });
+
   test("round trips stable signed timestamp and UUID state", () => {
     const cursor = encodeCursor(position, key);
     expect(decodeCursor(cursor, key)).toEqual(position);

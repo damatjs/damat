@@ -20,9 +20,17 @@ export async function claimCandidate(
   const claim = mapClaimedJob(updated.rows[0] as never);
   await executor.query(
     `INSERT INTO "_damat_job_attempts"
-       ("run_id","attempt_number","worker_id","lease_token","heartbeat_at")
-     VALUES ($1,$2,$3,$4,NOW())`,
-    [claim.id, claim.attemptCount, claim.workerId, claim.leaseToken],
+       ("run_id","attempt_number","worker_id","lease_token","started_at",
+        "available_at","heartbeat_at","wait_ms")
+     VALUES ($1,$2,$3,$4,NOW(),$5::timestamptz,NOW(),
+       GREATEST(0,FLOOR(EXTRACT(EPOCH FROM (NOW()-$5::timestamptz))*1000))::bigint)`,
+    [
+      claim.id,
+      claim.attemptCount,
+      claim.workerId,
+      claim.leaseToken,
+      row.available_at,
+    ],
   );
   await appendJobActivity(executor, {
     runId: claim.id,

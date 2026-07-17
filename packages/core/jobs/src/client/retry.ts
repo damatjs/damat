@@ -3,16 +3,14 @@ import {
   isTransactionalExecutor,
   TransactionalExecutorRequiredError,
   type DurabilityExecutor,
+  type WorkActor,
 } from "@damatjs/durability";
-import {
-  appendJobActivity,
-  transitionJobRun,
-  type JobRun,
-} from "../repositories";
+import { appendJobActivity, type JobRun } from "../repositories";
+import { mapJobRun, type JobRunRow } from "../repositories/map-run";
 import { publishJobWakeup } from "../wakeup/publisher";
 
 export interface RetryJobRunOptions {
-  actor?: Record<string, unknown>;
+  actor?: WorkActor;
   executor?: DurabilityExecutor;
 }
 
@@ -38,13 +36,24 @@ async function retryWith(
   id: string,
   options: RetryJobRunOptions,
 ): Promise<JobRun | undefined> {
-  const run = await transitionJobRun(executor, id, ["dead_lettered"], "queued");
-  if (!run) return undefined;
+  const updated = await executor.query<JobRunRow>(
+    `UPDATE "_damat_job_runs" SET "status"='queued',"progress"=NULL,
+       "result"=NULL,"last_error"=NULL,"cancellation_requested_at"=NULL,
+       "lease_owner"=NULL,"lease_token"=NULL,"lease_expires_at"=NULL,
+       "heartbeat_at"=NULL,"completed_at"=NULL,"available_at"=NOW(),
+       "updated_at"=NOW() WHERE "id"=$1 AND "status"='dead_lettered'
+     RETURNING *`,
+    [id],
+  );
+  const row = updated.rows[0];
+  if (!row) return undefined;
+  const run = mapJobRun(row);
   await appendJobActivity(executor, {
     runId: id,
     type: "manual_retry",
     previousStatus: "dead_lettered",
     nextStatus: "queued",
+    metadata: { availableAt: run.availableAt.toISOString() },
     ...(options.actor ? { actor: options.actor } : {}),
   });
   return run;

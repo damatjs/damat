@@ -15,6 +15,8 @@ export interface EventDeliveryClaimRow extends QueryResultRow {
   backoff_ms: string | number;
   backoff_multiplier: number;
   retention_at: Date;
+  available_at: Date;
+  wait_ms?: string | number;
   lease_owner: string;
   lease_token: string;
   lease_expires_at: Date;

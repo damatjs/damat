@@ -9,6 +9,8 @@ export interface EventDeliveryAttemptRow extends QueryResultRow {
   worker_id: string;
   lease_token: string;
   started_at: Date;
+  available_at: Date | null;
+  wait_ms: string | number | null;
   heartbeat_at: Date | null;
   finished_at: Date | null;
   duration_ms: string | number | null;
@@ -27,6 +29,8 @@ export function mapEventDeliveryAttempt(
     workerId: row.worker_id,
     leaseToken: row.lease_token,
     startedAt: row.started_at,
+    ...(row.available_at ? { availableAt: row.available_at } : {}),
+    ...(row.wait_ms !== null ? { waitMs: Number(row.wait_ms) } : {}),
     ...(row.heartbeat_at ? { heartbeatAt: row.heartbeat_at } : {}),
     ...(row.finished_at ? { finishedAt: row.finished_at } : {}),
     ...(row.duration_ms !== null

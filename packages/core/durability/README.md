@@ -90,6 +90,9 @@ durability client opens that transaction. A supplied executor must be an active
 Damat transaction executor. Pausing prevents future claims but does not
 terminate work already running.
 
+Headless administration clients call `validateWorkActor` before storage so an
+operator ID and one of `user`, `service`, or `system` is always present.
+
 ## Inspection primitives
 
 The package exports versioned opaque cursors containing a canonical ISO
@@ -98,12 +101,18 @@ buckets, UUID lease tokens, immutable key/path redaction, and chronological
 bounded log retention that keeps one contiguous newest suffix.
 
 `encodeCursor(position, signingKey)` and `decodeCursor(cursor, signingKey)`
-require the application to provide the same explicit HMAC key. Modified cursors
+require the application to provide the same explicit, nonempty HMAC key. Modified cursors
 and cursors signed by another key are rejected across processes. Cursor signing
 protects pagination state; it does not replace endpoint authentication. Log
 limits require finite nonnegative integer count and byte values and report
 dropped counts and bytes so truncation remains visible without failing a
 handler.
+
+`validateWorkSummaryFilter` validates the shared half-open summary range,
+safe-integer interval, optional clock/stale threshold, and a maximum of 1,000
+intersecting buckets. Jobs and events attach their fixed domain dimensions to
+the returned buckets. `BoundedRetentionRequest` carries the common
+terminal cutoff and batch-size request shape.
 
 ## System migrations
 

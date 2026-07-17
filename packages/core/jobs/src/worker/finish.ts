@@ -1,7 +1,6 @@
 import type { DurabilityExecutor, JsonValue } from "@damatjs/durability";
-import { appendJobActivity } from "../repositories";
-import type { JobRunStatus } from "../repositories";
 import { JobLeaseLostError } from "./errors";
+import { appendFinishActivity } from "./finish-activity";
 import type { ClaimedJobRun } from "./types";
 
 export interface FinishInput {
@@ -43,7 +42,7 @@ export async function finishClaim(
   await appendFinishActivity(
     executor,
     claim,
-    input.status,
+    input,
     terminal ? updated.rows[0]?.progress : undefined,
   );
 }
@@ -68,22 +67,4 @@ async function closeAttempt(
       input.error ? JSON.stringify(input.error) : null,
     ],
   );
-}
-
-async function appendFinishActivity(
-  executor: DurabilityExecutor,
-  claim: ClaimedJobRun,
-  status: JobRunStatus,
-  progress?: unknown,
-): Promise<void> {
-  await appendJobActivity(executor, {
-    runId: claim.id,
-    attemptNumber: claim.attemptCount,
-    type: status,
-    previousStatus: "running",
-    nextStatus: status,
-    workerId: claim.workerId,
-    leaseToken: claim.leaseToken,
-    ...(progress === undefined ? {} : { metadata: { progress } }),
-  });
 }

@@ -19,6 +19,21 @@
   state, optional strict Redis wake-ups, and ordered graceful shutdown.
 - Delivery, attempt, and log lifecycle read APIs plus an ordered retention
   integrity migration.
+- A headless durable-event inspection client with signed cursor pagination,
+  event/delivery filters, operational views, repeatable-read detail timelines,
+  configurable visibility, and recursive redaction.
+- Bounded operational summaries for current state, throughput, processing and
+  waiting duration, lease health, worker capacity, and grouped dead letters.
+- Actor-required administrative cancellation, dead-letter retry, exact consumer
+  pause/resume, and bounded retention with PostgreSQL audit history and
+  post-commit wake-ups.
+- Inspection indexes for event timestamps, lineage lookups, delivery lifecycle
+  ranges, worker leases, and activity timelines.
+- Consistent delayed-delivery operational views, range-bounded dead-letter
+  summaries, redacted worker metadata, active-only capacity, and bounded detail
+  control history with an explicit truncation signal.
+- Complete attempt-level waiting history, immutable retry schedules, overdue
+  router backlog age, and a deterministic 20-group dead-letter summary cap.
 
 ## Changed / improved
 
@@ -38,6 +53,8 @@
 Enable `services.events.durable`, configure PostgreSQL, and run
 `bun damat-orm migrate:up` before calling `publishDurableEvent`. External side
 effects still require provider-supported idempotency.
+Attempts created before the inspection migration retain an unknown wait value;
+waiting summaries exclude them instead of reporting a synthetic zero.
 
 ## References
 
