@@ -1,86 +1,88 @@
-# Server & Shutdown
+# Server & shutdown
 
-Source: `src/server/index.ts`, `src/shutdown/index.ts`.
+Source: `src/server/`, `src/shutdown/`, and `src/runtime/startup.ts`.
 
-## Server — `startServer(app, config, logger)` (`server/index.ts`)
+## Server
+
+`startServer(app, config, logger)` starts the Hono app through
+`@hono/node-server`, passing `port` and optional `hostname`. It returns a
+`ServerHandle`:
 
 ```ts
-import { serve } from "@damatjs/deps/hono"; // re-exports @hono/node-server's serve
-
-export function startServer(
-  app: Hono,
-  config: ServerConfig,
-  logger: Logger | ILogger,
-): void {
-  serve({ fetch: app.fetch, port: config.port }, (info) => {
-    logger.info("Server running", { url: `http://localhost:${info.port}` });
-  });
+interface ServerHandle {
+  close(): Promise<void>;
 }
 ```
 
-- Runs the Hono app under `@hono/node-server` (the `serve` adapter), binding to `config.port`.
-- Logs the listening URL once the server is up.
-- `config` is the `ServerConfig` returned by `bootstrap` (`{ port, host?, nodeEnv? }`).
+`close()` is idempotent. It waits for a server that is still starting, closes
+the listener, and shares one promise across repeated calls.
 
-> `host` is part of `ServerConfig` but is not currently passed to `serve` — the adapter binds with its default host behaviour. If you need a specific bind address, that is a small extension point (pass `hostname: config.host` to `serve`).
+The entry runtime calls `startServer` only when `ResolvedRuntime.servesHttp` is
+true. A `worker` process never constructs the Hono app or opens a listener.
+The returned close handle is registered in the `http` shutdown phase.
 
-## Shutdown (`shutdown/index.ts`)
+## Shutdown registry
 
-A module-level registry plus signal handlers for graceful teardown.
-
-```ts
-const handlers: ShutdownHandler[] = [];
-
-export function registerShutdown(handler: ShutdownHandler): void; // append a handler
-export function setupShutdownHandlers(logger: Logger | ILogger): void; // install process listeners
-```
+Every registration names its ordered phase:
 
 ```ts
-interface ShutdownHandler {
+type ShutdownPhase =
+  "http" | "claims" | "drain" | "heartbeat" | "redis" | "postgres" | "logger";
+
+interface ShutdownRegistration {
   name: string;
+  phase: ShutdownPhase;
   handler: () => Promise<void> | void;
 }
 ```
 
-### `setupShutdownHandlers(logger)`
+Use `registerShutdown(registration)` to append a handler.
+`runShutdownHandlers(logger, { graceMs? })` visits every phase in this order:
 
-Installs process listeners:
+1. **HTTP** — stop accepting requests.
+2. **Claims / wakeups** — stop external producers, subscribers, routers, and
+   worker claims.
+3. **Drain** — allow registered in-flight work to finish up to `graceMs`.
+4. **Heartbeat / reconciliation** — stop lease renewal and maintenance loops.
+5. **Redis** — close Redis transports.
+6. **PostgreSQL** — close the database pool.
+7. **Logger** — emit shutdown completion and close logging last.
 
-- `SIGINT` and `SIGTERM` → run `shutdown(signal, logger)`.
-- `uncaughtException` → log and `process.exit(1)`.
-- `unhandledRejection` → log and `process.exit(1)`.
+Handlers within one phase run concurrently with `Promise.allSettled`. Each
+failure is logged with its handler and phase, and later handlers and phases
+still run. A drain timeout rejects only that registration; leased work remains
+recoverable by another worker after expiry.
 
-### `shutdown(signal, logger)` (internal)
+`JobWorker.stop` and `DurableEventWorker.stop` already stage claim shutdown,
+graceful drain, and heartbeat/reconciliation cleanup internally. The framework
+therefore registers each worker once in `claims` and passes
+`runtime.shutdownGraceMs` to its stop method.
 
-1. Log `Received <signal>`.
-2. `await Promise.all(handlers.map(h => h.handler()))` — every registered handler runs; individual failures are swallowed (`try/catch {}`) so one bad handler can't block the rest.
-3. Log `Shutdown complete`.
-4. If the logger has a `close()` method, call it.
-5. `process.exit(0)`.
+The framework phase order applies to its registrations. Worker sub-stages are
+ordered inside each worker; when several workers stop together, their internal
+drain and maintenance sub-stages may overlap. Lease fencing and expiry preserve
+recovery across that overlap.
 
-### Who registers handlers
+## Signals
 
-`entry.start()` calls `setupShutdownHandlers(logger)` and then `registerShutdown(h)` for each handler returned by `initializeServices` (`services/index.ts`):
+`setupShutdownHandlers(logger, { graceMs? })` installs handlers once:
 
-- **database** — `closeDatabase()` (disconnects the connection manager, `PoolManager.reset()`), if `databaseUrl` was set.
-- **redis** — `disconnectRedis()`, if `redisUrl` was set.
-- **logger** — `closeLogger()` (always registered, last).
+- `SIGINT` and `SIGTERM` start the ordered shutdown and exit with code 0.
+- repeated termination signals share the same in-flight shutdown promise.
+- `uncaughtException` and `unhandledRejection` log and exit with code 1.
 
-## Lifecycle summary
+`runtime.shutdownGraceMs` accepts 0 through 2,147,483,647 milliseconds. Invalid
+values fail before services start. Zero requests immediate drain timeout/worker
+abort while retaining lease-based recovery.
 
-```
-start():
-  setupShutdownHandlers(logger)          // SIGINT/SIGTERM/uncaught/unhandled
-  for h of services.shutdownHandlers: registerShutdown(h)   // db, redis, logger
-  startServer(app, config, logger)       // serve()
+## Registrations created by the framework
 
-on SIGINT/SIGTERM:
-  run all handlers (db -> redis -> logger order of registration), close logger, exit(0)
-```
+- HTTP server close → `http`.
+- Auth shutdown, ephemeral event broadcast, durable event router/worker, and job
+  worker → `claims`.
+- Redis disconnect → `redis`.
+- PostgreSQL disconnect and `PoolManager.reset()` → `postgres`.
+- Logger close → `logger`.
 
-## Gotchas
-
-- **Handler errors are swallowed.** A throwing shutdown handler is caught and ignored so shutdown always completes. If you need to know a handler failed, log inside the handler itself.
-- **`uncaught`/`unhandled` exit immediately with code 1** and do **not** run the graceful shutdown handlers. They are last-resort guards, not a cleanup path.
-- **The registry is module-global and append-only.** There is no `unregister`. In long-lived test processes that re-run `start()`, handlers accumulate; isolate boots per process or reset state.
-- **Logger `close()` is feature-detected** (`'close' in logger`), so non-closeable logger shapes are fine.
+The registry is process-global. Tests can use `resetShutdownRegistry()` and
+`resetShutdownSignalsForTests()` to isolate repeated starts.

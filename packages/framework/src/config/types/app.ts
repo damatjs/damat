@@ -2,6 +2,7 @@ import { ModuleConfigObject } from "./module";
 import type { ProjectConfig } from "./project";
 import { ServicesConfig } from "./services";
 import type { LifecycleHooks } from "./hooks";
+import type { RuntimeConfig } from "./runtime";
 
 export interface AppConfig {
   projectConfig: ProjectConfig;
@@ -16,4 +17,5 @@ export interface AppConfig {
    */
   links?: string | string[];
   services?: ServicesConfig;
+  runtime?: RuntimeConfig;
 }

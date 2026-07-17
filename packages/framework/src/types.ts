@@ -2,6 +2,7 @@ import type { Hono } from "@damatjs/deps/hono";
 import { ProjectConfig } from "./config";
 import type { LifecycleHooks } from "./config";
 import type { AuthMiddlewareOptions } from "./middleware/auth";
+import type { ShutdownRegistration } from "./shutdown/types";
 
 export type { Logger, ILogger } from "@damatjs/logger";
 export type { AuthMiddlewareOptions } from "./middleware/auth";
@@ -47,7 +48,5 @@ export interface BootstrapResult {
   config: ServerConfig;
 }
 
-export interface ShutdownHandler {
-  name: string;
-  handler: () => Promise<void> | void;
-}
+export type ShutdownHandler = ShutdownRegistration;
+export type { ShutdownPhase } from "./shutdown/types";

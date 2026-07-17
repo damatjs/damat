@@ -31,6 +31,7 @@ export async function initializeRedis(
   };
   instances.shutdownHandlers.push({
     name: "redis",
+    phase: "redis",
     handler: async () => {
       await disconnectRedis();
       logger.info("Redis connection closed");

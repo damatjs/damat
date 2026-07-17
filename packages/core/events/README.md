@@ -133,10 +133,24 @@ Database atomicity cannot make an arbitrary external side effect exactly once.
 When a handler calls a provider, pass a stable idempotency key to that provider
 and use the context's shared `withIdempotency` operation for database work.
 
-Enable `services.events.durable` and run `bun damat-orm migrate:up`. The ORM CLI
-applies shared durability migrations followed by `@damatjs/events` migrations.
-Standalone migration tooling can import `eventsSystemMigrations` from
-`@damatjs/events/migrations`.
+Framework apps enable and select durable event execution independently:
+
+```ts
+services: {
+  events: { durable: { concurrency: 4 } },
+},
+runtime: {
+  mode: "worker", // or "all" to serve HTTP too
+  workers: ["events"],
+},
+```
+
+`runtime.mode` defaults to `"all"` and workers default to enabled durable
+capabilities. Dedicated deployments can set `DAMAT_RUNTIME_MODE=worker` and
+`DAMAT_WORKER_TYPES=events`. Run `damat-orm migrate:up` before startup. The ORM
+CLI applies shared durability migrations followed by `@damatjs/events`
+migrations. Standalone migration tooling can import `eventsSystemMigrations`
+from `@damatjs/events/migrations`.
 
 ## Durable inspection and operations
 

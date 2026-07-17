@@ -1,10 +1,15 @@
 # Services (wiring)
 
-Source: `src/services/` — `index.ts`, `logger.ts`, `database.ts`, `redis.ts`, `moduleService.ts`, `types.ts`.
+Source: `src/services/` — `index.ts`, shared service adapters, and
+`initialize/` stages for database, Redis, modules, auth, durability, wakeups,
+jobs, and durable events.
 
 ## Responsibility
 
-`initializeServices` brings up everything the app needs before the HTTP layer: the logger, the PostgreSQL pool (via `@damatjs/services` `PoolManager`), Redis, and the application modules. It returns the health checks `bootstrap` exposes and the shutdown handlers `entry` registers.
+`initializeServices` brings up the shared application layer before optional HTTP:
+logger, PostgreSQL, Redis, modules/providers, auth/publishers, durable readiness,
+and the workers selected by the resolved runtime. It returns health checks and
+phased shutdown registrations.
 
 ## `initializeServices(config, cwd?)` (`index.ts`)
 
@@ -12,36 +17,56 @@ Source: `src/services/` — `index.ts`, `logger.ts`, `database.ts`, `redis.ts`, 
 async function initializeServices(
   config: AppConfig,
   cwd = process.cwd(),
+  runtime = resolveRuntime(config, {}),
 ): Promise<ServiceInstances>;
 
 interface ServiceInstances {
   healthChecks?: { database?: HealthCheckFn; redis?: HealthCheckFn };
-  shutdownHandlers: Array<{ name: string; handler: () => Promise<void> }>;
+  shutdownHandlers: ShutdownRegistration[];
   modules?: Map<string, ModuleInstance<any>>;
+  resolvedModules?: Map<string, ResolvedModule>;
+  auth?: AuthRuntime;
 }
 ```
 
 Steps:
 
-1. **Logger** — `initLogger(config.projectConfig.loggerConfig)` (default config if none).
+1. **Logger** — `initLogger(config.projectConfig.loggerConfig)` reuses the
+   configured logger already created by `entry.start` (or creates it for direct
+   `initializeServices` callers).
 2. **Database** — if `projectConfig.databaseUrl`:
    - `initDatabase(config.services?.database ?? { connectionString: databaseUrl }, logger, nodeEnv)`.
    - Set `healthChecks.database` to a real ping (`getConnectionManager()?.healthCheck()`, returns `{ status, latency, data }`).
-   - Push a `database` shutdown handler (`closeDatabase()`).
+   - Register `closeDatabase()` in the `postgres` shutdown phase.
    - Else, `healthChecks.database` returns `{ status: "not configured" }`.
 3. **Redis** — if `projectConfig.redisUrl`:
    - `initRedis({ url: services?.redis?.url ?? redisUrl, logger })` then `connectRedis()`.
-   - Push a `redis` shutdown handler (`disconnectRedis()`).
+   - Register `disconnectRedis()` in the `redis` shutdown phase.
    - Set `healthChecks.redis` to a real ping (`getRedis().ping()`); else `{ status: "not configured" }`.
-4. **Modules + links** — build the module-config list from `Object.values(config.modules)` plus `resolveLinkModuleEntries(config.links, cwd)` (from `@damatjs/link`), each mapped to `{ id, resolve }`. If the list is non-empty: `initModules(list, cwd)` then `instances.modules = getAllModules()`. Link directories register as `link` module(s), so they share the module init path.
-5. **Link resolver** — `setLinkModuleResolver((id) => getModule(id))` so the link service can hydrate linked rows by calling other modules' services. No-op when no link module is registered.
-6. Always push a `logger` shutdown handler (`closeLogger()`), registered last.
+4. **Modules + links + providers** — initialize app/link modules, load their
+   workflow/job/event/pipeline providers, expose resolved modules, and install
+   the link resolver.
+5. **Auth and event broadcast** — initialize the configured auth adapter and
+   Redis event broadcast. Their shutdown registrations stop new external work
+   in the `claims` phase.
+6. **Durable readiness** — when jobs or durable events are enabled, create the
+   global durability client from `PoolManager.getPool()` and verify shared plus
+   capability-specific system migrations. Missing database config fails startup.
+   Missing migrations fail with `Run: damat-orm migrate:up` guidance.
+7. **Wakeup publishers** — if Redis is available and wakeups are enabled,
+   configure job/event publish-side wakeups. PostgreSQL polling remains active.
+8. **Selected workers** — start only capabilities in `runtime.workers`:
+   `JobWorker` for jobs, and `DurableEventRouter` + `DurableEventWorker` for
+   events. Definitions are already loaded. In `worker` and `all` modes,
+   selecting an unavailable capability fails visibly.
+9. **Logger shutdown** — register `closeLogger()` in the final `logger` phase.
 
-After module initialization, configured `services.jobs` creates the durability
-client from the initialized PostgreSQL pool. When `worker: true`, it starts the
-fenced job worker and registers its staged stop handler. Redis is not required
-for durable job execution. Configuring `services.jobs` without
-`projectConfig.databaseUrl` fails startup instead of silently disabling jobs.
+`server` resolves no workers, `worker` starts selected workers without HTTP,
+and `all` may start workers and HTTP. Worker stop methods stage their own claim
+stop, graceful drain, and maintenance/reconciliation cleanup and are registered
+once in the framework's `claims` phase. Because `server` never executes
+workers, it drops known worker selections without validating their service
+availability; unknown capability names remain invalid in every mode.
 
 `bootstrap` wraps `instances.healthChecks` as `{ version: "2.0.0", checks }` for the `/health` route; `entry` `registerShutdown`s every handler.
 
@@ -112,15 +137,25 @@ async function initModules(modules: ModuleConfig[], cwd): Promise<void>;
 ```ts
 interface ServiceInstances {
   healthChecks?: { database?: HealthCheckFn; redis?: HealthCheckFn };
-  shutdownHandlers: Array<{ name: string; handler: () => Promise<void> }>;
+  shutdownHandlers: ShutdownRegistration[];
   modules?: Map<string, ModuleInstance<any>>;
+  resolvedModules?: Map<string, ResolvedModule>;
+  auth?: AuthRuntime;
 }
 ```
 
 ## Gotchas
 
 - **Order is enforced here.** The pool is set up (`initDatabase` → `PoolManager.setup`) before modules are initialized (`initModules` → `init()` → service construction, which requires the pool). Don't reorder these steps.
-- **No DB / no Redis is valid until a dependent service is enabled.** Omitting either URL skips that subsystem; health reports `"not configured"` and rate limiting is disabled. `services.jobs` is the exception: once configured, `databaseUrl` is required and startup fails without it.
+- **No DB / no Redis is valid until a dependent service is enabled.** Omitting
+  either URL skips that subsystem and health reports `"not configured"`.
+  Enabling jobs or durable events requires PostgreSQL. Redis event broadcast,
+  rate limiting, and wakeups require Redis; durable polling does not.
+- **Readiness precedes execution.** A job or durable-event worker cannot start
+  until all required system migrations are present. Run
+  `damat-orm migrate:up` before starting durable processes.
+- **No operations routes are mounted here.** The framework root re-exports
+  headless inspection and control clients; the application owns any HTTP layer.
 - **Health-check `database` placeholder.** `initializeServices` first sets a stub `database`/`redis` health check (status `"Ideal"`) and then overwrites it with the real one when configured. The stub is never user-visible if a DB is configured.
 - **Module default export must be a `defineModule` result.** Anything else throws during `initModules`.
 - **Redis surface comes entirely from `@damatjs/redis`.** Document/extend Redis behaviour there, not here — this file is a one-line re-export.

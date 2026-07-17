@@ -6,7 +6,9 @@ Source: `src/bootstrap/index.ts`, driven by `src/entry.ts`, types in `src/types.
 
 `bootstrap` assembles a ready-to-serve Hono `app` from config, route directory, and (optional) health checks. It is the step between "services are initialized" and "start the server". It does **not** start listening — that is `startServer`.
 
-`entry.start()` is the orchestrator that calls config loading, service init, `bootstrap`, shutdown setup, and `startServer` in order.
+`entry.start()` resolves the runtime and initializes shared services first. It
+calls `bootstrap` and `startServer` only for `server` and `all` runtimes; a
+`worker` runtime never builds an HTTP app.
 
 ## `bootstrap(options)`
 
@@ -17,9 +19,11 @@ export async function bootstrap(
 
 interface BootstrapOptions {
   routesDir: string; // absolute path to scan for route.ts files
+  routeProviders?: Array<{ routesDir: string; basePath: string }>;
   projectConfig: ProjectConfig; // port/host/cors/api/rateLimit/auth + nodeEnv
   healthCheck?: HealthCheckConfig; // { version?, checks?: { database?, redis? } }
   authHandlers?: AuthMiddlewareOptions; // app-provided session/apiKey/flexible verifiers
+  authRoutes?: (app: Hono) => void; // provider-owned HTTP routes
   hooks?: LifecycleHooks; // beforeRoutes/afterRoutes run here (see config.md)
 }
 
@@ -47,23 +51,34 @@ interface BootstrapResult {
 ## `entry.start(cwd?)`
 
 ```ts
-export async function start(cwd: string = process.cwd()): Promise<void>;
+export async function start(
+  cwd: string = process.cwd(),
+  environment: RuntimeEnvironment = process.env,
+): Promise<void>;
 export async function runEntry(): Promise<void>; // start() wrapped in try/catch -> process.exit(1)
 ```
 
 Pipeline (`entry.ts`):
 
 1. `config = await loadConfigAsync(cwd)`.
-2. If `config.hooks.beforeServices` is set, `await` it with `{ config: config.projectConfig, logger: getLogger() }`. A throwing hook fails startup — a broken hook must never boot a half-configured server.
-3. `services = await initializeServices(config)`.
-4. If `config.hooks.afterServices` is set, `await` it with `{ config: config.projectConfig, logger: getLogger() }`.
-5. Build `healthCheck` from `services.healthChecks` (with `version: "2.0.0"`), or `undefined`.
-6. Resolve `routesDir = ${cwd}/${http.api?.entryRouterPath ?? "/src/api/routes"}`.
-7. `{ app, config: serverConfig } = await bootstrap({ routesDir, projectConfig, healthCheck, hooks })` — `bootstrap` runs `beforeRoutes`/`afterRoutes` itself.
-8. `setupShutdownHandlers(getLogger())`, then `registerShutdown(h)` for each `services.shutdownHandlers`.
-9. `startServer(app, serverConfig, getLogger())`.
+2. `runtime = resolveRuntime(config, environment)` independently applies
+   `DAMAT_RUNTIME_MODE` and `DAMAT_WORKER_TYPES` precedence.
+3. Validate `config.runtime?.shutdownGraceMs`, initialize the configured logger,
+   run `hooks.beforeServices`, and install single-flight signal handlers.
+4. `initializeServices(config, cwd, runtime)` reuses that logger, then initializes
+   database, Redis, modules/providers, auth/publishers, durable readiness, and
+   selected workers in order.
+5. Run `hooks.afterServices` and register every service shutdown handler.
+6. If `runtime.servesHttp` is false, return without scanning routes or opening
+   a listener.
+7. Build the health config and route providers from initialized services.
+8. Resolve `routesDir` from `cwd` and
+   `http.api?.entryRouterPath ?? "src/api/routes"`.
+9. `bootstrap(...)` builds the Hono app and runs `beforeRoutes`/`afterRoutes`.
+10. `startServer(...)` returns a close handle, registered in shutdown phase
+    `http`.
 
-## Important types (`types.ts`)
+## Important types (`src/types.ts`, `src/config/types/runtime.ts`)
 
 ```ts
 interface ServerConfig {
@@ -78,10 +93,8 @@ interface HealthCheckConfig {
   version?: string;
   checks?: { database?: HealthCheckFn; redis?: HealthCheckFn };
 }
-interface ShutdownHandler {
-  name: string;
-  handler: () => Promise<void> | void;
-}
+type RuntimeMode = "server" | "worker" | "all";
+type WorkerCapability = "jobs" | "events";
 ```
 
 `BootstrapResult.app` is typed `Hono` (via `@damatjs/deps/hono`), so callers get a real Hono instance without casting.
@@ -89,6 +102,10 @@ interface ShutdownHandler {
 ## Gotchas
 
 - **`bootstrap` does not init services.** It calls `getLogger()` (which lazily inits a default logger if none exists) but assumes the pool/redis/modules were set up by `initializeServices` beforehand. Calling `bootstrap` standalone (e.g. in a test) gives you an app but no DB-backed behaviour unless you set up `PoolManager` yourself.
+- **`bootstrap` is HTTP-only.** Runtime selection, durable migration readiness,
+  worker startup, and phased shutdown belong to `entry`/`runtime`/`services`.
+- **No durable admin routes are implicit.** The root package exposes headless
+  inspection clients, but `bootstrap` does not mount them.
 - **`routesDir` must be absolute** and is resolved by the caller (`entry.start` joins it with `cwd`). The scanner silently returns no routes if the directory doesn't exist (`scanDirectory` guards with `existsSync`), so a wrong path yields an empty API rather than an error.
 - **Dev introspection leaks structure.** `/damat` and `/damat/api/routes` are intentionally dev-only; don't rely on them in production.
 - **API base default is `/api`.** Override with `projectConfig.http.api.entryRouter`. The routes _directory_ default is `/src/api/routes`, overridden with `http.api.entryRouterPath`.

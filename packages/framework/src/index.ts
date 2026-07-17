@@ -4,6 +4,7 @@ export * from "./context";
 export * from "./server";
 export * from "./shutdown";
 export * from "./entry";
+export * from "./runtime";
 export type * from "./types";
 export * from "./services/redis";
 export {
@@ -20,3 +21,4 @@ export * from "@damatjs/services";
 export * from "@damatjs/link";
 export * from "@damatjs/events";
 export * from "@damatjs/jobs";
+export * from "@damatjs/durability";

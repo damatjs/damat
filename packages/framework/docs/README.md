@@ -4,55 +4,66 @@ Maintainer notes for the core framework. This index gives the module map, the en
 
 ## Module map
 
-| File / dir                  | Responsibility                                                                                                                                                                                                                                                                                                                                              |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/index.ts`              | Public barrel. Re-exports bootstrap, config, context, server, shutdown, entry, redis service, the module-registry helpers, framework types, **all of `@damatjs/services`**, **the link authoring surface from `@damatjs/link`** (`defineLink`, `defineLinkModule`, `collectLinkModels`, ...), **all of `@damatjs/events`**, and **all of `@damatjs/jobs`**. |
-| `src/entry.ts`              | `start(cwd?)` — the full boot pipeline (runs the `beforeServices`/`afterServices` lifecycle hooks); `runEntry()` — `start()` with error handling.                                                                                                                                                                                                           |
-| `src/context.ts`            | Typed Hono context: `ContextVariableMap` augmentation (`requestId`, `startTime`, `logger`, optional `user`/`team`/`userId`), `AuthUser`/`AuthTeam`, and the accessors `getRequestLogger(c)`, `getUser(c)`, `getTeam(c)`. See [middleware.md](./middleware.md).                                                                                              |
-| `src/types.ts`              | Cross-cutting types: `ServerConfig`, `HealthCheckConfig`/`HealthCheckFn`, `BootstrapOptions`/`BootstrapResult`, `ShutdownHandler`; re-exports `Logger`/`ILogger`.                                                                                                                                                                                           |
-| `src/bootstrap/index.ts`    | `bootstrap(options)` — builds the Hono app (onError + middleware + file router + dev/health routes; runs the `beforeRoutes`/`afterRoutes` lifecycle hooks). See [bootstrap.md](./bootstrap.md).                                                                                                                                                             |
-| `src/config/`               | `defineConfig`, async config loader, and all config types (incl. `LifecycleHooks`). See [config.md](./config.md).                                                                                                                                                                                                                                           |
-| `src/router/`               | File-based router: scanner, builder, `defineRoute`, `response`, per-method config resolution, route types. See [router.md](./router.md).                                                                                                                                                                                                                    |
-| `src/middleware/`           | `setupMiddleware`, error handler, not-found, request setup, rate limit, auth, validator, CORS config. See [middleware.md](./middleware.md).                                                                                                                                                                                                                 |
-| `src/handlers/`             | Built-in routes: `/` info (`/damat`), route introspection (`/damat/api/routes`), `/health`. See [handlers.md](./handlers.md).                                                                                                                                                                                                                               |
-| `src/server/index.ts`       | `startServer` via `@hono/node-server`. See [server-and-shutdown.md](./server-and-shutdown.md).                                                                                                                                                                                                                                                              |
-| `src/shutdown/index.ts`     | Signal handlers + shutdown-handler registry. See [server-and-shutdown.md](./server-and-shutdown.md).                                                                                                                                                                                                                                                        |
-| `src/services/`             | Logger, database, Redis, resolved modules, module providers, auth, event broadcast, job worker, and cross-module link wiring. See [services.md](./services.md).                                                                                                                                                                                             |
-| `src/utils/windowParser.ts` | `parseWindowToMs("1m" \| "5m" \| "1h" \| "1d")` for rate-limit windows.                                                                                                                                                                                                                                                                                     |
-| `src/tests/`                | `bun:test` suites: health handler, router helpers/response, scanner (`folderToUrlPath`, `sortRoutes`), services (logger, redis).                                                                                                                                                                                                                            |
+| File / dir                  | Responsibility                                                                                                                                                                                                                                                 |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/index.ts`              | Public barrel. Re-exports framework runtime/config/HTTP APIs plus `@damatjs/services`, link authoring, events, jobs, and durability, including their headless inspection clients.                                                                              |
+| `src/entry.ts`              | `start(cwd?, environment?)` — resolves and starts the selected HTTP/worker runtime; `runEntry()` — `start()` with error handling.                                                                                                                              |
+| `src/runtime/`              | Pure environment/config resolution, shutdown-grace validation, selected worker startup, and conditional HTTP startup.                                                                                                                                          |
+| `src/context.ts`            | Typed Hono context: `ContextVariableMap` augmentation (`requestId`, `startTime`, `logger`, optional `user`/`team`/`userId`), `AuthUser`/`AuthTeam`, and the accessors `getRequestLogger(c)`, `getUser(c)`, `getTeam(c)`. See [middleware.md](./middleware.md). |
+| `src/types.ts`              | Cross-cutting HTTP types: `ServerConfig`, `HealthCheckConfig`/`HealthCheckFn`, `BootstrapOptions`/`BootstrapResult`; shutdown types live under `src/shutdown/`.                                                                                                |
+| `src/bootstrap/index.ts`    | `bootstrap(options)` — builds the Hono app (onError + middleware + file router + dev/health routes; runs the `beforeRoutes`/`afterRoutes` lifecycle hooks). See [bootstrap.md](./bootstrap.md).                                                                |
+| `src/config/`               | `defineConfig`, async config loader, and all config types (incl. `LifecycleHooks`). See [config.md](./config.md).                                                                                                                                              |
+| `src/router/`               | File-based router: scanner, builder, `defineRoute`, `response`, per-method config resolution, route types. See [router.md](./router.md).                                                                                                                       |
+| `src/middleware/`           | `setupMiddleware`, error handler, not-found, request setup, rate limit, auth, validator, CORS config. See [middleware.md](./middleware.md).                                                                                                                    |
+| `src/handlers/`             | Built-in routes: `/` info (`/damat`), route introspection (`/damat/api/routes`), `/health`. See [handlers.md](./handlers.md).                                                                                                                                  |
+| `src/server/index.ts`       | `startServer` via `@hono/node-server`. See [server-and-shutdown.md](./server-and-shutdown.md).                                                                                                                                                                 |
+| `src/shutdown/index.ts`     | Signal handlers + shutdown-handler registry. See [server-and-shutdown.md](./server-and-shutdown.md).                                                                                                                                                           |
+| `src/services/`             | Logger, database, Redis, modules/providers, auth, event broadcast, durability readiness, optional wakeups, selected job/event workers, and cross-module link wiring. See [services.md](./services.md).                                                         |
+| `src/utils/windowParser.ts` | `parseWindowToMs("1m" \| "5m" \| "1h" \| "1d")` for rate-limit windows.                                                                                                                                                                                        |
+| `src/tests/`                | `bun:test` suites: health handler, router helpers/response, scanner (`folderToUrlPath`, `sortRoutes`), services (logger, redis).                                                                                                                               |
 
 ## Architecture overview
 
 ```
-damat.config.ts (defineConfig)
-        │ loadConfigAsync()
+damat.config.ts + process environment
+        │ loadConfigAsync() → resolveRuntime() → initLogger(config)
         │ hooks.beforeServices
         ▼
-initializeServices(config)  ── logger ── database ── Redis ── event broadcast
-        │                     └─ modules + links ── providers ── auth ── job worker
-        │ returns { healthChecks, shutdownHandlers, modules, resolvedModules }
+initializeServices(config, cwd, runtime)
+        │ logger → PostgreSQL → Redis → modules/providers → auth/publishers
+        │ → durable migration readiness → selected workers
         │ hooks.afterServices
         ▼
-bootstrap({ routesDir, routeProviders, projectConfig, healthCheck, hooks })
-        │ new Hono()  → onError → setupMiddleware → hooks.beforeRoutes
-        │             → app + external module file routers → mount at /api
-        │             → dev + health routes  → hooks.afterRoutes  → notFound
-        ▼ { app, config }
-setupShutdownHandlers(logger); register service shutdown handlers
-        ▼
-startServer(app, config, logger)  → @hono/node-server serve(...)
+register phased shutdown handlers
+        │
+        ├─ runtime serves HTTP → bootstrap(...) → startServer(...)
+        │
+        └─ worker-only runtime → no Hono app or listening socket
 ```
 
 ## Boot pipeline (`entry.ts:start`)
 
-1. **Load config** — `loadConfigAsync(cwd)` dynamically imports `damat.config.ts`, validates it has `projectConfig`, and caches it.
-2. **`hooks.beforeServices`** — if configured, awaited before any service init; a throwing hook fails startup.
-3. **Init services** — `initializeServices(config)`: creates the global logger; connects configured PostgreSQL and Redis services; connects optional event broadcast; imports modules and links; wires the link resolver; configures durable jobs from PostgreSQL and starts their worker after definitions load when `services.jobs.worker` is true. Returns `healthChecks` and `shutdownHandlers`.
-4. **`hooks.afterServices`** — if configured, awaited once services are up.
-5. **Resolve routes dir** — `config.projectConfig.http.api?.entryRouterPath ?? "/src/api/routes"`, joined with `cwd`.
-6. **Bootstrap the app** — `bootstrap({ routesDir, projectConfig, healthCheck, hooks })` builds the Hono app (running `hooks.beforeRoutes`/`hooks.afterRoutes` around route registration).
-7. **Shutdown handlers** — `setupShutdownHandlers(logger)` installs signal handlers; each service shutdown handler is `registerShutdown`ed.
-8. **Serve** — `startServer(app, serverConfig, getLogger())`.
+1. **Load and resolve** — `loadConfigAsync(cwd)` imports `damat.config.ts`;
+   `resolveRuntime(config, environment)` applies environment precedence and
+   validates the mode and selected capabilities.
+2. **Validate and log** — `runtime.shutdownGraceMs` is checked, then the logger
+   is initialized from `projectConfig.loggerConfig`; shutdown signals use that
+   same instance.
+3. **`hooks.beforeServices`** — if configured, awaited with the configured
+   logger before the remaining services initialize.
+4. **Init shared services** — the logger is reused, then PostgreSQL, Redis,
+   modules/providers, auth, and optional event publishers initialize in
+   dependency order.
+5. **Durable readiness** — jobs or durable events configure the pool-backed
+   durability client and verify every selected system migration. Failure tells
+   the operator to run `damat-orm migrate:up`.
+6. **Start selected workers** — job and/or durable-event workers start only when
+   the resolved runtime selects them, after module definitions are registered.
+7. **`hooks.afterServices`** — if configured, awaited after service startup.
+8. **Register shutdown** — service handlers are registered by phase.
+9. **Conditional HTTP** — server/all runtimes build routes and start Hono;
+   worker runtimes never build or listen on an HTTP server. The close handle is
+   registered in the HTTP shutdown phase.
 
 ## Request flow (per HTTP request)
 
@@ -66,6 +77,17 @@ startServer(app, config, logger)  → @hono/node-server serve(...)
 
 - **Async-only config loading.** `loadConfig` exists but always throws; `loadConfigAsync` is the real loader (it `await import()`s the TS config). The loaded config is cached module-globally; `clearConfigCache()` resets it.
 - **Global singletons via module state.** Logger (`services/logger.ts`), database connection manager (`services/database.ts`), and Redis client (`@damatjs/redis` singleton) are module-level singletons, retrieved with `getLogger()` / `getConnectionManager()` / `getRedis()`. The pool itself lives in `@damatjs/services` `PoolManager` (on `globalThis`).
+- **PostgreSQL owns durable state.** Jobs and durable events require a database
+  and applied system migrations. Redis wakeups are optional latency hints;
+  polling PostgreSQL remains the fallback.
+- **Runtime sources resolve independently.** `DAMAT_RUNTIME_MODE` overrides
+  `runtime.mode`; `DAMAT_WORKER_TYPES` overrides `runtime.workers`. Defaults are
+  `all` and the enabled durable service capabilities. Unknown selections always
+  fail. Known but unavailable selections fail in `worker` and `all`; `server`
+  drops them because it never executes workers.
+- **No implicit operations endpoints.** Root exports include headless jobs,
+  events, and durability clients. Applications decide whether and how to expose
+  them behind authentication and authorization.
 - **Dev-only introspection.** `/damat` and `/damat/api/routes` and the route-list log are only mounted when `nodeEnv === "development"`. `/health` is mounted whenever a `healthCheck` is provided.
 - **Standard response envelope.** Success: `{ success: true, data, meta: { requestId, timestamp } }`. Error: `{ success: false, error: { code, message, details? }, meta }`. Produced by `router/response.ts`, the error handler, the not-found handler, and the rate-limit/validator middleware.
 - **Route specificity ordering.** The scanner sorts routes so static paths beat dynamic (`:param`), which beat catch-all (`*`), and shallower paths register before deeper ones — so Hono matches the most specific route.

@@ -17,7 +17,7 @@ export type LifecycleHook = (ctx: LifecycleHookContext) => void | Promise<void>;
  * awaited at its stage; a hook that throws fails startup loudly (a broken
  * hook must never boot a half-configured server).
  *
- *   beforeServices — after config load, before logger/db/redis/module init
+ *   beforeServices — after configured logger init, before db/redis/module init
  *   afterServices  — services are up, routes not yet built
  *   beforeRoutes   — the Hono app exists, no routes registered yet
  *   afterRoutes    — all routes registered, just before the 404 handler

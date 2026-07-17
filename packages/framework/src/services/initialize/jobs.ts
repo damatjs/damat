@@ -1,13 +1,9 @@
 import type { ILogger } from "@damatjs/logger";
 import { JobWorker } from "@damatjs/jobs";
-import {
-  createDurabilityClient,
-  setDurabilityClient,
-  type DurabilityPool,
-} from "@damatjs/durability";
-import { PoolManager } from "@damatjs/services";
 import type { AppConfig } from "../../config";
 import type { ServiceInstances } from "../types";
+import { jobWorkerOptions } from "./workerOptions";
+import { getWorkerWakeupRedis } from "./wakeup";
 
 export function initializeJobs(
   config: AppConfig,
@@ -16,26 +12,22 @@ export function initializeJobs(
 ): void {
   const jobs = config.services?.jobs;
   if (!jobs) return;
-  if (!config.projectConfig.databaseUrl) {
-    throw new Error(
-      "services.jobs requires projectConfig.databaseUrl for durable storage",
-    );
-  }
-  const client = createDurabilityClient({
-    pool: PoolManager.getPool() as DurabilityPool,
-  });
-  setDurabilityClient(client);
-  if (!jobs.worker) return;
+  const wakeupRedis = getWorkerWakeupRedis(config);
   const worker = new JobWorker({
     ...(jobs.queue !== undefined && { queue: jobs.queue }),
     ...(jobs.concurrency !== undefined && { concurrency: jobs.concurrency }),
-    ...(jobs.pollIntervalMs !== undefined && {
-      pollIntervalMs: jobs.pollIntervalMs,
-    }),
+    ...jobWorkerOptions(config.services?.durability),
+    ...(wakeupRedis && { wakeupRedis }),
   });
   worker.start();
   instances.shutdownHandlers.push({
     name: "job-worker",
-    handler: async () => worker.stop(),
+    phase: "claims",
+    handler: async () =>
+      worker.stop(
+        config.runtime?.shutdownGraceMs === undefined
+          ? {}
+          : { graceMs: config.runtime.shutdownGraceMs },
+      ),
   });
 }

@@ -1,5 +1,8 @@
 import type { DbPoolConfig } from "@damatjs/orm-type";
 import type { RedisConfig } from "../../services/redis";
+import type { DurabilityServiceConfig } from "./durability";
+import type { EventsServiceConfig } from "./events";
+import type { JobsServiceConfig } from "./jobs";
 
 /**
  * Authentication via a pluggable provider (Better Auth / Clerk / Auth0). Fully
@@ -29,30 +32,7 @@ export interface ServicesConfig {
   workflowLock?: boolean;
   /** Pluggable authentication provider — see {@link AuthServiceConfig}. Optional. */
   auth?: AuthServiceConfig;
-  /**
-   * Cross-process event broadcasting via Redis pub/sub (@damatjs/events).
-   * Requires `projectConfig.redisUrl`. Local (in-process) events always work
-   * without this — broadcast only adds delivery to OTHER processes.
-   */
-  events?: {
-    broadcast?: boolean;
-    /** Pub/sub channel (default "damat-events"). */
-    channel?: string;
-  };
-  /**
-   * Durable PostgreSQL job capability (@damatjs/jobs). Requires
-   * `projectConfig.databaseUrl`.
-   * Enqueueing works from any process; only processes with `worker: true`
-   * execute jobs (they must import the code that `defineJob`s them — module
-   * init does this for installed modules).
-   */
-  jobs?: {
-    worker?: boolean;
-    /** Queue to poll (default "damat-jobs"). */
-    queue?: string;
-    /** Jobs processed simultaneously (default 1). */
-    concurrency?: number;
-    /** Idle wait between polls, ms (default 1000). */
-    pollIntervalMs?: number;
-  };
+  durability?: DurabilityServiceConfig;
+  events?: EventsServiceConfig;
+  jobs?: JobsServiceConfig;
 }

@@ -82,6 +82,28 @@ Self-published messages are deduped, and a broken broadcast is logged only
 after local subscribers already ran. The framework connects and disconnects the
 transport for you.
 
+### Durable events
+
+Use durable events when each named consumer needs a persisted delivery record,
+fenced retries, progress/log history, cancellation, and crash recovery. Enable
+the capability and apply its PostgreSQL system migrations:
+
+```ts
+services: {
+  events: {
+    durable: { concurrency: 4 },
+  },
+},
+```
+
+```bash
+damat-orm migrate:up
+```
+
+Definitions and consumers load from module providers before execution starts.
+The durable router and worker poll PostgreSQL; optional Redis wakeups reduce
+latency but never become the source of truth.
+
 ## Background jobs
 
 Jobs are named units of work persisted in PostgreSQL and executed by fenced
@@ -121,15 +143,50 @@ await enqueueJob(
 );
 ```
 
-To execute jobs, a process needs a worker. In a framework app, enable it in
-`damat.config.ts` — it starts **after module init** (so every module's
-`defineJob` is registered) and stops gracefully on shutdown:
+Enable jobs in `damat.config.ts`. The selected worker starts after module init
+(so every module's `defineJob` is registered) and after migration readiness:
 
 ```ts
 services: {
-  jobs: { worker: true, concurrency: 4 },   // also: queue, pollIntervalMs
+  jobs: { queue: "damat-jobs", concurrency: 4 },
 },
 ```
+
+Jobs require `projectConfig.databaseUrl` and `damat-orm migrate:up`. Redis is
+optional; PostgreSQL polling always remains available.
+
+## Select the process runtime
+
+The same backend build can be an HTTP process, a dedicated worker, or both:
+
+```ts
+runtime: {
+  mode: "worker", // "server" | "worker" | "all"
+  workers: ["jobs", "events"],
+  shutdownGraceMs: 30_000,
+},
+```
+
+The default mode is `all`. The default workers are the durable capabilities
+enabled by `services.jobs` and `services.events.durable`.
+
+- `server` serves HTTP and never starts workers.
+- `worker` serves no HTTP and requires at least one selected enabled capability.
+- `all` serves HTTP and starts selected workers; it may run with none.
+
+Environment overrides are independent, so one image can back several
+deployments:
+
+```bash
+DAMAT_RUNTIME_MODE=worker DAMAT_WORKER_TYPES=jobs,events bun run start
+```
+
+`DAMAT_RUNTIME_MODE` overrides `runtime.mode`; `DAMAT_WORKER_TYPES` overrides
+`runtime.workers`. Unknown capabilities always fail startup. Known unavailable
+capabilities fail in `worker` and `all`; `server` drops them because it never
+executes workers. Shutdown stops HTTP, claims/wakeups, drains work, stops
+heartbeat/reconciliation, then closes Redis, PostgreSQL, and the logger.
+Handler failures are logged without skipping later phases.
 
 Semantics worth knowing:
 
@@ -142,6 +199,10 @@ Semantics worth knowing:
   dead-letter immediately with a clear error.
 - **Inspection** — `getJobRun`, `listJobRuns`, `listJobAttempts`,
   `listJobActivity`, and `listJobLogs` expose durable headless records.
+
+The framework root also re-exports the jobs and durable-event inspection and
+control clients. They are headless: no administration routes are mounted
+automatically, so the application owns authentication and authorization.
 
 ## Jobs vs workflows (and where events fit)
 

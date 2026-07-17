@@ -14,6 +14,7 @@ export async function initializeAuth(
   if (!auth.shutdown) return;
   instances.shutdownHandlers.push({
     name: "auth",
+    phase: "claims",
     handler: async () => {
       await auth.shutdown!();
       logger.info("Auth provider shut down");

@@ -6,6 +6,7 @@ import {
   logger,
   reset,
   state,
+  workerState,
 } from "./initialize-events-jobs-fixture";
 
 beforeEach(reset);
@@ -14,26 +15,22 @@ test("jobs configure PostgreSQL durability without requiring Redis", async () =>
   const value = config();
   delete value.projectConfig.redisUrl;
   value.services = {
-    jobs: { worker: true, queue: "mail", concurrency: 3, pollIntervalMs: 25 },
+    durability: { pollIntervalMs: 25 },
+    jobs: { queue: "mail", concurrency: 3 },
   };
   const services = instances();
   initializeJobs(value, services, logger as never);
-  expect(state.durabilityClients).toHaveLength(1);
-  expect(state.workers).toMatchObject([
+  expect(workerState.jobs).toMatchObject([
     { queue: "mail", concurrency: 3, pollIntervalMs: 25 },
   ]);
-  expect(state.started).toBe(1);
+  expect(workerState.started).toEqual(["jobs"]);
   await services.shutdownHandlers[0]!.handler();
-  expect(state.stopped).toBe(1);
+  expect(workerState.stopped).toEqual(["jobs"]);
 });
 
-test("jobs fail startup without a database", () => {
+test("jobs do not configure the durability client themselves", () => {
   const value = config();
-  delete value.projectConfig.databaseUrl;
-  value.services = { jobs: { worker: true } };
-  expect(() => initializeJobs(value, instances(), logger as never)).toThrow(
-    /databaseUrl/,
-  );
-  expect(state.workers).toEqual([]);
-  expect(state.warnings).toEqual([]);
+  value.services = { jobs: {} };
+  initializeJobs(value, instances(), logger as never);
+  expect(state.durabilityClients).toEqual([]);
 });

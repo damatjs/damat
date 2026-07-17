@@ -10,7 +10,7 @@ activity, cancellation, result, and errors. Workers use fenced leases and
 
 ```bash
 bun add @damatjs/jobs
-bun run db:migrate
+damat-orm migrate:up
 ```
 
 Framework applications configure `projectConfig.databaseUrl` and
@@ -96,11 +96,22 @@ projectConfig: {
   databaseUrl: process.env.DATABASE_URL,
 },
 services: {
-  jobs: { worker: true, queue: "mail", concurrency: 4 },
+  jobs: { queue: "mail", concurrency: 4 },
+},
+runtime: {
+  mode: "worker", // or "all" to serve HTTP too
+  workers: ["jobs"],
 },
 ```
 
-The worker starts after modules register their definitions. Calling `start()`
+The framework defaults to `runtime.mode: "all"` and selects enabled durable
+capabilities, so the `runtime` block can be omitted when one process serves HTTP
+and jobs. A dedicated worker deployment can instead set
+`DAMAT_RUNTIME_MODE=worker` and `DAMAT_WORKER_TYPES=jobs` without changing the
+application build.
+
+The worker starts after modules register their definitions and after PostgreSQL
+migration readiness succeeds. Calling `start()`
 again while that worker is running is idempotent. A worker instance is one-shot:
 after stop begins, another `start()` throws synchronously; construct a new
 worker to run again. `stop()` stops new claims, marks the worker as stopping,

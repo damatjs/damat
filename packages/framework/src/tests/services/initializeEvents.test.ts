@@ -12,6 +12,7 @@ beforeEach(reset);
 
 test("event broadcast remains independently Redis-backed", async () => {
   const value = config();
+  value.projectConfig.redisUrl = "redis://test";
   value.services = { events: { broadcast: true, channel: "custom" } };
   const services = instances();
   await initializeEventBroadcast(value, services, logger as never);

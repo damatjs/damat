@@ -12,9 +12,10 @@ beforeEach(reset);
 
 test("event broadcast and durable jobs register independent shutdowns", async () => {
   const value = config();
+  value.projectConfig.redisUrl = "redis://test";
   value.services = {
     events: { broadcast: true },
-    jobs: { worker: true },
+    jobs: {},
   };
   const services = instances();
   await initializeEventBroadcast(value, services, logger as never);

@@ -33,6 +33,7 @@ export async function initializeDatabase(
   };
   instances.shutdownHandlers.push({
     name: "database",
+    phase: "postgres",
     handler: async () => {
       await closeDatabase();
       logger.info("Database connection closed");
