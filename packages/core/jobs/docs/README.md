@@ -97,7 +97,8 @@ stopping, and waits for active handlers up to the grace period. Repeated calls
 while stop is pending share the same promise. Registry heartbeats and recovery
 reconciliation stay active during that drain. It then aborts unfinished handler
 signals and their execution heartbeats, so the leases can expire, and stops the
-maintenance loops after the graceful drain phase. The worker
+maintenance loops after the graceful drain phase and before persisting the
+final stopped state. The worker
 record is not marked stopped until those handlers settle and the database write
 succeeds. A persistence failure rejects or is logged for post-grace background
 finalization; either path leaves `stop()` retryable. Grace is validated before

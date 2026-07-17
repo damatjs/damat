@@ -47,7 +47,7 @@
   aborts unfinished execution heartbeats after grace expires, and keeps the
   registry in `stopping` until active handler code settles. Registry heartbeat
   and reconciliation maintenance stay active during the drain and stop after
-  the graceful drain phase.
+  the graceful drain phase, before the final stopped state is persisted.
 - Expired-lease recovery now has one transition path for reconcilers and
   claimers. Recovery activity preserves the expired worker and token; an
   immediate reclaim records a distinct subsequent claim with its new identity.

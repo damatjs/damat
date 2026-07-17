@@ -13,6 +13,7 @@ test("stop drains after claims close while maintenance stays live", async () => 
   const pendingPoll = deferred<(typeof claim)[]>();
   let polls = 0;
   let heartbeats = 0;
+  let heartbeatsAfterStop = 0;
   let marks = 0;
   let stops = 0;
   const worker = createInternalJobWorker(
@@ -22,12 +23,14 @@ test("stop drains after claims close while maintenance stays live", async () => 
         ++polls === 1 ? Promise.resolve([claim]) : pendingPoll.promise,
       heartbeat: async () => {
         heartbeats += 1;
+        if (stops) heartbeatsAfterStop += 1;
       },
       markStopping: async () => {
         marks += 1;
       },
       stop: async () => {
         stops += 1;
+        await Bun.sleep(5);
       },
       startExecution: () => ({ promise: work.promise, abort: () => {} }),
     }) as never,
@@ -47,6 +50,7 @@ test("stop drains after claims close while maintenance stays live", async () => 
   work.resolve();
   await stopping;
   expect(stops).toBe(1);
+  expect(heartbeatsAfterStop).toBe(0);
 
   const heartbeatAtStop = heartbeats;
   await Bun.sleep(5);

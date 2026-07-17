@@ -1,4 +1,4 @@
-import { test } from "bun:test";
+import { expect, test } from "bun:test";
 import { createInternalJobWorker } from "../../src/worker/internal";
 import {
   claim,
@@ -41,6 +41,7 @@ test("stop absorbs an in-flight poll rejection", async () => {
 test("stop absorbs an in-flight registry heartbeat rejection", async () => {
   const heartbeat = deferred<void>();
   let heartbeatStarted = false;
+  let stoppingMarked = false;
   let stoppedPersisted = false;
   const worker = createInternalJobWorker(
     workerOptions(),
@@ -48,6 +49,9 @@ test("stop absorbs an in-flight registry heartbeat rejection", async () => {
       heartbeat: () => {
         heartbeatStarted = true;
         return heartbeat.promise;
+      },
+      markStopping: async () => {
+        stoppingMarked = true;
       },
       stop: async () => {
         stoppedPersisted = true;
@@ -57,7 +61,9 @@ test("stop absorbs an in-flight registry heartbeat rejection", async () => {
   worker.start();
   await waitUntil(() => heartbeatStarted);
   const stopping = worker.stop();
-  await waitUntil(() => stoppedPersisted);
+  await waitUntil(() => stoppingMarked);
+  expect(stoppedPersisted).toBeFalse();
   heartbeat.reject(new Error("heartbeat stopped"));
   await stopping;
+  expect(stoppedPersisted).toBeTrue();
 });

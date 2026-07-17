@@ -67,16 +67,20 @@ export class JobWorkerRuntime {
       await this.components.stopMaintenance();
       return this.lifecycle.completeStop();
     }
+    let drained = false;
     try {
-      await this.components.shutdown.begin(graceMs);
+      drained = await this.components.shutdown.begin(graceMs);
     } finally {
       await this.components.stopMaintenance();
     }
+    if (drained) await this.components.shutdown.complete();
     if (this.components.shutdown.isStopped) this.lifecycle.completeStop();
   }
 
   private async finalizeBackground(): Promise<void> {
+    if (!this.components.shutdown.isWaitingForDrain) return;
     try {
+      await this.components.stopMaintenance();
       await this.components.shutdown.onEmpty();
       if (this.components.shutdown.isStopped) this.lifecycle.completeStop();
     } catch (error) {

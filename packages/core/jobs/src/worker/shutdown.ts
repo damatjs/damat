@@ -16,16 +16,24 @@ export class WorkerShutdown {
     return this.stopped;
   }
 
-  async begin(graceMs: number): Promise<void> {
+  get isWaitingForDrain(): boolean {
+    return this.waitingForDrain;
+  }
+
+  async begin(graceMs: number): Promise<boolean> {
     await this.dependencies.markStopping(this.id);
-    if (await this.active().drain(graceMs)) return this.finish();
+    if (await this.active().drain(graceMs)) return true;
     this.waitingForDrain = true;
     this.active().abort();
-    if (!this.active().size) await this.finish();
+    return !this.active().size;
   }
 
   async onEmpty(): Promise<void> {
     if (this.waitingForDrain) await this.finish();
+  }
+
+  complete(): Promise<void> {
+    return this.finish();
   }
 
   private finish(): Promise<void> {

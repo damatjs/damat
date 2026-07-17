@@ -109,7 +109,8 @@ renewing their leases. The registry remains `stopping` while handler code is
 still running and changes to `stopped` only after it settles and PostgreSQL
 persists that transition. Persistence failures reject `stop()` and a later
 `stop()` retries them. Registry heartbeats and reconciliation remain active
-through the graceful drain phase, then stop before shutdown returns.
+through the graceful drain phase, then quiesce before the worker persists its
+final `stopped` transition.
 
 The worker also owns bounded lease, retry, schedule, idempotency, and retention
 reconciliation. Expired leases, not worker-registry state, decide recovery.

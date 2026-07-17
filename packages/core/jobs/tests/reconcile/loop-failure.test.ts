@@ -48,6 +48,7 @@ test("subscription dependency failure never stops polling", async () => {
 test("stop absorbs an in-flight reconciliation failure", async () => {
   const reconciliation = deferred<void>();
   let started = false;
+  let stoppingMarked = false;
   let stoppedPersisted = false;
   const worker = createInternalJobWorker(
     {
@@ -60,6 +61,9 @@ test("stop absorbs an in-flight reconciliation failure", async () => {
         started = true;
         return reconciliation.promise;
       },
+      markStopping: async () => {
+        stoppingMarked = true;
+      },
       stop: async () => {
         stoppedPersisted = true;
       },
@@ -68,8 +72,10 @@ test("stop absorbs an in-flight reconciliation failure", async () => {
   worker.start();
   await waitUntil(() => started);
   const stopping = worker.stop();
-  await waitUntil(() => stoppedPersisted);
+  await waitUntil(() => stoppingMarked);
+  expect(stoppedPersisted).toBeFalse();
   reconciliation.reject(new Error("reconciliation stopped"));
   await expect(stopping).resolves.toBeUndefined();
+  expect(stoppedPersisted).toBeTrue();
   expect(worker.isRunning).toBeFalse();
 });
