@@ -13,7 +13,7 @@ setupMigrateFixture();
 test.serial("status reports durable event system migrations", async () => {
   writeConfig({ modules: {}, services: "events:{durable:{}}" });
   state.status.modules = [
-    { name: "@damatjs/events", applied: 0, pending: 2, migrations: [] },
+    { name: "@damatjs/events", applied: 0, pending: 3, migrations: [] },
   ];
   expect((await (await loadStatus()).handler(context().ctx)).exitCode).toBe(0);
   expect(
@@ -23,5 +23,6 @@ test.serial("status reports durable event system migrations", async () => {
     "@damatjs/durability:002",
     "@damatjs/events:001",
     "@damatjs/events:002",
+    "@damatjs/events:003",
   ]);
 });

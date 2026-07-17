@@ -81,6 +81,25 @@ await publishDurableEvent(
 );
 ```
 
+Route and execute deliveries in worker processes:
+
+```ts
+import { DurableEventRouter, DurableEventWorker } from "@damatjs/events";
+
+const router = new DurableEventRouter();
+const worker = new DurableEventWorker({
+  consumers: [{ event: "user.registered", consumer: "welcome-email" }],
+  concurrency: 4,
+});
+
+router.start();
+worker.start();
+
+// Ordered shutdown: stop claims, drain handlers, stop maintenance, persist stopped.
+await router.stop();
+await worker.stop({ graceMs: 30_000 });
+```
+
 Consumer names are stable and unique per event. Durable names cannot be blank
 or contain wildcard tokens. A handler may register before its event definition;
 the later explicit definition upgrades the implicit defaults once without
@@ -95,9 +114,20 @@ original event without adding another publish activity entry.
 
 The outbox snapshots policy version, attempts, backoff, and retention values so
 later definition edits do not reinterpret stored events. Retention begins when
-the event becomes available. Publishing and inspection do not execute named
-handlers by themselves; no implicit bridge exists from `EventBus.emit` or CRUD
-events to durable delivery.
+the event becomes available. `DurableEventRouter` snapshots the consumers that
+exist when it routes an event; later registrations are not backfilled.
+
+`DurableEventWorker` claims only configured event/consumer pairs. Each delivery
+has its own fenced lease, attempts, retry/dead-letter state, progress, result,
+structured logs, cancellation, and activity timeline. A worker crash is recovered
+from PostgreSQL; stale workers cannot heartbeat or finish a reclaimed delivery.
+Redis wake-ups are optional latency hints. Router and worker polling always
+continue against PostgreSQL, and Redis failure never rolls back durable work.
+
+Publishing does not run handlers inside the caller's transaction. An owned
+publish wakes the router after commit; a caller-supplied executor emits no wake
+because its eventual commit is outside this package's control. There is no
+implicit bridge from `EventBus.emit` or CRUD events to durable delivery.
 
 Database atomicity cannot make an arbitrary external side effect exactly once.
 When a handler calls a provider, pass a stable idempotency key to that provider
@@ -143,7 +173,11 @@ framework wires this automatically).
 | `EventHandler`, `EventContext`, `EventName`, `EventPayload`, `Unsubscribe`, `Broadcaster`        | types     | Handler and metadata shapes.                                                                                      |
 | `defineDurableEvent` / `defineDurableEventHandler`                                               | function  | Register a typed event policy and stable named consumers.                                                         |
 | `publishDurableEvent`                                                                            | function  | Transactionally persist an event, with idempotent replay support.                                                 |
-| `getDurableEvent` / `listDurableEvents` / `listDurableEventActivity`                             | function  | Inspect durable outbox records and immutable publish activity.                                                    |
+| `DurableEventRouter` / `DurableEventWorker`                                                      | class     | Poll, route, claim, execute, reconcile, retain, and gracefully stop durable deliveries.                           |
+| `getDurableEvent` / `listDurableEvents` / `listDurableEventActivity`                             | function  | Read durable outbox records and immutable event activity.                                                         |
+| `getDurableEventDelivery` / `listDurableEventDeliveries`                                         | function  | Read current per-consumer delivery lifecycle state.                                                               |
+| `listDurableEventDeliveryAttempts` / `listDurableEventLogs`                                      | function  | Read fenced attempt history and ordered structured work logs.                                                     |
+| `configureEventWakeupPublisher` / `startEventWakeupSubscriber`                                   | function  | Optional strict Redis-compatible router and exact-consumer wake-up transport.                                     |
 | `DurableEventMap`, `DurableEventRecord`, `PublishDurableEventOptions`                            | types     | Typed durable payload, stored record, and publishing contract.                                                    |
 
 ## How it fits

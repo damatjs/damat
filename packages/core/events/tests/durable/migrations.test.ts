@@ -9,6 +9,7 @@ test("events catalog has stable ownership and order", () => {
   ).toEqual([
     ["001", 500],
     ["002", 600],
+    ["003", 700],
   ]);
 });
 

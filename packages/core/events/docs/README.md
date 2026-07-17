@@ -20,6 +20,9 @@ and reject wildcards.
 | `src/durable/migrations/`   | Ordered outbox, delivery, attempt, activity, and log catalogs; exported by `@damatjs/events/migrations`.            |
 | `src/durable/repositories/` | SQL writes, reads, row mapping, and public durable record types.                                                    |
 | `src/durable/client/`       | Transactional publish plus outbox/activity inspection.                                                              |
+| `src/durable/router/`       | Transactional `SKIP LOCKED` outbox claims, consumer snapshots, fan-out, routing activity, and polling.              |
+| `src/durable/worker/`       | Pair-scoped delivery claims, fenced execution, reconciliation, retention, registry state, and shutdown.             |
+| `src/durable/wakeup/`       | Strict optional router/exact-consumer wake messages; PostgreSQL polling remains authoritative.                      |
 | `tests/`                    | `bun:test` suites — `bus.test.ts` and `global.test.ts` are pure in-process; `broadcast.test.ts` needs a live Redis. |
 
 ## Architecture overview
@@ -147,10 +150,38 @@ event plus consumer. Attempts, activity, and logs use foreign keys that prevent
 attempt or consumer history from pointing at a different delivery. Retention starts
 at availability, so delayed events cannot expire before becoming eligible.
 
-The catalog owns migrations `001` and `002`, ordered after shared durability and
+The catalog owns migrations `001`, `002`, and `003`, ordered after shared durability and
 jobs. `@damatjs/orm-cli` selects shared plus events for
 `services.events.durable`, or shared plus jobs plus events when both features are
 enabled. Run migrations before publishing.
+
+The router claims bounded due outbox batches with `FOR UPDATE SKIP LOCKED`.
+Consumer rows, one event-scoped `routed` activity, and `routed_at` commit together;
+zero-consumer events still become routed. Fan-out resolves explicit consumer retry
+overrides against the policy copied onto the outbox row, not the registry's current
+defaults. Migration `003` repairs and constrains delivery retention so it cannot
+precede availability.
+
+Delivery workers select exact `(event, consumer)` pairs using JSON-encoded stable
+scopes. A claim moves one delivery to `running`, creates its attempt, and appends
+activity atomically. Every heartbeat, progress, log, success, retry, dead letter,
+cancellation, and attempt close matches the delivery identity, worker, token, and
+unexpired lease. Context logs are ordered, bounded, and redacted; progress keeps a
+current snapshot plus sampled activity; results must be JSON-safe.
+
+Inline claims and reconciliation share one expired-lease transition. It closes the
+old attempt as `lost`, retains its worker/token in activity, and returns the delivery
+to pending or settles cancellation/exhaustion. Retry promotion and retention use
+bounded overlapping-safe batches. Retention deletes only routed events whose
+deliveries are terminal, and its completed maintenance audit shares the deletion
+transaction.
+
+`DurableEventRouter` and `DurableEventWorker` continue PostgreSQL polling when Redis
+is absent, healthy, or failing. Owned publishing wakes the router only after commit;
+caller-owned transactions rely on polling. Router fan-out wakes exact consumers after
+commit. Worker shutdown stops polling/subscriptions, drains or aborts handlers, then
+stops heartbeat/reconciliation before persisting `stopped`; ordinary idle leaves
+maintenance active.
 
 Durable publishing guarantees atomicity only for database effects executed with the
 same transaction executor. External providers remain outside the database
@@ -182,9 +213,10 @@ publishing do not execute consumers on their own.
 ## Tests
 
 `tests/bus.test.ts` and `tests/global.test.ts` are pure unit tests.
-`tests/broadcast.test.ts` exercises a mocked Redis boundary. `tests/durable/` needs
-an isolated PostgreSQL database and covers schema integrity, transactions,
-concurrency, registry behavior, and the no-bridge ephemeral invariant.
+`tests/broadcast.test.ts` exercises a mocked Redis boundary. `tests/durable/` and
+`tests/durable-worker/` need an isolated PostgreSQL database and cover schema
+integrity, transactions, routing overlap, fencing, recovery, retention, wake-ups,
+shutdown, registry behavior, and the no-bridge ephemeral invariant.
 
 ## Related docs
 

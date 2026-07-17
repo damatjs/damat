@@ -24,7 +24,16 @@ export interface DurableEventRow extends QueryResultRow {
 export interface DurableEventActivityRow extends QueryResultRow {
   id: string;
   event_id: string;
+  delivery_id: string | null;
+  consumer: string | null;
+  attempt_number: number | null;
   type: string;
+  previous_status: string | null;
+  next_status: string | null;
+  worker_id: string | null;
+  lease_token: string | null;
+  reason: string | null;
+  duration_ms: number | string | null;
   occurred_at: Date;
   metadata: Record<string, unknown>;
   actor: Record<string, unknown>;
@@ -58,7 +67,20 @@ export function mapDurableEventActivity(
   return {
     id: row.id,
     eventId: row.event_id,
+    ...(row.delivery_id ? { deliveryId: row.delivery_id } : {}),
+    ...(row.consumer ? { consumer: row.consumer } : {}),
+    ...(row.attempt_number !== null
+      ? { attemptNumber: row.attempt_number }
+      : {}),
     type: row.type,
+    ...(row.previous_status ? { previousStatus: row.previous_status } : {}),
+    ...(row.next_status ? { nextStatus: row.next_status } : {}),
+    ...(row.worker_id ? { workerId: row.worker_id } : {}),
+    ...(row.lease_token ? { leaseToken: row.lease_token } : {}),
+    ...(row.reason ? { reason: row.reason } : {}),
+    ...(row.duration_ms !== null
+      ? { durationMs: Number(row.duration_ms) }
+      : {}),
     occurredAt: row.occurred_at,
     metadata: row.metadata,
     actor: row.actor,

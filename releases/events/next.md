@@ -10,11 +10,22 @@
 - Ordered migrations for outbox, deliveries, attempts, activity, and logs via
   `@damatjs/events/migrations`.
 - Durable event and activity inspection APIs.
+- Transactional `SKIP LOCKED` routing with stable named-consumer snapshots,
+  including inspectable zero-consumer events.
+- Exact event/consumer delivery workers with fenced leases, independent retries,
+  dead letters, cancellation, JSON-safe results, sampled progress, and bounded
+  redacted structured logs.
+- Shared lease recovery, bounded retry promotion and retention, worker registry
+  state, optional strict Redis wake-ups, and ordered graceful shutdown.
+- Delivery, attempt, and log lifecycle read APIs plus an ordered retention
+  integrity migration.
 
 ## Changed / improved
 
 - The package now depends on `@damatjs/durability` for PostgreSQL transaction
   ownership and shared handler idempotency.
+- Owned publishes wake the router only after commit. Caller-owned transactions
+  intentionally rely on PostgreSQL polling until the caller commits.
 - Ephemeral `EventBus`, Redis broadcast, and automatic model CRUD behavior are
   unchanged and never create durable rows.
 

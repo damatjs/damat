@@ -17,6 +17,7 @@ import {
   type NewDurableEvent,
 } from "../repositories";
 import { resolveDurableEvent } from "./resolve";
+import { publishEventRouterWakeup } from "../wakeup/publisher";
 
 export async function publishDurableEvent<K extends DurableEventName>(
   name: K,
@@ -30,9 +31,11 @@ export async function publishDurableEvent<K extends DurableEventName>(
     }
     return publishWith(options.executor, event);
   }
-  return getDurabilityClient().transaction((executor) =>
+  const published = await getDurabilityClient().transaction((executor) =>
     publishWith(executor, event),
   );
+  await publishEventRouterWakeup();
+  return published;
 }
 
 async function publishWith(

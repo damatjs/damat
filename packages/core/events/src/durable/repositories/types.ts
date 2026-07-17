@@ -41,7 +41,16 @@ export interface NewDurableEvent {
 export interface DurableEventActivity {
   id: string;
   eventId: string;
+  deliveryId?: string;
+  consumer?: string;
+  attemptNumber?: number;
   type: string;
+  previousStatus?: string;
+  nextStatus?: string;
+  workerId?: string;
+  leaseToken?: string;
+  reason?: string;
+  durationMs?: number;
   occurredAt: Date;
   metadata: Record<string, unknown>;
   actor: Record<string, unknown>;
