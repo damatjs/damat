@@ -2,21 +2,25 @@
 
 Maintainer-facing documentation. For usage see the [package README](../README.md).
 
-This package is the typed subscription/event bus: an in-process `EventBus` with a
-`globalThis` singleton, plus an opt-in Redis pub/sub transport that fans emits out to
-every process sharing the Redis. Four small source files, one flat barrel — there are
-no subpath exports.
+This package has two intentionally separate paths: an in-process `EventBus` with
+optional Redis fan-out, and PostgreSQL-backed durable event publishing. Ephemeral
+emits never enter the durable outbox. Durable definitions use stable named consumers
+and reject wildcards.
 
 ## Module map
 
-| File               | Responsibility                                                                                                      |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| `src/index.ts`     | Barrel re-exporting everything below.                                                                               |
-| `src/types.ts`     | `EventMap` (declaration-merge target), `EventName`, `EventPayload`, `EventContext`, `EventHandler`, `Unsubscribe`.  |
-| `src/bus.ts`       | `EventBus` class + the `Broadcaster` function type. All delivery semantics live here.                               |
-| `src/global.ts`    | The `globalThis` singleton: `getEventBus` / `setEventBus` / `resetEventBus`.                                        |
-| `src/broadcast.ts` | Redis pub/sub transport: `connectEventBroadcast` / `disconnectEventBroadcast` / `isEventBroadcastConnected`.        |
-| `tests/`           | `bun:test` suites — `bus.test.ts` and `global.test.ts` are pure in-process; `broadcast.test.ts` needs a live Redis. |
+| File                        | Responsibility                                                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `src/index.ts`              | Barrel re-exporting everything below.                                                                               |
+| `src/types.ts`              | `EventMap` (declaration-merge target), `EventName`, `EventPayload`, `EventContext`, `EventHandler`, `Unsubscribe`.  |
+| `src/bus.ts`                | `EventBus` class + the `Broadcaster` function type. All delivery semantics live here.                               |
+| `src/global.ts`             | The `globalThis` singleton: `getEventBus` / `setEventBus` / `resetEventBus`.                                        |
+| `src/broadcast.ts`          | Redis pub/sub transport: `connectEventBroadcast` / `disconnectEventBroadcast` / `isEventBroadcastConnected`.        |
+| `src/durable/definitions/`  | Declaration-merged durable payloads, policy defaults, named consumer registry, and validation.                      |
+| `src/durable/migrations/`   | Ordered outbox, delivery, attempt, activity, and log catalogs; exported by `@damatjs/events/migrations`.            |
+| `src/durable/repositories/` | SQL writes, reads, row mapping, and public durable record types.                                                    |
+| `src/durable/client/`       | Transactional publish plus outbox/activity inspection.                                                              |
+| `tests/`                    | `bun:test` suites — `bus.test.ts` and `global.test.ts` are pure in-process; `broadcast.test.ts` needs a live Redis. |
 
 ## Architecture overview
 
@@ -120,8 +124,38 @@ Promise<void>` function type; `bus.ts` imports nothing from `@damatjs/redis`. An
 - **Unregistered events are first-class.** The type system nudges toward `EventMap`
   registration but never blocks an ad-hoc string event.
 - **At-most-once locally, fire-and-forget remotely.** Redis pub/sub has no persistence:
-  a process that is down misses broadcasts. Durable processing belongs in
-  `@damatjs/jobs`, not here.
+  a process that is down misses broadcasts. Call `publishDurableEvent` explicitly
+  when persistence is required; `emit` never creates an outbox row.
+
+## Durable event architecture
+
+`defineDurableEvent` stores a resolved event policy in the process-wide registry.
+`defineDurableEventHandler` stores a unique consumer name per event and only allows
+retry overrides. A handler registered first creates an implicit default event; one
+later explicit definition upgrades its event policy and preserves the handlers.
+
+`publishDurableEvent` validates the event and options before SQL. Without an
+executor it opens a transaction on the global durability client. With an executor it
+requires the active marker created by `DurabilityClient.transaction`. The insert and
+immutable `published` activity entry share that transaction. A unique constraint on
+`(name, idempotency_key)` makes concurrent duplicates return the original row without
+duplicating activity.
+
+The outbox owns event identity, payload, metadata, lineage, availability, routing,
+retention, and a full retry-policy snapshot. Deliveries are separate rows keyed by
+event plus consumer. Attempts, activity, and logs use foreign keys that prevent
+attempt or consumer history from pointing at a different delivery. Retention starts
+at availability, so delayed events cannot expire before becoming eligible.
+
+The catalog owns migrations `001` and `002`, ordered after shared durability and
+jobs. `@damatjs/orm-cli` selects shared plus events for
+`services.events.durable`, or shared plus jobs plus events when both features are
+enabled. Run migrations before publishing.
+
+Durable publishing guarantees atomicity only for database effects executed with the
+same transaction executor. External providers remain outside the database
+transaction; handlers must pass stable provider idempotency keys. Definitions and
+publishing do not execute consumers on their own.
 
 ## Safe extension (quick reference)
 
@@ -147,9 +181,10 @@ Promise<void>` function type; `bus.ts` imports nothing from `@damatjs/redis`. An
 
 ## Tests
 
-`tests/bus.test.ts` and `tests/global.test.ts` are pure unit tests. `tests/broadcast.test.ts`
-is an integration test needing a reachable Redis (`REDIS_URL` or `localhost:6379`), like
-the `@damatjs/redis` suites.
+`tests/bus.test.ts` and `tests/global.test.ts` are pure unit tests.
+`tests/broadcast.test.ts` exercises a mocked Redis boundary. `tests/durable/` needs
+an isolated PostgreSQL database and covers schema integrity, transactions,
+concurrency, registry behavior, and the no-bridge ephemeral invariant.
 
 ## Related docs
 

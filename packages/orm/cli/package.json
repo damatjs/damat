@@ -39,6 +39,7 @@
     "@damatjs/cli": "workspace:*",
     "@damatjs/deps": "workspace:*",
     "@damatjs/durability": "workspace:*",
+    "@damatjs/events": "workspace:*",
     "@damatjs/logger": "workspace:*",
     "@damatjs/installer": "workspace:*",
     "@damatjs/jobs": "workspace:*",

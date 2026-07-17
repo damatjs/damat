@@ -1,6 +1,6 @@
 {
   "name": "@damatjs/events",
-  "description": "Typed subscription/event bus for Damat apps — local by default, Redis pub/sub broadcast opt-in",
+  "description": "Typed ephemeral subscriptions and transactional PostgreSQL durable events for Damat apps",
   "version": "0.6.0",
   "type": "module",
   "main": "dist/index.js",
@@ -9,6 +9,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./migrations": {
+      "types": "./dist/durable/migrations/index.d.ts",
+      "default": "./dist/durable/migrations/index.js"
     }
   },
   "engines": {
@@ -31,6 +35,8 @@
   ],
   "author": "Abel Lamesgen",
   "dependencies": {
+    "@damatjs/deps": "workspace:*",
+    "@damatjs/durability": "workspace:*",
     "@damatjs/logger": "workspace:*",
     "@damatjs/redis": "workspace:*"
   },

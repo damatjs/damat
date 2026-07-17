@@ -325,6 +325,8 @@
       "name": "@damatjs/events",
       "version": "0.6.0",
       "dependencies": {
+        "@damatjs/deps": "workspace:*",
+        "@damatjs/durability": "workspace:*",
         "@damatjs/logger": "workspace:*",
         "@damatjs/redis": "workspace:*",
       },
@@ -530,6 +532,7 @@
         "@damatjs/cli": "workspace:*",
         "@damatjs/deps": "workspace:*",
         "@damatjs/durability": "workspace:*",
+        "@damatjs/events": "workspace:*",
         "@damatjs/installer": "workspace:*",
         "@damatjs/jobs": "workspace:*",
         "@damatjs/link": "workspace:*",

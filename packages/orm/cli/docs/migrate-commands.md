@@ -135,5 +135,7 @@ bun damat-orm migrate:create link:user  # junction tables for the user owner's l
   not at module top level — preserve that for fast CLI startup.
 - `loadSystemMigrations` selects the shared durability catalog when
   `services.jobs` or `services.events.durable` is enabled. Jobs additionally
-  selects `@damatjs/jobs` after the shared catalog. Catalog collection sorts by
-  migration order, owner, and ID, so CLI selection is deterministic.
+  selects `@damatjs/jobs`; durable events select `@damatjs/events`. The stable
+  combined order is shared durability, jobs, then events. Catalog collection
+  sorts by migration order, owner, and ID, so both `migrate:up` and the
+  all-owner `migrate:status` view receive the same deterministic sequence.

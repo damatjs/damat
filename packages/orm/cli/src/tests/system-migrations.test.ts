@@ -33,10 +33,44 @@ test("selects shared then jobs migrations when jobs are enabled", async () => {
   ]);
 });
 
-test("selects shared migrations when durable events are enabled", async () => {
-  expect(await load("events: { durable: {} }")).toHaveLength(2);
+test("selects shared then events migrations for durable events", async () => {
+  expect(
+    (await load("events: { durable: {} }")).map(
+      ({ owner, id }) => `${owner}:${id}`,
+    ),
+  ).toEqual([
+    "@damatjs/durability:001",
+    "@damatjs/durability:002",
+    "@damatjs/events:001",
+    "@damatjs/events:002",
+  ]);
+});
+
+test("orders shared, jobs, then events catalogs", async () => {
+  expect(
+    (await load("jobs: {}, events: { durable: {} }")).map(({ owner }) => owner),
+  ).toEqual([
+    "@damatjs/durability",
+    "@damatjs/durability",
+    "@damatjs/jobs",
+    "@damatjs/jobs",
+    "@damatjs/events",
+    "@damatjs/events",
+  ]);
 });
 
 test("does not select shared migrations for ordinary events", async () => {
   expect(await load("events: { broadcast: true }")).toEqual([]);
+});
+
+test("wraps system catalog config failures with the config path", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "system-catalog-error-"));
+  roots.push(root);
+  fs.writeFileSync(
+    path.join(root, "damat.config.ts"),
+    `export default { get services() { throw new Error("catalog boom") } }`,
+  );
+  await expect(loadSystemMigrations("damat.config.ts", root)).rejects.toThrow(
+    /Failed to load system migrations.*damat\.config\.ts/,
+  );
 });

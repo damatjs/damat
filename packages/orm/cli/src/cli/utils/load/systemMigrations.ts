@@ -20,6 +20,11 @@ export async function loadSystemMigrations(
       const { jobsSystemMigrations } = await import("@damatjs/jobs/migrations");
       catalogs.push(jobsSystemMigrations);
     }
+    if (durableEventsEnabled) {
+      const { eventsSystemMigrations } =
+        await import("@damatjs/events/migrations");
+      catalogs.push(eventsSystemMigrations);
+    }
     return collectSystemMigrations(catalogs);
   } catch (error) {
     wrapLoadError(error, `Failed to load system migrations from '${filePath}'`);
