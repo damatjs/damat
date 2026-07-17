@@ -1,5 +1,13 @@
 # @damatjs/durability Unreleased
 
+> Establishes the shared PostgreSQL contracts used by durable jobs and events.
+
+## What changed
+
+Durable packages share one transaction, migration, idempotency, worker,
+inspection, redaction, logging, and maintenance foundation instead of owning
+parallel infrastructure contracts.
+
 ## Added
 
 - Structural PostgreSQL executor and transaction client contracts.
@@ -43,7 +51,7 @@
 
 ## Action required
 
-Run `bun run db:migrate` before enabling durable jobs or events.
+Run `damat-orm migrate:up` before enabling durable jobs or events.
 
 Configure a default durability client or pass the executor received by an
 active Damat transaction callback when calling `withIdempotency`. Custom
@@ -57,3 +65,13 @@ Provide a stable application secret to both `encodeCursor` and `decodeCursor`;
 rotating that key invalidates existing pagination cursors.
 Validate the caller's actor before invoking an administrative mutation, and use
 bounded summary ranges when building operational views.
+
+## Breaking
+
+- Caller-supplied executors must be active Damat transaction wrappers.
+- Inspection cursors require an explicit signing key.
+
+## References
+
+- Current behavior: [durability README](../../packages/core/durability/README.md)
+- Source: `packages/core/durability/src/`

@@ -33,6 +33,16 @@ versions where _its own_ code changed; for a lockstep bump with no change of its
 own, the package simply moves to the shared version with no new note. That is why
 a package can sit at `0.6.0` while the newest version it actually links is older.
 
+## Unreleased
+
+The durability phase establishes shared PostgreSQL infrastructure, durable jobs
+and named-consumer events, transaction composition, deterministic system
+migrations, headless operational inspection, and selectable server/jobs/events
+runtime roles. See [`durability`](./durability/), [`jobs`](./jobs/),
+[`events`](./events/), [`services`](./services/),
+[`orm-migration`](./orm-migration/), [`orm-cli`](./orm-cli/), and
+[`framework`](./framework/).
+
 What changed in `0.6.0` — a hardening release across the line:
 [`redis`](./redis/0.6.0.md) made its hot paths atomic and non-blocking;
 [`framework`](./framework/0.6.0.md) auth middleware fails closed;

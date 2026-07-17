@@ -54,7 +54,7 @@ export const buildSection: GuideSectionDefinition = {
       id: "events-and-jobs",
       title: "Events & background jobs",
       summary:
-        "The typed event bus (model CRUD events, Redis broadcast) and Redis-backed background jobs with retries and dead-lettering.",
+        "Typed events and PostgreSQL-backed jobs with retries, recovery, inspection, and optional Redis wake-ups.",
       file: "10b-events-and-jobs.md",
       order: 10.5,
     },

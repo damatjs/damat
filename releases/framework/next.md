@@ -10,9 +10,10 @@ Runtime mode and worker capabilities can be configured independently and each ha
 an environment override. The default remains a combined process (`all`) with
 workers inferred from enabled durable services.
 
-Startup now initializes logger, PostgreSQL, Redis, modules/providers, auth and
-publishers, then verifies durable system migrations before starting selected
-workers. Hono is built only for a runtime that serves HTTP. Redis wakeups are
+Startup now initializes logger, PostgreSQL, Redis, modules/providers, and auth,
+then verifies durable system migrations and configures durable wake-up
+publishers before starting selected workers. Ephemeral broadcast initializes
+independently. Hono is built only for a runtime that serves HTTP. Redis wakeups are
 optional; PostgreSQL polling remains the durability fallback.
 
 Shutdown registrations now use ordered phases: HTTP, claims/wakeups, drain,

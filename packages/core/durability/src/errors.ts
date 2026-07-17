@@ -37,7 +37,7 @@ export class DurableInfrastructureNotMigratedError extends Error {
   readonly missing: readonly MissingSystemMigration[];
 
   constructor(missing: readonly MissingSystemMigration[], cause?: unknown) {
-    super("Durable infrastructure is not migrated. Run: bun run db:migrate", {
+    super("Durable infrastructure is not migrated. Run: damat-orm migrate:up", {
       cause,
     });
     this.name = "DurableInfrastructureNotMigratedError";

@@ -104,6 +104,40 @@ Definitions and consumers load from module providers before execution starts.
 The durable router and worker poll PostgreSQL; optional Redis wakeups reduce
 latency but never become the source of truth.
 
+Define the event once and give every consumer a stable persistence identity:
+
+```ts
+import {
+  defineDurableEvent,
+  defineDurableEventHandler,
+} from "@damatjs/framework";
+
+declare module "@damatjs/events" {
+  interface DurableEventMap {
+    "user.created": { userId: string; email: string };
+  }
+}
+
+defineDurableEvent("user.created", {
+  version: 1,
+  maxAttempts: 5,
+  backoffMs: 1_000,
+});
+
+defineDurableEventHandler("user.created", "auditUser", async (user, ctx) => {
+  await ctx.log("info", "User creation audited", { userId: user.userId });
+  return { audited: true };
+});
+
+defineDurableEventHandler("user.created", "notifyUser", async (user, ctx) => {
+  await ctx.progress({ percent: 100, phase: "notified" });
+  return { notified: true };
+});
+```
+
+Each consumer is routed and retried independently. Renaming a consumer creates
+a different delivery identity, so treat names as persisted API.
+
 ## Background jobs
 
 Jobs are named units of work persisted in PostgreSQL and executed by fenced
@@ -155,6 +189,60 @@ services: {
 Jobs require `projectConfig.databaseUrl` and `damat-orm migrate:up`. Redis is
 optional; PostgreSQL polling always remains available.
 
+## Commit domain data and durable work together
+
+The executor received by `ModuleService.transaction` is accepted by enqueue,
+publish, and shared idempotency APIs:
+
+```ts
+await userService.transaction(async (executor) => {
+  const user = await userService.users.create({ data: input });
+  await enqueueJob("reports.generate", report, {
+    executor,
+    correlationId: user.id,
+    deduplication: { key: `report:${report.id}` },
+  });
+  await publishDurableEvent("user.created", user, {
+    executor,
+    correlationId: user.id,
+    idempotencyKey: `user.created:${user.id}`,
+  });
+});
+```
+
+All three writes commit or roll back together. Calls inside a caller-owned
+transaction do not publish Redis wake-ups because the package cannot observe
+the outer commit; PostgreSQL polling discovers the committed work.
+
+## Headless inspection and controls
+
+```ts
+import {
+  createDurableEventInspectionClient,
+  createJobInspectionClient,
+} from "@damatjs/framework";
+
+const jobs = createJobInspectionClient({
+  cursorSigningKey: process.env.CURSOR_KEY!,
+  visibility: "metadata",
+  redaction: { keys: ["password", "token", "secret"] },
+});
+const events = createDurableEventInspectionClient({
+  cursorSigningKey: process.env.CURSOR_KEY!,
+  visibility: "metadata",
+});
+
+const failedJobs = await jobs.listRuns({ views: ["failed"], limit: 25 });
+const failedEvents = await events.listEvents({ views: ["failed"], limit: 25 });
+await jobs.retry(failedJobs.items[0]!.id, { type: "user", id: adminId });
+```
+
+Lists use signed cursors. Detail views include attempts, activity, progress,
+errors, logs, worker/lease identity, and results according to visibility and
+redaction. Summaries require bounded time ranges. Mutating controls require an
+explicit actor and append audit history. No HTTP administration routes are
+mounted by the framework.
+
 ## Select the process runtime
 
 The same backend build can be an HTTP process, a dedicated worker, or both:
@@ -195,6 +283,8 @@ Semantics worth knowing:
   as a durable run with its final status, attempt history, and error preserved.
 - **At-least-once** — expired fenced leases recover jobs a crashed worker had
   claimed, so handlers should be idempotent.
+- **Redis loss** — enqueue/publish remain committed and replacement workers
+  continue through PostgreSQL polling; only fast wake-up latency is lost.
 - **Unknown jobs** (enqueued but not `defineJob`'d in the worker process)
   dead-letter immediately with a clear error.
 - **Inspection** — `getJobRun`, `listJobRuns`, `listJobAttempts`,
@@ -203,6 +293,12 @@ Semantics worth knowing:
 The framework root also re-exports the jobs and durable-event inspection and
 control clients. They are headless: no administration routes are mounted
 automatically, so the application owns authentication and authorization.
+
+For retry-safe database effects inside a handler, call
+`context.withIdempotency` with a stable scope/key. A killed process can leave a
+completed effect and an expired work lease; the replacement attempt replays the
+completed idempotency result instead of executing that effect twice. External
+side effects still need the provider to honor a stable idempotency key.
 
 ## Jobs vs workflows (and where events fit)
 

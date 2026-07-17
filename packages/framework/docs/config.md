@@ -223,7 +223,10 @@ Each lifecycle hook is awaited at its stage; a hook that throws fails startup lo
 
 - **`loadConfig` is a trap.** It always throws; use `loadConfigAsync`. This is intentional (the config is TS and must be imported asynchronously).
 - **Config is cached process-wide.** A second `loadConfigAsync` returns the first result regardless of `cwd`. Call `clearConfigCache()` in tests to reload.
-- **`projectConfig` is mandatory and validated lightly.** The loader only checks that `config.projectConfig` exists; everything else is trusted by type, not runtime-validated.
+- **`projectConfig` is mandatory.** The loader checks that it exists. Runtime
+  mode, worker capabilities, shutdown grace, and durable-worker numeric options
+  receive runtime validation during startup; other config fields rely on their
+  owning service's validation and the TypeScript contract.
 - **`http.api.bathUrl` is a typo'd, unused field** preserved in the source type; don't depend on it.
 - **`databaseUrl`/`redisUrl` are optional until a dependent service is enabled.**
   Omit `databaseUrl` and no pool is created; jobs or durable events then fail

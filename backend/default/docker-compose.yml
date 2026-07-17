@@ -1,77 +1,95 @@
-version: "3.8"
+x-app-environment: &app-environment
+  NODE_ENV: production
+  DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/damatjs?schema=public"
+  REDIS_URL: "${REDIS_URL:-}"
+
+x-app: &app
+  image: damat-default:local
+  build:
+    context: ../..
+    dockerfile: backend/default/Dockerfile
+  restart: unless-stopped
 
 services:
-  api:
-    build: .
-    ports:
-      - "9000:9000"
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/damatjs?schema=public
-      - REDIS_URL=redis://redis:6379
-    env_file:
-      - .env
+  migrate:
+    <<: *app
+    command: ["bun", "run", "db:migrate"]
+    environment: *app-environment
+    restart: "no"
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - app-network
+
+  api:
+    <<: *app
+    command: ["bun", "run", "start"]
+    environment:
+      <<: *app-environment
+      DAMAT_RUNTIME_MODE: server
+      PORT: 9000
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports: ["9000:9000"]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bun",
+          "--eval",
+          "fetch('http://localhost:9000/health').then(r=>{if(!r.ok)process.exit(1)})",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  jobs:
+    <<: *app
+    command: ["bun", "run", "start"]
+    environment:
+      <<: *app-environment
+      DAMAT_RUNTIME_MODE: worker
+      DAMAT_WORKER_TYPES: jobs
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  events:
+    <<: *app
+    command: ["bun", "run", "start"]
+    environment:
+      <<: *app-environment
+      DAMAT_RUNTIME_MODE: worker
+      DAMAT_WORKER_TYPES: events
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
 
   db:
     image: pgvector/pgvector:pg16
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=damatjs
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}"
+      POSTGRES_DB: damatjs
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U postgres -d damatjs"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
     restart: unless-stopped
-    networks:
-      - app-network
 
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes
-    volumes:
-      - redis-data:/data
-    ports:
-      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    profiles: [accelerator]
+    volumes: ["redis-data:/data"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
-    restart: unless-stopped
-    networks:
-      - app-network
-
-  # Optional: Adminer for database management
-  adminer:
-    image: adminer
-    ports:
-      - "8080:8080"
-    depends_on:
-      - db
-    restart: unless-stopped
-    networks:
-      - app-network
-    profiles:
-      - tools
+      retries: 10
 
 volumes:
   postgres-data:
   redis-data:
-
-networks:
-  app-network:
-    driver: bridge

@@ -1,7 +1,8 @@
 # `ModuleService` & generated CRUD
 
 Source: `src/service/module.ts`, `src/service/moduleState.ts`,
-`src/service/modelAccessors.ts`, `src/service/transaction.ts`,
+`src/service/moduleTypes.ts`, `src/service/modelAccessors.ts`,
+`src/service/transaction.ts`,
 `src/service/methods.ts`, `src/service/type.ts`, `src/service/cache.ts`,
 `src/service/events.ts`, `src/service/logging.ts`.
 
@@ -25,12 +26,14 @@ export function ModuleService<
   TCredentialsSchema extends z.ZodObject<z.ZodRawShape> | undefined = undefined,
 >(
   config: ModuleServiceConfig<TModels, TCredentialsSchema>,
-): abstract new (
-  credentials?: TCredentialsSchema extends z.ZodObject<z.ZodRawShape>
-    ? z.infer<TCredentialsSchema>
-    : undefined,
-) => GeneratedModuleService & ModelAccessors;
+): ModuleServiceConstructor<TModels, TCredentialsSchema>;
 ```
+
+`ModuleServiceConstructor`, `ModuleServiceInstance`, and `ModelAccessors` are
+public types. The constructor type describes only the supported service surface;
+the symbol-backed accessor resolver remains an implementation detail. This makes
+an exported subclass declaration portable through the package root and through
+the `@damatjs/framework` re-export.
 
 ```ts
 interface ModuleServiceConfig<TModels, TCredentialsSchema, TTypes> {
@@ -97,8 +100,8 @@ transaction<R>(
   the underlying ORM transaction manager.
 - `options` are forwarded to `PgEntityManager.transaction`, including
   transaction isolation settings.
-- A callback that declares no parameter remains assignable and behaves as it
-  did previously.
+- A callback may omit the executor parameter when it only needs
+  transaction-bound model accessors.
 
 ## `ModelMethods<T>` — the CRUD surface
 

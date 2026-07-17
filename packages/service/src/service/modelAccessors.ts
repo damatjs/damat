@@ -8,15 +8,9 @@ import { withTaggedCache } from "./cache";
 import { withModelEvents } from "./events";
 import { withQueryLogging } from "./logging";
 import { ModelMethods } from "./methods";
-import type { ModelsMap, ServiceCacheConfig, ToCamelCase } from "./type";
+import type { ModelsMap, ServiceCacheConfig } from "./type";
 
 export const resolveModelMethods = Symbol("resolveModelMethods");
-
-export type ModelAccessors<TModels extends ModelsMap> = {
-  [
-    K in keyof TModels as K extends string ? ToCamelCase<K> : never
-  ]: ModelMethods;
-};
 
 export interface ModelAccessorOptions {
   cache?: ServiceCacheConfig;

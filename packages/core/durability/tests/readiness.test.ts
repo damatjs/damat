@@ -49,7 +49,7 @@ test("turns a missing tracker table into the migration instruction", async () =>
   await expect(
     assertSystemMigrationsApplied(executor, migrations),
   ).rejects.toThrow(
-    "Durable infrastructure is not migrated. Run: bun run db:migrate",
+    "Durable infrastructure is not migrated. Run: damat-orm migrate:up",
   );
 });
 

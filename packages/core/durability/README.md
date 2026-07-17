@@ -122,6 +122,6 @@ control-activity, and maintenance-activity tables. Compose catalogs with
 
 Framework startup never creates these tables. Use
 `assertSystemMigrationsApplied` for a read-only readiness check; missing
-migrations instruct the operator to run `bun run db:migrate`.
+migrations instruct the operator to run `damat-orm migrate:up`.
 
 See [the internals guide](./docs/README.md) for the package map and contracts.

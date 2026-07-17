@@ -1,59 +1,31 @@
-# Build stage
-FROM oven/bun:1 AS builder
+FROM oven/bun:1.3.14-alpine AS build
 
-WORKDIR /app
+WORKDIR /workspace
 
-# Copy package files
-COPY package.json bun.lockb* ./
-
-# Install dependencies
-RUN bun install --frozen-lockfile
-
-
-
-# Copy source
 COPY . .
 
-# Generate Prisma client
-RUN bun run db:generate
+RUN bun install --frozen-lockfile
+RUN ln -s /workspace/packages/cli/damat/dist/cli.js /usr/local/bin/damat
+RUN ln -s /workspace/packages/orm/cli/dist/bin.js /usr/local/bin/damat-orm
+RUN bunx turbo run build --filter=@damatjs/default...
+RUN rm -rf node_modules
+RUN bun install --production --frozen-lockfile
+RUN rm -rf .turbo
 
-# Build TypeScript
-RUN bun run build
+FROM oven/bun:1.3.14-alpine AS runtime
 
-# Production stage
-FROM oven/bun:1 AS runner
+WORKDIR /workspace
 
-WORKDIR /app
-
-# Create non-root user (Bun image typically has 'bun' user)
-# We can use the default bun user which is 1000:1000 usually
-# But let's be explicit if needed, or stick to root for simplicity in bun containers unless strict security required.
-# Official docs suggest running as 'bun' user.
-USER bun
-
-# Copy built application and prisma client
-# Note: Bun bundles dependencies in the build step? 
-# No, tsup (which we set up) outputted a single file that REQUIRES node_modules for dependencies.
-# So we must copy node_modules.
-
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
-
-# Environment
 ENV NODE_ENV=production
 ENV PORT=9000
 
+COPY --chown=bun:bun --from=build /workspace /workspace
+RUN ln -s /workspace/packages/cli/damat/dist/cli.js /usr/local/bin/damat
+RUN ln -s /workspace/packages/orm/cli/dist/bin.js /usr/local/bin/damat-orm
+
+USER bun
+WORKDIR /workspace/backend/default
+
 EXPOSE 9000
 
-# Health check
-# bun image might not have wget/curl by default depending on version. 
-# We can use a simple bun script or assume it's there. 
-# oven/bun:1 is based on debian slim usually, which has curl/wget.
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD bun --eval "fetch('http://localhost:9000/health').then(r => r.ok ? process.exit(0) : process.exit(1))"
-
-# Start application
-CMD ["bun", "dist/index.js"]
+CMD ["bun", "run", "start"]

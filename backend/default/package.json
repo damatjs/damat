@@ -25,7 +25,9 @@
   "dependencies": {
     "@damatjs/damat-cli": "*",
     "@damatjs/deps": "*",
+    "@damatjs/events": "*",
     "@damatjs/framework": "*",
+    "@damatjs/jobs": "*",
     "@damatjs/logger": "*",
     "@damatjs/orm-cli": "*",
     "@damatjs/orm-model": "*",

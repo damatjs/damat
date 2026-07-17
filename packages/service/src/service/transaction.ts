@@ -17,7 +17,11 @@ interface ActiveTransaction {
 }
 
 export class ServiceTransactions {
-  private readonly storage = new AsyncLocalStorage<ActiveTransaction>();
+  private readonly storage: AsyncLocalStorage<ActiveTransaction>;
+
+  constructor() {
+    this.storage = new AsyncLocalStorage<ActiveTransaction>();
+  }
 
   get active(): ActiveTransaction | undefined {
     return this.storage.getStore();

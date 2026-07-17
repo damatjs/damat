@@ -6,7 +6,7 @@ it's easy to read and easy to publish as a docs site. A machine-readable map of
 the whole thing (chapters + packages) lives in
 [`guide.json`](./guide.json).
 
-> **New to Damat?** Read [Introduction](./guide/01-introduction.md) and
+> **Starting with Damat?** Read [Introduction](./guide/01-introduction.md) and
 > [Concepts](./guide/02-concepts.md), then follow
 > [Getting started](./guide/03-getting-started.md). Already set up? Jump straight
 > to the chapter you need below.
@@ -31,6 +31,7 @@ the whole thing (chapters + packages) lives in
 8. [Building HTTP APIs](./guide/08-http-apis.md)
 9. [Workflows (the saga engine)](./guide/09-workflows.md)
 10. [Redis: cache, queue, locks, rate limiting](./guide/10-redis.md)
+    - 10b. [Events & background jobs](./guide/10b-events-and-jobs.md) — ephemeral events, durable delivery, jobs, inspection, recovery, and worker runtimes
 11. [Logging](./guide/11-logging.md)
 12. [The default backend, end to end](./guide/12-default-backend.md)
 

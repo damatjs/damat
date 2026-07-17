@@ -1,0 +1,12 @@
+.git
+**/.damat
+**/.env
+**/.DS_Store
+**/.next
+**/coverage
+**/dist
+**/node_modules
+**/tsconfig.tsbuildinfo
+backend/default/logs
+.turbo
+.superpowers

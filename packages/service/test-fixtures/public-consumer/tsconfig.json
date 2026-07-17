@@ -1,0 +1,19 @@
+{
+  "extends": "@damatjs/typescript-config/base.json",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": false,
+    "emitDeclarationOnly": true,
+    "incremental": false,
+    "composite": false,
+    "sourceMap": false,
+    "baseUrl": ".",
+    "paths": {
+      "@damatjs/framework": ["../../../framework"],
+      "@damatjs/services": ["../.."]
+    },
+    "rootDir": ".",
+    "types": ["bun"]
+  },
+  "include": ["consumer.ts"]
+}

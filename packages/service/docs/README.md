@@ -10,6 +10,7 @@ Maintainer notes for the service layer. Three concerns: the `ModuleService` fact
 | `src/manager/pool.ts`           | `PoolManager` — process-wide holder of `Pool` / `PgEntityManager` / `ConnectionManager`, with state on `globalThis`. Plus `PoolManagerStats`, `ConnectionManagerLike`.         |
 | `src/manager/index.ts`          | Re-exports `./pool`.                                                                                                                                                           |
 | `src/service/module.ts`         | `ModuleService(config)` — the small class factory and public service surface.                                                                                                  |
+| `src/service/moduleTypes.ts`    | Public constructor, instance, and generated model-accessor types returned by `ModuleService`.                                                                                  |
 | `src/service/moduleState.ts`    | Per-instance base methods, stable accessors, and transaction state.                                                                                                            |
 | `src/service/modelAccessors.ts` | `ModelMethods` construction and call-time-resolving stable accessors.                                                                                                          |
 | `src/service/transaction.ts`    | AsyncLocalStorage transaction context, nesting, and executor isolation.                                                                                                        |
@@ -86,6 +87,11 @@ The order matters; the framework enforces it at boot:
   then invalidated after success or rollback. Retained executors cannot later
   bypass idempotency's transaction requirement, even if the ORM reuses its
   underlying transaction manager.
+- **The generated class has an explicit public type.** Its declaration contains
+  credentials, models, transactions, and generated model accessors, while the
+  symbol used to resolve accessor state stays private to the implementation.
+  Exported service subclasses therefore emit declarations through either
+  `@damatjs/services` or the `@damatjs/framework` re-export.
 - **`ModuleRegistry` is the typing seam.** Apps augment it via declaration merging so the framework's `getModule("user")` is typed. The interface ships empty.
 
 ## Build note

@@ -26,6 +26,20 @@ export default defineConfig({
       corsConfig: process.env.FRONTEND_CORS,
     },
   },
+  services: {
+    // The reference inspection clients reuse this same policy.
+    durability: {
+      inspectionVisibility: "metadata",
+      redaction: { keys: ["password", "token", "secret"] },
+    },
+    jobs: { queue: "reports", concurrency: 2 },
+    events: { durable: { concurrency: 2 } },
+  },
+  runtime: {
+    mode: "all", // "server" | "worker" | "all"
+    workers: ["jobs", "events"],
+    shutdownGraceMs: 30_000,
+  },
   // `modules` is an OBJECT keyed by module id (not an array):
   modules: {
     user: {
@@ -36,9 +50,8 @@ export default defineConfig({
 });
 ```
 
-> **Heads up:** older docs showed `modules` as an array — it is now a keyed
-> object `{ [id]: { resolve, id } }`. When you install a module with
-> `damat module add`, this block is updated for you.
+`modules` is a keyed object `{ [id]: { resolve, id } }`. `damat module add`
+updates this block when a module is installed.
 
 See [`@damatjs/framework` → config internals](../../packages/framework/docs/config.md)
 for the full `ProjectConfig`/`HttpConfig` type reference.
@@ -57,18 +70,28 @@ so local overrides win:
 
 Common variables (see the default backend's `.env.example` for the full set):
 
-| Variable                | Required | Description                                             |
-| ----------------------- | -------- | ------------------------------------------------------- |
-| `DATABASE_URL`          | ✅       | PostgreSQL connection string                            |
-| `REDIS_URL`             | —        | Redis URL (enables cache/queues/locks/rate limiting)    |
-| `NODE_ENV`              | —        | `development` \| `production` \| `test`                 |
-| `PORT` / `HOST`         | —        | HTTP bind                                               |
-| `BETTER_AUTH_SECRET`    | ✅*      | Auth secret (min 32 chars) — _if using the auth module_ |
-| `DAMAT_MODULE_REGISTRY` | —        | Module registry index (for `module add` / MCP)          |
-| `DAMAT_MODULE_VERIFY`   | —        | `off` \| `warn` \| `require` install policy             |
+| Variable                | Required | Description                                                              |
+| ----------------------- | -------- | ------------------------------------------------------------------------ |
+| `DATABASE_URL`          | ✅*      | PostgreSQL — required by modules, jobs, durable events, and migrations   |
+| `REDIS_URL`             | —        | Cache/pub-sub/lock backend and optional durable-work wake-up accelerator |
+| `NODE_ENV`              | —        | `development` \| `production` \| `test`                                  |
+| `PORT` / `HOST`         | —        | HTTP bind                                                                |
+| `DAMAT_RUNTIME_MODE`    | —        | Overrides `runtime.mode`: `server` \| `worker` \| `all`                  |
+| `DAMAT_WORKER_TYPES`    | —        | Overrides `runtime.workers`: comma-separated `jobs,events`               |
+| `BETTER_AUTH_SECRET`    | ✅*      | Auth secret (min 32 chars) — _if using the auth module_                  |
+| `DAMAT_MODULE_REGISTRY` | —        | Module registry index (for `module add` / MCP)                           |
+| `DAMAT_MODULE_VERIFY`   | —        | `off` \| `warn` \| `require` install policy                              |
 
 Modules declare their own env vars in `module.json`; `damat module add` syncs
 them into `.env.example` for you (see [Authoring a module](./13-authoring-modules.md)).
+
+Runtime environment overrides are independent. Values are trimmed, worker
+names are deduplicated, and unknown modes or capabilities fail startup. In
+`worker` and `all`, a selected capability must be enabled under `services`.
+`server` never starts workers and ignores known worker selections.
+
+Durable jobs and events do not require Redis. PostgreSQL polling, leases,
+recovery, and persisted inspection remain active without it.
 
 ## The mental model
 

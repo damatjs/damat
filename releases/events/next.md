@@ -2,6 +2,12 @@
 
 > Adds a PostgreSQL durable-event path alongside the existing ephemeral bus.
 
+## What changed
+
+Applications can publish transactional durable events to stable named
+consumers while retaining the existing in-process bus and optional ephemeral
+Redis broadcast as separate delivery paths.
+
 ## Added
 
 - Typed `DurableEventMap`, event policies, and stable named consumers.
@@ -51,7 +57,7 @@
 ## Action required
 
 Enable `services.events.durable`, configure PostgreSQL, and run
-`bun damat-orm migrate:up` before calling `publishDurableEvent`. External side
+`damat-orm migrate:up` before calling `publishDurableEvent`. External side
 effects still require provider-supported idempotency.
 Attempts created before the inspection migration retain an unknown wait value;
 waiting summaries exclude them instead of reporting a synthetic zero.

@@ -6,17 +6,19 @@ import { PoolManager } from "../manager/pool";
 import {
   createModelMethods,
   defineModelAccessors,
-  type ModelAccessors,
   resolveModelMethods,
 } from "./modelAccessors";
 import { createModuleState } from "./moduleState";
 import type { ModelMethods } from "./methods";
+import type { ModuleServiceConstructor } from "./moduleTypes";
 import type { ModuleServiceConfig, ModelsMap } from "./type";
 
 export function ModuleService<
   TModels extends ModelsMap,
   TCredentialsSchema extends z.ZodObject<z.ZodRawShape> | undefined = undefined,
->(config: ModuleServiceConfig<TModels, TCredentialsSchema>) {
+>(
+  config: ModuleServiceConfig<TModels, TCredentialsSchema>,
+): ModuleServiceConstructor<TModels, TCredentialsSchema> {
   const { models } = config;
   const state = createModuleState(models, config);
 
@@ -69,9 +71,8 @@ export function ModuleService<
   }
 
   defineModelAccessors(GeneratedModuleService.prototype, models);
-  return GeneratedModuleService as abstract new (
-    credentials?: TCredentialsSchema extends z.ZodObject<z.ZodRawShape>
-      ? z.infer<TCredentialsSchema>
-      : undefined,
-  ) => GeneratedModuleService & ModelAccessors<TModels>;
+  return GeneratedModuleService as ModuleServiceConstructor<
+    TModels,
+    TCredentialsSchema
+  >;
 }

@@ -1,5 +1,14 @@
 # @damatjs/orm-migration Unreleased
 
+> Adds deterministic system migrations alongside module-owned migrations.
+
+## What changed
+
+Before, the migration runner discovered and tracked only module-owned SQL. Now
+it accepts ordered system catalogs, applies shared infrastructure before module
+migrations under the same advisory lock, and commits each system migration with
+its owner-scoped tracker record.
+
 ## Changed
 
 Migration discovery prefers a resolved module's explicit `migrations`
@@ -15,3 +24,12 @@ row commit in the same transaction.
 
 String callers continue to use `<resolver>/migrations`. Callers enabling
 durable infrastructure must pass its collected system migrations.
+
+## Breaking
+
+- None. System catalogs are optional inputs to the existing migration runner.
+
+## References
+
+- Current behavior: [migration README](../../packages/orm/migration/README.md)
+- Source: `packages/orm/migration/src/`

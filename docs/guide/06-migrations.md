@@ -24,8 +24,26 @@ bun run db:status                  # what's applied vs pending
 Those scripts map to the [`damat-orm`](../../packages/orm/cli/README.md) commands
 `migrate:create`, `migrate:up`, `migrate:status`, and `migrate:list`.
 
+`migrate:up` also selects framework system migrations from enabled services.
+They run in deterministic owner order — shared durability, jobs, then durable
+events — before module migrations. Every system and module row is tracked by
+owner and migration id in `_damat_migration_logs`.
+
 > Applied migrations are recorded in a tracking table so re-running `migrate:up`
 > is safe and idempotent.
+
+Framework startup performs a read-only readiness check. It never creates
+tables. A deployment must run one migration step before any API or worker
+runtime starts:
+
+```bash
+damat-orm migrate:up
+damat-orm migrate:status
+```
+
+Status output includes system owners even when they are not feature modules.
+In containers, use one migration job and make API/jobs/events wait for its
+successful completion rather than letting replicas race schema changes.
 
 ## In a standalone module (`damat module`)
 

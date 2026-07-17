@@ -4,8 +4,9 @@
 
 `@damatjs/framework` turns one `damat.config.ts` and application build into an
 HTTP server, a selected durable-worker process, or both. It initializes the
-logger, PostgreSQL, optional Redis, modules, auth, and durable publishers before
-checking migration readiness. It then starts the selected job/event workers and
+logger, PostgreSQL, optional Redis, modules/providers, and auth before checking
+migration readiness. It configures durable wake-up publishers after readiness,
+then starts selected job/event workers and
 builds the Hono HTTP app only when the resolved runtime serves HTTP.
 
 It sits at the top of the Damat backend stack: it depends on `@damatjs/services`, `@damatjs/redis`, the ORM packages, `@damatjs/logger`, `@damatjs/types`, `@damatjs/workflow-engine`, `@damatjs/link`, `@damatjs/events`, `@damatjs/jobs`, and `@damatjs/deps`, and re-exports the service layer, the link authoring surface, and the events/jobs surfaces so apps import everything from one place.
@@ -74,7 +75,7 @@ String locations are project-relative editable source. Node and Damat package
 locations resolve the artifact root, read `damat.json`, and load the same entry
 and optional capabilities without copying them into app source. Packaged routes
 mount below `/<module-id>` in the API router; workflow, job, event, and pipeline
-providers load before the job worker starts. Damat paths stay in
+providers load before selected workers start. Damat paths stay in
 `.damat/packages`.
 
 `links` points at a directory whose `index.ts` default-exports `defineLinkModule(...)` and exports `models`. The framework registers it as a `link` module, so cross-module links boot, migrate, and type-generate alongside your modules.

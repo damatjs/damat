@@ -1,5 +1,13 @@
 # @damatjs/jobs Unreleased
 
+> Moves background work to PostgreSQL-backed runs with fenced workers and headless operations.
+
+## What changed
+
+Jobs use PostgreSQL as their canonical store, with persisted attempts, leases,
+retries, schedules, progress, logs, results, controls, and recovery. Redis is an
+optional post-commit wake-up path rather than the queue of record.
+
 ## Added
 
 - Ordered PostgreSQL system migrations for job runs, attempts, immutable
@@ -106,8 +114,19 @@
 
 ## Action required
 
-Run `bun run db:migrate` after enabling or updating `services.jobs`. This applies
+Run `damat-orm migrate:up` after enabling or updating `services.jobs`. This applies
 the shared durability catalog followed by the jobs catalog. Replace `queueName`
 with `queue`, replace string Redis priorities with numeric priorities, and
 migrate raw queue inspection to the headless job clients. Construct a new `JobWorker`
 instead of restarting a worker instance that has begun stopping.
+
+## Breaking
+
+- Raw Redis queue exports are removed; use durable definitions, workers, and
+  headless inspection clients.
+- `queueName` becomes `queue`, and priorities are numeric.
+
+## References
+
+- Current behavior: [jobs README](../../packages/core/jobs/README.md)
+- Source: `packages/core/jobs/src/`

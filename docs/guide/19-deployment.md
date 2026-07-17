@@ -2,69 +2,109 @@
 
 # 19. Deployment
 
-A Damat app deploys like any Bun HTTP service: build, run migrations, start.
-There is no framework-specific hosting requirement — anything that can run a
-container (or Bun directly) and reach Postgres works.
+One Damat build can serve HTTP, execute selected durable workers, or do both.
+Any platform that can run Bun and reach PostgreSQL can host it.
 
-## The release sequence
+## Release sequence
 
-Every deploy, in this order:
+Build once, migrate once, then start runtime roles:
 
 ```bash
-damat build                 # type-check + bundle to .damat/dist
-bun damat-orm migrate:up    # apply pending migrations (idempotent)
-damat start                 # serve the built app
+damat build
+damat-orm migrate:up
+damat start
 ```
 
-Set these in the production environment:
+Startup checks that required system migrations exist; it never creates tables.
+Run migrations as a release job or one-shot container and require successful
+completion before API and workers start.
+
+Production variables normally include:
 
 - `NODE_ENV=production`
-- `DATABASE_URL` — your production Postgres
-- `REDIS_URL` — if you use cache, queues, locks, sessions, or rate limiting
-- Any module credentials your `damat.config.ts` modules require (each module's
-  `.env` keys were synced into `.env.example` when you installed it)
+- `DATABASE_URL` for modules and durable infrastructure
+- optional `REDIS_URL` for cache/pub-sub/locks and faster durable wake-ups
+- module credentials declared by installed modules
+- `DAMAT_RUNTIME_MODE` and `DAMAT_WORKER_TYPES` for each process role
 
-## A minimal Dockerfile
+## One image, several roles
 
-This works for any app scaffolded with `damat create`:
+The same image can back an API and dedicated workers:
+
+| Role      | Environment                                              | Responsibility                           |
+| --------- | -------------------------------------------------------- | ---------------------------------------- |
+| Migration | none                                                     | Run `bun run db:migrate` once and exit   |
+| API       | `DAMAT_RUNTIME_MODE=server`                              | Serve HTTP; no workers                   |
+| Jobs      | `DAMAT_RUNTIME_MODE=worker`, `DAMAT_WORKER_TYPES=jobs`   | Run only job workers                     |
+| Events    | `DAMAT_RUNTIME_MODE=worker`, `DAMAT_WORKER_TYPES=events` | Run the durable router and event workers |
+
+`DAMAT_RUNTIME_MODE` overrides config mode and `DAMAT_WORKER_TYPES` independently
+overrides worker selection. An `all` process can serve HTTP and workers in one
+container for smaller deployments.
+
+## Monorepo Docker build
+
+The reference backend builds the dependency closure before building the app:
 
 ```dockerfile
 FROM oven/bun:1 AS build
-WORKDIR /app
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+WORKDIR /workspace
 COPY . .
-RUN bun run build
+RUN bun install --frozen-lockfile
+RUN bunx turbo run build --filter=@damatjs/default...
 
-FROM oven/bun:1-slim
-WORKDIR /app
-COPY --from=build /app .
-ENV NODE_ENV=production
-EXPOSE 6543
-CMD ["sh", "-c", "bun damat-orm migrate:up && bun run start"]
+FROM oven/bun:1 AS runtime
+WORKDIR /workspace
+COPY --chown=bun:bun --from=build /workspace /workspace
+USER bun
+WORKDIR /workspace/backend/default
+CMD ["bun", "run", "start"]
 ```
 
-Running migrations at container start is the simplest correct default —
-`migrate:up` is idempotent and per-module, so replicas racing on boot apply
-each migration once. On larger setups, run `migrate:up` as a separate release
-step (CI job, init container) before rolling instances.
+An application outside this monorepo can build its own package directly, but it
+must include all runtime dependencies and the `.damat/dist` production bundle.
 
-## Health checks
+## PostgreSQL and Redis
 
-Every Damat app serves `GET /health` — point your load balancer or
-orchestrator's liveness probe at it.
+PostgreSQL stores work, attempts, leases, retries, activity, progress, logs,
+results, controls, and worker records. Redis messages are optional latency hints.
+If Redis is absent or lost, workers continue polling PostgreSQL and expired
+leases remain recoverable.
 
-## The reference setup
+Workers provide at-least-once execution. Use handler `withIdempotency` for
+database effects and pass the same stable key to external providers when they
+support idempotency.
 
-The monorepo's [default backend](../../backend/default/README.md) ships a
-worked example of all of this: a multi-stage `Dockerfile` and a
-`docker-compose.yml` with Postgres (pgvector), Redis, and Adminer. If you
-cloned the repo:
+## Health and operations
+
+Point HTTP liveness/readiness probes at `GET /health` on API processes. Headless
+workers do not need an HTTP server. Inspect their status, capacity, attempts,
+failures, retries, recovery, progress, and logs through
+`createJobInspectionClient` and `createDurableEventInspectionClient`.
+
+The framework mounts no operational administration routes. Applications own
+authentication, authorization, and presentation for a dashboard, CLI, or
+automation.
+
+## Reference Compose setup
+
+From the repository root:
 
 ```bash
-docker-compose up -d db redis        # local infra
-docker build -t damatjs/api ./backend/default
-docker-compose up api
+export POSTGRES_PASSWORD='replace-with-a-long-random-value'
+docker compose -f backend/default/docker-compose.yml up --build
+```
+
+The migration/API/jobs/events services share `damat-default:local`; every
+runtime depends on successful migration completion. The reference PostgreSQL
+service requires this password and is not published on the host. Use private
+managed PostgreSQL and deployment-secret injection outside local evaluation.
+Redis is an optional `accelerator` profile:
+
+```bash
+export POSTGRES_PASSWORD='replace-with-a-long-random-value'
+REDIS_URL=redis://redis:6379 \
+docker compose -f backend/default/docker-compose.yml --profile accelerator up --build
 ```
 
 ---
