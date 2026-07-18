@@ -50,4 +50,13 @@ describe("matchProfiles", () => {
     delete unmatched.install?.provides?.routes.fallbackTo;
     expect(() => matchProfiles({ provider: unmatched })).toThrow("routes");
   });
+
+  test("rejects an override the provider does not expose", () => {
+    expect(() =>
+      matchProfiles({
+        provider,
+        overrides: { targets: { unknown: "custom/{id}" } },
+      }),
+    ).toThrow(/no provided capability: unknown/);
+  });
 });

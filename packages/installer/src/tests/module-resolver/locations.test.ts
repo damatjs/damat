@@ -58,4 +58,23 @@ describe("module artifact locations", () => {
     expect(resolved.manifest.name).toBe("billing");
     expect(resolved.entry).toBe(join(root, "src/index.ts"));
   });
+
+  test("finds a Node package from a nested workspace directory", () => {
+    const cwd = temp();
+    const nested = join(cwd, "apps/api/src");
+    const packageRoot = join(cwd, "node_modules/@fixtures/billing");
+    createModule(packageRoot);
+    const resolved = resolveModuleArtifact(
+      { type: "package", name: "@fixtures/billing" },
+      nested,
+    );
+    expect(resolved.root).toBe(packageRoot);
+  });
+
+  test("reports a valid Node package that is not installed", () => {
+    const cwd = temp();
+    expect(() =>
+      resolveModuleArtifact({ type: "package", name: "missing" }, cwd),
+    ).toThrow(/Node package module not found: missing/);
+  });
 });

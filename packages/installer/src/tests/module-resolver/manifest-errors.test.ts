@@ -2,7 +2,10 @@ import { afterEach, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { resolveModuleArtifact } from "../../module";
+import {
+  ModuleManifestNotFoundError,
+  resolveModuleArtifact,
+} from "../../module";
 import { write } from "./fixture";
 
 let root = "";
@@ -32,4 +35,10 @@ test("wrong manifest kind does not fall back to bare source", () => {
   expect(() => resolveModuleArtifact(path, path, "billing")).toThrow(
     /kind must be module/,
   );
+});
+
+test("missing manifests expose a typed error", () => {
+  const error = new ModuleManifestNotFoundError("missing");
+  expect(error).toBeInstanceOf(Error);
+  expect(error.message).toBe("missing");
 });

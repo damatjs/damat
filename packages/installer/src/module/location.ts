@@ -11,8 +11,6 @@ function nodePackageRoot(name: string, cwd: string): string {
   while (true) {
     const modulesDir = join(current, "node_modules");
     const candidate = join(modulesDir, name);
-    if (!inside(modulesDir, candidate))
-      throw new Error(`invalid Node package name: ${name}`);
     if (existsSync(candidate)) return candidate;
     const parent = dirname(current);
     if (parent === current) break;

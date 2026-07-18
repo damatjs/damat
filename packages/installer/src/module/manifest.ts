@@ -11,7 +11,11 @@ const CANDIDATES = [
   "module.json",
 ] as const;
 
-export class ModuleManifestNotFoundError extends Error {}
+export class ModuleManifestNotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
 
 export function locateModuleManifest(root: string): LocatedModuleManifest {
   for (const candidate of CANDIDATES) {

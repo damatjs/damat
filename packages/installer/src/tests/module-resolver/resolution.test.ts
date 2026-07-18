@@ -64,4 +64,23 @@ describe("resolveModuleArtifact", () => {
       /models.*inside the module artifact/,
     );
   });
+
+  test("accepts a TypeScript file as a direct source module", () => {
+    const root = temp();
+    write(root, "billing.ts", "export default {};\n");
+    const entry = join(root, "billing.ts");
+    const resolved = resolveModuleArtifact(entry, root, "billing");
+    expect(resolved.entry).toBe(entry);
+    expect(resolved.manifest.name).toBe("billing");
+  });
+
+  test("reports a module manifest without a runtime entry", () => {
+    const root = temp();
+    write(
+      root,
+      "damat.json",
+      JSON.stringify({ schemaVersion: 1, kind: "module", name: "empty" }),
+    );
+    expect(() => resolveModuleArtifact(root, root)).toThrow(/runtime entry/);
+  });
 });
