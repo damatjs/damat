@@ -29,7 +29,12 @@ describe("runTypeCheck", () => {
     state.exists = true;
     const logger = createTestLogger();
     expect(await runTypeCheck({ cwd: "/app", logger, label: "app" })).toBe(0);
-    expect(spawnCalls[0]?.cmd).toEqual(["bunx", "tsc", "--noEmit"]);
+    expect(spawnCalls[0]?.cmd).toEqual([
+      process.execPath,
+      "x",
+      "tsc",
+      "--noEmit",
+    ]);
     expect(logger.info).toHaveBeenCalledWith("Type-checking app...");
   });
 

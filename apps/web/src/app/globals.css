@@ -2,6 +2,14 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+.font-system-sans {
+  --font-inter: ui-sans-serif;
+}
+
+.font-system-mono {
+  --font-jetbrains-mono: ui-monospace;
+}
+
 /* ---- Theme variables --------------------------------------------------
  * Semantic tokens drive every color on the site. Light is the default;
  * `.dark` flips the page; `.forge` is an always-dark scope for product

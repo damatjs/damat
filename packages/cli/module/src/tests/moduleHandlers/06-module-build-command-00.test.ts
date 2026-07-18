@@ -21,8 +21,13 @@ describe("module build command", () => {
     const { ctx, logger } = createContext({}, { cwd: "/m" });
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(0);
-    // The type-check spawned `bunx tsc --noEmit`.
-    expect(spawnCalls[0]!.cmd).toEqual(["bunx", "tsc", "--noEmit"]);
+    // The type-check runs through the active Bun executable.
+    expect(spawnCalls[0]!.cmd).toEqual([
+      process.execPath,
+      "x",
+      "tsc",
+      "--noEmit",
+    ]);
     expect(logger.success).toHaveBeenCalledWith("Module build OK");
   });
 });

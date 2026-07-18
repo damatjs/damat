@@ -5,7 +5,7 @@
 | `cleanupTempFile.ts`    | Best-effort removal with debug diagnostics.                       |
 | `git.ts`                | Detect system Git and produce actionable errors.                  |
 | `gitSource.ts`          | Parse Git URLs and GitHub source shorthand.                       |
-| `runTypeCheck.ts`       | Run `bunx tsc --noEmit` with explicit inputs.                     |
+| `runTypeCheck.ts`       | Run `bun x tsc --noEmit` through the active Bun executable.       |
 | `packages/validate.ts`  | Validate package names and ranges.                                |
 | `packages/install.ts`   | Build safe `bun add` arguments and return output.                 |
 | `installer/origin.ts`   | Parse paths, Git, registry, npm, and tarball arguments.           |

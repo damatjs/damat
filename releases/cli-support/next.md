@@ -21,6 +21,8 @@ outside the executable composer.
   `DAMAT_MODULE_REGISTRY` setting.
 - Shared adapters that connect CLI options, logging, acquisition, planning, and
   transactional execution to `@damatjs/installer`.
+- Type-check subprocesses launch through Bun's absolute running executable, so
+  builds do not depend on a separate `bunx` command being present in `PATH`.
 
 ## Breaking
 

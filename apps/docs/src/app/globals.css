@@ -3,6 +3,14 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+.font-system-sans {
+  --font-inter: ui-sans-serif;
+}
+
+.font-system-mono {
+  --font-jetbrains-mono: ui-monospace;
+}
+
 @theme inline {
   --color-canvas: var(--bg);
   --color-surface: var(--surface);

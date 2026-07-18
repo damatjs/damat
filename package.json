@@ -2,7 +2,7 @@
   "name": "root",
   "private": true,
   "scripts": {
-    "build": "turbo run build",
+    "build": "turbo run build --concurrency=1",
     "dev": "turbo run dev",
     "test": "bun scripts/test/run.ts",
     "lint": "turbo run lint",
@@ -20,7 +20,7 @@
     "@changesets/cli": "^2.31.0",
     "oxlint": "^1.73.0",
     "prettier": "^3.7.4",
-    "turbo": "^2.8.10",
+    "turbo": "2.8.17",
     "typescript": "5.9.2"
   },
   "engines": {

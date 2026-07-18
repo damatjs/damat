@@ -30,7 +30,7 @@ afterEach(resetMocks);
 const CWD = "/project";
 
 describe("buildCommand.handler — type-check gate", () => {
-  it("type-checks first (bunx tsc --noEmit) when a tsconfig.json exists", async () => {
+  it("type-checks first with the active Bun executable", async () => {
     state.existsMap = { "/project/tsconfig.json": true }; // src absent -> stop after entry build
     const { ctx, logger } = createContext(
       { output: ".damat/dist", target: "bun", minify: false },
@@ -40,7 +40,12 @@ describe("buildCommand.handler — type-check gate", () => {
     await buildCommand.handler(ctx);
 
     expect(logger.info).toHaveBeenCalledWith("Type-checking app...");
-    expect(spawnCalls[0]!.cmd).toEqual(["bunx", "tsc", "--noEmit"]);
+    expect(spawnCalls[0]!.cmd).toEqual([
+      process.execPath,
+      "x",
+      "tsc",
+      "--noEmit",
+    ]);
     expect(spawnCalls[0]!.cwd).toBe(CWD);
     // The entry bundle is the SECOND spawn, after the type-check passes.
     expect(spawnCalls[1]!.cmd).toContain("build");
@@ -58,7 +63,12 @@ describe("buildCommand.handler — type-check gate", () => {
 
     expect(result.exitCode).toBe(2);
     expect(spawnCalls).toHaveLength(1); // only tsc; no entry/config build
-    expect(spawnCalls[0]!.cmd).toEqual(["bunx", "tsc", "--noEmit"]);
+    expect(spawnCalls[0]!.cmd).toEqual([
+      process.execPath,
+      "x",
+      "tsc",
+      "--noEmit",
+    ]);
     expect(rmCalls).toHaveLength(0); // never cleaned the output dir
     expect(logger.success).not.toHaveBeenCalled();
   });
@@ -74,7 +84,7 @@ describe("buildCommand.handler — type-check gate", () => {
 
     expect(logger.info).not.toHaveBeenCalledWith("Type-checking app...");
     expect(spawnCalls).toHaveLength(1); // entry build only, no tsc
-    expect(spawnCalls[0]!.cmd[0]).toBe("bun"); // the entry bundle, not `bunx tsc`
+    expect(spawnCalls[0]!.cmd[0]).toBe("bun"); // the entry bundle, not `bun x tsc`
     expect(spawnCalls[0]!.cmd).toContain("/project/.damat/build-entry.ts");
   });
 });

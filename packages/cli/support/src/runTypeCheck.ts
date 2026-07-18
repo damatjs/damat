@@ -19,7 +19,7 @@ export async function runTypeCheck(opts: RunTypeCheckOptions): Promise<number> {
   opts.logger.info(`Type-checking ${opts.label ?? "project"}...`);
   try {
     const result = spawn({
-      cmd: ["bunx", "tsc", "--noEmit"],
+      cmd: [process.execPath, "x", "tsc", "--noEmit"],
       cwd: opts.cwd,
       stdout: "inherit",
       stderr: "inherit",
