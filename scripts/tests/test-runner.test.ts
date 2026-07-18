@@ -20,6 +20,7 @@ const databasePackages = [
   ["packages/core/durability", "DAMAT_DURABILITY_DATABASE_URL"],
   ["packages/core/jobs", "DAMAT_JOBS_DATABASE_URL"],
   ["packages/core/events", "DAMAT_EVENTS_DATABASE_URL"],
+  ["packages/core/pipelines", "DAMAT_PIPELINES_DATABASE_URL"],
   ["packages/link", "DAMAT_LINK_DATABASE_URL"],
   ["packages/service", "DAMAT_SERVICES_DATABASE_URL"],
   ["packages/orm/pg", "DAMAT_ORM_PG_DATABASE_URL"],

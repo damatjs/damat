@@ -2,6 +2,7 @@ export const testDatabases = {
   DAMAT_DURABILITY_DATABASE_URL: "damat_durability",
   DAMAT_JOBS_DATABASE_URL: "damat_jobs",
   DAMAT_EVENTS_DATABASE_URL: "damat_events",
+  DAMAT_PIPELINES_DATABASE_URL: "damat_pipelines",
   DAMAT_LINK_DATABASE_URL: "damat_link",
   DAMAT_SERVICES_DATABASE_URL: "damat_services",
   DAMAT_ORM_PG_DATABASE_URL: "damat_orm_pg",
