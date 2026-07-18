@@ -29,6 +29,7 @@ workflow _fails_ inside a live process.
 | `src/types/result.ts`     | `WorkflowSuccess`, `WorkflowFailure`, `WorkflowResult`.                                                                                                                                    |
 | `src/types/retry.ts`      | `RetryPolicy`.                                                                                                                                                                             |
 | `src/types/lock.ts`       | `WorkflowLockConfig`, `WorkflowLockResult`.                                                                                                                                                |
+| `src/types/observer.ts`   | Execution identity, outer cancellation, and lifecycle observation.                                                                                                                         |
 | `src/errors/`             | Error hierarchy. See [errors.md](./errors.md).                                                                                                                                             |
 | `src/config/`             | `DEFAULT_*` config + `RetryPolicies` presets. See [retry.md](./retry.md).                                                                                                                  |
 | `src/step/create.ts`      | `createStep` — builds a `StepDefinition`, merges config. See [steps.md](./steps.md).                                                                                                       |
@@ -117,6 +118,9 @@ no-ops.
   (`engineState.compensationsRun > 0`).
 - **`executionId` is always unique** (`nanoid`), even under a lock — the `lockId`
   is a business id that repeats across runs and is surfaced via `metadata.lockId`.
+- **Observers are non-authoritative.** Event delivery is awaited for ordering,
+  but observer failures are logged and cannot replace workflow outcomes. A
+  supplied outer signal reaches Effect in locked and unlocked execution.
 - **Config layering is three-deep:** `DEFAULT_STEP_CONFIG` < workflow
   `defaultStepConfig` < the step's own `rawConfig`; `retry` is merged the same
   way under `DEFAULT_RETRY_POLICY`.

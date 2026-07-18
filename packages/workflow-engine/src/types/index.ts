@@ -11,6 +11,7 @@ export * from "./context";
 export * from "./result";
 export * from "./definition";
 export * from "./lock";
+export * from "./observer";
 
 // Re-export Effect types
 export { Effect, Scope } from "@damatjs/deps/effect";

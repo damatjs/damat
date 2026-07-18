@@ -74,11 +74,13 @@ export interface WorkflowDefinition<I, O> {
   execute: (
     input: I,
     metadata?: Record<string, unknown>,
+    options?: import("./observer").WorkflowExecutionOptions,
   ) => Promise<WorkflowResult<O>>;
   /** Execute the workflow with a distributed lock */
   executeWithLock: (
     input: I,
     lockConfig?: WorkflowLockConfig,
     metadata?: Record<string, unknown>,
+    options?: import("./observer").WorkflowExecutionOptions,
   ) => Promise<WorkflowResult<O>>;
 }

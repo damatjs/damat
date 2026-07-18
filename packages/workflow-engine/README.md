@@ -10,7 +10,8 @@
 > is killed mid-workflow, compensations for already-completed steps will **not**
 > run and the run cannot be resumed. The saga gives you rollback on _failure_
 > inside a live process — for crash-safe guarantees, pair it with idempotent
-> steps, reconciliation jobs, or an external saga log.
+> steps, reconciliation jobs, or use it as a node inside a durable
+> [`@damatjs/pipelines`](../core/pipelines/README.md) graph.
 
 Part of the [Damat](../../README.md) monorepo · [Full guide](../../docs/GUIDE.md) · [Internals](./docs/README.md)
 
@@ -102,6 +103,30 @@ if (result.success) {
   );
 }
 ```
+
+## Execution observation and cancellation
+
+`execute` and `executeWithLock` accept an optional execution-options argument.
+It can provide a stable execution ID, an outer `AbortSignal`, and an async
+observer. Observers receive workflow, step-attempt, and compensation
+start/success/failure events with timing and identity only. Observer failures
+are logged and never replace the workflow result.
+
+```ts
+const result = await placeOrder.execute(
+  input,
+  { correlationId },
+  {
+    executionId: nodeExecutionId,
+    signal: jobContext.signal,
+    observer: async (event) => audit(event),
+  },
+);
+```
+
+The pipeline runtime uses this seam to associate an in-process saga's internal
+steps with its durable workflow node. The workflow owns local compensation; the
+pipeline owns durable scheduling before and after the call.
 
 ## API
 

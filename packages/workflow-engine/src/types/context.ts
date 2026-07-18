@@ -1,5 +1,6 @@
 import type { StepConfig } from "./step";
 import type { CompensationError, MaxRetriesExceededError } from "../errors";
+import type { WorkflowExecutionObserver } from "./observer";
 
 /**
  * Engine-internal bookkeeping carried through the context.
@@ -24,6 +25,8 @@ export interface WorkflowEngineState {
    * result error so callers see MAX_RETRIES_EXCEEDED. @internal
    */
   retriesExceeded?: MaxRetriesExceededError;
+  /** Optional execution telemetry sink used by durable pipeline adapters. */
+  observer?: WorkflowExecutionObserver;
 }
 
 /**
