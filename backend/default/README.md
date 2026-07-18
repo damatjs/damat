@@ -1,7 +1,7 @@
 # @damatjs/default
 
 The reference Damat backend. It shows how an application composes modules,
-links, routes, workflows, durable jobs, durable events, inspection clients, and
+links, routes, workflows, durable jobs, durable events, pipelines, inspection clients, and
 separate process roles from one build.
 
 ## Run locally
@@ -13,7 +13,7 @@ bun run db:migrate
 bun run dev
 ```
 
-PostgreSQL is required for modules, jobs, and durable events. Redis is optional:
+PostgreSQL is required for modules, jobs, durable events, and pipelines. Redis is optional:
 when configured it holds rebuildable ready indexes, worker liveness, wake-ups,
 and inspection invalidations. PostgreSQL remains the complete source of truth.
 Healthy Redis leaves a 30-second PostgreSQL safety scan; degraded mode discovers
@@ -42,10 +42,11 @@ bun run test
 | User onboarding     | `src/workflows/user/`               | Forward steps and compensation                                                  |
 | Report job          | `src/jobs/generateReport.ts`        | Durable progress, structured logs, retry policy, and JSON result                |
 | User-created event  | `src/events/`                       | One durable event with `auditUser` and `notifyUser` consumers                   |
+| Onboarding pipeline | `src/pipelines/`                    | A durable graph composing the workflow, event, and report job                   |
 | Atomic dispatch     | `src/examples/transactionalWork.ts` | A domain write, job enqueue, and event publish sharing one transaction executor |
 | Operations          | `src/examples/inspectWork.ts`       | Headless job and event inspection clients; no routes are mounted automatically  |
 
-App-owned jobs and events are side-effect imported by `damat.config.ts` so their
+App-owned jobs, events, and pipelines are side-effect imported by `damat.config.ts` so their
 definitions exist before the framework starts selected workers. Installed module
 providers are loaded through each module's `damat.json`.
 
@@ -86,12 +87,13 @@ CLI, or UI that exposes those clients.
 ## Runtime roles
 
 The config defaults to `all`, which serves HTTP and runs both durable
-capabilities. Deployment variables override config independently:
+worker layers. Deployment variables override config independently:
 
 ```bash
 DAMAT_RUNTIME_MODE=server bun run start
 DAMAT_RUNTIME_MODE=worker DAMAT_WORKER_TYPES=jobs bun run start
 DAMAT_RUNTIME_MODE=worker DAMAT_WORKER_TYPES=events bun run start
+DAMAT_RUNTIME_MODE=worker DAMAT_WORKER_TYPES=pipelines bun run start
 ```
 
 `server` mounts HTTP without workers. `worker` is headless and requires at least
@@ -99,13 +101,14 @@ one enabled capability. `all` serves HTTP and runs selected workers.
 
 ## Docker Compose
 
-The Compose file builds one image from the monorepo root and uses it for four
+The Compose file builds one image from the monorepo root and uses it for five
 roles:
 
 1. `migrate` runs `bun run db:migrate` once.
 2. `api` waits for migration success and runs in `server` mode.
 3. `jobs` waits for migration success and runs the jobs worker only.
 4. `events` waits for migration success and runs the event router/worker only.
+5. `pipelines` waits for migration success and runs the pipeline router/internal worker only.
 
 Start PostgreSQL and the application:
 
@@ -128,8 +131,9 @@ docker compose -f backend/default/docker-compose.yml --profile accelerator up --
 
 For authenticated Redis, preserve the user's existing rules and add
 `&damat:*` and `&damat-events`. Verify publish/subscribe access to
-`damat:jobs:wakeup`, `damat:events:wakeup`, and `damat-events`, persist direct
-server changes with `CONFIG REWRITE`, and keep the ACL in the container-mounted
+`damat:jobs:wakeup`, `damat:events:wakeup`, `damat:pipelines:wakeup`, and
+`damat-events`. Persist direct server changes with `CONFIG REWRITE`, and keep
+the ACL in the container-mounted
 configuration for recreation.
 
 Only the API has an HTTP health check. Worker state, capacity, attempts,
@@ -149,6 +153,7 @@ providers should receive the same stable idempotency key when supported.
 
 - [Damat Guide](../../docs/GUIDE.md)
 - [Events and background jobs](../../docs/guide/10b-events-and-jobs.md)
+- [Durable pipelines](../../docs/guide/10c-pipelines.md)
 - [Deployment](../../docs/guide/19-deployment.md)
 - [Framework](../../packages/framework/README.md)
 - [Durability](../../packages/core/durability/README.md)

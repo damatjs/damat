@@ -65,6 +65,17 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  pipelines:
+    <<: *app
+    command: ["bun", "run", "start"]
+    environment:
+      <<: *app-environment
+      DAMAT_RUNTIME_MODE: worker
+      DAMAT_WORKER_TYPES: pipelines
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
   db:
     image: pgvector/pgvector:pg16
     environment:

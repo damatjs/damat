@@ -1,6 +1,7 @@
 import { defineConfig } from "@damatjs/framework";
 import "./src/events";
 import "./src/jobs";
+import "./src/pipelines";
 import { referenceInspectionPolicy } from "./src/examples/inspectionPolicy";
 
 export default defineConfig({
@@ -35,13 +36,14 @@ export default defineConfig({
   },
   runtime: {
     mode: "all",
-    workers: ["jobs", "events"],
+    workers: ["jobs", "events", "pipelines"],
     shutdownGraceMs: 30_000,
   },
   services: {
     durability: referenceInspectionPolicy,
     jobs: { queue: "reports", concurrency: 2 },
     events: { durable: { concurrency: 2 } },
+    pipelines: { concurrency: 2, routerBatchSize: 100 },
   },
   modules: {
     user: {

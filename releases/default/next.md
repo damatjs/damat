@@ -1,6 +1,6 @@
 # @damatjs/default Unreleased
 
-> Demonstrates PostgreSQL-canonical jobs/events with rebuildable Redis acceleration.
+> Demonstrates PostgreSQL-canonical jobs, events, and pipelines with rebuildable Redis acceleration.
 
 ## What changed
 
@@ -12,6 +12,8 @@ PostgreSQL worker snapshots, 100-row relay batches, and 90-day retention.
 
 - Operational documentation for Redis ACL channel rules and recovery.
 - Transactional acceleration wake-ups for the domain/job/event example.
+- A source-controlled onboarding pipeline that composes the existing saga
+  workflow, durable event, and report job, plus a dedicated Compose worker role.
 
 ## Breaking
 

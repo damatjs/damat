@@ -21,7 +21,7 @@ test("builds one runtime image from the monorepo root", () => {
   expect(compose).toContain("image: damat-default:local");
   expect(compose).toContain("context: ../..");
   expect(compose).toContain("dockerfile: backend/default/Dockerfile");
-  for (const name of ["migrate", "api", "jobs", "events"]) {
+  for (const name of ["migrate", "api", "jobs", "events", "pipelines"]) {
     expect(service(name)).toContain("<<: *app");
   }
 });
@@ -31,25 +31,27 @@ test("gates every runtime on the one-shot migration", () => {
   expect(migration).toContain('command: ["bun", "run", "db:migrate"]');
   expect(migration).toContain('restart: "no"');
   expect(migration).toContain("condition: service_healthy");
-  for (const name of ["api", "jobs", "events"]) {
+  for (const name of ["api", "jobs", "events", "pipelines"]) {
     expect(service(name)).toContain(
       "condition: service_completed_successfully",
     );
   }
 });
 
-test("selects API, jobs, and events runtime responsibilities exactly", () => {
+test("selects each runtime responsibility exactly", () => {
   expect(service("api")).toContain("DAMAT_RUNTIME_MODE: server");
   expect(service("api")).not.toContain("DAMAT_WORKER_TYPES");
   expect(service("jobs")).toContain("DAMAT_RUNTIME_MODE: worker");
   expect(service("jobs")).toContain("DAMAT_WORKER_TYPES: jobs");
   expect(service("events")).toContain("DAMAT_RUNTIME_MODE: worker");
   expect(service("events")).toContain("DAMAT_WORKER_TYPES: events");
+  expect(service("pipelines")).toContain("DAMAT_RUNTIME_MODE: worker");
+  expect(service("pipelines")).toContain("DAMAT_WORKER_TYPES: pipelines");
 });
 
 test("only the API runtime owns an HTTP health check", () => {
   expect(service("api")).toContain("healthcheck:");
-  for (const name of ["migrate", "jobs", "events"]) {
+  for (const name of ["migrate", "jobs", "events", "pipelines"]) {
     expect(service(name)).not.toContain("healthcheck:");
   }
 });
@@ -59,7 +61,9 @@ test("keeps Redis an optional wake-up accelerator", () => {
   expect(service("redis")).toContain("profiles: [accelerator]");
   expect(service("redis")).toContain("/etc/redis/users.acl");
   const acl = readFileSync(
-    join(root, "backend/default/redis/users.acl"), "utf8");
+    join(root, "backend/default/redis/users.acl"),
+    "utf8",
+  );
   expect(acl).toContain("&damat:*");
   expect(acl).toContain("&damat-events");
 });

@@ -33,6 +33,7 @@
     "@damatjs/orm-model": "*",
     "@damatjs/orm-pg": "*",
     "@damatjs/orm-processor": "*",
+    "@damatjs/pipelines": "*",
     "@damatjs/services": "*",
     "@damatjs/types": "*",
     "@damatjs/workflow-engine": "*"
