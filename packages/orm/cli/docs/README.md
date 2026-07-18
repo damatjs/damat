@@ -99,6 +99,9 @@ Every handler returns `{ exitCode: number }` and reports via `ctx.logger`
   `try { … } finally { await pool.end() }`.
 - **Module-free durability is valid**: `up` and all-status run when enabled
   system migrations exist even if the module container is empty.
+- **Pipeline catalog closure**: enabling pipelines selects shared durability,
+  jobs, and pipeline catalogs even when `services.jobs` is absent; its internal
+  executor still relies on fenced job storage.
 - **Exit codes**: missing config / missing module / missing db URL / failed
   migration → `exitCode: 1`; success or "no changes" → `0`.
 

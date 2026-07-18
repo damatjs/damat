@@ -12,11 +12,12 @@ export async function loadSystemMigrations(
     const config = loaded.default ?? loaded;
     const jobsEnabled = Boolean(config.services?.jobs);
     const durableEventsEnabled = Boolean(config.services?.events?.durable);
-    if (!jobsEnabled && !durableEventsEnabled) return [];
+    const pipelinesEnabled = Boolean(config.services?.pipelines);
+    if (!jobsEnabled && !durableEventsEnabled && !pipelinesEnabled) return [];
     const { collectSystemMigrations, durabilitySystemMigrations } =
       await import("@damatjs/durability");
     const catalogs = [durabilitySystemMigrations];
-    if (jobsEnabled) {
+    if (jobsEnabled || pipelinesEnabled) {
       const { jobsSystemMigrations } = await import("@damatjs/jobs/migrations");
       catalogs.push(jobsSystemMigrations);
     }
@@ -24,6 +25,11 @@ export async function loadSystemMigrations(
       const { eventsSystemMigrations } =
         await import("@damatjs/events/migrations");
       catalogs.push(eventsSystemMigrations);
+    }
+    if (pipelinesEnabled) {
+      const { pipelinesSystemMigrations } =
+        await import("@damatjs/pipelines/migrations");
+      catalogs.push(pipelinesSystemMigrations);
     }
     return collectSystemMigrations(catalogs);
   } catch (error) {

@@ -20,10 +20,13 @@ test.serial(
       [
         "@damatjs/durability:001",
         "@damatjs/durability:002",
+        "@damatjs/durability:003",
+        "@damatjs/durability:004",
         "@damatjs/events:001",
         "@damatjs/events:002",
         "@damatjs/events:003",
         "@damatjs/events:004",
+        "@damatjs/events:005",
       ],
     );
   },
@@ -37,7 +40,7 @@ test.serial("up orders jobs before events when both are enabled", async () => {
   state.runResult = [{ success: true }];
   expect((await (await loadUp()).handler(context().ctx)).exitCode).toBe(0);
   expect(
-    systemMigrationKeys(state.runArgs.options.systemMigrations).slice(-7),
+    systemMigrationKeys(state.runArgs.options.systemMigrations).slice(-8),
   ).toEqual([
     "@damatjs/jobs:001",
     "@damatjs/jobs:002",
@@ -46,5 +49,6 @@ test.serial("up orders jobs before events when both are enabled", async () => {
     "@damatjs/events:002",
     "@damatjs/events:003",
     "@damatjs/events:004",
+    "@damatjs/events:005",
   ]);
 });

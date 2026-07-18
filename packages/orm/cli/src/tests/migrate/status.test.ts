@@ -59,6 +59,8 @@ test.serial("status reports all modules and system owners", async () => {
   ).toEqual([
     "@damatjs/durability:001",
     "@damatjs/durability:002",
+    "@damatjs/durability:003",
+    "@damatjs/durability:004",
     "@damatjs/jobs:001",
     "@damatjs/jobs:002",
     "@damatjs/jobs:003",

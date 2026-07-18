@@ -55,8 +55,10 @@ including immutable packages whose SQL lives below `src/migrations`.
 
 When durable events are enabled, `migrate:up` applies the shared durability
 catalog followed by the events catalog before module migrations. Enabling jobs
-selects shared durability followed by jobs. With both enabled the stable owner
-order is shared durability, jobs, then events. The all-module
+selects shared durability followed by jobs. Enabling pipelines selects shared
+durability, jobs, then pipelines because pipeline action/workflow nodes use the
+durable job runtime. With every capability enabled the stable owner order is
+shared durability, jobs, events, then pipelines. The all-module
 `migrate:status` view includes each enabled system owner. A module-scoped
 status request remains limited to that module.
 

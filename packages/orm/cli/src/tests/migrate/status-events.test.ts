@@ -21,9 +21,12 @@ test.serial("status reports durable event system migrations", async () => {
   ).toEqual([
     "@damatjs/durability:001",
     "@damatjs/durability:002",
+    "@damatjs/durability:003",
+    "@damatjs/durability:004",
     "@damatjs/events:001",
     "@damatjs/events:002",
     "@damatjs/events:003",
     "@damatjs/events:004",
+    "@damatjs/events:005",
   ]);
 });
