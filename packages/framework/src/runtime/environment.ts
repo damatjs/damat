@@ -2,7 +2,7 @@ import type { RuntimeEnvironment, RuntimeOverrides } from "./types";
 import type { RuntimeMode, WorkerCapability } from "../config/types/runtime";
 
 const modes: readonly string[] = ["server", "worker", "all"];
-const capabilities: readonly string[] = ["jobs", "events"];
+const capabilities: readonly string[] = ["jobs", "events", "pipelines"];
 
 export function parseRuntimeMode(value: string): RuntimeMode {
   const normalized = value.trim();
@@ -21,7 +21,7 @@ export function normalizeWorkerCapabilities(
   for (const name of names) {
     if (!capabilities.includes(name)) {
       throw new Error(
-        `Unknown worker capability "${name}"; expected jobs or events`,
+        `Unknown worker capability "${name}"; expected jobs, events, or pipelines`,
       );
     }
   }

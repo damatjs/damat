@@ -32,7 +32,7 @@ function setFakeDurability(): void {
   );
 }
 
-test("one subscriber multiplexes job and event wakeups", async () => {
+test("one subscriber multiplexes job, event, and pipeline wakeups", async () => {
   setFakeDurability();
   const redis = new FakeWakeupRedis();
   const coordinator = new ProcessDurabilityCoordinator({ mode: "degraded" });
@@ -46,6 +46,15 @@ test("one subscriber multiplexes job and event wakeups", async () => {
       job: { id: "job", inFlight: 0, wake: () => wakes.push("job") },
       router: { wake: () => wakes.push("router") },
       event: { id: "event", inFlight: 0, wake: () => wakes.push("event") },
+      pipeline: {
+        router: { wake: () => wakes.push("pipeline-router") },
+        worker: {
+          id: "pipeline",
+          inFlight: 0,
+          wake: () => wakes.push("pipeline-worker"),
+        },
+        queue: "damat-pipelines",
+      },
     },
     logger,
     10_000,
@@ -62,27 +71,17 @@ test("one subscriber multiplexes job and event wakeups", async () => {
     event: "mail.sent",
     consumer: "audit",
   });
+  redis.emit("damat:pipelines:wakeup", { kind: "pipelines", scope: "orders" });
   expect(redis.duplicates).toBe(1);
-  expect(wakes).toEqual(["job", "router", "event"]);
+  expect(wakes).toEqual([
+    "job",
+    "pipeline-worker",
+    "router",
+    "pipeline-router",
+    "event",
+    "pipeline-router",
+    "pipeline-router",
+  ]);
   expect(coordinator.mode).toBe("healthy");
-  await transport.stop();
-});
-
-test("permission failure warns once and keeps degraded polling", async () => {
-  setFakeDurability();
-  const redis = new FakeWakeupRedis();
-  redis.subscribeError = new Error("NOPERM No permissions to access a channel");
-  const coordinator = new ProcessDurabilityCoordinator({ mode: "degraded" });
-  const transport = new WorkerWakeupTransport(
-    redis as unknown as Redis,
-    coordinator,
-    {},
-    logger,
-  );
-  transport.start();
-  await Bun.sleep(5);
-  expect(warnings).toEqual(["Durability Redis acceleration unavailable"]);
-  expect(coordinator.mode).toBe("degraded");
-  expect(coordinator.pollInterval(30_000)).toBe(5_000);
   await transport.stop();
 });

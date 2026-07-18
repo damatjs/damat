@@ -12,9 +12,11 @@ test("Redis authorization recovery restores acceleration without restart", async
   redis.subscribeError = new Error("NOPERM No permissions to access a channel");
   let mode: AccelerationMode = "degraded";
   const coordinator: DurabilityCoordinator = {
-    get mode() { return mode; },
+    get mode() {
+      return mode;
+    },
     setMode: (value) => void (mode = value),
-    pollInterval: (fallback) => mode === "healthy" ? 30_000 : fallback,
+    pollInterval: (fallback) => (mode === "healthy" ? 30_000 : fallback),
     run: (_key, operation) => operation(),
   };
   const warnings: string[] = [];
@@ -22,7 +24,7 @@ test("Redis authorization recovery restores acceleration without restart", async
   const transport = new WorkerWakeupTransport(
     redis as unknown as Redis,
     coordinator,
-    {},
+    { job: { id: "job", inFlight: 0, wake: () => {} } },
     {
       warn: (message: string) => warnings.push(message),
       info: (message: string) => infos.push(message),

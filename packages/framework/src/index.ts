@@ -22,3 +22,4 @@ export * from "@damatjs/link";
 export * from "@damatjs/events";
 export * from "@damatjs/jobs";
 export * from "@damatjs/durability";
+export * from "@damatjs/pipelines";

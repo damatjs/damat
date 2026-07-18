@@ -7,87 +7,85 @@ import {
   accelerationRelayOperations,
   type AccelerationRelayOperations,
 } from "./accelerationRelayOperations";
+import { rebuildAccelerationRelay } from "./accelerationRelayRebuild";
+import { flushAccelerationRelay } from "./accelerationRelayFlush";
 
 export class AccelerationRelay {
-  private timer?: ReturnType<typeof setTimeout>;
+  private timer: ReturnType<typeof setTimeout> | null = null;
   private running = false;
+  private inFlight: Promise<void> | null = null;
+  private requested = false;
 
   constructor(
     private readonly redis: Redis,
     private readonly batchSize: number,
     private readonly intervalMs: number,
-    private readonly enabled: { jobs: boolean; events: boolean },
+    private readonly enabled: {
+      jobs: boolean;
+      events: boolean;
+      pipelines?: boolean;
+    },
     private readonly coordinator: DurabilityCoordinator,
     private readonly onError: (error: unknown) => void,
-    private readonly operations: AccelerationRelayOperations =
-      accelerationRelayOperations,
+    private readonly operations: AccelerationRelayOperations = accelerationRelayOperations,
   ) {}
 
   start(): void {
+    if (this.running) return;
     this.running = true;
     void this.flush();
   }
 
   stop(): void {
     this.running = false;
+    this.requested = false;
     if (this.timer) clearTimeout(this.timer);
   }
 
   async flush(): Promise<void> {
     if (!this.running) return;
-    await this.coordinator.run("acceleration:relay", () => this.flushOnce());
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = null;
+    if (this.inFlight) {
+      this.requested = true;
+      await this.inFlight;
+      return;
+    }
+    this.inFlight = this.coordinator.run("acceleration:relay", () =>
+      this.flushOnce(),
+    );
+    try {
+      await this.inFlight;
+    } finally {
+      this.inFlight = null;
+      if (this.running) this.schedule(this.requested ? 0 : this.intervalMs);
+      this.requested = false;
+    }
   }
 
   private async flushOnce(): Promise<void> {
-    try {
-      const signals = await this.operations.claim(this.batchSize);
-      let checkpoint: string | undefined;
-      for (const signal of signals) {
-        try {
-          await this.operations.publish(this.redis, signal);
-          await this.operations.markPublished(signal);
-          checkpoint = signal.revision;
-        } catch (error) {
-          await this.operations.release(signal, error);
-          throw error;
-        }
-      }
-      await this.operations.updateState({
-        mode: "healthy",
-        fallbackPollIntervalMs: 5_000,
-        ...(checkpoint ? { checkpoint } : {}),
-        published: Boolean(checkpoint),
-      });
-    } catch (error) {
-      this.onError(error);
-    } finally {
-      if (this.running) {
-        this.timer = setTimeout(() => void this.flush(), this.intervalMs);
-      }
-    }
-  }
-
-  async rebuild(actor: AccelerationActor): Promise<void> {
-    await this.coordinator.run("acceleration:rebuild", () =>
-      this.rebuildOnce(actor),
+    await flushAccelerationRelay(
+      this.operations,
+      this.redis,
+      this.batchSize,
+      this.onError,
     );
   }
 
-  private async rebuildOnce(actor: AccelerationActor): Promise<void> {
-    await this.operations.audit(actor, "requested");
-    try {
-      await this.operations.rebuild(this.redis, this.enabled);
-      await this.operations.updateState({
-        mode: "healthy",
-        fallbackPollIntervalMs: 5_000,
-        rebuilt: true,
-      });
-      await this.operations.audit(actor, "completed");
-    } catch (error) {
-      await this.operations.audit(actor, "failed", {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      throw error;
-    }
+  async rebuild(actor: AccelerationActor): Promise<void> {
+    await rebuildAccelerationRelay(
+      this.operations,
+      this.redis,
+      this.enabled,
+      this.coordinator,
+      actor,
+    );
+  }
+
+  private schedule(delay: number): void {
+    this.timer = setTimeout(() => {
+      this.timer = null;
+      void this.flush();
+    }, delay);
   }
 }

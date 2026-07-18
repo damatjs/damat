@@ -4,7 +4,10 @@ import {
   createDurabilityClient,
   setDurabilityClient,
 } from "@damatjs/durability";
-import type { AccelerationMode, DurabilityCoordinator } from "@damatjs/durability";
+import type {
+  AccelerationMode,
+  DurabilityCoordinator,
+} from "@damatjs/durability";
 import type { Redis } from "@damatjs/redis";
 import { WorkerWakeupTransport } from "../../services/initialize/wakeupTransport";
 import { FakeWakeupRedis } from "./wakeup-transport-fixture";
@@ -54,23 +57,36 @@ test("publisher and liveness failures disable acceleration", async () => {
 
 function setFakeDurability(): void {
   const query = async () => ({ rows: [], rowCount: 1 });
-  setDurabilityClient(createDurabilityClient({
-    pool: { query, connect: async () => ({ query, release: () => {} }) },
-  }));
+  setDurabilityClient(
+    createDurabilityClient({
+      pool: { query, connect: async () => ({ query, release: () => {} }) },
+    }),
+  );
 }
 
 function localCoordinator(): DurabilityCoordinator {
   let mode: AccelerationMode = "degraded";
   return {
-    get mode() { return mode; },
+    get mode() {
+      return mode;
+    },
     setMode: (value) => void (mode = value),
-    pollInterval: (fallback) => mode === "healthy" ? 30_000 : Math.min(fallback, 5_000),
+    pollInterval: (fallback) =>
+      mode === "healthy" ? 30_000 : Math.min(fallback, 5_000),
     run: (_key, operation) => operation(),
   };
 }
 
 function transportPublisher(transport: WorkerWakeupTransport) {
-  return (transport as unknown as {
-    publishers: { publisher: { publish(channel: string, message: string): Promise<number> } };
-  }).publishers.publisher;
+  return (
+    transport as unknown as {
+      lifecycle: {
+        publishers: {
+          publisher: {
+            publish(channel: string, message: string): Promise<number>;
+          };
+        };
+      };
+    }
+  ).lifecycle.publishers.publisher;
 }

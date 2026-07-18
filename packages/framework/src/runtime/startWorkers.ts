@@ -2,6 +2,7 @@ import type { ILogger } from "@damatjs/logger";
 import type { AppConfig } from "../config";
 import { initializeDurableEvents } from "../services/initialize/events";
 import { initializeJobs } from "../services/initialize/jobs";
+import { initializePipelines } from "../services/initialize/pipelines";
 import type { ServiceInstances } from "../services/types";
 import type { ResolvedRuntime } from "./types";
 import type { WakeupTargets } from "../services/initialize/wakeupTargets";
@@ -12,7 +13,9 @@ function assertAvailable(config: AppConfig, runtime: ResolvedRuntime): void {
     const enabled =
       worker === "jobs"
         ? Boolean(config.services?.jobs)
-        : Boolean(config.services?.events?.durable);
+        : worker === "events"
+          ? Boolean(config.services?.events?.durable)
+          : Boolean(config.services?.pipelines);
     if (!enabled)
       throw new Error(`${worker} worker is not enabled in services`);
   }
@@ -41,6 +44,10 @@ export function startWorkers(
       targets.router = events.router;
       targets.event = events.worker;
     }
+  }
+  if (runtime.workers.includes("pipelines")) {
+    const pipelines = initializePipelines(config, instances, logger);
+    if (pipelines) targets.pipeline = pipelines;
   }
   startWorkerWakeups(config, instances, logger, targets);
 }

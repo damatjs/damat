@@ -49,7 +49,7 @@ interface AppConfig {
 }
 
 type RuntimeMode = "server" | "worker" | "all";
-type WorkerCapability = "jobs" | "events";
+type WorkerCapability = "jobs" | "events" | "pipelines";
 interface RuntimeConfig {
   mode?: RuntimeMode; // default "all"
   workers?: WorkerCapability[]; // default enabled durable capabilities
@@ -137,6 +137,14 @@ interface ServicesConfig {
     queue?: string; // default "damat-jobs"
     concurrency?: number; // default 1
   };
+  pipelines?: {
+    queue?: string; // internal action/workflow queue, default "damat-pipelines"
+    concurrency?: number; // internal action/workflow executions, default 1
+    routerBatchSize?: number; // graph advances per transaction, default 100
+    maxNodeActivationsPerRun?: number; // definition ceiling, default 10,000
+    maxFanOut?: number; // foreach ceiling, default 1,000
+    retentionMs?: number | "forever"; // default 90 days
+  };
   durability?: {
     pollIntervalMs?: number;
     leaseMs?: number;
@@ -171,9 +179,10 @@ interface ServicesConfig {
 ```
 
 `services.jobs` enables the durable job capability.
-`services.events.durable` enables the durable event capability. Runtime
-selection decides which enabled capabilities execute in the current process.
-Both durable capabilities require `projectConfig.databaseUrl` and applied
+`services.events.durable` enables the durable event capability.
+`services.pipelines` enables the durable pipeline router and internal node worker.
+Runtime selection decides which enabled capabilities execute in the current process.
+All durable capabilities require `projectConfig.databaseUrl` and applied
 system migrations. Run:
 
 ```bash
@@ -195,7 +204,7 @@ The two environment settings override config independently:
 1. `DAMAT_RUNTIME_MODE` → `runtime.mode` → `"all"`.
 2. `DAMAT_WORKER_TYPES` → `runtime.workers` → enabled durable capabilities.
 
-`DAMAT_WORKER_TYPES` is a comma-separated list of `jobs` and `events`.
+`DAMAT_WORKER_TYPES` is a comma-separated list of `jobs`, `events`, and `pipelines`.
 Whitespace and duplicates are removed. Unknown values fail startup.
 
 - `server` serves HTTP and always resolves no workers.
@@ -204,7 +213,8 @@ Whitespace and duplicates are removed. Unknown values fail startup.
 
 Unknown modes and capabilities always fail startup. In `worker` and `all`
 modes, selecting `jobs` without `services.jobs`, or `events` without
-`services.events.durable`, also fails startup. `server` is the deliberate
+`services.events.durable`, or `pipelines` without `services.pipelines`, also
+fails startup. `server` is the deliberate
 exception: it drops known worker selections without checking their service
 availability because it never executes workers. The same application image can
 therefore be deployed as separate HTTP and worker containers by setting only
@@ -216,7 +226,7 @@ Each lifecycle hook is awaited at its stage; a hook that throws fails startup lo
 
 - `projectConfig.databaseUrl` / `services.database` → `initDatabase` → `PoolManager.setup`.
 - `projectConfig.redisUrl` / `services.redis` → `initRedis` + `connectRedis`.
-- `services.events` / `services.jobs` / `services.durability` → event broadcast,
+- `services.events` / `services.jobs` / `services.pipelines` / `services.durability` → event broadcast,
   PostgreSQL migration readiness, optional Redis wakeups, and the selected
   durable workers — see [services.md](./services.md).
 - `runtime` plus `DAMAT_RUNTIME_MODE` / `DAMAT_WORKER_TYPES` →

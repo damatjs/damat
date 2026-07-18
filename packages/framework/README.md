@@ -6,10 +6,13 @@
 HTTP server, a selected durable-worker process, or both. It initializes the
 logger, PostgreSQL, optional Redis, modules/providers, and auth before checking
 migration readiness. It starts one process-level durability coordinator and
-Redis wake-up transport after readiness, then starts selected job/event workers and
+Redis wake-up transport after readiness, then starts selected job/event/pipeline workers and
 builds the Hono HTTP app only when the resolved runtime serves HTTP.
 
-It sits at the top of the Damat backend stack: it depends on `@damatjs/services`, `@damatjs/redis`, the ORM packages, `@damatjs/logger`, `@damatjs/types`, `@damatjs/workflow-engine`, `@damatjs/link`, `@damatjs/events`, `@damatjs/jobs`, and `@damatjs/deps`, and re-exports the service layer, the link authoring surface, and the events/jobs surfaces so apps import everything from one place.
+It sits at the top of the Damat backend stack: it depends on `@damatjs/services`,
+`@damatjs/redis`, the ORM packages, `@damatjs/logger`, `@damatjs/types`,
+`@damatjs/workflow-engine`, `@damatjs/link`, `@damatjs/events`, `@damatjs/jobs`,
+`@damatjs/pipelines`, and `@damatjs/deps`, and re-exports their app-facing surfaces.
 
 Part of the [Damat](../../README.md) monorepo · [Full guide](../../docs/GUIDE.md) · [Internals](./docs/README.md)
 
@@ -60,7 +63,7 @@ export default defineConfig({
   links: "./src/links",
   runtime: {
     mode: "all", // "server" | "worker" | "all"
-    workers: ["jobs", "events"],
+    workers: ["jobs", "events", "pipelines"],
     shutdownGraceMs: 30_000,
   },
   services: {
@@ -72,6 +75,7 @@ export default defineConfig({
     },
     jobs: { queue: "damat-jobs", concurrency: 4 },
     events: { durable: { concurrency: 4 } },
+    pipelines: { concurrency: 2, routerBatchSize: 100 },
   },
 });
 ```
@@ -95,8 +99,8 @@ export const GET = defineRoute<{ userId: string }>(async (c, params) => {
 });
 ```
 
-Apply the durable system migrations before starting a process with jobs or
-durable events:
+Apply the durable system migrations before starting a process with jobs,
+durable events, or pipelines:
 
 ```bash
 damat-orm migrate:up
@@ -111,15 +115,15 @@ await start();
 ```
 
 `runtime.mode` defaults to `"all"`. Workers default to the enabled durable
-capabilities: `services.jobs` enables `jobs`, while `services.events.durable`
-enables `events`. A `"server"` process never starts workers; a `"worker"`
+capabilities: `services.jobs` enables `jobs`, `services.events.durable` enables
+`events`, and `services.pipelines` enables `pipelines`. A `"server"` process never starts workers; a `"worker"`
 process must select at least one enabled capability; an `"all"` process may
 serve HTTP with no workers.
 
 Deployment environment overrides are independent:
 
 ```bash
-DAMAT_RUNTIME_MODE=worker DAMAT_WORKER_TYPES=jobs,events bun run start
+DAMAT_RUNTIME_MODE=worker DAMAT_WORKER_TYPES=jobs,events,pipelines bun run start
 ```
 
 `DAMAT_RUNTIME_MODE` overrides `runtime.mode`. `DAMAT_WORKER_TYPES` overrides
@@ -165,6 +169,7 @@ export default defineConfig({
   services: {
     events: { broadcast: true }, // cross-process event delivery via Redis pub/sub (needs redisUrl)
     jobs: { concurrency: 4 }, // PostgreSQL durability; selected by runtime
+    pipelines: { concurrency: 2 }, // graph router + internal node worker
   },
 });
 ```
@@ -210,7 +215,7 @@ The barrel also ships `src/context.ts`: a `ContextVariableMap` augmentation (`re
 
 ## How it fits
 
-- **Dependencies:** `@damatjs/services`, `@damatjs/redis`, `@damatjs/logger`, `@damatjs/types`, `@damatjs/orm-connector`, `@damatjs/orm-type`, `@damatjs/workflow-engine`, `@damatjs/link`, `@damatjs/events`, `@damatjs/jobs`, `@damatjs/deps`, and `@hono/node-server`.
+- **Dependencies:** `@damatjs/services`, `@damatjs/redis`, `@damatjs/logger`, `@damatjs/types`, `@damatjs/orm-connector`, `@damatjs/orm-type`, `@damatjs/workflow-engine`, `@damatjs/link`, `@damatjs/events`, `@damatjs/jobs`, `@damatjs/pipelines`, `@damatjs/deps`, and `@hono/node-server`.
 - **In-repo dependents:** the reference app `@damatjs/default` (`backend/default`) imports `defineConfig`, `defineRoute`/`RouteHandler`, `ModuleService`, and `defineModule` from here. The framework's `services/database.ts` calls `PoolManager.setup(...)` from `@damatjs/services`, and `services/moduleService.ts` registers each app module.
 
 ## Documentation

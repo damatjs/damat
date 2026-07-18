@@ -7,7 +7,9 @@ export async function publishAccelerationSignal(
 ): Promise<void> {
   if (signal.resourceId && signal.topic !== "damat:inspection:invalidate") {
     const key = readyKey(signal);
-    await redis.zadd(key, signal.availableAt.getTime(), signal.resourceId);
+    if (signal.payload.projection === "remove")
+      await redis.zrem(key, signal.resourceId);
+    else await redis.zadd(key, signal.availableAt.getTime(), signal.resourceId);
   }
   if (signal.topic !== "damat:inspection:invalidate") {
     await redis.publish(signal.topic, JSON.stringify(signal.payload));
@@ -24,7 +26,10 @@ export async function publishAccelerationSignal(
 }
 
 function readyKey(signal: AccelerationSignal): string {
-  if (signal.kind === "job") return `damat:ready:jobs:${signal.scope ?? "default"}`;
+  if (signal.topic === "damat:pipelines:wakeup")
+    return "damat:ready:pipelines:router";
+  if (signal.kind === "job")
+    return `damat:ready:jobs:${signal.scope ?? "default"}`;
   if (signal.scope === "router") return "damat:ready:events:router";
   return `damat:ready:events:delivery:${signal.scope ?? "all"}`;
 }

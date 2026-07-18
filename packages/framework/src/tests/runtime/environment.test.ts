@@ -32,7 +32,13 @@ describe("parseRuntimeEnvironment", () => {
       parseRuntimeEnvironment({ DAMAT_RUNTIME_MODE: "api" }),
     ).toThrow('Unknown runtime mode "api"');
     expect(() =>
-      parseRuntimeEnvironment({ DAMAT_WORKER_TYPES: "jobs,pipelines" }),
-    ).toThrow('Unknown worker capability "pipelines"');
+      parseRuntimeEnvironment({ DAMAT_WORKER_TYPES: "jobs,unknown" }),
+    ).toThrow('Unknown worker capability "unknown"');
+  });
+
+  it("accepts pipeline workers", () => {
+    expect(
+      parseRuntimeEnvironment({ DAMAT_WORKER_TYPES: "pipelines" }),
+    ).toEqual({ workers: ["pipelines"] });
   });
 });

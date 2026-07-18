@@ -26,8 +26,8 @@ test("inspection invalidations never publish canonical payload data", async () =
   };
   await publishAccelerationSignal(redis, signal);
   expect(ready).toEqual([["damat:ready:jobs:reports", 1_000, "run-1"]]);
-  const invalidation = publications.find(([channel]) =>
-    channel === "damat:inspection:invalidate"
+  const invalidation = publications.find(
+    ([channel]) => channel === "damat:inspection:invalidate",
   );
   expect(JSON.parse(invalidation![1])).toEqual({
     kind: "job",
@@ -45,24 +45,55 @@ test("event ready indexes distinguish router, delivery, and invalidation only", 
     zadd: async (...args: unknown[]) => void ready.push(args),
   } as unknown as Redis;
   const base = {
-    id: crypto.randomUUID(), revision: "8", kind: "event" as const,
-    payload: {}, availableAt: new Date(2_000), claimToken: crypto.randomUUID(),
+    id: crypto.randomUUID(),
+    revision: "8",
+    kind: "event" as const,
+    payload: {},
+    availableAt: new Date(2_000),
+    claimToken: crypto.randomUUID(),
   };
   await publishAccelerationSignal(redis, {
-    ...base, topic: "damat:events:wakeup", resourceId: "route", scope: "router",
+    ...base,
+    topic: "damat:events:wakeup",
+    resourceId: "route",
+    scope: "router",
   });
   await publishAccelerationSignal(redis, {
-    ...base, topic: "damat:events:wakeup", resourceId: "delivery",
+    ...base,
+    topic: "damat:events:wakeup",
+    resourceId: "delivery",
   });
   await publishAccelerationSignal(redis, {
-    ...base, topic: "damat:inspection:invalidate",
+    ...base,
+    topic: "damat:inspection:invalidate",
   });
   expect(ready).toEqual([
     ["damat:ready:events:router", 2_000, "route"],
     ["damat:ready:events:delivery:all", 2_000, "delivery"],
   ]);
-  expect(publications.filter((channel) => channel === "damat:events:wakeup"))
-    .toHaveLength(2);
-  expect(publications.filter((channel) => channel === "damat:inspection:invalidate"))
-    .toHaveLength(3);
+  expect(
+    publications.filter((channel) => channel === "damat:events:wakeup"),
+  ).toHaveLength(2);
+  expect(
+    publications.filter((channel) => channel === "damat:inspection:invalidate"),
+  ).toHaveLength(3);
+});
+
+test("terminal pipeline signals remove stale ready projection entries", async () => {
+  const removed: unknown[][] = [];
+  const redis = {
+    publish: async () => 1,
+    zrem: async (...args: unknown[]) => void removed.push(args),
+  } as unknown as Redis;
+  await publishAccelerationSignal(redis, {
+    id: crypto.randomUUID(),
+    revision: "9",
+    kind: "pipeline",
+    topic: "damat:pipelines:wakeup",
+    resourceId: "pipeline-run",
+    payload: { kind: "pipelines", projection: "remove" },
+    availableAt: new Date(),
+    claimToken: crypto.randomUUID(),
+  });
+  expect(removed).toEqual([["damat:ready:pipelines:router", "pipeline-run"]]);
 });

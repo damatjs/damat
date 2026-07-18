@@ -9,12 +9,19 @@ import {
   type JobWakeupRedis,
 } from "@damatjs/jobs";
 import type { AppConfig } from "../../config";
+import {
+  configurePipelineWakeupPublisher,
+  type PipelineWakeupPublisher,
+  type PipelineWakeupRedis,
+} from "@damatjs/pipelines";
 import { getRedis, hasRedis } from "../redis";
 
 export type WorkerWakeupRedis = EventWakeupRedis &
   EventWakeupPublisher &
   JobWakeupRedis &
-  JobWakeupPublisher;
+  JobWakeupPublisher &
+  PipelineWakeupRedis &
+  PipelineWakeupPublisher;
 
 export function getWorkerWakeupRedis(
   config: AppConfig,
@@ -32,8 +39,11 @@ export function configureWorkerWakeupPublishers(
   redis = getWorkerWakeupRedis(config),
 ): void {
   if (!redis) return;
-  if (config.services?.jobs) configureJobWakeupPublisher(redis);
+  if (config.services?.jobs || config.services?.pipelines) {
+    configureJobWakeupPublisher(redis);
+  }
   if (config.services?.events?.durable) {
     configureEventWakeupPublisher(redis);
   }
+  if (config.services?.pipelines) configurePipelineWakeupPublisher(redis);
 }

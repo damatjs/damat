@@ -6,9 +6,7 @@ import type { ILogger } from "@damatjs/logger";
 import type { Redis } from "@damatjs/redis";
 import type { AppConfig } from "../config";
 import { AccelerationRelay } from "../services/initialize/accelerationRelay";
-import {
-  WorkerWakeupTransport,
-} from "../services/initialize/wakeupTransport";
+import { WorkerWakeupTransport } from "../services/initialize/wakeupTransport";
 import type { WakeupTargets } from "../services/initialize/wakeupTargets";
 import { getRedis } from "../services/redis";
 import type { ServiceInstances } from "../services/types";
@@ -33,8 +31,9 @@ export function startWorkerWakeups(
     acceleration?.relayBatchSize ?? 100,
     acceleration?.healthySafetyPollIntervalMs ?? 30_000,
     {
-      jobs: Boolean(config.services?.jobs),
+      jobs: Boolean(config.services?.jobs || config.services?.pipelines),
       events: Boolean(config.services?.events?.durable),
+      pipelines: Boolean(config.services?.pipelines),
     },
     coordinator,
     (error) => void transport.markDegraded(error),

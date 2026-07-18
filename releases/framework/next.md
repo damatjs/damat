@@ -30,7 +30,11 @@ providers load before workers start.
 ## Added
 
 - `runtime.mode`: `server`, `worker`, or `all`.
-- `runtime.workers`: any selection of `jobs` and `events`.
+- `runtime.workers`: any selection of `jobs`, `events`, and `pipelines`.
+- `services.pipelines` starts one durable graph router and its internal
+  action/workflow job worker.
+- Root re-exports for pipeline code, authoring, inspection, administration,
+  retention, and invalidation contracts.
 - `runtime.shutdownGraceMs` for bounded graceful worker drain.
 - `DAMAT_RUNTIME_MODE` and `DAMAT_WORKER_TYPES` deployment overrides.
 - Durable event runtime wiring through `services.events.durable`.
@@ -40,9 +44,15 @@ providers load before workers start.
   durable-snapshot, and relay-batch configuration.
 - One process-wide wake-up subscriber/publisher gate, transactional outbox
   relay, projection rebuild, health query, and in-process invalidations.
+- Committed outbox writes prompt one coalesced relay flush after their owning
+  transaction completes, avoiding a relay-interval delay without publishing on
+  rollback.
 
 ## Changed / improved
 
+- One Redis subscriber multiplexes job, event, and pipeline wake-ups. The ready
+  projection removes terminal pipeline runs and upserts actionable ones.
+- Migration readiness includes the pipelines catalog when the service is enabled.
 - `services.jobs` configures the job capability with `queue` and `concurrency`;
   runtime config decides whether the current process executes it.
 - Jobs and durable events require `projectConfig.databaseUrl` and applied system
@@ -95,7 +105,7 @@ providers load before workers start.
    ```
 
 3. Configure `projectConfig.databaseUrl`, then apply system migrations before
-   starting jobs or durable events:
+   starting jobs, durable events, or pipelines:
 
    ```bash
    damat-orm migrate:up
@@ -107,10 +117,14 @@ providers load before workers start.
    publish/subscribe access, persist direct-server changes with `CONFIG REWRITE`,
    and retain the ACL declaration in recreated container configuration.
 
+6. Register every pipeline capability before startup and include `pipelines` in
+   any explicit worker selection that should run graph orchestration.
+
 ## References
 
 - Current behavior: [framework README](../../packages/framework/README.md),
   [configuration](../../packages/framework/docs/config.md), and
-  [events/jobs guide](../../docs/guide/10b-events-and-jobs.md)
+  [events/jobs guide](../../docs/guide/10b-events-and-jobs.md), and
+  [pipelines guide](../../docs/guide/10c-pipelines.md)
 - Source: `packages/framework/src/runtime/`, `packages/framework/src/services/`,
   `packages/framework/src/shutdown/`, and `packages/framework/src/entry.ts`

@@ -50,18 +50,22 @@ Steps:
 5. **Auth and event broadcast** — initialize the configured auth adapter and
    Redis event broadcast. Their shutdown registrations stop new external work
    in the `claims` phase.
-6. **Durable readiness** — when jobs or durable events are enabled, create the
-   global durability client from `PoolManager.getPool()` and verify shared plus
-   capability-specific system migrations. Missing database config fails startup.
-   Missing migrations fail with `Run: damat-orm migrate:up` guidance.
+6. **Durable readiness** — when jobs, durable events, or pipelines are enabled,
+   create the global durability client from `PoolManager.getPool()` and verify
+   shared plus capability-specific system migrations. Missing database config
+   fails startup. Missing migrations fail with `Run: damat-orm migrate:up`
+   guidance.
 7. **Durability acceleration** — create one coordinator, subscriber transport,
    transactional-outbox relay, Redis projection rebuild, and publisher gate per
-   process. Capability failure disables both durable publishers/subscribers,
-   activates PostgreSQL fallback, and retries with bounded backoff.
+   process. A committed outbox write prompts the relay after commit; several
+   writes in one transaction coalesce into one prompt. Capability failure
+   disables both durable publishers/subscribers, activates PostgreSQL fallback,
+   and retries with bounded backoff.
 8. **Selected workers** — start only capabilities in `runtime.workers`:
-   `JobWorker` for jobs, and `DurableEventRouter` + `DurableEventWorker` for
-   events. Definitions are already loaded. In `worker` and `all` modes,
-   selecting an unavailable capability fails visibly.
+   `JobWorker` for jobs, `DurableEventRouter` + `DurableEventWorker` for events,
+   and the pipeline graph router plus internal action worker for pipelines.
+   Definitions are already loaded. In `worker` and `all` modes, selecting an
+   unavailable capability fails visibly.
 9. **Logger shutdown** — register `closeLogger()` in the final `logger` phase.
 
 `server` resolves no workers, `worker` starts selected workers without HTTP,

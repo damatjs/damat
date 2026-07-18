@@ -7,6 +7,10 @@ import {
   configureJobWakeupPublisher,
 } from "@damatjs/jobs";
 import type { Redis } from "@damatjs/redis";
+import {
+  clearPipelineWakeupPublisher,
+  configurePipelineWakeupPublisher,
+} from "@damatjs/pipelines";
 
 export class WakeupPublisherGate {
   constructor(
@@ -17,11 +21,13 @@ export class WakeupPublisherGate {
   enable(): void {
     configureJobWakeupPublisher(this.publisher);
     configureEventWakeupPublisher(this.publisher);
+    configurePipelineWakeupPublisher(this.publisher);
   }
 
   disable(): void {
     clearJobWakeupPublisher();
     clearEventWakeupPublisher();
+    clearPipelineWakeupPublisher();
   }
 
   private readonly publisher = {

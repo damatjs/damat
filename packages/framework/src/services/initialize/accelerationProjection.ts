@@ -4,6 +4,7 @@ import {
 } from "@damatjs/durability";
 import type { QueryResultRow } from "@damatjs/deps/pg";
 import type { Redis } from "@damatjs/redis";
+import { clearReadyProjection } from "./accelerationProjectionClear";
 
 interface ReadyRow extends QueryResultRow {
   id: string;
@@ -13,20 +14,46 @@ interface ReadyRow extends QueryResultRow {
 
 export async function rebuildReadyProjection(
   redis: Redis,
-  enabled: { jobs: boolean; events: boolean },
+  enabled: { jobs: boolean; events: boolean; pipelines?: boolean },
   executor: DurabilityExecutor = getDurabilityClient(),
 ): Promise<void> {
-  await clearReadyKeys(redis);
+  await clearReadyProjection(redis);
   if (enabled.jobs) {
     const jobs = await executor.query<ReadyRow>(
       `SELECT "id","queue" AS "scope","available_at" FROM "_damat_job_runs"
        WHERE "status" IN ('queued','retry_wait')`,
     );
     for (const row of jobs.rows) {
-      await redis.zadd(`damat:ready:jobs:${row.scope}`, row.available_at.getTime(), row.id);
+      await redis.zadd(
+        `damat:ready:jobs:${row.scope}`,
+        row.available_at.getTime(),
+        row.id,
+      );
     }
   }
   if (enabled.events) await rebuildEventProjection(redis, executor);
+  if (enabled.pipelines) await rebuildPipelineProjection(redis, executor);
+}
+
+async function rebuildPipelineProjection(
+  redis: Redis,
+  executor: DurabilityExecutor,
+): Promise<void> {
+  const runs = await executor.query<ReadyRow>(
+    `SELECT DISTINCT ON (n."run_id") n."run_id" AS "id",d."name" AS "scope",
+       n."available_at" FROM "_damat_pipeline_node_executions" n
+     JOIN "_damat_pipeline_runs" r ON r."id"=n."run_id"
+     JOIN "_damat_pipeline_definitions" d ON d."id"=r."definition_id"
+     WHERE n."status" IN ('ready','waiting')
+     ORDER BY n."run_id",n."available_at"`,
+  );
+  for (const row of runs.rows) {
+    await redis.zadd(
+      "damat:ready:pipelines:router",
+      row.available_at.getTime(),
+      row.id,
+    );
+  }
 }
 
 async function rebuildEventProjection(
@@ -44,7 +71,11 @@ async function rebuildEventProjection(
      WHERE d."status" IN ('pending','retry_wait')`,
   );
   for (const row of routes.rows) {
-    await redis.zadd("damat:ready:events:router", row.available_at.getTime(), row.id);
+    await redis.zadd(
+      "damat:ready:events:router",
+      row.available_at.getTime(),
+      row.id,
+    );
   }
   for (const row of deliveries.rows) {
     await redis.zadd(
@@ -52,18 +83,5 @@ async function rebuildEventProjection(
       row.available_at.getTime(),
       row.id,
     );
-  }
-}
-
-async function clearReadyKeys(redis: Redis): Promise<void> {
-  let cursor = "0";
-  const readyKeys: string[] = [];
-  do {
-    const [next, keys] = await redis.scan(cursor, "MATCH", "damat:ready:*", "COUNT", 100);
-    cursor = next;
-    readyKeys.push(...keys);
-  } while (cursor !== "0");
-  for (let index = 0; index < readyKeys.length; index += 100) {
-    await redis.del(...readyKeys.slice(index, index + 100));
   }
 }

@@ -7,6 +7,7 @@ import { initializeEventBroadcast } from "./initialize/events";
 import { initializeModules } from "./initialize/modules";
 import { initializeAuth } from "./initialize/auth";
 import { initializeDurability } from "./initialize/durability";
+import { initializePipelineDefinitions } from "./initialize/pipelines";
 import { resolveRuntime, startWorkers, type ResolvedRuntime } from "../runtime";
 
 export async function initializeServices(
@@ -26,6 +27,7 @@ export async function initializeServices(
   await initializeEventBroadcast(config, instances, logger);
   const coordinator = await initializeDurability(config, instances);
   if (coordinator) instances.durabilityCoordinator = coordinator;
+  await initializePipelineDefinitions(config, instances);
   startWorkers(config, instances, logger, runtime);
   instances.shutdownHandlers.push({
     name: "logger",

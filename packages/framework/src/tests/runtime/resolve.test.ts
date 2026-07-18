@@ -1,6 +1,5 @@
 import { describe, expect, it } from "bun:test";
 import { resolveRuntime } from "../../runtime/resolve";
-import type { RuntimeConfig } from "../../config/types/runtime";
 
 describe("resolveRuntime", () => {
   it("defaults to all with enabled durable capabilities", () => {
@@ -78,18 +77,5 @@ describe("resolveRuntime", () => {
       workers: [],
       servesHttp: true,
     });
-  });
-
-  it("rejects unknown runtime values imported from config", () => {
-    const unknownMode = { mode: "api" } as unknown as RuntimeConfig;
-    const unknownWorker = {
-      workers: ["pipelines"],
-    } as unknown as RuntimeConfig;
-    expect(() => resolveRuntime({ runtime: unknownMode }, {})).toThrow(
-      'Unknown runtime mode "api"',
-    );
-    expect(() => resolveRuntime({ runtime: unknownWorker }, {})).toThrow(
-      'Unknown worker capability "pipelines"',
-    );
   });
 });

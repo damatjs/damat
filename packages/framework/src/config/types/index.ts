@@ -5,6 +5,7 @@ export * from "./hooks";
 export * from "./http";
 export * from "./module";
 export * from "./jobs";
+export * from "./pipelines";
 export * from "./project";
 export * from "./services";
 export * from "./runtime";

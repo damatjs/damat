@@ -3,6 +3,7 @@ import type { RedisConfig } from "../../services/redis";
 import type { DurabilityServiceConfig } from "./durability";
 import type { EventsServiceConfig } from "./events";
 import type { JobsServiceConfig } from "./jobs";
+import type { PipelinesServiceConfig } from "./pipelines";
 
 /**
  * Authentication via a pluggable provider (Better Auth / Clerk / Auth0). Fully
@@ -35,4 +36,5 @@ export interface ServicesConfig {
   durability?: DurabilityServiceConfig;
   events?: EventsServiceConfig;
   jobs?: JobsServiceConfig;
+  pipelines?: PipelinesServiceConfig;
 }

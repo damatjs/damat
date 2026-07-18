@@ -1,23 +1,18 @@
 import type { DurabilityCoordinator } from "@damatjs/durability";
 import type { ILogger } from "@damatjs/logger";
 import type { Redis } from "@damatjs/redis";
-import { WorkerLiveness, type LivenessWorker } from "./workerLiveness";
-import { WorkerWakeupSubscriber } from "./wakeupSubscriber";
-import { WakeupPublisherGate } from "./wakeupPublisherGate";
 import { warnAccelerationUnavailable } from "./accelerationWarning";
-import { persistAccelerationMode } from "./accelerationState";
 import { probeAccelerationPublish } from "./accelerationProbe";
 import type { WakeupTargets } from "./wakeupTargets";
+import { wakeupRetryDelay } from "./wakeupLiveness";
+import { createWakeupLifecycle, type WakeupLifecycle } from "./wakeupLifecycle";
 export class WorkerWakeupTransport {
   private retry: ReturnType<typeof setTimeout> | undefined;
   private stopped = false;
   private warned = false;
-  private degrading = false;
+  private degradation: Promise<void> | null = null;
   private attempts = 0;
-  private readonly liveness: WorkerLiveness;
-  private readonly subscriber: WorkerWakeupSubscriber;
-  private readonly publishers: WakeupPublisherGate;
-
+  private readonly lifecycle: WakeupLifecycle;
   constructor(
     private readonly redis: Redis,
     private readonly coordinator: DurabilityCoordinator,
@@ -28,16 +23,12 @@ export class WorkerWakeupTransport {
     private readonly onDegraded?: () => void,
     private readonly redisUser = "default",
   ) {
-    const workers = [targets.job, targets.event].filter(Boolean) as LivenessWorker[];
-    this.liveness = new WorkerLiveness(
+    this.lifecycle = createWakeupLifecycle(
       redis,
-      workers,
+      coordinator,
+      targets,
       livenessTtlMs,
-      (error) => void this.markDegraded(error),
-    );
-    this.subscriber = new WorkerWakeupSubscriber(redis, targets);
-    this.publishers = new WakeupPublisherGate(redis, (error) =>
-      this.markDegraded(error),
+      (error) => this.markDegraded(error),
     );
   }
 
@@ -48,24 +39,20 @@ export class WorkerWakeupTransport {
   async stop(): Promise<void> {
     this.stopped = true;
     if (this.retry) clearTimeout(this.retry);
-    this.publishers.disable();
-    await this.liveness.stop();
-    await this.subscriber.close();
-    this.coordinator.setMode("disabled");
-    await persistAccelerationMode(this.coordinator, "disabled");
+    if (this.degradation) await this.degradation;
+    await this.lifecycle.stop();
   }
 
   private async connect(): Promise<void> {
     if (this.stopped) return;
     try {
-      await this.subscriber.connect();
+      await this.lifecycle.subscriber.connect();
       await probeAccelerationPublish(this.redis);
       await this.onHealthy?.();
       this.attempts = 0;
-      this.coordinator.setMode("healthy");
-      this.publishers.enable();
-      this.liveness.start();
-      if (this.warned) this.logger.info("Durability Redis acceleration recovered");
+      this.lifecycle.markHealthy();
+      if (this.warned)
+        this.logger.info("Durability Redis acceleration recovered");
       this.warned = false;
     } catch (error) {
       await this.markDegraded(error);
@@ -73,28 +60,26 @@ export class WorkerWakeupTransport {
   }
 
   async markDegraded(error: unknown): Promise<void> {
-    if (this.stopped || this.degrading) return;
-    this.degrading = true;
+    if (this.stopped) return;
+    if (this.degradation) return this.degradation;
+    this.degradation = this.degrade(error);
     try {
-      this.coordinator.setMode("degraded");
-      this.onDegraded?.();
-      this.publishers.disable();
-      await this.liveness.stop();
-      await this.subscriber.close();
-      await persistAccelerationMode(this.coordinator, "degraded");
-      const fallback = this.coordinator.pollInterval(5_000);
-      if (!this.warned) warnAccelerationUnavailable(this.logger, error, fallback, this.redisUser);
-      this.warned = true;
-      this.retry = setTimeout(() => {
-        this.retry = undefined;
-        void this.connect();
-      }, this.retryDelay());
+      await this.degradation;
     } finally {
-      this.degrading = false;
+      this.degradation = null;
     }
   }
 
-  private retryDelay(): number {
-    return Math.min(30_000, 1_000 * 2 ** this.attempts++);
+  private async degrade(error: unknown): Promise<void> {
+    await this.lifecycle.markDegraded(this.onDegraded);
+    if (this.stopped) return;
+    const fallback = this.coordinator.pollInterval(5_000);
+    if (!this.warned)
+      warnAccelerationUnavailable(this.logger, error, fallback, this.redisUser);
+    this.warned = true;
+    this.retry = setTimeout(() => {
+      this.retry = undefined;
+      void this.connect();
+    }, wakeupRetryDelay(this.attempts++));
   }
 }

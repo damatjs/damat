@@ -12,6 +12,7 @@ import {
 } from "@damatjs/durability";
 import { eventsSystemMigrations } from "@damatjs/events/migrations";
 import { jobsSystemMigrations } from "@damatjs/jobs/migrations";
+import { pipelinesSystemMigrations } from "@damatjs/pipelines/migrations";
 import { PoolManager } from "@damatjs/services";
 import type { AppConfig } from "../../config";
 import type { ServiceInstances } from "../types";
@@ -19,13 +20,20 @@ import type { ServiceInstances } from "../types";
 function enabledCatalogs(config: AppConfig): SystemMigrationCatalog[] {
   return [
     durabilitySystemMigrations,
-    ...(config.services?.jobs ? [jobsSystemMigrations] : []),
+    ...(config.services?.jobs || config.services?.pipelines
+      ? [jobsSystemMigrations]
+      : []),
     ...(config.services?.events?.durable ? [eventsSystemMigrations] : []),
+    ...(config.services?.pipelines ? [pipelinesSystemMigrations] : []),
   ];
 }
 
 function usesDurability(config: AppConfig): boolean {
-  return Boolean(config.services?.jobs || config.services?.events?.durable);
+  return Boolean(
+    config.services?.jobs ||
+    config.services?.events?.durable ||
+    config.services?.pipelines,
+  );
 }
 
 export async function initializeDurability(
@@ -60,9 +68,10 @@ export async function initializeDurability(
   const acceleration = config.services?.durability?.acceleration;
   const enabled = acceleration?.enabled ?? config.services?.durability?.wakeups;
   return new ProcessDurabilityCoordinator({
-    mode: enabled === false || !config.projectConfig.redisUrl
-      ? "disabled"
-      : "degraded",
+    mode:
+      enabled === false || !config.projectConfig.redisUrl
+        ? "disabled"
+        : "degraded",
     healthySafetyPollIntervalMs:
       acceleration?.healthySafetyPollIntervalMs ?? 30_000,
     degradedMaxPollIntervalMs:

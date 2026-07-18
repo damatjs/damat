@@ -79,6 +79,7 @@
     "@damatjs/workflow-engine": "workspace:*",
     "@damatjs/events": "workspace:*",
     "@damatjs/jobs": "workspace:*",
+    "@damatjs/pipelines": "workspace:*",
     "@damatjs/redis": "workspace:*",
     "@hono/node-server": "^1.13.7"
   },

@@ -13,6 +13,7 @@ function enabledCapabilities(
   return [
     ...(services?.jobs ? (["jobs"] as const) : []),
     ...(services?.events?.durable ? (["events"] as const) : []),
+    ...(services?.pipelines ? (["pipelines"] as const) : []),
   ];
 }
 
