@@ -36,10 +36,11 @@ a package can sit at `0.6.0` while the newest version it actually links is older
 ## Unreleased
 
 The durability phase establishes shared PostgreSQL infrastructure, durable jobs
-and named-consumer events, transaction composition, deterministic system
+and named-consumer events, durable pipelines, transaction composition, deterministic system
 migrations, headless operational inspection, and selectable server/jobs/events
 runtime roles. See [`durability`](./durability/), [`jobs`](./jobs/),
 [`events`](./events/), [`services`](./services/),
+[`pipelines`](./pipelines/),
 [`orm-migration`](./orm-migration/), [`orm-cli`](./orm-cli/), and
 [`framework`](./framework/). Adaptive Redis acceleration and pool observability
 are tracked under [`redis`](./redis/), [`orm-connector`](./orm-connector/), and
@@ -77,6 +78,7 @@ snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
   (Damat discovery, filesystem output, registries, scaffolds, barrels)
 - [`link`](./link/) — `@damatjs/link`
 - [`workflow-engine`](./workflow-engine/) — `@damatjs/workflow-engine`
+- [`pipelines`](./pipelines/) — `@damatjs/pipelines`
 - [`installer`](./installer/) — `@damatjs/installer`
 
 ### ORM
