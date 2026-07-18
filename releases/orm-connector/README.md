@@ -6,6 +6,7 @@ Change history for this package. For how it works **now**, read the
 
 | Version | Summary                                                                                                                                               | Upgrade notes         |
 | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| Unreleased | Aggregate active pool stats and physical-connection-only logging                                                                                   | [next →](./next.md)   |
 | 0.1.3   | Dependency bump (`@damatjs/orm-type`, `@damatjs/deps`, …) — picks up the cross-module links work in `@damatjs/link`; no change to this package's code | —                     |
 | 0.1.2   | Dependency bump — picks up table-name relation targets in `@damatjs/orm-model`; no change to this package's code                                      | —                     |
 | 0.1.1   | Maintenance — CI and test cleanup, dependency bumps                                                                                                   | —                     |

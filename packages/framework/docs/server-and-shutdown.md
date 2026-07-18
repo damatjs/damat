@@ -78,8 +78,8 @@ abort while retaining lease-based recovery.
 ## Registrations created by the framework
 
 - HTTP server close → `http`.
-- Auth shutdown, ephemeral event broadcast, durable event router/worker, and job
-  worker → `claims`.
+- Auth shutdown, ephemeral event broadcast, the process-wide Redis acceleration
+  transport/relay, durable event router/worker, and job worker → `claims`.
 - Redis disconnect → `redis`.
 - PostgreSQL disconnect and `PoolManager.reset()` → `postgres`.
 - Logger close → `logger`.

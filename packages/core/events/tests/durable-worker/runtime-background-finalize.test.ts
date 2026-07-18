@@ -17,6 +17,10 @@ beforeEach(async () => {
 test("background stopped persistence failure can be retried", async () => {
   let release!: () => void;
   const gate = new Promise<void>((resolve) => void (release = resolve));
+  let observeFailure!: () => void;
+  const failureObserved = new Promise<void>(
+    (resolve) => void (observeFailure = resolve),
+  );
   const item = await seedDelivery({ handler: async () => gate });
   const worker = new DurableEventWorker({
     consumers: [{ event: item.event, consumer: item.consumer }],
@@ -27,10 +31,11 @@ test("background stopped persistence failure can be retried", async () => {
     async () => (await deliveryRow(item.id)).status === "running",
   );
   await worker.stop({ graceMs: 1 });
-  setDurabilityClient(failStoppedPersistence());
+  setDurabilityClient(failStoppedPersistence(observeFailure));
   try {
     release();
-    await Bun.sleep(20);
+    await failureObserved;
+    await Bun.sleep(0);
   } finally {
     setDurabilityClient(durability);
   }
@@ -38,11 +43,12 @@ test("background stopped persistence failure can be retried", async () => {
   expect((await listWorkers({ ids: [worker.id] }))[0]?.state).toBe("stopped");
 });
 
-function failStoppedPersistence(): DurabilityClient {
+function failStoppedPersistence(onFailure: () => void): DurabilityClient {
   return {
     ...durability,
     query: (sql, params) => {
       if (sql.includes('"stopped_at" = COALESCE')) {
+        onFailure();
         return Promise.reject(new Error("stop persistence failed"));
       }
       return durability.query(sql, params);

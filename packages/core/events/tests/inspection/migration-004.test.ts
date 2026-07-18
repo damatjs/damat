@@ -2,7 +2,9 @@ import { expect, test } from "bun:test";
 import { eventsSystemMigrations } from "../../src/durable/migrations/catalog";
 
 test("events catalog includes inspection indexes after worker storage", () => {
-  const migration = eventsSystemMigrations.migrations.at(-1);
+  const migration = eventsSystemMigrations.migrations.find(
+    ({ id }) => id === "004",
+  );
 
   expect(migration?.id).toBe("004");
   expect(migration?.order).toBe(800);

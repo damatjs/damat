@@ -9,6 +9,7 @@ export async function reconcileExpiredJobLeases(
   options: ReconcileOptions = {},
 ): Promise<number> {
   const limit = reconcileLimit(options.limit);
+  if (options.executor) return recover(options.executor, limit, options.queue);
   return getDurabilityClient().transaction((executor) =>
     recover(executor, limit, options.queue),
   );

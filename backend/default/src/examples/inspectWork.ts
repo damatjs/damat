@@ -6,7 +6,7 @@ import {
 } from "@damatjs/framework";
 import { referenceInspectionPolicy } from "./inspectionPolicy";
 
-const client: DurabilityClient = {
+export const referenceDurabilityClient: DurabilityClient = {
   get pool() {
     return getDurabilityClient().pool;
   },
@@ -17,7 +17,7 @@ const client: DurabilityClient = {
 export function createReferenceInspection(cursorSigningKey: string) {
   const options = {
     cursorSigningKey,
-    client,
+    client: referenceDurabilityClient,
     visibility: referenceInspectionPolicy.inspectionVisibility,
     redaction: referenceInspectionPolicy.redaction,
   };
@@ -30,8 +30,9 @@ export function createReferenceInspection(cursorSigningKey: string) {
 export async function inspectByCorrelationId(
   correlationId: string,
   cursorSigningKey: string,
+  createOperations = createReferenceInspection,
 ) {
-  const operations = createReferenceInspection(cursorSigningKey);
+  const operations = createOperations(cursorSigningKey);
   const [jobs, events] = await Promise.all([
     operations.jobs.listRuns({ correlationIds: [correlationId], limit: 25 }),
     operations.events.listEvents({ correlationId, limit: 25 }),

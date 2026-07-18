@@ -1,0 +1,28 @@
+# @damatjs/orm-connector Unreleased
+
+> Makes aggregate pool usage visible without logging every client checkout.
+
+## What changed
+
+Pool listeners report physical connection creation, removal, and errors.
+Routine acquire/release messages are removed, while pool statistics add a
+derived active-connection count.
+
+## Changed / improved
+
+- `PoolStats` includes `activeCount = max(0, totalCount - idleCount)`.
+- Checkout/release debug logging no longer makes normal query reuse look like
+  repeated database reconnection.
+
+## Breaking
+
+- Code constructing `PoolStats` must provide `activeCount`.
+
+## Action required
+
+Update custom pool-stat fixtures and dashboards to include `activeCount`.
+
+## References
+
+- Current behavior: [connector README](../../packages/orm/connector/README.md)
+- Source: `packages/orm/connector/src/tools/`

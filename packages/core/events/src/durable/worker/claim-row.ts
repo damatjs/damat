@@ -14,7 +14,7 @@ export interface EventDeliveryClaimRow extends QueryResultRow {
   max_attempts: number;
   backoff_ms: string | number;
   backoff_multiplier: number;
-  retention_at: Date;
+  retention_at: Date | null;
   available_at: Date;
   wait_ms?: string | number;
   lease_owner: string;
@@ -40,7 +40,7 @@ export function mapEventDeliveryClaim(
     maxAttempts: row.max_attempts,
     backoffMs: Number(row.backoff_ms),
     backoffMultiplier: row.backoff_multiplier,
-    retentionAt: row.retention_at,
+    ...(row.retention_at ? { retentionAt: row.retention_at } : {}),
     workerId: row.lease_owner,
     leaseToken: row.lease_token,
     leaseExpiresAt: row.lease_expires_at,

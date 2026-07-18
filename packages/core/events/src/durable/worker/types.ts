@@ -1,5 +1,6 @@
 import type {
   DurabilityClient,
+  DurabilityExecutor,
   JsonValue,
   RedactionOptions,
   WorkLogLimits,
@@ -23,7 +24,7 @@ export interface ClaimedEventDelivery {
   maxAttempts: number;
   backoffMs: number;
   backoffMultiplier: number;
-  retentionAt: Date;
+  retentionAt?: Date;
   workerId: string;
   leaseToken: string;
   leaseExpiresAt: Date;
@@ -46,6 +47,8 @@ export interface EventDeliveryContextOptions {
 export interface ExecuteEventDeliveryOptions extends EventDeliveryContextOptions {
   leaseMs?: number;
   heartbeatIntervalMs?: number;
+  batchHeartbeats?: boolean;
+  heartbeatExecutor?: DurabilityExecutor;
 }
 
 export type EventDeliveryResult = JsonValue | undefined;

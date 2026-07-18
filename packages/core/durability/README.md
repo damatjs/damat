@@ -114,10 +114,31 @@ intersecting buckets. Jobs and events attach their fixed domain dimensions to
 the returned buckets. `BoundedRetentionRequest` carries the common
 terminal cutoff and batch-size request shape.
 
+## Acceleration and retention control
+
+PostgreSQL is the canonical record for durable work. `recordAccelerationSignal`
+writes a coordination/invalidation row through the same transaction executor as
+the state change. A framework relay publishes committed rows to Redis; rollback
+removes both the state change and its signal. Relay claims are leased and
+idempotent, so a crash after publication can produce a duplicate wake-up but
+cannot duplicate a fenced PostgreSQL claim.
+
+`getAccelerationHealth()` reports the mode, pending outbox count, publication
+checkpoint, last successful publication and rebuild, and fallback interval.
+`rebuildAccelerationProjection(actor)` rebuilds Redis coordination indexes from
+PostgreSQL and audits the actor and reason. `subscribeDurableInvalidations`
+provides an in-process hook for a future HTTP/SSE adapter. Invalidations contain
+only resource identity, scope, and revision; consumers refetch canonical data.
+
+`setRetentionOverride` and `getRetentionOverride` use
+`number | "forever"`. Overrides are actor/reason audited and apply to remaining
+data. Operational presets are seven days, 90 days, and `"forever"`; the default
+is 90 days.
+
 ## System migrations
 
-`durabilitySystemMigrations` declares the shared idempotency, worker, control,
-control-activity, and maintenance-activity tables. Compose catalogs with
+`durabilitySystemMigrations` declares shared idempotency, worker, control,
+maintenance, acceleration outbox/state, and retention-override tables. Compose catalogs with
 `collectSystemMigrations`, then pass the result to the ORM migration runner.
 
 Framework startup never creates these tables. Use

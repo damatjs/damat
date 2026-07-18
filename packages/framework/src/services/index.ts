@@ -24,7 +24,8 @@ export async function initializeServices(
   await initializeModules(config, instances, cwd);
   await initializeAuth(config, instances, logger);
   await initializeEventBroadcast(config, instances, logger);
-  await initializeDurability(config);
+  const coordinator = await initializeDurability(config, instances);
+  if (coordinator) instances.durabilityCoordinator = coordinator;
   startWorkers(config, instances, logger, runtime);
   instances.shutdownHandlers.push({
     name: "logger",

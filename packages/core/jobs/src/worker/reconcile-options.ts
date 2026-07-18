@@ -1,6 +1,9 @@
+import type { DurabilityExecutor } from "@damatjs/durability";
+
 export interface ReconcileOptions {
   limit?: number;
   queue?: string;
+  executor?: DurabilityExecutor;
 }
 
 export function reconcileLimit(value = 100): number {

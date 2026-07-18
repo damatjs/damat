@@ -11,7 +11,7 @@ import { pool, resetWorkerStorage, uniqueEvent } from "./context";
 import { seedDelivery } from "./fixture";
 
 const actor = { id: "retention-boundaries", type: "system" as const };
-const future = new Date(Date.now() + 700_000_000);
+const future = new Date(Date.now() + 91 * 86_400_000);
 
 beforeEach(async () => {
   await resetWorkerStorage();

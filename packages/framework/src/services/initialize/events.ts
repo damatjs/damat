@@ -9,7 +9,6 @@ import {
 import type { AppConfig } from "../../config";
 import type { ServiceInstances } from "../types";
 import { commonWorkerOptions } from "./workerOptions";
-import { getWorkerWakeupRedis } from "./wakeup";
 
 export async function initializeEventBroadcast(
   config: AppConfig,
@@ -39,13 +38,15 @@ export function initializeDurableEvents(
   config: AppConfig,
   instances: ServiceInstances,
   _logger: ILogger,
-): void {
+  cleanupSharedIdempotency = true,
+): { router: DurableEventRouter; worker: DurableEventWorker } | undefined {
   const events = config.services?.events?.durable;
-  if (!events) return;
-  const wakeupRedis = getWorkerWakeupRedis(config);
+  if (!events) return undefined;
   const router = new DurableEventRouter({
     ...events.router,
-    ...(wakeupRedis && { wakeupRedis }),
+    ...(instances.durabilityCoordinator && {
+      coordinator: instances.durabilityCoordinator,
+    }),
   });
   const consumers = getAllDurableEventDefinitions().flatMap((definition) =>
     [...definition.consumers.keys()].map((consumer) => ({
@@ -55,11 +56,15 @@ export function initializeDurableEvents(
   );
   const worker = new DurableEventWorker({
     consumers,
-    ...commonWorkerOptions(config.services?.durability),
+    ...commonWorkerOptions(
+      config.services?.durability,
+      instances.durabilityCoordinator,
+    ),
     ...(events.concurrency !== undefined && {
       concurrency: events.concurrency,
     }),
-    ...(wakeupRedis && { wakeupRedis }),
+    cleanupSharedIdempotency,
+    batchHeartbeats: true,
   });
   router.start();
   worker.start();
@@ -71,6 +76,7 @@ export function initializeDurableEvents(
         : { graceMs: config.runtime.shutdownGraceMs },
     ),
   );
+  return { router, worker };
 }
 
 function registerStop(

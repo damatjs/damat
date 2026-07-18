@@ -15,20 +15,20 @@ describe("setupPoolListeners", () => {
   });
 
   describe("registration", () => {
-    it("should register all five event listeners on the pool", () => {
+    it("registers only physical connection lifecycle listeners", () => {
       const names = pool.eventNames();
       expect(names).toContain("error");
       expect(names).toContain("connect");
-      expect(names).toContain("acquire");
-      expect(names).toContain("release");
       expect(names).toContain("remove");
+      expect(names).not.toContain("acquire");
+      expect(names).not.toContain("release");
     });
 
     it("should register exactly one handler per event", () => {
       expect(pool.listenerCount("error")).toBe(1);
       expect(pool.listenerCount("connect")).toBe(1);
-      expect(pool.listenerCount("acquire")).toBe(1);
-      expect(pool.listenerCount("release")).toBe(1);
+      expect(pool.listenerCount("acquire")).toBe(0);
+      expect(pool.listenerCount("release")).toBe(0);
       expect(pool.listenerCount("remove")).toBe(1);
     });
 
@@ -46,16 +46,14 @@ describe("setupPoolListeners", () => {
       ]);
     });
 
-    it("should log debug on acquire event", () => {
+    it("does not log routine acquire events", () => {
       pool.emit("acquire");
-      expect(logger.messages("debug")).toEqual(["Client acquired from pool"]);
+      expect(logger.messages("debug")).toEqual([]);
     });
 
-    it("should log debug on release event", () => {
+    it("does not log routine release events", () => {
       pool.emit("release");
-      expect(logger.messages("debug")).toEqual([
-        "Client released back to pool",
-      ]);
+      expect(logger.messages("debug")).toEqual([]);
     });
 
     it("should log debug on remove event", () => {
@@ -85,8 +83,6 @@ describe("setupPoolListeners", () => {
       pool.emit("remove");
       expect(logger.messages("debug")).toEqual([
         "New client connected to pool",
-        "Client acquired from pool",
-        "Client released back to pool",
         "Client removed from pool",
       ]);
     });

@@ -8,6 +8,7 @@ describe("fetchPoolStats", () => {
     expect(fetchPoolStats(null)).toEqual({
       totalCount: 0,
       idleCount: 0,
+      activeCount: 0,
       waitingCount: 0,
     });
   });
@@ -17,6 +18,7 @@ describe("fetchPoolStats", () => {
     expect(fetchPoolStats(pool as unknown as Pool)).toEqual({
       totalCount: 5,
       idleCount: 3,
+      activeCount: 2,
       waitingCount: 2,
     });
   });
@@ -30,6 +32,7 @@ describe("fetchPoolStats", () => {
     expect(fetchPoolStats(mockPool)).toEqual({
       totalCount: 0,
       idleCount: 0,
+      activeCount: 0,
       waitingCount: 0,
     });
   });
@@ -39,6 +42,7 @@ describe("fetchPoolStats", () => {
     expect(fetchPoolStats(pool as unknown as Pool)).toEqual({
       totalCount: 0,
       idleCount: 0,
+      activeCount: 0,
       waitingCount: 0,
     });
   });
@@ -61,6 +65,7 @@ describe("performHealthCheck", () => {
     expect(status.poolStats).toEqual({
       totalCount: 0,
       idleCount: 0,
+      activeCount: 0,
       waitingCount: 0,
     });
     expect(status.lastChecked).toBeInstanceOf(Date);
@@ -114,6 +119,7 @@ describe("performHealthCheck", () => {
     expect(status.poolStats).toEqual({
       totalCount: 0,
       idleCount: 0,
+      activeCount: 0,
       waitingCount: 0,
     });
   });

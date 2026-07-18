@@ -29,6 +29,7 @@ export interface ConnectionStatus {
 export interface PoolStats {
   totalCount: number;
   idleCount: number;
+  activeCount: number;
   waitingCount: number;
 }
 

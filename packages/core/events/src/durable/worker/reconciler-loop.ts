@@ -4,7 +4,7 @@ import type { ResolvedEventWorkerOptions } from "./runtime-options";
 
 export class EventWorkerReconcilerLoop {
   private enabled = false;
-  private lastRetentionAt = 0;
+  private lastRetentionAt = Date.now();
   private timer?: ReturnType<typeof setTimeout>;
   private inFlight: Promise<void> | undefined;
 
@@ -34,11 +34,11 @@ export class EventWorkerReconcilerLoop {
     const includeRetention =
       now - this.lastRetentionAt >= this.options.retentionIntervalMs;
     try {
-      this.inFlight = reconcileEventWork(
-        this.id,
-        this.options,
-        includeRetention,
-      );
+      const reconcile = () =>
+        reconcileEventWork(this.id, this.options, includeRetention);
+      this.inFlight = this.options.coordinator
+        ? this.options.coordinator.run(`events:reconcile:${this.id}`, reconcile)
+        : reconcile();
       await this.inFlight;
       if (includeRetention) this.lastRetentionAt = now;
     } catch (error) {
@@ -48,7 +48,9 @@ export class EventWorkerReconcilerLoop {
       if (this.enabled)
         this.timer = setTimeout(
           () => void this.run(),
-          this.options.reconcileIntervalMs,
+          this.options.coordinator?.pollInterval(
+            this.options.reconcileIntervalMs,
+          ) ?? this.options.reconcileIntervalMs,
         );
     }
   }

@@ -32,6 +32,11 @@ parallel infrastructure contracts.
 - Ordered bounded cleanup for expired idempotency keys.
 - Shared work-actor validation plus bounded summary and retention request
   contracts for jobs and durable-event inspection clients.
+- A process-level adaptive coordinator that serializes background maintenance
+  and coalesces simultaneous wake-ups without restricting active pool work.
+- Transactional acceleration outbox/state tables, leased relay claims,
+  projection health, audited rebuild control, and payload-free invalidations.
+- Audited `number | "forever"` retention overrides and 90-day defaults.
 
 ## Changed
 
@@ -48,10 +53,13 @@ parallel infrastructure contracts.
 - Operational summary filters use half-open ranges and reject invalid dates,
   fractional intervals, invalid stale thresholds, reversed ranges, and ranges
   intersecting more than 1,000 buckets.
+- PostgreSQL worker snapshots default to 30 seconds and become stale after 90
+  seconds; high-frequency liveness belongs to Redis.
 
 ## Action required
 
-Run `damat-orm migrate:up` before enabling durable jobs or events.
+Run `damat-orm migrate:up` before enabling durable jobs or events. The migration
+adds acceleration outbox/state and retention-override storage.
 
 Configure a default durability client or pass the executor received by an
 active Damat transaction callback when calling `withIdempotency`. Custom

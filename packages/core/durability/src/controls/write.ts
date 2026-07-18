@@ -3,6 +3,7 @@ import { isTransactionalExecutor } from "../client/transactional";
 import type { DurabilityExecutor } from "../client/types";
 import { TransactionalExecutorRequiredError } from "../errors";
 import type { ChangeWorkControlOptions } from "./types";
+import { recordControlSignal } from "./signal";
 
 async function withExecutor<T>(
   executor: DurabilityExecutor | undefined,
@@ -50,6 +51,11 @@ export async function writeControl(
         options.reason ?? null,
         JSON.stringify(options.actor),
       ],
+    );
+    await recordControlSignal(
+      executor,
+      options.kind,
+      options.scope,
     );
   });
 }

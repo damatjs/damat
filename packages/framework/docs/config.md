@@ -146,12 +146,20 @@ interface ServicesConfig {
     reconcileIntervalMs?: number;
     reconcileBatchSize?: number;
     retentionIntervalMs?: number;
-    retentionMs?: number;
+    retentionMs?: number | "forever";
     progressMinimumIntervalMs?: number;
     logLimits?: WorkLogLimits;
     redaction?: RedactionOptions;
     inspectionVisibility?: InspectionVisibility;
     wakeups?: boolean;
+    acceleration?: {
+      enabled?: boolean;
+      healthySafetyPollIntervalMs?: number;
+      degradedMaxPollIntervalMs?: number;
+      workerLivenessTtlMs?: number;
+      durableWorkerSnapshotIntervalMs?: number;
+      relayBatchSize?: number;
+    };
   };
   auth?: {
     // pluggable auth provider (@damatjs/auth-*); optional, dynamically loaded
@@ -172,9 +180,13 @@ system migrations. Run:
 damat-orm migrate:up
 ```
 
-Redis is optional for durable execution. With `redisUrl` configured and
-`services.durability.wakeups !== false`, enqueue/publish wakeups reduce latency;
-workers still poll PostgreSQL when Redis is absent or unhealthy.
+Redis is optional for durable execution. Acceleration defaults to enabled when
+`redisUrl` exists: Redis wake-ups trigger prompt work, PostgreSQL safety-scans
+every 30 seconds, and Redis worker liveness expires after 10 seconds. Missing,
+unauthorized, or disconnected Redis switches the process to coordinated
+PostgreSQL polling within five seconds and retries Redis with bounded backoff.
+`wakeups` and `pollIntervalMs` remain compatibility inputs when `acceleration`
+does not supply their replacements.
 
 ## Runtime resolution
 

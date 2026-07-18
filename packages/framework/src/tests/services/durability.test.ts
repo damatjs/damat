@@ -4,10 +4,15 @@ import {
   FakeNotMigratedError,
   initializeDurability,
   reset,
+  sharedPool,
   state,
 } from "./initialize-events-jobs-fixture";
 
-beforeEach(reset);
+beforeEach(async () => {
+  reset();
+  const { PoolManager } = await import("@damatjs/services");
+  Object.assign(PoolManager, { getPool: () => sharedPool });
+});
 
 test("ordinary events remain database optional", async () => {
   const value = config();
@@ -18,11 +23,12 @@ test("ordinary events remain database optional", async () => {
   expect(state.readiness).toEqual([]);
 });
 
-test("jobs configure the pool-backed client after readiness", async () => {
+test("jobs use the one process pool after readiness", async () => {
   const value = config();
   value.services = { jobs: {} };
   await initializeDurability(value);
   expect(state.durabilityClients).toHaveLength(1);
+  expect(state.durabilityClients[0]).toEqual({ pool: sharedPool });
   expect(state.readiness[0]).toEqual([{ id: "shared" }, { id: "jobs" }]);
 });
 
@@ -31,6 +37,18 @@ test("durable events include only their enabled migrations", async () => {
   value.services = { events: { durable: {} } };
   await initializeDurability(value);
   expect(state.readiness[0]).toEqual([{ id: "shared" }, { id: "events" }]);
+});
+
+test("durability registers process-global cleanup with shutdown", async () => {
+  const value = config();
+  value.services = { jobs: {} };
+  const instances = { shutdownHandlers: [] } as never;
+  await initializeDurability(value, instances);
+  const [cleanup] = (instances as { shutdownHandlers: Array<{
+    name: string; handler(): void;
+  }> }).shutdownHandlers;
+  expect(cleanup?.name).toBe("durability-globals");
+  expect(cleanup?.handler()).toBeUndefined();
 });
 
 test("durable services require database configuration", async () => {

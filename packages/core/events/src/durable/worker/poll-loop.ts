@@ -43,7 +43,7 @@ export class EventDeliveryPollLoop {
     const capacity = this.options.concurrency - this.activeCount();
     let delay = this.options.pollIntervalMs;
     try {
-      this.inFlight =
+      const poll = () =>
         capacity > 0
           ? claimEventDeliveries({
               consumers: this.options.consumers,
@@ -52,6 +52,9 @@ export class EventDeliveryPollLoop {
               leaseMs: this.options.leaseMs,
             })
           : Promise.resolve([]);
+      this.inFlight = this.options.coordinator
+        ? this.options.coordinator.run(`events:poll:${this.id}`, poll)
+        : poll();
       const claims = await this.inFlight;
       if (this.enabled) for (const claim of claims) this.startClaim(claim);
       if (claims.length === capacity && capacity > 0) delay = 0;
@@ -64,7 +67,11 @@ export class EventDeliveryPollLoop {
         this.wakeRequested = false;
         delay = 0;
       }
-      if (this.enabled) this.timer = setTimeout(() => void this.run(), delay);
+      const resolved =
+        delay === this.options.pollIntervalMs && this.options.coordinator
+          ? this.options.coordinator.pollInterval(delay)
+          : delay;
+      if (this.enabled) this.timer = setTimeout(() => void this.run(), resolved);
     }
   }
 }

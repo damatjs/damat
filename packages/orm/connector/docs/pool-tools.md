@@ -31,14 +31,12 @@ failure), and `getPool()` (used before `connect()`).
 export function setupPoolListeners(pool: Pool, logger: ILogger): void;
 ```
 
-Registers five listeners on the pool:
+Registers three listeners on the pool:
 
 | Event     | Level   | Message                                                 |
 | --------- | ------- | ------------------------------------------------------- |
 | `error`   | `error` | `"PostgreSQL pool error"` with `{ error: err.message }` |
 | `connect` | `debug` | `"New client connected to pool"`                        |
-| `acquire` | `debug` | `"Client acquired from pool"`                           |
-| `release` | `debug` | `"Client released back to pool"`                        |
 | `remove`  | `debug` | `"Client removed from pool"`                            |
 
 Notes / gotchas:
@@ -47,7 +45,8 @@ Notes / gotchas:
   pool emits no log lines.
 - The `error` listener is important: an unhandled `error` event on a `pg` `Pool` can crash the
   process. Attaching this listener makes pool errors observable instead of fatal.
-- The test verifies all five events are registered via `pool.eventNames()`.
+- Routine checkout/release events are intentionally not logged. Aggregate pool
+  statistics expose usage without producing a log line per query.
 
 ## `tools/status.ts` — health checks & stats
 
@@ -55,7 +54,7 @@ Notes / gotchas:
 
 ```ts
 {
-  (totalCount, idleCount, waitingCount);
+  (totalCount, idleCount, activeCount, waitingCount);
 } // all default to 0
 ```
 
@@ -64,6 +63,7 @@ Returns `{ 0, 0, 0 }` when `pool` is `null`, and coalesces any `undefined` count
 
 - `totalCount` — clients currently in the pool (idle + in-use).
 - `idleCount` — clients available to be acquired.
+- `activeCount` — derived as `max(0, totalCount - idleCount)`.
 - `waitingCount` — pending acquire requests (a rising value signals pool exhaustion / leaked clients).
 
 ### `performHealthCheck(pool, updateStatus): Promise<ConnectionStatus>`

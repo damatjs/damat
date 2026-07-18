@@ -5,5 +5,5 @@ export const DEFAULT_DURABLE_EVENT_POLICY: ResolvedDurableEventPolicy = {
   maxAttempts: 3,
   backoffMs: 1_000,
   backoffMultiplier: 2,
-  retentionMs: 604_800_000,
+  retentionMs: 7_776_000_000,
 };

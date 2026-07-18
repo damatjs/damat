@@ -13,7 +13,7 @@ export type ResolvedWorkerOptions = JobWorkerOptions & {
   reconcileIntervalMs: number;
   reconcileBatchSize: number;
   retentionIntervalMs: number;
-  retentionMs: number;
+  retentionMs: import("@damatjs/durability").RetentionDuration;
 };
 
 export function resolveWorkerOptions(
@@ -24,15 +24,15 @@ export function resolveWorkerOptions(
     ...options,
     queue: options.queue ?? DEFAULT_JOB_QUEUE,
     concurrency: options.concurrency ?? 1,
-    pollIntervalMs: options.pollIntervalMs ?? 1_000,
+    pollIntervalMs: options.pollIntervalMs ?? 5_000,
     leaseMs: options.leaseMs ?? 30_000,
     heartbeatIntervalMs: options.heartbeatIntervalMs ?? 10_000,
-    registryHeartbeatIntervalMs: options.registryHeartbeatIntervalMs ?? 5_000,
+    registryHeartbeatIntervalMs: options.registryHeartbeatIntervalMs ?? 30_000,
     retryIntervalMs: Math.min(options.retryIntervalMs ?? 1_000, 5_000),
     reconcileIntervalMs: options.reconcileIntervalMs ?? 5_000,
     reconcileBatchSize: options.reconcileBatchSize ?? 100,
     retentionIntervalMs: options.retentionIntervalMs ?? 3_600_000,
-    retentionMs: options.retentionMs ?? 604_800_000,
+    retentionMs: options.retentionMs ?? 7_776_000_000,
   };
   if (resolved.heartbeatIntervalMs >= resolved.leaseMs) {
     throw new Error("heartbeatIntervalMs must be less than leaseMs");

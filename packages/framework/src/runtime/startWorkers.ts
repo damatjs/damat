@@ -4,6 +4,8 @@ import { initializeDurableEvents } from "../services/initialize/events";
 import { initializeJobs } from "../services/initialize/jobs";
 import type { ServiceInstances } from "../services/types";
 import type { ResolvedRuntime } from "./types";
+import type { WakeupTargets } from "../services/initialize/wakeupTargets";
+import { startWorkerWakeups } from "./startWorkerWakeups";
 
 function assertAvailable(config: AppConfig, runtime: ResolvedRuntime): void {
   for (const worker of runtime.workers) {
@@ -23,10 +25,22 @@ export function startWorkers(
   runtime: ResolvedRuntime,
 ): void {
   assertAvailable(config, runtime);
+  const targets: WakeupTargets = {};
   if (runtime.workers.includes("jobs")) {
-    initializeJobs(config, instances, logger);
+    const worker = initializeJobs(config, instances, logger);
+    if (worker) targets.job = worker;
   }
   if (runtime.workers.includes("events")) {
-    initializeDurableEvents(config, instances, logger);
+    const events = initializeDurableEvents(
+      config,
+      instances,
+      logger,
+      !runtime.workers.includes("jobs"),
+    );
+    if (events) {
+      targets.router = events.router;
+      targets.event = events.worker;
+    }
   }
+  startWorkerWakeups(config, instances, logger, targets);
 }

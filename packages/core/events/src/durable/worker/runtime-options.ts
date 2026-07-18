@@ -1,4 +1,5 @@
 import type { EventWakeupRedis } from "../wakeup/types";
+import type { DurabilityCoordinator } from "@damatjs/durability";
 import type {
   EventConsumerIdentity,
   EventDeliveryContextOptions,
@@ -22,6 +23,9 @@ export interface DurableEventWorkerOptions extends EventDeliveryContextOptions {
   reconcileBatchSize?: number;
   retentionIntervalMs?: number;
   wakeupRedis?: EventWakeupRedis;
+  coordinator?: DurabilityCoordinator;
+  cleanupSharedIdempotency?: boolean;
+  batchHeartbeats?: boolean;
 }
 
 export type ResolvedEventWorkerOptions = DurableEventWorkerOptions & {
@@ -34,6 +38,7 @@ export type ResolvedEventWorkerOptions = DurableEventWorkerOptions & {
   reconcileIntervalMs: number;
   reconcileBatchSize: number;
   retentionIntervalMs: number;
+  cleanupSharedIdempotency: boolean;
 };
 
 export function resolveEventWorkerOptions(
@@ -56,14 +61,15 @@ export function resolveEventWorkerOptions(
     ...execution,
     consumers,
     concurrency: options.concurrency ?? 1,
-    pollIntervalMs: options.pollIntervalMs ?? 1_000,
+    pollIntervalMs: options.pollIntervalMs ?? 5_000,
     leaseMs: options.leaseMs ?? 30_000,
     heartbeatIntervalMs: options.heartbeatIntervalMs ?? 10_000,
-    registryHeartbeatIntervalMs: options.registryHeartbeatIntervalMs ?? 5_000,
+    registryHeartbeatIntervalMs: options.registryHeartbeatIntervalMs ?? 30_000,
     retryIntervalMs: options.retryIntervalMs ?? 1_000,
     reconcileIntervalMs: options.reconcileIntervalMs ?? 5_000,
     reconcileBatchSize: options.reconcileBatchSize ?? 100,
     retentionIntervalMs: options.retentionIntervalMs ?? 3_600_000,
+    cleanupSharedIdempotency: options.cleanupSharedIdempotency ?? true,
   };
   validateResolvedEventWorkerOptions(resolved);
   return resolved;

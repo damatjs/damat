@@ -63,7 +63,7 @@ export async function listWorkers(
   options: ListWorkersOptions = {},
 ): Promise<WorkerRecord[]> {
   const now = options.now ?? new Date();
-  const staleAfter = options.staleAfterMs ?? 30_000;
+  const staleAfter = options.staleAfterMs ?? 90_000;
   const ids = options.ids ?? [];
   const result = await workerExecutor(options.executor).query<WorkerRow>(
     `SELECT * FROM "_damat_workers"

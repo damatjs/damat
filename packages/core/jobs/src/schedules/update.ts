@@ -6,6 +6,7 @@ import { scheduleTransaction } from "./transaction";
 import type { JobSchedule, UpdateJobScheduleInput } from "./types";
 import { validateJobScheduleInput } from "./validate";
 import { publishJobWakeup } from "../wakeup/publisher";
+import { recordAccelerationSignal } from "@damatjs/durability";
 
 export async function updateJobSchedule(
   id: string,
@@ -47,6 +48,17 @@ export async function updateJobSchedule(
       const schedule = mapJobSchedule(row);
       await appendScheduleActivity(executor, id, "updated", {
         enabled: schedule.enabled,
+      });
+      await recordAccelerationSignal({
+        topic: "damat:jobs:wakeup",
+        kind: "job",
+        resourceId: schedule.id,
+        scope: schedule.queue,
+        payload: { kind: "jobs", queue: schedule.queue },
+        ...(schedule.nextOccurrenceAt
+          ? { availableAt: schedule.nextOccurrenceAt }
+          : {}),
+        executor,
       });
       return schedule;
     },

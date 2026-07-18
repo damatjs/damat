@@ -21,4 +21,12 @@ export class DurableEventWorker {
   get isRunning(): boolean {
     return this.#runtime.isRunning;
   }
+
+  get inFlight(): number {
+    return this.#runtime.inFlight;
+  }
+
+  wake(): void {
+    this.#runtime.wake();
+  }
 }

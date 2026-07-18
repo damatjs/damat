@@ -1,6 +1,6 @@
 import type { JobWorkerOptions } from "./types";
 
-export const MAX_REGISTRY_HEARTBEAT_INTERVAL_MS = 25_000;
+export const MAX_REGISTRY_HEARTBEAT_INTERVAL_MS = 120_000;
 const INT32_MAX = 2_147_483_647;
 const TIMER_MAX = 2_147_483_647;
 
@@ -43,10 +43,13 @@ function validateNumbers(options: JobWorkerOptions): void {
     "registryHeartbeatIntervalMs",
     "reconcileIntervalMs",
     "retentionIntervalMs",
-    "retentionMs",
   ] as const) {
     const value = options[name];
     if (value !== undefined) positive(name, value, false, TIMER_MAX);
+  }
+  const retention = options.retentionMs;
+  if (retention !== undefined && retention !== "forever") {
+    positive("retentionMs", retention);
   }
   if (options.reconcileBatchSize !== undefined) {
     positive("reconcileBatchSize", options.reconcileBatchSize, true, INT32_MAX);

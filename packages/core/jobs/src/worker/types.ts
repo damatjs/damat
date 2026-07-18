@@ -1,7 +1,9 @@
 import type {
+  DurabilityCoordinator,
   JsonValue,
   RedactionOptions,
   WorkLogLimits,
+  RetentionDuration,
 } from "@damatjs/durability";
 import type { DurabilityClient } from "@damatjs/durability";
 import type { JobWakeupRedis } from "../wakeup";
@@ -36,8 +38,10 @@ export interface JobWorkerOptions {
   reconcileIntervalMs?: number;
   reconcileBatchSize?: number;
   retentionIntervalMs?: number;
-  retentionMs?: number;
+  retentionMs?: RetentionDuration;
   wakeupRedis?: JobWakeupRedis;
+  coordinator?: DurabilityCoordinator;
+  batchHeartbeats?: boolean;
 }
 
 export interface ExecuteJobOptions extends JobWorkerOptions {

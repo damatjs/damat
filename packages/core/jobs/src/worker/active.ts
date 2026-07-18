@@ -11,6 +11,10 @@ export class ActiveExecutions {
     return this.executions.size;
   }
 
+  values(): JobExecution[] {
+    return [...this.executions];
+  }
+
   track(execution: JobExecution): void {
     this.executions.add(execution);
     void execution.promise

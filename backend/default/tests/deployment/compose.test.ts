@@ -57,6 +57,11 @@ test("only the API runtime owns an HTTP health check", () => {
 test("keeps Redis an optional wake-up accelerator", () => {
   expect(compose).toContain('REDIS_URL: "${REDIS_URL:-}"');
   expect(service("redis")).toContain("profiles: [accelerator]");
+  expect(service("redis")).toContain("/etc/redis/users.acl");
+  const acl = readFileSync(
+    join(root, "backend/default/redis/users.acl"), "utf8");
+  expect(acl).toContain("&damat:*");
+  expect(acl).toContain("&damat-events");
 });
 
 test("requires a database password without publishing PostgreSQL", () => {

@@ -11,6 +11,10 @@ export class ActiveEventDeliveries {
     return this.executions.size;
   }
 
+  values(): EventDeliveryExecution[] {
+    return [...this.executions];
+  }
+
   track(execution: EventDeliveryExecution): void {
     this.executions.add(execution);
     void execution.promise

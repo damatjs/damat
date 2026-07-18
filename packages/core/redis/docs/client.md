@@ -25,6 +25,11 @@ interface RedisClientConfig extends RedisConfig {
 
 `Redis` and `RedisOptions` are re-exported from `@damatjs/deps/ioredis` (`src/types/redis.ts`, `src/types/config.ts`).
 
+Framework durability uses the singleton for one multiplexed subscriber and a
+rebuildable coordination projection. Authenticated users need Redis ACL channel
+patterns `&damat:*` and `&damat-events` in addition to their command and key
+rules. Redis is never the canonical store for durable payloads or history.
+
 ## Factory — `src/client/factory.ts`
 
 ```ts

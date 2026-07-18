@@ -3,6 +3,7 @@ import {
   isTransactionalExecutor,
   TransactionalExecutorRequiredError,
   type DurabilityExecutor,
+  recordAccelerationSignal,
 } from "@damatjs/durability";
 import type {
   DurableEventName,
@@ -45,6 +46,15 @@ async function publishWith(
   const inserted = await insertDurableEvent(executor, event);
   if (inserted) {
     await appendDurableEventActivity(executor, inserted.id, "published");
+    await recordAccelerationSignal({
+      topic: "damat:events:wakeup",
+      kind: "event",
+      resourceId: inserted.id,
+      scope: "router",
+      payload: { kind: "events", target: "router" },
+      availableAt: inserted.availableAt,
+      executor,
+    });
     return inserted;
   }
   const existing = event.idempotencyKey

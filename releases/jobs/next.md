@@ -34,6 +34,9 @@ optional post-commit wake-up path rather than the queue of record.
   summaries, and actor-audited headless administration.
 - Inspection indexes for cursor, status, queue, lineage, lease, terminal,
   activity, and attempt summary paths in jobs system migration `003`.
+- Transactional acceleration signals for enqueue, retry, schedules, controls,
+  and inspection changes, including caller-owned transactions.
+- Batched fenced lease renewal for every execution owned by one worker.
 
 ## Changed
 
@@ -111,6 +114,10 @@ optional post-commit wake-up path rather than the queue of record.
   signing keys at creation instead of waiting for the first cursor operation.
 - Hidden inspection detail omits worker application and deployment metadata,
   matching hidden worker summaries and the documented visibility contract.
+- Framework-managed workers use one adaptive coordinator: healthy Redis leaves
+  a 30-second safety scan, degraded operation polls within five seconds, worker
+  snapshots persist every 30 seconds, and retention defaults to 90 days or
+  accepts `"forever"`.
 
 ## Action required
 
@@ -119,6 +126,8 @@ the shared durability catalog followed by the jobs catalog. Replace `queueName`
 with `queue`, replace string Redis priorities with numeric priorities, and
 migrate raw queue inspection to the headless job clients. Construct a new `JobWorker`
 instead of restarting a worker instance that has begun stopping.
+Ensure an authenticated Redis user has the channel rule `&damat:*` when using
+framework acceleration.
 
 ## Breaking
 

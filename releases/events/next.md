@@ -40,6 +40,9 @@ Redis broadcast as separate delivery paths.
   control history with an explicit truncation signal.
 - Complete attempt-level waiting history, immutable retry schedules, overdue
   router backlog age, and a deterministic 20-group dead-letter summary cap.
+- Transactional acceleration signals for publish, routing, retry, controls, and
+  inspection changes plus batched fenced delivery heartbeats.
+- Nullable event/delivery retention columns for `retentionMs: "forever"`.
 
 ## Changed / improved
 
@@ -49,6 +52,9 @@ Redis broadcast as separate delivery paths.
   intentionally rely on PostgreSQL polling until the caller commits.
 - Ephemeral `EventBus`, Redis broadcast, and automatic model CRUD behavior are
   unchanged and never create durable rows.
+- Framework routing/delivery uses one adaptive coordinator and multiplexed
+  Redis subscriber. Healthy safety scans run every 30 seconds; Redis failure
+  activates a PostgreSQL fallback bounded to five seconds.
 
 ## Breaking
 
@@ -61,6 +67,8 @@ Enable `services.events.durable`, configure PostgreSQL, and run
 effects still require provider-supported idempotency.
 Attempts created before the inspection migration retain an unknown wait value;
 waiting summaries exclude them instead of reporting a synthetic zero.
+Apply migration `events:005` before storing `"forever"` retention and grant the
+Redis channel rules `&damat:*` and `&damat-events` when those transports run.
 
 ## References
 

@@ -49,6 +49,14 @@ export class JobWorkerRuntime {
     return this.lifecycle.running;
   }
 
+  get inFlight(): number {
+    return this.components.active.size;
+  }
+
+  wake(): void {
+    this.components.wake();
+  }
+
   private async boot(): Promise<void> {
     await this.deps.register({
       id: this.id,

@@ -24,7 +24,7 @@ export function resolveEventInspectionOptions(
     throw new Error("cursorSigningKey is required");
   }
   validateCursorSigningKey(options.cursorSigningKey);
-  const staleAfterMs = options.staleAfterMs ?? 30_000;
+  const staleAfterMs = options.staleAfterMs ?? 90_000;
   if (!Number.isSafeInteger(staleAfterMs) || staleAfterMs < 1) {
     throw new Error("staleAfterMs must be a positive safe integer");
   }

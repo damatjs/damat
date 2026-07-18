@@ -4,7 +4,7 @@ import type { ResolvedWorkerOptions } from "./options";
 
 export class JobReconcilerLoop {
   private enabled = false;
-  private lastRetentionAt = 0;
+  private lastRetentionAt = Date.now();
   private timer?: ReturnType<typeof setTimeout>;
   private inFlight: Promise<void> | undefined;
 
@@ -31,13 +31,17 @@ export class JobReconcilerLoop {
     const includeRetention =
       now - this.lastRetentionAt >= this.options.retentionIntervalMs;
     try {
-      this.inFlight = this.dependencies.reconcile({
-        workerId: this.workerId,
-        queue: this.options.queue,
-        batchSize: this.options.reconcileBatchSize,
-        retentionMs: this.options.retentionMs,
-        includeRetention,
-      });
+      const reconcile = () =>
+        this.dependencies.reconcile({
+          workerId: this.workerId,
+          queue: this.options.queue,
+          batchSize: this.options.reconcileBatchSize,
+          retentionMs: this.options.retentionMs,
+          includeRetention,
+        });
+      this.inFlight = this.options.coordinator
+        ? this.options.coordinator.run(`jobs:reconcile:${this.workerId}`, reconcile)
+        : reconcile();
       await this.inFlight;
       if (includeRetention) this.lastRetentionAt = now;
     } catch (error) {
@@ -45,10 +49,10 @@ export class JobReconcilerLoop {
     } finally {
       this.inFlight = undefined;
       if (this.enabled) {
-        this.timer = setTimeout(
-          () => void this.run(),
+        const delay = this.options.coordinator?.pollInterval(
           this.options.reconcileIntervalMs,
         );
+        this.timer = setTimeout(() => void this.run(), delay);
       }
     }
   }

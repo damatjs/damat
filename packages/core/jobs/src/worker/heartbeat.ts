@@ -1,12 +1,19 @@
-import { getDurabilityClient } from "@damatjs/durability";
+import {
+  getDurabilityClient,
+  type DurabilityExecutor,
+} from "@damatjs/durability";
 import { JobLeaseLostError } from "./errors";
 import type { ClaimedJobRun } from "./types";
 
 export async function heartbeatJobClaim(
   claim: ClaimedJobRun,
-  options: { leaseMs: number; client?: ReturnType<typeof getDurabilityClient> },
+  options: {
+    leaseMs: number;
+    client?: ReturnType<typeof getDurabilityClient>;
+    executor?: DurabilityExecutor;
+  },
 ): Promise<{ cancellationRequested: boolean }> {
-  const executor = options.client ?? getDurabilityClient();
+  const executor = options.executor ?? options.client ?? getDurabilityClient();
   const result = await executor.query<{ cancellation_requested: boolean }>(
     `WITH run AS (
        UPDATE "_damat_job_runs" SET

@@ -10,6 +10,7 @@ import { scheduleTransaction } from "./transaction";
 import type { CreateJobScheduleInput, JobSchedule } from "./types";
 import { validateJobScheduleInput } from "./validate";
 import { publishJobWakeup } from "../wakeup/publisher";
+import { recordAccelerationSignal } from "@damatjs/durability";
 
 export async function createJobSchedule(
   input: CreateJobScheduleInput,
@@ -54,6 +55,17 @@ export async function createJobSchedule(
       );
       const schedule = mapJobSchedule(result.rows[0]!);
       await appendScheduleActivity(executor, schedule.id, "created");
+      await recordAccelerationSignal({
+        topic: "damat:jobs:wakeup",
+        kind: "job",
+        resourceId: schedule.id,
+        scope: schedule.queue,
+        payload: { kind: "jobs", queue: schedule.queue },
+        ...(schedule.nextOccurrenceAt
+          ? { availableAt: schedule.nextOccurrenceAt }
+          : {}),
+        executor,
+      });
       return schedule;
     },
   );

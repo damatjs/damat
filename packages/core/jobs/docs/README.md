@@ -88,7 +88,7 @@ instances are one-shot: `start()` rejects synchronously once stopping begins or
 after the worker stops. It registers a worker record before polling, fills only
 free concurrency, and reports in-flight load on a heartbeat cadence independent
 from polling. Construction validates identity, concurrency, timing, progress,
-and log-limit options. Registry heartbeat cadence cannot exceed 25 seconds and
+and log-limit options. Registry heartbeat cadence cannot exceed 120 seconds and
 the job heartbeat must remain shorter than the claim lease. Concurrency fits a
 PostgreSQL signed integer, timer and duration values fit the runtime's
 2,147,483,647 ms timeout range, and log limits are safe integers.
@@ -127,8 +127,10 @@ maintenance activity; completion commits with its deletions.
 Redis wake-ups carry only `{ kind: "jobs", queue }`. Publishers run after
 package-owned PostgreSQL transactions commit. Mutations using a caller-owned
 executor do not publish because the package cannot observe that outer commit.
-The duplicated subscriber can wake the claim loop early, while periodic
-PostgreSQL polling remains active and authoritative.
+Framework processes multiplex job and event signals through one subscriber.
+Healthy Redis uses a 30-second PostgreSQL safety scan; degraded mode discovers
+work within five seconds. Standalone workers retain their compatible dedicated
+subscriber and five-second PostgreSQL fallback.
 
 ## Operational inspection
 

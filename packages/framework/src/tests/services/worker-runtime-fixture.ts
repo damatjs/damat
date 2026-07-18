@@ -11,6 +11,9 @@ export const workerState = {
 
 mock.module("@damatjs/jobs", () => ({
   JobWorker: FakeJobWorker,
+  JOB_WAKEUP_CHANNEL: "damat:jobs:wakeup",
+  parseJobWakeup: () => undefined,
+  clearJobWakeupPublisher: () => {},
   configureJobWakeupPublisher: () => workerState.publishers.push("jobs"),
 }));
 

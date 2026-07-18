@@ -10,14 +10,14 @@ export interface DurableEventRow extends QueryResultRow {
   max_attempts: number;
   backoff_ms: number | string;
   backoff_multiplier: number;
-  retention_ms: number | string;
+  retention_ms: number | string | null;
   idempotency_key: string | null;
   correlation_id: string | null;
   causation_id: string | null;
   occurred_at: Date;
   available_at: Date;
   routed_at: Date | null;
-  retention_at: Date;
+  retention_at: Date | null;
   created_at: Date;
 }
 
@@ -49,14 +49,14 @@ export function mapDurableEvent(row: DurableEventRow): DurableEventRecord {
     maxAttempts: row.max_attempts,
     backoffMs: Number(row.backoff_ms),
     backoffMultiplier: row.backoff_multiplier,
-    retentionMs: Number(row.retention_ms),
+    retentionMs: row.retention_ms === null ? "forever" : Number(row.retention_ms),
     ...(row.idempotency_key ? { idempotencyKey: row.idempotency_key } : {}),
     ...(row.correlation_id ? { correlationId: row.correlation_id } : {}),
     ...(row.causation_id ? { causationId: row.causation_id } : {}),
     occurredAt: row.occurred_at,
     availableAt: row.available_at,
     ...(row.routed_at ? { routedAt: row.routed_at } : {}),
-    retentionAt: row.retention_at,
+    ...(row.retention_at ? { retentionAt: row.retention_at } : {}),
     createdAt: row.created_at,
   };
 }

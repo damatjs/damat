@@ -12,15 +12,19 @@ export async function runJobHandler(
   heartbeat: () => Promise<void>,
   setStopHeartbeat: (stop: () => void) => void,
 ): Promise<void> {
-  const timer = setInterval(
-    () =>
-      void heartbeat().catch(() => {
-        controller.abort();
-        clearInterval(timer);
-      }),
-    options.heartbeatIntervalMs,
-  );
-  const stopHeartbeat = () => clearInterval(timer);
+  const timer = options.batchHeartbeats
+    ? undefined
+    : setInterval(
+        () =>
+          void heartbeat().catch(() => {
+            controller.abort();
+            if (timer) clearInterval(timer);
+          }),
+        options.heartbeatIntervalMs,
+      );
+  const stopHeartbeat = () => {
+    if (timer) clearInterval(timer);
+  };
   setStopHeartbeat(stopHeartbeat);
   try {
     const context = createJobRunContext(claim, controller, options);

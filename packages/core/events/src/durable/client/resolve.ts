@@ -17,8 +17,10 @@ export function resolveDurableEvent(
   const availableAt =
     options.availableAt ??
     new Date(occurredAt.getTime() + (options.delayMs ?? 0));
-  const retentionAt = new Date(availableAt.getTime() + policy.retentionMs);
-  if (Number.isNaN(retentionAt.getTime())) {
+  const retentionAt = policy.retentionMs === "forever"
+    ? undefined
+    : new Date(availableAt.getTime() + policy.retentionMs);
+  if (retentionAt && Number.isNaN(retentionAt.getTime())) {
     throw new Error("Durable event retention timestamp is outside Date range");
   }
   return {
@@ -33,7 +35,7 @@ export function resolveDurableEvent(
     retentionMs: policy.retentionMs,
     occurredAt,
     availableAt,
-    retentionAt,
+    ...(retentionAt ? { retentionAt } : {}),
     ...(options.idempotencyKey
       ? { idempotencyKey: options.idempotencyKey }
       : {}),

@@ -5,8 +5,8 @@
 `@damatjs/framework` turns one `damat.config.ts` and application build into an
 HTTP server, a selected durable-worker process, or both. It initializes the
 logger, PostgreSQL, optional Redis, modules/providers, and auth before checking
-migration readiness. It configures durable wake-up publishers after readiness,
-then starts selected job/event workers and
+migration readiness. It starts one process-level durability coordinator and
+Redis wake-up transport after readiness, then starts selected job/event workers and
 builds the Hono HTTP app only when the resolved runtime serves HTTP.
 
 It sits at the top of the Damat backend stack: it depends on `@damatjs/services`, `@damatjs/redis`, the ORM packages, `@damatjs/logger`, `@damatjs/types`, `@damatjs/workflow-engine`, `@damatjs/link`, `@damatjs/events`, `@damatjs/jobs`, and `@damatjs/deps`, and re-exports the service layer, the link authoring surface, and the events/jobs surfaces so apps import everything from one place.
@@ -64,7 +64,12 @@ export default defineConfig({
     shutdownGraceMs: 30_000,
   },
   services: {
-    durability: { wakeups: true },
+    durability: {
+      acceleration: {
+        healthySafetyPollIntervalMs: 30_000,
+        degradedMaxPollIntervalMs: 5_000,
+      },
+    },
     jobs: { queue: "damat-jobs", concurrency: 4 },
     events: { durable: { concurrency: 4 } },
   },
@@ -123,6 +128,19 @@ unknown mode or capability always fails startup. In `worker` and `all` modes,
 selecting a known capability without its service config also fails startup. A
 `server` process drops known worker selections because it never executes
 workers.
+
+One application process creates one PostgreSQL pool and gives that pool to
+HTTP modules, jobs, event routing/delivery, inspection, the acceleration relay,
+and maintenance. The pool may hold several physical connections up to its
+configured `max`; sharing a pool does not mean setting `max: 1`.
+
+PostgreSQL remains canonical. Redis stores rebuildable ready identifiers,
+short-lived worker liveness, wake-ups, and inspection invalidations. Healthy
+Redis removes one-second idle polling and leaves a 30-second PostgreSQL safety
+scan; degraded mode discovers work within five seconds. The shared coordinator
+serializes idle/background maintenance without blocking HTTP requests or active
+handlers. Use `getAccelerationHealth`, `rebuildAccelerationProjection`, and
+`subscribeDurableInvalidations` to integrate operational tooling.
 
 ### Opt-in config
 

@@ -96,7 +96,8 @@ connected). **The caller must `client.release()`** to return it to the pool.
 
 ### `getPoolStats(): PoolStats`
 
-Delegates to `fetchPoolStats(this.pool)`. Returns all zeros when not connected.
+Delegates to `fetchPoolStats(this.pool)`. Returns total, idle, active, and waiting
+connection counts, or all zeros when not connected.
 
 ### `isInitialized(): boolean`
 

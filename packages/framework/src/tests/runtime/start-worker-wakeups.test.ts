@@ -1,0 +1,79 @@
+import { afterEach, expect, test } from "bun:test";
+import {
+  clearAccelerationController,
+  clearDurabilityClient,
+  createDurabilityClient,
+  ProcessDurabilityCoordinator,
+  setDurabilityClient,
+} from "@damatjs/durability";
+import type { Redis } from "@damatjs/redis";
+import {
+  redisUsername,
+  startWorkerWakeups,
+} from "../../runtime/startWorkerWakeups";
+import { FakeWakeupRedis } from "../services/wakeup-transport-fixture";
+
+afterEach(() => {
+  clearAccelerationController();
+  clearDurabilityClient();
+});
+
+test("worker wakeups rebuild acceleration and clear it on shutdown", async () => {
+  setFakeDurability();
+  const redis = new FakeWakeupRedis();
+  const coordinator = new ProcessDurabilityCoordinator({ mode: "degraded" });
+  const instances = { shutdownHandlers: [], durabilityCoordinator: coordinator };
+  startWorkerWakeups(config("redis://redisUsername@localhost"), instances,
+    logger(), {}, redis as unknown as Redis);
+  await waitFor(() => coordinator.mode === "healthy");
+  expect(instances.shutdownHandlers).toHaveLength(1);
+  await instances.shutdownHandlers[0]!.handler();
+  expect(coordinator.mode).toBe("disabled");
+});
+
+test("relay failure degrades transport and reports an invalid Redis user", async () => {
+  setFakeDurability(true);
+  const redis = new FakeWakeupRedis();
+  const coordinator = new ProcessDurabilityCoordinator({ mode: "degraded" });
+  const warnings: unknown[] = [];
+  const instances = { shutdownHandlers: [], durabilityCoordinator: coordinator };
+  startWorkerWakeups(config("not a redis url"), instances,
+    logger(warnings), {}, redis as unknown as Redis);
+  await waitFor(() => warnings.length > 0);
+  expect(warnings[0]).toMatchObject({ redisUser: "unknown" });
+  await instances.shutdownHandlers[0]!.handler();
+});
+
+test("Redis usernames decode and default predictably", () => {
+  expect(redisUsername("redis://named%20user@localhost")).toBe("named user");
+  expect(redisUsername("redis://localhost")).toBe("default");
+  expect(redisUsername("invalid")).toBe("unknown");
+});
+
+function setFakeDurability(failClaims = false): void {
+  const query = async (sql: string) => {
+    if (failClaims && sql.includes("WITH selected")) throw new Error("relay failed");
+    return { rows: [], rowCount: 1 };
+  };
+  setDurabilityClient(createDurabilityClient({
+    pool: { query, connect: async () => ({ query, release: () => {} }) },
+  }));
+}
+
+function config(redisUrl: string) {
+  return {
+    projectConfig: { http: { port: 3000, host: "localhost" }, redisUrl },
+    services: { jobs: {}, events: { durable: {} }, durability: { acceleration: {} } },
+  } as never;
+}
+
+function logger(warnings: unknown[] = []) {
+  return { warn: (_message: string, details: unknown) => warnings.push(details),
+    info: () => {}, error: () => {} } as never;
+}
+
+async function waitFor(condition: () => boolean): Promise<void> {
+  const deadline = Date.now() + 500;
+  while (!condition() && Date.now() < deadline) await Bun.sleep(2);
+  expect(condition()).toBeTrue();
+}

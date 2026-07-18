@@ -7,6 +7,7 @@ import {
   resetWorkers,
   workerState,
 } from "./worker-runtime-fixture";
+import { durabilityRuntimeMock } from "./durability-runtime-mock";
 export const state = {
   broadcasts: [] as unknown[],
   durabilityClients: [] as unknown[],
@@ -21,35 +22,26 @@ mock.module("@damatjs/events", () => ({
   disconnectEventBroadcast: async () => {},
   DurableEventRouter: FakeEventRouter,
   DurableEventWorker: FakeEventWorker,
+  EVENT_WAKEUP_CHANNEL: "damat:events:wakeup",
+  parseEventWakeup: () => undefined,
+  clearEventWakeupPublisher: () => {},
   configureEventWakeupPublisher: () => workerState.publishers.push("events"),
   getAllDurableEventDefinitions: () => [
     { name: "mail.sent", consumers: new Map([["audit", {}]]) },
   ],
 }));
-mock.module("@damatjs/durability", () => ({
-  DurableInfrastructureNotMigratedError: FakeNotMigratedError,
-  createDurabilityClient: ({ pool }: { pool: unknown }) => ({ pool }),
-  setDurabilityClient: (client: unknown) =>
-    state.durabilityClients.push(client),
-  assertSystemMigrationsApplied: async (
-    _client: unknown,
-    migrations: unknown,
-  ) => {
-    state.readiness.push(migrations);
-    if (state.readinessError) throw state.readinessError;
-  },
-  collectSystemMigrations: (catalogs: Array<{ migrations: unknown[] }>) =>
-    catalogs.flatMap(({ migrations }) => migrations),
-  durabilitySystemMigrations: { migrations: [{ id: "shared" }] },
-}));
+mock.module("@damatjs/durability", () =>
+  durabilityRuntimeMock(state, FakeNotMigratedError),
+);
 mock.module("@damatjs/jobs/migrations", () => ({
   jobsSystemMigrations: { migrations: [{ id: "jobs" }] },
 }));
 mock.module("@damatjs/events/migrations", () => ({
   eventsSystemMigrations: { migrations: [{ id: "events" }] },
 }));
+export const sharedPool = { query: async () => ({ rows: [] }) };
 mock.module("@damatjs/services", () => ({
-  PoolManager: { getPool: () => ({ query: async () => ({ rows: [] }) }) },
+  PoolManager: { getPool: () => sharedPool },
 }));
 export const { initializeEventBroadcast } =
   await import("../../services/initialize/events");

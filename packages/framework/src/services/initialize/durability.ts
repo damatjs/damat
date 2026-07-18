@@ -1,17 +1,20 @@
 import {
   assertSystemMigrationsApplied,
   collectSystemMigrations,
+  clearDurabilityClient,
   createDurabilityClient,
+  ProcessDurabilityCoordinator,
   DurableInfrastructureNotMigratedError,
   durabilitySystemMigrations,
   setDurabilityClient,
   type SystemMigrationCatalog,
+  type DurabilityCoordinator,
 } from "@damatjs/durability";
 import { eventsSystemMigrations } from "@damatjs/events/migrations";
 import { jobsSystemMigrations } from "@damatjs/jobs/migrations";
 import { PoolManager } from "@damatjs/services";
 import type { AppConfig } from "../../config";
-import { configureWorkerWakeupPublishers } from "./wakeup";
+import type { ServiceInstances } from "../types";
 
 function enabledCatalogs(config: AppConfig): SystemMigrationCatalog[] {
   return [
@@ -25,8 +28,11 @@ function usesDurability(config: AppConfig): boolean {
   return Boolean(config.services?.jobs || config.services?.events?.durable);
 }
 
-export async function initializeDurability(config: AppConfig): Promise<void> {
-  if (!usesDurability(config)) return;
+export async function initializeDurability(
+  config: AppConfig,
+  instances?: ServiceInstances,
+): Promise<DurabilityCoordinator | undefined> {
+  if (!usesDurability(config)) return undefined;
   if (!config.projectConfig.databaseUrl) {
     throw new Error(
       "Configure projectConfig.databaseUrl, then run: damat-orm migrate:up",
@@ -46,5 +52,22 @@ export async function initializeDurability(config: AppConfig): Promise<void> {
     );
   }
   setDurabilityClient(client);
-  configureWorkerWakeupPublishers(config);
+  instances?.shutdownHandlers.push({
+    name: "durability-globals",
+    phase: "postgres",
+    handler: () => clearDurabilityClient(),
+  });
+  const acceleration = config.services?.durability?.acceleration;
+  const enabled = acceleration?.enabled ?? config.services?.durability?.wakeups;
+  return new ProcessDurabilityCoordinator({
+    mode: enabled === false || !config.projectConfig.redisUrl
+      ? "disabled"
+      : "degraded",
+    healthySafetyPollIntervalMs:
+      acceleration?.healthySafetyPollIntervalMs ?? 30_000,
+    degradedMaxPollIntervalMs:
+      acceleration?.degradedMaxPollIntervalMs ??
+      config.services?.durability?.pollIntervalMs ??
+      5_000,
+  });
 }

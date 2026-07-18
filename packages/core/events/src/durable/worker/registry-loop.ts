@@ -15,7 +15,7 @@ export class EventWorkerRegistryLoop {
 
   start(): void {
     this.enabled = true;
-    this.schedule(0);
+    this.schedule(this.options.registryHeartbeatIntervalMs);
   }
 
   async stop(): Promise<void> {
@@ -36,10 +36,11 @@ export class EventWorkerRegistryLoop {
     if (!this.enabled) return;
     let delay = this.options.registryHeartbeatIntervalMs;
     try {
-      this.inFlight = heartbeatWorker({
-        id: this.id,
-        inFlight: this.activeCount(),
-      });
+      const heartbeat = () =>
+        heartbeatWorker({ id: this.id, inFlight: this.activeCount() });
+      this.inFlight = this.options.coordinator
+        ? this.options.coordinator.run(`events:registry:${this.id}`, heartbeat)
+        : heartbeat();
       await this.inFlight;
     } catch (error) {
       delay = this.options.retryIntervalMs;

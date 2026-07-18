@@ -1,4 +1,8 @@
-import { cleanupExpiredIdempotency } from "@damatjs/durability";
+import {
+  cleanupExpiredIdempotency,
+  cleanupPublishedAccelerationSignals,
+  getDurabilityClient,
+} from "@damatjs/durability";
 import { reconcileExpiredEventDeliveryLeases } from "./reconcileLeases";
 import { reconcileEventDeliveryRetries } from "./reconcileRetries";
 import { runEventRetention } from "./retention";
@@ -13,9 +17,20 @@ export async function reconcileEventWork(
     limit: options.reconcileBatchSize,
     consumers: options.consumers,
   };
-  await reconcileExpiredEventDeliveryLeases(scope);
-  await reconcileEventDeliveryRetries(scope);
-  await cleanupExpiredIdempotency({ limit: options.reconcileBatchSize });
+  await getDurabilityClient().transaction(async (executor) => {
+    await reconcileExpiredEventDeliveryLeases({ ...scope, executor });
+    await reconcileEventDeliveryRetries({ ...scope, executor });
+    if (options.cleanupSharedIdempotency) {
+      await cleanupExpiredIdempotency({
+        limit: options.reconcileBatchSize,
+        executor,
+      });
+      await cleanupPublishedAccelerationSignals({
+        limit: options.reconcileBatchSize,
+        executor,
+      });
+    }
+  });
   if (includeRetention)
     await runEventRetention({
       actor: { id, type: "system" },

@@ -23,8 +23,8 @@ export function validateResolvedEventWorkerOptions(
       throw new Error(`${name} must be a positive safe integer`);
     }
   }
-  if (options.registryHeartbeatIntervalMs > 25_000) {
-    throw new Error("registryHeartbeatIntervalMs must be at most 25000");
+  if (options.registryHeartbeatIntervalMs > 120_000) {
+    throw new Error("registryHeartbeatIntervalMs must be at most 120000");
   }
 }
 

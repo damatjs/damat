@@ -1,4 +1,7 @@
-import type { DurabilityExecutor } from "@damatjs/durability";
+import {
+  recordAccelerationSignal,
+  type DurabilityExecutor,
+} from "@damatjs/durability";
 import { eventExecutor } from "./executor";
 import {
   mapDurableEventActivity,
@@ -33,6 +36,7 @@ export async function appendDurableEventActivity(
      VALUES ($1,$2,$3::jsonb) RETURNING *`,
     [eventId, type, JSON.stringify(metadata)],
   );
+  await invalidateEvent(executor, eventId);
   return mapDurableEventActivity(result.rows[0]!);
 }
 
@@ -62,6 +66,19 @@ export async function appendEventActivity(
       JSON.stringify(activity.actor ?? {}),
     ],
   );
+  await invalidateEvent(executor, activity.eventId);
+}
+
+function invalidateEvent(
+  executor: DurabilityExecutor,
+  eventId: string,
+): Promise<string> {
+  return recordAccelerationSignal({
+    topic: "damat:inspection:invalidate",
+    kind: "event",
+    resourceId: eventId,
+    executor,
+  });
 }
 
 export async function findDurableEventActivity(

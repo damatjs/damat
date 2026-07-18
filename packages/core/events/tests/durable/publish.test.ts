@@ -6,7 +6,7 @@ import {
   listDurableEventActivity,
   publishDurableEvent,
 } from "../../src";
-import { durability, ensureEventStorage, uniqueEvent } from "./storage-context";
+import { durability, ensureEventStorage, pool, uniqueEvent } from "./storage-context";
 
 beforeEach(async () => {
   await ensureEventStorage();
@@ -72,6 +72,9 @@ test("supplied transaction executor owns publish atomicity", async () => {
     }),
   ).rejects.toThrow("rollback");
   expect(await getDurableEvent(id)).toBeUndefined();
+  const signals = await pool.query(
+    `SELECT 1 FROM "_damat_acceleration_outbox" WHERE "resource_id"=$1`, [id]);
+  expect(signals.rowCount).toBe(0);
 });
 
 test("publish rejects a non-transactional supplied executor", async () => {

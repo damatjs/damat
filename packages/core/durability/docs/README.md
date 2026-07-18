@@ -5,6 +5,9 @@
 | Path                          | Responsibility                                      |
 | ----------------------------- | --------------------------------------------------- |
 | `src/client/types.ts`         | Structural executor, pool, and client contracts     |
+| `src/coordinator/`            | Process-level adaptive background-work coordinator  |
+| `src/acceleration/`           | Transactional outbox, health, rebuild, invalidation  |
+| `src/retention/`              | Audited runtime retention overrides                  |
 | `src/client/create.ts`        | Transaction runner with commit, rollback, release   |
 | `src/client/global.ts`        | Process-wide optional default client                |
 | `src/client/transactional.ts` | Active transaction executor marker and helpers      |
@@ -23,6 +26,8 @@
 ## Invariants
 
 - The package never opens a PostgreSQL pool; callers own pool lifecycle.
+- Redis never owns canonical state. Its projections are safe to discard and
+  rebuild from committed PostgreSQL records.
 - A client transaction always releases its checked-out connection.
 - Only active Damat transaction callbacks expose fresh executor wrappers.
 - Wrappers are invalidated after both successful and failed callbacks.

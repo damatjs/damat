@@ -17,6 +17,7 @@ export async function reconcileExpiredEventDeliveryLeases(
 ): Promise<number> {
   const limit = resolveReconcileLimit(options.limit);
   const selected = encodeReconcileConsumers(options.consumers);
+  if (options.executor) return recover(options.executor, limit, selected);
   return getDurabilityClient().transaction((executor) =>
     recover(executor, limit, selected),
   );

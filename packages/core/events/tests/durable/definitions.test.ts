@@ -24,7 +24,7 @@ test("durable event definitions resolve policy defaults", () => {
     maxAttempts: 3,
     backoffMs: 1_000,
     backoffMultiplier: 2,
-    retentionMs: 604_800_000,
+    retentionMs: 90 * 86_400_000,
   });
   expectTypeOf<DurableEventPayload<"account.created">>().toEqualTypeOf<{
     id: string;

@@ -19,6 +19,7 @@ async function ensureMigrations(pool: Pool): Promise<void> {
   const tableByMigration: Record<string, string> = {
     "001": "_damat_idempotency_keys",
     "002": "_damat_work_controls",
+    "003": "_damat_acceleration_outbox",
   };
   try {
     await client.query("SELECT pg_advisory_lock(724034)");

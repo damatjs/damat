@@ -22,7 +22,7 @@ test("retention removes routed zero-consumer events and audits atomically", asyn
     await runEventRetention({
       actor,
       batchSize: 10,
-      terminalBefore: new Date(Date.now() + 700_000_000),
+      terminalBefore: new Date(Date.now() + 91 * 86_400_000),
     }),
   ).toMatchObject({
     deletedEvents: 1,
@@ -40,7 +40,7 @@ test("retention preserves unrouted and active delivery events", async () => {
   await runEventRetention({
     actor,
     batchSize: 10,
-    terminalBefore: new Date(Date.now() + 700_000_000),
+    terminalBefore: new Date(Date.now() + 91 * 86_400_000),
   });
   const rows = await pool.query(
     `SELECT "id" FROM "_damat_event_outbox" WHERE "id" IN ($1,$2)`,

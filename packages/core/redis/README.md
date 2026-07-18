@@ -65,6 +65,25 @@ const redis = createRedis({ url: process.env.REDIS_URL! });
 const value = await cacheGet<string>("key", redis);
 ```
 
+## Pub/Sub ACLs for framework durability
+
+An authenticated Redis user used by the Damat framework must be allowed to use
+the durable channel namespace and the ephemeral event-broadcast channel. Keep
+the user's existing command/key rules and add these channel patterns:
+
+```text
+&damat:*
+&damat-events
+```
+
+For a direct Redis deployment, apply the additive rules with `ACL SETUSER`,
+verify `SUBSCRIBE` and `PUBLISH` for `damat:jobs:wakeup`,
+`damat:events:wakeup`, and `damat-events`, then run `CONFIG REWRITE`. Also keep
+the same ACL declaration in the container-mounted Redis configuration so a
+recreated container does not lose it. A Damat framework process disables its
+durable Redis publishers/subscriber on `NOPERM`, emits one actionable warning,
+uses PostgreSQL fallback, and retries authorization with bounded backoff.
+
 ## API
 
 All exports are available from the single entry point `@damatjs/redis` (no subpath exports).

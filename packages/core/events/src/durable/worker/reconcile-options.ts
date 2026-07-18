@@ -1,9 +1,11 @@
 import { encodeEventConsumerScope } from "./scope";
 import type { EventConsumerIdentity } from "./types";
+import type { DurabilityExecutor } from "@damatjs/durability";
 
 export interface EventReconcileOptions {
   limit?: number;
   consumers?: EventConsumerIdentity[];
+  executor?: DurabilityExecutor;
 }
 
 export function resolveReconcileLimit(limit = 100): number {

@@ -1,4 +1,8 @@
-import type { DurabilityExecutor, WorkActor } from "@damatjs/durability";
+import {
+  recordAccelerationSignal,
+  type DurabilityExecutor,
+  type WorkActor,
+} from "@damatjs/durability";
 import { jobExecutor } from "./executor";
 import { mapJobActivity } from "./map-records";
 import type { JobActivityRow } from "./record-rows";
@@ -43,6 +47,12 @@ export async function appendJobActivity(
       JSON.stringify(input.actor ?? {}),
     ],
   );
+  await recordAccelerationSignal({
+    topic: "damat:inspection:invalidate",
+    kind: "job",
+    resourceId: input.runId,
+    executor,
+  });
   return mapJobActivity(result.rows[0]!);
 }
 

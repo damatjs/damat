@@ -6,6 +6,7 @@ import { EventWorkerRegistryLoop } from "./registry-loop";
 import type { ResolvedEventWorkerOptions } from "./runtime-options";
 import type { ClaimedEventDelivery } from "./types";
 import { EventWorkerWakeupLifecycle } from "./wakeup-lifecycle";
+import { EventLeaseHeartbeatLoop } from "./heartbeat-loop";
 
 export class EventWorkerRuntimeComponents {
   readonly active: ActiveEventDeliveries;
@@ -13,6 +14,7 @@ export class EventWorkerRuntimeComponents {
   private readonly registry: EventWorkerRegistryLoop;
   private readonly reconciler: EventWorkerReconcilerLoop;
   private readonly wakeup: EventWorkerWakeupLifecycle;
+  private readonly leaseHeartbeat: EventLeaseHeartbeatLoop;
 
   constructor(
     id: string,
@@ -30,6 +32,7 @@ export class EventWorkerRuntimeComponents {
     this.wakeup = new EventWorkerWakeupLifecycle(options, () =>
       this.poll.wake(),
     );
+    this.leaseHeartbeat = new EventLeaseHeartbeatLoop(options, this.active);
   }
 
   start(): void {
@@ -37,6 +40,7 @@ export class EventWorkerRuntimeComponents {
     this.registry.start();
     this.reconciler.start();
     this.wakeup.start();
+    this.leaseHeartbeat.start();
   }
 
   stopClaims(): Promise<unknown[]> {
@@ -44,7 +48,15 @@ export class EventWorkerRuntimeComponents {
   }
 
   stopMaintenance(): Promise<unknown[]> {
-    return Promise.all([this.registry.stop(), this.reconciler.stop()]);
+    return Promise.all([
+      this.registry.stop(),
+      this.reconciler.stop(),
+      this.leaseHeartbeat.stop(),
+    ]);
+  }
+
+  wake(): void {
+    this.poll.wake();
   }
 
   private startClaim(claim: ClaimedEventDelivery): void {

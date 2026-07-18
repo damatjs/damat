@@ -41,7 +41,9 @@ migrations, headless operational inspection, and selectable server/jobs/events
 runtime roles. See [`durability`](./durability/), [`jobs`](./jobs/),
 [`events`](./events/), [`services`](./services/),
 [`orm-migration`](./orm-migration/), [`orm-cli`](./orm-cli/), and
-[`framework`](./framework/).
+[`framework`](./framework/). Adaptive Redis acceleration and pool observability
+are tracked under [`redis`](./redis/), [`orm-connector`](./orm-connector/), and
+the [`default` reference backend](./default/).
 
 What changed in `0.6.0` — a hardening release across the line:
 [`redis`](./redis/0.6.0.md) made its hot paths atomic and non-blocking;
@@ -68,6 +70,7 @@ snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
 ### Framework & app
 
 - [`framework`](./framework/) — `@damatjs/framework`
+- [`default`](./default/) — `@damatjs/default` reference backend
 - [`services`](./services/) — `@damatjs/services`
 - [`module`](./module/) — `@damatjs/module`
 - [`module-generator`](./module-generator/) — `@damatjs/module-generator`

@@ -1,4 +1,7 @@
-import { getDurabilityClient } from "@damatjs/durability";
+import {
+  getDurabilityClient,
+  recordAccelerationSignal,
+} from "@damatjs/durability";
 import { claimUnroutedEvents } from "./claim";
 import { completeEventRouting } from "./complete";
 import { fanOutEvent } from "./fanout";
@@ -25,6 +28,21 @@ export async function routeDurableEvents(
           consumer,
         })),
       );
+      for (const consumer of consumers) {
+        await recordAccelerationSignal({
+          topic: "damat:events:wakeup",
+          kind: "event",
+          resourceId: event.id,
+          scope: JSON.stringify([event.name, consumer]),
+          payload: {
+            kind: "events",
+            target: "delivery",
+            event: event.name,
+            consumer,
+          },
+          executor,
+        });
+      }
     }
     return { count: events.length, identities };
   });

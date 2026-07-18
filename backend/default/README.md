@@ -14,8 +14,10 @@ bun run dev
 ```
 
 PostgreSQL is required for modules, jobs, and durable events. Redis is optional:
-when configured it reduces worker wake-up latency, while PostgreSQL remains the
-source of truth and polling fallback.
+when configured it holds rebuildable ready indexes, worker liveness, wake-ups,
+and inspection invalidations. PostgreSQL remains the complete source of truth.
+Healthy Redis leaves a 30-second PostgreSQL safety scan; degraded mode discovers
+work within five seconds.
 
 Useful commands:
 
@@ -66,8 +68,9 @@ await userService.transaction(async (executor) => {
 ```
 
 The job and event become visible only if the domain transaction commits.
-Caller-owned transactions intentionally rely on PostgreSQL polling because the
-jobs/events packages cannot observe the outer commit to publish a Redis wake-up.
+The transaction writes acceleration-outbox signals beside the job/event rows.
+The framework relay publishes them only after commit, so rollback emits no Redis
+wake-up and caller-owned transactions do not lose the fast path.
 
 Inspection remains application-owned:
 
@@ -123,6 +126,12 @@ REDIS_URL=redis://redis:6379 \
 docker compose -f backend/default/docker-compose.yml --profile accelerator up --build
 ```
 
+For authenticated Redis, preserve the user's existing rules and add
+`&damat:*` and `&damat-events`. Verify publish/subscribe access to
+`damat:jobs:wakeup`, `damat:events:wakeup`, and `damat-events`, persist direct
+server changes with `CONFIG REWRITE`, and keep the ACL in the container-mounted
+configuration for recreation.
+
 Only the API has an HTTP health check. Worker state, capacity, attempts,
 failures, retries, recovery, and logs are available through the headless durable
 inspection clients.
@@ -131,7 +140,8 @@ inspection clients.
 
 Workers use fenced PostgreSQL leases. If a process is killed, its lease expires
 and a replacement records recovery before claiming a new attempt. Redis loss
-does not lose work; it only removes the fast wake-up path. Database effects that
+does not lose work or inspection history. On recovery, the framework rebuilds
+Redis coordination indexes from PostgreSQL. Database effects that
 must survive retries should use `context.withIdempotency`, while external
 providers should receive the same stable idempotency key when supported.
 

@@ -1,4 +1,9 @@
-import { cleanupExpiredIdempotency } from "@damatjs/durability";
+import {
+  cleanupExpiredIdempotency,
+  cleanupPublishedAccelerationSignals,
+  getRetentionOverride,
+  getDurabilityClient,
+} from "@damatjs/durability";
 import { reconcileExpiredJobLeases } from "./reconcileLeases";
 import { reconcileJobRetries } from "./reconcileRetries";
 import { reconcileJobSchedules } from "./reconcileSchedules";
@@ -8,7 +13,7 @@ export interface JobReconcilePassOptions {
   workerId: string;
   queue: string;
   batchSize: number;
-  retentionMs: number;
+  retentionMs: import("@damatjs/durability").RetentionDuration;
   includeRetention: boolean;
 }
 
@@ -16,15 +21,27 @@ export async function reconcileJobWork(
   options: JobReconcilePassOptions,
 ): Promise<void> {
   const scope = { limit: options.batchSize, queue: options.queue };
-  await reconcileExpiredJobLeases(scope);
-  await reconcileJobRetries(scope);
-  await reconcileJobSchedules(scope);
-  await cleanupExpiredIdempotency({ limit: options.batchSize });
+  await getDurabilityClient().transaction(async (executor) => {
+    await reconcileExpiredJobLeases({ ...scope, executor });
+    await reconcileJobRetries({ ...scope, executor });
+    await reconcileJobSchedules({ ...scope, executor });
+    await cleanupExpiredIdempotency({
+      limit: options.batchSize,
+      executor,
+    });
+    await cleanupPublishedAccelerationSignals({
+      limit: options.batchSize,
+      executor,
+    });
+  });
   if (!options.includeRetention) return;
+  const override = await getRetentionOverride("job", options.queue);
+  const retentionMs = override?.retentionMs ?? options.retentionMs;
+  if (retentionMs === "forever") return;
   await runJobRetention({
     actor: { id: options.workerId, type: "system" },
     queue: options.queue,
     batchSize: options.batchSize,
-    terminalBefore: new Date(Date.now() - options.retentionMs),
+    terminalBefore: new Date(Date.now() - retentionMs),
   });
 }

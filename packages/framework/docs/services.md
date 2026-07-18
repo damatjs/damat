@@ -26,6 +26,7 @@ interface ServiceInstances {
   modules?: Map<string, ModuleInstance<any>>;
   resolvedModules?: Map<string, ResolvedModule>;
   auth?: AuthRuntime;
+  durabilityCoordinator?: DurabilityCoordinator;
 }
 ```
 
@@ -53,8 +54,10 @@ Steps:
    global durability client from `PoolManager.getPool()` and verify shared plus
    capability-specific system migrations. Missing database config fails startup.
    Missing migrations fail with `Run: damat-orm migrate:up` guidance.
-7. **Wakeup publishers** — if Redis is available and wakeups are enabled,
-   configure job/event publish-side wakeups. PostgreSQL polling remains active.
+7. **Durability acceleration** — create one coordinator, subscriber transport,
+   transactional-outbox relay, Redis projection rebuild, and publisher gate per
+   process. Capability failure disables both durable publishers/subscribers,
+   activates PostgreSQL fallback, and retries with bounded backoff.
 8. **Selected workers** — start only capabilities in `runtime.workers`:
    `JobWorker` for jobs, and `DurableEventRouter` + `DurableEventWorker` for
    events. Definitions are already loaded. In `worker` and `all` modes,
@@ -97,6 +100,10 @@ Bridges config to `@damatjs/services` `PoolManager`.
 | `closeDatabase()`                         | `connectionManager.disconnect()`, null it, and `PoolManager.reset()`.                                                                                                                   |
 
 `getPoolConfigByEnv(nodeEnv, config)`: if the config already has advanced pool settings (`min/max/idleTimeoutMillis/connectionTimeoutMillis`), use it verbatim; otherwise merge env defaults from `@damatjs/orm-connector` (`developmentPoolConfig`/`productionPoolConfig`/`testPoolConfig`) under the provided `config`.
+
+`PoolManager.getPool()` is the only pool handed to modules, HTTP work,
+durability clients, workers, inspection, and maintenance. Worker loops never
+construct a pool or direct PostgreSQL connection.
 
 ## Redis (`redis.ts`)
 

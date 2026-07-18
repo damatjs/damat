@@ -1,4 +1,5 @@
 import type { EventWakeupRedis } from "../wakeup/types";
+import type { DurabilityCoordinator } from "@damatjs/durability";
 
 const TIMER_MAX = 2_147_483_647;
 
@@ -7,19 +8,20 @@ export interface DurableEventRouterOptions {
   retryIntervalMs?: number;
   batchSize?: number;
   wakeupRedis?: EventWakeupRedis;
+  coordinator?: DurabilityCoordinator;
 }
 
 export type ResolvedRouterOptions = Required<
-  Omit<DurableEventRouterOptions, "wakeupRedis">
+  Omit<DurableEventRouterOptions, "wakeupRedis" | "coordinator">
 > &
-  Pick<DurableEventRouterOptions, "wakeupRedis">;
+  Pick<DurableEventRouterOptions, "wakeupRedis" | "coordinator">;
 
 export function resolveRouterOptions(
   options: DurableEventRouterOptions,
 ): ResolvedRouterOptions {
   const resolved = {
     ...options,
-    pollIntervalMs: options.pollIntervalMs ?? 1_000,
+    pollIntervalMs: options.pollIntervalMs ?? 5_000,
     retryIntervalMs: options.retryIntervalMs ?? 1_000,
     batchSize: options.batchSize ?? 100,
   };

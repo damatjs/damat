@@ -2,6 +2,7 @@ import type {
   InspectionVisibility,
   RedactionOptions,
   WorkLogLimits,
+  RetentionDuration,
 } from "@damatjs/durability";
 
 export interface DurabilityServiceConfig {
@@ -13,10 +14,20 @@ export interface DurabilityServiceConfig {
   reconcileIntervalMs?: number;
   reconcileBatchSize?: number;
   retentionIntervalMs?: number;
-  retentionMs?: number;
+  retentionMs?: RetentionDuration;
   progressMinimumIntervalMs?: number;
   logLimits?: WorkLogLimits;
   redaction?: RedactionOptions;
   inspectionVisibility?: InspectionVisibility;
   wakeups?: boolean;
+  acceleration?: DurabilityAccelerationConfig;
+}
+
+export interface DurabilityAccelerationConfig {
+  enabled?: boolean;
+  healthySafetyPollIntervalMs?: number;
+  degradedMaxPollIntervalMs?: number;
+  workerLivenessTtlMs?: number;
+  durableWorkerSnapshotIntervalMs?: number;
+  relayBatchSize?: number;
 }

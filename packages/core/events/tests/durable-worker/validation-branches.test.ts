@@ -70,9 +70,9 @@ test("worker validates identity, numeric, and stop inputs", async () => {
     () =>
       new DurableEventWorker({
         consumers,
-        registryHeartbeatIntervalMs: 25_001,
+        registryHeartbeatIntervalMs: 120_001,
       }),
-  ).toThrow(/25000/);
+  ).toThrow(/120000/);
   const worker = new DurableEventWorker({ consumers });
   expect(worker.isRunning).toBe(false);
   expect(() => worker.stop({ graceMs: -1 })).toThrow(/graceMs/);

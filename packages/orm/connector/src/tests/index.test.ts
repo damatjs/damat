@@ -246,6 +246,7 @@ describe("ConnectionManager", () => {
       expect(cm.getPoolStats()).toEqual({
         totalCount: 0,
         idleCount: 0,
+        activeCount: 0,
         waitingCount: 0,
       });
     });
@@ -289,6 +290,7 @@ describe("ConnectionManager", () => {
       expect(status.poolStats).toEqual({
         totalCount: 0,
         idleCount: 0,
+        activeCount: 0,
         waitingCount: 0,
       });
       expect(status.lastChecked).toBeInstanceOf(Date);

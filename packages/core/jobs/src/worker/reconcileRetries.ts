@@ -13,6 +13,7 @@ export async function reconcileJobRetries(
   options: ReconcileOptions = {},
 ): Promise<number> {
   const limit = reconcileLimit(options.limit);
+  if (options.executor) return promote(options.executor, limit, options.queue);
   return getDurabilityClient().transaction((executor) =>
     promote(executor, limit, options.queue),
   );

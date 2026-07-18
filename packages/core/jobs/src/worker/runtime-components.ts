@@ -7,6 +7,7 @@ import { WorkerRegistryHeartbeat } from "./registry-heartbeat";
 import { WorkerShutdown } from "./shutdown";
 import type { ClaimedJobRun } from "./types";
 import { WorkerWakeupLifecycle } from "./wakeup-lifecycle";
+import { JobLeaseHeartbeatLoop } from "./heartbeat-loop";
 
 export class WorkerRuntimeComponents {
   readonly active: ActiveExecutions;
@@ -15,6 +16,7 @@ export class WorkerRuntimeComponents {
   private readonly heartbeat: WorkerRegistryHeartbeat;
   private readonly reconciler: JobReconcilerLoop;
   private readonly wakeup: WorkerWakeupLifecycle;
+  private readonly leaseHeartbeat: JobLeaseHeartbeatLoop;
 
   constructor(
     id: string,
@@ -43,6 +45,7 @@ export class WorkerRuntimeComponents {
         if (queue === options.queue) this.poll.wake();
       },
     );
+    this.leaseHeartbeat = new JobLeaseHeartbeatLoop(options, this.active);
   }
 
   start(): void {
@@ -50,6 +53,7 @@ export class WorkerRuntimeComponents {
     this.heartbeat.start();
     this.reconciler.start();
     this.wakeup.start();
+    this.leaseHeartbeat.start();
   }
 
   stopClaims(): Promise<void[]> {
@@ -57,7 +61,15 @@ export class WorkerRuntimeComponents {
   }
 
   stopMaintenance(): Promise<void[]> {
-    return Promise.all([this.heartbeat.stop(), this.reconciler.stop()]);
+    return Promise.all([
+      this.heartbeat.stop(),
+      this.reconciler.stop(),
+      this.leaseHeartbeat.stop(),
+    ]);
+  }
+
+  wake(): void {
+    this.poll.wake();
   }
 
   private startClaim(

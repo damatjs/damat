@@ -81,8 +81,8 @@ import { JobWorker } from "@damatjs/jobs";
 const worker = new JobWorker({
   queue: "mail",
   concurrency: 4,
-  pollIntervalMs: 1_000,
-  registryHeartbeatIntervalMs: 5_000,
+  pollIntervalMs: 5_000,
+  registryHeartbeatIntervalMs: 30_000,
 });
 
 worker.start();
@@ -128,21 +128,27 @@ reconciliation. Expired leases, not worker-registry state, decide recovery.
 Recovery activity retains the expired worker and lease token. An immediately
 reclaimed run records that recovery to `queued`, then records a separate claim
 for the new worker and token.
-Periodic PostgreSQL polling always remains enabled.
+Framework-managed workers use Redis wake-ups while healthy and perform a
+PostgreSQL safety scan every 30 seconds. If Redis is missing or unauthorized,
+the shared coordinator falls back to PostgreSQL discovery within five seconds.
+Standalone workers default to five-second PostgreSQL polling.
 
 Configure enqueue-side wake-ups with `configureJobWakeupPublisher(redis)` and
 pass a Redis-compatible client as `wakeupRedis` to a worker. The worker uses a
 dedicated duplicated subscriber. Missing Redis, malformed messages, and
 publish failures only reduce responsiveness to the polling interval. Mutations
-inside a caller-owned transaction suppress wake-ups because the package cannot
-observe the outer commit.
+inside a caller-owned transaction do not publish directly. They still write a
+transactional acceleration-outbox row; the framework relay publishes it only
+after the outer transaction commits.
 
 Worker options are validated when the worker is constructed. Queue and supplied
 worker IDs must be non-empty, concurrency and log limits must be positive
 integers, timing values must be finite and positive, and the progress interval
 may also be zero. The job heartbeat must be shorter than its lease. Registry
-heartbeats are capped at 25 seconds, below the durability registry's 30-second
-stale window. Concurrency is capped at PostgreSQL's signed 32-bit maximum;
+heartbeats default to durable snapshots every 30 seconds and are capped at 120
+seconds. Framework Redis liveness expires after 10 seconds; inspection treats
+PostgreSQL snapshots as stale after 90 seconds by default. Concurrency is capped
+at PostgreSQL's signed 32-bit maximum;
 timers are capped at 2,147,483,647 ms; log limits must be safe integers.
 `stop({ graceMs })` applies the same timer ceiling and accepts zero for an
 immediate abort.
@@ -210,6 +216,10 @@ state plus half-open time-window throughput, activity, and duration metrics.
 Administrative cancellation, retry, queue pause/resume, schedule enable/disable,
 and retention require a validated actor and append immutable audit history.
 Applications decide how to authenticate and present these records.
+
+Retention defaults to 90 days and accepts `"forever"`. PostgreSQL keeps the
+complete inspection timeline; Redis stores only rebuildable ready identifiers,
+worker liveness, and invalidation signals.
 
 ## Public definition API
 

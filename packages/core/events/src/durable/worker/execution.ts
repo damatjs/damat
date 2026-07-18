@@ -1,7 +1,8 @@
 import { getLogger } from "@damatjs/logger";
 import { getDurableEventConsumer } from "../definitions/registry";
 import { runEventDeliveryHandler } from "./execution-handler";
-import { heartbeatEventDelivery } from "./heartbeat";
+import { createEventHeartbeatControl } from "./execution-heartbeat";
+import type { DurabilityExecutor } from "@damatjs/durability";
 import { completeEventDeliveryFailure } from "./outcome";
 import type {
   ClaimedEventDelivery,
@@ -12,6 +13,7 @@ import { resolveExecutionOptions } from "./execution-options";
 export interface EventDeliveryExecution {
   promise: Promise<void>;
   abort(): void;
+  heartbeat(executor?: DurabilityExecutor): Promise<void>;
 }
 
 export function startEventDeliveryExecution(
@@ -20,9 +22,15 @@ export function startEventDeliveryExecution(
 ): EventDeliveryExecution {
   const controller = new AbortController();
   const options = resolveExecutionOptions(input);
+  const heartbeat = createEventHeartbeatControl(
+    claim,
+    options.leaseMs,
+    controller,
+  );
   return {
-    promise: runClaim(claim, options, controller),
+    promise: runClaim(claim, options, controller, heartbeat),
     abort: () => controller.abort(),
+    heartbeat: heartbeat.run,
   };
 }
 
@@ -33,6 +41,7 @@ async function runClaim(
   > &
     ExecuteEventDeliveryOptions,
   controller: AbortController,
+  heartbeat: ReturnType<typeof createEventHeartbeatControl>,
 ): Promise<void> {
   const definition = getDurableEventConsumer(claim.event, claim.consumer);
   if (!definition) {
@@ -45,26 +54,18 @@ async function runClaim(
     );
     return;
   }
-  let cancellationRequested = false;
-  const heartbeat = async () => {
-    const state = await heartbeatEventDelivery(claim, {
-      leaseMs: options.leaseMs,
-    });
-    cancellationRequested ||= state.cancellationRequested;
-    if (state.cancellationRequested) controller.abort();
-  };
   try {
-    await heartbeat();
-    if (cancellationRequested) throw new Error("Delivery cancelled");
+    if (!options.batchHeartbeats) await heartbeat.run();
+    if (heartbeat.cancellationRequested) throw new Error("Delivery cancelled");
     if (controller.signal.aborted) return;
     await runEventDeliveryHandler(
       claim,
       options,
       definition.handler,
       controller,
-      heartbeat,
+      heartbeat.run,
     );
-    if (cancellationRequested) {
+    if (heartbeat.cancellationRequested) {
       await completeEventDeliveryFailure(
         claim,
         new Error("Delivery cancelled"),
@@ -72,7 +73,7 @@ async function runClaim(
     }
   } catch (error) {
     try {
-      if (!controller.signal.aborted || cancellationRequested) {
+      if (!controller.signal.aborted || heartbeat.cancellationRequested) {
         await completeEventDeliveryFailure(claim, error);
       }
     } catch (transitionError) {

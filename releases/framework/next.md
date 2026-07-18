@@ -36,6 +36,10 @@ providers load before workers start.
 - Durable event runtime wiring through `services.events.durable`.
 - Root re-exports for headless durability, jobs, and durable-event inspection
   and control clients. No administration routes are mounted automatically.
+- `services.durability.acceleration` adaptive polling, worker-liveness,
+  durable-snapshot, and relay-batch configuration.
+- One process-wide wake-up subscriber/publisher gate, transactional outbox
+  relay, projection rebuild, health query, and in-process invalidations.
 
 ## Changed / improved
 
@@ -44,6 +48,11 @@ providers load before workers start.
 - Jobs and durable events require `projectConfig.databaseUrl` and applied system
   migrations. Startup fails visibly with `damat-orm migrate:up` guidance.
 - Redis wakeups improve responsiveness without replacing PostgreSQL polling.
+- `all` mode shares one PostgreSQL pool and one background coordinator across
+  HTTP, jobs, event routing/delivery, inspection, relay, and maintenance.
+- Redis `NOPERM` disables durable publishers/subscriber once, emits one
+  actionable warning, falls back within five seconds, and recovers with bounded
+  backoff. Healthy Redis removes one-second idle PostgreSQL traffic.
 - `startServer` returns an idempotent asynchronous close handle and honors the
   configured host.
 
@@ -93,6 +102,10 @@ providers load before workers start.
    ```
 
 4. Give package modules a valid `damat.json`. Package mode remains early alpha.
+
+5. Add Redis ACL channel patterns `&damat:*` and `&damat-events`, verify
+   publish/subscribe access, persist direct-server changes with `CONFIG REWRITE`,
+   and retain the ACL declaration in recreated container configuration.
 
 ## References
 

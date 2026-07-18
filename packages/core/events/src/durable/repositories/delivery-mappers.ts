@@ -12,7 +12,7 @@ export interface DurableEventDeliveryRow extends QueryResultRow {
   backoff_ms: string | number;
   backoff_multiplier: number;
   available_at: Date;
-  retention_at: Date;
+  retention_at: Date | null;
   lease_owner: string | null;
   lease_token: string | null;
   lease_expires_at: Date | null;
@@ -40,7 +40,7 @@ export function mapDurableEventDelivery(
     backoffMs: Number(row.backoff_ms),
     backoffMultiplier: row.backoff_multiplier,
     availableAt: row.available_at,
-    retentionAt: row.retention_at,
+    ...(row.retention_at ? { retentionAt: row.retention_at } : {}),
     ...(row.lease_owner ? { leaseOwner: row.lease_owner } : {}),
     ...(row.lease_token ? { leaseToken: row.lease_token } : {}),
     ...(row.lease_expires_at ? { leaseExpiresAt: row.lease_expires_at } : {}),

@@ -16,3 +16,12 @@ test("redaction hides nested paths and matching keys without mutation", () => {
   });
   expect(value.user.credentials.token).toBe("abc");
 });
+
+test("redaction traverses arrays and supports a custom replacement", () => {
+  expect(
+    redactValue([{ token: "one" }, { nested: { token: "two" } }], {
+      keys: ["token"],
+      replacement: "hidden",
+    }),
+  ).toEqual([{ token: "hidden" }, { nested: { token: "hidden" } }]);
+});

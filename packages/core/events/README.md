@@ -122,11 +122,14 @@ has its own fenced lease, attempts, retry/dead-letter state, progress, result,
 structured logs, cancellation, and activity timeline. A worker crash is recovered
 from PostgreSQL; stale workers cannot heartbeat or finish a reclaimed delivery.
 Redis wake-ups are optional latency hints. Router and worker polling always
-continue against PostgreSQL, and Redis failure never rolls back durable work.
+remain backed by PostgreSQL. Framework processes safety-scan every 30 seconds
+while Redis is healthy and fall back to discovery within five seconds when it
+is unavailable or unauthorized.
 
 Publishing does not run handlers inside the caller's transaction. An owned
-publish wakes the router after commit; a caller-supplied executor emits no wake
-because its eventual commit is outside this package's control. There is no
+publish wakes the router after commit; a caller-supplied executor writes an
+acceleration-outbox row in the same transaction so the framework relay wakes
+the router only after the outer commit. There is no
 implicit bridge from `EventBus.emit` or CRUD events to durable delivery.
 
 Database atomicity cannot make an arbitrary external side effect exactly once.
@@ -151,6 +154,12 @@ capabilities. Dedicated deployments can set `DAMAT_RUNTIME_MODE=worker` and
 CLI applies shared durability migrations followed by `@damatjs/events`
 migrations. Standalone migration tooling can import `eventsSystemMigrations`
 from `@damatjs/events/migrations`.
+
+Durable retention defaults to 90 days. `retentionMs: "forever"` stores nullable
+retention/expiry values, and audited runtime overrides apply to remaining data.
+PostgreSQL keeps payload metadata, deliveries, attempts, logs, results,
+controls, and worker snapshots for inspection; Redis contains no sole copy of
+that history.
 
 ## Durable inspection and operations
 

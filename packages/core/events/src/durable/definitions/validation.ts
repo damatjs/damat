@@ -15,7 +15,9 @@ export function validateDurablePolicy(policy: DurableEventPolicy): void {
   positiveInteger(policy.version, "version");
   positiveInteger(policy.maxAttempts, "maxAttempts");
   nonNegativeInteger(policy.backoffMs, "backoffMs");
-  nonNegativeInteger(policy.retentionMs, "retentionMs");
+  if (policy.retentionMs !== "forever") {
+    nonNegativeInteger(policy.retentionMs, "retentionMs");
+  }
   if (
     policy.backoffMultiplier !== undefined &&
     (!Number.isFinite(policy.backoffMultiplier) || policy.backoffMultiplier < 1)

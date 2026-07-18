@@ -101,8 +101,9 @@ damat-orm migrate:up
 ```
 
 Definitions and consumers load from module providers before execution starts.
-The durable router and worker poll PostgreSQL; optional Redis wakeups reduce
-latency but never become the source of truth.
+Optional Redis wake-ups reduce latency but never become the source of truth.
+Healthy acceleration uses a 30-second PostgreSQL safety scan; degraded mode
+discovers work within five seconds.
 
 Define the event once and give every consumer a stable persistence identity:
 
@@ -187,7 +188,7 @@ services: {
 ```
 
 Jobs require `projectConfig.databaseUrl` and `damat-orm migrate:up`. Redis is
-optional; PostgreSQL polling always remains available.
+optional; PostgreSQL fallback always remains available.
 
 ## Commit domain data and durable work together
 
@@ -210,9 +211,9 @@ await userService.transaction(async (executor) => {
 });
 ```
 
-All three writes commit or roll back together. Calls inside a caller-owned
-transaction do not publish Redis wake-ups because the package cannot observe
-the outer commit; PostgreSQL polling discovers the committed work.
+All three writes commit or roll back together, including acceleration-outbox
+signals. The framework relay publishes only committed signals, so caller-owned
+transactions receive reliable post-commit wake-ups and rollback emits none.
 
 ## Headless inspection and controls
 
@@ -284,7 +285,8 @@ Semantics worth knowing:
 - **At-least-once** — expired fenced leases recover jobs a crashed worker had
   claimed, so handlers should be idempotent.
 - **Redis loss** — enqueue/publish remain committed and replacement workers
-  continue through PostgreSQL polling; only fast wake-up latency is lost.
+  continue through PostgreSQL fallback. Redis ready indexes rebuild from
+  PostgreSQL after recovery; no visual history is lost.
 - **Unknown jobs** (enqueued but not `defineJob`'d in the worker process)
   dead-letter immediately with a clear error.
 - **Inspection** — `getJobRun`, `listJobRuns`, `listJobAttempts`,
@@ -293,6 +295,8 @@ Semantics worth knowing:
 The framework root also re-exports the jobs and durable-event inspection and
 control clients. They are headless: no administration routes are mounted
 automatically, so the application owns authentication and authorization.
+The in-process invalidation subscription carries identity and revision only;
+visual clients refetch complete inspection records from PostgreSQL.
 
 For retry-safe database effects inside a handler, call
 `context.withIdempotency` with a stable scope/key. A killed process can leave a

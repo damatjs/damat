@@ -48,7 +48,7 @@
   "scripts": {
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
     "watch": "tsc --watch",
-    "test": "bun test",
+    "test": "bun ../../../scripts/test/package.ts DAMAT_EVENTS_DATABASE_URL --max-concurrency=1",
     "lint": "oxlint src",
     "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)"
   }

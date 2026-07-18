@@ -28,13 +28,13 @@ export async function insertDurableEvent(
       event.maxAttempts,
       event.backoffMs,
       event.backoffMultiplier,
-      event.retentionMs,
+      event.retentionMs === "forever" ? null : event.retentionMs,
       event.idempotencyKey ?? null,
       event.correlationId ?? null,
       event.causationId ?? null,
       event.occurredAt,
       event.availableAt,
-      event.retentionAt,
+      event.retentionAt ?? null,
     ],
   );
   return result.rows[0] ? mapDurableEvent(result.rows[0]) : undefined;

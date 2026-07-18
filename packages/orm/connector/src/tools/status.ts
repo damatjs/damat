@@ -2,11 +2,14 @@ import type { ConnectionStatus, Pool, PoolStats } from "@damatjs/orm-type";
 
 export function fetchPoolStats(pool: Pool | null): PoolStats {
   if (!pool) {
-    return { totalCount: 0, idleCount: 0, waitingCount: 0 };
+    return { totalCount: 0, idleCount: 0, activeCount: 0, waitingCount: 0 };
   }
+  const totalCount = pool.totalCount ?? 0;
+  const idleCount = pool.idleCount ?? 0;
   return {
-    totalCount: pool.totalCount ?? 0,
-    idleCount: pool.idleCount ?? 0,
+    totalCount,
+    idleCount,
+    activeCount: Math.max(0, totalCount - idleCount),
     waitingCount: pool.waitingCount ?? 0,
   };
 }

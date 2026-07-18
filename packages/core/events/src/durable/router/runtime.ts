@@ -64,7 +64,10 @@ export class DurableEventRouter {
     if (!this.running) return;
     let delay = this.options.pollIntervalMs;
     try {
-      this.inFlight = routeDurableEvents({ limit: this.options.batchSize });
+      const route = () => routeDurableEvents({ limit: this.options.batchSize });
+      this.inFlight = this.options.coordinator
+        ? this.options.coordinator.run("events:router", route)
+        : route();
       const count = await this.inFlight;
       if (count === this.options.batchSize) delay = 0;
     } catch (error) {
@@ -76,7 +79,11 @@ export class DurableEventRouter {
         this.wakeRequested = false;
         delay = 0;
       }
-      if (this.running) this.timer = setTimeout(() => void this.run(), delay);
+      const resolved =
+        delay === this.options.pollIntervalMs && this.options.coordinator
+          ? this.options.coordinator.pollInterval(delay)
+          : delay;
+      if (this.running) this.timer = setTimeout(() => void this.run(), resolved);
     }
   }
 }

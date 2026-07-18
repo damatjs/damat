@@ -223,9 +223,11 @@ bounded overlapping-safe batches. Retention deletes only routed events whose
 deliveries are terminal, and its completed maintenance audit shares the deletion
 transaction.
 
-`DurableEventRouter` and `DurableEventWorker` continue PostgreSQL polling when Redis
-is absent, healthy, or failing. Owned publishing wakes the router only after commit;
-caller-owned transactions rely on polling. Router fan-out wakes exact consumers after
+`DurableEventRouter` and `DurableEventWorker` use adaptive PostgreSQL polling.
+Healthy framework acceleration safety-scans every 30 seconds; degraded mode scans
+within five seconds. Owned publishing wakes the router after commit, while
+caller-owned transactions commit a relayable acceleration signal atomically.
+Router fan-out wakes exact consumers after
 commit. Worker shutdown stops polling/subscriptions, drains or aborts handlers, then
 stops heartbeat/reconciliation before persisting `stopped`; ordinary idle leaves
 maintenance active.

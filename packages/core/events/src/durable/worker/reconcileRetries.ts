@@ -21,6 +21,7 @@ export async function reconcileEventDeliveryRetries(
 ): Promise<number> {
   const limit = resolveReconcileLimit(options.limit);
   const selected = encodeReconcileConsumers(options.consumers);
+  if (options.executor) return promote(options.executor, limit, selected);
   return getDurabilityClient().transaction((executor) =>
     promote(executor, limit, selected),
   );

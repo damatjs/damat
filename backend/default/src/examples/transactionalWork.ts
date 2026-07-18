@@ -28,7 +28,7 @@ interface WorkOptions {
 
 interface WorkDependencies {
   service: {
-    users: { create(input: { data: object }): Promise<UserRecord> };
+    users: { create(input: { data: object }): Promise<unknown> };
     transaction(run: (executor: unknown) => Promise<unknown>): Promise<unknown>;
   };
   enqueue(
@@ -43,18 +43,22 @@ interface WorkDependencies {
   ): Promise<unknown>;
 }
 
-function defaultDependencies(): WorkDependencies {
-  const service = getModule<WorkDependencies["service"]>("user");
+export function createDefaultDependencies(
+  resolve = getModule as (name: string) => WorkDependencies["service"] | null,
+  enqueue = enqueueJob,
+  publish = publishDurableEvent,
+): WorkDependencies {
+  const service = resolve("user");
   if (!service) throw new Error('Module "user" is not initialized');
   return {
     service,
     enqueue: (name, payload, options) =>
-      enqueueJob(name, payload, {
+      enqueue(name, payload, {
         ...options,
         executor: options.executor as DurabilityExecutor,
       }),
     publish: (name, payload, options) =>
-      publishDurableEvent(name, payload, {
+      publish(name, payload, {
         ...options,
         executor: options.executor as DurabilityExecutor,
       }),
@@ -63,12 +67,12 @@ function defaultDependencies(): WorkDependencies {
 
 export async function createUserWithDurableWork(
   input: UserInput,
-  dependencies: WorkDependencies = defaultDependencies(),
+  dependencies: WorkDependencies = createDefaultDependencies(),
 ) {
   return dependencies.service.transaction(async (executor) => {
-    const user = await dependencies.service.users.create({
+    const user = (await dependencies.service.users.create({
       data: { email: input.email, name: input.name },
-    });
+    })) as UserRecord;
     const job = await dependencies.enqueue(
       GENERATE_REPORT_JOB,
       { reportId: input.reportId, requestedBy: user.id },

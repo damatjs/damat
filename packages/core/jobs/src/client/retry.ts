@@ -4,6 +4,7 @@ import {
   TransactionalExecutorRequiredError,
   type DurabilityExecutor,
   type WorkActor,
+  recordAccelerationSignal,
 } from "@damatjs/durability";
 import { appendJobActivity, type JobRun } from "../repositories";
 import { mapJobRun, type JobRunRow } from "../repositories/map-run";
@@ -55,6 +56,14 @@ async function retryWith(
     nextStatus: "queued",
     metadata: { availableAt: run.availableAt.toISOString() },
     ...(options.actor ? { actor: options.actor } : {}),
+  });
+  await recordAccelerationSignal({
+    topic: "damat:jobs:wakeup",
+    kind: "job",
+    resourceId: run.id,
+    scope: run.queue,
+    payload: { kind: "jobs", queue: run.queue },
+    executor,
   });
   return run;
 }

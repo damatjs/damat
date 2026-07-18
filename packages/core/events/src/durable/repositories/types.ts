@@ -1,4 +1,4 @@
-import type { DurabilityExecutor } from "@damatjs/durability";
+import type { DurabilityExecutor, RetentionDuration } from "@damatjs/durability";
 
 export interface DurableEventRecord {
   id: string;
@@ -9,14 +9,14 @@ export interface DurableEventRecord {
   maxAttempts: number;
   backoffMs: number;
   backoffMultiplier: number;
-  retentionMs: number;
+  retentionMs: RetentionDuration;
   idempotencyKey?: string;
   correlationId?: string;
   causationId?: string;
   occurredAt: Date;
   availableAt: Date;
   routedAt?: Date;
-  retentionAt: Date;
+  retentionAt?: Date;
   createdAt: Date;
 }
 
@@ -29,13 +29,13 @@ export interface NewDurableEvent {
   maxAttempts: number;
   backoffMs: number;
   backoffMultiplier: number;
-  retentionMs: number;
+  retentionMs: RetentionDuration;
   idempotencyKey?: string;
   correlationId?: string;
   causationId?: string;
   occurredAt: Date;
   availableAt: Date;
-  retentionAt: Date;
+  retentionAt?: Date;
 }
 
 export interface DurableEventActivity {

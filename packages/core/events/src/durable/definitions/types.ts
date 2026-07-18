@@ -2,6 +2,7 @@ import type {
   DurabilityExecutor,
   JsonValue,
   withIdempotency,
+  RetentionDuration,
 } from "@damatjs/durability";
 
 export interface DurableEventMap {}
@@ -14,7 +15,7 @@ export interface DurableEventPolicy {
   maxAttempts?: number;
   backoffMs?: number;
   backoffMultiplier?: number;
-  retentionMs?: number;
+  retentionMs?: RetentionDuration;
 }
 
 export type ResolvedDurableEventPolicy = Required<DurableEventPolicy>;

@@ -43,7 +43,10 @@ export class WorkerPollLoop {
     const active = this.activeCount();
     const capacity = this.options.concurrency - active;
     try {
-      this.inFlight = this.dependencies.poll(this.options, this.id, active);
+      const poll = () => this.dependencies.poll(this.options, this.id, active);
+      this.inFlight = this.options.coordinator
+        ? this.options.coordinator.run(`jobs:poll:${this.id}`, poll)
+        : poll();
       const claims = await this.inFlight;
       if (!this.enabled) return;
       for (const claim of claims) this.startClaim(claim);
@@ -61,8 +64,13 @@ export class WorkerPollLoop {
     }
   }
 
-  private schedule(delay = this.options.pollIntervalMs): void {
+  private schedule(delay?: number): void {
     if (!this.enabled) return;
-    this.timer = setTimeout(() => void this.run(), delay);
+    const fallback = delay ?? this.options.pollIntervalMs;
+    const resolved =
+      delay === undefined && this.options.coordinator
+        ? this.options.coordinator.pollInterval(fallback)
+        : fallback;
+    this.timer = setTimeout(() => void this.run(), resolved);
   }
 }

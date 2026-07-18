@@ -12,10 +12,9 @@ jobs:
   # gitignored (.gitignore: /modules), so they are NOT in a clean checkout and
   # cannot be tested here.
   #
-  # No external services: tests that need a live database or redis self-skip
-  # when their env var is unset — orm/pg's integration suite is
-  # skipIf(!DATABASE_URL) and the redis live-server tests gate on REDIS_URL.
-  # Everything else (the vast majority of the suite) is infra-free.
+  # The root test runner starts isolated PostgreSQL databases, then removes
+  # their container after the package matrix. Redis live-server tests still
+  # self-skip when REDIS_URL is unset.
   test:
     name: Build & test (packages)
     runs-on: ubuntu-latest

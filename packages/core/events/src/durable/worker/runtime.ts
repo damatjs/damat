@@ -6,7 +6,7 @@ import type { DurableEventWorkerOptions } from "./runtime-options";
 import { EventWorkerRuntimeComponents } from "./runtime-components";
 import { EventWorkerRuntimeFinalizer } from "./runtime-finalizer";
 import { validateEventWorkerGrace } from "./stop-options";
-
+import { finishEventWorkerBackground } from "./background-finalize";
 type RuntimeState = "idle" | "running" | "stopping" | "stopped" | "failed";
 
 export class DurableEventWorkerRuntime {
@@ -37,6 +37,14 @@ export class DurableEventWorkerRuntime {
 
   get isRunning(): boolean {
     return this.state === "running";
+  }
+
+  get inFlight(): number {
+    return this.components.active.size;
+  }
+
+  wake(): void {
+    this.components.wake();
   }
 
   start(): void {
@@ -87,14 +95,6 @@ export class DurableEventWorkerRuntime {
   }
 
   private async onEmpty(): Promise<void> {
-    if (this.finalizer.isWaitingForDrain)
-      await this.finalizer
-        .finish()
-        .catch((error) =>
-          getLogger().error(
-            "Event worker background finalization failed",
-            error,
-          ),
-        );
+    await finishEventWorkerBackground(this.finalizer);
   }
 }

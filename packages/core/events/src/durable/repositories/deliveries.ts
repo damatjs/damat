@@ -23,7 +23,7 @@ export interface DurableEventDelivery {
   backoffMs: number;
   backoffMultiplier: number;
   availableAt: Date;
-  retentionAt: Date;
+  retentionAt?: Date;
   leaseOwner?: string;
   leaseToken?: string;
   leaseExpiresAt?: Date;

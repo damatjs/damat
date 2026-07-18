@@ -48,6 +48,9 @@ test("declares the shared durability tables with explicit names", () => {
     "_damat_work_controls",
     "_damat_work_control_activity",
     "_damat_maintenance_activity",
+    "_damat_acceleration_outbox",
+    "_damat_acceleration_state",
+    "_damat_retention_overrides",
   ]) {
     expect(sql).toContain(`"${table}"`);
   }

@@ -1,15 +1,18 @@
-import { getDurabilityClient } from "@damatjs/durability";
+import {
+  getDurabilityClient,
+  type DurabilityExecutor,
+} from "@damatjs/durability";
 import { EventDeliveryLeaseLostError } from "./errors";
 import type { ClaimedEventDelivery } from "./types";
 
 export async function heartbeatEventDelivery(
   claim: ClaimedEventDelivery,
-  options: { leaseMs: number },
+  options: { leaseMs: number; executor?: DurabilityExecutor },
 ): Promise<{ cancellationRequested: boolean }> {
   if (!Number.isSafeInteger(options.leaseMs) || options.leaseMs < 1) {
     throw new Error("leaseMs must be a positive safe integer");
   }
-  return getDurabilityClient().transaction(async (executor) => {
+  const operation = async (executor: DurabilityExecutor) => {
     const delivery = await executor.query<{ cancellation_requested: boolean }>(
       `UPDATE "_damat_event_deliveries" SET "heartbeat_at"=NOW(),
        "lease_expires_at"=NOW()+($4*INTERVAL '1 ms'),"updated_at"=NOW()
@@ -37,5 +40,8 @@ export async function heartbeatEventDelivery(
     );
     if (attempt.rowCount !== 1) throw new EventDeliveryLeaseLostError(claim.id);
     return { cancellationRequested: row.cancellation_requested };
-  });
+  };
+  return options.executor
+    ? operation(options.executor)
+    : getDurabilityClient().transaction(operation);
 }

@@ -3,12 +3,14 @@ import { getJobDefinition } from "../definitions/registry";
 import { completeJobCancellation } from "./cancel";
 import { runJobHandler } from "./execution-handler";
 import { completeJobFailure } from "./fail";
-import { heartbeatJobClaim } from "./heartbeat";
+import { createJobHeartbeatControl } from "./execution-heartbeat";
+import type { DurabilityExecutor } from "@damatjs/durability";
 import type { ClaimedJobRun, ExecuteJobOptions } from "./types";
 
 export interface JobExecution {
   promise: Promise<void>;
   abort(): void;
+  heartbeat(executor?: DurabilityExecutor): Promise<void>;
 }
 
 export async function executeJobClaim(
@@ -23,8 +25,13 @@ export function startJobExecution(
   options: ExecuteJobOptions,
 ): JobExecution {
   const controller = new AbortController();
+  const heartbeat = createJobHeartbeatControl(
+    claim,
+    options.leaseMs ?? 30_000,
+    controller,
+  );
   let stopHeartbeat = () => {};
-  const promise = runClaim(claim, options, controller, (stop) => {
+  const promise = runClaim(claim, options, controller, heartbeat, (stop) => {
     stopHeartbeat = stop;
   });
   return {
@@ -33,6 +40,7 @@ export function startJobExecution(
       controller.abort();
       stopHeartbeat();
     },
+    heartbeat: heartbeat.run,
   };
 }
 
@@ -40,6 +48,7 @@ async function runClaim(
   claim: ClaimedJobRun,
   options: ExecuteJobOptions,
   controller: AbortController,
+  heartbeat: ReturnType<typeof createJobHeartbeatControl>,
   setStopHeartbeat: (stop: () => void) => void,
 ): Promise<void> {
   const definition = getJobDefinition(claim.name);
@@ -51,17 +60,9 @@ async function runClaim(
     );
     return;
   }
-  let cancellationRequested = false;
-  const heartbeat = async () => {
-    const state = await heartbeatJobClaim(claim, {
-      leaseMs: options.leaseMs ?? 30_000,
-    });
-    cancellationRequested ||= state.cancellationRequested;
-    if (state.cancellationRequested) controller.abort();
-  };
   try {
-    await heartbeat();
-    if (cancellationRequested) {
+    if (!options.batchHeartbeats) await heartbeat.run();
+    if (heartbeat.cancellationRequested) {
       await completeJobCancellation(claim);
       return;
     }
@@ -71,13 +72,13 @@ async function runClaim(
       options,
       definition.handler,
       controller,
-      heartbeat,
+      heartbeat.run,
       setStopHeartbeat,
     );
-    if (cancellationRequested) await completeJobCancellation(claim);
+    if (heartbeat.cancellationRequested) await completeJobCancellation(claim);
   } catch (error) {
     try {
-      if (cancellationRequested) await completeJobCancellation(claim);
+      if (heartbeat.cancellationRequested) await completeJobCancellation(claim);
       else if (controller.signal.aborted) return;
       else await completeJobFailure(claim, error);
     } catch (transitionError) {

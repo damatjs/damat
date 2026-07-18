@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import { JobWorker, type JobWorkerOptions } from "../../src";
+import { resolveWorkerOptions } from "../../src/worker/options";
 
 const invalid: [string, JobWorkerOptions][] = [
   ["queue", { queue: " " }],
@@ -10,7 +11,7 @@ const invalid: [string, JobWorkerOptions][] = [
   ["retryIntervalMs", { retryIntervalMs: Number.NaN }],
   ["leaseMs", { leaseMs: Number.POSITIVE_INFINITY }],
   ["heartbeatIntervalMs", { heartbeatIntervalMs: -1 }],
-  ["registryHeartbeatIntervalMs", { registryHeartbeatIntervalMs: 25_001 }],
+  ["registryHeartbeatIntervalMs", { registryHeartbeatIntervalMs: 120_001 }],
   ["reconcileIntervalMs", { reconcileIntervalMs: 0 }],
   ["retentionIntervalMs", { retentionIntervalMs: Infinity }],
   ["retentionMs", { retentionMs: -1 }],
@@ -35,9 +36,22 @@ test("accepts boundary worker options", () => {
         queue: "jobs",
         workerId: "worker-1",
         concurrency: 1,
-        registryHeartbeatIntervalMs: 25_000,
+        registryHeartbeatIntervalMs: 120_000,
         progressMinimumIntervalMs: 0,
         logLimits: { maxCount: 1, maxBytes: 1 },
       }),
   ).not.toThrow();
+});
+
+test("defaults avoid one-second polling and retain history for 90 days", () => {
+  const options = resolveWorkerOptions({});
+  expect(options.pollIntervalMs).toBe(5_000);
+  expect(options.registryHeartbeatIntervalMs).toBe(30_000);
+  expect(options.retentionMs).toBe(7_776_000_000);
+});
+
+test("forever retention is accepted", () => {
+  expect(resolveWorkerOptions({ retentionMs: "forever" }).retentionMs).toBe(
+    "forever",
+  );
 });

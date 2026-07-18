@@ -11,7 +11,7 @@ are marked inline below with no link.
 
 | Version    | Summary                                                                                                                                                                                    | Upgrade notes         |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------- |
-| Unreleased | Optional resolved runtime paths and package metadata                                                                                                                                       | [next →](./next.md)   |
+| Unreleased | Optional resolved runtime paths, package metadata, and active pool stats                                                                                                                    | [next →](./next.md)   |
 | 0.1.3      | `OrmModule` gains an optional `kind?: "module" \| "link"` field so the toolchain can tell a cross-module link directory from an ordinary module (cross-module links work); dependency bump | [0.1.3 →](./0.1.3.md) |
 | 0.1.2      | Dependency bump (`@damatjs/deps`) — picks up table-name `hasOne`/`belongsTo` relation work in higher packages; no change to this package's type surface                                    | —                     |
 | 0.1.1      | Maintenance — CI and test cleanup, dependency bumps                                                                                                                                        | —                     |

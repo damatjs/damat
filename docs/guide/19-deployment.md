@@ -67,9 +67,15 @@ must include all runtime dependencies and the `.damat/dist` production bundle.
 ## PostgreSQL and Redis
 
 PostgreSQL stores work, attempts, leases, retries, activity, progress, logs,
-results, controls, and worker records. Redis messages are optional latency hints.
-If Redis is absent or lost, workers continue polling PostgreSQL and expired
-leases remain recoverable.
+results, controls, worker snapshots, acceleration checkpoints, and audit records.
+Each process shares one PostgreSQL pool across HTTP and durable services; the
+pool retains normal bounded concurrency instead of using `max: 1`.
+
+Redis stores rebuildable ready identifiers, 10-second worker liveness, wake-ups,
+and inspection invalidations. Healthy Redis leaves a 30-second PostgreSQL
+safety scan. If Redis is absent, unauthorized, or lost, coordinated PostgreSQL
+polling discovers work within five seconds and expired leases remain recoverable.
+Recovery rebuilds Redis from PostgreSQL.
 
 Workers provide at-least-once execution. Use handler `withIdempotency` for
 database effects and pass the same stable key to external providers when they
@@ -106,6 +112,11 @@ export POSTGRES_PASSWORD='replace-with-a-long-random-value'
 REDIS_URL=redis://redis:6379 \
 docker compose -f backend/default/docker-compose.yml --profile accelerator up --build
 ```
+
+Authenticated Redis users need channel rules `&damat:*` and `&damat-events`.
+Verify `SUBSCRIBE` and `PUBLISH` for both durable wake-up channels and
+`damat-events`; persist direct-server ACL changes with `CONFIG REWRITE` and in
+the container configuration used for recreation.
 
 ---
 

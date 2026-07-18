@@ -14,15 +14,19 @@ export async function runEventDeliveryHandler(
   controller: AbortController,
   heartbeat: () => Promise<void>,
 ): Promise<void> {
-  const timer = setInterval(
-    () =>
-      void heartbeat().catch(() => {
-        controller.abort();
-        clearInterval(timer);
-      }),
-    options.heartbeatIntervalMs,
-  );
-  const stopHeartbeat = () => clearInterval(timer);
+  const timer = options.batchHeartbeats
+    ? undefined
+    : setInterval(
+        () =>
+          void heartbeat().catch(() => {
+            controller.abort();
+            if (timer) clearInterval(timer);
+          }),
+        options.heartbeatIntervalMs,
+      );
+  const stopHeartbeat = () => {
+    if (timer) clearInterval(timer);
+  };
   controller.signal.addEventListener("abort", stopHeartbeat, { once: true });
   try {
     const context = createEventDeliveryContext(claim, controller, options);

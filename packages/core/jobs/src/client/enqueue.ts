@@ -3,9 +3,8 @@ import {
   isTransactionalExecutor,
   TransactionalExecutorRequiredError,
   type DurabilityExecutor,
+  recordAccelerationSignal,
 } from "@damatjs/durability";
-import { DEFAULT_JOB_OPTIONS } from "../definitions/defaults";
-import { getJobDefinition } from "../definitions/registry";
 import type { JobName, JobPayload } from "../definitions/types";
 import { validateEnqueue } from "../validation/enqueue";
 import { publishJobWakeup } from "../wakeup/publisher";
@@ -17,8 +16,8 @@ import {
   insertJobRun,
   type EnqueueJobOptions,
   type JobRun,
-  type NewJobRun,
 } from "../repositories";
+import { resolveJobRun } from "./resolve-enqueue";
 
 export async function enqueueJob<K extends JobName>(
   name: K,
@@ -45,7 +44,7 @@ async function enqueueWith(
   payload: unknown,
   options: EnqueueJobOptions,
 ): Promise<JobRun> {
-  const run = resolveRun(name, payload, options);
+  const run = resolveJobRun(name, payload, options);
   if (options.deduplication) {
     const claim = await claimJobDeduplication(executor, {
       queue: run.queue,
@@ -67,29 +66,14 @@ async function enqueueWith(
     type: "enqueued",
     nextStatus: "queued",
   });
+  await recordAccelerationSignal({
+    topic: "damat:jobs:wakeup",
+    kind: "job",
+    resourceId: inserted.id,
+    scope: inserted.queue,
+    payload: { kind: "jobs", queue: inserted.queue },
+    availableAt: inserted.availableAt,
+    executor,
+  });
   return inserted;
-}
-
-function resolveRun(
-  name: string,
-  payload: unknown,
-  options: EnqueueJobOptions,
-): NewJobRun {
-  const defaults = getJobDefinition(name)?.options ?? DEFAULT_JOB_OPTIONS;
-  return {
-    id: crypto.randomUUID(),
-    name,
-    payload,
-    queue: options.queue ?? defaults.queue,
-    priority: options.priority ?? defaults.priority,
-    maxAttempts: options.maxAttempts ?? defaults.maxAttempts,
-    backoffMs: options.backoffMs ?? defaults.backoffMs,
-    backoffMultiplier: options.backoffMultiplier ?? defaults.backoffMultiplier,
-    availableAt: new Date(Date.now() + (options.delayMs ?? 0)),
-    metadata: options.metadata ?? {},
-    ...(options.correlationId ? { correlationId: options.correlationId } : {}),
-    ...(options.deduplication
-      ? { deduplicationKey: options.deduplication.key }
-      : {}),
-  };
 }

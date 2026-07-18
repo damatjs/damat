@@ -2,6 +2,7 @@ import {
   validateWorkActor,
   type DurabilityExecutor,
   type WorkActor,
+  recordAccelerationSignal,
 } from "@damatjs/durability";
 import { appendEventActivity } from "../repositories/activity";
 import {
@@ -53,7 +54,7 @@ async function retryLocked(
   }
   const event = await executor.query<{
     name: string;
-    retention_ms: string;
+    retention_ms: string | null;
   }>(
     `SELECT "name","retention_ms" FROM "_damat_event_outbox"
      WHERE "id"=$1 FOR UPDATE`,
@@ -63,7 +64,7 @@ async function retryLocked(
   const row = await updateDeliveryForRetry(
     executor,
     current,
-    +event.rows[0].retention_ms,
+    event.rows[0].retention_ms === null ? null : +event.rows[0].retention_ms,
   );
   await appendEventActivity(executor, {
     eventId: current.event_id,
@@ -74,6 +75,19 @@ async function retryLocked(
     nextStatus: "pending",
     actor: { ...actor },
     metadata: { availableAt: row.available_at.toISOString() },
+  });
+  await recordAccelerationSignal({
+    topic: "damat:events:wakeup",
+    kind: "event",
+    resourceId: current.event_id,
+    scope: JSON.stringify([event.rows[0].name, current.consumer]),
+    payload: {
+      kind: "events",
+      target: "delivery",
+      event: event.rows[0].name,
+      consumer: current.consumer,
+    },
+    executor,
   });
   return { delivery: mapDurableEventDelivery(row), event: event.rows[0].name };
 }
