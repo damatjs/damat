@@ -1,6 +1,6 @@
 # @damatjs/durability Unreleased
 
-> Establishes the shared PostgreSQL contracts used by durable jobs and events.
+> Establishes the shared PostgreSQL contracts used by durable jobs, events, and pipelines.
 
 ## What changed
 
@@ -36,9 +36,18 @@ parallel infrastructure contracts.
   and coalesces simultaneous wake-ups without restricting active pool work.
 - Transactional acceleration outbox/state tables, leased relay claims,
   projection health, audited rebuild control, and payload-free invalidations.
+- Coalesced transaction after-commit hooks that request an acceleration relay
+  flush only after PostgreSQL commits and never after rollback.
 - Audited `number | "forever"` retention overrides and 90-day defaults.
+- `pipeline` resource/work kinds for acceleration, controls, workers,
+  maintenance, inspection invalidation, and retention overrides.
 
 ## Changed
+
+- Shared migration `004` extends existing retention-override constraints to
+  accept pipeline-owned history.
+- Acceleration relay claims preserve numeric outbox revision order even after
+  revisions cross decimal digit boundaries.
 
 - A caller-supplied `withIdempotency` executor must be actively marked by a
   Damat transaction owner. Pools, arbitrary query executors, and executors
@@ -58,13 +67,14 @@ parallel infrastructure contracts.
 
 ## Action required
 
-Run `damat-orm migrate:up` before enabling durable jobs or events. The migration
+Run `damat-orm migrate:up` before enabling durable jobs, events, or pipelines. The migration
 adds acceleration outbox/state and retention-override storage.
 
 Configure a default durability client or pass the executor received by an
 active Damat transaction callback when calling `withIdempotency`. Custom
 transaction adapters must create and invalidate a fresh wrapper for every
-callback.
+callback and invoke `runAfterCommitCallbacks` only after the database confirms
+commit.
 Propagate the same key to external providers when they support idempotency.
 Use the worker registry for visibility only; keep fenced leases authoritative
 for every claim. Run pause and resume inside an existing active Damat

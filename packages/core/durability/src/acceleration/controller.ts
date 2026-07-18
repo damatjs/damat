@@ -2,6 +2,11 @@ import type { AccelerationActor } from "./types";
 
 export interface AccelerationController {
   rebuild(actor: AccelerationActor): Promise<void>;
+  flush?(): Promise<void>;
+}
+
+export function requestAccelerationFlush(): void {
+  void storage[KEY]?.flush?.().catch(() => {});
 }
 
 const KEY = Symbol.for("damatjs.durability.accelerationController");

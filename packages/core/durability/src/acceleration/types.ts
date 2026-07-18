@@ -1,7 +1,8 @@
 import type { DurabilityExecutor } from "../client/types";
 import type { AccelerationMode } from "../coordinator";
 
-export type DurableResourceKind = "job" | "event" | "worker" | "control";
+export type DurableResourceKind =
+  "job" | "event" | "pipeline" | "worker" | "control";
 
 export interface DurableInvalidation {
   kind: DurableResourceKind;

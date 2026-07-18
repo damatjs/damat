@@ -1,4 +1,6 @@
 import { getDurabilityClient } from "../client/global";
+import { registerAfterCommit } from "../client/transactional";
+import { requestAccelerationFlush } from "./controller";
 import type { AccelerationSignalInput } from "./types";
 
 export async function recordAccelerationSignal(
@@ -20,5 +22,8 @@ export async function recordAccelerationSignal(
       input.availableAt ?? new Date(),
     ],
   );
+  if (!registerAfterCommit(executor, requestAccelerationFlush)) {
+    requestAccelerationFlush();
+  }
   return id;
 }

@@ -26,6 +26,8 @@ declarations without naming internal symbols.
 - Top-level transactions use fresh executor wrappers, so reuse of an underlying
   ORM transaction manager cannot reactivate a captured executor.
 - Transaction options are forwarded to the ORM transaction.
+- Durable after-commit callbacks run after the ORM commit, enabling prompt
+  acceleration outbox relay without publishing rolled-back work.
 - `ModuleService` declares an explicit public constructor and instance surface.
   Exported service subclasses can emit declarations through the
   `@damatjs/framework` re-export because the internal `resolveModelMethods`

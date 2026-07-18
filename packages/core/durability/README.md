@@ -69,6 +69,13 @@ adapter reuses its underlying client. Queries through an invalidated wrapper
 fail before reaching that client. Application code should not create transaction
 wrappers itself.
 
+Durable acceleration outbox writes register one coalesced after-commit flush on
+these wrappers. `createDurabilityClient().transaction` and
+`ModuleService.transaction` run it only after PostgreSQL commits; rollback runs
+no publisher or relay request. Custom transaction adapters must call
+`runAfterCommitCallbacks` after their commit if they want the same prompt relay
+behavior.
+
 The guarantee covers database effects performed through the supplied executor.
 Remote providers must receive the same idempotency key; a local transaction
 cannot make an external side effect exactly once.
@@ -129,11 +136,16 @@ checkpoint, last successful publication and rebuild, and fallback interval.
 PostgreSQL and audits the actor and reason. `subscribeDurableInvalidations`
 provides an in-process hook for a future HTTP/SSE adapter. Invalidations contain
 only resource identity, scope, and revision; consumers refetch canonical data.
+Jobs, durable events, and pipelines share this outbox. `pipeline` is a first-class
+resource/work kind, so its ready changes, controls, retention overrides, and
+visual invalidations use the same contracts without storing graph data in Redis.
 
 `setRetentionOverride` and `getRetentionOverride` use
 `number | "forever"`. Overrides are actor/reason audited and apply to remaining
 data. Operational presets are seven days, 90 days, and `"forever"`; the default
 is 90 days.
+`"forever"` is represented by nullable retention/expiry storage; the shared
+catalog migration extends existing retention overrides to the pipeline kind.
 
 ## System migrations
 

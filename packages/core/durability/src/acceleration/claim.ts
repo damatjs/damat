@@ -37,7 +37,11 @@ export async function claimAccelerationSignals(
       [limit, token, leaseMs, ids?.length ? ids : null],
     ),
   );
-  return rows.rows.map(mapSignal);
+  return rows.rows.map(mapSignal).sort((left, right) => {
+    const a = BigInt(left.revision);
+    const b = BigInt(right.revision);
+    return a < b ? -1 : a > b ? 1 : 0;
+  });
 }
 
 function mapSignal(row: SignalRow): AccelerationSignal {

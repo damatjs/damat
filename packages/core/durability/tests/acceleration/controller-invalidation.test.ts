@@ -5,6 +5,7 @@ import {
   configureAccelerationController,
   emitDurableInvalidation,
   rebuildAccelerationProjection,
+  requestAccelerationFlush,
   subscribeDurableInvalidations,
 } from "../../src";
 
@@ -34,6 +35,28 @@ test("rebuilds require attribution and a configured controller", async () => {
     type: "user",
     reason: "repair",
   })).toThrow("not configured");
+});
+
+test("flush requests are optional and contain relay failures", async () => {
+  requestAccelerationFlush();
+  configureAccelerationController({ rebuild: async () => {} });
+  requestAccelerationFlush();
+  let flushes = 0;
+  configureAccelerationController({
+    rebuild: async () => {},
+    flush: async () => void flushes++,
+  });
+  requestAccelerationFlush();
+  await Promise.resolve();
+  expect(flushes).toBe(1);
+  configureAccelerationController({
+    rebuild: async () => {},
+    flush: async () => {
+      throw new Error("temporary relay failure");
+    },
+  });
+  expect(() => requestAccelerationFlush()).not.toThrow();
+  await Promise.resolve();
 });
 
 test("invalidation listeners can subscribe, unsubscribe, and clear", () => {

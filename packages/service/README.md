@@ -117,6 +117,8 @@ falls back to the base repository. Each top-level transaction receives a fresh
 active executor wrapper, so it can be passed to `withIdempotency`; retaining it
 after success or rollback is rejected even when the ORM reuses its underlying
 transaction manager.
+Durable acceleration writes made through the callback executor request their
+outbox relay only after the ORM commit succeeds; a rollback sends no wake-up.
 `TransactionOptions`, including the isolation level, are forwarded to the ORM.
 
 ## API

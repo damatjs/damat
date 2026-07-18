@@ -6,6 +6,7 @@ import type {
 import {
   createTransactionalExecutor,
   invalidateTransactionalExecutor,
+  runAfterCommitCallbacks,
 } from "./transactional";
 
 export function createDurabilityClient(options: {
@@ -25,6 +26,8 @@ export function createDurabilityClient(options: {
         executor = createTransactionalExecutor(client);
         const result = await callback(executor);
         await client.query("COMMIT");
+        invalidateTransactionalExecutor(executor);
+        await runAfterCommitCallbacks(executor);
         return result;
       } catch (error) {
         try {

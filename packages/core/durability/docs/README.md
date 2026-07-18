@@ -6,8 +6,8 @@
 | ----------------------------- | --------------------------------------------------- |
 | `src/client/types.ts`         | Structural executor, pool, and client contracts     |
 | `src/coordinator/`            | Process-level adaptive background-work coordinator  |
-| `src/acceleration/`           | Transactional outbox, health, rebuild, invalidation  |
-| `src/retention/`              | Audited runtime retention overrides                  |
+| `src/acceleration/`           | Transactional outbox, health, rebuild, invalidation |
+| `src/retention/`              | Audited runtime retention overrides                 |
 | `src/client/create.ts`        | Transaction runner with commit, rollback, release   |
 | `src/client/global.ts`        | Process-wide optional default client                |
 | `src/client/transactional.ts` | Active transaction executor marker and helpers      |
@@ -33,6 +33,9 @@
 - Wrappers are invalidated after both successful and failed callbacks.
 - Invalidated wrappers reject queries before delegating to their client.
 - Reusing an underlying client never reactivates an older wrapper.
+- After-commit callbacks run only after the transaction owner confirms commit.
+- Multiple acceleration signals in one transaction request one relay flush.
+- Rollback discards every registered after-commit callback.
 - `withIdempotency` rejects an unmarked supplied executor before querying.
 - An idempotency claim, operation, and completion share one transaction.
 - Completed duplicates replay the stored JSON result without rerunning work.

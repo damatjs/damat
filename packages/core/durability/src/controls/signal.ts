@@ -8,15 +8,24 @@ export function recordControlSignal(
   scope: string,
 ): Promise<string> {
   const event = kind === "event" ? decodeEventScope(scope) : undefined;
+  const topic =
+    kind === "job"
+      ? "damat:jobs:wakeup"
+      : kind === "event"
+        ? "damat:events:wakeup"
+        : "damat:pipelines:wakeup";
   return recordAccelerationSignal({
-    topic: kind === "job" ? "damat:jobs:wakeup" : "damat:events:wakeup",
+    topic,
     kind: "control",
     scope,
-    payload: kind === "job"
-      ? { kind: "jobs", queue: scope }
-      : event
-        ? { kind: "events", target: "delivery", ...event }
-        : { kind: "events", target: "router" },
+    payload:
+      kind === "job"
+        ? { kind: "jobs", queue: scope }
+        : kind === "pipeline"
+          ? { kind: "pipelines", scope }
+          : event
+            ? { kind: "events", target: "delivery", ...event }
+            : { kind: "events", target: "router" },
     executor,
   });
 }

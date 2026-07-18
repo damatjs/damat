@@ -100,6 +100,9 @@ transaction<R>(
   the underlying ORM transaction manager.
 - `options` are forwarded to `PgEntityManager.transaction`, including
   transaction isolation settings.
+- After PostgreSQL commits, registered durability callbacks run once. This is
+  how acceleration outbox writes request prompt relay without waking Redis for
+  a transaction that later rolls back.
 - A callback may omit the executor parameter when it only needs
   transaction-bound model accessors.
 

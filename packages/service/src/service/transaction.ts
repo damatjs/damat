@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import {
   createTransactionalExecutor,
   invalidateTransactionalExecutor,
+  runAfterCommitCallbacks,
   type DurabilityExecutor,
 } from "@damatjs/durability";
 import type {
@@ -48,18 +49,25 @@ export class ServiceTransactions {
   ): Promise<R> {
     const active = this.active;
     if (active) return callback(active.executor);
-    return em.transaction(async (transaction) => {
-      const executor = createTransactionalExecutor(
+    let executor: DurabilityExecutor | undefined;
+    const result = await em.transaction(async (transaction) => {
+      const transactionExecutor = createTransactionalExecutor(
         transaction as DurabilityExecutor,
       );
+      executor = transactionExecutor;
       try {
         return await this.storage.run(
-          { executor, methods: createMethods(transaction) },
-          () => callback(executor),
+          {
+            executor: transactionExecutor,
+            methods: createMethods(transaction),
+          },
+          () => callback(transactionExecutor),
         );
       } finally {
-        invalidateTransactionalExecutor(executor);
+        invalidateTransactionalExecutor(transactionExecutor);
       }
     }, options);
+    await runAfterCommitCallbacks(executor!);
+    return result;
   }
 }

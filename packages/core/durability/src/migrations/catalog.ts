@@ -2,10 +2,11 @@ import type { SystemMigration, SystemMigrationCatalog } from "./types";
 import { shared001 } from "./shared-001";
 import { shared002 } from "./shared-002";
 import { shared003 } from "./shared-003";
+import { shared004 } from "./shared-004";
 
 export const durabilitySystemMigrations: SystemMigrationCatalog = {
   owner: "@damatjs/durability",
-  migrations: [shared001, shared002, shared003],
+  migrations: [shared001, shared002, shared003, shared004],
 };
 
 export function collectSystemMigrations(

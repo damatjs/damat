@@ -1,6 +1,6 @@
 import type { DurabilityExecutor } from "../client/types";
 
-export type WorkKind = "job" | "event";
+export type WorkKind = "job" | "event" | "pipeline";
 export type WorkerState = "active" | "stale" | "stopping" | "stopped";
 
 export interface RegisterWorkerOptions {
