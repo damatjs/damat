@@ -29,6 +29,7 @@ Start from the [package map](./01-introduction.md#the-package-map), or jump in:
   [redis](../../packages/core/redis/README.md) ·
   [events](../../packages/core/events/README.md) ·
   [jobs](../../packages/core/jobs/README.md) ·
+  [pipelines](../../packages/core/pipelines/README.md) ·
   [load-env](../../packages/core/env/README.md) ·
   [types](../../packages/core/types/README.md) ·
   [cli](../../packages/core/cli/README.md) ·
@@ -46,9 +47,9 @@ A machine-readable map of the whole site (chapters + packages) lives in
 
 `@damatjs/durability` owns the shared PostgreSQL transaction, migration,
 idempotency, worker-registry, redaction, cursor, and operational contracts.
-`@damatjs/jobs` and the durable side of `@damatjs/events` build on that
-foundation. `@damatjs/framework` configures and orchestrates their selected
-runtime roles.
+`@damatjs/jobs`, `@damatjs/pipelines`, and the durable side of `@damatjs/events`
+build on that foundation. `@damatjs/framework` configures and orchestrates their
+selected runtime roles.
 
 ---
 

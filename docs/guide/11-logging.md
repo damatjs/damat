@@ -77,4 +77,5 @@ and `skip`.
 
 ---
 
-Prev: [← Redis](./10-redis.md) · [Guide home](../GUIDE.md) · Next: [The default backend →](./12-default-backend.md)
+Prev: [← Durable pipelines](./10c-pipelines.md) · [Guide home](../GUIDE.md) ·
+Next: [The default backend →](./12-default-backend.md)

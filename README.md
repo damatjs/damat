@@ -66,6 +66,8 @@ Full walkthrough: **[docs/GUIDE.md](./docs/GUIDE.md)**.
   migration system.
 - **Services** — base classes with auto-generated CRUD, transactions, and pooling.
 - **Workflows** — a saga engine (Effect-TS) with compensation and distributed locks.
+- **Pipelines** — durable, inspectable graphs that compose jobs, events,
+  workflows, waits, branches, and child processes.
 - **File-based routing** — `route.ts` files become URL paths (Hono).
 - **AI-native** — discover and install modules via an [MCP server](./packages/mcp/README.md).
 
@@ -106,17 +108,19 @@ version history.
 
 ### Core
 
-| Package                                                                | Description                                                        |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| [`@damatjs/logger`](./packages/core/logger/README.md)                  | Structured logging (levels, formats, file transport)               |
-| [`@damatjs/redis`](./packages/core/redis/README.md)                    | Cache, queue, locks, sessions, rate limiting                       |
-| [`@damatjs/events`](./packages/core/events/README.md)                  | Typed event bus: subscriptions, model CRUD events, Redis broadcast |
-| [`@damatjs/jobs`](./packages/core/jobs/README.md)                      | Background jobs: workers, retries/backoff, dead-lettering          |
-| [`@damatjs/load-env`](./packages/core/env/README.md)                   | `.env` cascade loader                                              |
-| [`@damatjs/types`](./packages/core/types/README.md)                    | Error classes & shared types                                       |
-| [`@damatjs/cli`](./packages/core/cli/README.md)                        | General CLI framework (powers the CLIs below)                      |
-| [`@damatjs/deps`](./packages/deps/README.md)                           | Pinned external dependency re-exports                              |
-| [`@damatjs/typescript-config`](./packages/typescript-config/README.md) | Shared tsconfig presets                                            |
+| Package                                                                | Description                                                          |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| [`@damatjs/durability`](./packages/core/durability/README.md)          | Shared PostgreSQL durability, inspection, and acceleration contracts |
+| [`@damatjs/pipelines`](./packages/core/pipelines/README.md)            | Durable orchestration across jobs, events, workflows, and waits      |
+| [`@damatjs/logger`](./packages/core/logger/README.md)                  | Structured logging (levels, formats, file transport)                 |
+| [`@damatjs/redis`](./packages/core/redis/README.md)                    | Cache, queue, locks, sessions, rate limiting                         |
+| [`@damatjs/events`](./packages/core/events/README.md)                  | Typed event bus: subscriptions, model CRUD events, Redis broadcast   |
+| [`@damatjs/jobs`](./packages/core/jobs/README.md)                      | Background jobs: workers, retries/backoff, dead-lettering            |
+| [`@damatjs/load-env`](./packages/core/env/README.md)                   | `.env` cascade loader                                                |
+| [`@damatjs/types`](./packages/core/types/README.md)                    | Error classes & shared types                                         |
+| [`@damatjs/cli`](./packages/core/cli/README.md)                        | General CLI framework (powers the CLIs below)                        |
+| [`@damatjs/deps`](./packages/deps/README.md)                           | Pinned external dependency re-exports                                |
+| [`@damatjs/typescript-config`](./packages/typescript-config/README.md) | Shared tsconfig presets                                              |
 
 ### Auth
 

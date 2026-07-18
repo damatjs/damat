@@ -32,6 +32,7 @@ the whole thing (chapters + packages) lives in
 9. [Workflows (the saga engine)](./guide/09-workflows.md)
 10. [Redis: cache, queue, locks, rate limiting](./guide/10-redis.md)
     - 10b. [Events & background jobs](./guide/10b-events-and-jobs.md) — ephemeral events, durable delivery, jobs, inspection, recovery, and worker runtimes
+    - 10c. [Durable pipelines](./guide/10c-pipelines.md) — persisted orchestration across jobs, events, workflows, waits, and branches
 11. [Logging](./guide/11-logging.md)
 12. [The default backend, end to end](./guide/12-default-backend.md)
 

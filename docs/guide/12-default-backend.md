@@ -10,9 +10,10 @@
 [`@damatjs/default`](../../backend/default/README.md) is a complete reference app
 demonstrating the whole framework: `user` and `organization` modules,
 file-based routes under `/api` (`/api/posts`, `/api/users/:userId`, `/api/workflows`) plus a top-level `/health`,
-cross-module `links/`, a `user-onboarding` saga workflow, Redis usage, and a
-durable jobs and events, headless inspection, process roles, and a same-image
-Docker setup. Most patterns in this guide are taken directly from it. Its
+cross-module `links/`, a `user-onboarding` saga workflow, Redis usage, durable
+jobs and events, a durable pipeline composing them, headless inspection,
+process roles, and a same-image Docker setup. Most patterns in this guide are
+taken directly from it. Its
 README has the full route and feature list.
 
 To explore it, clone the repo (see
@@ -29,6 +30,7 @@ and the matching chapter:
 | The cross-module link             | `src/links/`                        | [Composing & linking](./17-composing-and-linking-modules.md) |
 | `reports.generate`                | `src/jobs/`                         | [Events & jobs](./10b-events-and-jobs.md)                    |
 | `user.created` + two consumers    | `src/events/`                       | [Events & jobs](./10b-events-and-jobs.md)                    |
+| `user.onboard-and-report`         | `src/pipelines/`                    | [Durable pipelines](./10c-pipelines.md)                      |
 | Atomic enqueue and publish        | `src/examples/transactionalWork.ts` | [Events & jobs](./10b-events-and-jobs.md)                    |
 | Headless operational inspection   | `src/examples/inspectWork.ts`       | [Events & jobs](./10b-events-and-jobs.md)                    |
 | Migration/API/jobs/events roles   | `docker-compose.yml`                | [Deployment](./19-deployment.md)                             |
@@ -36,9 +38,9 @@ and the matching chapter:
 If you can follow one row of that table through the code, you understand the
 framework — everything else is more of the same.
 
-The four Compose roles use the same built image. The one-shot migration role
+The five Compose roles use the same built image. The one-shot migration role
 finishes first; API runs HTTP only, while jobs and events run as headless
-workers selected by environment variables.
+workers and pipelines runs its router/internal worker, all selected by environment variables.
 
 ---
 

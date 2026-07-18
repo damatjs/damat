@@ -319,4 +319,5 @@ and [`@damatjs/jobs`](../../packages/core/jobs/README.md) READMEs.
 
 ---
 
-Prev: [← Redis](./10-redis.md) · [Guide home](../GUIDE.md) · Next: [Logging →](./11-logging.md)
+Prev: [← Redis](./10-redis.md) · [Guide home](../GUIDE.md) ·
+Next: [Durable pipelines →](./10c-pipelines.md)
