@@ -44,7 +44,7 @@
         },
         {
           "name": "created_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "nullable": false,
           "default": "now()",
           "primaryKey": false,
@@ -52,14 +52,15 @@
         },
         {
           "name": "updated_at",
-          "type": "date",
-          "nullable": true,
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
           "primaryKey": false,
           "unique": false
         },
         {
           "name": "deleted_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "nullable": true,
           "primaryKey": false,
           "unique": false
@@ -141,7 +142,7 @@
         },
         {
           "name": "created_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "nullable": false,
           "default": "now()",
           "primaryKey": false,
@@ -149,14 +150,15 @@
         },
         {
           "name": "updated_at",
-          "type": "date",
-          "nullable": true,
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
           "primaryKey": false,
           "unique": false
         },
         {
           "name": "deleted_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "nullable": true,
           "primaryKey": false,
           "unique": false
@@ -174,7 +176,9 @@
           "type": "btree"
         },
         {
-          "columns": ["user_id"]
+          "columns": [
+            "user_id"
+          ]
         }
       ],
       "foreignKeys": [
@@ -187,7 +191,9 @@
             }
           ],
           "referencedTable": "users",
-          "referencedColumns": ["id"],
+          "referencedColumns": [
+            "id"
+          ],
           "indexed": true
         }
       ],
@@ -298,7 +304,7 @@
         },
         {
           "name": "created_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "nullable": false,
           "default": "now()",
           "primaryKey": false,
@@ -306,14 +312,15 @@
         },
         {
           "name": "updated_at",
-          "type": "date",
-          "nullable": true,
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
           "primaryKey": false,
           "unique": false
         },
         {
           "name": "deleted_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "nullable": true,
           "primaryKey": false,
           "unique": false
@@ -354,7 +361,9 @@
           "type": "btree"
         },
         {
-          "columns": ["user_id"]
+          "columns": [
+            "user_id"
+          ]
         }
       ],
       "foreignKeys": [
@@ -367,7 +376,9 @@
             }
           ],
           "referencedTable": "users",
-          "referencedColumns": ["id"],
+          "referencedColumns": [
+            "id"
+          ],
           "indexed": true
         }
       ],
@@ -425,7 +436,7 @@
         },
         {
           "name": "created_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "nullable": false,
           "default": "now()",
           "primaryKey": false,
@@ -433,14 +444,15 @@
         },
         {
           "name": "updated_at",
-          "type": "date",
-          "nullable": true,
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
           "primaryKey": false,
           "unique": false
         },
         {
           "name": "deleted_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "nullable": true,
           "primaryKey": false,
           "unique": false
@@ -469,16 +481,24 @@
       "from": "user",
       "to": "users",
       "type": "belongsTo",
-      "mappedBy": ["user"],
-      "linkedBy": ["user_id"]
+      "mappedBy": [
+        "user"
+      ],
+      "linkedBy": [
+        "user_id"
+      ]
     },
     {
       "fromTable": "accounts",
       "from": "user",
       "to": "users",
       "type": "belongsTo",
-      "mappedBy": ["user"],
-      "linkedBy": ["user_id"]
+      "mappedBy": [
+        "user"
+      ],
+      "linkedBy": [
+        "user_id"
+      ]
     },
     {
       "fromTable": "users",
