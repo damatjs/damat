@@ -13,6 +13,10 @@
     "./migrations": {
       "types": "./dist/migrations/index.d.ts",
       "default": "./dist/migrations/index.js"
+    },
+    "./pipeline-integration": {
+      "types": "./dist/pipeline-integration.d.ts",
+      "default": "./dist/pipeline-integration.js"
     }
   },
   "engines": {

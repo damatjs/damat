@@ -2,12 +2,13 @@ import { getDurabilityClient } from "@damatjs/durability";
 import type { JobResult } from "./types";
 import type { ClaimedJobRun } from "./types";
 import { finishClaim } from "./finish";
+import { notifyJobTerminal } from "../terminal/listener";
 
 export async function completeJobSuccess(
   claim: ClaimedJobRun,
   result: JobResult,
 ): Promise<"succeeded" | "cancelled"> {
-  return getDurabilityClient().transaction(async (executor) => {
+  const status = await getDurabilityClient().transaction(async (executor) => {
     const cancellation = await executor.query(
       `SELECT 1 FROM "_damat_job_runs"
        WHERE "id"=$1 AND "lease_owner"=$2 AND "lease_token"=$3
@@ -22,4 +23,6 @@ export async function completeJobSuccess(
     });
     return status;
   });
+  await notifyJobTerminal(claim, status);
+  return status;
 }

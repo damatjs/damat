@@ -2,6 +2,7 @@ import type { DurabilityExecutor, JsonValue } from "@damatjs/durability";
 import { JobLeaseLostError } from "./errors";
 import { appendFinishActivity } from "./finish-activity";
 import type { ClaimedJobRun } from "./types";
+import { recordPipelineJobTerminal } from "../terminal/signal";
 
 export interface FinishInput {
   status: "retry_wait" | "succeeded" | "dead_lettered" | "cancelled";
@@ -45,6 +46,7 @@ export async function finishClaim(
     input,
     terminal ? updated.rows[0]?.progress : undefined,
   );
+  if (terminal) await recordPipelineJobTerminal(executor, claim);
 }
 
 async function closeAttempt(

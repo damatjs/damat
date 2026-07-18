@@ -83,9 +83,9 @@ optional post-commit wake-up path rather than the queue of record.
   synchronously before lifecycle mutation and accepts zero for immediate abort.
 - The public `JobWorker` constructor accepts only worker options; dependency
   injection moved to an internal, non-root-exported test seam.
-- Package-owned enqueue, retry, and schedule transactions publish wake-ups only
-  after commit. Caller-owned transactions rely on periodic polling because
-  their commit is outside the package boundary.
+- Package-owned and active caller-owned Damat transactions write outbox signals
+  atomically and request one coalesced relay flush after commit. Rollback
+  requests no wake-up; the PostgreSQL safety poll remains the final fallback.
 - Manual retry clears current progress, result, error, cancellation, completion,
   and lease snapshots while preserving immutable attempt and activity history.
 - Operational summary time windows are half-open; current status, waiting,
@@ -118,6 +118,11 @@ optional post-commit wake-up path rather than the queue of record.
   a 30-second safety scan, degraded operation polls within five seconds, worker
   snapshots persist every 30 seconds, and retention defaults to 90 days or
   accepts `"forever"`.
+- Pipeline-owned jobs write a pipeline wake-up outbox row inside every fenced
+  terminal transaction. Job retention skips them so pipeline retention can
+  delete the graph and its backing jobs as one ownership unit.
+- Framework-only terminal notification is isolated under the
+  `@damatjs/jobs/pipeline-integration` subpath.
 
 ## Action required
 

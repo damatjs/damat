@@ -171,6 +171,14 @@ immediate abort.
 
 ## Inspection and administration
 
+Pipeline-created jobs carry internal `_damatPipeline` ownership metadata. Their
+fenced terminal transaction writes a pipeline acceleration-outbox signal in the
+same commit, so the graph router cannot observe a completion that PostgreSQL did
+not commit. Ordinary job retention excludes these runs: pipeline retention
+deletes the owning node records, complete child tree, and backing jobs together.
+The framework integration hook lives at `@damatjs/jobs/pipeline-integration`;
+applications should use pipeline clients rather than replacing that hook.
+
 The package exposes a typed headless client rather than unauthenticated routes:
 
 ```ts

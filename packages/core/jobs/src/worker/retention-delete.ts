@@ -27,6 +27,7 @@ export async function deleteTerminalJobRuns(
     `DELETE FROM "_damat_job_runs" WHERE "id" IN (
        SELECT "id" FROM "_damat_job_runs"
        WHERE "status" IN ('succeeded','dead_lettered','cancelled')
+         AND NOT ("metadata" ? '_damatPipeline')
          AND "completed_at" IS NOT NULL AND "completed_at" <= $1
          AND ($3::text IS NULL OR "queue"=$3)
        ORDER BY "completed_at","id" LIMIT $2)`,

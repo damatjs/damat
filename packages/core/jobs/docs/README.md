@@ -115,6 +115,13 @@ not be recreated beside them.
 
 ## Reconciliation and wake-ups
 
+Pipeline-owned runs are identified only by validated internal metadata. Every
+fenced terminal path records the pipeline wake-up in its existing transaction,
+then invokes the optional process listener after commit for low latency. The
+durable outbox remains authoritative if the listener fails. Job retention skips
+owned runs because deleting them before their pipeline node would violate both
+the inspection record and its foreign key; pipeline retention removes both.
+
 Every pass is bounded and safe under overlap. Expired leases close the old
 attempt and recover from the fenced lease alone. Recovery activity preserves
 the expired worker and token. Immediate reclaim records a separate `claimed`
@@ -125,12 +132,13 @@ Queue-scoped retention records actor-attributed requested, completed, or failed
 maintenance activity; completion commits with its deletions.
 
 Redis wake-ups carry only `{ kind: "jobs", queue }`. Publishers run after
-package-owned PostgreSQL transactions commit. Mutations using a caller-owned
-executor do not publish because the package cannot observe that outer commit.
-Framework processes multiplex job and event signals through one subscriber.
-Healthy Redis uses a 30-second PostgreSQL safety scan; degraded mode discovers
-work within five seconds. Standalone workers retain their compatible dedicated
-subscriber and five-second PostgreSQL fallback.
+package-owned PostgreSQL transactions commit. Mutations using an active
+caller-owned Damat transaction register the same coalesced after-commit relay
+prompt; rollback discards it. Framework processes multiplex job, event, and
+pipeline signals through one subscriber. Healthy Redis uses a 30-second
+PostgreSQL safety scan; degraded mode discovers work within five seconds.
+Standalone workers retain their compatible dedicated subscriber and
+five-second PostgreSQL fallback.
 
 ## Operational inspection
 

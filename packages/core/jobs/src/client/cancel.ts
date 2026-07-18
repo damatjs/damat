@@ -12,6 +12,7 @@ import {
   transitionJobRun,
   type JobRun,
 } from "../repositories";
+import { recordPipelineMetadataTerminal } from "../terminal/signal";
 
 export interface CancelJobRunOptions {
   reason?: string;
@@ -64,5 +65,7 @@ async function cancelWith(
     ...(options.reason ? { reason: options.reason } : {}),
     ...(options.actor ? { actor: options.actor } : {}),
   });
+  if (cancelled)
+    await recordPipelineMetadataTerminal(executor, current.metadata);
   return run;
 }
