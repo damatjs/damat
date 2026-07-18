@@ -19,6 +19,8 @@ port zero.
 
 The package now exposes `resolveModuleArtifact`, `resolveArtifactRoot`, and the
 shared `ResolvedModule` type used by framework, ORM, and codegen consumers.
+It also re-exports the durable pipeline authoring surface so a portable pipeline
+provider uses the same contract in standalone module and assembled app runtimes.
 
 ## Action required
 

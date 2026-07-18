@@ -41,7 +41,8 @@
     "@damatjs/orm-model": "workspace:*",
     "@damatjs/orm-type": "workspace:*",
     "@damatjs/services": "workspace:*",
-    "@damatjs/workflow-engine": "workspace:*"
+    "@damatjs/workflow-engine": "workspace:*",
+    "@damatjs/pipelines": "workspace:*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "workspace:*",

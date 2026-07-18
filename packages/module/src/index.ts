@@ -1,13 +1,15 @@
 /**
  * @damatjs/module — the module system's contract, config, runtime, and tooling.
  *
- * Authoring symbols are imported from the real packages, not re-exported here:
+ * Most authoring symbols are imported from their real packages:
  *   - defineModule / ModuleService           → @damatjs/services
  *   - getModule / hasModule / registerModule  → @damatjs/framework
  *   - model / columns                         → @damatjs/orm-model
  *   - workflow engine (createStep, …)         → @damatjs/workflow-engine
  *   - RouteHandler / RouteValidator           → @damatjs/framework/router
  *   - z                                       → @damatjs/deps/zod
+ * Durable pipeline authoring is re-exported because pipeline providers are a
+ * portable module capability loaded by the standalone and backend runtimes.
  *
  * - Contract:   ModuleManifest (damat.json, with legacy fallback) + validation
  * - Config:     defineModuleConfig — the only thing a module author sets up
@@ -35,3 +37,6 @@ export * from "./tooling";
 
 // Registry tooling
 export * from "./registry";
+
+// Durable orchestration authoring surface.
+export * from "@damatjs/pipelines";

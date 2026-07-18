@@ -40,6 +40,11 @@ Skip it when:
 - You're building app-level wiring that isn't a module — use `@damatjs/framework` directly.
 - You only need workflows — depend on `@damatjs/workflow-engine` directly.
 
+Portable pipeline providers may import `definePipeline` and capability
+registration from `@damatjs/module`. The same definitions are re-exported by
+`@damatjs/framework` when the module is assembled into a backend. Pipelines stay
+headless and app policy still owns web authoring and administrative routes.
+
 ## Quick start
 
 Author a module (import each symbol from its real package):
