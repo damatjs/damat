@@ -11,8 +11,13 @@ test("inspection configuration requires a valid signing key and applies defaults
     "cursorSigningKey",
   );
   expect(() =>
-    resolvePipelineInspectionOptions({ cursorSigningKey: "short" }),
-  ).toThrow();
+    resolvePipelineInspectionOptions({ cursorSigningKey: "" }),
+  ).toThrow("cannot be empty");
+  expect(() =>
+    resolvePipelineInspectionOptions({
+      cursorSigningKey: new Uint8Array(),
+    }),
+  ).toThrow("cannot be empty");
   const client = {} as never;
   const resolved = resolvePipelineInspectionOptions({
     cursorSigningKey: "a-valid-inspection-signing-key-32",

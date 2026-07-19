@@ -33,11 +33,30 @@ export async function startTestPipeline(
   );
 }
 
-export async function routeToTerminal(id: string) {
-  for (let cycle = 0; cycle < 12; cycle += 1) {
-    await routePipelineCycle(100);
-    const run = await findPipelineRun(id);
-    if (run?.completedAt) return run;
+export async function routeUntil<T>(
+  read: () => Promise<T>,
+  reached: (value: T) => boolean,
+  description: string,
+  maxCycles = 32,
+) {
+  let value = await read();
+  for (let cycle = 0; cycle < maxCycles && !reached(value); cycle += 1) {
+    await routePipelineCycle(1_000);
+    value = await read();
   }
-  throw new Error(`Pipeline run ${id} did not complete`);
+  if (!reached(value))
+    throw new Error(
+      `Router did not reach ${description} in ${maxCycles} cycles`,
+    );
+  return value;
+}
+
+export async function routeToTerminal(id: string) {
+  const run = await routeUntil(
+    () => findPipelineRun(id),
+    (value) => Boolean(value?.completedAt),
+    `a terminal state for pipeline run ${id}`,
+  );
+  if (!run) throw new Error(`Pipeline run ${id} disappeared while routing`);
+  return run;
 }

@@ -44,6 +44,13 @@ transactional starts and signals, and headless authoring and inspection clients.
 - Hidden inspection preserves graph shape and operational state while removing
   value expressions, runtime content, detailed errors, logs, and activity data.
 
+## Fixed
+
+- Storage-backed router tests now wait for the target run or node state instead
+  of assuming global router batches contain only work created by the test.
+- Inspection signing-key coverage now matches the shared durability contract:
+  signing keys must be non-empty strings or byte arrays.
+
 ## Breaking
 
 - None. This is a new package.

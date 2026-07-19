@@ -4,10 +4,9 @@ import {
   createPipelineInspectionClient,
   findPipelineRun,
   listPipelineNodeExecutions,
-  routePipelineCycle,
 } from "../../src";
 import { durability, ensureStorage, pool } from "./context";
-import { startTestPipeline } from "./pipeline-fixture";
+import { routeUntil, startTestPipeline } from "./pipeline-fixture";
 
 beforeEach(async () => {
   await ensureStorage();
@@ -41,11 +40,12 @@ test("resume reconstructs waiting state when the prior state is unavailable", as
 
 test("retry rejects a node after it has scheduled downstream work", async () => {
   const run = await startTestPipeline("retry-downstream");
-  await routePipelineCycle(100);
-  await routePipelineCycle(100);
-  const first = (await listPipelineNodeExecutions(run.id)).find(
-    (node) => node.nodeId === "first",
-  )!;
+  const nodes = await routeUntil(
+    () => listPipelineNodeExecutions(run.id),
+    (value) => value.some((node) => node.nodeId === "last"),
+    `downstream work for pipeline run ${run.id}`,
+  );
+  const first = nodes.find((node) => node.nodeId === "first")!;
   await pool.query(
     `UPDATE "_damat_pipeline_node_executions" SET "status"='failed',"completed_at"=NOW() WHERE "id"=$1`,
     [first.id],

@@ -2,12 +2,11 @@ import { beforeEach, expect, test } from "bun:test";
 import {
   clearPipelineRuntime,
   definePipeline,
-  findPipelineRun,
-  routePipelineCycle,
   startPipeline,
   syncPipelineDefinitions,
 } from "../../src";
 import { ensureStorage, uniqueName } from "./context";
+import { routeToTerminal } from "./pipeline-fixture";
 
 beforeEach(async () => {
   await ensureStorage();
@@ -32,11 +31,7 @@ test("router completes delayed nodes and evaluates explicit pipeline output", as
   });
   await syncPipelineDefinitions();
   const started = await startPipeline(definition.name, {});
-  for (let index = 0; index < 8; index++) {
-    await routePipelineCycle(100);
-    if ((await findPipelineRun(started.id))?.completedAt) break;
-  }
-  const run = await findPipelineRun(started.id);
-  expect(run?.status).toBe("succeeded");
-  expect(run?.output).toEqual({ delayed: 0 });
+  const run = await routeToTerminal(started.id);
+  expect(run.status).toBe("succeeded");
+  expect(run.output).toEqual({ delayed: 0 });
 });
