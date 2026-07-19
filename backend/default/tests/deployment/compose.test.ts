@@ -7,18 +7,22 @@ const compose = readFileSync(
   join(root, "backend/default/docker-compose.yml"),
   "utf8",
 );
+const drill = readFileSync(
+  join(root, "backend/default/ops/staging-drill.sh"),
+  "utf8",
+);
 
 function service(name: string): string {
   const marker = `  ${name}:\n`;
-  const start = compose.indexOf(marker);
+  const start = compose.indexOf(`\n${marker}`);
   expect(start).toBeGreaterThan(-1);
-  const tail = compose.slice(start + marker.length);
+  const tail = compose.slice(start + marker.length + 1);
   const end = tail.search(/\n  [a-z][\w-]*:\n/);
   return end === -1 ? tail : tail.slice(0, end);
 }
 
 test("builds one runtime image from the monorepo root", () => {
-  expect(compose).toContain("image: damat-default:local");
+  expect(compose).toContain("${DAMAT_IMAGE:-damat-default:local}");
   expect(compose).toContain("context: ../..");
   expect(compose).toContain("dockerfile: backend/default/Dockerfile");
   for (const name of ["migrate", "api", "jobs", "events", "pipelines"]) {
@@ -59,13 +63,17 @@ test("only the API runtime owns an HTTP health check", () => {
 test("keeps Redis an optional wake-up accelerator", () => {
   expect(compose).toContain('REDIS_URL: "${REDIS_URL:-}"');
   expect(service("redis")).toContain("profiles: [accelerator]");
-  expect(service("redis")).toContain("/etc/redis/users.acl");
-  const acl = readFileSync(
-    join(root, "backend/default/redis/users.acl"),
+  expect(service("redis")).toContain("REDIS_PASSWORD");
+  expect(drill).toContain("up -d db redis");
+  expect(drill).toContain("wait_for_redis");
+  expect(drill).toContain("up --build -d migrate api jobs events pipelines");
+  const entrypoint = readFileSync(
+    join(root, "backend/default/redis/entrypoint.sh"),
     "utf8",
   );
-  expect(acl).toContain("&damat:*");
-  expect(acl).toContain("&damat-events");
+  expect(entrypoint).toContain("&damat:*");
+  expect(entrypoint).toContain("&damat-events");
+  expect(entrypoint).toContain("user default off");
 });
 
 test("requires a database password without publishing PostgreSQL", () => {

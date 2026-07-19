@@ -21,11 +21,13 @@ test("pins Bun and excludes generated build caches", () => {
 test("builds the default backend from the Bun monorepo root", () => {
   expect(dockerfile).toContain("WORKDIR /workspace");
   expect(dockerfile).toContain("COPY . .");
-  expect(dockerfile).toContain("RUN bun install --frozen-lockfile");
+  expect(dockerfile).toContain("bun install --frozen-lockfile");
+  expect(dockerfile).toContain("id=damat-bun");
+  expect(dockerfile).toContain("id=damat-turbo");
   expect(dockerfile).toContain(
-    "RUN bunx turbo run build --filter=@damatjs/default...",
+    "bunx turbo run build --filter=@damatjs/default...",
   );
-  expect(dockerfile).toContain("RUN bun install --production --frozen-lockfile");
+  expect(dockerfile).toContain("bun install --production --frozen-lockfile");
   expect(dockerfile).toContain("RUN rm -rf node_modules");
   expect(dockerfile).toContain("RUN rm -rf .turbo");
   expect(dockerfile).not.toContain("bun --cwd backend/default run build");

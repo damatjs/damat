@@ -3,6 +3,13 @@ import "./src/events";
 import "./src/jobs";
 import "./src/pipelines";
 import { referenceInspectionPolicy } from "./src/examples/inspectionPolicy";
+import {
+  assertProductionEnvironment,
+  installMetricsMiddleware,
+  installMetricsRoute,
+} from "./src/operations";
+
+const production = process.env.NODE_ENV === "production";
 
 export default defineConfig({
   projectConfig: {
@@ -15,8 +22,8 @@ export default defineConfig({
           ? "test"
           : "development",
     loggerConfig: {
-      level: "debug",
-      format: "pretty",
+      level: production ? "info" : "debug",
+      format: production ? "json" : "pretty",
       timestamp: true,
       prefix: "server",
       file: {
@@ -33,6 +40,11 @@ export default defineConfig({
       host: process.env.HOST || "0.0.0.0",
       corsConfig: process.env.FRONTEND_CORS,
     },
+  },
+  hooks: {
+    beforeServices: assertProductionEnvironment,
+    beforeRoutes: installMetricsMiddleware,
+    afterRoutes: installMetricsRoute,
   },
   runtime: {
     mode: "all",

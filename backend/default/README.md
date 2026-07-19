@@ -9,7 +9,7 @@ separate process roles from one build.
 ```bash
 bun install
 cd backend/default
-bun run db:migrate
+bun run db:setup
 bun run dev
 ```
 
@@ -25,10 +25,17 @@ Useful commands:
 bun run dev          # development server and enabled workers
 bun run build        # type-check and create .damat/dist
 bun run start        # run the production build
+bun run db:setup     # create the selected database and apply all migrations
 bun run db:migrate   # apply system and module migrations
 bun run db:status    # list applied and pending migrations by owner
 bun run test
 ```
+
+At the monorepo root, `bun run test` provisions disposable PostgreSQL and Redis,
+migrates a dedicated recovery database, and runs the reference backend's four
+job/event SIGKILL cases in a process isolated from its unit tests. The live and
+unavailable Redis paths are mandatory rather than silently skipped. Package
+tests also emit LCOV for the repository source-inclusion audit.
 
 ## Application map
 
@@ -49,6 +56,10 @@ bun run test
 App-owned jobs, events, and pipelines are side-effect imported by `damat.config.ts` so their
 definitions exist before the framework starts selected workers. Installed module
 providers are loaded through each module's `damat.json`.
+
+The onboarding workflow converts ORM `Date` values to ISO strings before its
+result crosses the durable pipeline boundary. Pipeline capability results are
+stored as PostgreSQL `jsonb` and must remain recursively JSON-safe.
 
 ## Durable sample
 
@@ -104,41 +115,72 @@ one enabled capability. `all` serves HTTP and runs selected workers.
 The Compose file builds one image from the monorepo root and uses it for five
 roles:
 
-1. `migrate` runs `bun run db:migrate` once.
+1. `migrate` runs `bun run db:migrate` once against the provisioned database.
 2. `api` waits for migration success and runs in `server` mode.
 3. `jobs` waits for migration success and runs the jobs worker only.
 4. `events` waits for migration success and runs the event router/worker only.
 5. `pipelines` waits for migration success and runs the pipeline router/internal worker only.
 
-Start PostgreSQL and the application:
+Create one protected, gitignored environment file for a disposable staging
+drill, then start PostgreSQL and the application:
 
 ```bash
-export POSTGRES_PASSWORD='replace-with-a-long-random-value'
-docker compose -f backend/default/docker-compose.yml up --build
+bun run --cwd backend/default ops:env
+docker compose --env-file backend/default/.env.production.local \
+  -f backend/default/docker-compose.yml up --build
 ```
 
-The password is required and PostgreSQL is not published on the host. This
-database is a local reference dependency; use a private managed database and
-secret injection for production.
+The stack uses separate bootstrap, migration, runtime, and backup database
+roles. The runtime role cannot create schemas or own tables. PostgreSQL is not
+published, API binding defaults to `127.0.0.1`, and application containers are
+non-root, read-only, capability-free, and protected from privilege escalation.
+Use private managed services and deployment-secret injection in production.
+The reference user module also requires a unique `BETTER_AUTH_SECRET` of at
+least 32 characters; Compose derives its public auth URL from `PUBLIC_BASE_URL`.
 
 Redis is an optional accelerator profile. Enable it and provide its URL:
 
 ```bash
-export POSTGRES_PASSWORD='replace-with-a-long-random-value'
-REDIS_URL=redis://redis:6379 \
-docker compose -f backend/default/docker-compose.yml --profile accelerator up --build
+docker compose --env-file backend/default/.env.production.local \
+  -f backend/default/docker-compose.yml --profile accelerator up --build
 ```
 
-For authenticated Redis, preserve the user's existing rules and add
-`&damat:*` and `&damat-events`. Verify publish/subscribe access to
-`damat:jobs:wakeup`, `damat:events:wakeup`, `damat:pipelines:wakeup`, and
-`damat-events`. Persist direct server changes with `CONFIG REWRITE`, and keep
-the ACL in the container-mounted
-configuration for recreation.
+The reference Redis disables the default account, creates an authenticated
+`damat` account, grants its key access and required `&damat:*` and
+`&damat-events` channels, and denies administrative and dangerous commands.
 
 Only the API has an HTTP health check. Worker state, capacity, attempts,
 failures, retries, recovery, and logs are available through the headless durable
 inspection clients.
+
+The restore drill intentionally uses `--no-owner --no-acl`; bootstrap the
+target environment's least-privilege roles first, then restore portable schema
+and data without replaying source-cluster role grants.
+
+## Production acceptance
+
+The repository CI performs the same production-like exercise available
+locally: environment policy, migration gating, health/routes, protected
+Prometheus metrics, least-privilege PostgreSQL and Redis, live worker
+capabilities, load thresholds, custom-format backup, restore into a disposable
+database, and runtime rollback. Run individual checks with:
+
+```bash
+bun run --cwd backend/default ops:validate
+bun run --cwd backend/default ops:smoke
+bun run --cwd backend/default ops:load
+COMPOSE_ENV_FILE=backend/default/.env.production.local \
+  bun run --cwd backend/default ops:drill
+docker compose --env-file backend/default/.env.production.local \
+  -f backend/default/docker-compose.yml --profile operations run --rm acceptance
+```
+
+Production logs use JSON at `info` level. `/metrics` requires
+`Authorization: Bearer $METRICS_TOKEN`; start with
+`ops/prometheus-alerts.yml` and route critical alerts to an owned on-call
+receiver. `ops/worker-health.ts` is an exit-code probe for job, event, and
+pipeline worker capabilities. Rollback accepts an immutable previous image
+digest and deliberately leaves forward database migrations in place.
 
 ## Recovery contract
 
