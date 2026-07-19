@@ -15,9 +15,12 @@ async function waitForRedis(name: string): Promise<void> {
 }
 
 export async function startTestRedis(): Promise<{
-  name: string;
+  name?: string;
   url: string;
 }> {
+  const externalUrl = process.env.DAMAT_TEST_REDIS_URL;
+  if (externalUrl) return { url: externalUrl };
+
   const name = `damat-test-redis-${crypto.randomUUID()}`;
   try {
     await capture([

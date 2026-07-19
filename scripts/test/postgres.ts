@@ -1,5 +1,6 @@
 import { buildDatabaseUrls, testDatabases } from "./databases";
 import { capture, docker } from "./docker";
+import { prepareExternalPostgres } from "./external-postgres";
 
 const image = process.env.DAMAT_TEST_POSTGRES_IMAGE ?? "pgvector/pgvector:pg16";
 
@@ -27,10 +28,13 @@ async function waitForPostgres(name: string): Promise<void> {
 }
 
 export async function startTestPostgres(): Promise<{
-  name: string;
+  name?: string;
   url: string;
   packageUrls: Record<string, string>;
 }> {
+  const externalUrl = process.env.DAMAT_TEST_POSTGRES_URL;
+  if (externalUrl) return prepareExternalPostgres(externalUrl);
+
   const name = `damat-test-${crypto.randomUUID()}`;
   const password = crypto.randomUUID();
   try {

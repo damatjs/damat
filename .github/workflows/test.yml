@@ -13,6 +13,24 @@ jobs:
     name: Full repository release gates
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: damat_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d damat_test"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -38,6 +56,9 @@ jobs:
 
       - name: Test with managed PostgreSQL and Redis
         run: bun run test
+        env:
+          DAMAT_TEST_POSTGRES_URL: postgresql://postgres:postgres@127.0.0.1:5432/damat_test
+          DAMAT_TEST_REDIS_URL: redis://127.0.0.1:6379
 
       - name: Test interactive CLI fixtures under a pseudo-terminal
         shell: bash

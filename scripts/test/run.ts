@@ -14,7 +14,7 @@ async function run(command: string[], env = process.env): Promise<boolean> {
   return exitCode === 0;
 }
 
-if (!(await run(["bun", "test", "scripts/tests"]))) {
+if (!(await run(["bun", "test", "--max-concurrency=1", "scripts/tests"]))) {
   process.exit(process.exitCode);
 }
 
@@ -39,6 +39,6 @@ try {
     await run(["bun", "scripts/check-coverage-sources.ts"]);
   }
 } finally {
-  if (redis) await stopTestRedis(redis.name);
-  await stopTestPostgres(managed.name);
+  if (redis?.name) await stopTestRedis(redis.name);
+  if (managed.name) await stopTestPostgres(managed.name);
 }

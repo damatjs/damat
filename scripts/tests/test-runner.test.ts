@@ -66,9 +66,26 @@ test("root tests provision crash-recovery dependencies", async () => {
   const runner = await Bun.file(new URL("scripts/test/run.ts", root)).text();
   expect(runner).toContain("startTestRedis");
   expect(runner).toContain("prepareRecoveryDatabase");
+  expect(runner).toContain('"--max-concurrency=1"');
   const turbo = await readJson("turbo.json");
   expect(turbo.tasks.test.env).toContain("DAMAT_RECOVERY_DATABASE_URL");
   expect(turbo.tasks.test.env).toContain("DAMAT_RECOVERY_REDIS_URL");
+});
+
+test("CI services bypass disposable Docker containers", async () => {
+  const postgres = await Bun.file(
+    new URL("scripts/test/postgres.ts", root),
+  ).text();
+  const redis = await Bun.file(new URL("scripts/test/redis.ts", root)).text();
+  const workflow = await Bun.file(
+    new URL(".github/workflows/test.yml", root),
+  ).text();
+  expect(postgres).toContain("DAMAT_TEST_POSTGRES_URL");
+  expect(redis).toContain("DAMAT_TEST_REDIS_URL");
+  expect(workflow).toContain("pgvector/pgvector:pg16");
+  expect(workflow).toContain("redis:7.4-alpine");
+  expect(workflow).toContain("DAMAT_TEST_POSTGRES_URL");
+  expect(workflow).toContain("DAMAT_TEST_REDIS_URL");
 });
 
 test("root tests reject unloaded production source", async () => {
