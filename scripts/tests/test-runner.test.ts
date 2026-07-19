@@ -16,6 +16,12 @@ test("Turbo never replays cached test results", async () => {
   expect(turbo.tasks.test.cache).toBeFalse();
 });
 
+test("type checks build dependency declarations without task races", async () => {
+  const turbo = await readJson("turbo.json");
+  expect(turbo.tasks["check-types"].dependsOn).toEqual(["^build"]);
+  expect(turbo.tasks.build.dependsOn).toContain("check-types");
+});
+
 const databasePackages = [
   ["packages/core/durability", "DAMAT_DURABILITY_DATABASE_URL"],
   ["packages/core/jobs", "DAMAT_JOBS_DATABASE_URL"],
