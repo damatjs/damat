@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
 import { resetSupportMocks, spawnCalls, state } from "./setup";
 import { createTestLogger } from "./logger";
 import { runTypeCheck } from "../runTypeCheck";
@@ -54,5 +54,21 @@ describe("runTypeCheck", () => {
     const logger = createTestLogger();
     expect(await runTypeCheck({ cwd: "/app", logger })).toBe(1);
     expect(logger.error).toHaveBeenCalled();
+  });
+
+  test("resolves the Bun spawn implementation when invoked", async () => {
+    state.exists = true;
+    const runtime = Bun as unknown as { spawn: typeof Bun.spawn };
+    const originalSpawn = runtime.spawn;
+    const lateSpawn = mock(() => ({ exited: Promise.resolve(0) }));
+    runtime.spawn = lateSpawn as unknown as typeof Bun.spawn;
+    try {
+      expect(
+        await runTypeCheck({ cwd: "/app", logger: createTestLogger() }),
+      ).toBe(0);
+    } finally {
+      runtime.spawn = originalSpawn;
+    }
+    expect(lateSpawn).toHaveBeenCalledTimes(1);
   });
 });

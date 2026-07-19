@@ -28,6 +28,11 @@ outside the executable composer.
 - Noninteractive callers can pass a full URL or connection fields, and can
   explicitly defer provisioning without a hanging prompt.
 
+## Fixed
+
+- Type-check subprocesses now resolve `Bun.spawn` when invoked, so package test
+  doubles remain reliable regardless of module discovery order or platform.
+
 ## Breaking
 
 - None — this is a new package.

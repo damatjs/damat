@@ -1,4 +1,3 @@
-import { spawn } from "bun";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { CliLogger } from "@damatjs/cli";
@@ -18,7 +17,7 @@ export async function runTypeCheck(opts: RunTypeCheckOptions): Promise<number> {
   }
   opts.logger.info(`Type-checking ${opts.label ?? "project"}...`);
   try {
-    const result = spawn({
+    const result = Bun.spawn({
       cmd: [process.execPath, "x", "tsc", "--noEmit"],
       cwd: opts.cwd,
       stdout: "inherit",
