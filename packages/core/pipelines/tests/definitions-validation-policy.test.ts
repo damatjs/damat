@@ -24,7 +24,10 @@ test("node identity validation rejects invalid identifiers and references", () =
 test("node policies reject unsafe timing, retries, and compensation", () => {
   invalid({ kind: "delay", delayMs: -1 }, "non-negative delayMs");
   invalid({ kind: "loop", pipeline: "p", maxIterations: 0 }, "maxIterations");
-  invalid({ kind: "foreach", pipeline: "p", items: [], maxItems: 0 }, "maxItems");
+  invalid(
+    { kind: "foreach", pipeline: "p", items: [], maxItems: 0 },
+    "maxItems",
+  );
   invalid({ kind: "join", join: "some" }, "invalid policy");
   invalid({ kind: "fork", failure: "ignore" }, "invalid failure policy");
   invalid(
@@ -33,7 +36,10 @@ test("node policies reject unsafe timing, retries, and compensation", () => {
   );
   invalid({ kind: "fork", retry: { maxAttempts: 0 } }, "maxAttempts");
   invalid({ kind: "fork", retry: { backoffMs: -1 } }, "backoffMs");
-  invalid({ kind: "fork", retry: { backoffMultiplier: 0 } }, "backoffMultiplier");
+  invalid(
+    { kind: "fork", retry: { backoffMultiplier: 0 } },
+    "backoffMultiplier",
+  );
 });
 
 test("manifest policies reject invalid graph and retention settings", () => {

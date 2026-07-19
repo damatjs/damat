@@ -15,6 +15,8 @@ transactional starts and signals, and headless authoring and inspection clients.
 - Explicit graph output mappings for deterministic branched and forked results.
 - JSON-schema validation and a registered capability catalog for safe visual
   authoring.
+- Explicit JSON-safe action/workflow output guidance, including ISO
+  serialization for ORM `Date` values before durable storage.
 - Strict closed-AST validation for node kinds, references, expressions, edge
   outcomes, triggers, and JSON values before code sync or web publication.
 - PostgreSQL migrations for definitions, versions, drafts, layouts, runs,

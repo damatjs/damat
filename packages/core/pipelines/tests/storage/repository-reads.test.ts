@@ -30,14 +30,30 @@ test("repository readers expose definitions, versions, runs, and nodes", async (
   expect(nodes).toHaveLength(1);
   expect(await findNodeExecution(nodes[0]!.id)).toEqual(nodes[0]);
   expect(await findNodeExecution(crypto.randomUUID())).toBeUndefined();
-  const runs = await listPipelineRuns({ name: definition.name, status: "running", limit: 500 });
+  const runs = await listPipelineRuns({
+    name: definition.name,
+    status: "running",
+    limit: 500,
+  });
   expect(runs.map((value) => value.id)).toContain(run.id);
   expect(await listPipelineRuns({ limit: 0 })).toBeArray();
   await durability.transaction(async (executor) => {
     const row = await findPipelineDefinitionRow(executor, definition.name);
     expect(row?.name).toBe(definition.name);
-    expect(await findPipelineDefinitionRow(executor, uniqueName("missing"))).toBeUndefined();
-    expect((await findActivePipelineVersion(executor, definition.name))?.id).toBe(run.versionId);
-    expect((await findActivePipelineVersion(executor, definition.name, run.versionId))?.id).toBe(run.versionId);
+    expect(
+      await findPipelineDefinitionRow(executor, uniqueName("missing")),
+    ).toBeUndefined();
+    expect(
+      (await findActivePipelineVersion(executor, definition.name))?.id,
+    ).toBe(run.versionId);
+    expect(
+      (
+        await findActivePipelineVersion(
+          executor,
+          definition.name,
+          run.versionId,
+        )
+      )?.id,
+    ).toBe(run.versionId);
   });
 });

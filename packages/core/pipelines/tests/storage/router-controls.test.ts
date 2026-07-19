@@ -22,7 +22,11 @@ test("fork, join, and condition nodes route a converging graph", async () => {
       { id: "left", kind: "delay", delayMs: 0 },
       { id: "right", kind: "delay", delayMs: 0 },
       { id: "join", kind: "join", join: "all" },
-      { id: "condition", kind: "condition", expression: { op: "exists", value: { $ref: "input.enabled" } } },
+      {
+        id: "condition",
+        kind: "condition",
+        expression: { op: "exists", value: { $ref: "input.enabled" } },
+      },
     ],
     edges: [
       { from: "fork", to: "left" },

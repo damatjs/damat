@@ -18,17 +18,36 @@ const graph = (delayMs = 0) => ({
   edges: [],
   nodes: [{ id: "start", kind: "delay" as const, delayMs }],
 });
-const mutation = { actor: { id: "editor", type: "user" as const }, reason: "ownership", idempotencyKey: "create" };
+const mutation = {
+  actor: { id: "editor", type: "user" as const },
+  reason: "ownership",
+  idempotencyKey: "create",
+};
 
 test("definition sync rejects unpublished child pipelines", async () => {
   definePipeline(uniqueName("parent"), {
     version: 1,
     start: "child",
-    edges: [{ from: "child", to: "each" }, { from: "each", to: "loop" }],
+    edges: [
+      { from: "child", to: "each" },
+      { from: "each", to: "loop" },
+    ],
     nodes: [
       { id: "child", kind: "child", pipeline: uniqueName("missing") },
-      { id: "each", kind: "foreach", pipeline: uniqueName("missing-each"), items: [], maxItems: 1 },
-      { id: "loop", kind: "loop", pipeline: uniqueName("missing-loop"), until: { op: "eq", left: 1, right: 1 }, maxIterations: 1 },
+      {
+        id: "each",
+        kind: "foreach",
+        pipeline: uniqueName("missing-each"),
+        items: [],
+        maxItems: 1,
+      },
+      {
+        id: "loop",
+        kind: "loop",
+        pipeline: uniqueName("missing-loop"),
+        until: { op: "eq", left: 1, right: 1 },
+        maxIterations: 1,
+      },
     ],
   });
   await expect(syncPipelineDefinitions()).rejects.toThrow("unpublished child");

@@ -197,6 +197,9 @@ scope, and revision; a visual client refetches canonical PostgreSQL detail.
 - Node scheduling and state transitions commit transactionally.
 - Job and workflow nodes inherit fenced, at-least-once job delivery; handlers
   and external side effects must be idempotent.
+- Action and workflow results must be recursively JSON-safe because node output
+  is stored as PostgreSQL `jsonb`. Convert ORM `Date` values to ISO strings
+  before returning from a registered capability.
 - Redis can wake a router or worker but cannot grant ownership or decide a run.
 - Healthy Redis leaves a 30-second PostgreSQL safety scan. Degraded mode uses
   the configured shared fallback, at most five seconds by default.

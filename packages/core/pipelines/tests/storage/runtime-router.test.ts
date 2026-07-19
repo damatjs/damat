@@ -20,12 +20,17 @@ test("router lifecycle ignores idle wakes and duplicate starts", async () => {
 
 test("coordinated router coalesces an in-flight wake and stop rejection", async () => {
   let reject!: (error: Error) => void;
-  const pending = new Promise<never>((_, fail) => { reject = fail; });
+  const pending = new Promise<never>((_, fail) => {
+    reject = fail;
+  });
   const coordinator = {
     run: () => pending,
     pollInterval: (value: number) => value,
   };
-  const router = new PipelineRouter({ coordinator: coordinator as never, pollIntervalMs: 50 });
+  const router = new PipelineRouter({
+    coordinator: coordinator as never,
+    pollIntervalMs: 50,
+  });
   router.start();
   router.wake();
   const stopped = router.stop();
@@ -38,10 +43,19 @@ test("coordinator poll intervals and explicit wakes reschedule work", async () =
   let runs = 0;
   let polls = 0;
   const coordinator = {
-    run: async () => { runs++; return { count: 0 }; },
-    pollInterval: () => { polls++; return 50; },
+    run: async () => {
+      runs++;
+      return { count: 0 };
+    },
+    pollInterval: () => {
+      polls++;
+      return 50;
+    },
   };
-  const router = new PipelineRouter({ coordinator: coordinator as never, pollIntervalMs: 50 });
+  const router = new PipelineRouter({
+    coordinator: coordinator as never,
+    pollIntervalMs: 50,
+  });
   router.start();
   await pause();
   router.wake();
@@ -49,42 +63,4 @@ test("coordinator poll intervals and explicit wakes reschedule work", async () =
   await router.stop();
   expect(runs).toBeGreaterThanOrEqual(2);
   expect(polls).toBeGreaterThanOrEqual(2);
-});
-
-test("router honors due-node delays and full batches", async () => {
-  let runs = 0;
-  let release!: (value: { count: number }) => void;
-  const blocked = new Promise<{ count: number }>((resolve) => { release = resolve; });
-  const coordinator = {
-    run: async () => ++runs === 1
-      ? { count: 2, nextDelayMs: 1 }
-      : runs === 2 ? { count: 0, nextDelayMs: 1 } : blocked,
-    pollInterval: (value: number) => value,
-  };
-  const router = new PipelineRouter({
-    coordinator: coordinator as never,
-    batchSize: 2,
-    pollIntervalMs: 50,
-  });
-  router.start();
-  await pause();
-  const stopped = router.stop();
-  release({ count: 0 });
-  await stopped;
-  expect(runs).toBeGreaterThanOrEqual(2);
-});
-
-test("router retries coordinator errors", async () => {
-  const coordinator = {
-    run: async () => { throw new Error("poll failed"); },
-    pollInterval: (value: number) => value,
-  };
-  const router = new PipelineRouter({
-    coordinator: coordinator as never,
-    retryIntervalMs: 20,
-  });
-  router.start();
-  await pause();
-  await router.stop();
-  expect(router.isRunning).toBe(false);
 });

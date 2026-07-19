@@ -23,10 +23,12 @@ test("inspection configuration requires a valid signing key and applies defaults
     redaction: {},
     client,
   });
-  expect(createPipelineInspectionClient({
-    cursorSigningKey: "a-valid-inspection-signing-key-32",
-    client,
-  })).toMatchObject({
+  expect(
+    createPipelineInspectionClient({
+      cursorSigningKey: "a-valid-inspection-signing-key-32",
+      client,
+    }),
+  ).toMatchObject({
     listRuns: expect.any(Function),
     getRun: expect.any(Function),
     getSummary: expect.any(Function),
@@ -40,7 +42,9 @@ test("inspection configuration requires a valid signing key and applies defaults
 
 test("pipeline invalidation subscriptions filter unrelated resources", () => {
   const seen: unknown[] = [];
-  const unsubscribe = subscribePipelineInvalidations((event) => seen.push(event));
+  const unsubscribe = subscribePipelineInvalidations((event) =>
+    seen.push(event),
+  );
   emitDurableInvalidation({ kind: "job", revision: "1" });
   emitDurableInvalidation({ kind: "pipeline", id: "run", revision: "2" });
   unsubscribe();

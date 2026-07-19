@@ -24,9 +24,13 @@ export async function startTestPipeline(
     ...manifest,
   });
   await syncPipelineDefinitions();
-  return startPipeline(definition.name, { secret: "input", visible: true }, {
-    metadata: { secret: "metadata", trace: "yes" },
-  });
+  return startPipeline(
+    definition.name,
+    { secret: "input", visible: true },
+    {
+      metadata: { secret: "metadata", trace: "yes" },
+    },
+  );
 }
 
 export async function routeToTerminal(id: string) {

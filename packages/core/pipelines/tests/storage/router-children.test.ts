@@ -15,7 +15,12 @@ beforeEach(async () => {
   await ensureStorage();
   clearPipelineRuntime();
 });
-const childGraph = { version: 1, start: "wait", nodes: [{ id: "wait", kind: "delay" as const, delayMs: 0 }], edges: [] };
+const childGraph = {
+  version: 1,
+  start: "wait",
+  nodes: [{ id: "wait", kind: "delay" as const, delayMs: 0 }],
+  edges: [],
+};
 
 test("child nodes pin lineage and project successful child output", async () => {
   const child = definePipeline(uniqueName("child"), childGraph);
@@ -33,12 +38,21 @@ test("child nodes pin lineage and project successful child output", async () => 
 test("child nodes honor explicit versions and project child failure", async () => {
   const child = definePipeline(uniqueName("failed-child"), childGraph);
   await syncPipelineDefinitions();
-  const version = await durability.transaction((executor) => findActivePipelineVersion(executor, child.name));
+  const version = await durability.transaction((executor) =>
+    findActivePipelineVersion(executor, child.name),
+  );
   clearPipelineRuntime();
   const parent = definePipeline(uniqueName("failed-parent"), {
     version: 1,
     start: "child",
-    nodes: [{ id: "child", kind: "child", pipeline: child.name, versionId: version!.id }],
+    nodes: [
+      {
+        id: "child",
+        kind: "child",
+        pipeline: child.name,
+        versionId: version!.id,
+      },
+    ],
     edges: [],
   });
   await syncPipelineDefinitions();

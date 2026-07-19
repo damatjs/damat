@@ -26,10 +26,21 @@ const failingPipeline = (policy: "edge" | "continue") => {
     version: 1,
     start: "task",
     nodes: [
-      { id: "task", kind: "action", name: action, ...(policy === "continue" ? { failure: "continue" as const } : {}) },
+      {
+        id: "task",
+        kind: "action",
+        name: action,
+        ...(policy === "continue" ? { failure: "continue" as const } : {}),
+      },
       { id: "after", kind: "delay", delayMs: 0 },
     ],
-    edges: [{ from: "task", to: "after", ...(policy === "edge" ? { on: "failure" as const } : {}) }],
+    edges: [
+      {
+        from: "task",
+        to: "after",
+        ...(policy === "edge" ? { on: "failure" as const } : {}),
+      },
+    ],
   });
 };
 
@@ -37,8 +48,22 @@ test("failure edges and continue policies schedule downstream work", async () =>
   const edge = failingPipeline("edge");
   const continued = failingPipeline("continue");
   await syncPipelineDefinitions();
-  expect((await routeRunWithJobs((await startPipeline(edge.name, {})).id, "dead_lettered")).status).toBe("succeeded");
-  expect((await routeRunWithJobs((await startPipeline(continued.name, {})).id, "dead_lettered")).status).toBe("succeeded");
+  expect(
+    (
+      await routeRunWithJobs(
+        (await startPipeline(edge.name, {})).id,
+        "dead_lettered",
+      )
+    ).status,
+  ).toBe("succeeded");
+  expect(
+    (
+      await routeRunWithJobs(
+        (await startPipeline(continued.name, {})).id,
+        "dead_lettered",
+      )
+    ).status,
+  ).toBe("succeeded");
 });
 
 test("invalid pipeline output fails during idle completion", async () => {
@@ -51,7 +76,10 @@ test("invalid pipeline output fails during idle completion", async () => {
     outputSchema: { type: "number" },
   });
   await syncPipelineDefinitions();
-  expect((await routeToTerminal((await startPipeline(definition.name, {})).id)).status).toBe("failed");
+  expect(
+    (await routeToTerminal((await startPipeline(definition.name, {})).id))
+      .status,
+  ).toBe("failed");
 });
 
 test("route contracts validate limits, expose counts, and run retention", async () => {

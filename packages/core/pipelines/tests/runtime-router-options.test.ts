@@ -10,13 +10,15 @@ test("router options apply defaults and retain a supplied coordinator", () => {
     retentionIntervalMs: 3_600_000,
   });
   const coordinator = { run: () => Promise.resolve({}), pollInterval: () => 1 };
-  expect(resolvePipelineRouterOptions({
-    pollIntervalMs: 2,
-    retryIntervalMs: 3,
-    batchSize: 4,
-    retentionIntervalMs: 5,
-    coordinator: coordinator as never,
-  }).coordinator).toBe(coordinator);
+  expect(
+    resolvePipelineRouterOptions({
+      pollIntervalMs: 2,
+      retryIntervalMs: 3,
+      batchSize: 4,
+      retentionIntervalMs: 5,
+      coordinator: coordinator as never,
+    }).coordinator,
+  ).toBe(coordinator);
 });
 
 test("router options reject unsafe intervals and oversized batches", () => {
@@ -25,8 +27,13 @@ test("router options reject unsafe intervals and oversized batches", () => {
     { retryIntervalMs: 1.5 },
     { batchSize: Number.MAX_SAFE_INTEGER + 1 },
     { retentionIntervalMs: -1 },
-  ]) expect(() => resolvePipelineRouterOptions(options)).toThrow("positive safe integer");
-  expect(() => resolvePipelineRouterOptions({ batchSize: 1_001 })).toThrow("cannot exceed");
+  ])
+    expect(() => resolvePipelineRouterOptions(options)).toThrow(
+      "positive safe integer",
+    );
+  expect(() => resolvePipelineRouterOptions({ batchSize: 1_001 })).toThrow(
+    "cannot exceed",
+  );
 });
 
 test("workflow observer writes structured activity through the job context", async () => {
@@ -36,6 +43,10 @@ test("workflow observer writes structured activity through the job context", asy
   } as never);
   await observer.onEvent?.({ type: "step.started", step: "reserve" } as never);
   expect(calls).toEqual([
-    ["info", "Workflow activity", { workflowEvent: { type: "step.started", step: "reserve" } }],
+    [
+      "info",
+      "Workflow activity",
+      { workflowEvent: { type: "step.started", step: "reserve" } },
+    ],
   ]);
 });

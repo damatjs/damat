@@ -31,12 +31,22 @@ test("event publication uses canonical durable events and correlation", async ()
     start: "publish",
     nodes: [
       { id: "publish", kind: "event.publish", event, input: { value: 1 } },
-      { id: "custom", kind: "event.publish", event, input: { value: 2 }, correlation: "custom" },
+      {
+        id: "custom",
+        kind: "event.publish",
+        event,
+        input: { value: 2 },
+        correlation: "custom",
+      },
     ],
     edges: [{ from: "publish", to: "custom" }],
   });
   await syncPipelineDefinitions();
-  const first = await startPipeline(definition.name, {}, { correlationId: "run-correlation" });
+  const first = await startPipeline(
+    definition.name,
+    {},
+    { correlationId: "run-correlation" },
+  );
   expect((await routeToTerminal(first.id)).status).toBe("succeeded");
 });
 
@@ -60,8 +70,17 @@ test("event and signal waits park until their durable input arrives", async () =
   const waitingEvent = await startPipeline(eventPipeline.name, {});
   const waitingSignal = await startPipeline(signalPipeline.name, {});
   await routePipelineCycle(100);
-  await publishDurableEvent(event, { accepted: true }, { correlationId: "expected" });
-  await signalPipelineRun(waitingSignal.id, "approve", { accepted: true }, control());
+  await publishDurableEvent(
+    event,
+    { accepted: true },
+    { correlationId: "expected" },
+  );
+  await signalPipelineRun(
+    waitingSignal.id,
+    "approve",
+    { accepted: true },
+    control(),
+  );
   expect((await routeToTerminal(waitingEvent.id)).status).toBe("succeeded");
   expect((await routeToTerminal(waitingSignal.id)).status).toBe("succeeded");
 });

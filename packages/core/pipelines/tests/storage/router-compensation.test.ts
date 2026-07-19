@@ -19,18 +19,29 @@ beforeEach(async () => {
   registerPipelineExecutorJob();
 });
 
-async function compensatedRun(compensation: "succeeded" | "dead_lettered", explicitInput: boolean) {
+async function compensatedRun(
+  compensation: "succeeded" | "dead_lettered",
+  explicitInput: boolean,
+) {
   const forward = uniqueName("compensated-forward");
   const failing = uniqueName("compensated-failure");
   const undo = uniqueName("compensated-undo");
-  for (const name of [forward, failing, undo]) definePipelineAction({ name, handler: (input) => input });
+  for (const name of [forward, failing, undo])
+    definePipelineAction({ name, handler: (input) => input });
   const definition = definePipeline(uniqueName("compensated"), {
     version: 1,
     start: "forward",
     nodes: [
-      { id: "forward", kind: "action", name: forward,
-        compensateWith: { kind: "action", name: undo,
-          ...(explicitInput ? { input: { $ref: "nodes.forward.output" } } : {}) } },
+      {
+        id: "forward",
+        kind: "action",
+        name: forward,
+        compensateWith: {
+          kind: "action",
+          name: undo,
+          ...(explicitInput ? { input: { $ref: "nodes.forward.output" } } : {}),
+        },
+      },
       { id: "failure", kind: "action", name: failing, failure: "compensate" },
     ],
     edges: [{ from: "forward", to: "failure" }],
@@ -41,10 +52,15 @@ async function compensatedRun(compensation: "succeeded" | "dead_lettered", expli
     await routePipelineCycle(100);
     const nodes = await listPipelineNodeExecutions(started.id);
     for (const node of nodes.filter((value) => value.status === "queued")) {
-      const status = node.phase === "compensation"
-        ? compensation
-        : node.nodeId === "failure" ? "dead_lettered" : "succeeded";
-      await settleQueuedPipelineJobs(started.id, status, { value: node.nodeId });
+      const status =
+        node.phase === "compensation"
+          ? compensation
+          : node.nodeId === "failure"
+            ? "dead_lettered"
+            : "succeeded";
+      await settleQueuedPipelineJobs(started.id, status, {
+        value: node.nodeId,
+      });
     }
     const run = await findPipelineRun(started.id);
     if (run?.completedAt) return run;

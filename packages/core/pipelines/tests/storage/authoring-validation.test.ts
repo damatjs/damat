@@ -19,7 +19,11 @@ const mutation = (key: string, reason = "validation coverage") => ({
 
 test("web validation reports malformed graphs and unpublished children", async () => {
   const client = createPipelineAuthoringClient({ client: durability });
-  const invalid = await client.validate({ start: "none", nodes: [], edges: [] });
+  const invalid = await client.validate({
+    start: "none",
+    nodes: [],
+    edges: [],
+  });
   expect(invalid.valid).toBe(false);
   expect(invalid.errors[0]).toContain("at least one node");
   const child = uniqueName("unknown-child");
@@ -31,7 +35,9 @@ test("web validation reports malformed graphs and unpublished children", async (
     ],
     edges: [{ from: "child", to: "each" }],
   });
-  expect(result.errors).toEqual([`Unknown published child pipeline "${child}"`]);
+  expect(result.errors).toEqual([
+    `Unknown published child pipeline "${child}"`,
+  ]);
 });
 
 test("code-owned names cannot be overwritten by the visual authoring client", async () => {
@@ -47,20 +53,37 @@ test("code-owned names cannot be overwritten by the visual authoring client", as
   await expect(
     client.saveDraft(
       name,
-      { start: "only", nodes: [{ id: "only", kind: "delay", delayMs: 0 }], edges: [] },
+      {
+        start: "only",
+        nodes: [{ id: "only", kind: "delay", delayMs: 0 }],
+        edges: [],
+      },
       undefined,
       mutation("save"),
     ),
   ).rejects.toThrow("code-owned");
   expect(client.listCapabilities()).toEqual({
-    actions: [], workflows: [], jobs: [], events: [],
+    actions: [],
+    workflows: [],
+    jobs: [],
+    events: [],
   });
 });
 
 test("mutations require an actor, name, reason, and idempotency key", async () => {
   const client = createPipelineAuthoringClient();
-  const manifest = { start: "x", nodes: [{ id: "x", kind: "delay" as const, delayMs: 0 }], edges: [] };
-  await expect(client.saveDraft("", manifest, undefined, mutation("key"))).rejects.toThrow("required");
-  await expect(client.saveDraft("name", manifest, undefined, mutation("key", ""))).rejects.toThrow("required");
-  await expect(client.saveDraft("name", manifest, undefined, mutation(""))).rejects.toThrow("required");
+  const manifest = {
+    start: "x",
+    nodes: [{ id: "x", kind: "delay" as const, delayMs: 0 }],
+    edges: [],
+  };
+  await expect(
+    client.saveDraft("", manifest, undefined, mutation("key")),
+  ).rejects.toThrow("required");
+  await expect(
+    client.saveDraft("name", manifest, undefined, mutation("key", "")),
+  ).rejects.toThrow("required");
+  await expect(
+    client.saveDraft("name", manifest, undefined, mutation("")),
+  ).rejects.toThrow("required");
 });

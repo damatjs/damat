@@ -23,13 +23,19 @@ test("edges require known endpoints, unique pairs, and valid policies", () => {
     ),
   ).toThrow("Duplicate pipeline edge");
   expect(() =>
-    validatePipelineManifest(graph([{ from: "a", to: "b", on: "later" }]) as never),
+    validatePipelineManifest(
+      graph([{ from: "a", to: "b", on: "later" }]) as never,
+    ),
   ).toThrow("invalid outcome");
   expect(() =>
-    validatePipelineManifest(graph([{ from: "a", to: "b", input: Infinity }]) as never),
+    validatePipelineManifest(
+      graph([{ from: "a", to: "b", input: Infinity }]) as never,
+    ),
   ).toThrow("finite");
   expect(() =>
-    validatePipelineManifest(graph([{ from: "a", to: "b", when: {} }]) as never),
+    validatePipelineManifest(
+      graph([{ from: "a", to: "b", when: {} }]) as never,
+    ),
   ).toThrow("pipeline expression");
 });
 
@@ -68,7 +74,16 @@ test("operational limits validate foreach concurrency and loop expansion", () =>
   const manifest = {
     start: "each",
     edges: [],
-    nodes: [{ id: "each", kind: "foreach", pipeline: "child", items: [], maxItems: 2, concurrency: 3 }],
+    nodes: [
+      {
+        id: "each",
+        kind: "foreach",
+        pipeline: "child",
+        items: [],
+        maxItems: 2,
+        concurrency: 3,
+      },
+    ],
   } as never;
   expect(() => validateOperationalLimits(manifest)).toThrow("concurrency");
 });

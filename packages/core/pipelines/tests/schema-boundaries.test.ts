@@ -1,11 +1,16 @@
 import { expect, test } from "bun:test";
 import { validatePipelineSchema } from "../src";
 
-const invalid = (value: unknown, schema: Record<string, unknown>, text: string) =>
-  expect(() => validatePipelineSchema(value, schema, "field")).toThrow(text);
+const invalid = (
+  value: unknown,
+  schema: Record<string, unknown>,
+  text: string,
+) => expect(() => validatePipelineSchema(value, schema, "field")).toThrow(text);
 
 test("schema validation handles absent, const, enum, and union types", () => {
-  expect(() => validatePipelineSchema(Symbol("ignored"), undefined)).not.toThrow();
+  expect(() =>
+    validatePipelineSchema(Symbol("ignored"), undefined),
+  ).not.toThrow();
   invalid("a", { const: "b" }, "const");
   invalid("a", { enum: ["b", "c"] }, "allowed values");
   invalid(1, { type: ["string", "null"] }, "string or null");
@@ -39,9 +44,5 @@ test("object schemas ignore malformed declarations but enforce real ones", () =>
     validatePipelineSchema({ ok: 1 }, { required: [4], properties: false }),
   ).not.toThrow();
   invalid({}, { required: ["id"] }, "field.id");
-  invalid(
-    { id: 1 },
-    { properties: { id: { type: "string" } } },
-    "field.id",
-  );
+  invalid({ id: 1 }, { properties: { id: { type: "string" } } }, "field.id");
 });

@@ -33,6 +33,8 @@ public contract.
    resolve registered jobs, durable events, workflows, and actions at startup.
 8. Composite PostgreSQL constraints keep active/run versions, parent executions,
    transitions, consumed signals, and node activity inside their owning graph.
+9. Action and workflow capability results are JSON values. Application adapters
+   must serialize domain objects such as `Date` before the internal job returns.
 
 ## Router transaction
 

@@ -19,10 +19,9 @@ test("capability registry owns actions, workflows, jobs, and events", () => {
     name: "action",
     handler: (input) => input,
   });
-  const workflow = registerPipelineWorkflow(
-    { name: "workflow" } as never,
-    { description: "durable workflow" },
-  );
+  const workflow = registerPipelineWorkflow({ name: "workflow" } as never, {
+    description: "durable workflow",
+  });
   const job = registerPipelineJob({ name: "job" });
   const event = registerPipelineEvent({ name: "event", hidden: true });
   expect(getPipelineAction("action")).toBe(action);

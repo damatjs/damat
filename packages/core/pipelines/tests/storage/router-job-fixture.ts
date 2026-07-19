@@ -11,7 +11,9 @@ export async function settleQueuedPipelineJobs(
   result: unknown = 3,
 ) {
   const nodes = await listPipelineNodeExecutions(runId);
-  for (const node of nodes.filter((value) => value.jobRunId && value.status === "queued")) {
+  for (const node of nodes.filter(
+    (value) => value.jobRunId && value.status === "queued",
+  )) {
     await pool.query(
       `UPDATE "_damat_job_runs" SET "status"=$2,"result"=$3::jsonb,
        "last_error"=NULL,"completed_at"=NOW(),"updated_at"=NOW() WHERE "id"=$1`,

@@ -1,8 +1,5 @@
 import { expect, test } from "bun:test";
-import {
-  validatePipelineExpression,
-  validatePipelineValue,
-} from "../src";
+import { validatePipelineExpression, validatePipelineValue } from "../src";
 
 test("pipeline values accept JSON data and safe closed references", () => {
   for (const value of [null, "text", true, 2, [1, "two"], { nested: false }])
@@ -64,7 +61,7 @@ test("expressions reject malformed and incomplete operands", () => {
   expect(() =>
     validatePipelineExpression({ op: "and", values: [] }, "x"),
   ).toThrow("at least one");
-  expect(() =>
-    validatePipelineExpression({ op: "eq", left: 1 }, "x"),
-  ).toThrow("invalid expression fields");
+  expect(() => validatePipelineExpression({ op: "eq", left: 1 }, "x")).toThrow(
+    "invalid expression fields",
+  );
 });

@@ -23,7 +23,12 @@ test("interval, cron, and event triggers create pinned auditable runs", async ()
     nodes: [{ id: "wait", kind: "delay", delayMs: 0 }],
     edges: [],
     triggers: [
-      { id: "interval", kind: "interval", everyMs: 60_000, input: { $ref: "trigger.scheduledFor" } },
+      {
+        id: "interval",
+        kind: "interval",
+        everyMs: 60_000,
+        input: { $ref: "trigger.scheduledFor" },
+      },
       { id: "cron", kind: "cron", expression: "* * * * *" },
       { id: "event", kind: "event", event },
       { id: "disabled", kind: "event", event, enabled: false },
@@ -45,5 +50,7 @@ test("interval, cron, and event triggers create pinned auditable runs", async ()
     `SELECT "trigger_id" FROM "_damat_pipeline_trigger_receipts" WHERE "version_id"=$1`,
     [runs[0]!.versionId],
   );
-  expect(receipts.rows.map((row) => row.trigger_id)).toEqual(expect.arrayContaining(["interval", "cron", "event"]));
+  expect(receipts.rows.map((row) => row.trigger_id)).toEqual(
+    expect.arrayContaining(["interval", "cron", "event"]),
+  );
 });
