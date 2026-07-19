@@ -7,7 +7,13 @@ export interface LineViolation {
 }
 
 const codeExtensions = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
-const ignoredDirectories = new Set(["node_modules", "dist", ".git", ".turbo"]);
+const ignoredDirectories = new Set([
+  "node_modules",
+  "dist",
+  ".git",
+  ".next",
+  ".turbo",
+]);
 
 export function findLineViolations(paths: readonly string[]): LineViolation[] {
   const files = paths.flatMap((path) => collectCodeFiles(resolve(path)));

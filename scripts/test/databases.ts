@@ -6,6 +6,7 @@ export const testDatabases = {
   DAMAT_LINK_DATABASE_URL: "damat_link",
   DAMAT_SERVICES_DATABASE_URL: "damat_services",
   DAMAT_ORM_PG_DATABASE_URL: "damat_orm_pg",
+  DAMAT_RECOVERY_DATABASE_URL: "damat_recovery",
 } as const;
 
 export type TestDatabaseVariable = keyof typeof testDatabases;

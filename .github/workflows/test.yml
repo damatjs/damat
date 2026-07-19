@@ -2,45 +2,52 @@ name: Test
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
 
-jobs:
-  # Builds and tests everything that is actually committed: packages/** (the
-  # framework) and backend/** (the default app). The modules/** workspaces are
-  # gitignored (.gitignore: /modules), so they are NOT in a clean checkout and
-  # cannot be tested here.
-  #
-  # The root test runner starts isolated PostgreSQL databases, then removes
-  # their container after the package matrix. Redis live-server tests still
-  # self-skip when REDIS_URL is unset.
-  test:
-    name: Build & test (packages)
-    runs-on: ubuntu-latest
+permissions:
+  contents: read
 
+jobs:
+  test:
+    name: Full repository release gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v5
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.9
+          bun-version: 1.3.14
 
-      # The committed lockfile matches a clean checkout: the gitignored
-      # `modules/*` workspaces are dev-only and are NOT recorded in bun.lock,
-      # so a frozen install is reproducible here. If this step ever fails,
-      # a lockfile generated with a local modules/* workspace present was
-      # committed — regenerate bun.lock without it.
-      - name: Install dependencies
+      - name: Install frozen dependencies
         run: bun install --frozen-lockfile
 
-      - name: Lint packages
-        run: bun run lint --filter='./packages/**'
+      # The legacy whole-repository 100-line cleanup is an explicit temporary
+      # waiver. Changed files are still enforced by review and local checks.
+      - name: Lint
+        run: bun run lint --force
 
-      - name: Build packages
-        run: bun run build --filter='./packages/**'
+      - name: Type-check
+        run: bun run check-types --force
 
-      - name: Test packages + default app
-        run: bun run test --filter='./packages/**'
+      - name: Build
+        run: bun run build --force
+
+      - name: Test with managed PostgreSQL and Redis
+        run: bun run test
+
+      - name: Test interactive CLI fixtures under a pseudo-terminal
+        shell: bash
+        run: |
+          script -q -e -c "bun run --cwd packages/cli/support test" /dev/null
+          script -q -e -c "bun run --cwd packages/cli/app test" /dev/null
+          script -q -e -c "bun run --cwd packages/cli/module test" /dev/null
+
+      - name: Dependency, secret, and deployment security gates
+        run: bun run check:security
+
+      - name: Confirm reproducible checkout
+        run: bun run check:release-clean

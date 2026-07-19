@@ -55,7 +55,7 @@ test("recurses, ignores non-code, and checks generated code", () => {
 
 test("ignores dependency and build directories", () => {
   const root = fixture();
-  for (const name of ["node_modules", "dist", ".git", ".turbo"]) {
+  for (const name of ["node_modules", "dist", ".git", ".next", ".turbo"]) {
     const directory = join(root, name);
     mkdirSync(directory);
     writeFileSync(join(directory, "large.js"), lines(120));

@@ -45,3 +45,18 @@ test("Turbo forwards every isolated database URL", async () => {
     expect(turbo.tasks.test.env).toContain(variable);
   }
 });
+
+test("root tests provision crash-recovery dependencies", async () => {
+  const runner = await Bun.file(new URL("scripts/test/run.ts", root)).text();
+  expect(runner).toContain("startTestRedis");
+  expect(runner).toContain("prepareRecoveryDatabase");
+  const turbo = await readJson("turbo.json");
+  expect(turbo.tasks.test.env).toContain("DAMAT_RECOVERY_DATABASE_URL");
+  expect(turbo.tasks.test.env).toContain("DAMAT_RECOVERY_REDIS_URL");
+});
+
+test("root tests reject unloaded production source", async () => {
+  const runner = await Bun.file(new URL("scripts/test/run.ts", root)).text();
+  expect(runner).toContain("scripts/check-coverage-sources.ts");
+  expect(runner).toContain("turboArgs.length === 0");
+});

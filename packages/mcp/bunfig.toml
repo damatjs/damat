@@ -1,6 +1,7 @@
 [test]
 coverage = true
 coverageThreshold = 1.0
+coverageReporter = ["text", "lcov"]
 coveragePathIgnorePatterns = [
   "**/dist/**",
   "**/node_modules/**",
@@ -8,6 +9,9 @@ coveragePathIgnorePatterns = [
   "**/tests/**",
   "**/__tests__/**",
   "**/__fixtures__/**",
+  # Covered by a subprocess smoke test because importing the executable would
+  # bind process stdin and terminate the test process when input closes.
+  "**/bin/**",
   # reason: interactive stdin loop / process.exit — entrypoint that reads stdin
   # line-by-line and exits the process on "end"; not unit-coverable.
   "**/src/server/run.ts",

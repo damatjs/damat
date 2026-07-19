@@ -1,7 +1,10 @@
 [test]
 coverage = true
 coverageThreshold = 1.0
-coveragePathIgnorePatterns = ["**/dist/**", "**/node_modules/**", "**/*.test.ts", "**/tests/**", "**/__tests__/**", "**/__fixtures__/**", "**/.damat-config-*"]
+coverageReporter = ["text", "lcov"]
+coveragePathIgnorePatterns = ["**/dist/**", "**/node_modules/**", "**/*.test.ts", "**/tests/**", "**/__tests__/**", "**/__fixtures__/**", "**/.damat-config-*", "src/bin.ts"]
+# `src/bin.ts` is executed and asserted in a subprocess because importing it
+# would run the CLI against the package test process.
 # reason: `.damat-config-*` are transient cache-busting sidecar copies of a
 # user's damat.config.ts that loadConfigModule writes to os.tmpdir(), imports,
 # then deletes. They are test inputs (sometimes intentionally throwing configs),
