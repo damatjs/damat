@@ -52,10 +52,6 @@ export async function writeControl(
         JSON.stringify(options.actor),
       ],
     );
-    await recordControlSignal(
-      executor,
-      options.kind,
-      options.scope,
-    );
+    await recordControlSignal(executor, options.kind, options.scope);
   });
 }

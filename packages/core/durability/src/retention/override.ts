@@ -26,13 +26,27 @@ export async function setRetentionOverride(
        DO UPDATE SET "retention_ms"=EXCLUDED."retention_ms",
          "actor"=EXCLUDED."actor","reason"=EXCLUDED."reason","updated_at"=NOW()
        RETURNING *`,
-      [input.workKind, input.scope, retention, JSON.stringify(input.actor), input.reason],
+      [
+        input.workKind,
+        input.scope,
+        retention,
+        JSON.stringify(input.actor),
+        input.reason,
+      ],
     );
     await executor.query(
       `INSERT INTO "_damat_maintenance_activity"
         ("operation","work_kind","scope","status","actor","details","completed_at")
        VALUES ('retention_override',$1,$2,'completed',$3::jsonb,$4::jsonb,NOW())`,
-      [input.workKind, input.scope, JSON.stringify(input.actor), JSON.stringify({ reason: input.reason, retentionMs: input.retentionMs })],
+      [
+        input.workKind,
+        input.scope,
+        JSON.stringify(input.actor),
+        JSON.stringify({
+          reason: input.reason,
+          retentionMs: input.retentionMs,
+        }),
+      ],
     );
     await applyRetentionOverride(executor, input);
     return mapOverride(result.rows[0]!);
@@ -55,7 +69,8 @@ function mapOverride(row: OverrideRow): RetentionOverride {
   return {
     workKind: row.work_kind,
     scope: row.scope,
-    retentionMs: row.retention_ms === null ? "forever" : Number(row.retention_ms),
+    retentionMs:
+      row.retention_ms === null ? "forever" : Number(row.retention_ms),
     actor: row.actor,
     reason: row.reason,
     updatedAt: row.updated_at,
@@ -64,8 +79,14 @@ function mapOverride(row: OverrideRow): RetentionOverride {
 
 function validateInput(input: SetRetentionOverrideInput): void {
   validateWorkActor(input.actor);
-  if (!input.scope.trim() || !input.reason.trim()) throw new Error("Retention scope and reason are required");
-  if (input.retentionMs !== "forever" && (!Number.isSafeInteger(input.retentionMs) || input.retentionMs < 0)) {
-    throw new Error("retentionMs must be a non-negative safe integer or forever");
+  if (!input.scope.trim() || !input.reason.trim())
+    throw new Error("Retention scope and reason are required");
+  if (
+    input.retentionMs !== "forever" &&
+    (!Number.isSafeInteger(input.retentionMs) || input.retentionMs < 0)
+  ) {
+    throw new Error(
+      "retentionMs must be a non-negative safe integer or forever",
+    );
   }
 }

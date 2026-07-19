@@ -53,8 +53,7 @@ export function hasRedis(): boolean {
 }
 
 export async function disconnectRedis(): Promise<void> {
-  if (globalClient) {
-    await globalClient.disconnect();
-    globalClient = null;
-  }
+  const client = globalClient;
+  globalClient = null;
+  if (client) await client.disconnect();
 }

@@ -15,12 +15,18 @@ test("coordinator switches between healthy and degraded polling", () => {
 });
 
 test("coordinator rejects invalid polling intervals", () => {
-  expect(() => new ProcessDurabilityCoordinator({
-    healthySafetyPollIntervalMs: 0,
-  })).toThrow("positive safe integer");
-  expect(() => new ProcessDurabilityCoordinator({
-    degradedMaxPollIntervalMs: Number.NaN,
-  })).toThrow("positive safe integer");
+  expect(
+    () =>
+      new ProcessDurabilityCoordinator({
+        healthySafetyPollIntervalMs: 0,
+      }),
+  ).toThrow("positive safe integer");
+  expect(
+    () =>
+      new ProcessDurabilityCoordinator({
+        degradedMaxPollIntervalMs: Number.NaN,
+      }),
+  ).toThrow("positive safe integer");
 });
 
 test("coordinator serializes unrelated background operations", async () => {
@@ -53,8 +59,10 @@ test("coordinator coalesces duplicate background keys", async () => {
 
 test("coordinator continues after a background operation rejects", async () => {
   const coordinator = new ProcessDurabilityCoordinator();
-  await expect(coordinator.run("failed", async () => {
-    throw new Error("failed operation");
-  })).rejects.toThrow("failed operation");
+  await expect(
+    coordinator.run("failed", async () => {
+      throw new Error("failed operation");
+    }),
+  ).rejects.toThrow("failed operation");
   expect(await coordinator.run("next", async () => 2)).toBe(2);
 });

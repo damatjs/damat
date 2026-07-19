@@ -12,6 +12,11 @@ export async function startEventWakeupSubscriber(
   wake: (message: EventWakeup) => void,
 ): Promise<StopEventWakeupSubscriber> {
   let connection: EventWakeupConnection | undefined;
+  const onError = (error: Error) => {
+    getLogger().warn("Durable event wake-up Redis error", {
+      error: error.message,
+    });
+  };
   try {
     connection = redis.duplicate();
     const active = connection;
@@ -21,17 +26,20 @@ export async function startEventWakeupSubscriber(
       if (parsed) wake(parsed);
     };
     active.on("message", listener);
+    active.on("error", onError);
     await active.subscribe(EVENT_WAKEUP_CHANNEL);
     return async () => {
       active.off("message", listener);
       await active.unsubscribe(EVENT_WAKEUP_CHANNEL).catch(() => {});
       await active.quit().catch(() => {});
+      active.off("error", onError);
     };
   } catch (error) {
     getLogger().warn("Durable event wake-up subscription failed", {
       error: error instanceof Error ? error.message : String(error),
     });
     await connection?.quit().catch(() => {});
+    connection?.off("error", onError);
     return async () => {};
   }
 }

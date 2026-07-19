@@ -43,6 +43,8 @@ test("claimed acceleration signals are revision ordered", async () => {
   const claimed = await claimAccelerationSignals(4, 1_000, []);
 
   expect(claimed.map(({ revision }) => revision)).toEqual(["1", "1", "2", "3"]);
-  expect(claimed.every(({ resourceId, scope }) => !resourceId && !scope)).toBeTrue();
+  expect(
+    claimed.every(({ resourceId, scope }) => !resourceId && !scope),
+  ).toBeTrue();
   expect(params[0]).toEqual([4, expect.any(String), 1_000, null]);
 });

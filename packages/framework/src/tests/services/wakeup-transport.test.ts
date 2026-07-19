@@ -83,5 +83,8 @@ test("one subscriber multiplexes job, event, and pipeline wakeups", async () => 
     "pipeline-router",
   ]);
   expect(coordinator.mode).toBe("healthy");
+  redis.emitError(new Error("connection lost"));
+  await Bun.sleep(0);
+  expect(coordinator.mode).toBe("degraded");
   await transport.stop();
 });

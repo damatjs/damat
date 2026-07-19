@@ -42,6 +42,8 @@ Steps:
    - Else, `healthChecks.database` returns `{ status: "not configured" }`.
 3. **Redis** — if `projectConfig.redisUrl`:
    - `initRedis({ url: services?.redis?.url ?? redisUrl, logger })` then `connectRedis()`.
+   - If the startup probe fails, clear the client, report Redis unhealthy, log
+     degraded operation, and continue with PostgreSQL-authoritative fallback.
    - Register `disconnectRedis()` in the `redis` shutdown phase.
    - Set `healthChecks.redis` to a real ping (`getRedis().ping()`); else `{ status: "not configured" }`.
 4. **Modules + links + providers** — initialize app/link modules, load their

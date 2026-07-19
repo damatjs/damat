@@ -1,9 +1,13 @@
 import type { JobWakeupConnection, JobWakeupRedis } from "../../src/wakeup";
 
+type WakeupListener =
+  ((channel: string, message: string) => void) | ((error: Error) => void);
+
 export class FakeWakeupConnection implements JobWakeupConnection {
   subscribed?: string;
   stopped = false;
   private listener?: (channel: string, message: string) => void;
+  private errorListener?: (error: Error) => void;
 
   async subscribe(channel: string): Promise<number> {
     this.subscribed = channel;
@@ -20,18 +24,28 @@ export class FakeWakeupConnection implements JobWakeupConnection {
     return "OK";
   }
 
-  on(_event: "message", listener: (channel: string, message: string) => void) {
-    this.listener = listener;
+  on(event: "message" | "error", listener: WakeupListener) {
+    if (event === "message") {
+      this.listener = listener as (channel: string, message: string) => void;
+    } else this.errorListener = listener as (error: Error) => void;
     return this;
   }
 
-  off(_event: "message", listener: (channel: string, message: string) => void) {
-    if (this.listener === listener) this.listener = undefined;
+  off(event: "message" | "error", listener: WakeupListener) {
+    if (event === "message" && this.listener === listener)
+      this.listener = undefined;
+    if (event === "error" && this.errorListener === listener) {
+      this.errorListener = undefined;
+    }
     return this;
   }
 
   emit(channel: string, message: string): void {
     this.listener?.(channel, message);
+  }
+
+  emitError(error: Error): void {
+    this.errorListener?.(error);
   }
 }
 

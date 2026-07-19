@@ -14,6 +14,7 @@ export class WorkerWakeupSubscriber {
   constructor(
     private readonly redis: Redis,
     private readonly targets: WakeupTargets,
+    private readonly handleError: (error: unknown) => Promise<void>,
   ) {
     this.channels = [
       ...(targets.job || targets.pipeline ? [JOB_WAKEUP_CHANNEL] : []),
@@ -28,6 +29,7 @@ export class WorkerWakeupSubscriber {
     const subscriber = this.redis.duplicate();
     this.subscriber = subscriber;
     subscriber.on("message", this.onMessage);
+    subscriber.on("error", this.onError);
     try {
       if (this.channels.length) await subscriber.subscribe(...this.channels);
     } catch (cause) {
@@ -48,6 +50,7 @@ export class WorkerWakeupSubscriber {
     try {
       await subscriber.quit();
     } catch {}
+    subscriber.off("error", this.onError);
   }
 
   private readonly onMessage = (channel: string, message: string): void => {
@@ -68,5 +71,11 @@ export class WorkerWakeupSubscriber {
         ? parsePipelineWakeup(message)
         : undefined;
     if (pipeline) this.targets.pipeline?.router.wake();
+  };
+
+  private readonly onError = (error: Error): void => {
+    void this.handleError(
+      new Error("Durability wake-up subscriber failed", { cause: error }),
+    );
   };
 }

@@ -4,10 +4,12 @@ import { EventWorkerWakeupLifecycle } from "../../src/durable/worker/wakeup-life
 import { resolveEventWorkerOptions } from "../../src/durable/worker/runtime-options";
 
 test("worker wakeups select exact deliveries and clean up", async () => {
-  let listener: Parameters<EventWakeupConnection["on"]>[1] = () => {};
+  let listener = (_channel: string, _message: string) => {};
   let closed = 0;
   const connection = createConnection({
-    on: (_event, value) => void (listener = value),
+    on: (event, value) => {
+      if (event === "message") listener = value as typeof listener;
+    },
     unsubscribe: async () => void closed++,
     quit: async () => void closed++,
   });

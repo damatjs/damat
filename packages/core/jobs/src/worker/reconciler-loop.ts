@@ -40,7 +40,10 @@ export class JobReconcilerLoop {
           includeRetention,
         });
       this.inFlight = this.options.coordinator
-        ? this.options.coordinator.run(`jobs:reconcile:${this.workerId}`, reconcile)
+        ? this.options.coordinator.run(
+            `jobs:reconcile:${this.workerId}`,
+            reconcile,
+          )
         : reconcile();
       await this.inFlight;
       if (includeRetention) this.lastRetentionAt = now;

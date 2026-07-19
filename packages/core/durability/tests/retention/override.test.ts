@@ -22,20 +22,24 @@ afterAll(async () => {
 
 test("retention overrides persist finite and forever values", async () => {
   const scope = testId("retention");
-  expect(await setRetentionOverride({
-    workKind: "job",
-    scope,
-    retentionMs: 7 * 86_400_000,
-    actor,
-    reason: "shorten history",
-  })).toMatchObject({ retentionMs: 7 * 86_400_000 });
-  expect(await setRetentionOverride({
-    workKind: "job",
-    scope,
-    retentionMs: "forever",
-    actor,
-    reason: "legal hold",
-  })).toMatchObject({ retentionMs: "forever" });
+  expect(
+    await setRetentionOverride({
+      workKind: "job",
+      scope,
+      retentionMs: 7 * 86_400_000,
+      actor,
+      reason: "shorten history",
+    }),
+  ).toMatchObject({ retentionMs: 7 * 86_400_000 });
+  expect(
+    await setRetentionOverride({
+      workKind: "job",
+      scope,
+      retentionMs: "forever",
+      actor,
+      reason: "legal hold",
+    }),
+  ).toMatchObject({ retentionMs: "forever" });
   expect(await getRetentionOverride("job", scope)).toMatchObject({
     retentionMs: "forever",
     reason: "legal hold",
@@ -62,13 +66,31 @@ test("event overrides update remaining outbox and delivery rows", async () => {
 });
 
 test("retention overrides reject invalid scope, reason, and duration", async () => {
-  await expect(setRetentionOverride({
-    workKind: "job", scope: " ", retentionMs: 1, actor, reason: "audit",
-  })).rejects.toThrow("scope and reason");
-  await expect(setRetentionOverride({
-    workKind: "job", scope: "queue", retentionMs: 1, actor, reason: " ",
-  })).rejects.toThrow("scope and reason");
-  await expect(setRetentionOverride({
-    workKind: "job", scope: "queue", retentionMs: -1, actor, reason: "audit",
-  })).rejects.toThrow("non-negative safe integer");
+  await expect(
+    setRetentionOverride({
+      workKind: "job",
+      scope: " ",
+      retentionMs: 1,
+      actor,
+      reason: "audit",
+    }),
+  ).rejects.toThrow("scope and reason");
+  await expect(
+    setRetentionOverride({
+      workKind: "job",
+      scope: "queue",
+      retentionMs: 1,
+      actor,
+      reason: " ",
+    }),
+  ).rejects.toThrow("scope and reason");
+  await expect(
+    setRetentionOverride({
+      workKind: "job",
+      scope: "queue",
+      retentionMs: -1,
+      actor,
+      reason: "audit",
+    }),
+  ).rejects.toThrow("non-negative safe integer");
 });

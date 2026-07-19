@@ -49,7 +49,8 @@ export function mapDurableEvent(row: DurableEventRow): DurableEventRecord {
     maxAttempts: row.max_attempts,
     backoffMs: Number(row.backoff_ms),
     backoffMultiplier: row.backoff_multiplier,
-    retentionMs: row.retention_ms === null ? "forever" : Number(row.retention_ms),
+    retentionMs:
+      row.retention_ms === null ? "forever" : Number(row.retention_ms),
     ...(row.idempotency_key ? { idempotencyKey: row.idempotency_key } : {}),
     ...(row.correlation_id ? { correlationId: row.correlation_id } : {}),
     ...(row.causation_id ? { causationId: row.causation_id } : {}),

@@ -87,6 +87,7 @@ describe("optional job wake-ups", () => {
     );
     expect(redis.duplicateCalls).toBe(1);
     expect(queues).toEqual(["mail"]);
+    expect(() => connection.emitError(new Error("redis down"))).not.toThrow();
     await stop();
     expect(connection.stopped).toBe(true);
   });

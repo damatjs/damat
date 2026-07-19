@@ -16,9 +16,13 @@ export function durabilityRuntimeMock(
     ProcessDurabilityCoordinator: class {},
     createDurabilityClient: ({ pool }: { pool: unknown }) => ({ pool }),
     clearDurabilityClient: () => {},
-    setDurabilityClient: (client: unknown) => state.durabilityClients.push(client),
+    setDurabilityClient: (client: unknown) =>
+      state.durabilityClients.push(client),
     getDurabilityClient: () => ({ query }),
-    assertSystemMigrationsApplied: async (_client: unknown, migrations: unknown) => {
+    assertSystemMigrationsApplied: async (
+      _client: unknown,
+      migrations: unknown,
+    ) => {
       state.readiness.push(migrations);
       if (state.readinessError) throw state.readinessError;
     },

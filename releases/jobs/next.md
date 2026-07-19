@@ -29,7 +29,8 @@ optional post-commit wake-up path rather than the queue of record.
   reconciliation owned by each job worker.
 - Actor-attributed retention request outcomes in maintenance activity.
 - Optional Redis wake-up publication and a dedicated duplicated subscriber,
-  with PostgreSQL polling retained as the fallback.
+  with PostgreSQL polling retained as the fallback and subscriber errors
+  consumed through structured warnings.
 - Signed cursor job lists, repeatable-read detail timelines, bounded operational
   summaries, and actor-audited headless administration.
 - Inspection indexes for cursor, status, queue, lineage, lease, terminal,

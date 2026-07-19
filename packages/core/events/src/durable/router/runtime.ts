@@ -83,7 +83,8 @@ export class DurableEventRouter {
         delay === this.options.pollIntervalMs && this.options.coordinator
           ? this.options.coordinator.pollInterval(delay)
           : delay;
-      if (this.running) this.timer = setTimeout(() => void this.run(), resolved);
+      if (this.running)
+        this.timer = setTimeout(() => void this.run(), resolved);
     }
   }
 }

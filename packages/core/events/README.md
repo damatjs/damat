@@ -124,7 +124,8 @@ from PostgreSQL; stale workers cannot heartbeat or finish a reclaimed delivery.
 Redis wake-ups are optional latency hints. Router and worker polling always
 remain backed by PostgreSQL. Framework processes safety-scan every 30 seconds
 while Redis is healthy and fall back to discovery within five seconds when it
-is unavailable or unauthorized.
+is unavailable or unauthorized. Subscriber connection errors are consumed and
+reported through the structured logger during that fallback.
 
 Publishing does not run handlers inside the caller's transaction. An owned
 publish wakes the router after commit; a caller-supplied executor writes an

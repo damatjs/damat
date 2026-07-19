@@ -11,12 +11,14 @@ import {
 import { pool, resetWorkerStorage, uniqueEvent } from "./context";
 import { waitUntil } from "./wait";
 
-let listener: Parameters<EventWakeupConnection["on"]>[1] = () => {};
+let listener = (_channel: string, _message: string) => {};
 const connection: EventWakeupConnection = {
   subscribe: async () => {},
   unsubscribe: async () => {},
   quit: async () => {},
-  on: (_event, value) => void (listener = value),
+  on: (event, value) => {
+    if (event === "message") listener = value as typeof listener;
+  },
   off: () => {},
 };
 

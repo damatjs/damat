@@ -12,12 +12,14 @@ export interface JobWakeupConnection {
   unsubscribe(channel: string): Promise<unknown>;
   quit(): Promise<unknown>;
   on(
-    event: "message",
-    listener: (channel: string, message: string) => void,
+    event: "message" | "error",
+    listener:
+      ((channel: string, message: string) => void) | ((error: Error) => void),
   ): unknown;
   off(
-    event: "message",
-    listener: (channel: string, message: string) => void,
+    event: "message" | "error",
+    listener:
+      ((channel: string, message: string) => void) | ((error: Error) => void),
   ): unknown;
 }
 

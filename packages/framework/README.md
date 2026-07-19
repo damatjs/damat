@@ -143,7 +143,9 @@ short-lived worker liveness, wake-ups, and inspection invalidations. Healthy
 Redis removes one-second idle polling and leaves a 30-second PostgreSQL safety
 scan; degraded mode discovers work within five seconds. The shared coordinator
 serializes idle/background maintenance without blocking HTTP requests or active
-handlers. Use `getAccelerationHealth`, `rebuildAccelerationProjection`, and
+handlers. Subscriber error events enter the same structured degradation path
+as failed connection attempts. Use `getAccelerationHealth`,
+`rebuildAccelerationProjection`, and
 `subscribeDurableInvalidations` to integrate operational tooling.
 
 ### Opt-in config

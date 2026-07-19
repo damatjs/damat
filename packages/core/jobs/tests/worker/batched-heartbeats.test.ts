@@ -42,7 +42,9 @@ test("active job leases share one heartbeat transaction", async () => {
     }),
   );
   let release!: () => void;
-  const executionDone = new Promise<void>((resolve) => void (release = resolve));
+  const executionDone = new Promise<void>(
+    (resolve) => void (release = resolve),
+  );
   let observed!: () => void;
   const heartbeat = new Promise<void>((resolve) => void (observed = resolve));
   const active = new ActiveExecutions(() => {});

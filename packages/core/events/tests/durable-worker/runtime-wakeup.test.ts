@@ -14,7 +14,9 @@ const connection: EventWakeupConnection = {
   subscribe: async () => {},
   unsubscribe: async () => {},
   quit: async () => {},
-  on: (_event, value) => void (listener = value),
+  on: (event, value) => {
+    if (event === "message") listener = value as typeof listener;
+  },
   off: () => {},
 };
 const redis = { duplicate: () => connection };

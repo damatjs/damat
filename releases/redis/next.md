@@ -14,6 +14,10 @@ uses `damat-events`.
   `&damat-events` in addition to their existing command/key rules.
 - Durable Redis authorization failure activates PostgreSQL fallback and bounded
   recovery instead of repeated publish/subscription warnings.
+- Singleton disconnect clears process state before awaiting the network close,
+  so a failed close cannot leave a stale client registered.
+- The client disables ioredis's `INFO` readiness probe by default and relies on
+  explicit `PING`, avoiding unnecessary server-inspection ACL permission.
 
 ## Breaking
 

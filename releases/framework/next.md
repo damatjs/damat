@@ -51,13 +51,17 @@ providers load before workers start.
 ## Changed / improved
 
 - One Redis subscriber multiplexes job, event, and pipeline wake-ups. The ready
-  projection removes terminal pipeline runs and upserts actionable ones.
+  projection removes terminal pipeline runs and upserts actionable ones. Redis
+  error events enter the structured degraded-mode path instead of surfacing as
+  unhandled emitter warnings.
 - Migration readiness includes the pipelines catalog when the service is enabled.
 - `services.jobs` configures the job capability with `queue` and `concurrency`;
   runtime config decides whether the current process executes it.
 - Jobs and durable events require `projectConfig.databaseUrl` and applied system
   migrations. Startup fails visibly with `damat-orm migrate:up` guidance.
 - Redis wakeups improve responsiveness without replacing PostgreSQL polling.
+- An unavailable Redis startup probe no longer aborts the process; the client is
+  cleared, health reports the outage, and durable work uses PostgreSQL fallback.
 - `all` mode shares one PostgreSQL pool and one background coordinator across
   HTTP, jobs, event routing/delivery, inspection, relay, and maintenance.
 - Redis `NOPERM` disables durable publishers/subscriber once, emits one

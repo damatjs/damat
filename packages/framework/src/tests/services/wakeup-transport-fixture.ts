@@ -1,11 +1,13 @@
 import type { Redis } from "@damatjs/redis";
 
 type MessageListener = (channel: string, message: string) => void;
+type ErrorListener = (error: Error) => void;
 
 export class FakeWakeupRedis {
   duplicates = 0;
   published: Array<[string, string]> = [];
   listener?: MessageListener;
+  errorListener?: ErrorListener;
   subscribeError?: Error;
   publishError?: Error;
   setError?: Error;
@@ -13,10 +15,14 @@ export class FakeWakeupRedis {
   duplicate(): Redis {
     this.duplicates += 1;
     return {
-      on: (_event: string, listener: MessageListener) => {
-        this.listener = listener;
+      on: (event: string, listener: MessageListener | ErrorListener) => {
+        if (event === "message") this.listener = listener as MessageListener;
+        if (event === "error") this.errorListener = listener as ErrorListener;
       },
-      off: () => void (this.listener = undefined),
+      off: (event: string) => {
+        if (event === "message") this.listener = undefined;
+        if (event === "error") this.errorListener = undefined;
+      },
       subscribe: async () => {
         if (this.subscribeError) throw this.subscribeError;
         return 2;
@@ -51,5 +57,9 @@ export class FakeWakeupRedis {
 
   emit(channel: string, message: unknown): void {
     this.listener?.(channel, JSON.stringify(message));
+  }
+
+  emitError(error: Error): void {
+    this.errorListener?.(error);
   }
 }

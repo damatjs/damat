@@ -45,9 +45,14 @@ new Redis(config.url, {
   maxRetriesPerRequest: config.maxRetriesPerRequest ?? 3,
   retryStrategy: createRetryStrategy,
   lazyConnect: config.lazyConnect ?? true,
+  enableReadyCheck: false,
   ...config.options, // caller options win (spread last)
 });
 ```
+
+The default skips ioredis's `INFO`-based readiness probe so restricted ACL
+users do not need server-inspection permission. Framework startup performs an
+authenticated `PING`; set `options.enableReadyCheck` explicitly to opt back in.
 
 `src/client/index.ts` adds the public, singleton-free helpers:
 

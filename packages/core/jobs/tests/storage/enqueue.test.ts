@@ -77,7 +77,9 @@ test("supplied transaction executor owns enqueue atomicity", async () => {
   ).rejects.toThrow("rollback");
   expect(await getJobRun(id)).toBeUndefined();
   const signals = await pool.query(
-    `SELECT 1 FROM "_damat_acceleration_outbox" WHERE "resource_id"=$1`, [id]);
+    `SELECT 1 FROM "_damat_acceleration_outbox" WHERE "resource_id"=$1`,
+    [id],
+  );
   expect(signals.rowCount).toBe(0);
 });
 

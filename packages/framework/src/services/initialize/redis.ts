@@ -15,11 +15,25 @@ export async function initializeRedis(
     });
     return;
   }
-  await initRedis({
-    url: config.services?.redis?.url ?? config.projectConfig.redisUrl,
-    logger,
-  });
-  await connectRedis();
+  try {
+    await initRedis({
+      url: config.services?.redis?.url ?? config.projectConfig.redisUrl,
+      logger,
+    });
+    await connectRedis();
+  } catch (error) {
+    try {
+      await disconnectRedis();
+    } catch {}
+    logger.warn("Redis unavailable; continuing without acceleration", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    instances.healthChecks!.redis = async () => ({
+      status: "unhealthy",
+      data: error,
+    });
+    return;
+  }
   instances.healthChecks!.redis = async () => {
     const start = Date.now();
     try {

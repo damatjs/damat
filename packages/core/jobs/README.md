@@ -136,8 +136,10 @@ Standalone workers default to five-second PostgreSQL polling.
 Configure enqueue-side wake-ups with `configureJobWakeupPublisher(redis)` and
 pass a Redis-compatible client as `wakeupRedis` to a worker. The worker uses a
 dedicated duplicated subscriber. Missing Redis, malformed messages, and
-publish failures only reduce responsiveness to the polling interval. Mutations
-inside a caller-owned transaction do not publish directly. They still write a
+publish failures only reduce responsiveness to the polling interval. Subscriber
+connection errors are handled through structured warnings rather than escaping
+as raw unhandled Redis events. Mutations inside a caller-owned transaction do
+not publish directly. They still write a
 transactional acceleration-outbox row; the framework relay publishes it only
 after the outer transaction commits.
 

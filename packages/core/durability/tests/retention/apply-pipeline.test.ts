@@ -29,5 +29,7 @@ test("pipeline overrides update remaining runs", async () => {
     ["onboarding", 7 * 86_400_000],
     ["*", null],
   ]);
-  expect(calls.every(({ sql }) => sql.includes('"_damat_pipeline_runs"'))).toBeTrue();
+  expect(
+    calls.every(({ sql }) => sql.includes('"_damat_pipeline_runs"')),
+  ).toBeTrue();
 });

@@ -17,11 +17,18 @@ beforeEach(async () => {
 test("background stopped persistence failure can be retried", async () => {
   let release!: () => void;
   const gate = new Promise<void>((resolve) => void (release = resolve));
+  let markStarted!: () => void;
+  const started = new Promise<void>((resolve) => void (markStarted = resolve));
   let observeFailure!: () => void;
   const failureObserved = new Promise<void>(
     (resolve) => void (observeFailure = resolve),
   );
-  const item = await seedDelivery({ handler: async () => gate });
+  const item = await seedDelivery({
+    handler: async () => {
+      markStarted();
+      await gate;
+    },
+  });
   const worker = new DurableEventWorker({
     consumers: [{ event: item.event, consumer: item.consumer }],
     pollIntervalMs: 10,
@@ -30,6 +37,7 @@ test("background stopped persistence failure can be retried", async () => {
   await waitUntil(
     async () => (await deliveryRow(item.id)).status === "running",
   );
+  await started;
   await worker.stop({ graceMs: 1 });
   setDurabilityClient(failStoppedPersistence(observeFailure));
   try {

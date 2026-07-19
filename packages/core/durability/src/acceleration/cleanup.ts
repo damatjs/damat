@@ -1,11 +1,13 @@
 import { getDurabilityClient } from "../client/global";
 import type { DurabilityExecutor } from "../client/types";
 
-export async function cleanupPublishedAccelerationSignals(options: {
-  executor?: DurabilityExecutor;
-  limit?: number;
-  before?: Date;
-} = {}): Promise<number> {
+export async function cleanupPublishedAccelerationSignals(
+  options: {
+    executor?: DurabilityExecutor;
+    limit?: number;
+    before?: Date;
+  } = {},
+): Promise<number> {
   const limit = options.limit ?? 100;
   if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1_000) {
     throw new Error("acceleration cleanup limit must be between 1 and 1000");

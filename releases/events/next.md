@@ -22,7 +22,8 @@ Redis broadcast as separate delivery paths.
   dead letters, cancellation, JSON-safe results, sampled progress, and bounded
   redacted structured logs.
 - Shared lease recovery, bounded retry promotion and retention, worker registry
-  state, optional strict Redis wake-ups, and ordered graceful shutdown.
+  state, optional strict Redis wake-ups, handled subscriber errors, and ordered
+  graceful shutdown.
 - Delivery, attempt, and log lifecycle read APIs plus an ordered retention
   integrity migration.
 - A headless durable-event inspection client with signed cursor pagination,

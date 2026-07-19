@@ -16,13 +16,15 @@ test("combined maintenance applies finite retention overrides", async () => {
     actor,
     reason: "test finite retention",
   });
-  await expect(reconcileJobWork({
-    workerId: "maintenance-worker",
-    queue,
-    batchSize: 1,
-    retentionMs: 90 * 86_400_000,
-    includeRetention: true,
-  })).resolves.toBeUndefined();
+  await expect(
+    reconcileJobWork({
+      workerId: "maintenance-worker",
+      queue,
+      batchSize: 1,
+      retentionMs: 90 * 86_400_000,
+      includeRetention: true,
+    }),
+  ).resolves.toBeUndefined();
 });
 
 test("combined maintenance honors forever retention", async () => {
@@ -34,11 +36,13 @@ test("combined maintenance honors forever retention", async () => {
     actor,
     reason: "test legal hold",
   });
-  await expect(reconcileJobWork({
-    workerId: "maintenance-worker",
-    queue,
-    batchSize: 1,
-    retentionMs: 90 * 86_400_000,
-    includeRetention: true,
-  })).resolves.toBeUndefined();
+  await expect(
+    reconcileJobWork({
+      workerId: "maintenance-worker",
+      queue,
+      batchSize: 1,
+      retentionMs: 90 * 86_400_000,
+      includeRetention: true,
+    }),
+  ).resolves.toBeUndefined();
 });

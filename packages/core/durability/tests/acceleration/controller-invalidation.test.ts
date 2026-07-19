@@ -25,16 +25,20 @@ test("rebuilds use an attributed configured controller", async () => {
 });
 
 test("rebuilds require attribution and a configured controller", async () => {
-  expect(() => rebuildAccelerationProjection({
-    id: " ",
-    type: "user",
-    reason: "repair",
-  })).toThrow("actor and reason");
-  expect(() => rebuildAccelerationProjection({
-    id: "operator",
-    type: "user",
-    reason: "repair",
-  })).toThrow("not configured");
+  expect(() =>
+    rebuildAccelerationProjection({
+      id: " ",
+      type: "user",
+      reason: "repair",
+    }),
+  ).toThrow("actor and reason");
+  expect(() =>
+    rebuildAccelerationProjection({
+      id: "operator",
+      type: "user",
+      reason: "repair",
+    }),
+  ).toThrow("not configured");
 });
 
 test("flush requests are optional and contain relay failures", async () => {

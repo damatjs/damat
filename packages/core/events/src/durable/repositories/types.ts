@@ -1,4 +1,7 @@
-import type { DurabilityExecutor, RetentionDuration } from "@damatjs/durability";
+import type {
+  DurabilityExecutor,
+  RetentionDuration,
+} from "@damatjs/durability";
 
 export interface DurableEventRecord {
   id: string;

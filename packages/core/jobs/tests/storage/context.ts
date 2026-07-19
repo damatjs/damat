@@ -26,7 +26,11 @@ async function migrate(): Promise<void> {
     await client.query("SELECT pg_advisory_lock(724035)");
     const catalogs = [durabilitySystemMigrations, jobsSystemMigrations];
     for (const migration of catalogs.flatMap(({ migrations }) => migrations)) {
-      const exists = await migrationApplied(client, migration.owner, migration.id);
+      const exists = await migrationApplied(
+        client,
+        migration.owner,
+        migration.id,
+      );
       if (exists.rowCount) continue;
       await client.query(migration.sql);
       await ensureTracker(client);
@@ -43,19 +47,30 @@ async function migrate(): Promise<void> {
 }
 
 async function migrationApplied(
-  client: { query(sql: string, values?: unknown[]): Promise<{ rowCount: number | null }> },
+  client: {
+    query(
+      sql: string,
+      values?: unknown[],
+    ): Promise<{ rowCount: number | null }>;
+  },
   owner: string,
   id: string,
 ) {
-  const current = await client.query(
-    `SELECT 1 FROM "_damat_migration_logs"
-     WHERE "module"=$1 AND "name"=$2 AND "status"='applied'`, [owner, id]
-  ).catch(() => ({ rowCount: 0 }));
+  const current = await client
+    .query(
+      `SELECT 1 FROM "_damat_migration_logs"
+     WHERE "module"=$1 AND "name"=$2 AND "status"='applied'`,
+      [owner, id],
+    )
+    .catch(() => ({ rowCount: 0 }));
   if (current.rowCount) return current;
-  return client.query(
-    `SELECT 1 FROM "_damat_system_migrations"
-     WHERE "owner"=$1 AND "migration_id"=$2`, [owner, id]
-  ).catch(() => ({ rowCount: 0 }));
+  return client
+    .query(
+      `SELECT 1 FROM "_damat_system_migrations"
+     WHERE "owner"=$1 AND "migration_id"=$2`,
+      [owner, id],
+    )
+    .catch(() => ({ rowCount: 0 }));
 }
 
 async function ensureTracker(client: { query(sql: string): Promise<unknown> }) {

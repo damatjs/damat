@@ -48,7 +48,12 @@ export async function updateAccelerationState(input: {
        "last_success_at"=CASE WHEN $5 THEN NOW() ELSE "last_success_at" END,
        "last_rebuild_at"=CASE WHEN $4 THEN NOW() ELSE "last_rebuild_at" END,
        "updated_at"=NOW() WHERE "id"=TRUE`,
-    [input.mode, input.fallbackPollIntervalMs, input.checkpoint ?? null,
-      input.rebuilt ?? false, input.published ?? false],
+    [
+      input.mode,
+      input.fallbackPollIntervalMs,
+      input.checkpoint ?? null,
+      input.rebuilt ?? false,
+      input.published ?? false,
+    ],
   );
 }

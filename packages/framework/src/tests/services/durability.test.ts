@@ -44,9 +44,14 @@ test("durability registers process-global cleanup with shutdown", async () => {
   value.services = { jobs: {} };
   const instances = { shutdownHandlers: [] } as never;
   await initializeDurability(value, instances);
-  const [cleanup] = (instances as { shutdownHandlers: Array<{
-    name: string; handler(): void;
-  }> }).shutdownHandlers;
+  const [cleanup] = (
+    instances as {
+      shutdownHandlers: Array<{
+        name: string;
+        handler(): void;
+      }>;
+    }
+  ).shutdownHandlers;
   expect(cleanup?.name).toBe("durability-globals");
   expect(cleanup?.handler()).toBeUndefined();
 });

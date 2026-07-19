@@ -15,7 +15,7 @@ export function createWakeupLifecycle(
 ): WakeupLifecycle {
   return new WakeupLifecycle(
     coordinator,
-    new WorkerWakeupSubscriber(redis, targets),
+    new WorkerWakeupSubscriber(redis, targets, onError),
     new WakeupPublisherGate(redis, onError),
     createWakeupLiveness(redis, targets, ttlMs, onError),
   );

@@ -22,15 +22,17 @@ afterAll(async () => {
 
 test("transaction rollback leaves no acceleration signal", async () => {
   const resourceId = testId("rollback-signal");
-  await expect(context.durability.transaction(async (executor) => {
-    await recordAccelerationSignal({
-      topic: "damat:inspection:invalidate",
-      kind: "job",
-      resourceId,
-      executor,
-    });
-    throw new Error("roll back signal");
-  })).rejects.toThrow("roll back signal");
+  await expect(
+    context.durability.transaction(async (executor) => {
+      await recordAccelerationSignal({
+        topic: "damat:inspection:invalidate",
+        kind: "job",
+        resourceId,
+        executor,
+      });
+      throw new Error("roll back signal");
+    }),
+  ).rejects.toThrow("roll back signal");
   const result = await context.pool.query(
     `SELECT 1 FROM "_damat_acceleration_outbox" WHERE "resource_id"=$1`,
     [resourceId],

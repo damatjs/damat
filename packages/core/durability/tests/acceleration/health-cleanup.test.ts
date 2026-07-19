@@ -61,12 +61,16 @@ test("published acceleration rows are cleaned in bounded batches", async () => {
   const [signal] = await claimAccelerationSignals(1, 30_000, [id]);
   await markAccelerationSignalPublished(signal!);
   expect(await cleanupPublishedAccelerationSignals()).toBe(0);
-  expect(await cleanupPublishedAccelerationSignals({
-    before: new Date(Date.now() + 1_000),
-    limit: 1,
-  })).toBe(1);
-  await expect(claimAccelerationSignals(0)).rejects.toThrow("between 1 and 1000");
-  await expect(cleanupPublishedAccelerationSignals({ limit: 0 })).rejects.toThrow(
+  expect(
+    await cleanupPublishedAccelerationSignals({
+      before: new Date(Date.now() + 1_000),
+      limit: 1,
+    }),
+  ).toBe(1);
+  await expect(claimAccelerationSignals(0)).rejects.toThrow(
     "between 1 and 1000",
   );
+  await expect(
+    cleanupPublishedAccelerationSignals({ limit: 0 }),
+  ).rejects.toThrow("between 1 and 1000");
 });
