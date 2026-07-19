@@ -1,63 +1,39 @@
 import { runDamat } from "../app";
+import {
+  appendInstallOptions,
+  installOptionProperties,
+} from "./install-options";
 import type { ToolDef } from "./types";
 
 export const updateModule: ToolDef = {
   name: "update_module",
   description:
-    "Update an installed module by running `damat module update`: re-fetches " +
-    "the module from the source recorded in damat.config.ts, shows a version " +
-    "and file diff, and force-reinstalls it. Overwrites any local edits to " +
-    "the module's installed files, so use dryRun first and get the user's " +
-    "approval before passing yes. Path/git sources are refused unless " +
-    "allowUnverified is true.",
+    "Update a module from the origin recorded in damat.lock.json. The " +
+    "transactional installer shows owned-file changes and backs up modified " +
+    "files only when yes is explicitly approved. Use dryRun before mutation; " +
+    "unverified origins still require allowUnverified.",
   inputSchema: {
     type: "object",
     properties: {
       id: {
         type: "string",
-        description: "The installed module id (single kebab-case segment)",
+        description: "Installation id recorded in damat.lock.json",
       },
-      dir: {
-        type: "string",
-        description: "Modules directory (default: src/modules)",
-      },
-      yes: {
-        type: "boolean",
-        description:
-          "Apply the update (default false — without it the command only " +
-          "prints the diff and fails). Requires explicit user approval since " +
-          "local edits are overwritten.",
-      },
-      allowUnverified: {
-        type: "boolean",
-        description:
-          "Allow updating from a recorded path/git source (default false).",
-      },
-      allowScripts: {
-        type: "boolean",
-        description:
-          "Run npm lifecycle scripts of the module's dependencies (default false).",
-      },
-      dryRun: {
-        type: "boolean",
-        description:
-          "Show the version and file changes without writing anything.",
-      },
+      ...installOptionProperties,
     },
     required: ["id"],
     additionalProperties: false,
   },
-  handler: async ({ id, dir, yes, allowUnverified, allowScripts, dryRun }) => {
-    if (!id || typeof id !== "string") {
+  handler: async (input) => {
+    if (!input.id || typeof input.id !== "string") {
       return { text: "An 'id' string is required", isError: true };
     }
-    const args = ["module", "update", id];
-    if (dir) args.push("--dir", String(dir));
-    if (yes) args.push("--yes");
-    if (allowUnverified) args.push("--allow-unverified");
-    if (allowScripts) args.push("--allow-scripts");
-    if (dryRun) args.push("--dry-run");
+    const args = ["module", "update", input.id];
+    appendInstallOptions(args, input);
     const { ok, output } = runDamat(args);
-    return { text: output || (ok ? "Done." : "Update failed."), isError: !ok };
+    return {
+      text: output || (ok ? "Done." : "Update failed."),
+      isError: !ok,
+    };
   },
 };

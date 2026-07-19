@@ -15,13 +15,15 @@ exist in Damat:
 2. the **`damat module add`** command (in
    [`@damatjs/damat-cli`](../../cli/damat/docs/module-commands.md)).
 
-The AI never touches the filesystem directly to install a module — it calls a
-tool, the tool runs the audited CLI path, and the CLI does the copy + config
-registration + env sync + package install.
+The AI never edits module files directly to install a module. It calls a tool,
+the tool runs the audited CLI path, and source mode copies declared capabilities,
+installs required packages, and reports backend-owned integration work.
 
 ## Module map
 
-The server is plain TypeScript run by Bun (no build step). `bin/damat-mcp.ts`
+The server is plain TypeScript run by Bun (no transpilation step).
+`bun run build` strictly type-checks the published runtime source.
+`bin/damat-mcp.ts`
 is just the executable entry — it carries the shebang and the env-var reference,
 then calls `run()`. Everything else lives under `src/`, split so no file
 exceeds ~100 lines:
@@ -36,7 +38,7 @@ exceeds ~100 lines:
 | `src/tools/`            | One MCP tool per file (`list-modules`, `search-modules`, `module-info`, `list-installed`, `add-module`), the `ToolDef` type, and `index.ts` assembling the `tools` catalog.                               |
 | `src/server/`           | The MCP transport — `rpc.ts` (`send`/`reply`/`replyError`), `dispatch.ts` (`handleMessage`), `run.ts` (the newline-delimited stdin loop).                                                                 |
 | `registry.example.json` | A sample registry index used by the repo's `.mcp.json` and for local testing.                                                                                                                             |
-| `package.json`          | Declares the `damat-mcp` bin (raw `.ts`, run by Bun — no build); publishes `bin` + `src`.                                                                                                                 |
+| `package.json`          | Declares the raw TypeScript `damat-mcp` bin, source type-check gate, and published `bin` + `src`.                                                                                                         |
 
 Each folder has an `index.ts` barrel, so imports stay at the folder level
 (`from "../registry"`, `from "../tools"`). The dependency direction is
@@ -67,13 +69,15 @@ JSON-RPC errors) so the assistant sees the message and can recover.
 
 ## Tool reference
 
-| Tool             | Inputs                                                                   | Behavior                                                                                                                                                                                            |
-| ---------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `list_modules`   | —                                                                        | Loads the registry index, returns a summary per module. Errors if no registry is configured.                                                                                                        |
-| `search_modules` | `query`                                                                  | Same, filtered by case-insensitive match on ref/description/keywords.                                                                                                                               |
-| `module_info`    | `ref`                                                                    | `parseModuleRef` → `lookupEntry` (tries `namespace/name` then bare `name`) → summary.                                                                                                               |
-| `list_installed` | `dir?` (default `src/modules`)                                           | Scans `DAMAT_APP_DIR/<dir>` for subdirectories with a `module.json`.                                                                                                                                |
-| `add_module`     | `source`, `name?`, `dir?`, `force?`, `allowUnverified?`, `allowScripts?` | Builds `module add` args and runs `runDamat()`. `allowUnverified` maps to `--allow-unverified` (required for path/git sources), `allowScripts` to `--allow-scripts` (dependency lifecycle scripts). |
+| Tool             | Inputs                                      | Behavior                                                                                                   |
+| ---------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `list_modules`   | —                                           | Loads the registry index, returns a summary per module. Errors if no registry is configured.               |
+| `search_modules` | `query`                                     | Same, filtered by case-insensitive match on ref/description/keywords.                                      |
+| `module_info`    | `ref`                                       | `parseModuleRef` → `lookupEntry` (tries `namespace/name` then bare `name`) → summary.                      |
+| `list_installed` | —                                           | Reads module installation records from `DAMAT_APP_DIR/damat.lock.json`.                                    |
+| `add_module`     | `source` plus transactional install options | Builds `module add` args. Security, modified-file, target, and experimental package choices stay explicit. |
+| `remove_module`  | `id`, `yes?`, `dryRun?`                     | Removes installer-owned files/packages through the lockfile plan; it does not roll back the database.      |
+| `update_module`  | `id` plus transactional install options     | Re-resolves the recorded origin and applies an ownership-aware update plan.                                |
 
 `summarizeEntry()` is the single place that decides which registry fields are
 surfaced to the model — extend it when you add fields to the registry schema.
@@ -84,8 +88,8 @@ surfaced to the model — extend it when you add fields to the registry schema.
 assistant → tools/call add_module { source: "damatjs/user" }
   → runDamat(["module", "add", "damatjs/user"])
     → spawnSync(damatCli, ..., { cwd: appDir() })
-      → damat CLI: resolve source → verify → copy → register in
-        damat.config.ts → sync env → bun add packages
+      → damat CLI: resolve source → verify → copy declared capabilities
+        → bun add packages → report host integration work
   → tool result: CLI stdout/stderr, isError = (exit != 0)
 ```
 

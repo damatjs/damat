@@ -5,24 +5,19 @@ import type { ToolDef } from "./types";
 export const listInstalledTool: ToolDef = {
   name: "list_installed",
   description:
-    "List Damat modules already installed in the target app by scanning its " +
-    "modules directory (default src/modules) for module.json manifests.",
+    "List module installations recorded by the target app's transactional " +
+    "damat.lock.json. This remains authoritative when module capabilities are " +
+    "distributed across modules, routes, workflows, jobs, events, and pipelines.",
   inputSchema: {
     type: "object",
-    properties: {
-      dir: {
-        type: "string",
-        description: "Modules directory (default: src/modules)",
-      },
-    },
+    properties: {},
     additionalProperties: false,
   },
-  handler: async ({ dir }) => {
-    const modulesDir = (dir as string) || "src/modules";
-    const installed = listInstalled(modulesDir);
+  handler: async () => {
+    const installed = listInstalled();
     return {
       text: JSON.stringify(
-        { app: appDir(), dir: modulesDir, count: installed.length, installed },
+        { app: appDir(), count: installed.length, installed },
         null,
         2,
       ),

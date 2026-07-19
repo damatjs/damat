@@ -26,10 +26,12 @@
   ],
   "dependencies": {},
   "devDependencies": {
-    "@types/bun": "1.3.9"
+    "@types/bun": "1.3.9",
+    "typescript": "^5.9.3"
   },
   "scripts": {
-    "build": "exit 0",
+    "build": "bun run check-types",
+    "check-types": "tsc --noEmit",
     "start": "bun run bin/damat-mcp.ts",
     "test": "bun test",
     "lint": "oxlint src bin"

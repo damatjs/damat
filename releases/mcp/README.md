@@ -6,6 +6,7 @@ Change history for this package. For how it works **now**, read the
 
 | Version       | Summary                                                                                                                                                                                                   | Upgrade notes         |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| next          | MCP tools read `damat.lock.json` and expose the current transactional install/update/remove contract                                                                                                      | [next →](./next.md)   |
 | 0.6.0         | `add_module` exposes the CLI security gates (`allowUnverified`, `allowScripts`); flags forwarded only when explicitly true                                                                                | [0.6.0 →](./0.6.0.md) |
 | 0.5.0         | Test coverage to 100%; `readServerVersion(url)` extracted for testability — no tool-surface change                                                                                                        | —                     |
 | 0.2.0 – 0.4.1 | Lockstep bumps — no change to the MCP server                                                                                                                                                              | —                     |

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -20,46 +20,34 @@ afterEach(() => {
 });
 
 describe("list_installed tool", () => {
-  test("defaults to src/modules and reports the app dir", async () => {
-    const moduleDir = join(tmp, "src/modules/user");
-    mkdirSync(moduleDir, { recursive: true });
+  test("reports lockfile module installations and app location", async () => {
     writeFileSync(
-      join(moduleDir, "module.json"),
-      JSON.stringify({ version: "1.0.0", description: "User" }),
+      join(tmp, "damat.lock.json"),
+      JSON.stringify({
+        installations: {
+          user: {
+            artifactId: "user",
+            kind: "module",
+            mode: "source",
+            version: "1.0.0",
+          },
+        },
+      }),
     );
-
     const res = await listInstalledTool.handler({});
-    expect(res.isError).toBeFalsy();
     const payload = JSON.parse(res.text);
+    expect(res.isError).toBeFalsy();
     expect(payload.app).toBe(tmp);
-    expect(payload.dir).toBe("src/modules");
     expect(payload.count).toBe(1);
-    expect(payload.installed[0]).toEqual({
+    expect(payload.installed[0]).toMatchObject({
       id: "user",
+      artifactId: "user",
       version: "1.0.0",
-      description: "User",
     });
   });
 
-  test("honors a custom dir argument", async () => {
-    const moduleDir = join(tmp, "mods/alpha");
-    mkdirSync(moduleDir, { recursive: true });
-    writeFileSync(
-      join(moduleDir, "module.json"),
-      JSON.stringify({ version: "2" }),
-    );
-
-    const res = await listInstalledTool.handler({ dir: "mods" });
-    const payload = JSON.parse(res.text);
-    expect(payload.dir).toBe("mods");
-    expect(payload.count).toBe(1);
-    expect(payload.installed[0].id).toBe("alpha");
-  });
-
-  test("returns an empty list for a missing modules dir", async () => {
-    const res = await listInstalledTool.handler({});
-    const payload = JSON.parse(res.text);
-    expect(payload.count).toBe(0);
-    expect(payload.installed).toEqual([]);
+  test("returns an empty list when no lock exists", async () => {
+    const payload = JSON.parse((await listInstalledTool.handler({})).text);
+    expect(payload).toMatchObject({ count: 0, installed: [] });
   });
 });

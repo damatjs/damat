@@ -4,53 +4,40 @@ import type { ToolDef } from "./types";
 export const removeModule: ToolDef = {
   name: "remove_module",
   description:
-    "Remove an installed module from the target Damat app by running " +
-    "`damat module remove`. Deletes the module's files (src/modules/<id>, its " +
-    "grouped routes/workflows/links/tests), deregisters it from " +
-    "damat.config.ts, and drops its tsconfig alias. Refused while other " +
-    "installed modules depend on it unless force is true. Database tables and " +
-    "applied migrations are NOT rolled back. Use dryRun first to show the " +
-    "user exactly what would be deleted before removing anything.",
+    "Remove installer-owned module files and uniquely owned packages with " +
+    "`damat module remove`. The plan reads damat.lock.json, reports remaining " +
+    "usage, and never rolls back database tables or applied migrations. Use " +
+    "dryRun first. Pass yes only after approval when owned files were modified.",
   inputSchema: {
     type: "object",
     properties: {
       id: {
         type: "string",
-        description: "The installed module id (single kebab-case segment)",
+        description: "Installation id recorded in damat.lock.json",
       },
-      dir: {
-        type: "string",
-        description: "Modules directory (default: src/modules)",
-      },
-      force: {
+      yes: {
         type: "boolean",
-        description:
-          "Remove even when other installed modules depend on this one " +
-          "(default false). Requires explicit user approval.",
-      },
-      cleanEnv: {
-        type: "boolean",
-        description:
-          "Also remove the module's env block from .env.example (.env is never touched).",
+        description: "Confirm backup and removal of modified owned files.",
       },
       dryRun: {
         type: "boolean",
-        description: "Print what would be removed without deleting anything.",
+        description: "Print the removal plan without mutation.",
       },
     },
     required: ["id"],
     additionalProperties: false,
   },
-  handler: async ({ id, dir, force, cleanEnv, dryRun }) => {
+  handler: async ({ id, yes, dryRun }) => {
     if (!id || typeof id !== "string") {
       return { text: "An 'id' string is required", isError: true };
     }
     const args = ["module", "remove", id];
-    if (dir) args.push("--dir", String(dir));
-    if (force) args.push("--force");
-    if (cleanEnv) args.push("--clean-env");
+    if (yes) args.push("--yes");
     if (dryRun) args.push("--dry-run");
     const { ok, output } = runDamat(args);
-    return { text: output || (ok ? "Done." : "Remove failed."), isError: !ok };
+    return {
+      text: output || (ok ? "Done." : "Remove failed."),
+      isError: !ok,
+    };
   },
 };
