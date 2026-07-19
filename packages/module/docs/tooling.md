@@ -1,6 +1,6 @@
 # Tooling — migrations & codegen
 
-Source: `src/tooling/migration.ts`, `src/tooling/codegen.ts`.
+Source: `src/tooling/migration-*.ts`, `src/tooling/codegen.ts`.
 
 Helpers that operate on a **standalone module package** — no `damat.config.ts`
 required. They locate the module dir, read its manifest, and drive the ORM
@@ -26,13 +26,15 @@ function createModuleMigration(
 ```
 
 Creates a migration by **diffing the module's models against the last schema
-snapshot** (`migration.ts`):
+snapshot** (`migration-create.ts`):
 
 1. `moduleDir = locateModuleDir(packageDir)`.
 2. `manifest = readModuleManifest(moduleDir)`.
-3. `result = await createDiffMigration(manifest.name, moduleDir)` (from
-   `@damatjs/orm-migration`).
-4. Return `{ hasChanges: result.hasChanges ?? Boolean(result.filePath), filePath? }`.
+3. Resolve the manifest's model and migration paths. Legacy modules without a
+   models directory fall back to their aggregate entry directory.
+4. Call `createDiffMigration` with the resolved models provider and explicit
+   migrations directory.
+5. Return `{ hasChanges: result.hasChanges ?? Boolean(result.filePath), filePath? }`.
 
 `hasChanges` is false (and `filePath` absent) when the models already match the
 snapshot — nothing is written.
@@ -60,16 +62,16 @@ function runModuleMigration(
 ```
 
 **Applies the module's own migration files to `DATABASE_URL`** — scoped to this
-module only (`migration.ts`):
+module only (`migration-run.ts`):
 
 1. `moduleDir = locateModuleDir(packageDir)`; `manifest = readModuleManifest(moduleDir)`.
 2. If the migrations dir is missing, return early with `hadMigrations: false`
    (nothing to apply — run `createModuleMigration` first).
 3. `resolveDatabaseConfig({})` (DATABASE_URL env) → connect via
    `ConnectionManager` (same wiring as `bootModule`).
-4. `runMigrations(pool, { [manifest.name]: { … resolve: moduleDir } })` (from
-   `@damatjs/orm-migration`) — a single-module container, so only this module's
-   migrations run, tracked under `manifest.name`.
+4. `runMigrations` receives a single-module descriptor with the manifest's
+   explicit migrations directory, so only those files run and are tracked
+   under `manifest.name`.
 5. Disconnect and return the applied/pending names.
 
 Idempotent: migrations already recorded under the module's name are skipped, so
@@ -98,7 +100,7 @@ function runModuleMigrationStatus(
 
 **Reports which of the module's migrations are applied vs pending** against
 `DATABASE_URL`, without changing anything. Discovers the migration files
-(`discoverModuleMigrations(moduleDir)`) and cross-references the tracking table
+from the manifest-declared directory and cross-references the tracking table
 (`MigrationTracker.getApplied(manifest.name)`) — keyed by the same module name
 `runModuleMigration` records under, so counts stay consistent.
 
@@ -121,8 +123,8 @@ Generates TypeScript row types + Zod schemas, the registry, and missing CRUD
 scaffolds for the module's models (`codegen.ts`):
 
 1. `moduleDir = locateModuleDir(packageDir)`; `manifest = readModuleManifest(moduleDir)`.
-2. Resolve the manifest's types and workflows paths plus the standard API route
-   path.
+2. Resolve the manifest's models, entry/service, types, workflows, and routes
+   paths.
 3. Call `runCodegen` from `@damatjs/module-generator` with portable module and
    workflow aliases.
 4. The generator discovers models, uses `@damatjs/schema-codegen`, regenerates
@@ -137,17 +139,15 @@ console.log(`generated ${files.length} files in ${outputDir}`);
 ## How they relate
 
 Both share the same front end — `locateModuleDir` + `readModuleManifest` — so they
-work on a module package with root `damat.json`, while still reading supported
-legacy manifest layouts. They are deliberately thin: migration work lives in
+work on a module package with root `damat.json`. They are deliberately thin: migration work lives in
 the ORM packages and generation lives in `@damatjs/module-generator`. This
 package makes those owners usable _for a single module package_ without app
 config.
 
 ## Gotchas
 
-- The migrations output of `createModuleMigration` lands wherever
-  `createDiffMigration` writes for `manifest.name` + `moduleDir`; the **types**
-  output is controlled by `manifest.paths.types` (default `./types`).
+- Migration, type, workflow, and route output follows the corresponding
+  manifest paths. Model discovery follows `manifest.paths.models`.
 - `generateModuleTypes` requires a `logger` argument; `createModuleMigration` does
   not. Don't assume a symmetric signature.
 - `createModuleMigration` and `generateModuleTypes` do not touch the database —

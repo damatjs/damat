@@ -34,6 +34,9 @@ standalone module tooling.
   and four id-route files.
 - Alias mode keeps generated imports portable between standalone modules and
   installed backends.
+- Service results are narrowed to generated row types at the scaffold boundary;
+  templates never use blanket `any` casts.
+- Generated route comments show the framework's `/api` prefix.
 - Barrel output is deterministic and always reflects the current directory.
 - Scaffold and barrel failures are reported as warnings after generated types
   and the registry have been written.

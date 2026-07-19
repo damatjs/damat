@@ -59,7 +59,7 @@ function locateModuleDir(packageDir: string): string;
 
 Finds the directory holding a module manifest:
 
-1. Check the package root for `damat.json` or legacy `module.json`.
+1. Check the package root for `damat.json`.
 2. Check `<packageDir>/src` for either filename.
 3. Throw a clear error when neither location contains a manifest.
 

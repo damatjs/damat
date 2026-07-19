@@ -13,14 +13,14 @@ export const findMany${n.pascal}Step = createStep<${n.queryType}, ${n.rowType}[]
     const service = getModule("${n.moduleId}");
     if (!service) throw new Error("${n.moduleId} module not loaded");
     const { limit, offset, orderBy, orderDir, ...where } = query;
-    const rows = await service.${n.prop}.findMany({
+    const rows = (await service.${n.prop}.findMany({
       where,
       ...(limit !== undefined ? { take: limit } : {}),
       ...(offset !== undefined ? { skip: offset } : {}),
       ...(orderBy
         ? { orderBy: [{ column: orderBy, direction: orderDir === "desc" ? "DESC" : "ASC" }] }
         : {}),
-    });
+    })) as ${n.rowType}[];
     return new StepResponse(rows);
   },
   undefined,

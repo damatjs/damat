@@ -17,12 +17,12 @@ export const update${n.pascal}Step = createStep<Update${n.pascal}Input, ${n.rowT
   async (input, _ctx) => {
     const service = getModule("${n.moduleId}");
     if (!service) throw new Error("${n.moduleId} module not loaded");
-    const previous = await service.${n.prop}.find({ where: { ${n.pk}: input.${n.pk} } });
+    const previous = (await service.${n.prop}.find({ where: { ${n.pk}: input.${n.pk} } })) as ${n.rowType} | null;
     if (!previous) throw new Error("${n.prop} not found");
-    const rows = await service.${n.prop}.update({
+    const rows = (await service.${n.prop}.update({
       where: { ${n.pk}: input.${n.pk} },
       data: input.data,
-    });
+    })) as ${n.rowType}[];
     const row = rows[0];
     if (!row) throw new Error("${n.prop} not found");
     return new StepResponse(row, previous);

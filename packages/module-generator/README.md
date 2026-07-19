@@ -46,6 +46,10 @@ type files, and newly scaffolded files.
 Generated type and registry files are replaceable output. Scaffold files are
 user-owned after their first creation and are never overwritten.
 
+CRUD step templates bind the service layer's generic PostgreSQL rows to the
+generated table row type at the service boundary. Fresh scaffolds therefore
+pass strict TypeScript without weakening the workflow contract to `any`.
+
 ## API
 
 - `runModuleCodegen` generates from an existing `ModuleSchema`.

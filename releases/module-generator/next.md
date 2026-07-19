@@ -21,6 +21,8 @@ surfaces for compatibility.
 - Portable alias import rendering and deterministic recursive barrels.
 - App-owned and immutable-package registry declaration renderers.
 - File-map augmentation hooks receive the full Damat logger surface.
+- Strictly typed CRUD steps that narrow generic service rows to generated table
+  types, plus route comments that show the runtime `/api` prefix.
 
 ## Breaking
 

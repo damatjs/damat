@@ -17,13 +17,32 @@ remains an override for non-standard layouts. Ephemeral port requests remain
 supported on Bun runtimes where the underlying Node-server adapter rejects
 port zero.
 
+Standalone migration creation, migration run/status, and codegen now honor the
+root `damat.json` model, migration, type, workflow, and route paths. Fresh
+scaffolds no longer search the package root, write routes outside `src/`, or
+miss their own migration files.
+
 The package now exposes `resolveModuleArtifact`, `resolveArtifactRoot`, and the
 shared `ResolvedModule` type used by framework, ORM, and codegen consumers.
 It also re-exports the durable pipeline authoring surface so a portable pipeline
 provider uses the same contract in standalone module and assembled app runtimes.
+
+General authoring APIs are no longer re-exported from `@damatjs/module`. Module
+source imports services, framework/router, model, workflow, job, event, and
+validation APIs from their owning packages. `@damatjs/module` remains the
+contract, config, standalone runtime, harness, tooling, registry, and portable
+pipeline surface.
+
+## Breaking
+
+- Replace general authoring imports from `@damatjs/module` with their owning
+  package imports.
 
 ## Action required
 
 Use root `damat.json` for new modules. Existing `module.json` packages continue
 to work, including `src/module.json` packages using `"./index.ts"`. Keep an
 explicit entry only for a non-standard layout.
+
+Regenerate or update standalone module dependencies before adopting the explicit
+authoring imports. Fresh `module init` scaffolds already include them.

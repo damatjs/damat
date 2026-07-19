@@ -12,7 +12,7 @@ export const find${n.pascal}Step = createStep<${n.idType}, ${n.rowType} | null>(
   async (id, _ctx) => {
     const service = getModule("${n.moduleId}");
     if (!service) throw new Error("${n.moduleId} module not loaded");
-    const row = await service.${n.prop}.find({ where: { ${n.pk}: id } });
+    const row = (await service.${n.prop}.find({ where: { ${n.pk}: id } })) as ${n.rowType} | null;
     return new StepResponse(row);
   },
   undefined,

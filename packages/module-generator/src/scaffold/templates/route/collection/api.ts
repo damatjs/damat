@@ -13,7 +13,7 @@ import { create${n.pascal}Workflow, findMany${n.pascal}Workflow } from "${wfDirS
 import type { ${n.newType} } from "${typesSpec}";
 import type { ${n.queryType} } from "./query";
 
-/** GET /${n.fileBase} — list ${n.prop}. */
+/** GET /api/${n.fileBase} — list ${n.prop}. */
 export const GET: RouteHandler = async (c) => {
   // Already validated + coerced by the route's query validator.
   const query = getValidated<${n.queryType}>(c, "query");
@@ -24,7 +24,7 @@ export const GET: RouteHandler = async (c) => {
   return c.json({ success: true, data: result.result });
 };
 
-/** POST /${n.fileBase} — create ${n.prop}. */
+/** POST /api/${n.fileBase} — create ${n.prop}. */
 export const POST: RouteHandler = async (c) => {
   // Already validated by the route's body validator.
   const body = getValidated<${n.newType}>(c, "body");

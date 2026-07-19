@@ -12,7 +12,7 @@ export const create${n.pascal}Step = createStep<${n.newType}, ${n.rowType}, ${n.
   async (input, _ctx) => {
     const service = getModule("${n.moduleId}");
     if (!service) throw new Error("${n.moduleId} module not loaded");
-    const created = await service.${n.prop}.create({ data: input });
+    const created = (await service.${n.prop}.create({ data: input })) as ${n.rowType};
     return new StepResponse(created, created);
   },
   async (created, _ctx) => {

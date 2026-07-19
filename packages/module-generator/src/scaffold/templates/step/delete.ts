@@ -12,7 +12,7 @@ export const delete${n.pascal}Step = createStep<${n.idType},  boolean, ${n.rowTy
   async (id, _ctx) => {
     const service = getModule("${n.moduleId}");
     if (!service) throw new Error("${n.moduleId} module not loaded");
-    const existing = await service.${n.prop}.find({ where: { ${n.pk}: id } });
+    const existing = (await service.${n.prop}.find({ where: { ${n.pk}: id } })) as ${n.rowType} | null;
     await service.${n.prop}.delete({ where: { ${n.pk}: id } });
     return new StepResponse(true, existing);
   },

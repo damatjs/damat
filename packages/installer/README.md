@@ -8,7 +8,7 @@ provenance, and safe project changes.
 It also resolves installed Damat modules. A source path, Node package name, or
 `.damat/packages` location becomes one `ResolvedModule` with an absolute entry
 and optional model, migration, route, workflow, job, event, and pipeline paths.
-Those paths come from `damat.json` (with legacy `module.json` compatibility),
+Those paths come from `damat.json`,
 never from `package.json.exports`. Malformed manifests fail before fallback,
 package descriptors accept only valid unscoped or `@scope/name` names, and
 resolved paths are checked by real location so symlinks cannot escape the

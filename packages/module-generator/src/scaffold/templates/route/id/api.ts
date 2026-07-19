@@ -12,7 +12,7 @@ import { getValidated, type RouteHandler } from "@damatjs/framework/router";
 import { find${n.pascal}Workflow, update${n.pascal}Workflow, delete${n.pascal}Workflow } from "${wfDirSpec}";
 import type { ${n.paramsType}, ${n.updateType} } from "${typesSpec}";
 
-/** GET /${n.fileBase}/:id — fetch one ${n.prop}. */
+/** GET /api/${n.fileBase}/:id — fetch one ${n.prop}. */
 export const GET: RouteHandler = async (c) => {
   // \`:id\` is already validated by the route's params validator.
   const { id } = getValidated<${n.paramsType}>(c, "params");
@@ -24,7 +24,7 @@ export const GET: RouteHandler = async (c) => {
   return c.json({ success: true, data: result.result });
 };
 
-/** PATCH /${n.fileBase}/:id — update one ${n.prop}. */
+/** PATCH /api/${n.fileBase}/:id — update one ${n.prop}. */
 export const PATCH: RouteHandler = async (c) => {
   const { id } = getValidated<${n.paramsType}>(c, "params");
   const data = getValidated<${n.updateType}>(c, "body");
@@ -35,7 +35,7 @@ export const PATCH: RouteHandler = async (c) => {
   return c.json({ success: true, data: result.result });
 };
 
-/** DELETE /${n.fileBase}/:id — delete one ${n.prop}. */
+/** DELETE /api/${n.fileBase}/:id — delete one ${n.prop}. */
 export const DELETE: RouteHandler = async (c) => {
   const { id } = getValidated<${n.paramsType}>(c, "params");
   const result = await delete${n.pascal}Workflow.execute(id);

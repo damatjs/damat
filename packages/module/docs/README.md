@@ -1,170 +1,147 @@
-# @damatjs/module — Internals
+# @damatjs/module internals
 
-Maintainer-facing documentation for the module system. For the public overview
-and quick start, see the [package README](../README.md). For the `damat.json`
-contract from a module author's point of view, see [MODULES.md](../MODULES.md).
+Maintainer map for module contracts, standalone execution, tooling, artifact
+resolution, and registry trust. Public usage starts in the
+[package README](../README.md); the manifest contract is
+[MODULES.md](../../../MODULES.md).
 
-## What this package is
+## Responsibilities
 
-The module system, gathered into one package, organized by concern:
+| Concern             | Responsibility                                                            |
+| ------------------- | ------------------------------------------------------------------------- |
+| Manifest            | Normalize strict universal `damat.json` data into module runtime metadata |
+| Config              | Define and load `module.config.ts`                                        |
+| Harness             | Boot one module against PostgreSQL without HTTP                           |
+| Runtime             | Run one module through the framework HTTP stack                           |
+| Tooling             | Create module migrations and generate types/CRUD slices                   |
+| Registry            | Refs, validation, resolution, verification, and trust policy              |
+| Artifact resolution | Resolve source, Node package, or Damat package locations                  |
+| Pipelines           | Re-export portable pipeline authoring definitions                         |
 
-- **Authoring** — the single import surface a module package uses.
-- **Manifest** — the universal `damat.json` contract that makes a module portable.
-- **Config** — `module.config.ts`, the only thing a module author configures.
-- **Harness** — boot a module standalone for dev/test (no server).
-- **Runtime** — run one module package as a live HTTP app.
-- **Tooling** — migrations plus `@damatjs/module-generator` integration for a
-  standalone module package.
-- **Registry** — refs, readiness, resolution, and the verification/trust gate.
+Authoring APIs such as `defineModule`, `ModuleService`, models, routes,
+workflows, jobs, and events remain owned by their real packages.
 
-Everything is re-exported from `src/index.ts` via the concern barrels.
+## Source map
 
-## Module map
+| Path            | Role                                                           |
+| --------------- | -------------------------------------------------------------- |
+| `src/index.ts`  | Public concern barrels and pipeline exports                    |
+| `src/manifest/` | Module normalization, path defaults, entry/artifact resolution |
+| `src/config/`   | `defineModuleConfig`, loading, and config types                |
+| `src/harness/`  | Database resolution, migration apply, boot, and teardown       |
+| `src/runtime/`  | Module-as-app config and lifecycle                             |
+| `src/tooling/`  | Migration creation, migration run/status, and codegen          |
+| `src/registry/` | Ref parsing, readiness, registry resolution, and verification  |
 
-| Path               | Responsibility                                                                                                                                                                 |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/index.ts`     | Root barrel: re-exports every concern (`authoring`, `manifest`, `config`, `runtime`, `harness`, `tooling`, `registry`).                                                        |
-| `src/authoring.ts` | The authoring surface — re-exports `defineModule`/`ModuleService`/`model`/`columns`/workflow engine/route types/`z` from sibling packages. See [authoring.md](./authoring.md). |
-| `src/manifest/`    | Universal `damat.json` normalization plus legacy manifest compatibility. See [manifest.md](./manifest.md).                                                                     |
-| `src/config/`      | `module.config.ts`: `defineModuleConfig`, `loadModuleConfig`, `ModuleAppConfig`. See [config.md](./config.md).                                                                 |
-| `src/harness/`     | Standalone dev/test: `bootModule`, `withModule`, db resolution, migration apply. See [harness.md](./harness.md).                                                               |
-| `src/runtime/`     | Module-as-app: `startModuleApp`, `runModuleEntry`, app-config build, module-dir location. See [runtime.md](./runtime.md).                                                      |
-| `src/tooling/`     | `createModuleMigration`, `generateModuleTypes` — no `damat.config.ts` needed. See [tooling.md](./tooling.md).                                                                  |
-| `src/registry/`    | Refs, readiness, resolution, verification. See [registry.md](./registry.md).                                                                                                   |
+## Standard module shape
 
-### Per-concern file map
+```text
+module/
+├── damat.json
+├── module.config.ts
+├── .env
+├── src/
+│   ├── index.ts
+│   ├── service.ts
+│   ├── config/
+│   ├── models/
+│   ├── migrations/
+│   ├── types/
+│   ├── workflows/
+│   ├── api/routes/
+│   ├── jobs/
+│   ├── events/
+│   ├── pipelines/
+│   └── links/
+└── tests/
+```
 
-| File                              | Role                                                                                         |
-| --------------------------------- | -------------------------------------------------------------------------------------------- |
-| `manifest/types/`                 | `ModuleManifest` & friends, `DEFAULT_MODULE_PATHS`.                                          |
-| `manifest/validate.ts`            | `validateModuleManifest` (throws CLI-friendly errors).                                       |
-| `manifest/read.ts`                | Prefer `damat.json`, normalize it, then fall back to legacy `module.json`.                   |
-| `manifest/damat.ts`               | Normalize universal module metadata into `ModuleManifest`.                                   |
-| `manifest/entry.ts`               | Resolve an explicit or conventional module runtime entry.                                    |
-| `manifest/resolver.ts`            | Expose the shared source/Node/Damat resolver and `ResolvedModule`.                           |
-| `manifest/constants.ts`           | Legacy manifest filename retained for compatibility reads.                                   |
-| `config/types.ts`                 | `ModuleAppConfig`.                                                                           |
-| `config/define.ts`                | `defineModuleConfig` (identity helper).                                                      |
-| `config/load.ts`                  | `loadModuleConfig` (dynamic import of the config file).                                      |
-| `harness/boot.ts`                 | `bootModule` — wire infra, migrate, init, return `BootedModule`.                             |
-| `harness/with.ts`                 | `withModule` — boot + run + always teardown.                                                 |
-| `harness/database.ts`             | `resolveDatabaseConfig` (internal — not exported from the barrel).                           |
-| `harness/migrate.ts`              | `applyModuleMigrations` (internal — used by harness & runtime).                              |
-| `harness/types.ts`                | `BootableModule`, `BootModuleOptions`, `BootedModule`.                                       |
-| `runtime/start.ts`                | `startModuleApp` — full HTTP stack for one module.                                           |
-| `runtime/entry.ts`                | `runModuleEntry` — `damat module dev` entry.                                                 |
-| `runtime/appConfig.ts`            | `buildModuleAppConfig`, `DEFAULT_MODULE_PORT`.                                               |
-| `runtime/locate.ts`               | `locateModuleDir` — find either manifest at package root or in `src/`.                       |
-| `runtime/types.ts`                | `StartModuleAppOptions`, `RunningModuleApp`.                                                 |
-| `tooling/migration.ts`            | `createModuleMigration`.                                                                     |
-| `tooling/codegen.ts`              | `generateModuleTypes`.                                                                       |
-| `registry/types.ts`               | `ModuleRef`, `ModuleValidationReport`.                                                       |
-| `registry/parse.ts` / `format.ts` | `parseModuleRef` / `formatModuleRef`.                                                        |
-| `registry/entry.ts`               | `RegistryIndex`/`RegistryModuleEntry` schema + verification types + `normalizeVersionEntry`. |
-| `registry/verify.ts`              | `verificationPolicy`, `evaluateVerification` — the trust gate.                               |
-| `registry/readiness.ts`           | `validateModuleDir` — registry-readiness report.                                             |
-| `registry/resolve.ts`             | `resolveRegistryEntry`, `resolveRegistryRef`, `ResolvedRegistryModule`.                      |
+The manifest determines which optional capabilities actually exist.
+
+## Harness lifecycle
+
+```text
+resolve artifact and manifest
+  → resolve DATABASE_URL / database config
+  → create one connection manager and shared pool
+  → apply only this module's migrations
+  → initialize module service
+  → execute caller callback
+  → module teardown
+  → close/reset pool
+```
+
+The harness assumes one standalone module per process. It does not apply the
+assembled backend's shared durability catalogs.
+
+## Runtime lifecycle
+
+```text
+load damat.json + module.config.ts
+  → build one-module AppConfig
+  → initialize services
+  → apply module migrations
+  → bootstrap file routes
+  → serve
+  → graceful shutdown
+```
+
+The generated `bun run dev` script runs `database:setup` before entering this
+runtime, so a missing development database is created first.
+
+## Tooling flow
+
+- `createModuleMigration` discovers models, compares the stored snapshot, and
+  writes the next migration to the manifest-declared directory when the schema
+  changed.
+- `runModuleMigration` and status use `DATABASE_URL` and remain scoped to one
+  module owner.
+- `generateModuleTypes` resolves the manifest's model, entry, type, workflow,
+  and route paths, writes replaceable row/Zod/registry output, and creates
+  missing CRUD workflow/route files once.
+
+## Manifest and installation boundary
+
+`damat.json` carries identity, install mappings, package requirements, module
+paths, environment declarations, and registry metadata. The installer copies
+owned capabilities and records provenance. Shared host config, aliases,
+environment values, barrels, imports, runtime roles, and operational routes stay
+outside module package ownership.
+
+## Registry and validation
+
+`validateModuleDir` distinguishes installation-blocking errors from
+publishing-readiness warnings. Registry resolution preserves source pinning,
+owner, integrity, and verification. Rejected and revoked artifacts always fail
+the trust gate.
+
+## Invariants
+
+- Root `damat.json` is the portable contract.
+- Module names are stable kebab-case identities.
+- Convention resolves standard entries and paths; explicit paths override it.
+- Harness/runtime create one pool and close it deterministically.
+- Module-local migration commands never apply shared system catalogs.
+- A module may provide durable definitions but host policy enables and operates
+  their workers.
+- Installation does not mutate user-owned shared application files.
+
+## Extending the package
+
+- New universal manifest fields start in `@damatjs/installer` types/schema.
+- New module runtime metadata must update normalization, types, readiness, and
+  docs.
+- New harness/runtime options must preserve zero-config conventional behavior.
+- New tooling output must remain deterministic and respect scaffold-once files.
+- Observable changes update living docs and `releases/module/` together.
 
 ## Split docs
 
-- [authoring.md](./authoring.md) — the single-import authoring surface.
-- [manifest.md](./manifest.md) — universal and legacy manifest behavior.
-- [config.md](./config.md) — `module.config.ts` and `ModuleAppConfig`.
-- [harness.md](./harness.md) — `bootModule` / `withModule`, dev + test.
-- [runtime.md](./runtime.md) — `startModuleApp` / `runModuleEntry`, module-as-app.
-- [tooling.md](./tooling.md) — migrations + codegen.
-- [registry.md](./registry.md) — refs, resolution, the trust model, the index schema.
-
-## Architecture overview
-
-A module package has a root `damat.json` and an `index.ts` that default-exports
-`defineModule(...)`. The standard layout is:
-
-```
-my-module/
-├── package.json          (depends on @damatjs/module only)
-├── damat.json            (portable install + module contract)
-├── module.config.ts      (optional author overrides)
-└── src/
-    ├── index.ts          (default-exports defineModule(...))
-    ├── models/           (ORM model definitions)
-    ├── migrations/       (SQL migrations the module owns)
-    ├── workflows/        (workflow definitions)
-    ├── types/            (generated row types + zod)
-    └── api/routes/       (file-based HTTP routes)
-```
-
-The same directory is consumed three ways:
-
-1. **Standalone (harness)** — `bootModule` wires `ConnectionManager` +
-   `PoolManager`, applies the module's own migrations, calls `module.init()`,
-   and hands back `service` for direct calls. No HTTP.
-2. **Live app (runtime)** — `startModuleApp` builds a full framework `AppConfig`
-   from `damat.json` + `module.config.ts`, runs `initializeServices`, applies
-   migrations, `bootstrap`s the Hono app over `api/routes`, and serves.
-3. **Distribution (registry)** — `validateModuleDir` checks the contract,
-   `parseModuleRef`/`resolveRegistryEntry` address it, and `evaluateVerification`
-   gates installs. (The hosted backend isn't live yet; the contract is fixed.)
-
-## Control & data flow
-
-```
-authoring  ─ defineModule(...) ──────────────► a module package (src/ + damat.json)
-                                                       │
-manifest   ─ readModuleManifest ─► ModuleManifest ◄────┤ (read by harness/runtime/registry)
-                                                       │
-config     ─ loadModuleConfig ──► ModuleAppConfig ─────┤ (read by runtime)
-                                                       │
-harness    ─ bootModule ─► ConnectionManager+PoolManager → applyModuleMigrations → init → service
-                                                       │
-runtime    ─ startModuleApp ─► buildModuleAppConfig → initializeServices → applyModuleMigrations
-                                → bootstrap(api/routes) → serve
-                                                       │
-tooling    ─ createModuleMigration / generateModuleTypes (locateModuleDir + readModuleManifest)
-                                                       │
-registry   ─ parseModuleRef → resolveRegistryEntry(DAMAT_MODULE_REGISTRY)
-                            → evaluateVerification(DAMAT_MODULE_VERIFY)
-```
-
-## Invariants & design decisions
-
-- **One dependency for authors.** A module package's only direct dep is
-  `@damatjs/module`; `authoring.ts` re-exports everything else, so module code is
-  insulated from sibling-package versions.
-- **The manifest is the contract.** Root `damat.json` is the source of truth for
-  identity, install modes, capabilities, dependencies, module layout, and
-  registry metadata. Legacy `module.json` is read during the 0.x migration only.
-- **kebab-case module names.** `validateModuleManifest` enforces
-  `/^[a-z][a-z0-9-]*$/`; the same pattern bounds the namespace/name in refs.
-- **Convention-first entry.** Runtime discovery checks sibling `index.ts` /
-  `index.js`, then `src/index.ts` / `src/index.js`. `paths.entry` is an optional
-  override for non-standard layouts.
-- **Module dir may be root or `src/`.** `locateModuleDir` recognizes either
-  manifest filename in both locations.
-- **Errors vs warnings** (`validateModuleDir`): errors block _install_
-  (no resolvable entry, broken manifest, declared-but-missing dirs); warnings
-  block _publishing_ (missing version/description/author/license/namespace;
-  models without migrations).
-- **Two planes of trust** (registry): the author _declares_
-  name/version/author/license/keywords/repository in `damat.json`; the registry
-  _backend_ assigns `owner` and stamps `verification`. An author cannot
-  self-verify. `rejected`/`revoked` is always blocked regardless of policy.
-- **The harness owns the process.** `bootModule` calls `PoolManager.reset()`
-  before `setup` and on `teardown` — it assumes a single module per process.
-- **`applyModuleMigrations` / `resolveDatabaseConfig` are internal.** They live
-  under `harness/` but are _not_ re-exported from `harness/index.ts`; the runtime
-  imports `applyModuleMigrations` directly.
-
-## Safe-extension guidance
-
-- **New manifest field**: add it to `ModuleManifest` in `manifest/types.ts`,
-  validate shape in `manifest/validate.ts` (throw CLI-readable messages), and, if
-  it's registry-relevant, add a readiness check in `registry/readiness.ts` and
-  mirror it on `RegistryModuleEntry`. Keep `validateModuleManifest`
-  backward-compatible — extra unknown keys are allowed.
-- **New registry field**: add it to `entry.ts`; remember the index is
-  forward-compatible (a bare `{ source }` or string source must keep resolving).
-- **New runtime knob**: thread it through `StartModuleAppOptions` →
-  `buildModuleAppConfig`; defaults must cover the unset case.
-- **New harness option**: add to `BootModuleOptions`; keep `bootModule` working
-  with zero options except where a database is genuinely required.
+- [Manifest](./manifest.md)
+- [Config](./config.md)
+- [Harness](./harness.md)
+- [Runtime](./runtime.md)
+- [Tooling](./tooling.md)
+- [Registry](./registry.md)
+- [Authoring ownership](./authoring.md)
+- [Public module authoring](../../../docs/guide/13-authoring-modules.md)
