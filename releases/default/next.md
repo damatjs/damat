@@ -23,6 +23,10 @@ bootstrap/migration/runtime/backup roles, restricts authenticated Redis, and
 hardens application containers. Production-readiness automation exercises
 smoke, worker, load, backup/restore, security, and rollback gates.
 
+Reference-backend scripts invoke their declared CLI dependency entries
+directly. Clean workspace installs no longer depend on executable links whose
+compiled targets did not exist yet when Bun installed the monorepo.
+
 ## Added
 
 - The reference backend exposes `bun run db:setup` for local clean-database
