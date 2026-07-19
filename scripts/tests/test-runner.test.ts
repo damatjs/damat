@@ -90,6 +90,8 @@ test("CI services bypass disposable Docker containers", async () => {
 
 test("root tests reject unloaded production source", async () => {
   const runner = await Bun.file(new URL("scripts/test/run.ts", root)).text();
+  expect(runner).toContain("runDiagnosed");
+  expect(runner).toContain("PostgreSQL test setup failed");
   expect(runner).toContain("scripts/check-coverage-sources.ts");
   expect(runner).toContain("turboArgs.length === 0");
 });

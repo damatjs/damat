@@ -1,3 +1,4 @@
+import { reportCiFailure, runDiagnosed } from "./ci-diagnostics";
 import { startTestPostgres, stopTestPostgres } from "./postgres";
 import { startTestRedis, stopTestRedis } from "./redis";
 import { prepareRecoveryDatabase } from "./recovery";
@@ -14,14 +15,22 @@ async function run(command: string[], env = process.env): Promise<boolean> {
   return exitCode === 0;
 }
 
-if (!(await run(["bun", "test", "--max-concurrency=1", "scripts/tests"]))) {
+if (
+  !(await runDiagnosed(["bun", "test", "--max-concurrency=1", "scripts/tests"]))
+) {
   process.exit(process.exitCode);
 }
 
-const managed = await startTestPostgres();
+const managed = await startTestPostgres().catch((error) => {
+  reportCiFailure("PostgreSQL test setup failed", error);
+  throw error;
+});
 let redis: Awaited<ReturnType<typeof startTestRedis>> | undefined;
 try {
-  redis = await startTestRedis();
+  redis = await startTestRedis().catch((error) => {
+    reportCiFailure("Redis test setup failed", error);
+    throw error;
+  });
   const databaseUrl = process.env.DATABASE_URL ?? managed.url;
   const recoveryUrl = managed.packageUrls.DAMAT_RECOVERY_DATABASE_URL;
   await prepareRecoveryDatabase(recoveryUrl);
