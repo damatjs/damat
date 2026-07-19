@@ -55,20 +55,20 @@ mock.module("@damatjs/orm-connector", () => ({
 
 let setupCalls: Array<{ pool: unknown; connectionManager: unknown }> = [];
 let resetCalls = 0;
+let managedPool: unknown;
 
 mock.module("@damatjs/services", () => ({
   PoolManager: {
     setup: (args: { pool: unknown; connectionManager: unknown }) => {
       setupCalls.push(args);
+      managedPool = args.pool;
     },
     reset: () => {
       resetCalls++;
+      managedPool = undefined;
     },
-    // Present so this process-global stub still satisfies the auth wiring's
-    // pool probe (`PoolManager.isInitialized()`) if this mock leaks into a
-    // sibling test file (mock.module is process-wide).
-    isInitialized: () => false,
-    getPool: () => undefined,
+    isInitialized: () => managedPool !== undefined,
+    getPool: () => managedPool,
   },
 }));
 
@@ -98,6 +98,7 @@ beforeEach(() => {
   connectShouldThrow = null;
   setupCalls = [];
   resetCalls = 0;
+  managedPool = undefined;
 });
 
 afterEach(async () => {

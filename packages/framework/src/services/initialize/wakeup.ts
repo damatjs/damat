@@ -23,6 +23,18 @@ export type WorkerWakeupRedis = EventWakeupRedis &
   PipelineWakeupRedis &
   PipelineWakeupPublisher;
 
+export interface WakeupPublisherConfigurers {
+  jobs: typeof configureJobWakeupPublisher;
+  events: typeof configureEventWakeupPublisher;
+  pipelines: typeof configurePipelineWakeupPublisher;
+}
+
+const defaultConfigurers: WakeupPublisherConfigurers = {
+  jobs: configureJobWakeupPublisher,
+  events: configureEventWakeupPublisher,
+  pipelines: configurePipelineWakeupPublisher,
+};
+
 export function getWorkerWakeupRedis(
   config: AppConfig,
   getClient?: () => WorkerWakeupRedis,
@@ -37,13 +49,14 @@ export function getWorkerWakeupRedis(
 export function configureWorkerWakeupPublishers(
   config: AppConfig,
   redis = getWorkerWakeupRedis(config),
+  configurers = defaultConfigurers,
 ): void {
   if (!redis) return;
   if (config.services?.jobs || config.services?.pipelines) {
-    configureJobWakeupPublisher(redis);
+    configurers.jobs(redis);
   }
   if (config.services?.events?.durable) {
-    configureEventWakeupPublisher(redis);
+    configurers.events(redis);
   }
-  if (config.services?.pipelines) configurePipelineWakeupPublisher(redis);
+  if (config.services?.pipelines) configurers.pipelines(redis);
 }

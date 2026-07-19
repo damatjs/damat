@@ -1,5 +1,6 @@
 import { mock } from "bun:test";
 import { workerState } from "./worker-runtime-fixture";
+import { parseWakeup } from "./parse-wakeup-fixture";
 
 export const state = {
   definitions: [] as Array<{ name: string; manifest: object }>,
@@ -45,12 +46,11 @@ mock.module("@damatjs/pipelines", () => ({
   syncPipelineDefinitions: async () => void state.synced++,
   clearPipelineRuntimeBindings: () => void state.cleared++,
   PIPELINE_WAKEUP_CHANNEL: "damat:pipelines:wakeup",
-  parsePipelineWakeup: () => undefined,
+  parsePipelineWakeup: parseWakeup,
   configurePipelineWakeupPublisher: () =>
     workerState.publishers.push("pipelines"),
   clearPipelineWakeupPublisher: () => {},
 }));
-
 export const { initializePipelineDefinitions, initializePipelines } =
   await import("../../services/initialize/pipelines");
 export const { startWorkers } = await import("../../runtime/startWorkers");

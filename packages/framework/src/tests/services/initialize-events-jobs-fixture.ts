@@ -8,6 +8,7 @@ import {
   workerState,
 } from "./worker-runtime-fixture";
 import { durabilityRuntimeMock } from "./durability-runtime-mock";
+import { parseWakeup } from "./parse-wakeup-fixture";
 export const state = {
   broadcasts: [] as unknown[],
   durabilityClients: [] as unknown[],
@@ -23,7 +24,7 @@ mock.module("@damatjs/events", () => ({
   DurableEventRouter: FakeEventRouter,
   DurableEventWorker: FakeEventWorker,
   EVENT_WAKEUP_CHANNEL: "damat:events:wakeup",
-  parseEventWakeup: () => undefined,
+  parseEventWakeup: parseWakeup,
   clearEventWakeupPublisher: () => {},
   configureEventWakeupPublisher: () => workerState.publishers.push("events"),
   getAllDurableEventDefinitions: () => [
@@ -40,8 +41,14 @@ mock.module("@damatjs/events/migrations", () => ({
   eventsSystemMigrations: { migrations: [{ id: "events" }] },
 }));
 export const sharedPool = { query: async () => ({ rows: [] }) };
+let managedPool: unknown = sharedPool;
 mock.module("@damatjs/services", () => ({
-  PoolManager: { getPool: () => sharedPool },
+  PoolManager: {
+    setup: ({ pool }: { pool: unknown }) => void (managedPool = pool),
+    reset: () => void (managedPool = undefined),
+    isInitialized: () => managedPool !== undefined,
+    getPool: () => managedPool ?? sharedPool,
+  },
 }));
 export const { initializeEventBroadcast } =
   await import("../../services/initialize/events");
@@ -82,6 +89,7 @@ export function instances(): ServiceInstances {
 }
 
 export function reset(): void {
+  managedPool = sharedPool;
   state.broadcasts.length = 0;
   resetWorkers();
   state.durabilityClients.length = 0;

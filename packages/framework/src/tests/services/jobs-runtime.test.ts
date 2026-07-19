@@ -8,7 +8,6 @@ import {
   workerState,
 } from "./initialize-events-jobs-fixture";
 import {
-  configureWorkerWakeupPublishers,
   getWorkerWakeupRedis,
 } from "../../services/initialize/wakeup";
 
@@ -60,20 +59,6 @@ test("configured Redis enables optional worker wakeups", () => {
       () => true,
     ),
   ).toBe(redis);
-});
-
-test("enabled capabilities retain their wakeup publishers", () => {
-  const value = config();
-  value.services = { jobs: {}, events: { durable: {} } };
-  configureWorkerWakeupPublishers(value, { duplicate: () => ({}) } as never);
-  expect(workerState.publishers).toEqual(["jobs", "events"]);
-});
-
-test("pipelines enable their internal job wakeup publisher", () => {
-  const value = config();
-  value.services = { pipelines: {} };
-  configureWorkerWakeupPublishers(value, { duplicate: () => ({}) } as never);
-  expect(workerState.publishers).toEqual(["jobs", "pipelines"]);
 });
 
 test("worker polling remains available when wakeups are disabled", async () => {

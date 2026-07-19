@@ -1,4 +1,5 @@
 import { mock } from "bun:test";
+import { parseWakeup } from "./parse-wakeup-fixture";
 
 export const workerState = {
   jobs: [] as unknown[],
@@ -12,7 +13,7 @@ export const workerState = {
 mock.module("@damatjs/jobs", () => ({
   JobWorker: FakeJobWorker,
   JOB_WAKEUP_CHANNEL: "damat:jobs:wakeup",
-  parseJobWakeup: () => undefined,
+  parseJobWakeup: parseWakeup,
   clearJobWakeupPublisher: () => {},
   configureJobWakeupPublisher: () => workerState.publishers.push("jobs"),
 }));
