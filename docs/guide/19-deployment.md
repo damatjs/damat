@@ -19,6 +19,11 @@ Startup checks that required system migrations exist; it never creates tables.
 Run migrations as a release job or one-shot container and require successful
 completion before API and workers start.
 
+Provisioned production databases normally use `migrate:up`. Use
+`damat-orm database:setup` only when the deployment role is intentionally
+allowed to create the named database; that requires PostgreSQL `CREATEDB` or an
+equivalent administrative role.
+
 Production variables normally include:
 
 - `NODE_ENV=production`
@@ -31,12 +36,13 @@ Production variables normally include:
 
 The same image can back an API and dedicated workers:
 
-| Role      | Environment                                              | Responsibility                           |
-| --------- | -------------------------------------------------------- | ---------------------------------------- |
-| Migration | none                                                     | Run `bun run db:migrate` once and exit   |
-| API       | `DAMAT_RUNTIME_MODE=server`                              | Serve HTTP; no workers                   |
-| Jobs      | `DAMAT_RUNTIME_MODE=worker`, `DAMAT_WORKER_TYPES=jobs`   | Run only job workers                     |
-| Events    | `DAMAT_RUNTIME_MODE=worker`, `DAMAT_WORKER_TYPES=events` | Run the durable router and event workers |
+| Role      | Environment                                                 | Responsibility                           |
+| --------- | ----------------------------------------------------------- | ---------------------------------------- |
+| Migration | none                                                        | Run `bun run db:migrate` once and exit   |
+| API       | `DAMAT_RUNTIME_MODE=server`                                 | Serve HTTP; no workers                   |
+| Jobs      | `DAMAT_RUNTIME_MODE=worker`, `DAMAT_WORKER_TYPES=jobs`      | Run only job workers                     |
+| Events    | `DAMAT_RUNTIME_MODE=worker`, `DAMAT_WORKER_TYPES=events`    | Run the durable router and event workers |
+| Pipelines | `DAMAT_RUNTIME_MODE=worker`, `DAMAT_WORKER_TYPES=pipelines` | Run pipeline routing and internal nodes  |
 
 `DAMAT_RUNTIME_MODE` overrides config mode and `DAMAT_WORKER_TYPES` independently
 overrides worker selection. An `all` process can serve HTTP and workers in one
@@ -86,7 +92,8 @@ support idempotency.
 Point HTTP liveness/readiness probes at `GET /health` on API processes. Headless
 workers do not need an HTTP server. Inspect their status, capacity, attempts,
 failures, retries, recovery, progress, and logs through
-`createJobInspectionClient` and `createDurableEventInspectionClient`.
+`createJobInspectionClient`, `createDurableEventInspectionClient`, and the
+pipeline inspection client.
 
 The framework mounts no operational administration routes. Applications own
 authentication, authorization, and presentation for a dashboard, CLI, or
@@ -94,29 +101,56 @@ automation.
 
 ## Reference Compose setup
 
-From the repository root:
+From the repository root, generate disposable local secrets and start the
+production-shaped stack:
 
 ```bash
-export POSTGRES_PASSWORD='replace-with-a-long-random-value'
-docker compose -f backend/default/docker-compose.yml up --build
+bun run --cwd backend/default ops:env
+docker compose --env-file backend/default/.env.production.local \
+  -f backend/default/docker-compose.yml up --build
 ```
 
-The migration/API/jobs/events services share `damat-default:local`; every
-runtime depends on successful migration completion. The reference PostgreSQL
-service requires this password and is not published on the host. Use private
-managed PostgreSQL and deployment-secret injection outside local evaluation.
+The migration/API/jobs/events/pipelines services share `damat-default:local`;
+every runtime depends on successful migration completion. PostgreSQL uses
+distinct bootstrap, migration, runtime, and backup roles and is not published.
+The API binds to localhost by default. Application containers are non-root,
+read-only, capability-free, and protected from privilege escalation. Use
+private managed PostgreSQL and deployment-secret injection outside local
+evaluation. The reference user module requires a unique 32-character-or-longer
+`BETTER_AUTH_SECRET`; its external URL comes from `PUBLIC_BASE_URL`.
 Redis is an optional `accelerator` profile:
 
 ```bash
-export POSTGRES_PASSWORD='replace-with-a-long-random-value'
-REDIS_URL=redis://redis:6379 \
-docker compose -f backend/default/docker-compose.yml --profile accelerator up --build
+docker compose --env-file backend/default/.env.production.local \
+  -f backend/default/docker-compose.yml --profile accelerator up --build
 ```
 
-Authenticated Redis users need channel rules `&damat:*` and `&damat-events`.
-Verify `SUBSCRIBE` and `PUBLISH` for both durable wake-up channels and
-`damat-events`; persist direct-server ACL changes with `CONFIG REWRITE` and in
-the container configuration used for recreation.
+The reference Redis disables its default user. Its authenticated application
+user receives `&damat:*` and `&damat-events`, required data commands, and no
+administrative or dangerous commands.
+
+## Acceptance and rollback
+
+`bun run check:release` performs clean-checkout, lint, type, build, complete
+test, dependency vulnerability, secret, and deployment-security gates. The
+legacy whole-repository line-limit cleanup can remain under an explicit waiver;
+new changes still stay within the repository limit.
+
+The production-readiness workflow additionally starts the split runtime,
+checks health, routes, protected Prometheus metrics, database and Redis least
+privilege, live job/event/pipeline worker capabilities, and load thresholds.
+It then performs a custom-format backup, restores it into a disposable
+PostgreSQL target with `--exit-on-error`, and recreates runtime roles from a
+previous image. Database migrations are forward-only and remain after runtime
+rollback, so releases must preserve rollback compatibility.
+Restore uses `--no-owner --no-acl`; recreate deployment roles through the
+target environment's bootstrap before attaching the restored database.
+
+Production deployments set `DAMAT_IMAGE`, `POSTGRES_IMAGE`, and `REDIS_IMAGE`
+to registry sha256 digests. `/metrics` requires the bearer `METRICS_TOKEN`.
+Use `backend/default/ops/prometheus-alerts.yml` as the initial API alert rules
+and schedule `ops/worker-health.ts` as the headless worker probe. Backups are
+not accepted until a restore drill succeeds.
 
 ---
 

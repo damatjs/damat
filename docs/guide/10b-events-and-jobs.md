@@ -97,7 +97,7 @@ services: {
 ```
 
 ```bash
-damat-orm migrate:up
+bun run db:migrate
 ```
 
 Definitions and consumers load from module providers before execution starts.
@@ -187,8 +187,9 @@ services: {
 },
 ```
 
-Jobs require `projectConfig.databaseUrl` and `damat-orm migrate:up`. Redis is
-optional; PostgreSQL fallback always remains available.
+Jobs require `projectConfig.databaseUrl` and current migrations. On a fresh
+backend use `bun run db:setup`; after schema changes use `bun run db:migrate`.
+Redis is optional; PostgreSQL fallback always remains available.
 
 ## Commit domain data and durable work together
 
@@ -287,6 +288,8 @@ Semantics worth knowing:
 - **Redis loss** — enqueue/publish remain committed and replacement workers
   continue through PostgreSQL fallback. Redis ready indexes rebuild from
   PostgreSQL after recovery; no visual history is lost.
+- **Redis ACLs** — authenticated users need channel access for `&damat:*` and,
+  when ephemeral broadcast is enabled, `&damat-events`.
 - **Unknown jobs** (enqueued but not `defineJob`'d in the worker process)
   dead-letter immediately with a clear error.
 - **Inspection** — `getJobRun`, `listJobRuns`, `listJobAttempts`,
@@ -313,6 +316,8 @@ side effects still need the provider to honor a stable idempotency key.
   place to `execute()` a workflow.
 - An **event** is a fact, not a task — emit it when something happened; any
   number of subscribers (including none) may react, e.g. by enqueueing jobs.
+- A **pipeline** is the durable outer graph when a process must wait, branch,
+  survive restarts, expose each stage, or compose jobs, events, and workflows.
 
 Full API surfaces: the [`@damatjs/events`](../../packages/core/events/README.md)
 and [`@damatjs/jobs`](../../packages/core/jobs/README.md) READMEs.

@@ -29,7 +29,7 @@ export function buildDocumentationMap(root: string) {
         title: "Module manifest contract",
         path: "MODULES.md",
         summary:
-          "The module.json contract, registry refs, and the trust model.",
+          "The damat.json contract, capability ownership, registry refs, and trust model.",
       },
       {
         id: "agents",

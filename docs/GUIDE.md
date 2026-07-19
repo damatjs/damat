@@ -18,9 +18,9 @@ the whole thing (chapters + packages) lives in
 ### Start here
 
 1. [Introduction](./guide/01-introduction.md) — what Damat is and the package map
-2. [Concepts — modules & the framework](./guide/02-concepts.md) — the idea and mental model
-3. [Getting started](./guide/03-getting-started.md) — install, scaffold, project structure
-4. [Configuration & environment](./guide/04-configuration.md) — `damat.config.ts` and env vars
+2. [Concepts and architecture](./guide/02-concepts.md) — modules, durable primitives, PostgreSQL, Redis, and process roles
+3. [Getting started](./guide/03-getting-started.md) — scaffold, database creation, migrations, and project structure
+4. [Configuration & environment](./guide/04-configuration.md) — `damat.config.ts`, runtime workers, and env vars
 
 ### Build
 
@@ -29,6 +29,7 @@ the whole thing (chapters + packages) lives in
 7. [Modules & services](./guide/07-modules-and-services.md)
    - 7b. [Querying & CRUD](./guide/07b-crud-reference.md) — the generated service methods, where operators, transactions
 8. [Building HTTP APIs](./guide/08-http-apis.md)
+   - 8b. [Authentication](./guide/08b-authentication.md) — provider contracts and adapters
 9. [Workflows (the saga engine)](./guide/09-workflows.md)
 10. [Redis: cache, queue, locks, rate limiting](./guide/10-redis.md)
     - 10b. [Events & background jobs](./guide/10b-events-and-jobs.md) — ephemeral events, durable delivery, jobs, inspection, recovery, and worker runtimes

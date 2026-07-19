@@ -22,7 +22,7 @@
       "id": "modules",
       "title": "Module manifest contract",
       "path": "MODULES.md",
-      "summary": "The module.json contract, registry refs, and the trust model."
+      "summary": "The damat.json contract, capability ownership, registry refs, and trust model."
     },
     {
       "id": "agents",
@@ -59,10 +59,10 @@
         {
           "id": "concepts",
           "order": 2,
-          "title": "Concepts — modules & the framework",
+          "title": "Concepts and architecture",
           "slug": "concepts",
           "path": "docs/guide/02-concepts.md",
-          "summary": "The idea behind Damat: what a module is, why the backend is shaped this way, and how the framework wires modules together."
+          "summary": "Modules, durable primitives, PostgreSQL authority, Redis acceleration, pools, and runtime roles."
         },
         {
           "id": "getting-started",
@@ -70,7 +70,7 @@
           "title": "Getting started",
           "slug": "getting-started",
           "path": "docs/guide/03-getting-started.md",
-          "summary": "Install, scaffold a new app or run the reference backend, and the project structure."
+          "summary": "Scaffold a backend, collect database credentials, create and migrate PostgreSQL, and understand the project structure."
         },
         {
           "id": "configuration",
@@ -78,7 +78,7 @@
           "title": "Configuration & environment",
           "slug": "configuration",
           "path": "docs/guide/04-configuration.md",
-          "summary": "damat.config.ts, projectConfig, and the .env cascade."
+          "summary": "damat.config.ts, runtime workers, durability policy, and the environment cascade."
         }
       ]
     },
@@ -157,14 +157,6 @@
           "slug": "events-and-jobs",
           "path": "docs/guide/10b-events-and-jobs.md",
           "summary": "Typed events and PostgreSQL-backed jobs with retries, recovery, inspection, and optional Redis wake-ups."
-        },
-        {
-          "id": "pipelines",
-          "order": 10.75,
-          "title": "Durable pipelines",
-          "slug": "pipelines",
-          "path": "docs/guide/10c-pipelines.md",
-          "summary": "PostgreSQL-backed orchestration across jobs, events, workflows, waits, branching, and child graphs."
         },
         {
           "id": "logging",

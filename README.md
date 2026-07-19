@@ -2,11 +2,11 @@
 
 **A composable backend framework for TypeScript, built on Bun.**
 
-Damat gives you a modular, production-ready backend assembled from independent,
-plug-and-play building blocks. Instead of fighting a monolithic framework's
-opinions, you compose exactly what your app needs — database layer, auth,
-billing, queues, workflows — each as a self-contained **module** you can author
-in isolation and install into any Damat app with one command.
+Damat gives you a modular backend assembled from independent, portable domain
+blades. Applications combine modules with file-based HTTP routes, in-process
+workflows, PostgreSQL-backed jobs and events, and durable, inspectable pipelines.
+PostgreSQL remains authoritative; Redis is an optional acceleration and
+application-infrastructure layer.
 
 > Built with [Bun](https://bun.sh), [Hono](https://hono.dev),
 > [Effect-TS](https://effect.website), [Better Auth](https://better-auth.com),
@@ -36,10 +36,9 @@ version only** — the per-version change history and upgrade steps live in
 ## Quick start
 
 ```bash
-# scaffold a new app (writes .env with generated secrets, git-inits, installs deps)
+# asks for PostgreSQL credentials, scaffolds, installs, creates DB, and migrates
 bunx @damatjs/damat-cli@latest create my-app
 cd my-app
-bun run db:migrate
 bun run dev
 ```
 
@@ -49,8 +48,8 @@ Or run the reference backend in this repo:
 bun install && bun run build
 cd backend/default
 cp .env.example .env
-docker-compose up -d db redis
-bun run db:migrate && bun run dev   # http://localhost:6543
+docker compose up -d db redis
+bun run db:setup && bun run dev   # http://localhost:6543
 ```
 
 Full walkthrough: **[docs/GUIDE.md](./docs/GUIDE.md)**.
@@ -59,13 +58,15 @@ Full walkthrough: **[docs/GUIDE.md](./docs/GUIDE.md)**.
 
 ## Core ideas
 
-- **Modules** — a self-contained slice (models + migrations + service + config +
-  workflows), registered in one `damat.config.ts`. Author standalone, install
-  anywhere. See [MODULES.md](./MODULES.md).
+- **Modules** — a self-contained slice that may provide models, migrations,
+  config, routes, workflows, jobs, events, and pipelines. Author standalone;
+  let the backend owner compose it. See [MODULES.md](./MODULES.md).
 - **ORM DSL** — a fluent, type-safe model definition with a real, module-aware
   migration system.
 - **Services** — base classes with auto-generated CRUD, transactions, and pooling.
-- **Workflows** — a saga engine (Effect-TS) with compensation and distributed locks.
+- **Workflows** — an in-process saga engine with compensation and distributed locks.
+- **Durable jobs and events** — PostgreSQL-backed attempts, leases, retries,
+  progress, logs, controls, and inspection.
 - **Pipelines** — durable, inspectable graphs that compose jobs, events,
   workflows, waits, branches, and child processes.
 - **File-based routing** — `route.ts` files become URL paths (Hono).
@@ -114,7 +115,7 @@ version history.
 | [`@damatjs/pipelines`](./packages/core/pipelines/README.md)            | Durable orchestration across jobs, events, workflows, and waits      |
 | [`@damatjs/logger`](./packages/core/logger/README.md)                  | Structured logging (levels, formats, file transport)                 |
 | [`@damatjs/redis`](./packages/core/redis/README.md)                    | Cache, queue, locks, sessions, rate limiting                         |
-| [`@damatjs/events`](./packages/core/events/README.md)                  | Typed event bus: subscriptions, model CRUD events, Redis broadcast   |
+| [`@damatjs/events`](./packages/core/events/README.md)                  | Typed event bus plus PostgreSQL-canonical durable event delivery     |
 | [`@damatjs/jobs`](./packages/core/jobs/README.md)                      | Background jobs: workers, retries/backoff, dead-lettering            |
 | [`@damatjs/load-env`](./packages/core/env/README.md)                   | `.env` cascade loader                                                |
 | [`@damatjs/types`](./packages/core/types/README.md)                    | Error classes & shared types                                         |
@@ -157,8 +158,16 @@ bun run dev          # dev (persistent)
 bun run lint         # lint
 bun run check-types  # typecheck
 bun run format       # prettier
-bun test             # tests
+bun run test         # isolated tests + managed PostgreSQL/Redis + coverage audit
 ```
+
+The root test runner migrates a dedicated recovery database, executes real
+SIGKILL recovery with both healthy and unavailable Redis, and rejects any
+instrumentable production source file absent from its package's LCOV report.
+`bun run check:release` adds clean-checkout, dependency vulnerability, secret,
+and deployment-security gates. The production-readiness workflow also performs
+a split-role container deployment, least-privilege checks, smoke/load probes,
+backup restoration, and runtime rollback.
 
 See [AGENTS.md](./AGENTS.md) for the repo map, conventions, and how to make
 common changes.
@@ -174,7 +183,7 @@ common changes.
 | HTTP         | Hono 4.x              |
 | ORM          | damat-orm (in-repo)   |
 | Database     | PostgreSQL + pgvector |
-| Cache/queues | Redis 7 (ioredis)     |
+| Acceleration | Redis 7 (ioredis)     |
 | Auth         | Better Auth 1.x       |
 | Workflows    | Effect-TS 3.x         |
 | Validation   | Zod 4.x               |

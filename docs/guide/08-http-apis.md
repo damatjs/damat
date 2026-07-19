@@ -119,7 +119,8 @@ are wired into the route's `validators`, and the handlers read them with
 ## Reaching services and middleware
 
 Inside a handler, fetch a module's service with `getModule(id)` and call its
-generated CRUD or domain methods (see [Modules & services](./07-modules-and-services.md)).
+generated CRUD accessors or explicit integrations (see
+[Modules & services](./07-modules-and-services.md)).
 Cross-cutting middleware lives in `src/api/middleware/`; per-route `middleware`,
 `config`, and `configs` (rate-limit / auth per method) attach from the route file
 itself.

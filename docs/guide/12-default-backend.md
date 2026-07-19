@@ -21,26 +21,27 @@ To explore it, clone the repo (see
 `backend/default/src/`. Then trace **one feature end to end** across the code
 and the matching chapter:
 
-| What to trace                     | Where it lives                      | Chapter                                                      |
-| --------------------------------- | ----------------------------------- | ------------------------------------------------------------ |
-| The `users` table definition      | `src/modules/user/models/`          | [Defining models](./05-models.md)                            |
-| The user service & generated CRUD | `src/modules/user/service.ts`       | [Modules & services](./07-modules-and-services.md)           |
-| `GET /api/users/:userId`          | `src/api/routes/users/[userId]/`    | [Building HTTP APIs](./08-http-apis.md)                      |
-| The `user-onboarding` saga        | `src/workflows/`                    | [Workflows](./09-workflows.md)                               |
-| The cross-module link             | `src/links/`                        | [Composing & linking](./17-composing-and-linking-modules.md) |
-| `reports.generate`                | `src/jobs/`                         | [Events & jobs](./10b-events-and-jobs.md)                    |
-| `user.created` + two consumers    | `src/events/`                       | [Events & jobs](./10b-events-and-jobs.md)                    |
-| `user.onboard-and-report`         | `src/pipelines/`                    | [Durable pipelines](./10c-pipelines.md)                      |
-| Atomic enqueue and publish        | `src/examples/transactionalWork.ts` | [Events & jobs](./10b-events-and-jobs.md)                    |
-| Headless operational inspection   | `src/examples/inspectWork.ts`       | [Events & jobs](./10b-events-and-jobs.md)                    |
-| Migration/API/jobs/events roles   | `docker-compose.yml`                | [Deployment](./19-deployment.md)                             |
+| What to trace                            | Where it lives                      | Chapter                                                      |
+| ---------------------------------------- | ----------------------------------- | ------------------------------------------------------------ |
+| The `users` table definition             | `src/modules/user/models/`          | [Defining models](./05-models.md)                            |
+| The user service & generated CRUD        | `src/modules/user/service.ts`       | [Modules & services](./07-modules-and-services.md)           |
+| `GET /api/users/:userId`                 | `src/api/routes/users/[userId]/`    | [Building HTTP APIs](./08-http-apis.md)                      |
+| The `user-onboarding` saga               | `src/workflows/`                    | [Workflows](./09-workflows.md)                               |
+| The cross-module link                    | `src/links/`                        | [Composing & linking](./17-composing-and-linking-modules.md) |
+| `reports.generate`                       | `src/jobs/`                         | [Events & jobs](./10b-events-and-jobs.md)                    |
+| `user.created` + two consumers           | `src/events/`                       | [Events & jobs](./10b-events-and-jobs.md)                    |
+| `user.onboard-and-report`                | `src/pipelines/`                    | [Durable pipelines](./10c-pipelines.md)                      |
+| Atomic enqueue and publish               | `src/examples/transactionalWork.ts` | [Events & jobs](./10b-events-and-jobs.md)                    |
+| Headless operational inspection          | `src/examples/inspectWork.ts`       | [Events & jobs](./10b-events-and-jobs.md)                    |
+| Migration/API/jobs/events/pipeline roles | `docker-compose.yml`                | [Deployment](./19-deployment.md)                             |
 
 If you can follow one row of that table through the code, you understand the
 framework — everything else is more of the same.
 
 The five Compose roles use the same built image. The one-shot migration role
 finishes first; API runs HTTP only, while jobs and events run as headless
-workers and pipelines runs its router/internal worker, all selected by environment variables.
+workers and pipelines runs its router/internal worker, all selected by
+environment variables.
 
 ---
 

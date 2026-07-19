@@ -50,12 +50,16 @@ need an explicit `allowUnverified: true`, and registry verification follows
 your `DAMAT_MODULE_VERIFY` policy (see
 [Installing modules](./14-installing-modules.md)).
 
+`list_installed` reads `damat.lock.json`, which remains authoritative even when
+a source module's routes, jobs, events, and pipelines are distributed across
+the backend.
+
 ## Using it
 
 Just ask: _"Find a Damat auth module and install it."_ The assistant chains
 `search_modules → module_info → add_module`, reports what changed
-(`damat.config.ts` entry, synced env keys), and reminds you to apply
-migrations:
+(copied capabilities, packages, and backend-owned integration instructions),
+and reminds you to review the wiring and apply migrations:
 
 ```bash
 bun damat-orm migrate:up

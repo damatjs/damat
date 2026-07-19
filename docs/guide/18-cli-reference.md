@@ -6,7 +6,7 @@
 
 | Command                             | Description                                                                                                                                                                                                    |
 | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `damat create <name>`               | Scaffold a new app (offline embedded templates; writes `.env` with generated secrets, git-inits, runs `bun install`). `--pin <ver>` pins `@damatjs/*`, `--no-git` / `--no-install` skip steps                  |
+| `damat create <name>`               | Scaffold a durable app, collect PostgreSQL credentials, install, create DB, and migrate. Accepts `--database-url` or individual `--database-*` fields; setup/install/git can be deferred explicitly            |
 | `damat clone <src> [dir]`           | git clone with extras: github shorthand + `#ref`, subdirectory extraction, `--fresh` (new history), `--name` (package rename), `--install`, `--depth`. Overlays the system git — clear error if git is missing |
 | `damat dev`                         | Start the dev server with hot reload                                                                                                                                                                           |
 | `damat build`                       | Type-check the whole app (`tsc --noEmit`), then bundle for production. Fails on any type error; `--no-typecheck` skips the check                                                                               |
@@ -18,7 +18,8 @@
 | `damat module remove <id>`          | Remove installer-owned files/packages, back up confirmed modified owned files, and report remaining usage. Shared integration files stay user-owned                                                            |
 | `damat module update <id>`          | Re-resolve the recorded origin and transactionally update installer-owned content                                                                                                                              |
 | `damat module list`                 | List installed modules                                                                                                                                                                                         |
-| `damat module init <name>`          | Scaffold a standalone module package                                                                                                                                                                           |
+| `damat module init <name>`          | Scaffold/install a standalone module, collect PostgreSQL credentials, create its development DB, and run module-scoped migration setup                                                                         |
+| `damat module database:setup`       | Create the development database and apply only this module's migrations                                                                                                                                        |
 | `damat module dev`                  | Run a module package as a live app                                                                                                                                                                             |
 | `damat module migration:create`     | Diff models → migration (in a module)                                                                                                                                                                          |
 | `damat module migration:run`        | Apply this module's migrations to `DATABASE_URL` (scoped to the module)                                                                                                                                        |
@@ -36,12 +37,13 @@
 
 ## `damat-orm` — migrations ([docs](../../packages/orm/cli/README.md))
 
-| Command                           | Description                  |
-| --------------------------------- | ---------------------------- |
-| `damat-orm migrate:up`            | Apply pending migrations     |
-| `damat-orm migrate:status`        | Show applied vs pending      |
-| `damat-orm migrate:create <name>` | Create a migration           |
-| `damat-orm migrate:list`          | List modules with migrations |
+| Command                           | Description                    |
+| --------------------------------- | ------------------------------ |
+| `damat-orm database:setup`        | Create DB and apply migrations |
+| `damat-orm migrate:up`            | Apply pending migrations       |
+| `damat-orm migrate:status`        | Show applied vs pending        |
+| `damat-orm migrate:create <name>` | Create a migration             |
+| `damat-orm migrate:list`          | List modules with migrations   |
 
 > `damat-orm` is migrations-only. Use `damat codegen <module>` in an app or
 > `damat module codegen` in a module package for type generation.
@@ -56,8 +58,8 @@ Scaffolding lives in the `damat` CLI — `damat create` for apps and
 `damat module init` for standalone modules:
 
 ```bash
-bunx @damatjs/damat-cli@latest create my-app        # new project (writes .env, git-inits, installs deps)
-bunx @damatjs/damat-cli@latest module init my-mod   # new standalone module (offline local scaffold)
+bunx @damatjs/damat-cli@latest create my-app        # app + .env + install + DB + all migrations
+bunx @damatjs/damat-cli@latest module init my-mod   # module + .env + install + module DB
 ```
 
 ---

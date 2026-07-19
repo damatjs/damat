@@ -122,7 +122,8 @@ export default defineConfig({
 });
 ```
 
-Run `damat-orm migrate:up` after enabling pipelines. The pipeline worker
+Run `bun run db:setup` for a fresh backend or `bun run db:migrate` after
+enabling pipelines. The pipeline worker
 selection starts one router plus the internal action/workflow job worker. A
 direct job node still needs a job worker for that job's queue; an event node
 needs the durable event definition and, for delivery, event workers.

@@ -11,20 +11,21 @@ export const startSection: GuideSectionDefinition = {
     },
     {
       id: "concepts",
-      title: "Concepts — modules & the framework",
+      title: "Concepts and architecture",
       summary:
-        "The idea behind Damat: what a module is, why the backend is shaped this way, and how the framework wires modules together.",
+        "Modules, durable primitives, PostgreSQL authority, Redis acceleration, pools, and runtime roles.",
     },
     {
       id: "getting-started",
       title: "Getting started",
       summary:
-        "Install, scaffold a new app or run the reference backend, and the project structure.",
+        "Scaffold a backend, collect database credentials, create and migrate PostgreSQL, and understand the project structure.",
     },
     {
       id: "configuration",
       title: "Configuration & environment",
-      summary: "damat.config.ts, projectConfig, and the .env cascade.",
+      summary:
+        "damat.config.ts, runtime workers, durability policy, and the environment cascade.",
     },
   ],
 };
