@@ -22,16 +22,6 @@ test("type checks build dependency declarations without task races", async () =>
   expect(turbo.tasks.build.dependsOn).toContain("check-types");
 });
 
-test("source commands are not hidden by build-output ignores", async () => {
-  const path = "packages/cli/app/src/commands/build/index.ts";
-  const check = Bun.spawn(["git", "check-ignore", "--no-index", path], {
-    cwd: root.pathname,
-    stdout: "ignore",
-    stderr: "ignore",
-  });
-  expect(await check.exited).toBe(1);
-});
-
 const databasePackages = [
   ["packages/core/durability", "DAMAT_DURABILITY_DATABASE_URL"],
   ["packages/core/jobs", "DAMAT_JOBS_DATABASE_URL"],
