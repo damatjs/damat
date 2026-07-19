@@ -11,7 +11,7 @@ beforeEach(() => {
 
 const runCreate = (args: string[], options: Record<string, unknown> = {}) => {
   const { ctx, logger } = createContext(
-    { git: true, install: true, ...options },
+    { git: true, install: true, databaseSetup: false, ...options },
     { args, cwd: "/base" } as never,
   );
   return { result: createCommand.handler(ctx), logger };
@@ -42,5 +42,6 @@ describe("damat create — git/install flags and failures", () => {
     expect((await result).exitCode).toBe(0);
     const info = logger.info.mock.calls.map((c) => String(c[0])).join("\n");
     expect(info).toContain("bun install");
+    expect(info).toContain("bunx @damatjs/damat-cli@latest module add");
   });
 });

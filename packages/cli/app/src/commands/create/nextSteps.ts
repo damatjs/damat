@@ -1,10 +1,19 @@
-export function createNextSteps(name: string, installed: boolean): string {
+export function createNextSteps(
+  directory: string,
+  installed: boolean,
+  databaseReady: boolean,
+): string {
   return [
     "Next steps:",
-    `  cd ${name}`,
+    `  cd ${directory}`,
     ...(installed ? [] : ["  bun install"]),
-    "  # .env was written with generated secrets — point DATABASE_URL at your postgres",
+    ...(databaseReady
+      ? []
+      : [
+          "  bun run db:setup                # create DB + apply system migrations",
+        ]),
+    "  # .env contains the selected DATABASE_URL and generated secrets",
     "  bun run dev                      # http://localhost:6543/api/hello",
-    "  bunx damat module add <source>   # install modules (registry, path, or git)",
+    "  bunx @damatjs/damat-cli@latest module add <source>",
   ].join("\n");
 }

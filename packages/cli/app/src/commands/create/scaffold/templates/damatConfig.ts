@@ -31,6 +31,21 @@ export default defineConfig({
       corsConfig: process.env.FRONTEND_CORS,
     },
   },
+  runtime: {
+    mode: "all",
+    workers: ["jobs", "events", "pipelines"],
+    shutdownGraceMs: 30_000,
+  },
+  services: {
+    durability: {
+      inspectionVisibility: "metadata",
+      retentionMs: 90 * 24 * 60 * 60 * 1_000,
+      acceleration: { enabled: true },
+    },
+    jobs: { queue: "default", concurrency: 2 },
+    events: { durable: { concurrency: 2 } },
+    pipelines: { queue: "pipelines", concurrency: 2, routerBatchSize: 100 },
+  },
   // Installed modules are registered here by \`damat module add\`.
   modules: {},
 });

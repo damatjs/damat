@@ -16,13 +16,24 @@ New applications include a receiver `damat.json` with accepted capability
 targets for modules, routes, workflows, jobs, events, pipelines, links, tests,
 migrations, models, and types. The receiver file is optional at install time.
 
+Backend creation now collects a complete PostgreSQL URL or individual host,
+port, user, hidden password, and database fields. After scaffolding it installs,
+creates the selected database when absent, and runs the shared durability,
+jobs, durable-event, and pipeline migrations. Generated apps enable those
+workers in all mode and run the idempotent database setup before development.
+Their README and completion output describe the same database-first bootstrap,
+PostgreSQL/Redis responsibility split, and full module CLI invocation.
+
 ## Breaking
 
-- None for `damat` users; the executable composes this capability.
+- Fresh scaffolds enable durable jobs, events, and pipelines by default and
+  therefore require PostgreSQL. Use `--no-database-setup` to defer provisioning.
 
 ## Action required
 
 Custom CLIs can add `appCliCapability` to their capability list.
+Existing scaffolds can add `db:setup: damat-orm database:setup` and use it before
+their first runtime start.
 
 ## References
 

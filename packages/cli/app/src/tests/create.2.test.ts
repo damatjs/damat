@@ -12,7 +12,7 @@ beforeEach(() => {
 
 const runCreate = (args: string[], options: Record<string, unknown> = {}) => {
   const { ctx, logger } = createContext(
-    { git: true, install: true, ...options },
+    { git: true, install: true, databaseSetup: false, ...options },
     { args, cwd: "/base" } as never,
   );
   return { result: createCommand.handler(ctx), logger };
@@ -60,6 +60,12 @@ describe("damat create — scaffold", () => {
     expect(pkg.name).toBe("my-api");
     expect(pkg.dependencies["@damatjs/framework"]).toBe(`^${CLI_VERSION}`);
     expect(pkg.dependencies["@damatjs/damat-cli"]).toBe(`^${CLI_VERSION}`);
+    expect(pkg.dependencies["@damatjs/durability"]).toBe(`^${CLI_VERSION}`);
+    expect(pkg.dependencies["@damatjs/events"]).toBe(`^${CLI_VERSION}`);
+    expect(pkg.dependencies["@damatjs/jobs"]).toBe(`^${CLI_VERSION}`);
+    expect(pkg.dependencies["@damatjs/pipelines"]).toBe(`^${CLI_VERSION}`);
+    expect(pkg.scripts["db:setup"]).toBe("damat-orm database:setup");
+    expect(pkg.scripts.dev).toContain("db:setup");
   });
 
   test("--pin overrides the dependency range (and `latest` stays bare)", async () => {
@@ -74,7 +80,11 @@ describe("damat create — scaffold", () => {
   });
 
   test("--dir overrides the target directory", async () => {
-    await runCreate(["my-api"], { dir: "apps/backend" }).result;
+    const { result, logger } = runCreate(["my-api"], { dir: "apps/backend" });
+    await result;
     expect(written("/base/apps/backend/package.json")).toBeDefined();
+    expect(String(logger.info.mock.calls.at(-1)?.[0])).toContain(
+      "cd apps/backend",
+    );
   });
 });

@@ -1,504 +1,282 @@
 # AGENTS.md — building this Damat module
 
-This repository is a **standalone Damat module**: a single, self-contained,
-shareable feature (models + service + config + migrations, and optionally
-workflows + HTTP routes) that any Damat app can install with one command. You are
-working on **this one module**.
+This repository is one standalone, portable Damat module. It owns a single
+domain concern and may provide models, migrations, config, routes, workflows,
+jobs, events, pipelines, links, and tests. It does not decide how a host
+application composes or operates those capabilities.
 
-> **The rule that shapes everything: a module is a single-purpose blade.** It does
-> one thing well and stays independent. It must **not** import another module's code
-> or decide what it is plugged into or what it "needs". If it pairs naturally with
-> another module, leave a **non-binding `pairsWith` hint** in `damat.json`. It
-> MAY also ship a **dormant link file** under `src/links/` (a `defineLink` the
-> _backend owner_ activates by migrating) — but it never imports the other module and
-> never creates the connection itself. Building the app (what to combine, when to
-> activate links) is their job; building the blade is yours.
+## Start here
 
----
+- Use Bun only: `bun install`, `bun run <script>`, and `bun test`.
+- Use strict TypeScript and ESM.
+- Keep every code file at 100 physical lines or fewer.
+- Read `damat.json` before changing package layout or capabilities.
+- Run `bun run database:setup` before database-backed development.
 
-## Prerequisites
-
-- **Bun** — this is a Bun project. Use `bun` / `bunx`, never npm/yarn/pnpm.
-  Run `bun install` first.
-- A **PostgreSQL** URL in `.env` (`DATABASE_URL=…`) to run the module or to run
-  database-backed tests. Copy `.env.example` to `.env`.
-- The `damat` CLI comes from the `@damatjs/damat-cli` dev dependency; the
-  package's scripts wrap it, so you normally run `bun run <script>`.
-
-## Layout
-
-```
-.
-├── package.json          # @modules/<name>; scripts wrap the damat CLI
-├── tsconfig.json
-├── module.config.ts      # defineModuleConfig — module-local runtime config
-├── .env.example          # DATABASE_URL
-├── damat.json            # portable install + module contract
-└── src/
-    ├── index.ts          # defineModule(...) — the module's public definition
-    ├── service.ts        # ModuleService({ models, credentialsSchema }); models = collectModels([...])
-    ├── config/
-    │   ├── schema/index.ts  # zod schema for this module's credentials
-    │   ├── load.ts          # read credentials from env
-    │   └── index.ts         # default export { schema, load }
-    ├── models/           # ORM model definitions (your tables)
-    ├── migrations/       # SQL migrations (generated)
-    ├── types/            # GENERATED (overwritten each run): row types + zod + registry.ts — don't hand-edit
-    ├── lib/              # everything the service calls: providers (one per file), pure helpers in
-    │                     #   lib/utils/, category-D gateway ops — there is NO top-level src/utils/
-    ├── workflows/        # GENERATED, flat <table>/{steps,workflows} + index.ts barrels (scaffold-once — edit freely)
-    └── api/routes/       # GENERATED routes, flat <table>/, split into api/validator/query/middleware/route (scaffold-once)
-└── tests/contract.test.ts
-```
+The generated `.env` contains the selected development `DATABASE_URL`.
+Module initialization either accepts a complete URL or asks for host, port,
+user, password, and database name. It creates the database and applies this
+module's migrations by default.
 
 ## Commands
 
 ```bash
-bun run dev               # run the module standalone (its own server + DB)
-bun run migration:create  # diff models -> a SQL migration in src/migrations
-bun run migration:run     # apply this module's migrations to DATABASE_URL
-bun run migration:status  # show applied vs pending migrations for DATABASE_URL
-bun run codegen           # generate row types + zod schemas
-bun run validate          # check the damat.json contract + registry-readiness
-bun run typecheck         # tsc --noEmit
-bun run build             # type-check + contract validate (the release gate)
-bun test                  # the contract test + your own tests
+bun run database:setup    # create dev DB + apply only this module's migrations
+bun run migration:create # generate the next migration from model changes
+bun run migration:run    # apply this module's pending migrations
+bun run migration:status
+bun run codegen           # rows, zod, registry, and missing CRUD slices
+bun run dev               # database preflight + standalone HTTP runtime
+bun run validate          # manifest and publishing readiness
+bun run typecheck
+bun run build             # typecheck + validate
+bun test
 ```
 
----
+Standalone database setup never applies the assembled backend's shared
+durability, jobs, durable-event, or pipeline catalogs. The backend owner applies
+those after installation.
 
-## The build flow — codegen is your propeller, build only what's missing
+## The blade rule
 
-A module is **codegen-first**. You do **not** hand-write CRUD. The fast path:
+This module must remain independent:
 
-1. **Model the data** — one table per file in `src/models/`.
-2. **`bun run codegen`** — from your models it generates the WHOLE basic slice:
-   `src/types/` (row types + zod + `registry.ts` that types `getModule`) and,
-   **scaffold-once**, the per-operation `src/workflows/<table>/` (steps +
-   workflows) and `src/api/routes/<table>/` (split route files) — both flat by
-   table; `damat module add` adds the `<moduleId>/` segment on install. That is your
-   working foundation — route → workflow → step → service, already wired.
-3. **Build only what's missing ON TOP** of what codegen made: put real logic in
-   the generated steps (each ships a compensation/fallback hook), add custom
-   non-CRUD workflows/steps next to the generated ones, add third-party
-   integrations on the service (SDK code in `src/lib/`), and pure helpers in
-   `src/lib/utils/`.
-4. **Re-run `codegen`** after any model change — types/registry are overwritten;
-   your step/workflow/route edits are kept (scaffold-once).
+- It owns only its own models and migrations.
+- It never imports another module's implementation.
+- It never foreign-keys into another module's table.
+- It never selects host workers, concurrency, queues, retention, Redis, auth, or
+  deployment policy.
+- It never edits host config, aliases, environment files, barrels, or call sites.
+- It may use `pairsWith` as a non-binding suggestion.
+- It may ship a dormant link template; the host chooses whether to activate it.
 
-So: **models → codegen → extend.** The generated slice is your propeller — extend
-it in place. Never reproduce CRUD by hand, and never create a parallel
-route/step/workflow that competes with the generated one — extend it.
+Installation, composition, shared migrations, runtime roles, dashboards, and
+deployment belong to the backend owner.
 
-## Hard rules — never break these (so the code always "fits")
+## Layout
 
-- **Layering is one-way: API route → workflow → step → service.**
-  - A **route** ONLY calls a workflow (`await workflow.execute(input)`) and shapes
-    the response. It NEVER calls the service, NEVER holds business logic.
-  - Only a **step** touches the service, via the typed `getModule("<name>")`.
-  - **The step does the work with the scaffolded CRUD accessors directly**
-    (`getModule("<name>").<table>.create/update/find/…`) and owns its compensation. If a
-    step can do the action with a handful of accessor calls and undo them itself, it is NOT
-    a service/gateway function — the step just calls the accessors. A **service method**
-    (a one-line delegate to a `src/lib/gateway` body) is reserved for logic **beyond CRUD** —
-    a third-party API call, or a genuinely-complex many-table operation — and the gateway is
-    imported **only** by the service. Never wrap an accessor in a second function (no
-    `recordEvent` over `eventEvents.create`). The step owns the **revert**.
-- **Never re-wrap what the service already gives you.** `ModuleService({ models })`
-  already exposes the full per-model CRUD surface — `create`, `createMany`, `upsert`,
-  `upsertMany`, `find`, `findById`, `findOne`, `findMany`, `update`, `updateOne`,
-  `delete` / `softDelete` (with `cascade`), `restore`, `count`, `exists`. NEVER add a
-  service method that just forwards to one of these — no `getUser` that calls `find`,
-  no `listUsers` that calls `findMany`. A step calls
-  `getModule("<name>").<model>.find(...)` (etc.) **directly**. The service gains
-  **only new, model-specific** logic the generated CRUD can't do — e.g. an `ai`
-  model's provider calls: the provider catalog + request/parse detail lives in
-  `src/lib/<provider>.ts`, and the service method just selects the provider and
-  invokes it (then may persist via the accessor). Litmus test: if a method body is a
-  single CRUD call, delete it and call the accessor from the step.
-- **The service stays small — logic lives in `src/lib/`.** It is data + new
-  integrations ONLY (the generated CRUD plus third-party calls as do/reverse pairs),
-  mostly **one-line delegates** to `src/lib/` functions. No business logic, no
-  orchestration, no CRUD passthroughs. There is no top-level `src/utils/`.
-- **No file over 100 lines. Readability is the highest priority.** Split by concern:
-  one model per file, one integration per `src/lib/<provider>.ts`, one helper-group
-  per `src/lib/utils/<concern>.ts`. The moment a file holds more than one idea — or
-  crosses ~100 lines — split it; extract a long function's sub-steps into sibling
-  files/folders so each piece reads on its own. A long file is a refactor signal,
-  never a "comment it better" one.
-- **Import from the real packages** (see below), never the `@damatjs/module`
-  umbrella.
-- **Stay a blade:** never import another module's code. You MAY ship a **dormant
-  link file** under `src/links/` (see "Shipping a link" below) — it creates nothing
-  until the backend owner migrates it.
+```text
+.
+├── damat.json             # identity, install capabilities, runtime paths
+├── module.config.ts       # standalone runtime overrides
+├── package.json
+├── .env                   # selected local DATABASE_URL; ignored
+├── .env.example
+├── src/
+│   ├── index.ts           # defineModule(...)
+│   ├── service.ts         # models + ModuleService subclass
+│   ├── config/            # credentials schema and loader
+│   ├── models/            # one owned table per file
+│   ├── migrations/        # generated schema history
+│   ├── types/             # generated; do not edit
+│   ├── lib/               # provider implementations and pure helpers
+│   ├── workflows/         # local sagas; CRUD slice is scaffolded once
+│   ├── api/routes/        # HTTP surface; CRUD slice is scaffolded once
+│   ├── jobs/              # optional durable job definitions
+│   ├── events/            # optional event definitions/consumers
+│   ├── pipelines/         # optional durable graphs
+│   └── links/             # optional dormant link templates
+└── tests/
+```
 
-## Where each kind of code goes
+Optional directories need not contain placeholder code. Keep `damat.json`
+capability paths synchronized with what the package actually provides.
 
-| You are adding…                               | It goes in…                                                                         | Notes                                                                                                              |
-| --------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| a table                                       | `src/models/<name>.ts`                                                              | one model per file                                                                                                 |
-| CRUD (create / find / update / delete / list) | **GENERATED — don't hand-write**                                                    | `codegen` scaffolds the steps/workflows/routes                                                                     |
-| business logic / orchestration                | the generated `src/workflows/<table>/` steps & workflows (and your own custom ones) | steps call the service; workflows orchestrate steps                                                                |
-| a third-party SDK (Stripe, AI provider, …)    | `src/lib/<provider>.ts`, surfaced on the **service** as do/reverse methods          | the service is the ONLY place integrations live                                                                    |
-| pure helpers / formatting / mappers           | `src/lib/utils/<concern>.ts`                                                        | small, one concern per file (no top-level `src/utils/`)                                                            |
-| the HTTP surface                              | **GENERATED** `src/api/routes/<table>/` — handlers ONLY call workflows              | never call the service from a route                                                                                |
-| an optional dormant link                      | `src/links/models/<from>-<to>.ts` (`defineLink`)                                    | hand-written; splits into the app's `src/links/<moduleId>/` on install; ships no migration (see "Shipping a link") |
+## Codegen-first flow
 
-## The authoring surface
+1. Add or change models.
+2. Include them with `collectModels([...])`.
+3. Run `bun run migration:create` and review the SQL.
+4. Run `bun run database:setup` or `migration:run`.
+5. Run `bun run codegen`.
+6. Extend generated workflows, steps, validators, and routes in place.
+7. Add only domain behavior the generated surface cannot provide.
+8. Test, build, and validate.
 
-Import each symbol from its **real** package — so the code fits unchanged when an
-app pulls the module in:
+Codegen replaces `src/types/` and registry typing. It creates missing CRUD
+workflow/route files once and preserves edits on later runs. Do not create a
+second CRUD path beside the generated one.
+
+## Layering
+
+Use one direction:
+
+```text
+route → workflow → step → service → model accessor / provider
+```
+
+A route validates and shapes HTTP. A workflow orchestrates. A step performs the
+action and owns compensation. A service exposes generated CRUD and intentional
+new provider/domain operations. Provider SDK details and pure helpers belong in
+small `src/lib/` files.
+
+## Generated CRUD
+
+`ModuleService({ models })` supplies typed accessors with:
+
+- `create`, `createMany`, `upsert`, and `upsertMany`;
+- `find`, `findById`, `findOne`, and `findMany`;
+- `update`, `updateOne`, `delete`, `softDelete`, and `restore`;
+- `count`, `exists`, and transactions.
+
+Never add a service method that merely forwards to one accessor. Plain CRUD
+modules correctly use an empty service subclass. Add methods only for genuinely
+new integration or complex domain behavior, and keep their implementation in
+`src/lib/`.
+
+## Imports
+
+Import from the package that owns the API:
 
 ```ts
 import { defineModule, ModuleService } from "@damatjs/services";
 import { getModule } from "@damatjs/framework";
-import { model, columns, collectModels } from "@damatjs/orm-model";
+import type { RouteHandler } from "@damatjs/framework/router";
+import { collectModels, columns, model } from "@damatjs/orm-model";
 import { createStep, createWorkflow, Effect } from "@damatjs/workflow-engine";
-import type { RouteHandler, RouteValidator } from "@damatjs/framework/router";
+import { defineJob } from "@damatjs/jobs";
+import { defineDurableEvent, defineDurableEventHandler } from "@damatjs/events";
+import { definePipeline } from "@damatjs/pipelines";
 import { z } from "@damatjs/deps/zod";
 ```
 
-`@damatjs/module` itself now carries only the contract/config/runtime/tooling
-(`defineModuleConfig`, `bootModule`/`withModule`, `validateModuleDir`, …) — it does
-**not** re-export link helpers. To ship a dormant link, import `defineLink` /
-`collectLinkModels` from `@damatjs/framework` (the same surface the app uses) in a
-`src/links/models/<a>-<b>.ts` file. See "Shipping a link" below.
+`@damatjs/module` owns manifest, standalone runtime/harness, migration/codegen
+tooling, and registry APIs. It is not the umbrella for all authoring packages.
 
-### Portable import aliases (use exactly what codegen emits)
+## Portable imports
 
-Your imports must resolve **identically** standalone here AND after `damat module add`
-inserts `src/` into a host app. The host keeps some parts inside the module dir and
-moves others out, so two `tsconfig.json` aliases split by destination:
+Code must resolve both here and after source installation:
 
-- **Stay-inside → `@<module>/*`** — `types`, `config`/`schema`, `service`, `lib`, and
-  `models` stay under `src/modules/<module>/`. Address them by the module-name alias:
-  ```ts
-  import type { Widgets } from "@widget/types";
-  import { schema } from "@widget/config/schema";
-  import type { WidgetService } from "@widget/service";
-  ```
-  Types stay inside — they are never moved out.
-- **Move-out → the bare `@workflows` barrel** — `workflows/` and `api/routes/`
-  relocate into the app's top-level `src/workflows/` / `src/api/routes/` on install.
-  Your module ships both trees **FLAT** (`workflows/<table>`, `api/routes/<table>`); the
-  `<moduleId>/` segment is added by `damat module add`, never by your codegen. Because the
-  folder is flat, you don't reference workflows by a deep path — you reach them through the
-  recursive `index.ts` barrels, where the bare barrel root `@workflows` re-exports every
-  workflow:
-  ```ts
-  // route → workflow (crosses trees) — from the barrel root:
-  import { createWidgetsWorkflow } from "@workflows";
-  // workflow → step (same <table> subtree, relocates together) — relative:
-  import { createWidgetsStep } from "../steps/createWidgets";
-  ```
-  `@workflows` resolves to `src/workflows/index` the same standalone and after install
-  (tsconfig has a non-wildcard `"@workflows": ["./src/workflows"]` entry), so it is
-  install-stable with no module-id baked into the specifier. Barrels are auto-generated
-  (codegen, `damat module add`, or `damat barrel`) — **never hand-edit an `index.ts` barrel;
-  add the file and re-run.**
-- **Never use `@/` in module code.** The host binds `@/` → the _app_ root, so a moved-out
-  file importing `@/types` would silently resolve to the app's `src/types`, not yours.
-- **Sibling re-exports stay relative** (`./api`, `./create<Pascal>`, `./validator`,
-  `../steps/<op>`) — files that always move together keep relative paths.
-- The **only** cross-module specifier you'll see is in codegen-generated link augmentation
-  (`<table>.links.ts`), which imports the linked module's types via `@<other>/types` — you
-  never hand-write it.
+- Use `@<module>/*` for files that stay inside the module.
+- Routes import workflows through the bare `@workflows` barrel.
+- Workflows import sibling steps relatively.
+- Never use `@/`; the host application owns it.
+- Never hand-edit generated `index.ts` barrels.
 
-Codegen emits these specifiers for you. When you **hand-write** a file, use the SAME
-specifiers codegen emits — reach workflows via the bare `@workflows` barrel, a step
-via its relative `../steps/<op>` sibling, and types via `@<module>/types`; don't
-invent a new alias.
+## Models
 
-## Building the module
+Define one table per file with `@damatjs/orm-model`. Intra-module relations
+target the owned table name. A conceptual reference to another module is a plain
+identifier, not an ORM relation or foreign key.
 
-### 1. Models (`src/models/`)
+Use `collectModels([...])` so accessor keys derive consistently from table
+names.
 
-Use the `@damatjs/orm-model` DSL (`model` / `columns`). Reference
-relations only to your **own** tables, by table name. Never reference another
-module's tables in a model relation — a cross-module connection is a separate,
-dormant **link file** (see "Shipping a link"), never a model relation.
+## Service and credentials
 
-```ts
-import { model, columns } from "@damatjs/orm-model";
+The service extends `ModuleService({ models, credentialsSchema })`. Credentials
+are read in `src/config/load.ts`, validated by the schema, and declared in
+`damat.json.module.env`.
 
-export const Widget = model("widgets", {
-  id: columns.id({ prefix: "wgt" }).primaryKey(),
-  name: columns.text(),
-  ownerId: columns.text(), // a plain id, NOT a foreign key to another module
-})
-  .indexes([columns.indexes().columns(["name"])])
-  .timestamps();
-```
+Do not read `process.env` ad hoc from services, workflows, jobs, events, or
+pipelines. Do not put host secrets in source or the manifest.
 
-Register every model in `src/service.ts`'s `models` map.
+## Workflows
 
-### 2. Service (`src/service.ts`)
+Use `createStep` for forward and compensation behavior and `createWorkflow`
+for a local saga. A workflow is appropriate when completed steps must compensate
+in reverse after a failure. It does not persist the outer process across a crash.
 
-`ModuleService({ models, credentialsSchema })` auto-generates CRUD for each model
-(keyed by its map name): `create` / `createMany` / `upsert` / `upsertMany` /
-`find` / `findById` / `findOne` / `findMany` / `update` / `updateOne` / `delete`
-(optional `cascade`) / `softDelete` (optional `cascade`) / `restore` / `count` /
-`exists`, plus `this.transaction(cb)`.
+## Durable capability providers
 
-**Pass models as an ARRAY via `collectModels`** — it derives each accessor key
-from the model's TABLE NAME (camelCased, no pluralizing), so you never hand-write
-a redundant key: `model("items")` → `service.items`, `model("ai_sessions")` →
-`service.aiSessions`. The codegen scaffolder wires generated steps to
-`service.<camelTable>`, so the key (= table name) is the single source of truth.
+This module may ship stable definitions:
 
-The service is the **data + new-integration layer only**. The CRUD above is
-already generated — **never add a method that re-exports it** (no `getWidget`
-wrapping `find`, no `listWidgets` wrapping `findMany`); steps call
-`service.<model>.find(...)` directly. The service gains **only new, model-specific**
-methods the CRUD can't do — third-party calls where the SDK import + provider
-detail live in `src/lib/<provider>.ts` and the method just selects and invokes
-the provider (do/reverse pairs so steps can compensate). Business logic does
-**not** live here; it lives in steps/workflows (route → workflow → step → service).
+- jobs for deferred retryable units;
+- events and named durable consumers for facts;
+- pipelines for persisted waits, branches, joins, loops, signals, jobs, events,
+  workflows, and bounded children.
 
-**Empty-gateway baseline.** A plain-CRUD module has **no service methods and no
-`lib/gateway`** — `ModuleService({ models })` already covers every operation, so the empty
-body below **is** the finished service, not an unfinished one. The step does CRUD-shaped
-work with the accessors directly. Add a `lib/gateway` function (taking the service as its
-first arg) plus a **one-line** service delegate ONLY for logic **beyond CRUD** — a
-third-party API call, or a genuinely-complex operation touching many tables. The body lives
-in `lib/gateway`, imported **only** by the service; the step calls `service.method(...)`.
-Never wrap an accessor in a second function (no `recordEvent` over `eventEvents.create`).
-"Every exemplar has a gateway, so I must invent one" is the failure to avoid — see
-`spec/MODULE-STANDARDS.md`.
+Definitions must load before backend bootstrap. The host chooses service config,
+worker roles, queues, concurrency, retention, Redis, and operational routes.
+Document required wiring in `install.instructions`.
 
-```ts
-import { ModuleService } from "@damatjs/services";
-import { collectModels } from "@damatjs/orm-model";
-import { schema } from "@widget/config/schema";
-import { Widget } from "@widget/models/widget";
+## `damat.json`
 
-export const models = collectModels([Widget]); // -> { widgets: Widget }
-
-export class WidgetService extends ModuleService({
-  models,
-  credentialsSchema: schema,
-}) {
-  // Plain CRUD ⇒ leave this body EMPTY — that is the finished service, not a stub.
-  // NO CRUD passthroughs — `service.widgets.find(...)` already exists; call it
-  // from steps. Add ONLY new model-specific integrations, each in @widget/lib/<x>:
-  //   import { charge, refund } from "@widget/lib/stripe";
-  //
-  // e.g. an `ai` model: providers + request/parse detail live in @widget/lib/<provider>;
-  //   the method just picks the provider and calls it (then persists via the accessor):
-  //   async complete(input) {
-  //     const provider = pickProvider(this.credentials);   // @widget/lib/providers
-  //     return provider.complete(input);                    // @widget/lib/<provider>
-  //   }
-}
-```
-
-### 3. Config / credentials (`src/config/`)
-
-`schema/index.ts` is a zod schema for the config your module needs; `load.ts`
-reads it from `process.env`; `index.ts` exports `{ schema, load }`. Declare any
-env vars in `damat.json`'s `module.env` array so installers can report them.
-
-```ts
-// src/config/schema/index.ts
-import { z } from "@damatjs/deps/zod";
-export const schema = z.object({ apiKey: z.string().min(16) });
-export type schemaType = z.infer<typeof schema>;
-
-// src/config/load.ts
-export const load = (env: NodeJS.ProcessEnv) => ({
-  apiKey: env.WIDGET_API_KEY ?? "",
-});
-```
-
-### 4. Entry (`src/index.ts`)
-
-Wires the service + credentials into a module definition. The `ModuleRegistry`
-augmentation that makes `getModule("<name>")` typed is **generated** into
-`src/types/registry.ts` by codegen — you don't hand-author it (and there is no
-`accessor.ts`; reach the service with the typed `getModule("<name>")`).
-
-```ts
-import { defineModule } from "@damatjs/services";
-import { WidgetService, models } from "./service";
-import credentials from "./config";
-
-export const MODULE_ID = "widget";
-export { WidgetService, models };
-
-export default defineModule(MODULE_ID, {
-  service: WidgetService,
-  credentials: credentials.load,
-});
-```
-
-### 5. Migrate + generate types
-
-After changing models: `bun run migration:create`, review the SQL, then
-`bun run codegen`. To test against a real database, set `DATABASE_URL` and run
-`bun run migration:run` to apply this module's migrations; `bun run
-migration:status` shows which are applied vs pending.
-
-### 6. Workflows & routes (generated)
-
-`bun run codegen` scaffolds a per-operation CRUD slice from your models —
-`src/workflows/<table>/{steps,workflows}/…` (flat by table; the `<moduleId>/`
-segment is added on install — see _Portable import aliases_ above) and split routes
-under `src/api/routes/<table>/…` — **scaffold-once** (your edits survive). The layering
-is route → workflow → step → service. A single-step workflow is just
-`(input, ctx) => myStep(input, ctx)` (steps are directly callable); for
-multi-step, compose them in `Effect.gen` with `yield* myStep(input, ctx)`
-(`yield*` is just Effect's `await` — it runs the step and binds its result).
-A step takes an optional third arg to override retry/timeout for that one call —
-`myStep(input, ctx, { timeoutMs: 15_000, retry: { maxAttempts: 3 } })` — layered
-over the step's own `createStep(..., { timeoutMs, retry })` defaults. Only steps
-touch the service, via the typed `getModule("<name>")`. Add custom (non-CRUD)
-workflows alongside the generated ones.
-
-A route ONLY calls a workflow — never the service, never business logic:
-
-```ts
-// ✅ api.ts — the route just calls the workflow and shapes the response
-export const POST: RouteHandler = async (c) => {
-  const result = await createWidgetsWorkflow.execute(await c.req.json());
-  if (!result.success)
-    return c.json({ success: false, error: result.error?.message }, 500);
-  return c.json({ success: true, data: result.result }, 201);
-};
-
-// ❌ NEVER do this in a route — no getModule/service, no business logic here
-export const POST: RouteHandler = async (c) => {
-  const svc = getModule("widget"); // ❌ route reaching the service
-  if (await svc.widgets.find(/* … */)) {
-    /* ❌ logic */
-  }
-  return c.json(await svc.widgets.create({ data: await c.req.json() })); // ❌
-};
-```
-
-In source mode, `damat module add` copies the declared capabilities. It reports
-host wiring locations but never edits shared config, barrels, env, or call sites.
-
----
-
-## The `damat.json` contract
-
-This is what makes the module installable and discoverable.
-
-| Field                                      | Purpose                                              |
-| ------------------------------------------ | ---------------------------------------------------- |
-| `schemaVersion`, `kind`, `name`, `version` | Universal identity. `kind` is `module`.              |
-| `install.default`                          | Default mode; source is recommended.                 |
-| `install.provides`                         | Named capability paths copied by source mode.        |
-| `install.packages`                         | Package dependencies required by the artifact.       |
-| `install.instructions`                     | Advisory host wiring and cleanup guidance.           |
-| `module`                                   | Module paths, env, registry fields, and `pairsWith`. |
-
-**Do not** add a `modules` (hard dependency) array unless it is genuinely
-unavoidable — a module should stay self-contained. To suggest a relationship, use
-`pairsWith`; the backend owner decides what to actually install and link.
+The manifest uses the Damat schema envelope:
 
 ```jsonc
 {
+  "$schema": "https://damat.dev/schemas/damat-v1.json",
   "schemaVersion": 1,
   "kind": "module",
-  "name": "user-management",
-  "version": "0.1.0",
+  "name": "inventory",
+  "version": "1.0.0",
   "install": {
+    "modes": ["source"],
     "default": "source",
-    "provides": { "module": { "from": "src/**" } },
+    "provides": {
+      "module": { "from": "src/**", "fallbackTo": "src/modules/{id}" },
+      "routes": {
+        "from": "src/api/routes/**",
+        "fallbackTo": "src/api/routes/{id}",
+      },
+      "jobs": { "from": "src/jobs/**", "fallbackTo": "src/jobs/{id}" },
+    },
+    "usageHints": [{ "token": "inventory" }],
+    "instructions": {
+      "add": ["Register/import inventory capabilities, then migrate."],
+    },
   },
   "module": {
-    "description": "Workspaces, teams, and memberships.",
-    "pairsWith": ["user"],
+    "description": "Stock and reservations.",
+    "models": "./src/models",
+    "migrations": "./src/migrations",
+    "routes": "./src/api/routes",
+    "jobs": "./src/jobs",
+    "env": [],
+    "pairsWith": ["catalog"],
+    "registry": {
+      "namespace": "acme",
+      "license": "MIT",
+      "keywords": ["inventory"],
+    },
   },
 }
 ```
 
+Use `pairsWith` instead of hard module dependencies unless the dependency is
+unavoidable. Keep provider capabilities and module paths honest.
+
+## Dormant links
+
+A module may ship a `defineLink` file under
+`src/links/models/<from>-<to>.ts`. Import `defineLink` from
+`@damatjs/framework`, name the other module by identity, and import none of its
+code. Ship no link migration. The backend owner reviews and activates it.
+
 ## Testing
 
-`tests/contract.test.ts` validates the `damat.json` contract. For behavior, use
-the harness — no app or server needed:
+Use `withModule` for database behavior without an app:
 
 ```ts
-import { describe, expect, test } from "bun:test";
 import { withModule } from "@damatjs/module";
-import mod from "../src";
+import module from "../src";
 
-describe.skipIf(!process.env.DATABASE_URL)("widget", () => {
-  test("creates a widget", async () => {
-    await withModule(
-      mod,
-      { moduleDir: new URL("../src", import.meta.url).pathname },
-      async ({ service }) => {
-        const w = await service.widgets.create({ data: { name: "a" } });
-        expect(w.name).toBe("a");
-      },
-    );
-  });
+await withModule(module, { moduleDir }, async ({ service }) => {
+  const item = await service.items.create({ data: { name: "A" } });
+  // assertions
 });
 ```
 
-Harness tests need `DATABASE_URL`; gate them with `describe.skipIf(...)`. Test one
-module per process.
+The harness applies this module's migrations and owns its pool lifecycle. Test
+one module per process. Test durable definition/graph validity locally and host
+runtime wiring in an assembled backend integration.
 
-## Validate, then share
+## Validate and share
 
-Run `bun run build` — it **type-checks** the module (`tsc --noEmit`) and runs the
-contract **validate** in one gate; it must exit clean. Keep going until `validate`
-reports **no warnings** too — then it is ready for a Git-tagged registry release,
-a Git branch, or a local path. An app installs it with
-`damat module add <ref | path | git-url>`.
+`bun run validate` reports errors that block installation and warnings that
+block publishing readiness. Resolve both. A backend owner should still run
+`damat module plan <source>` before installation and review every integration
+notice.
 
----
+## Quality checklist
 
-## Stay in your lane (the blade)
-
-- ❌ Never import another module's code, and never activate a connection yourself.
-- ❌ Don't decide what is "needed" or what plugs into what.
-- ✅ Do one thing well, expose clean models + a service, and — if it pairs
-  naturally with something — leave a `pairsWith` hint.
-- ✅ You MAY ship a **dormant** `defineLink` under `src/links/models/` — it proposes
-  a connection but creates nothing until the **backend owner** migrates it (see
-  "Shipping a link").
-
-## Shipping a link (optional)
-
-Most modules ship no links. If yours genuinely pairs with another (e.g. `user` ↔
-`organization`), you can ship the connection as a **dormant** link file instead of
-leaving the owner to hand-write it:
-
-- Put a `defineLink(...)` in `src/links/models/<from>-<to>.ts`, importing from
-  `@damatjs/framework`. Name your **own** side concretely and the target by the
-  module id you expect (the owner edits it if they installed that module under a
-  different id):
-  ```ts
-  import { defineLink } from "@damatjs/framework";
-  export default defineLink(
-    { module: "user", model: "users", field: "users" }, // your side
-    { module: "organization", model: "organizations", field: "organizations" }, // target
-  );
-  ```
-- **Ship no migration for it.** On `damat module add`, the file splits into the
-  app's `src/links/<moduleId>/` and the owner index + top-level aggregator are
-  regenerated. The link is **dormant** until the backend runs
-  `damat-orm migrate:create link:<moduleId>` + `migrate:up`, and **inert** until
-  queried — so it's harmless even if the target module isn't installed.
-- You never import the other module's code, and you never create the connection —
-  the backend owner stays in control of whether and when to activate it.
-
-## Conventions
-
-- Bun only; ESM; strict TypeScript.
-- Import each symbol from its real package: `defineModule`/`ModuleService` from
-  `@damatjs/services`, `getModule` from `@damatjs/framework`, `model`/`columns`
-  from `@damatjs/orm-model`, the workflow helpers from `@damatjs/workflow-engine`,
-  `RouteHandler`/`RouteValidator` from `@damatjs/framework/router`, and `z` from
-  `@damatjs/deps/zod`.
-- `ModuleService({ models, credentialsSchema })` — object args, not positional;
-  build `models` with `collectModels([...])` (keys derived from table names). Keep
-  the service to the generated CRUD + **new** integrations only — never re-export a
-  CRUD method (call `service.<model>.find(...)` from the step instead).
-- Relations reference the **target table name**, and only your own tables.
-- For the full API, read the package READMEs (in `node_modules/@damatjs/…`).
-- **No file over 100 lines; readability is the highest priority.** Split by concern,
-  subdivide long functions into sibling files/folders — never pile into one big file.
+- Models and migrations agree.
+- Codegen is current.
+- No duplicated generated CRUD.
+- Credentials are declared and validated.
+- Capability paths exist and match `damat.json`.
+- Optional durable definitions use stable names.
+- Tests, typecheck, build, and validate pass.
+- Every code file is 100 lines or fewer.
+- Living docs describe current behavior only.

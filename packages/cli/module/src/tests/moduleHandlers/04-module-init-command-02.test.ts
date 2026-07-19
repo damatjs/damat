@@ -20,7 +20,10 @@ describe("module init command", () => {
   it("scaffolds the full package tree to the default dir", async () => {
     fsState.existsDefault = false;
     const cmd = await get();
-    const { ctx, logger } = createContext({}, { args: ["user"], cwd: "/m" });
+    const { ctx, logger } = createContext(
+      { databaseSetup: false },
+      { args: ["user"], cwd: "/m" },
+    );
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(0);
     expect(logger.success).toHaveBeenCalled();
@@ -30,6 +33,7 @@ describe("module init command", () => {
     expect(written).toContain("/m/user/src/index.ts");
     expect(written).toContain("/m/user/src/config/index.ts");
     expect(written).toContain("/m/user/AGENTS.md");
+    expect(written).toContain("/m/user/.env");
     expect(mockMkdirSync).toHaveBeenCalled();
     expect(mockWriteFileSync).toHaveBeenCalled();
   });

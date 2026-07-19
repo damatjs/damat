@@ -3,6 +3,7 @@
 | Area                    | Responsibility                                                    |
 | ----------------------- | ----------------------------------------------------------------- |
 | `cleanupTempFile.ts`    | Best-effort removal with debug diagnostics.                       |
+| `database/`             | PostgreSQL options, hidden prompts, URL building, and selection.  |
 | `git.ts`                | Detect system Git and produce actionable errors.                  |
 | `gitSource.ts`          | Parse Git URLs and GitHub source shorthand.                       |
 | `runTypeCheck.ts`       | Run `bun x tsc --noEmit` through the active Bun executable.       |

@@ -41,9 +41,14 @@ LOG_DIR="logs"
 export function envTemplate(
   name: string,
   secrets: { jwtSecret: string; cookieSecret: string },
+  databaseUrl?: string,
 ): string {
   return (
     envExampleTemplate(name)
+      .replace(
+        /^DATABASE_URL=.*$/m,
+        `DATABASE_URL=${JSON.stringify(databaseUrl ?? defaultDatabaseUrl(name))}`,
+      )
       .replace('JWT_SECRET=""', `JWT_SECRET="${secrets.jwtSecret}"`)
       .replace('COOKIE_SECRET=""', `COOKIE_SECRET="${secrets.cookieSecret}"`)
       // Redis is optional and a wrong localhost instance (e.g. one requiring
@@ -58,4 +63,8 @@ export function envTemplate(
 /** App name → a safe postgres database name (kebab → snake). */
 export function dbName(name: string): string {
   return name.replace(/-/g, "_");
+}
+
+export function defaultDatabaseUrl(name: string): string {
+  return `postgres://postgres:postgres@localhost:5432/${dbName(name)}`;
 }

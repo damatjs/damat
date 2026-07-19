@@ -18,13 +18,18 @@ import {
   tsconfigTemplate,
 } from "../scaffold/templates";
 
-export function scaffoldModule(targetDir: string, name: string) {
+export function scaffoldModule(
+  targetDir: string,
+  name: string,
+  databaseUrl?: string,
+) {
   const serviceClass = `${toPascal(name)}Service`;
   const files: Record<string, string> = {
     "package.json": packageJsonTemplate(name),
     "tsconfig.json": tsconfigTemplate(name),
     "module.config.ts": moduleConfigTemplate(),
-    ".env.example": envExampleTemplate(),
+    ".env.example": envExampleTemplate(name),
+    ".env": envExampleTemplate(name, databaseUrl),
     ".gitignore": gitignoreTemplate(),
     "README.md": readmeTemplate(name),
     "damat.json": manifestTemplate(name),

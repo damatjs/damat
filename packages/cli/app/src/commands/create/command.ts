@@ -1,4 +1,5 @@
 import type { Command } from "@damatjs/cli";
+import { databaseSetupOptions } from "@damatjs/cli-support";
 import { CLI_VERSION } from "../../version.generated";
 import { handleCreate } from "./handler";
 
@@ -8,13 +9,15 @@ export const createCommand: Command = {
     "Scaffold a new Damat backend app (offline, from embedded templates)",
   aliases: ["new"],
   usage:
-    "damat create <name> [--dir <path>] [--pin <version>] [--no-git] [--no-install]",
+    "damat create <name> [--database-url <url>] [--no-database-setup] [--no-install]",
   examples: [
     "damat create my-api",
+    "damat create my-api --database-url postgres://user:pass@localhost/my_api",
     "damat create my-api --no-install   # scaffold only, install later",
     "damat create my-api --pin 0.6.0    # pin @damatjs/* to a specific version",
   ],
   options: [
+    ...databaseSetupOptions,
     {
       name: "dir",
       alias: "d",

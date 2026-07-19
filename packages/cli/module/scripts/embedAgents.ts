@@ -15,6 +15,7 @@
  * committed so typecheck/tests work without a prebuild.
  */
 import { readFileSync, writeFileSync } from "node:fs";
+import { format } from "prettier";
 
 const SCAFFOLD = new URL("../src/commands/module/scaffold/", import.meta.url);
 const source = new URL("AGENTS.md", SCAFFOLD);
@@ -22,13 +23,14 @@ const target = new URL("agents.generated.ts", SCAFFOLD);
 
 const guide = readFileSync(source, "utf-8");
 
-const out = `// AUTO-GENERATED from scaffold/AGENTS.md by scripts/embedAgents.ts.
+const generated = `// AUTO-GENERATED from scaffold/AGENTS.md by scripts/embedAgents.ts.
 // Do not edit by hand — edit AGENTS.md and run \`bun run build\` (or
 // \`bun scripts/embedAgents.ts\`) to regenerate.
 /* eslint-disable */
 export const AGENTS_GUIDE: string = ${JSON.stringify(guide)};
 `;
 
+const out = await format(generated, { parser: "typescript" });
 writeFileSync(target, out);
 console.log(
   `embedAgents: wrote ${guide.length} chars from AGENTS.md -> agents.generated.ts`,

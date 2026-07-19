@@ -11,7 +11,7 @@ beforeEach(() => {
 
 const runCreate = (args: string[], options: Record<string, unknown> = {}) => {
   const { ctx, logger } = createContext(
-    { git: true, install: true, ...options },
+    { git: true, install: true, databaseSetup: false, ...options },
     { args, cwd: "/base" } as never,
   );
   return { result: createCommand.handler(ctx), logger };

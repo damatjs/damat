@@ -1,7 +1,7 @@
 # @damatjs/cli-module
 
 Standalone capabilities for authoring and installing Damat modules, plus the
-current auth-storage scaffold.
+auth-storage scaffold.
 
 ```ts
 import { authCliCapability, moduleCliCapability } from "@damatjs/cli-module";
@@ -14,11 +14,16 @@ modes requiring `--experimental-package`.
 
 The installer owns only files it adds. It never edits `damat.config.ts`,
 `tsconfig.json`, `.env*`, barrels, or call sites; commands report that work for
-the user or AI. Existing `module.json` files remain readable, while new module
-scaffolds write root `damat.json` and rely on conventional `src/index.ts`
-discovery. npm-shaped `module publish` is removed.
+the user or AI. Module scaffolds write root `damat.json` and rely on
+conventional `src/index.ts` discovery.
 
 The package also owns module init/dev/build/validation, migrations, codegen,
 and the embedded authoring guide.
 
-See [internals](./docs/README.md) and the [manifest contract](../../module/MODULES.md).
+`module init` accepts or interactively collects PostgreSQL credentials, writes
+both `.env.example` and ignored `.env`, installs dependencies, creates the
+module development database, and applies that module's migrations. Its
+`database:setup` command is intentionally module-scoped: a backend remains the
+owner of shared durability, jobs, durable-event, and pipeline catalogs.
+
+See [internals](./docs/README.md) and the [manifest contract](../../../MODULES.md).

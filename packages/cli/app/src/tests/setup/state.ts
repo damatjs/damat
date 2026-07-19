@@ -17,6 +17,11 @@ export const state = {
     stdout: "" as string | undefined,
     stderr: "" as string | undefined,
   },
+  spawnSyncResults: [] as Array<{
+    status: number | null;
+    stdout?: string;
+    stderr?: string;
+  }>,
 };
 
 export function resetState() {
@@ -27,4 +32,5 @@ export function resetState() {
   state.statIsDirectory = false;
   state.readFileMap = {};
   state.spawnSyncResult = { status: 0, stdout: "", stderr: "" };
+  state.spawnSyncResults = [];
 }

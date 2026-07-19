@@ -13,6 +13,12 @@ export const state = {
   statIsDirectory: false,
   readFileMap: {} as Record<string, string>,
   spawnSyncResult: { status: 0 as number | null, stdout: "", stderr: "" },
+  spawnSyncResults: [] as Array<{
+    status: number | null;
+    stdout?: string;
+    stderr?: string;
+  }>,
+  spawnSyncErrors: [] as boolean[],
 };
 
 export function resetSetup(): void {
@@ -23,4 +29,6 @@ export function resetSetup(): void {
   state.statIsDirectory = false;
   state.readFileMap = {};
   state.spawnSyncResult = { status: 0, stdout: "", stderr: "" };
+  state.spawnSyncResults = [];
+  state.spawnSyncErrors = [];
 }

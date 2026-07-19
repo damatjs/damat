@@ -6,10 +6,11 @@ export function packageJsonTemplate(name: string): string {
       type: "module",
       private: true,
       scripts: {
-        dev: "damat module dev",
+        dev: "bun run database:setup && damat module dev",
         build: "damat module build",
         test: "bun test",
         typecheck: "tsc --noEmit",
+        "database:setup": "damat module database:setup",
         "migration:create": "damat module migration:create",
         "migration:run": "damat module migration:run",
         "migration:status": "damat module migration:status",
@@ -23,6 +24,10 @@ export function packageJsonTemplate(name: string): string {
         "@damatjs/orm-model": "latest",
         "@damatjs/workflow-engine": "latest",
         "@damatjs/deps": "latest",
+        "@damatjs/durability": "latest",
+        "@damatjs/events": "latest",
+        "@damatjs/jobs": "latest",
+        "@damatjs/pipelines": "latest",
       },
       devDependencies: {
         "@damatjs/damat-cli": "latest",

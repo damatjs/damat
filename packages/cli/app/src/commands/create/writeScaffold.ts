@@ -19,6 +19,7 @@ export function writeScaffold(
   targetDir: string,
   name: string,
   version: string,
+  databaseUrl?: string,
 ): void {
   const secrets = {
     jwtSecret: randomBytes(32).toString("hex"),
@@ -30,7 +31,7 @@ export function writeScaffold(
     "damat.json": damatManifestTemplate(name),
     "tsconfig.json": tsconfigTemplate(),
     ".env.example": envExampleTemplate(name),
-    ".env": envTemplate(name, secrets),
+    ".env": envTemplate(name, secrets, databaseUrl),
     ".gitignore": gitignoreTemplate(),
     "README.md": readmeTemplate(name),
     "src/api/routes/hello/route.ts": helloRouteTemplate(name),

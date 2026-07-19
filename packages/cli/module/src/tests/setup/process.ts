@@ -11,7 +11,8 @@ export const spawnSyncCalls: Array<{
 export const mockSpawnSync = mock(
   (cmd: string, args: string[], opts?: unknown) => {
     spawnSyncCalls.push({ cmd, args, opts });
-    return state.spawnSyncResult;
+    if (state.spawnSyncErrors.shift()) throw new Error("spawn failed");
+    return state.spawnSyncResults.shift() ?? state.spawnSyncResult;
   },
 );
 

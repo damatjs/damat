@@ -19,7 +19,7 @@ describe("module init command", () => {
     fsState.existsDefault = false;
     const cmd = await get();
     const { ctx } = createContext(
-      { dir: "packages/user" },
+      { dir: "packages/user", databaseSetup: false },
       { args: ["user"], cwd: "/m" },
     );
     const res = await cmd.handler(ctx);

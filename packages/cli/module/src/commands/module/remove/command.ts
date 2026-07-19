@@ -7,12 +7,11 @@ export const moduleRemoveCommand: Command = {
   description:
     "Remove an installed module from this app (inverse of module add)",
   aliases: ["rm", "uninstall"],
-  usage:
-    "damat module remove <id> [--dir <path>] [--force] [--clean-env] [--dry-run]",
+  usage: "damat module remove <id> [--yes] [--dry-run]",
   examples: [
     "damat module remove user-management",
     "damat module remove user-management --dry-run   # show what would be deleted",
-    "damat module remove user-management --force     # even if other modules depend on it",
+    "damat module remove user-management --yes        # confirm modified owned files",
   ],
   options: moduleInstallOptions,
   handler: handleModuleRemove,

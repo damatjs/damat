@@ -5,6 +5,8 @@
 `@damatjs/damat-cli` is now a thin executable composer. App, codegen, module,
 kit, and auth handlers are owned and tested by standalone capability packages.
 The top-level command order and behavior remain compatible.
+The generated executable version is now checked against the package version in
+the canonical test suite.
 
 ## Action required
 

@@ -2,7 +2,8 @@ export function readmeTemplate(name: string): string {
   return `# ${name}
 
 A Damat **module** — a self-contained vertical slice of a backend (models,
-migrations, service, config, workflows, routes) that plugs into any Damat app.
+migrations, service, config, routes, workflows, and optional job/event/pipeline
+providers) that plugs into any Damat app.
 You build and test it **standalone**, then install it into a backend with
 \`damat module add <path>\`, which splits it across the app's layers.
 
@@ -29,20 +30,23 @@ workflows, third-party integrations on the service. So: **models → codegen →
 ## No big files
 
 Distribute code by concern: one model per \`src/models/<name>.ts\`, one integration
-per \`src/lib/<provider>.ts\`, one helper-group per \`src/utils/<concern>.ts\`.
+per \`src/lib/<provider>.ts\`, one helper-group per
+\`src/lib/utils/<concern>.ts\`.
 
 ## Get started
 
 \`\`\`bash
 bun install
+bun run database:setup   # create DB + apply this module's migrations
 # add a model in src/models/, register it in src/service.ts via collectModels([...])
 bun run migration:create   # diff models -> SQL migration
 bun run migration:run      # apply this module's migrations to DATABASE_URL
 bun run migration:status   # show applied vs pending migrations
 bun run codegen            # types + zod + registry + CRUD scaffold
-bun run dev                # run the module standalone (its own server + /health)
+bun run dev                # repeats DB setup, then runs its server + /health
 bun test                   # contract test always; service/api tests when DATABASE_URL is set
 bun run build              # type-check + contract validate — the release gate
+bun run validate           # resolve every manifest readiness warning
 \`\`\`
 
 ## Stay portable
@@ -50,8 +54,9 @@ bun run build              # type-check + contract validate — the release gate
 - **Import from the real packages:** \`ModuleService\`/\`defineModule\` ←
   \`@damatjs/services\`, \`getModule\` ← \`@damatjs/framework\`,
   \`model\`/\`columns\`/\`collectModels\` ← \`@damatjs/orm-model\`, workflow helpers ←
-  \`@damatjs/workflow-engine\`, route types ← \`@damatjs/framework/router\`, \`z\` ←
-  \`@damatjs/deps/zod\`. \`@damatjs/module\` itself is only the contract/config/tooling.
+  \`@damatjs/workflow-engine\`, durable definitions ← their jobs/events/pipelines
+  packages, route types ← \`@damatjs/framework/router\`, \`z\` ←
+  \`@damatjs/deps/zod\`. \`@damatjs/module\` owns contract/runtime/tooling.
 - **No cross-module internals:** store foreign ids as plain columns; if it pairs
   with another module leave a non-binding \`pairsWith\` hint in \`damat.json\`.
 - **The table name is the source of truth:** \`collectModels([...])\` derives each

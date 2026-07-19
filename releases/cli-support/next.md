@@ -23,6 +23,10 @@ outside the executable composer.
   transactional execution to `@damatjs/installer`.
 - Type-check subprocesses launch through Bun's absolute running executable, so
   builds do not depend on a separate `bunx` command being present in `PATH`.
+- Shared PostgreSQL command options, URL validation/building, and interactive
+  collection. Full URLs and passwords use a non-echoing terminal prompt.
+- Noninteractive callers can pass a full URL or connection fields, and can
+  explicitly defer provisioning without a hanging prompt.
 
 ## Breaking
 

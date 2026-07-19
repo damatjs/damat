@@ -11,7 +11,7 @@ beforeEach(() => {
 
 const runCreate = (args: string[], options: Record<string, unknown> = {}) => {
   const { ctx, logger } = createContext(
-    { git: true, install: true, ...options },
+    { git: true, install: true, databaseSetup: false, ...options },
     { args, cwd: "/base" } as never,
   );
   return { result: createCommand.handler(ctx), logger };
@@ -39,6 +39,11 @@ describe("damat create — scaffold", () => {
     const config = written("my-api/damat.config.ts")!.content;
     expect(config).toContain("modules: {}");
     expect(config).toContain('prefix: "my-api"');
+    expect(config).toContain('mode: "all"');
+    expect(config).toContain('workers: ["jobs", "events", "pipelines"]');
+    expect(config).toContain('inspectionVisibility: "metadata"');
+    expect(config).toContain("events: { durable:");
+    expect(config).toContain("pipelines:");
   });
 
   test("tsconfig has the app-level @workflows aliases module add expects", async () => {

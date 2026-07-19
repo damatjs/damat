@@ -11,6 +11,7 @@ import { moduleMigrationStatusCommand } from "./migrationStatus";
 import { moduleCodegenCommand } from "./codegen";
 import { moduleValidateCommand } from "./validate";
 import { moduleBuildCommand } from "./build";
+import { moduleDatabaseSetupCommand } from "./databaseSetup";
 import { modulePlanCommand } from "./plan";
 
 export const moduleCommand: Command = {
@@ -25,6 +26,7 @@ export const moduleCommand: Command = {
     moduleListCommand,
     moduleDevCommand,
     moduleInitCommand,
+    moduleDatabaseSetupCommand,
     moduleMigrationCreateCommand,
     moduleMigrationRunCommand,
     moduleMigrationStatusCommand,
@@ -38,6 +40,7 @@ export const moduleCommand: Command = {
         "Authoring (inside a module package):",
         "  damat module init <name>        Scaffold a standalone module package",
         "  damat module dev                Run the module as a live app",
+        "  damat module database:setup     Create DB + apply module migrations",
         "  damat module migration:create   Diff models -> migration",
         "  damat module migration:run      Apply migrations to DATABASE_URL",
         "  damat module migration:status   Show applied vs pending migrations",
@@ -65,6 +68,7 @@ export {
   moduleListCommand,
   moduleDevCommand,
   moduleInitCommand,
+  moduleDatabaseSetupCommand,
   moduleMigrationCreateCommand,
   moduleMigrationRunCommand,
   moduleMigrationStatusCommand,
