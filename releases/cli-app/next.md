@@ -12,6 +12,10 @@ executable package. They are exported with a stable command order from
 Configuration remains optional. A command reads a Damat config only when its
 operation requires one.
 
+The `build` command source is explicitly tracked even though its directory name
+matches the repository's build-output ignore. Clean checkouts now expose the
+same command surface that local development and package tests use.
+
 New applications include a receiver `damat.json` with accepted capability
 targets for modules, routes, workflows, jobs, events, pipelines, links, tests,
 migrations, models, and types. The receiver file is optional at install time.
