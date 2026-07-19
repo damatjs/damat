@@ -20,12 +20,14 @@ export async function createMigration(
 ): Promise<string | DiffMigrationResult>;
 ```
 
-Computes `migrationsDir = path.join(modulesDir, moduleName, "migrations")` for the snapshot check and chooses:
+Computes `migrationsDir = path.join(modulesDir, "migrations")` for the snapshot check and chooses:
 
 - `snapshotExist(migrationsDir)` is **false** → `createInitialMigration(moduleName, modulesDir, options)` (returns a file-path `string`).
 - **true** → `createDiffMigration(moduleName, modulesDir, options)` (returns a `DiffMigrationResult`).
 
-> The router checks the snapshot under `modulesDir/moduleName/migrations` but passes its `modulesDir` argument **unchanged** to the builders as their `moduleResolver` (the directory that gets `import()`ed for models). So `createMigration`'s second argument must already be the module's own directory (e.g. `src/modules/user`), not a modules-root like `src/modules` — pass the same value you would pass the builders. The in-repo callers (`@damatjs/orm-cli`, `@damatjs/module`) skip the router and call `createInitialMigration` / `createDiffMigration` directly with the module's resolver path.
+The second argument is the module's own resolver (for example
+`src/modules/user`), not its parent modules directory. Snapshot detection and
+both builders use the same `<resolver>/migrations` location.
 
 ## `createInitialMigration` — baseline
 
@@ -56,10 +58,12 @@ export async function createDiffMigration(
   moduleName: string,
   moduleResolver: string,
   options: CreateDiffMigrationOptions = {},
+  layout: { migrationsDir?: string } = {},
 ): Promise<DiffMigrationResult>;
 ```
 
-1. Verify `moduleResolver` exists; ensure `migrations/` exists.
+1. Verify `moduleResolver` exists; ensure `layout.migrationsDir` or the default
+   `<moduleResolver>/migrations` exists.
 2. `models = await discoverModels(moduleResolver)`.
 3. `previous = loadSnapshot(migrationsDir, moduleName)` (empty baseline if no file).
 4. `current = toModuleSchema(moduleName, models)`.

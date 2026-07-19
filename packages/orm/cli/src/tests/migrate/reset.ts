@@ -5,6 +5,9 @@ export function setupState(): void {
   beforeEach(() => {
     state.connections = [];
     state.ends = 0;
+    state.clientConnectErrors = [];
+    state.clientQueries = [];
+    state.clientRows = [{ exists: 1 }];
     state.runResult = [];
     state.runArgs = null;
     state.status = { modules: [] };

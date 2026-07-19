@@ -15,6 +15,11 @@ Migration discovery prefers a resolved module's explicit `migrations`
 directory, including all-module listing. Model discovery accepts aggregate
 exports and file-per-model provider directories.
 
+Migration generation now checks the same resolver-local snapshot directory its
+builders write. Diff generation also accepts an explicit migrations directory,
+allowing standalone manifests to keep `src/models` and `src/migrations`
+separate without losing the snapshot.
+
 `runMigrations` and `getMigrationStatus` accept optional system migrations.
 System SQL runs before modules under the existing advisory lock and is tracked
 by owner and migration id in `_damat_migration_logs`. The system SQL and tracker

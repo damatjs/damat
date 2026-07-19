@@ -22,10 +22,10 @@ Steps:
    does not exist.
 2. `configDir = dirname(filePath)` — the base for relative module `resolve`
    paths.
-3. Import with cache busting via `loadConfigModule`: copy the config to a
-   transient sidecar file (`.damat-config-<pid>-<n><ext>` next to it) so every
-   load gets a distinct module identity, `import("file://" + sidecar)`, then
-   delete the sidecar in `finally`. `config = mod.default ?? mod`.
+3. Import via `loadConfigModule`: bundle the config to a unique file under the
+   operating-system temporary directory, import it, and remove it in `finally`.
+   Unchanged source is reused within the process so registration side effects
+   run once; edited source is rebuilt. `config = mod.default ?? mod`.
 4. For each key in `config.modules`:
    - `id = module.id ?? moduleName` (falls back to the object key).
    - `resolvedPath = isAbsolute(module.resolve) ? module.resolve :
@@ -67,7 +67,7 @@ Resolution order:
 `buildConnectionString` defaults `host=localhost`, `port=5432`, `user=postgres`,
 `password=""`, `database=postgres`; URL-encodes password and database; appends
 `?ssl=true` (boolean) or `?ssl=<encoded JSON>` (object) when `ssl` is set. Same
-cache-busting import + error-wrapping as `loadModules`.
+cached temporary import + error-wrapping as `loadModules`.
 
 ## `requireDatabaseUrl(logger)` — `src/cli/config/index.ts`
 

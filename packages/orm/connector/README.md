@@ -82,9 +82,9 @@ Exported from the package root (`@damatjs/orm-connector`):
 | ----------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `ConnectionManager`     | class    | Owns the `pg` Pool lifecycle: `connect`, `disconnect`, `healthCheck`, `getPool`, `getClient`, `getPoolStats`, `isInitialized`.      |
 | `ConnectionError`       | class    | `Error` subclass thrown on connect/disconnect failures and when accessing the pool before `connect()`. Carries an optional `cause`. |
-| `setupPoolListeners`    | function | `(pool, logger) => void` — logs physical `error`/`connect`/`remove` pool events without logging each checkout.                    |
+| `setupPoolListeners`    | function | `(pool, logger) => void` — logs physical `error`/`connect`/`remove` pool events without logging each checkout.                      |
 | `performHealthCheck`    | function | `(pool, updateStatus) => Promise<ConnectionStatus>` — runs `SELECT 1` and reports connectivity + pool stats.                        |
-| `fetchPoolStats`        | function | `(pool \| null) => PoolStats` — reads total/idle/waiting and derives active connections (zeros when null).                         |
+| `fetchPoolStats`        | function | `(pool \| null) => PoolStats` — reads total/idle/waiting and derives active connections (zeros when null).                          |
 | `productionPoolConfig`  | function | Pool config preset: `min 2`, `max 20`, 5s connect / 30s idle, `allowExitOnIdle: false`. Accepts overrides.                          |
 | `developmentPoolConfig` | function | Pool config preset: `min 1`, `max 5`, 5s connect / 10s idle. Accepts overrides.                                                     |
 | `testPoolConfig`        | function | Pool config preset: `min 0`, `max 2`, 2s connect / 1s idle. Accepts overrides.                                                      |
@@ -97,7 +97,7 @@ Key types (defined in `@damatjs/orm-type`, re-used here):
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | `DbPoolConfigWithExtras` | `DbPoolConfig & { allowExitOnIdle?: boolean }` — host/port/user/password/database/ssl/min/max/timeouts/`connectionString`. |
 | `ConnectionStatus`       | `{ connected: boolean; poolStats: PoolStats; lastChecked: Date }`                                                          |
-| `PoolStats`              | `{ totalCount: number; idleCount: number; activeCount: number; waitingCount: number }`                                    |
+| `PoolStats`              | `{ totalCount: number; idleCount: number; activeCount: number; waitingCount: number }`                                     |
 
 ## How it fits
 

@@ -32,11 +32,9 @@ damat-orm <command> [args] [options]
 
 ## Commands
 
-Two top-level command groups, each with subcommands. Running a group with no
-subcommand prints the available subcommands.
-
 | Command                   | Description                                             | Example                         |
 | ------------------------- | ------------------------------------------------------- | ------------------------------- |
+| `database:setup`          | Create the configured database and apply migrations     | `damat-orm database:setup`      |
 | `migrate:up`              | Run all pending migrations across every module          | `damat-orm migrate:up`          |
 | `migrate:status [module]` | Show applied/pending counts (optionally for one module) | `damat-orm migrate:status user` |
 | `migrate:list`            | List modules that have migrations, with counts          | `damat-orm migrate:list`        |
@@ -61,6 +59,17 @@ durable job runtime. With every capability enabled the stable owner order is
 shared durability, jobs, events, then pipelines. The all-module
 `migrate:status` view includes each enabled system owner. A module-scoped
 status request remains limited to that module.
+
+`database:setup` first connects to the configured target. PostgreSQL error
+`3D000` triggers a server-level check through the standard `postgres` database;
+the command safely creates the requested database when absent and then delegates
+to `migrate:up`. Existing databases and repeated migration runs are idempotent.
+The configured user needs `CREATEDB` only when the target does not exist.
+Every command propagates its handler result to the process exit status, so
+configuration, connection, and migration failures are nonzero in CI and scripts.
+Configuration imports are cache-busted through the operating-system temporary
+directory rather than beside the source, so migration jobs can keep the
+application filesystem read-only.
 
 ### Cross-module links
 

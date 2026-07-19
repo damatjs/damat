@@ -3,6 +3,9 @@ import { mock } from "bun:test";
 export const state = {
   connections: [] as string[],
   ends: 0,
+  clientConnectErrors: [] as Array<Error | null>,
+  clientQueries: [] as Array<{ sql: string; values?: unknown[] }>,
+  clientRows: [{ exists: 1 }] as unknown[],
   runResult: [] as Array<{ success: boolean; error?: Error }>,
   runArgs: null as any,
   status: { modules: [] as any[] },
@@ -35,7 +38,24 @@ class FakePool {
   }
 }
 
-mock.module("@damatjs/deps/pg", () => ({ Pool: FakePool }));
+class FakeClient {
+  constructor(options: { connectionString: string }) {
+    state.connections.push(options.connectionString);
+  }
+  async connect() {
+    const error = state.clientConnectErrors.shift();
+    if (error) throw error;
+  }
+  async query(sql: string, values?: unknown[]) {
+    state.clientQueries.push({ sql, values });
+    return { rows: state.clientRows };
+  }
+  async end() {
+    state.ends++;
+  }
+}
+
+mock.module("@damatjs/deps/pg", () => ({ Client: FakeClient, Pool: FakePool }));
 mock.module("@damatjs/orm-migration", () => ({
   runMigrations: async (pool: unknown, modules: unknown, options: unknown) => {
     state.runArgs = { pool, modules, options };
@@ -74,4 +94,4 @@ mock.module("@damatjs/orm-processor", () => ({
   },
 }));
 
-export { FakePool };
+export { FakeClient, FakePool };

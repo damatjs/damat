@@ -1,5 +1,11 @@
 # Migrate commands
 
+`database:setup` lives beside the migrate group. It loads the same configured
+URL, connects to the target, and on PostgreSQL `3D000` checks/creates that
+database through the standard `postgres` database. It then calls `migrate:up`,
+so database creation and all selected system/module migrations form one setup
+command. Every target/admin client is closed in `finally` paths.
+
 The `migrate` group lives in `src/cli/commands/migrate/`. The parent
 `migrate` command (`index.ts`) only lists its subcommands; the real work is in
 the four leaves. All four call `loadModules("damat.config.ts", ctx.cwd)` and bail

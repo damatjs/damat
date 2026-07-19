@@ -21,7 +21,7 @@ Maintainer-facing reference for the `damat-orm` CLI. Read alongside the
 | `src/cli/index.ts`            | Re-exports `runCli` and `./types`                                                                                                                      |
 | `src/cli/types.ts`            | `ModulesMap`, `OrmCliOptions`, `Logger`, and re-exported `Command`/`CommandContext`/`CommandResult`/`CommandOption` + `OrmModule`/`OrmModuleContainer` |
 | `src/cli/registry.ts`         | A standalone in-memory `CommandRegistry` impl (`getRegistry`, `registerCommand`, `getCommand`, `getAllCommands`)                                       |
-| `src/cli/commands/index.ts`   | Aggregates the top-level command list: `[migrateCommand]`                                                                                              |
+| `src/cli/commands/index.ts`   | Aggregates `database:setup` and the `migrate` command group                                                                                            |
 | `src/cli/commands/migrate/*`  | The `migrate` group: `index.ts` (parent) + `up`, `status`, `list`, `create`                                                                            |
 | `src/cli/commands/generate/*` | The `generate` group: `index.ts` (parent) + `types`                                                                                                    |
 | `src/cli/config/index.ts`     | `requireDatabaseUrl(logger)` — reads `process.env.DATABASE_URL`, exits 1 if missing                                                                    |
@@ -58,7 +58,8 @@ bin.ts
 ```
 
 Every handler returns `{ exitCode: number }` and reports via `ctx.logger`
-(`info`/`success`/`warn`/`error`/`skip`).
+(`info`/`success`/`warn`/`error`/`skip`). `bin.ts` assigns that result to
+`process.exitCode`; a logged command failure therefore cannot exit zero.
 
 ## Command dispatch
 
@@ -87,9 +88,10 @@ Every handler returns `{ exitCode: number }` and reports via `ctx.logger`
   keyed by module id, each value `{ id, name, path, resolve }` with `resolve`
   always an absolute path. Per-module commands look up `modules[moduleName]` and
   error if absent.
-- **Cache busting**: `loadModules`/`loadDatabaseUrl` import the config through a
-  transient sidecar copy (written next to the config, imported, then deleted) so
-  every load gets a fresh module identity and edits are always picked up.
+- **Cache busting**: `loadModules`/`loadDatabaseUrl` bundle each config load to
+  a unique module in the operating-system temporary directory, import it, then
+  remove it. Every load gets fresh contents without writing beside the source,
+  so migration jobs work from a read-only application filesystem.
 - **Link modules**: `loadModules` also folds in cross-module link migration
   modules from `config.links` — one `link:<owner>` entry per `src/links/<owner>`
   directory, tagged `kind: "link"`. They share the `migrations/`+snapshot layout
