@@ -24,7 +24,9 @@ describe("originFromArgument", () => {
   });
 
   test("uses existing paths locally and ambiguous bare refs as registry refs", () => {
-    expect(originFromArgument(".", process.cwd()).type).toBe("local");
+    expect(originFromArgument(".", process.cwd(), () => true).type).toBe(
+      "local",
+    );
     expect(originFromArgument("auth", "/work", () => false)).toEqual({
       type: "registry",
       ref: "auth",
