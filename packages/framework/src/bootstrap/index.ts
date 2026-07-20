@@ -59,8 +59,8 @@ export async function bootstrap(
   const entryPathUrl = projectConfig.http.api?.entryRouter ?? "/api";
   app.route(entryPathUrl, fileRouter.router);
 
-  if (projectConfig.nodeEnv === "development")
-    logger.info(fileRouter.getRouteList());
+  // if (projectConfig.nodeEnv === "development")
+  //   logger.info(fileRouter.getRouteList());
 
   if (projectConfig.nodeEnv === "development")
     app.route("", createRootRoute(fileRouter));
