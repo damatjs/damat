@@ -162,7 +162,8 @@ and data without replaying source-cluster role grants.
 The repository CI performs the same production-like exercise available
 locally: environment policy, migration gating, health/routes, protected
 Prometheus metrics, least-privilege PostgreSQL and Redis, live worker
-capabilities, load thresholds, custom-format backup, restore into a disposable
+capabilities, completed job/event/pipeline executions with Redis live and
+unavailable, load thresholds, custom-format backup, restore into a disposable
 database, and runtime rollback. Run individual checks with:
 
 ```bash
@@ -179,8 +180,10 @@ Production logs use JSON at `info` level. `/metrics` requires
 `Authorization: Bearer $METRICS_TOKEN`; start with
 `ops/prometheus-alerts.yml` and route critical alerts to an owned on-call
 receiver. `ops/worker-health.ts` is an exit-code probe for job, event, and
-pipeline worker capabilities. Rollback accepts an immutable previous image
-digest and deliberately leaves forward database migrations in place.
+pipeline worker capabilities. `ops/durable-work-acceptance.ts` rejects failed
+or timed-out executions after submitting real work to all three durable
+systems. Rollback accepts an immutable previous image digest and deliberately
+leaves forward database migrations in place.
 
 ## Recovery contract
 

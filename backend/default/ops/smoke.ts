@@ -22,7 +22,13 @@ const health = await waitForHealth();
 if (health.status !== "healthy")
   throw new Error(`unexpected health: ${health.status}`);
 const posts = await fetch(`${base}/api/posts`);
-if (!posts.ok || !(await posts.json()).success)
+const postsBody: unknown = posts.ok ? await posts.json() : undefined;
+const routeSucceeded =
+  typeof postsBody === "object" &&
+  postsBody !== null &&
+  "success" in postsBody &&
+  postsBody.success === true;
+if (!routeSucceeded)
   throw new Error("HTTP route smoke failed");
 if ((await fetch(`${base}/metrics`)).status !== 401)
   throw new Error("metrics endpoint is not protected");

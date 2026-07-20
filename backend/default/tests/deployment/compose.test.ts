@@ -11,6 +11,10 @@ const drill = readFileSync(
   join(root, "backend/default/ops/staging-drill.sh"),
   "utf8",
 );
+const readiness = readFileSync(
+  join(root, ".github/workflows/production-readiness.yml"),
+  "utf8",
+);
 
 function service(name: string): string {
   const marker = `  ${name}:\n`;
@@ -74,6 +78,18 @@ test("keeps Redis an optional wake-up accelerator", () => {
   expect(entrypoint).toContain("&damat:*");
   expect(entrypoint).toContain("&damat-events");
   expect(entrypoint).toContain("user default off");
+});
+
+test("executes durable work with Redis live and unavailable", () => {
+  expect(service("worker-acceptance")).toContain(
+    'command: ["bun", "ops/durable-work-acceptance.ts"]',
+  );
+  for (const source of [drill, readiness]) {
+    expect(source).toContain("worker-acceptance");
+    expect(source).toContain("postgres-fallback");
+    expect(source).toContain("stop redis");
+    expect(source).toContain("start redis");
+  }
 });
 
 test("requires a database password without publishing PostgreSQL", () => {

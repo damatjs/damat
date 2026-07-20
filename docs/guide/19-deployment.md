@@ -139,10 +139,11 @@ new changes still stay within the repository limit.
 The production-readiness workflow additionally starts the split runtime,
 checks health, routes, protected Prometheus metrics, database and Redis least
 privilege, live job/event/pipeline worker capabilities, and load thresholds.
-It then performs a custom-format backup, restores it into a disposable
-PostgreSQL target with `--exit-on-error`, and recreates runtime roles from a
-previous image. Database migrations are forward-only and remain after runtime
-rollback, so releases must preserve rollback compatibility.
+It also requires completed job, event, and pipeline executions with Redis both
+available and unavailable. It then performs a custom-format backup, restores
+it into a disposable PostgreSQL target with `--exit-on-error`, and recreates
+runtime roles from a previous image. Database migrations are forward-only and
+remain after runtime rollback, so releases must preserve rollback compatibility.
 Restore uses `--no-owner --no-acl`; recreate deployment roles through the
 target environment's bootstrap before attaching the restored database.
 
@@ -150,7 +151,7 @@ Production deployments set `DAMAT_IMAGE`, `POSTGRES_IMAGE`, and `REDIS_IMAGE`
 to registry sha256 digests. `/metrics` requires the bearer `METRICS_TOKEN`.
 Use `backend/default/ops/prometheus-alerts.yml` as the initial API alert rules
 and schedule `ops/worker-health.ts` as the headless worker probe. Backups are
-not accepted until a restore drill succeeds.
+not accepted until real durable work and a restore drill succeed.
 
 ---
 

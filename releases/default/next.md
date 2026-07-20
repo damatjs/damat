@@ -21,7 +21,10 @@ The reference deployment now fails unsafe production configuration, emits
 structured JSON logs, protects Prometheus metrics, separates PostgreSQL
 bootstrap/migration/runtime/backup roles, restricts authenticated Redis, and
 hardens application containers. Production-readiness automation exercises
-smoke, worker, load, backup/restore, security, and rollback gates.
+smoke, worker, load, backup/restore, security, and rollback gates. Its durable
+worker acceptance now requires real job, event, and pipeline completion with
+Redis both available and unavailable, rather than trusting registration alone.
+Operational TypeScript is now included in the backend lint and type-check gates.
 
 Reference-backend scripts invoke their declared CLI dependency entries
 directly. Clean workspace installs no longer depend on executable links whose

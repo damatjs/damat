@@ -26,8 +26,8 @@
     "test:recovery": "bun test --coverage-dir=coverage/recovery tests/recovery.test.ts",
     "test:watch": "bun test --watch",
     "test:coverage": "bun run test",
-    "lint": "oxlint src tests damat.config.ts",
-    "lint:fix": "oxlint --fix src tests damat.config.ts",
+    "lint": "oxlint src tests ops damat.config.ts",
+    "lint:fix": "oxlint --fix src tests ops damat.config.ts",
     "check-types": "tsc --noEmit",
     "clean": "rm -rf dist"
   },

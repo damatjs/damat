@@ -107,7 +107,7 @@ services:
   worker-acceptance:
     <<: *app
     profiles: [operations]
-    command: ["bun", "ops/worker-health.ts"]
+    command: ["bun", "ops/durable-work-acceptance.ts"]
     environment: *app-environment
     restart: "no"
     depends_on:

@@ -84,10 +84,27 @@ jobs:
           docker compose -f backend/default/docker-compose.yml
           --profile accelerator run --rm redis-acceptance
 
-      - name: Verify live job, event, and pipeline worker capabilities
+      - name: Execute live job, event, and pipeline work
         run: >-
           docker compose -f backend/default/docker-compose.yml
           --profile operations run --rm worker-acceptance
+
+      - name: Execute durable work with Redis unavailable
+        shell: bash
+        run: |
+          docker compose -f backend/default/docker-compose.yml --profile accelerator stop redis
+          docker compose -f backend/default/docker-compose.yml --profile operations run --rm \
+            -e REDIS_URL= -e ACCEPTANCE_MODE=postgres-fallback worker-acceptance
+          docker compose -f backend/default/docker-compose.yml --profile accelerator start redis
+          for attempt in {1..30}; do
+            if docker compose -f backend/default/docker-compose.yml exec -T redis sh -ec \
+              'redis-cli --no-auth-warning -u "redis://damat:${REDIS_PASSWORD}@127.0.0.1:6379" ping' >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Redis did not recover" >&2
+          exit 1
 
       - name: Load acceptance
         env:

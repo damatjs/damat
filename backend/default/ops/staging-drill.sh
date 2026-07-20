@@ -59,6 +59,11 @@ bun run --cwd backend/default ops:smoke
 compose --profile operations run --rm acceptance
 compose --profile accelerator run --rm redis-acceptance
 compose --profile operations run --rm worker-acceptance
+compose --profile accelerator stop redis
+compose --profile operations run --rm -e REDIS_URL= \
+  -e ACCEPTANCE_MODE=postgres-fallback worker-acceptance
+compose --profile accelerator start redis
+wait_for_redis
 bun run --cwd backend/default ops:load
 compose --profile operations run --rm backup
 compose --profile operations up -d restore-db

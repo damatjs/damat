@@ -13,5 +13,5 @@
       "@workflows": ["./src/workflows"]
     }
   },
-  "include": ["src/**/*", "damat.config.ts"]
+  "include": ["src/**/*", "ops/**/*", "damat.config.ts"]
 }
