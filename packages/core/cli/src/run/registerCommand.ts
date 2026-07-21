@@ -1,87 +1,36 @@
 import type { CAC } from "cac";
-import type { CliConfig, Command, CommandResult } from "../types";
-import { Logger } from "@damatjs/logger";
-import { CliError } from "../errors";
-import { reportError, getExitCode } from "../utils/output";
-import { validateOptions, applyDefaults, coerceOptions } from "../utils/validate";
-import { loadConfig } from "../config";
-import { buildCommandContext } from "./buildCommand";
+import type { CliDefinition, CliRuntime, Command } from "../types";
 import { buildOptionFlag } from "./buildOption";
+import { runCommand, type ProjectConfigAccessor } from "./runCommand";
 
 export function registerSingleCommand(
   cli: CAC,
-  cmd: Command,
-  config: CliConfig,
-  logger: Logger
+  command: Command,
+  definition: CliDefinition,
+  runtime: CliRuntime,
+  project?: ProjectConfigAccessor,
 ): void {
-  if (cmd.subcommands) {
-    return;
+  if (command.subcommands) return;
+  const registered = cli.command(command.name, command.description);
+
+  for (const alias of command.aliases ?? []) registered.alias(alias);
+  for (const option of command.options ?? []) {
+    registered.option(buildOptionFlag(option), option.description, {
+      default: option.default,
+    });
   }
 
-  const cacCmd = cli.command(cmd.name, cmd.description);
-
-  if (cmd.aliases) {
-    for (const alias of cmd.aliases) {
-      cacCmd.alias(alias);
-    }
-  }
-
-  if (cmd.options) {
-    for (const opt of cmd.options) {
-      cacCmd.option(
-        buildOptionFlag(opt),
-        opt.description,
-        { default: opt.default }
-      );
-    }
-  }
-
-  cacCmd.action(async (options) => {
-    const opts = { ...options };
-    delete opts._;
-
-    let processedOptions = coerceOptions(opts, cmd.options);
-    processedOptions = applyDefaults(processedOptions, cmd.options);
-
-    try {
-      validateOptions(processedOptions, cmd.options, cmd.name);
-    } catch (error) {
-      if (!(error instanceof CliError)) throw error;
-      logger.error(error.message);
-      process.exit(error.exitCode);
-    }
-
-    let projectConfig: unknown;
-    try {
-      projectConfig = await loadConfig(config.configLoader);
-    } catch (error) {
-      reportError(logger, error, { prefix: "Failed to load configuration" });
-      process.exit(getExitCode(error));
-    }
-
-    const ctx = buildCommandContext(cmd.name, processedOptions, logger, config);
-
-    if (projectConfig) {
-      ctx.options.config = projectConfig;
-    }
-
-    if (ctx.options.verbose) {
-      if (config.verbose?.handler !== "manual") {
-        logger.info("Verbose mode enabled");
-      }
-      logger.debug("Verbose mode enabled");
-    }
-
-    let result: CommandResult;
-    try {
-      result = await cmd.handler(ctx);
-    } catch (error) {
-      reportError(logger, error, { prefix: "Command failed" });
-      if (config.onError) {
-        config.onError(error instanceof Error ? error : new Error(String(error)), ctx);
-      }
-      process.exit(getExitCode(error));
-    }
-    process.exit(result.exitCode);
+  registered.action(async (parsed: Record<string, unknown>) => {
+    const options = { ...parsed };
+    delete options._;
+    return runCommand(
+      command,
+      command.name,
+      runtime.args.slice(1),
+      options,
+      definition,
+      runtime,
+      project,
+    );
   });
 }

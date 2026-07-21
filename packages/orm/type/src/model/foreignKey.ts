@@ -1,22 +1,17 @@
-import { ColumnType } from './column';
+import { ColumnType } from "./column";
 
 /**
  * Foreign key on delete/update action
  */
 export type ForeignKeyAction =
-  | "CASCADE"
-  | "SET NULL"
-  | "SET DEFAULT"
-  | "RESTRICT"
-  | "NO ACTION";
+  "CASCADE" | "SET NULL" | "SET DEFAULT" | "RESTRICT" | "NO ACTION";
 
-export type ForeignKeySchemaMatch = "SIMPLE" | "FULL"
+export type ForeignKeySchemaMatch = "SIMPLE" | "FULL";
 
 export type ForeignKeyType = {
-  name: string,
-  type: ColumnType,
+  name: string;
+  type: ColumnType;
 };
-
 
 /**
  * Foreign key definition

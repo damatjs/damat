@@ -5,9 +5,31 @@ import { UpdateBuilder } from "../update";
 import { DeleteBuilder } from "../delete";
 import { UpsertBuilder } from "../upsert";
 import { executeFindMany, executeFindOne } from "./find";
-import { executeCreate, executeCreateMany, executeUpdate, executeDelete, executeUpsert, executeUpsertMany } from "./mutate";
-import type { FindOptions, QueryResult, CreateOptions, CreateManyOptions, UpdateOptions, DeleteOptions, UpsertOptions, UpsertManyOptions } from "./type";
-import type { SelectDescriptor, InsertDescriptor, UpdateDescriptor, DeleteDescriptor, UpsertDescriptor } from "../types";
+import {
+  executeCreate,
+  executeCreateMany,
+  executeUpdate,
+  executeDelete,
+  executeUpsert,
+  executeUpsertMany,
+} from "./mutate";
+import type {
+  FindOptions,
+  QueryResult,
+  CreateOptions,
+  CreateManyOptions,
+  UpdateOptions,
+  DeleteOptions,
+  UpsertOptions,
+  UpsertManyOptions,
+} from "./type";
+import type {
+  SelectDescriptor,
+  InsertDescriptor,
+  UpdateDescriptor,
+  DeleteDescriptor,
+  UpsertDescriptor,
+} from "../types";
 
 export class ModelAccessor<Cols extends string = string> {
   readonly _model: ModelDefinition;
@@ -22,11 +44,21 @@ export class ModelAccessor<Cols extends string = string> {
   constructor(model: ModelDefinition) {
     this._model = model;
     this.builders = {
-      get select() { return new SelectBuilder<Cols>(model); },
-      get insert() { return new InsertBuilder<Cols>(model); },
-      get update() { return new UpdateBuilder<Cols>(model); },
-      get delete() { return new DeleteBuilder<Cols>(model); },
-      get upsert() { return new UpsertBuilder<Cols>(model); },
+      get select() {
+        return new SelectBuilder<Cols>(model);
+      },
+      get insert() {
+        return new InsertBuilder<Cols>(model);
+      },
+      get update() {
+        return new UpdateBuilder<Cols>(model);
+      },
+      get delete() {
+        return new DeleteBuilder<Cols>(model);
+      },
+      get upsert() {
+        return new UpsertBuilder<Cols>(model);
+      },
     };
   }
 
@@ -34,7 +66,9 @@ export class ModelAccessor<Cols extends string = string> {
     return executeFindMany(this as any, options);
   }
 
-  findOne(options: Omit<FindOptions<Cols>, "limit" | "offset"> = {}): QueryResult<SelectDescriptor> {
+  findOne(
+    options: Omit<FindOptions<Cols>, "limit" | "offset"> = {},
+  ): QueryResult<SelectDescriptor> {
     return executeFindOne(this as any, options);
   }
 

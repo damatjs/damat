@@ -20,9 +20,12 @@ Persist log entries to disk for post-mortem analysis without slowing the hot pat
 itself then computes its own `enabled` flag ([`file-transport.ts:30`](../src/file-transport.ts)):
 
 ```ts
-this.enabled = config.enabled === true ||
-  process.env.LOG_FILE === "true" || process.env.LOG_FILE === "1" ||
-  process.env.LOGGING_FILE_ON === "true" || process.env.LOGGING_FILE_ON === "1";
+this.enabled =
+  config.enabled === true ||
+  process.env.LOG_FILE === "true" ||
+  process.env.LOG_FILE === "1" ||
+  process.env.LOGGING_FILE_ON === "true" ||
+  process.env.LOGGING_FILE_ON === "1";
 ```
 
 So a transport is "live" when either `file.enabled: true` is passed, or one of the env
@@ -31,20 +34,20 @@ vars `LOG_FILE` / `LOGGING_FILE_ON` is `true`/`1`. If a `FileTransport` is const
 timer) and `log()` is a no-op.
 
 > Two-layer gate: passing `file: { enabled: false }` prevents the transport from being
-> created at all (Logger's check). Passing `file: {}` *creates* a transport whose own
+> created at all (Logger's check). Passing `file: {}` _creates_ a transport whose own
 > `enabled` then depends on the env vars. To force file logging on regardless of env,
 > pass `file: { enabled: true }`.
 
 ## Configuration (`FileTransportConfig`)
 
-| Field           | Default          | Meaning                                                        |
-| --------------- | ---------------- | ------------------------------------------------------------- |
-| `enabled`       | env-derived      | Force-enable when `true` (see above).                         |
-| `dir`           | `"logs"`         | Output directory (created recursively on first use).          |
-| `maxSizeBytes`  | `10 * 1024 * 1024` (10 MiB) | Rotation threshold per file.                      |
-| `bufferFlushMs` | `1000`           | Flush interval in ms. `0` disables the timer (flush on close only). |
-| `errorFile`     | *(unused)*       | Declared in the type; not currently read by the implementation. |
-| `allFile`       | *(unused)*       | Declared in the type; not currently read by the implementation. |
+| Field           | Default                     | Meaning                                                             |
+| --------------- | --------------------------- | ------------------------------------------------------------------- |
+| `enabled`       | env-derived                 | Force-enable when `true` (see above).                               |
+| `dir`           | `"logs"`                    | Output directory (created recursively on first use).                |
+| `maxSizeBytes`  | `10 * 1024 * 1024` (10 MiB) | Rotation threshold per file.                                        |
+| `bufferFlushMs` | `1000`                      | Flush interval in ms. `0` disables the timer (flush on close only). |
+| `errorFile`     | _(unused)_                  | Declared in the type; not currently read by the implementation.     |
+| `allFile`       | _(unused)_                  | Declared in the type; not currently read by the implementation.     |
 
 > `errorFile` / `allFile` exist on `FileTransportConfig` but the current implementation
 > always writes to date-stamped `all.{log,md}` files and never reads these fields.

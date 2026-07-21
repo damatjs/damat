@@ -19,7 +19,11 @@ type and defaults to `undefined`.
 ```ts
 function createStep<I, O, C = undefined>(
   name: string,
-  invoke: (input: I, ctx: WorkflowContext, signal?: AbortSignal) => Promise<StepResponse<O, C>>,
+  invoke: (
+    input: I,
+    ctx: WorkflowContext,
+    signal?: AbortSignal,
+  ) => Promise<StepResponse<O, C>>,
   compensate?: (compensateInput: C, ctx: WorkflowContext) => Promise<void>,
   config: StepConfig = {},
 ): StepDefinition<I, O, C>;
@@ -39,8 +43,8 @@ It merges config eagerly and returns a plain object:
 
 `mergedConfig` = `{ ...DEFAULT_STEP_CONFIG, ...config, retry: { ...DEFAULT_RETRY_POLICY, ...config.retry } }`.
 
-`rawConfig` is kept *unmerged* so `executeStep` can layer workflow-level defaults
-*between* the engine defaults and the step's own values. A step constructed by
+`rawConfig` is kept _unmerged_ so `executeStep` can layer workflow-level defaults
+_between_ the engine defaults and the step's own values. A step constructed by
 hand without `rawConfig` falls back to `config` and skips workflow layering.
 
 ### Step definition shape
@@ -50,7 +54,11 @@ interface StepDefinition<I, O, C = undefined> {
   name: string;
   config: RequiredStepConfig;
   rawConfig?: StepConfig;
-  invoke: (input: I, ctx: WorkflowContext, signal?: AbortSignal) => Promise<StepResponse<O, C>>;
+  invoke: (
+    input: I,
+    ctx: WorkflowContext,
+    signal?: AbortSignal,
+  ) => Promise<StepResponse<O, C>>;
   compensate?: (compensateInput: C, ctx: WorkflowContext) => Promise<void>;
 }
 ```
@@ -59,10 +67,10 @@ interface StepDefinition<I, O, C = undefined> {
 
 ```ts
 interface StepConfig {
-  timeoutMs?: number;          // per-attempt timeout (default 30000)
-  retry?: Partial<RetryPolicy>;// default: no retries (maxAttempts 0)
-  idempotent?: boolean;        // safe to retry? false suppresses retries (default true)
-  description?: string;        // used in debug logs
+  timeoutMs?: number; // per-attempt timeout (default 30000)
+  retry?: Partial<RetryPolicy>; // default: no retries (maxAttempts 0)
+  idempotent?: boolean; // safe to retry? false suppresses retries (default true)
+  description?: string; // used in debug logs
 }
 ```
 
@@ -80,20 +88,22 @@ Source: `src/step/response.ts`. The value `invoke` returns.
 
 ```ts
 class StepResponse<O, C = undefined> {
-  readonly output: O;          // flows downstream / to the next step
+  readonly output: O; // flows downstream / to the next step
   readonly compensateInput: C; // handed to compensate (or undefined)
   constructor(
     output: O,
     // required when C excludes undefined, optional otherwise
     ...rest: undefined extends C ? [compensateInput?: C] : [compensateInput: C]
   );
-  static isStepResponse(value: unknown): value is StepResponse<unknown, unknown>;
+  static isStepResponse(
+    value: unknown,
+  ): value is StepResponse<unknown, unknown>;
 }
 ```
 
 - **`output`** is unwrapped by `executeStep` and returned downstream — the
   workflow never sees the `StepResponse` itself.
-- **`compensateInput`** is the *only* thing `compensate` receives (plus `ctx`).
+- **`compensateInput`** is the _only_ thing `compensate` receives (plus `ctx`).
   There is **no fallback**: provide nothing and `compensate` gets `undefined`,
   never the output.
 - **Type-enforced optionality.** When `C` excludes `undefined`, the second
@@ -118,12 +128,8 @@ function executeStep<I, O, C = undefined>(
   step: StepDefinition<I, O, C>,
   input: I,
   ctx: WorkflowContext,
-  overrideConfig?: StepConfig,   // optional per-call timeout/retry override
-): Effect.Effect<
-  O,
-  StepExecutionError | StepTimeoutError,
-  Scope.Scope
->;
+  overrideConfig?: StepConfig, // optional per-call timeout/retry override
+): Effect.Effect<O, StepExecutionError | StepTimeoutError, Scope.Scope>;
 ```
 
 You always call it inside a workflow generator: `const x = yield* executeStep(step, input, ctx)`.
@@ -181,8 +187,10 @@ directly without baking per-site values into the step definition.
    `Effect.addFinalizer((exit) => ...)`:
    - If the scope closes with **failure**, run `step.compensate(compensateInput, ctx)`.
      On success, increment `engineState.compensationsRun`.
-     On throw, increment `engineState.compensationsFailed`, log the error
-     (with the squashed original cause), and **swallow** it (`Effect.catchAll → Effect.void`).
+     On throw, increment `engineState.compensationsFailed`, push a
+     `CompensationError` onto `engineState.compensationErrors` (surfaced as
+     `result.compensationErrors`), log the error (with the squashed original
+     cause), and **swallow** it (`Effect.catchAll → Effect.void`).
    - If the scope closes with **success**, the finalizer is a no-op.
 7. **Return** the step output (the unwrapped `StepResponse.output`).
 
@@ -208,14 +216,15 @@ const wf = createWorkflow("saga", (input, ctx) =>
 
 ## Gotchas
 
-- A timed-out promise is *abandoned*, not force-killed. JS can't cancel a
+- A timed-out promise is _abandoned_, not force-killed. JS can't cancel a
   promise, so forward the `signal` (3rd `invoke` arg) into `fetch`/db calls to
   actually stop work on timeout.
-- `attempt` in the *outer* `ctx` passed to `executeStep` is whatever the workflow
+- `attempt` in the _outer_ `ctx` passed to `executeStep` is whatever the workflow
   set (1); inside `invoke` you receive `{ ...ctx, attempt: attemptCount }`, so use
   the `ctx` parameter your `invoke` function is given to read the real attempt
   number.
 - Don't throw from compensation expecting it to abort anything — it's logged and
-  swallowed; only `compensationsFailed` reflects it.
+  swallowed; only `compensationsFailed`/`compensationErrors` on the failure
+  result reflect it.
 - `executeStep` needs a `Scope`. Calling it outside a scoped workflow effect is a
   type error (its `R` channel includes `Scope.Scope`).

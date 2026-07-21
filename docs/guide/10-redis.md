@@ -17,11 +17,15 @@ initRedis(process.env.REDIS_URL!); // only needed outside a framework app
 ```ts
 import { cacheGet, cacheSet } from "@damatjs/redis";
 
-await cacheSet("user:1", user, 60);        // (key, value, ttlSeconds — default 300)
+await cacheSet("user:1", user, 60); // (key, value, ttlSeconds — default 300)
 const cached = await cacheGet<User>("user:1"); // typed read; null on miss
 ```
 
-Values are JSON-serialized for you.
+Values are JSON-serialized for you. For group invalidation, `cacheSetTagged(key,
+value, ttl, tags)` indexes an entry under invalidation tags and
+`invalidateCacheTags(tags)` drops every entry in a tag at once — the model the
+service layer's opt-in read cache is built on (see
+[Querying & CRUD → read caching](./07b-crud-reference.md#opt-in-read-caching-events--query-logging)).
 
 ## Rate limiting
 
@@ -44,14 +48,22 @@ The HTTP layer can also rate-limit for you — see `http.rateLimit` in
 import { withLock, acquireLock, releaseLock } from "@damatjs/redis";
 
 // run a critical section under a lock (ttlMs default 10_000)
-await withLock("import-job", async () => {
-  /* only one process runs this at a time */
-}, 30_000);
+await withLock(
+  "import-job",
+  async () => {
+    /* only one process runs this at a time */
+  },
+  30_000,
+);
 
 // or manage the lock yourself
 const token = await acquireLock("import-job", 30_000); // null if already held
 if (token) {
-  try { /* ... */ } finally { await releaseLock("import-job", token); }
+  try {
+    /* ... */
+  } finally {
+    await releaseLock("import-job", token);
+  }
 }
 ```
 
@@ -61,8 +73,10 @@ Workflows build on the same primitive via
 
 ## Job queue
 
-`RedisQueue` is a typed job queue with status tracking, priorities, and retry
-accounting:
+`RedisQueue` is a low-level Redis queue with status tracking and retry
+accounting. Durable application jobs use the separate PostgreSQL-backed
+[`@damatjs/jobs`](./10b-events-and-jobs.md#background-jobs) layer. Reach for
+`RedisQueue` directly only for explicitly ephemeral Redis queue use cases:
 
 ```ts
 import { RedisQueue, type QueueJob } from "@damatjs/redis";
@@ -74,7 +88,7 @@ const job: QueueJob<{ to: string }> = {
   queue: "emails",
   data: { to: "a@b.co" },
   status: "pending",
-  priority: "normal",     // "low" | "normal" | "high" | "critical"
+  priority: "normal", // "low" | "normal" | "high" | "critical"
   attempts: 0,
   maxAttempts: 3,
   createdAt: new Date(),

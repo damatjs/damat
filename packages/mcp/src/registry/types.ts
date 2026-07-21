@@ -16,12 +16,26 @@ export interface RegistryVerification {
   integrity?: string;
 }
 
+/**
+ * Security verdict for a module version, as returned by the registry gateway.
+ * A module that has never been scanned carries status "unscanned".
+ * Mirrors the VerdictPayload shape from packages/registry-client.
+ */
+export interface RegistryVerdict {
+  status: "unscanned" | "pending" | "pass" | "warn" | "flagged" | "malicious";
+  score?: number | null;
+  reasons?: string[] | null;
+  summary?: string | null;
+  checkedAt?: string | null;
+}
+
 export interface RegistryModuleEntry {
   name?: string;
   source: string;
   description?: string;
   owner?: { namespace: string; verified?: boolean };
   verification?: RegistryVerification;
+  verdict?: RegistryVerdict;
   versions?: Record<string, { source: string } | string>;
   latest?: string;
   keywords?: string[];

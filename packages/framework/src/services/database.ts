@@ -1,6 +1,15 @@
-import { developmentPoolConfig, productionPoolConfig, testPoolConfig, ConnectionManager } from "@damatjs/orm-connector";
+import {
+  developmentPoolConfig,
+  productionPoolConfig,
+  testPoolConfig,
+  ConnectionManager,
+} from "@damatjs/orm-connector";
 import { PoolManager } from "@damatjs/services";
-import type { ConnectionStatus, DbPoolConfigWithExtras, Pool } from "@damatjs/orm-type";
+import type {
+  ConnectionStatus,
+  DbPoolConfigWithExtras,
+  Pool,
+} from "@damatjs/orm-type";
 import type { ILogger } from "@damatjs/logger";
 
 let connectionManager: ConnectionManager | null = null;
@@ -8,7 +17,7 @@ let connectionManager: ConnectionManager | null = null;
 export async function initDatabase(
   dbConfig: DbPoolConfigWithExtras,
   logger: ILogger,
-  nodeEnv: "development" | "production" | "test" = "development"
+  nodeEnv: "development" | "production" | "test" = "development",
 ): Promise<Pool> {
   if (!connectionManager) {
     const baseConfig = getPoolConfigByEnv(nodeEnv, dbConfig);
@@ -30,11 +39,9 @@ export function getConnectionManager(): ConnectionManager | null {
   return connectionManager;
 }
 
-
 export async function checkHealth(): Promise<ConnectionStatus | null> {
-  if (connectionManager)
-    return await connectionManager.healthCheck();
-  return null
+  if (connectionManager) return await connectionManager.healthCheck();
+  return null;
 }
 
 export async function closeDatabase(): Promise<void> {
@@ -47,7 +54,7 @@ export async function closeDatabase(): Promise<void> {
 
 function getPoolConfigByEnv(
   nodeEnv: "development" | "production" | "test",
-  config: DbPoolConfigWithExtras
+  config: DbPoolConfigWithExtras,
 ): DbPoolConfigWithExtras {
   const hasAdvancedSettings =
     config.min !== undefined ||

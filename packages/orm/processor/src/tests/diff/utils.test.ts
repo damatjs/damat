@@ -26,10 +26,7 @@ describe("createNameMap", () => {
   });
 
   it("uses a custom name accessor when provided", () => {
-    const map = createNameMap(
-      [{ id: "x" }, { id: "y" }],
-      (item) => item.id,
-    );
+    const map = createNameMap([{ id: "x" }, { id: "y" }], (item) => item.id);
     expect([...map.keys()]).toEqual(["x", "y"]);
   });
 
@@ -160,10 +157,7 @@ describe("nativeEnumsEqual", () => {
 
   it("returns false when the schema namespace differs", () => {
     expect(
-      nativeEnumsEqual(
-        { ...e, schema: "public" },
-        { ...e, schema: "store" },
-      ),
+      nativeEnumsEqual({ ...e, schema: "public" }, { ...e, schema: "store" }),
     ).toBe(false);
   });
 });

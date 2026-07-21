@@ -21,14 +21,14 @@ It starts `null` and is created lazily or set explicitly.
 
 ## Lifecycle functions
 
-| Function                  | Behavior                                                                                  |
-| ------------------------- | ---------------------------------------------------------------------------------------- |
-| `createLogger(config?)`   | Constructs `new Logger(config)`, stores it as the global, and returns it.                 |
-| `setGlobalLogger(logger)` | Stores an already-constructed `Logger` as the global.                                     |
-| `getLogger()`             | Returns the global logger, **lazily creating a default `new Logger()`** if none is set.   |
-| `clearGlobalLogger()`     | Sets the reference back to `null`. Does **not** close any file transport.                 |
-| `closeLogger()`           | If a global exists, calls `.close()` (flushes/closes file transport) and nulls the ref.   |
-| `isLoggerConfigured()`    | Returns `globalLogger !== null` (i.e. whether one has been explicitly set/created).       |
+| Function                  | Behavior                                                                                |
+| ------------------------- | --------------------------------------------------------------------------------------- |
+| `createLogger(config?)`   | Constructs `new Logger(config)`, stores it as the global, and returns it.               |
+| `setGlobalLogger(logger)` | Stores an already-constructed `Logger` as the global.                                   |
+| `getLogger()`             | Returns the global logger, **lazily creating a default `new Logger()`** if none is set. |
+| `clearGlobalLogger()`     | Sets the reference back to `null`. Does **not** close any file transport.               |
+| `closeLogger()`           | If a global exists, calls `.close()` (flushes/closes file transport) and nulls the ref. |
+| `isLoggerConfigured()`    | Returns `globalLogger !== null` (i.e. whether one has been explicitly set/created).     |
 
 Notes:
 
@@ -59,16 +59,16 @@ default logger (unlike `getLogger()`).
 
 Thin wrappers that call the matching method on `getLogger()`:
 
-| Function                         | Calls                              |
-| -------------------------------- | --------------------------------- |
-| `debug(message, context?)`       | `getLogger().debug(...)`          |
-| `info(message, context?)`        | `getLogger().info(...)`           |
-| `progress(message, context?)`    | `getLogger().progress(...)`       |
-| `cached(message, context?)`      | `getLogger().cached(...)`         |
-| `waiting(message, context?)`     | `getLogger().waiting(...)`        |
-| `warn(message, context?)`        | `getLogger().warn(...)`           |
-| `error(message, err?, context?)` | `getLogger().error(...)`          |
-| `fatal(message, err?, context?)` | `getLogger().fatal(...)`          |
+| Function                         | Calls                       |
+| -------------------------------- | --------------------------- |
+| `debug(message, context?)`       | `getLogger().debug(...)`    |
+| `info(message, context?)`        | `getLogger().info(...)`     |
+| `progress(message, context?)`    | `getLogger().progress(...)` |
+| `cached(message, context?)`      | `getLogger().cached(...)`   |
+| `waiting(message, context?)`     | `getLogger().waiting(...)`  |
+| `warn(message, context?)`        | `getLogger().warn(...)`     |
+| `error(message, err?, context?)` | `getLogger().error(...)`    |
+| `fatal(message, err?, context?)` | `getLogger().fatal(...)`    |
 
 > Coverage gap: there are **no** top-level convenience wrappers for `success`, `skip`, or
 > `request`. Call those on a `Logger` / `getLogger()` instance directly. Each convenience
@@ -78,10 +78,18 @@ Thin wrappers that call the matching method on `getLogger()`:
 ## Typical wiring
 
 ```ts
-import { createLogger, closeLogger, createContextLogger, info } from "@damatjs/logger";
+import {
+  createLogger,
+  closeLogger,
+  createContextLogger,
+  info,
+} from "@damatjs/logger";
 
 // at startup
-createLogger({ level: process.env.LOG_LEVEL as any ?? "info", format: "json" });
+createLogger({
+  level: (process.env.LOG_LEVEL as any) ?? "info",
+  format: "json",
+});
 
 // anywhere
 info("ready");
@@ -100,7 +108,7 @@ closeLogger();
 - **`createContextLogger` does not auto-create** a global; it falls back to `NOOP_LOGGER`,
   so context loggers obtained before configuration are silent.
 - **One global per process.** `createLogger`/`setGlobalLogger` overwrite the previous
-  global *without* closing it — close the old one first if it had a file transport.
+  global _without_ closing it — close the old one first if it had a file transport.
 
 ## Safe extension
 

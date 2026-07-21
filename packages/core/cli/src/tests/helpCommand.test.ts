@@ -1,133 +1,48 @@
-import { describe, test, expect, beforeEach, afterEach, spyOn } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { cac } from "cac";
-import { Logger } from "@damatjs/logger";
+import { createCommandRegistry } from "../registry";
 import { handleHelpCommand } from "../run/helpCommand";
-import { getRegistry, clearRegistry } from "../registry";
-import type { CliConfig } from "../types";
+import type { CliDefinition, CliRunResult, CommandRegistry } from "../types";
+import { createRuntimeFixture } from "./runtimeFixture";
 
-class ExitSignal extends Error {
-  constructor(public code: number) {
-    super(`__exit__:${code}`);
-  }
-}
+const config: CliDefinition = { name: "cli", version: "1.0.0", commands: [] };
 
-const exitCodes: number[] = [];
-
-/** Invoke cac's matched action with the given positional arg, swallowing ExitSignal. */
-async function invokeHelp(
-  cli: ReturnType<typeof cac>,
-  argv: string[]
-): Promise<void> {
-  cli.parse(["node", "cli", ...argv], { run: false });
-  const matched = (cli as unknown as {
-    matchedCommand?: { commandAction?: (...a: unknown[]) => unknown };
-  }).matchedCommand;
-  if (!matched?.commandAction) return;
-  try {
-    // `help [command]` -> action(commandName, options)
-    await matched.commandAction(argv[1], {});
-  } catch (err) {
-    if (!(err instanceof ExitSignal)) throw err;
-  }
+async function invoke(
+  args: string[],
+  registry: CommandRegistry = createCommandRegistry(),
+) {
+  const fixture = createRuntimeFixture(args);
+  const cli = cac("cli");
+  handleHelpCommand(cli, config, fixture.runtime, registry);
+  cli.parse(["bun", "cli", ...args], { run: false });
+  const result = (await cli.runMatchedCommand()) as CliRunResult;
+  return { fixture, cli, result };
 }
 
 describe("handleHelpCommand", () => {
-  let exitSpy: ReturnType<typeof spyOn>;
-  let consoleOutput: string[];
-  let originalLog: typeof console.log;
-  let logger: Logger;
-  let logErrorSpy: ReturnType<typeof spyOn>;
-  const config: CliConfig = { name: "cli", version: "1.0.0", commands: [] };
-
-  beforeEach(() => {
-    clearRegistry();
-    exitCodes.length = 0;
-    exitSpy = spyOn(process, "exit").mockImplementation(((code?: number) => {
-      exitCodes.push(code ?? 0);
-      throw new ExitSignal(code ?? 0);
-    }) as never);
-    consoleOutput = [];
-    originalLog = console.log;
-    console.log = (...args: unknown[]) => {
-      consoleOutput.push(args.join(" "));
-    };
-    logger = new Logger({ timestamp: false });
-    logErrorSpy = spyOn(logger, "error").mockImplementation(() => {});
+  test("registers the help command and prints default help", async () => {
+    const { cli, fixture, result } = await invoke(["help"]);
+    expect(cli.commands.some((command) => command.name === "help")).toBe(true);
+    expect(result).toEqual({ exitCode: 0 });
+    expect(fixture.messages.join("\n")).toContain("Usage: cli");
   });
 
-  afterEach(() => {
-    exitSpy.mockRestore();
-    console.log = originalLog;
-    clearRegistry();
-  });
-
-  test("registers a 'help' command on the cac instance", () => {
-    const cli = cac("cli");
-    handleHelpCommand(cli, config, logger);
-    const helpCmd = cli.commands.find((c) => c.name === "help");
-    expect(helpCmd).toBeDefined();
-    expect(helpCmd?.rawName).toBe("help [command]");
-    expect(helpCmd?.description).toBe("Show help for a command");
-  });
-
-  test("prints default help and exits 0 when no command name is given", async () => {
-    const cli = cac("cli");
-    getRegistry().register({
+  test("prints command help through an alias", async () => {
+    const registry = createCommandRegistry();
+    registry.register({
       name: "build",
-      description: "Build it",
-      handler: async () => ({ exitCode: 0 }),
-    });
-    handleHelpCommand(cli, config, logger);
-
-    await invokeHelp(cli, ["help"]);
-
-    expect(exitCodes[0]).toBe(0);
-    const out = consoleOutput.join("\n");
-    expect(out).toContain("Usage:");
-    expect(out).toContain("build");
-  });
-
-  test("prints command-specific help and exits 0 for a known command", async () => {
-    const cli = cac("cli");
-    getRegistry().register({
-      name: "deploy",
-      description: "Deploy the app",
-      handler: async () => ({ exitCode: 0 }),
-    });
-    handleHelpCommand(cli, config, logger);
-
-    await invokeHelp(cli, ["help", "deploy"]);
-
-    expect(exitCodes[0]).toBe(0);
-    const out = consoleOutput.join("\n");
-    expect(out).toContain("Command: deploy");
-    expect(out).toContain("Deploy the app");
-  });
-
-  test("logs an error and exits 1 for an unknown command", async () => {
-    const cli = cac("cli");
-    handleHelpCommand(cli, config, logger);
-
-    await invokeHelp(cli, ["help", "nope"]);
-
-    expect(exitCodes[0]).toBe(1);
-    expect(logErrorSpy).toHaveBeenCalled();
-    expect(logErrorSpy.mock.calls[0]?.[0]).toBe("Unknown command: nope");
-  });
-
-  test("resolves command-specific help through an alias", async () => {
-    const cli = cac("cli");
-    getRegistry().register({
-      name: "build",
-      description: "Build it",
       aliases: ["b"],
+      description: "Build it",
       handler: async () => ({ exitCode: 0 }),
     });
-    handleHelpCommand(cli, config, logger);
+    const { fixture, result } = await invoke(["help", "b"], registry);
+    expect(result).toEqual({ exitCode: 0, command: "build" });
+    expect(fixture.messages.join("\n")).toContain("Command: build");
+  });
 
-    await invokeHelp(cli, ["help", "b"]);
-
-    expect(exitCodes[0]).toBe(0);
-    expect(consoleOutput.join("\n")).toContain("Command: build");
+  test("returns one for an unknown help target", async () => {
+    const { fixture, result } = await invoke(["help", "missing"]);
+    expect(result).toEqual({ exitCode: 1, command: "missing" });
+    expect(fixture.errors).toEqual(["Unknown command: missing"]);
   });
 });

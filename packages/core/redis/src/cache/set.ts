@@ -1,6 +1,6 @@
 import type { Redis } from "../types";
 import { getRedis } from "../singleton";
-import { CACHE_PREFIX } from './constant';
+import { CACHE_PREFIX } from "./constant";
 
 /**
  * Set a cached value with optional TTL.
@@ -11,11 +11,11 @@ import { CACHE_PREFIX } from './constant';
  * @param ttlSeconds - Time to live in seconds (default: 300)
  */
 export async function cacheSet<T>(
-    key: string,
-    value: T,
-    ttlSeconds: number = 300,
-    client?: Redis,
+  key: string,
+  value: T,
+  ttlSeconds: number = 300,
+  client?: Redis,
 ): Promise<void> {
-    const redis = client || getRedis();
-    await redis.setex(CACHE_PREFIX + key, ttlSeconds, JSON.stringify(value));
+  const redis = client || getRedis();
+  await redis.setex(CACHE_PREFIX + key, ttlSeconds, JSON.stringify(value));
 }

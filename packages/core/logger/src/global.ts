@@ -65,10 +65,18 @@ export function warn(message: string, context?: LogContext): void {
   getLogger().warn(message, context);
 }
 
-export function error(message: string, err?: unknown, context?: LogContext): void {
+export function error(
+  message: string,
+  err?: unknown,
+  context?: LogContext,
+): void {
   getLogger().error(message, err, context);
 }
 
-export function fatal(message: string, err?: unknown, context?: LogContext): void {
+export function fatal(
+  message: string,
+  err?: unknown,
+  context?: LogContext,
+): void {
   getLogger().fatal(message, err, context);
 }

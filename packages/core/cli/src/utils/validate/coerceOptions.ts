@@ -2,7 +2,7 @@ import type { CommandOption } from "../../types";
 
 export function coerceOptionValue(
   value: unknown,
-  type: CommandOption["type"]
+  type: CommandOption["type"],
 ): unknown {
   if (value === undefined || value === null) return value;
 
@@ -21,7 +21,7 @@ export function coerceOptionValue(
 
 export function coerceOptions(
   options: Record<string, unknown>,
-  optionDefs: CommandOption[] | undefined
+  optionDefs: CommandOption[] | undefined,
 ): Record<string, unknown> {
   if (!optionDefs) return options;
 

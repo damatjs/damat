@@ -10,4 +10,4 @@ export const generateTimestamp = (date: Date): string => {
     .replace(/[-:T]/g, "")
     .replace(/\..+/, "")
     .slice(0, 14);
-}
+};

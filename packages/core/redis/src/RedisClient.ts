@@ -1,7 +1,8 @@
 import { Redis } from "@damatjs/deps/ioredis";
 import type { RedisClientConfig } from "./types";
 import { createRedisConnection } from "./client/factory";
-import { ILogger } from '@damatjs/logger';
+import { CONSOLE_LOGGER } from "./client/consoleLogger";
+import { ILogger } from "@damatjs/logger";
 
 export class RedisClient {
   private readonly redis: Redis;
@@ -12,7 +13,7 @@ export class RedisClient {
 
   constructor(config: RedisClientConfig) {
     this.redis = createRedisConnection(config);
-    this.logger = config.logger ?? console as unknown as ILogger;
+    this.logger = config.logger ?? CONSOLE_LOGGER;
     this.name = config.name ?? "default";
     this.debug = config.debug ?? false;
     this.setupEventHandlers();

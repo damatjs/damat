@@ -5,9 +5,6 @@ export const VerificationModel = model("verifications", {
   identifier: columns.text(),
   value: columns.text(),
   expiresAt: columns.timestamp(),
-}).indexes([
-  columns.indexes().columns(["identifier"]),
-]);
-
+}).indexes([columns.indexes().columns(["identifier"])]);
 
 export default VerificationModel;

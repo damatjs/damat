@@ -219,9 +219,7 @@ describe("loadDatabaseUrl", () => {
     );
 
     const result = await loadDatabaseUrl(configPath);
-    expect(result.databaseUrl).toBe(
-      "postgres://postgres:@h:5432/d?ssl=true",
-    );
+    expect(result.databaseUrl).toBe("postgres://postgres:@h:5432/d?ssl=true");
   });
 
   it("encodes an ssl object as a JSON query param", async () => {

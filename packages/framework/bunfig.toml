@@ -1,6 +1,7 @@
 [test]
 coverage = true
 coverageThreshold = 1.0
+coverageReporter = ["text", "lcov"]
 # `damat-builder-*` is the router-builder test's runtime scaffold: route fixtures
 # it writes to a temp dir and the scanner imports as real modules. They are test
 # fixtures, not framework source, and one (`secured/route.ts`) is intentionally

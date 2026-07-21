@@ -11,6 +11,10 @@ export async function executeUpdate<
   options: UpdateOptions<Cols>,
 ): Promise<PgUpdateResult<T>> {
   const { sql, json } = client.accessor.update(options);
-  const { rows, rowCount } = await pgExecuteRaw<T>(client._conn, sql, client._logger);
+  const { rows, rowCount } = await pgExecuteRaw<T>(
+    client._conn,
+    sql,
+    client._logger,
+  );
   return { rows, rowCount, descriptor: json as UpdateDescriptor };
 }

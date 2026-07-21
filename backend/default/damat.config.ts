@@ -1,13 +1,30 @@
 import { defineConfig } from "@damatjs/framework";
+import "./src/events";
+import "./src/jobs";
+import "./src/pipelines";
+import { referenceInspectionPolicy } from "./src/examples/inspectionPolicy";
+import {
+  assertProductionEnvironment,
+  installMetricsMiddleware,
+  installMetricsRoute,
+} from "./src/operations";
+
+const production = process.env.NODE_ENV === "production";
 
 export default defineConfig({
   projectConfig: {
+    releaseVersion: process.env.RELEASE_VERSION ?? "development",
     databaseUrl: process.env.DATABASE_URL ?? "",
     redisUrl: process.env.REDIS_URL,
-    nodeEnv: "development",
+    nodeEnv:
+      process.env.NODE_ENV === "production"
+        ? "production"
+        : process.env.NODE_ENV === "test"
+          ? "test"
+          : "development",
     loggerConfig: {
-      level: "debug",
-      format: "pretty",
+      level: production ? "info" : "debug",
+      format: production ? "json" : "pretty",
       timestamp: true,
       prefix: "server",
       file: {
@@ -24,6 +41,22 @@ export default defineConfig({
       host: process.env.HOST || "0.0.0.0",
       corsConfig: process.env.FRONTEND_CORS,
     },
+  },
+  hooks: {
+    beforeServices: assertProductionEnvironment,
+    beforeRoutes: installMetricsMiddleware,
+    afterRoutes: installMetricsRoute,
+  },
+  runtime: {
+    mode: "all",
+    workers: ["jobs", "events", "pipelines"],
+    shutdownGraceMs: 30_000,
+  },
+  services: {
+    durability: referenceInspectionPolicy,
+    jobs: { queue: "reports", concurrency: 2 },
+    events: { durable: { concurrency: 2 } },
+    pipelines: { concurrency: 2, routerBatchSize: 100 },
   },
   modules: {
     user: {

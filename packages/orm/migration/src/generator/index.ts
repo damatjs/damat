@@ -20,6 +20,7 @@ import { createDiffMigration } from "./diffMigration";
 
 export { createInitialMigration } from "./initialMigration";
 export { createDiffMigration } from "./diffMigration";
+export type { DiffMigrationLayout } from "./diffMigration";
 
 /** Default modules root directory */
 export const DEFAULT_MODULES_DIR = "src/modules";
@@ -54,7 +55,7 @@ export async function createMigration(
   modulesDir: string = DEFAULT_MODULES_DIR,
   options: CreateDiffMigrationOptions = {},
 ): Promise<string | DiffMigrationResult> {
-  const migrationsDir = path.join(modulesDir, moduleName, "migrations");
+  const migrationsDir = path.join(modulesDir, "migrations");
 
   if (snapshotExist(migrationsDir)) {
     return createDiffMigration(moduleName, modulesDir, options);

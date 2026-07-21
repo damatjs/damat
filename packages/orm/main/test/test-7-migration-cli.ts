@@ -2,11 +2,17 @@
 import { Pool } from "@damatjs/deps/pg";
 import { writeFileSync, mkdirSync, rmSync, existsSync } from "fs";
 import { join } from "path";
-import { model, columns, toModuleSchema, saveSnapshot } from "@damatjs/orm-model";
+import {
+  model,
+  columns,
+  toModuleSchema,
+  saveSnapshot,
+} from "@damatjs/orm-model";
 import { generateFromSnapshot } from "@damatjs/orm-processor";
 import { bootstrapDatabase } from "@damatjs/orm-migration";
 
-const DB_URL = "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable";
+const DB_URL =
+  "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable";
 
 async function testMigrationCLI() {
   console.log("=".repeat(80));
@@ -65,15 +71,21 @@ export const PostSchema = model("post", {
     });
 
     const moduleSchema = toModuleSchema("test_cli", [PostSchema]);
-    saveSnapshot(moduleSchema, join(testDir, "migrations/schema-snapshot.json"));
+    saveSnapshot(
+      moduleSchema,
+      join(testDir, "migrations/schema-snapshot.json"),
+    );
 
     const migration = generateFromSnapshot(moduleSchema);
-    const timestamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\..+/, '');
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[-:]/g, "")
+      .replace(/\..+/, "");
     const migrationFile = `Migration${timestamp}_Initial.sql`;
 
     writeFileSync(
       join(testDir, "migrations", migrationFile),
-      migration.upStatements.join(";\n\n")
+      migration.upStatements.join(";\n\n"),
     );
     console.log(`   ✅ Migration generated: ${migrationFile}`);
     console.log(`   📊 Statements: ${migration.upStatements.length}`);
@@ -85,7 +97,7 @@ export const PostSchema = model("post", {
 
     await pool.query("SET search_path TO test_cli");
     const sql = migration.upStatements
-      .map(s => s.replace(/"public"\./g, '"test_cli".'))
+      .map((s) => s.replace(/"public"\./g, '"test_cli".'))
       .join(";\n");
     await pool.query(sql);
 
@@ -94,7 +106,9 @@ export const PostSchema = model("post", {
       SELECT table_name FROM information_schema.tables 
       WHERE table_schema = 'test_cli'
     `);
-    console.log(`   ✅ Tables created: ${tables.rows.map(r => r.table_name).join(", ")}`);
+    console.log(
+      `   ✅ Tables created: ${tables.rows.map((r) => r.table_name).join(", ")}`,
+    );
 
     // 5. Test snapshot persistence
     console.log("\n5. Testing snapshot persistence");
@@ -106,7 +120,6 @@ export const PostSchema = model("post", {
     console.log("\n" + "=".repeat(80));
     console.log("✅ ALL MIGRATION CLI TESTS PASSED");
     console.log("=".repeat(80));
-
   } catch (error) {
     console.error("\n❌ TEST FAILED:", error);
     throw error;

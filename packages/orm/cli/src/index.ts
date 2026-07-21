@@ -7,3 +7,8 @@ export type {
 } from "@damatjs/cli";
 export { loadModules } from "./cli/utils/load.js";
 export { requireDatabaseUrl } from "./cli/config/index.js";
+export { ensurePostgresDatabase } from "./database/index.js";
+export type {
+  DatabaseClient,
+  DatabaseClientFactory,
+} from "./database/index.js";

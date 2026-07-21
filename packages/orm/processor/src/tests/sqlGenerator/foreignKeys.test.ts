@@ -55,9 +55,9 @@ describe("generateAddForeignKey", () => {
   });
 
   it("appends MATCH FULL only for FULL match", () => {
-    expect(generateAddForeignKey(fk({ match: "FULL" }), "post", "public")).toContain(
-      "MATCH FULL",
-    );
+    expect(
+      generateAddForeignKey(fk({ match: "FULL" }), "post", "public"),
+    ).toContain("MATCH FULL");
     expect(
       generateAddForeignKey(fk({ match: "SIMPLE" }), "post", "public"),
     ).not.toContain("MATCH");

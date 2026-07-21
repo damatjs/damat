@@ -43,8 +43,20 @@ describe("renderLinkAugmentations", () => {
 
   test("groups multiple links on one table into a single file with combined imports", () => {
     const files = renderLinkAugmentations([
-      { localTable: "users", field: "organizations", otherTable: "organizations", importPath: "../../organization/types", isList: true },
-      { localTable: "users", field: "teams", otherTable: "teams", importPath: "../../team/types", isList: true },
+      {
+        localTable: "users",
+        field: "organizations",
+        otherTable: "organizations",
+        importPath: "../../organization/types",
+        isList: true,
+      },
+      {
+        localTable: "users",
+        field: "teams",
+        otherTable: "teams",
+        importPath: "../../team/types",
+        isList: true,
+      },
     ]);
     expect(files).toHaveLength(1);
     expect(files[0]!.content).toContain("organizations?: Organizations[];");
@@ -56,7 +68,10 @@ describe("resolveLinkMigrationModules", () => {
   test("returns one link:<owner> entry per owner directory that has an index", () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "links-"));
     fs.mkdirSync(path.join(root, "links", "user"), { recursive: true });
-    fs.writeFileSync(path.join(root, "links", "user", "index.ts"), "export const models = {};");
+    fs.writeFileSync(
+      path.join(root, "links", "user", "index.ts"),
+      "export const models = {};",
+    );
     fs.mkdirSync(path.join(root, "links", "empty"), { recursive: true }); // no index → ignored
 
     const entries = resolveLinkMigrationModules("./links", root);

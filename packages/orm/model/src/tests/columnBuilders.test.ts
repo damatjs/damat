@@ -80,7 +80,9 @@ describe("real / doublePrecision / money / interval builders", () => {
 
   it("doublePrecision emits double precision type", () => {
     expect(columns.doublePrecision().toSchema().type).toBe("double precision");
-    expect(columns.doublePrecision()).toBeInstanceOf(DoublePrecisionColumnBuilder);
+    expect(columns.doublePrecision()).toBeInstanceOf(
+      DoublePrecisionColumnBuilder,
+    );
   });
 
   it("money emits the money type", () => {
@@ -119,10 +121,8 @@ describe("TimestampColumnBuilder", () => {
 
   it("withoutTimezone() flips back to timestamp without time zone", () => {
     expect(
-      columns
-        .timestamp({ withTimezone: true })
-        .withoutTimezone()
-        .toSchema().type,
+      columns.timestamp({ withTimezone: true }).withoutTimezone().toSchema()
+        .type,
     ).toBe("timestamp without time zone");
   });
 
@@ -189,7 +189,9 @@ describe("CharacterVaryingColumnBuilder", () => {
   });
 
   it("length() method also sets the length", () => {
-    expect(new CharacterVaryingColumnBuilder().length(32).toSchema().length).toBe(32);
+    expect(
+      new CharacterVaryingColumnBuilder().length(32).toSchema().length,
+    ).toBe(32);
   });
 });
 

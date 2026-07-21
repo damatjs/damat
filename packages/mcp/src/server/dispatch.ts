@@ -22,7 +22,8 @@ export async function handleMessage(msg: any): Promise<void> {
       case "initialize": {
         const requested = params?.protocolVersion;
         reply(id, {
-          protocolVersion: typeof requested === "string" ? requested : DEFAULT_PROTOCOL,
+          protocolVersion:
+            typeof requested === "string" ? requested : DEFAULT_PROTOCOL,
           capabilities: { tools: { listChanged: false } },
           serverInfo: { name: SERVER_NAME, version: SERVER_VERSION },
           instructions: SERVER_INSTRUCTIONS,
@@ -53,17 +54,26 @@ export async function handleMessage(msg: any): Promise<void> {
         }
         try {
           const { text, isError } = await tool.handler(params?.arguments ?? {});
-          reply(id, { content: [{ type: "text", text }], isError: Boolean(isError) });
+          reply(id, {
+            content: [{ type: "text", text }],
+            isError: Boolean(isError),
+          });
         } catch (e) {
           reply(id, {
-            content: [{ type: "text", text: e instanceof Error ? e.message : String(e) }],
+            content: [
+              {
+                type: "text",
+                text: e instanceof Error ? e.message : String(e),
+              },
+            ],
             isError: true,
           });
         }
         return;
       }
       default:
-        if (!isNotification) replyError(id, -32601, `Method not found: ${method}`);
+        if (!isNotification)
+          replyError(id, -32601, `Method not found: ${method}`);
         return;
     }
   } catch (e) {

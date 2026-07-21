@@ -115,7 +115,8 @@ function makeWorld(spec: Record<string, TableSpec>) {
   const em: any = {
     getRepository,
     getModelRegistry: () => ({
-      get: (name: string) => (models[name] ? { model: models[name] } : undefined),
+      get: (name: string) =>
+        models[name] ? { model: models[name] } : undefined,
     }),
     transaction: async (cb: (tx: any) => Promise<any>) => {
       const snaps: Record<string, Row[]> = {};
@@ -143,11 +144,7 @@ describe("cascade delete", () => {
         rows: [{ id: "c1", parent_id: "p1" }],
       },
     });
-    const parent = new ModelMethods(
-      defModel({ name: "parent" }),
-      "parent",
-      em,
-    );
+    const parent = new ModelMethods(defModel({ name: "parent" }), "parent", em);
     const n = await parent.delete({ where: { id: "p1" } });
     expect(n).toBe(1);
     expect(tables.parent.rows).toHaveLength(0);
@@ -160,13 +157,23 @@ describe("cascade delete", () => {
     const childModel = defModel({
       name: "child",
       relations: [
-        { from: "grandchildren", to: "grandchild", type: "hasMany", mappedBy: ["child"] },
+        {
+          from: "grandchildren",
+          to: "grandchild",
+          type: "hasMany",
+          mappedBy: ["child"],
+        },
       ],
     });
     const parentModel = defModel({
       name: "parent",
       relations: [
-        { from: "children", to: "child", type: "hasMany", mappedBy: ["parent"] },
+        {
+          from: "children",
+          to: "child",
+          type: "hasMany",
+          mappedBy: ["parent"],
+        },
       ],
     });
 
@@ -357,7 +364,12 @@ describe("cascade delete", () => {
     const parentModel = defModel({
       name: "parent",
       relations: [
-        { from: "children", to: "child", type: "hasMany", mappedBy: ["parent"] },
+        {
+          from: "children",
+          to: "child",
+          type: "hasMany",
+          mappedBy: ["parent"],
+        },
         { from: "notes", to: "note", type: "hasMany", mappedBy: ["parent"] },
       ],
     });
@@ -387,7 +399,12 @@ describe("cascade delete", () => {
     const parentModel = defModel({
       name: "parent",
       relations: [
-        { from: "children", to: "child", type: "hasMany", mappedBy: ["parent"] },
+        {
+          from: "children",
+          to: "child",
+          type: "hasMany",
+          mappedBy: ["parent"],
+        },
       ],
     });
     const { em, tables } = makeWorld({
@@ -414,12 +431,20 @@ describe("cascade delete", () => {
 
 describe("cascade softDelete", () => {
   it("soft-deletes the whole graph and returns the matched rows", async () => {
-    const childModel = defModel({ name: "child", deletedAtField: "deleted_at" });
+    const childModel = defModel({
+      name: "child",
+      deletedAtField: "deleted_at",
+    });
     const parentModel = defModel({
       name: "parent",
       deletedAtField: "deleted_at",
       relations: [
-        { from: "children", to: "child", type: "hasMany", mappedBy: ["parent"] },
+        {
+          from: "children",
+          to: "child",
+          type: "hasMany",
+          mappedBy: ["parent"],
+        },
       ],
     });
     const { em, tables } = makeWorld({
@@ -434,7 +459,10 @@ describe("cascade softDelete", () => {
     });
 
     const parent = new ModelMethods(parentModel, "parent", em);
-    const rows = await parent.softDelete({ where: { id: "p1" }, cascade: true });
+    const rows = await parent.softDelete({
+      where: { id: "p1" },
+      cascade: true,
+    });
 
     // returns the soft-deleted parent rows
     expect(rows).toHaveLength(1);
@@ -443,16 +471,26 @@ describe("cascade softDelete", () => {
 
     // rows are still present but stamped, not removed
     expect(tables.parent.rows[0].deleted_at).toBeInstanceOf(Date);
-    expect(tables.child.rows.every((r) => r.deleted_at instanceof Date)).toBe(true);
+    expect(tables.child.rows.every((r) => r.deleted_at instanceof Date)).toBe(
+      true,
+    );
   });
 
   it("honors a custom deletedAt field name across the graph", async () => {
-    const childModel = defModel({ name: "child", deletedAtField: "archived_at" });
+    const childModel = defModel({
+      name: "child",
+      deletedAtField: "archived_at",
+    });
     const parentModel = defModel({
       name: "parent",
       deletedAtField: "archived_at",
       relations: [
-        { from: "children", to: "child", type: "hasMany", mappedBy: ["parent"] },
+        {
+          from: "children",
+          to: "child",
+          type: "hasMany",
+          mappedBy: ["parent"],
+        },
       ],
     });
     const { em, tables } = makeWorld({

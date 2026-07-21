@@ -1,15 +1,20 @@
 import { join } from "node:path";
 import { existsSync, readFileSync } from "node:fs";
 import { MODULE_MANIFEST_FILENAME } from "./constants";
+import { DAMAT_MANIFEST_FILENAME } from "@damatjs/installer";
+import { normalizeDamatModule } from "./damat";
 import { validateModuleManifest } from "./validate";
 import type { ModuleManifest } from "./types";
 
-/** Read and validate module.json from a module directory */
+/** Read damat.json, falling back to the legacy module.json contract. */
 export function readModuleManifest(moduleDir: string): ModuleManifest {
-  const manifestPath = join(moduleDir, MODULE_MANIFEST_FILENAME);
+  const universalPath = join(moduleDir, DAMAT_MANIFEST_FILENAME);
+  const manifestPath = existsSync(universalPath)
+    ? universalPath
+    : join(moduleDir, MODULE_MANIFEST_FILENAME);
   if (!existsSync(manifestPath)) {
     throw new Error(
-      `No ${MODULE_MANIFEST_FILENAME} found in ${moduleDir} — not a damat module`,
+      `No damat.json or ${MODULE_MANIFEST_FILENAME} found in ${moduleDir} — not a damat module`,
     );
   }
   let parsed: unknown;
@@ -20,5 +25,7 @@ export function readModuleManifest(moduleDir: string): ModuleManifest {
       `Invalid JSON in ${manifestPath}: ${e instanceof Error ? e.message : String(e)}`,
     );
   }
-  return validateModuleManifest(parsed);
+  return manifestPath === universalPath
+    ? normalizeDamatModule(parsed)
+    : validateModuleManifest(parsed);
 }

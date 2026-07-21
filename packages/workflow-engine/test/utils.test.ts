@@ -71,15 +71,18 @@ describe("utils/skipStep", () => {
 
 describe("utils/parallel", () => {
   it("runs all effects concurrently and returns a tuple of outputs in order", async () => {
-    let active = 0;
-    let maxActive = 0;
+    // Deterministic concurrency proof: every step blocks on a barrier that
+    // only opens once ALL of them have started. Sequential execution would
+    // deadlock (and fail via timeout) — no sleep-overlap timing to flake on.
+    let started = 0;
+    let release!: () => void;
+    const allStarted = new Promise<void>((r) => (release = r));
     const mk = (val: number) =>
       runStep(
         createStep<void, number>(`s${val}`, async () => {
-          active++;
-          maxActive = Math.max(maxActive, active);
-          await new Promise((r) => setTimeout(r, 20));
-          active--;
+          started++;
+          if (started === 3) release();
+          await allStarted;
           return val;
         }),
         undefined as never,
@@ -89,18 +92,30 @@ describe("utils/parallel", () => {
     const exit = await run(parallel(mk(1), mk(2), mk(3)));
     expect(Exit.isSuccess(exit)).toBe(true);
     if (Exit.isSuccess(exit)) expect(exit.value).toEqual([1, 2, 3]);
-    expect(maxActive).toBeGreaterThan(1);
+    expect(started).toBe(3);
   });
 
   it("supports heterogeneous output types in the result tuple", async () => {
-    const a = runStep(createStep<void, string>("a", async () => "x"), undefined as never, ctx());
-    const b = runStep(createStep<void, number>("b", async () => 7), undefined as never, ctx());
+    const a = runStep(
+      createStep<void, string>("a", async () => "x"),
+      undefined as never,
+      ctx(),
+    );
+    const b = runStep(
+      createStep<void, number>("b", async () => 7),
+      undefined as never,
+      ctx(),
+    );
     const exit = await run(parallel(a, b));
     if (Exit.isSuccess(exit)) expect(exit.value).toEqual(["x", 7]);
   });
 
   it("fails if any effect fails", async () => {
-    const ok = runStep(createStep<void, number>("ok", async () => 1), undefined as never, ctx());
+    const ok = runStep(
+      createStep<void, number>("ok", async () => 1),
+      undefined as never,
+      ctx(),
+    );
     const bad = runStep(
       createStep<void, number>("bad", async () => {
         throw new Error("parallel failure");
@@ -116,7 +131,11 @@ describe("utils/parallel", () => {
   });
 
   it("handles a single effect", async () => {
-    const a = runStep(createStep<void, number>("solo", async () => 99), undefined as never, ctx());
+    const a = runStep(
+      createStep<void, number>("solo", async () => 99),
+      undefined as never,
+      ctx(),
+    );
     const exit = await run(parallel(a));
     if (Exit.isSuccess(exit)) expect(exit.value).toEqual([99]);
   });

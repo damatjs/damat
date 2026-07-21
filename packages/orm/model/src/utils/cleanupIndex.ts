@@ -1,4 +1,4 @@
-import { IndexColumn, IndexSchema, } from "@/types";
+import { IndexColumn, IndexSchema } from "@/types";
 
 /**
  * Convert user-friendly index definition to IndexSchema

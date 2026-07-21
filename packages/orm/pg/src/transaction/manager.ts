@@ -15,7 +15,8 @@ const VALID_ISOLATION_LEVELS = new Set([
 export class TransactionManager {
   private pool: Pool;
   private logger?: ILogger | undefined;
-  private activeTransactions: WeakMap<PoolClient, TransactionContext> = new WeakMap();
+  private activeTransactions: WeakMap<PoolClient, TransactionContext> =
+    new WeakMap();
 
   constructor(pool: Pool, logger?: ILogger) {
     this.pool = pool;
@@ -38,7 +39,7 @@ export class TransactionManager {
 
   async run<R>(
     callback: (ctx: TransactionContext) => Promise<R>,
-    options: TransactionOptions = {}
+    options: TransactionOptions = {},
   ): Promise<R> {
     const ctx = await this.begin(options);
 
@@ -55,7 +56,7 @@ export class TransactionManager {
           "Transaction rollback failed",
           rollbackError instanceof Error
             ? rollbackError
-            : new Error(String(rollbackError))
+            : new Error(String(rollbackError)),
         );
       }
       throw error;
@@ -66,25 +67,35 @@ export class TransactionManager {
 
   private async _beginTransaction(
     client: PoolClient,
-    options: TransactionOptions
+    options: TransactionOptions,
   ): Promise<void> {
     const statements: string[] = [];
 
     if (options.isolationLevel) {
       if (!VALID_ISOLATION_LEVELS.has(options.isolationLevel)) {
         throw new Error(
-          `Invalid transaction isolation level: "${options.isolationLevel}"`
+          `Invalid transaction isolation level: "${options.isolationLevel}"`,
         );
       }
-      statements.push(`SET TRANSACTION ISOLATION LEVEL ${options.isolationLevel}`);
+      statements.push(
+        `SET TRANSACTION ISOLATION LEVEL ${options.isolationLevel}`,
+      );
     }
 
     if (options.readOnly !== undefined) {
-      statements.push(`SET TRANSACTION ${options.readOnly ? "READ ONLY" : "READ WRITE"}`);
+      statements.push(
+        `SET TRANSACTION ${options.readOnly ? "READ ONLY" : "READ WRITE"}`,
+      );
     }
 
-    if (options.readOnly === undefined && options.isolationLevel === undefined && options.deferrable !== undefined) {
-      statements.push(`SET TRANSACTION ${options.deferrable ? "" : "NOT "}DEFERRABLE`);
+    if (
+      options.readOnly === undefined &&
+      options.isolationLevel === undefined &&
+      options.deferrable !== undefined
+    ) {
+      statements.push(
+        `SET TRANSACTION ${options.deferrable ? "" : "NOT "}DEFERRABLE`,
+      );
     }
 
     await client.query("BEGIN");

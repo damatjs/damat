@@ -5,11 +5,7 @@ import { readModuleManifest } from "../manifest/read";
 import type { ModuleManifest } from "../manifest/types";
 import { resolveDatabaseConfig } from "./database";
 import { applyModuleMigrations } from "./migrate";
-import type {
-  BootableModule,
-  BootModuleOptions,
-  BootedModule,
-} from "./types";
+import type { BootableModule, BootModuleOptions, BootedModule } from "./types";
 
 /**
  * Boot a module standalone — no backend app required.

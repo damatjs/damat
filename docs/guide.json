@@ -22,7 +22,7 @@
       "id": "modules",
       "title": "Module manifest contract",
       "path": "MODULES.md",
-      "summary": "The module.json contract, registry refs, and the trust model."
+      "summary": "The damat.json contract, capability ownership, registry refs, and trust model."
     },
     {
       "id": "agents",
@@ -59,10 +59,10 @@
         {
           "id": "concepts",
           "order": 2,
-          "title": "Concepts — modules & the framework",
+          "title": "Concepts and architecture",
           "slug": "concepts",
           "path": "docs/guide/02-concepts.md",
-          "summary": "The idea behind Damat: what a module is, why the backend is shaped this way, and how the framework wires modules together."
+          "summary": "Modules, durable primitives, PostgreSQL authority, Redis acceleration, pools, and runtime roles."
         },
         {
           "id": "getting-started",
@@ -70,7 +70,7 @@
           "title": "Getting started",
           "slug": "getting-started",
           "path": "docs/guide/03-getting-started.md",
-          "summary": "Install, scaffold a new app or run the reference backend, and the project structure."
+          "summary": "Scaffold a backend, collect database credentials, create and migrate PostgreSQL, and understand the project structure."
         },
         {
           "id": "configuration",
@@ -78,7 +78,7 @@
           "title": "Configuration & environment",
           "slug": "configuration",
           "path": "docs/guide/04-configuration.md",
-          "summary": "damat.config.ts, projectConfig, and the .env cascade."
+          "summary": "damat.config.ts, runtime workers, durability policy, and the environment cascade."
         }
       ]
     },
@@ -111,12 +111,36 @@
           "summary": "ModuleService auto-CRUD, credentials, and defineModule."
         },
         {
+          "id": "crud-reference",
+          "order": 7.5,
+          "title": "Querying & the CRUD service",
+          "slug": "crud-reference",
+          "path": "docs/guide/07b-crud-reference.md",
+          "summary": "The generated service methods, where operators, read caching, and transactions."
+        },
+        {
           "id": "http-apis",
           "order": 8,
           "title": "Building HTTP APIs",
           "slug": "http-apis",
           "path": "docs/guide/08-http-apis.md",
           "summary": "File-based routing with Hono."
+        },
+        {
+          "id": "authentication",
+          "order": 8.5,
+          "title": "Authentication",
+          "slug": "authentication",
+          "path": "docs/guide/08b-authentication.md",
+          "summary": "Bind an auth module for sessions and API keys, then use typed request principals."
+        },
+        {
+          "id": "providers",
+          "order": 8.6,
+          "title": "Integration providers",
+          "slug": "providers",
+          "path": "docs/guide/08c-providers.md",
+          "summary": "ModuleService-based auth, payment, subscription, and custom provider standards."
         },
         {
           "id": "workflows",
@@ -135,6 +159,14 @@
           "summary": "Batteries-included Redis helpers."
         },
         {
+          "id": "events-and-jobs",
+          "order": 10.5,
+          "title": "Events & background jobs",
+          "slug": "events-and-jobs",
+          "path": "docs/guide/10b-events-and-jobs.md",
+          "summary": "Typed events and PostgreSQL-backed jobs with retries, recovery, inspection, and optional Redis wake-ups."
+        },
+        {
           "id": "logging",
           "order": 11,
           "title": "Logging",
@@ -149,14 +181,6 @@
           "slug": "default-backend",
           "path": "docs/guide/12-default-backend.md",
           "summary": "The reference app as a worked example."
-        },
-        {
-          "id": "crud-reference",
-          "order": 7.5,
-          "title": "Querying & CRUD",
-          "slug": "crud-reference",
-          "path": "docs/guide/07b-crud-reference.md",
-          "summary": "The generated CRUD methods, where operators, pagination, returning, soft deletes, and transactions."
         }
       ]
     },
@@ -178,7 +202,15 @@
           "title": "Installing existing modules",
           "slug": "installing-modules",
           "path": "docs/guide/14-installing-modules.md",
-          "summary": "damat module add from a registry ref, path, or git."
+          "summary": "damat module add / remove / update from a registry ref, path, or git."
+        },
+        {
+          "id": "publishing-modules",
+          "order": 14.5,
+          "title": "Publishing modules",
+          "slug": "publishing-modules",
+          "path": "docs/guide/14b-publishing-modules.md",
+          "summary": "List a module in a registry — damat module publish, verification, running your own registry."
         },
         {
           "id": "installing-modules-with-ai",
@@ -203,14 +235,6 @@
           "slug": "composing-and-linking-modules",
           "path": "docs/guide/17-composing-and-linking-modules.md",
           "summary": "The backend owner's job: getModule, cross-module links, pairsWith hints, and wiring modules into the app."
-        },
-        {
-          "id": "publishing-modules",
-          "order": 14.5,
-          "title": "Publishing modules",
-          "slug": "publishing-modules",
-          "path": "docs/guide/14b-publishing-modules.md",
-          "summary": "List a module in a registry, understand verification statuses, and run your own registry."
         }
       ]
     },
@@ -224,7 +248,7 @@
           "title": "CLI reference",
           "slug": "cli-reference",
           "path": "docs/guide/18-cli-reference.md",
-          "summary": "damat, damat-orm, and create-damat-app."
+          "summary": "damat and damat-orm."
         },
         {
           "id": "deployment",
@@ -305,14 +329,20 @@
           ]
         },
         {
+          "name": "@damatjs/module-generator",
+          "description": "Damat module discovery, code generation, scaffolding, and barrels",
+          "dir": "packages/module-generator",
+          "readme": "packages/module-generator/README.md",
+          "docsIndex": "packages/module-generator/docs/README.md",
+          "docs": ["packages/module-generator/docs/README.md"]
+        },
+        {
           "name": "@damatjs/link",
           "description": "Cross-module links for Damat — define relationships between two modules, generate the junction table, migrate it, and query linked records across modules.",
           "dir": "packages/link",
           "readme": "packages/link/README.md",
           "docsIndex": "packages/link/docs/README.md",
-          "docs": [
-            "packages/link/docs/README.md"
-          ]
+          "docs": ["packages/link/docs/README.md"]
         },
         {
           "name": "@damatjs/workflow-engine",
@@ -419,15 +449,15 @@
           ]
         },
         {
-          "name": "@damatjs/codegen",
-          "description": "Damatjs codegen — agnostic type + zod + CRUD scaffold generation",
-          "dir": "packages/core/codegen",
-          "readme": "packages/core/codegen/README.md",
-          "docsIndex": "packages/core/codegen/docs/README.md",
+          "name": "@damatjs/schema-codegen",
+          "description": "Pure TypeScript and Zod source generation from Damat module schemas",
+          "dir": "packages/core/schema-codegen",
+          "readme": "packages/core/schema-codegen/README.md",
+          "docsIndex": "packages/core/schema-codegen/docs/README.md",
           "docs": [
-            "packages/core/codegen/docs/README.md",
-            "packages/core/codegen/docs/generators.md",
-            "packages/core/codegen/docs/type-mapping.md"
+            "packages/core/schema-codegen/docs/README.md",
+            "packages/core/schema-codegen/docs/generators.md",
+            "packages/core/schema-codegen/docs/type-mapping.md"
           ]
         },
         {
@@ -491,6 +521,22 @@
           ]
         },
         {
+          "name": "@damatjs/events",
+          "description": "Typed ephemeral subscriptions and transactional PostgreSQL durable events for Damat apps",
+          "dir": "packages/core/events",
+          "readme": "packages/core/events/README.md",
+          "docsIndex": "packages/core/events/docs/README.md",
+          "docs": ["packages/core/events/docs/README.md"]
+        },
+        {
+          "name": "@damatjs/jobs",
+          "description": "Durable PostgreSQL background jobs and fenced workers for Damat apps",
+          "dir": "packages/core/jobs",
+          "readme": "packages/core/jobs/README.md",
+          "docsIndex": "packages/core/jobs/docs/README.md",
+          "docs": ["packages/core/jobs/docs/README.md"]
+        },
+        {
           "name": "@damatjs/load-env",
           "description": "Damatjs load env",
           "dir": "packages/core/env",
@@ -514,7 +560,7 @@
         },
         {
           "name": "@damatjs/cli",
-          "description": "General CLI framework for DamatJS",
+          "description": "Framework-neutral embeddable TypeScript command runtime",
           "dir": "packages/core/cli",
           "readme": "packages/core/cli/README.md",
           "docsIndex": "packages/core/cli/docs/README.md",
@@ -552,6 +598,43 @@
       ]
     },
     {
+      "group": "Providers",
+      "packages": [
+        {
+          "name": "@damatjs/provider",
+          "description": "ModuleService-based provider authoring and role binding contracts for Damat",
+          "dir": "packages/provider",
+          "readme": "packages/provider/README.md",
+          "docsIndex": null,
+          "docs": []
+        },
+        {
+          "name": "@damatjs/auth",
+          "description": "Strict ModuleService-based authentication provider contract for Damat",
+          "dir": "provider/auth",
+          "readme": "provider/auth/README.md",
+          "docsIndex": null,
+          "docs": []
+        },
+        {
+          "name": "@damatjs/payment",
+          "description": "Strict ModuleService-based payment provider contract for Damat",
+          "dir": "provider/payment",
+          "readme": "provider/payment/README.md",
+          "docsIndex": null,
+          "docs": []
+        },
+        {
+          "name": "@damatjs/subscription",
+          "description": "Strict ModuleService-based subscription provider contract for Damat",
+          "dir": "provider/subscription",
+          "readme": "provider/subscription/README.md",
+          "docsIndex": null,
+          "docs": []
+        }
+      ]
+    },
+    {
       "group": "CLIs & AI",
       "packages": [
         {
@@ -560,12 +643,15 @@
           "dir": "packages/cli/damat",
           "readme": "packages/cli/damat/README.md",
           "docsIndex": "packages/cli/damat/docs/README.md",
-          "docs": [
-            "packages/cli/damat/docs/README.md",
-            "packages/cli/damat/docs/commands.md",
-            "packages/cli/damat/docs/module-commands.md",
-            "packages/cli/damat/docs/scaffolding.md"
-          ]
+          "docs": ["packages/cli/damat/docs/README.md"]
+        },
+        {
+          "name": "@damatjs/cli-codegen",
+          "description": "Damat application code generation CLI capability",
+          "dir": "packages/cli/codegen",
+          "readme": "packages/cli/codegen/README.md",
+          "docsIndex": "packages/cli/codegen/docs/README.md",
+          "docs": ["packages/cli/codegen/docs/README.md"]
         },
         {
           "name": "@damatjs/orm-cli",
@@ -581,28 +667,12 @@
           ]
         },
         {
-          "name": "@damatjs/create-damat-app",
-          "description": "Create a damat project using a single command.",
-          "dir": "packages/cli/create-damat-app",
-          "readme": "packages/cli/create-damat-app/README.md",
-          "docsIndex": "packages/cli/create-damat-app/docs/README.md",
-          "docs": [
-            "packages/cli/create-damat-app/docs/README.md",
-            "packages/cli/create-damat-app/docs/database-setup.md",
-            "packages/cli/create-damat-app/docs/flow.md",
-            "packages/cli/create-damat-app/docs/package-managers.md",
-            "packages/cli/create-damat-app/docs/project-vs-module.md"
-          ]
-        },
-        {
           "name": "@damatjs/mcp",
           "description": "Model Context Protocol (MCP) server for discovering and installing Damat modules with AI",
           "dir": "packages/mcp",
           "readme": "packages/mcp/README.md",
           "docsIndex": "packages/mcp/docs/README.md",
-          "docs": [
-            "packages/mcp/docs/README.md"
-          ]
+          "docs": ["packages/mcp/docs/README.md"]
         }
       ]
     }

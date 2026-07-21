@@ -1,7 +1,7 @@
 import path from "node:path";
 import fs from "node:fs";
 import { pathToFileURL } from "node:url";
-import { AppConfig } from './types';
+import { AppConfig } from "./types";
 
 const CONFIG_FILE = "damat.config.ts";
 let cachedConfig: AppConfig | null = null;
@@ -18,11 +18,13 @@ export function loadConfig(cwd: string = process.cwd()): AppConfig {
   }
 
   throw new Error(
-    "Synchronous config loading is not supported. Use loadConfigAsync() instead."
+    "Synchronous config loading is not supported. Use loadConfigAsync() instead.",
   );
 }
 
-export async function loadConfigAsync(cwd: string = process.cwd()): Promise<AppConfig> {
+export async function loadConfigAsync(
+  cwd: string = process.cwd(),
+): Promise<AppConfig> {
   if (cachedConfig) {
     return cachedConfig;
   }

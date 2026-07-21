@@ -4,3 +4,6 @@ dist/
 *.log
 /logs
 .damat
+/ops
+/postgres
+/redis

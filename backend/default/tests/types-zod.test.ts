@@ -118,14 +118,19 @@ describe("zod › accounts", () => {
       accessTokenExpiresAt: "2030-01-01T00:00:00.000Z",
     });
     expect(r.success).toBe(true);
-    if (r.success)
-      expect(r.data.accessTokenExpiresAt).toBeInstanceOf(Date);
+    if (r.success) expect(r.data.accessTokenExpiresAt).toBeInstanceOf(Date);
   });
 
   it("rejects missing required user_id / accountId / providerId", () => {
-    expect(newAccountsSchema.safeParse({ accountId: "x", providerId: "y" }).success).toBe(false);
-    expect(newAccountsSchema.safeParse({ user_id: "u", providerId: "y" }).success).toBe(false);
-    expect(newAccountsSchema.safeParse({ user_id: "u", accountId: "x" }).success).toBe(false);
+    expect(
+      newAccountsSchema.safeParse({ accountId: "x", providerId: "y" }).success,
+    ).toBe(false);
+    expect(
+      newAccountsSchema.safeParse({ user_id: "u", providerId: "y" }).success,
+    ).toBe(false);
+    expect(
+      newAccountsSchema.safeParse({ user_id: "u", accountId: "x" }).success,
+    ).toBe(false);
   });
 
   it("rejects unknown fields (strict)", () => {
@@ -136,8 +141,10 @@ describe("zod › accounts", () => {
 
   it("rejects an un-coercible date", () => {
     expect(
-      newAccountsSchema.safeParse({ ...valid, accessTokenExpiresAt: "not-a-date" })
-        .success,
+      newAccountsSchema.safeParse({
+        ...valid,
+        accessTokenExpiresAt: "not-a-date",
+      }).success,
     ).toBe(false);
   });
 
@@ -146,8 +153,12 @@ describe("zod › accounts", () => {
   });
 
   it("query schema validates orderDir enum", () => {
-    expect(AccountsQuerySchema.safeParse({ orderDir: "desc" }).success).toBe(true);
-    expect(AccountsQuerySchema.safeParse({ orderDir: "up" }).success).toBe(false);
+    expect(AccountsQuerySchema.safeParse({ orderDir: "desc" }).success).toBe(
+      true,
+    );
+    expect(AccountsQuerySchema.safeParse({ orderDir: "up" }).success).toBe(
+      false,
+    );
   });
 });
 
@@ -182,8 +193,11 @@ describe("zod › sessions", () => {
 
   it("allows null ipAddress / userAgent", () => {
     expect(
-      newSessionsSchema.safeParse({ ...valid, ipAddress: null, userAgent: null })
-        .success,
+      newSessionsSchema.safeParse({
+        ...valid,
+        ipAddress: null,
+        userAgent: null,
+      }).success,
     ).toBe(true);
   });
 
@@ -213,9 +227,21 @@ describe("zod › verifications", () => {
   });
 
   it("rejects missing identifier / value / expiresAt", () => {
-    expect(newVerificationsSchema.safeParse({ value: "x", expiresAt: valid.expiresAt }).success).toBe(false);
-    expect(newVerificationsSchema.safeParse({ identifier: "x", expiresAt: valid.expiresAt }).success).toBe(false);
-    expect(newVerificationsSchema.safeParse({ identifier: "x", value: "y" }).success).toBe(false);
+    expect(
+      newVerificationsSchema.safeParse({
+        value: "x",
+        expiresAt: valid.expiresAt,
+      }).success,
+    ).toBe(false);
+    expect(
+      newVerificationsSchema.safeParse({
+        identifier: "x",
+        expiresAt: valid.expiresAt,
+      }).success,
+    ).toBe(false);
+    expect(
+      newVerificationsSchema.safeParse({ identifier: "x", value: "y" }).success,
+    ).toBe(false);
   });
 
   it("rejects extra fields (strict)", () => {
@@ -225,14 +251,21 @@ describe("zod › verifications", () => {
   });
 
   it("update schema accepts a partial object", () => {
-    expect(updateVerificationsSchema.safeParse({ value: "new" }).success).toBe(true);
+    expect(updateVerificationsSchema.safeParse({ value: "new" }).success).toBe(
+      true,
+    );
     expect(updateVerificationsSchema.safeParse({}).success).toBe(true);
   });
 
   it("query schema validates the orderDir enum and coerces limit", () => {
-    const r = VerificationsQuerySchema.safeParse({ limit: "5", orderDir: "asc" });
+    const r = VerificationsQuerySchema.safeParse({
+      limit: "5",
+      orderDir: "asc",
+    });
     expect(r.success).toBe(true);
     if (r.success) expect(r.data.limit).toBe(5);
-    expect(VerificationsQuerySchema.safeParse({ orderDir: "nope" }).success).toBe(false);
+    expect(
+      VerificationsQuerySchema.safeParse({ orderDir: "nope" }).success,
+    ).toBe(false);
   });
 });

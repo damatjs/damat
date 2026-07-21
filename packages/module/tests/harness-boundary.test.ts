@@ -102,9 +102,8 @@ const { bootModule, withModule } = await import("../src/harness/boot").then(
     withModule: (await import("../src/harness/with")).withModule,
   }),
 );
-const { runModuleMigration, runModuleMigrationStatus } = await import(
-  "../src/tooling/migration"
-);
+const { runModuleMigration, runModuleMigrationStatus } =
+  await import("../src/tooling/migration");
 import { PoolManager } from "@damatjs/services";
 
 // --- fixtures ---------------------------------------------------------------

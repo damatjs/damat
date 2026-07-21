@@ -84,7 +84,8 @@ export function renderLinkAugmentations(
     }
 
     const importLines = [...importsByPath.entries()].map(
-      ([p, types]) => `import type { ${[...types].sort().join(", ")} } from "${p}";`,
+      ([p, types]) =>
+        `import type { ${[...types].sort().join(", ")} } from "${p}";`,
     );
 
     const head = banner ? `${banner}\n` : "";
@@ -97,7 +98,11 @@ export function renderLinkAugmentations(
       fieldLines.join("\n") +
       "\n  }\n}\n\nexport {};\n";
 
-    files.push({ fileName: `${base}.links.ts`, content, indexExport: `${base}.links` });
+    files.push({
+      fileName: `${base}.links.ts`,
+      content,
+      indexExport: `${base}.links`,
+    });
   }
 
   return files;

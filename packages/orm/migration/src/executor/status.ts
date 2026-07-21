@@ -9,6 +9,8 @@ import type { MigrationStatus, ModuleMigrationStatus } from "../types";
 import { discoverModuleMigrations } from "../discovery";
 import { MigrationTracker } from "../tracker";
 import { OrmModuleContainer, OrmModule } from "@damatjs/orm-type";
+import type { MigrationRunOptions } from "../system";
+import { getSystemMigrationStatus } from "../system";
 
 /**
  * Get migration status for all modules.
@@ -16,11 +18,15 @@ import { OrmModuleContainer, OrmModule } from "@damatjs/orm-type";
 export async function getMigrationStatus(
   pool: Pool,
   moduleResolvers: OrmModuleContainer,
+  options: MigrationRunOptions = {},
 ): Promise<MigrationStatus> {
   const tracker = new MigrationTracker(pool);
   await tracker.ensureTable();
 
-  const result: ModuleMigrationStatus[] = [];
+  const result = await getSystemMigrationStatus(
+    tracker,
+    options.systemMigrations ?? [],
+  );
 
   for (const moduleResolver of Object.values(moduleResolvers)) {
     result.push(await moduleStatus(tracker, moduleResolver));
@@ -39,7 +45,7 @@ export async function getModuleMigrationStatus(
   const tracker = new MigrationTracker(pool);
   await tracker.ensureTable();
 
-  const migrations = discoverModuleMigrations(moduleResolver.resolve);
+  const migrations = discoverModuleMigrations(moduleResolver);
 
   if (migrations.length === 0) {
     throw new Error(
@@ -59,7 +65,7 @@ async function moduleStatus(
   tracker: MigrationTracker,
   moduleResolver: OrmModule,
 ): Promise<ModuleMigrationStatus> {
-  const migrations = discoverModuleMigrations(moduleResolver.resolve);
+  const migrations = discoverModuleMigrations(moduleResolver);
   const applied = await tracker.getApplied(moduleResolver.name);
   const appliedNames = new Set(applied.map((a) => a.name));
 

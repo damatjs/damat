@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/load-env",
   "description": "Damatjs load env",
-  "version": "0.6.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -42,6 +42,7 @@
     "dev": "bun run build --watch",
     "watch": "tsc --watch",
     "test": "bun test",
-    "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)"
+    "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)",
+    "lint": "oxlint src"
   }
 }

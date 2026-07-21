@@ -1,5 +1,9 @@
 import { type Command, reportError } from "@damatjs/cli";
-import { loadModules, loadDatabaseUrl } from "@/cli/utils/load";
+import {
+  loadModules,
+  loadDatabaseUrl,
+  loadSystemMigrations,
+} from "@/cli/utils/load";
 import { OrmModuleContainer } from "@/cli/types";
 
 const migrateUp: Command = {
@@ -11,15 +15,20 @@ const migrateUp: Command = {
 
     // Load modules from damat.config.ts
     let modules: OrmModuleContainer;
+    let systemMigrations: Awaited<ReturnType<typeof loadSystemMigrations>>;
     try {
       modules = await loadModules("damat.config.ts", ctx.cwd);
+      systemMigrations = await loadSystemMigrations("damat.config.ts", ctx.cwd);
     } catch (error) {
       reportError(ctx.logger, error, { prefix: "Failed to load config" });
       return { exitCode: 1 };
     }
 
-    if (!modules || Object.keys(modules).length === 0) {
-      ctx.logger.error("No modules found in 'damat.config.ts'");
+    if (
+      (!modules || Object.keys(modules).length === 0) &&
+      systemMigrations.length === 0
+    ) {
+      ctx.logger.error("No module or system migrations found");
       return { exitCode: 1 };
     }
 
@@ -29,7 +38,9 @@ const migrateUp: Command = {
       const config = await loadDatabaseUrl("damat.config.ts", ctx.cwd);
       databaseUrl = config.databaseUrl;
     } catch (error) {
-      reportError(ctx.logger, error, { prefix: "Failed to load database config" });
+      reportError(ctx.logger, error, {
+        prefix: "Failed to load database config",
+      });
       return { exitCode: 1 };
     }
 
@@ -43,10 +54,15 @@ const migrateUp: Command = {
     const pool = new Pool({ connectionString: databaseUrl });
 
     try {
-      const results = await runMigrations(pool, modules);
-      // results are returned in the same order as Object.values(modules), so we
-      // can recover which module each failure belongs to and surface its error.
-      const moduleList = Object.values(modules);
+      const results = await runMigrations(pool, modules, { systemMigrations });
+      // System owners precede modules in the result list.
+      const systemOwners = [
+        ...new Set(systemMigrations.map((migration) => migration.owner)),
+      ];
+      const moduleList = [
+        ...systemOwners.map((name) => ({ name })),
+        ...Object.values(modules),
+      ];
       const failures = results.filter((r) => !r.success);
 
       if (failures.length > 0) {

@@ -3,24 +3,32 @@ import { BuiltQuery, UpsertDescriptor, ValuesMap } from "./types";
 import { assembleQuery, quoteIdent } from "./helpers";
 import { QueryBase } from "./base";
 
-export class UpsertBuilder<Cols extends string = string> extends QueryBase<Cols> {
+export class UpsertBuilder<
+  Cols extends string = string,
+> extends QueryBase<Cols> {
   private _rows: ValuesMap<Cols>[] = [];
   private _conflictColumns: Cols[] = [];
   private _updateColumns?: Cols[];
   private _set?: ValuesMap<Cols>;
 
-  constructor(model: ModelDefinition) { super(model); }
+  constructor(model: ModelDefinition) {
+    super(model);
+  }
 
   values(input: ValuesMap<Cols> | ValuesMap<Cols>[]): this {
     const rows = Array.isArray(input) ? input : [input];
     if (rows.length === 0) return this;
-    for (const r of rows) this._assertCols(r as Record<string, unknown>, "upsert.values");
+    for (const r of rows)
+      this._assertCols(r as Record<string, unknown>, "upsert.values");
     this._rows = rows;
     return this;
   }
 
   onConflict(conflictColumns: Cols[]): this {
-    this._assertColList(conflictColumns as string[], "upsert.onConflict.conflictColumns");
+    this._assertColList(
+      conflictColumns as string[],
+      "upsert.onConflict.conflictColumns",
+    );
     this._conflictColumns = conflictColumns;
     return this;
   }
@@ -38,8 +46,10 @@ export class UpsertBuilder<Cols extends string = string> extends QueryBase<Cols>
   }
 
   generateSql(): BuiltQuery {
-    if (this._rows.length === 0) throw new Error("[query:upsert] No values provided");
-    if (this._conflictColumns.length === 0) throw new Error("[query:upsert] No conflict columns specified");
+    if (this._rows.length === 0)
+      throw new Error("[query:upsert] No values provided");
+    if (this._conflictColumns.length === 0)
+      throw new Error("[query:upsert] No conflict columns specified");
 
     const params: unknown[] = [];
     const colNames = Object.keys(this._rows[0]!);
@@ -70,26 +80,40 @@ export class UpsertBuilder<Cols extends string = string> extends QueryBase<Cols>
       conflictColumns: [...this._conflictColumns],
       returning: [...this._returningCols],
     };
-    if (this._tableRef.schema !== undefined) desc.schema = this._tableRef.schema;
-    if (this._updateColumns !== undefined) desc.updateColumns = [...this._updateColumns];
-    if (this._set !== undefined) desc.set = { ...(this._set as Record<string, unknown>) };
+    if (this._tableRef.schema !== undefined)
+      desc.schema = this._tableRef.schema;
+    if (this._updateColumns !== undefined)
+      desc.updateColumns = [...this._updateColumns];
+    if (this._set !== undefined)
+      desc.set = { ...(this._set as Record<string, unknown>) };
     return desc;
   }
 
-  private _buildSetFragments(insertedColNames: string[], params: unknown[]): string[] {
+  private _buildSetFragments(
+    insertedColNames: string[],
+    params: unknown[],
+  ): string[] {
     const conflictSet = new Set(this._conflictColumns as string[]);
     const explicitSet = this._set as Record<string, unknown> | undefined;
-    const explicitKeys = explicitSet ? new Set(Object.keys(explicitSet)) : new Set<string>();
+    const explicitKeys = explicitSet
+      ? new Set(Object.keys(explicitSet))
+      : new Set<string>();
 
     let excludedCols: string[];
     if (this._updateColumns !== undefined) {
-      excludedCols = (this._updateColumns as string[]).filter((c) => !explicitKeys.has(c));
+      excludedCols = (this._updateColumns as string[]).filter(
+        (c) => !explicitKeys.has(c),
+      );
     } else {
-      excludedCols = insertedColNames.filter((c) => !conflictSet.has(c) && !explicitKeys.has(c));
+      excludedCols = insertedColNames.filter(
+        (c) => !conflictSet.has(c) && !explicitKeys.has(c),
+      );
     }
 
     return [
-      ...excludedCols.map((col) => `${quoteIdent(col)} = EXCLUDED.${quoteIdent(col)}`),
+      ...excludedCols.map(
+        (col) => `${quoteIdent(col)} = EXCLUDED.${quoteIdent(col)}`,
+      ),
       ...Object.entries(explicitSet ?? {}).map(([col, val]) => {
         params.push(val);
         return `${quoteIdent(col)} = $${params.length}`;

@@ -20,7 +20,7 @@ interface ModuleAppConfig {
 ```
 
 `ProjectConfig` / `HttpConfig` come from `@damatjs/framework`. The shape lets you
-override any project-level field *except* you provide `http` as a partial so you
+override any project-level field _except_ you provide `http` as a partial so you
 can set, e.g., just the port without restating the whole HTTP config.
 
 ## `defineModuleConfig`

@@ -1,6 +1,6 @@
 # Connection and query types (`src/connection/`, `src/query/`)
 
-Two type groups that have nothing to do with schema *definition* and everything
+Two type groups that have nothing to do with schema _definition_ and everything
 to do with talking to the database: how a connection/pool is described, and how a
 query is represented as JSON before it is compiled to SQL.
 
@@ -20,8 +20,10 @@ export interface DbConnection {
   close: () => Promise<void>;
   isConnected: () => Promise<boolean>;
   getClient: () => Promise<PoolClient>;
-  query: (sql: string, params?: unknown[])
-    => Promise<{ rows: unknown[]; rowCount: number }>;
+  query: (
+    sql: string,
+    params?: unknown[],
+  ) => Promise<{ rows: unknown[]; rowCount: number }>;
   transaction: <R>(callback: (client: PoolClient) => Promise<R>) => Promise<R>;
   getStats: () => PoolStats;
 }
@@ -36,29 +38,46 @@ provides the body.
 ```ts
 export interface DbPoolConfig {
   connectionString?: string;
-  host?: string; port?: number; user?: string; password?: string; database?: string;
+  host?: string;
+  port?: number;
+  user?: string;
+  password?: string;
+  database?: string;
   ssl?: boolean | object;
-  min?: number; max?: number;
+  min?: number;
+  max?: number;
   idleTimeoutMillis?: number;
   connectionTimeoutMillis?: number;
 }
 
-export type DbPoolConfigWithExtras = DbPoolConfig & { allowExitOnIdle?: boolean };
+export type DbPoolConfigWithExtras = DbPoolConfig & {
+  allowExitOnIdle?: boolean;
+};
 
-export interface DbConnectionConfig { database: string | DbPoolConfig; }
+export interface DbConnectionConfig {
+  database: string | DbPoolConfig;
+}
 
-export interface PoolStats { totalCount: number; idleCount: number; waitingCount: number; }
-export interface ConnectionStatus { connected: boolean; poolStats: PoolStats; lastChecked: Date; }
+export interface PoolStats {
+  totalCount: number;
+  idleCount: number;
+  waitingCount: number;
+}
+export interface ConnectionStatus {
+  connected: boolean;
+  poolStats: PoolStats;
+  lastChecked: Date;
+}
 ```
 
-`DbConnectionConfig.database` is a union: pass a connection string *or* a full
+`DbConnectionConfig.database` is a union: pass a connection string _or_ a full
 pool config object.
 
 ### Transactions & context (`config.ts`)
 
 ```ts
 export type TransactionIsolationLevel =
-  | "READ UNCOMMITTED" | "READ COMMITTED" | "REPEATABLE READ" | "SERIALIZABLE";
+  "READ UNCOMMITTED" | "READ COMMITTED" | "REPEATABLE READ" | "SERIALIZABLE";
 
 export interface TransactionOptions {
   isolationLevel?: TransactionIsolationLevel;
@@ -69,7 +88,7 @@ export interface TransactionOptions {
 export type EntityConstructor<T> = new () => T;
 
 export interface QueryContext {
-  schema?: string;     // override the target PG schema for one query
+  schema?: string; // override the target PG schema for one query
   timezone?: string;
   debug?: boolean;
 }
@@ -84,17 +103,29 @@ a query as data; the query-builder/executor package turns them into SQL.
 
 ```ts
 export type WhereOperators =
-  | { eq: unknown } | { neq: unknown }
-  | { gt: unknown } | { gte: unknown } | { lt: unknown } | { lte: unknown }
-  | { like: string } | { ilike: string }
-  | { in: unknown[] } | { notIn: unknown[] }
-  | { isNull: true } | { isNotNull: true }
+  | { eq: unknown }
+  | { neq: unknown }
+  | { gt: unknown }
+  | { gte: unknown }
+  | { lt: unknown }
+  | { lte: unknown }
+  | { like: string }
+  | { ilike: string }
+  | { in: unknown[] }
+  | { notIn: unknown[] }
+  | { isNull: true }
+  | { isNotNull: true }
   | { between: [unknown, unknown] };
 
 export type WhereConditionValue = unknown | WhereOperators;
-export type WhereClause<Cols extends string = string> = { [K in Cols]?: WhereConditionValue };
+export type WhereClause<Cols extends string = string> = {
+  [K in Cols]?: WhereConditionValue;
+};
 
-export interface RawWhereClause { sql: string; params?: unknown[]; }
+export interface RawWhereClause {
+  sql: string;
+  params?: unknown[];
+}
 
 export type OrderDirection = "ASC" | "DESC";
 export interface OrderByClause {
@@ -103,7 +134,10 @@ export interface OrderByClause {
   nulls?: "NULLS FIRST" | "NULLS LAST";
 }
 
-export interface BuiltQuery { sql: string; params: unknown[]; }
+export interface BuiltQuery {
+  sql: string;
+  params: unknown[];
+}
 ```
 
 `WhereClause` is generic over the allowed column names so a typed builder can
@@ -118,49 +152,71 @@ JSON-serializable, discriminated-by-`type` representations of each operation:
 ```ts
 export interface SelectDescriptor {
   type: "select";
-  table: string; schema?: string;
+  table: string;
+  schema?: string;
   columns: string[];
   where: WhereConditionJson[];
   whereRaw: RawWhereClause[];
   orderBy: OrderByJson[];
-  limit?: number; offset?: number;
+  limit?: number;
+  offset?: number;
   distinct: boolean;
-  with?: RelationDescriptor[];   // nested relation loads
+  with?: RelationDescriptor[]; // nested relation loads
 }
 
 export interface RelationDescriptor {
-  relation: string; table: string; schema?: string;
+  relation: string;
+  table: string;
+  schema?: string;
   type: "belongsTo" | "hasMany" | "hasOne";
-  foreignKey: string[]; references: string[];
+  foreignKey: string[];
+  references: string[];
   columns: string[];
-  where: WhereConditionJson[]; whereRaw: RawWhereClause[];
+  where: WhereConditionJson[];
+  whereRaw: RawWhereClause[];
   orderBy: OrderByJson[];
-  limit?: number; offset?: number;
-  with: RelationDescriptor[];    // recursive — eager-load trees
+  limit?: number;
+  offset?: number;
+  with: RelationDescriptor[]; // recursive — eager-load trees
 }
 
 export interface InsertDescriptor {
-  type: "insert"; table: string; schema?: string;
+  type: "insert";
+  table: string;
+  schema?: string;
   rows: Record<string, unknown>[];
-  onConflict?: { conflictColumns?: string[]; action: "nothing" | "update"; set?: Record<string, unknown>; };
+  onConflict?: {
+    conflictColumns?: string[];
+    action: "nothing" | "update";
+    set?: Record<string, unknown>;
+  };
   returning: string[];
 }
 
 export interface UpdateDescriptor {
-  type: "update"; table: string; schema?: string;
+  type: "update";
+  table: string;
+  schema?: string;
   set: Record<string, unknown>;
-  where: WhereConditionJson[]; whereRaw: RawWhereClause[]; orderBy: OrderByJson[];
+  where: WhereConditionJson[];
+  whereRaw: RawWhereClause[];
+  orderBy: OrderByJson[];
   returning: string[];
 }
 
 export interface DeleteDescriptor {
-  type: "delete"; table: string; schema?: string;
-  where: WhereConditionJson[]; whereRaw: RawWhereClause[];
+  type: "delete";
+  table: string;
+  schema?: string;
+  where: WhereConditionJson[];
+  whereRaw: RawWhereClause[];
   returning: string[];
 }
 
 export interface UpsertDescriptor {
-  type: "upsert"; table: string; schema?: string;
+  type: "upsert";
+  table: string;
+  schema?: string;
   rows: Record<string, unknown>[];
   conflictColumns: string[];
   updateColumns?: string[];
@@ -169,13 +225,17 @@ export interface UpsertDescriptor {
 }
 
 export type QueryDescriptor =
-  | SelectDescriptor | InsertDescriptor | UpdateDescriptor
-  | DeleteDescriptor | UpsertDescriptor;
+  | SelectDescriptor
+  | InsertDescriptor
+  | UpdateDescriptor
+  | DeleteDescriptor
+  | UpsertDescriptor;
 
 // Serializable counterparts of the clause types
 export type WhereConditionJson = { [column: string]: WhereConditionValue };
 export interface OrderByJson {
-  column: string; direction?: OrderDirection;
+  column: string;
+  direction?: OrderDirection;
   nulls?: "NULLS FIRST" | "NULLS LAST";
 }
 ```
@@ -193,7 +253,7 @@ Notes:
 
 ## Editing checklist
 
-- New where operator → add to `WhereOperators` (clauses) *and* ensure
+- New where operator → add to `WhereOperators` (clauses) _and_ ensure
   `WhereConditionJson`/`WhereConditionValue` still cover it, then implement
   compilation in the query builder.
 - New query operation → add a `*Descriptor` interface and add it to the

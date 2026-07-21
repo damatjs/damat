@@ -1,13 +1,11 @@
 {
   "extends": "@damatjs/typescript-config/base.json",
   "compilerOptions": {
-    "types": [
-      "bun"
-    ],
+    "composite": false,
+    "incremental": false,
+    "types": ["bun"],
     "rootDir": "src",
     "outDir": "dist"
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }

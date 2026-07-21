@@ -1,4 +1,6 @@
 import { addModule } from "./add-module";
+import { removeModule } from "./remove-module";
+import { updateModule } from "./update-module";
 import { listInstalledTool } from "./list-installed";
 import { listModules } from "./list-modules";
 import { moduleInfo } from "./module-info";
@@ -14,4 +16,6 @@ export const tools: ToolDef[] = [
   moduleInfo,
   listInstalledTool,
   addModule,
+  removeModule,
+  updateModule,
 ];

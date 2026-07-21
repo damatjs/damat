@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/services",
   "description": "Damatjs services definition",
-  "version": "0.6.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -32,12 +32,15 @@
   "author": "Abel Lamesgen",
   "dependencies": {
     "@damatjs/deps": "workspace:*",
+    "@damatjs/durability": "workspace:*",
     "@damatjs/orm-pg": "workspace:*",
     "@damatjs/orm-model": "workspace:*",
     "@damatjs/orm-type": "workspace:*",
     "@damatjs/orm-connector": "workspace:*",
     "@damatjs/types": "workspace:*",
-    "@damatjs/logger": "workspace:*"
+    "@damatjs/logger": "workspace:*",
+    "@damatjs/redis": "workspace:*",
+    "@damatjs/events": "workspace:*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "workspace:*",
@@ -49,7 +52,8 @@
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc && tsc-alias",
     "dev": "bun run build --watch",
     "watch": "tsc --watch",
-    "test": "bun test",
-    "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)"
+    "test": "bun ../../scripts/test/package.ts DAMAT_SERVICES_DATABASE_URL",
+    "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)",
+    "lint": "oxlint src"
   }
 }

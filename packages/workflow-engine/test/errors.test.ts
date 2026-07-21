@@ -15,7 +15,13 @@ import {
 describe("errors: WorkflowError (base)", () => {
   it("is an Error subclass with name, code, message and optional fields", () => {
     const cause = new Error("boom");
-    const err = new WorkflowError("CODE", "something broke", "wf", "step", cause);
+    const err = new WorkflowError(
+      "CODE",
+      "something broke",
+      "wf",
+      "step",
+      cause,
+    );
 
     expect(err).toBeInstanceOf(Error);
     expect(err).toBeInstanceOf(WorkflowError);
@@ -44,7 +50,12 @@ describe("errors: WorkflowError (base)", () => {
 describe("errors: StepExecutionError", () => {
   it("formats with STEP_EXECUTION_FAILED code and preserves step/cause/workflow", () => {
     const cause = new Error("db down");
-    const err = new StepExecutionError("charge-card", "payment failed", cause, "checkout");
+    const err = new StepExecutionError(
+      "charge-card",
+      "payment failed",
+      cause,
+      "checkout",
+    );
 
     expect(err).toBeInstanceOf(WorkflowError);
     expect(err).toBeInstanceOf(StepExecutionError);
@@ -114,7 +125,12 @@ describe("errors: MaxRetriesExceededError", () => {
 describe("errors: CompensationError", () => {
   it("formats with COMPENSATION_FAILED code and preserves step/cause/workflow", () => {
     const cause = new Error("rollback failed");
-    const err = new CompensationError("create-order", "could not cancel", cause, "checkout");
+    const err = new CompensationError(
+      "create-order",
+      "could not cancel",
+      cause,
+      "checkout",
+    );
 
     expect(err).toBeInstanceOf(WorkflowError);
     expect(err).toBeInstanceOf(CompensationError);

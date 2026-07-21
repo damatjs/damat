@@ -1,6 +1,12 @@
-export function printSection(title: string, content: string[]): void {
-  console.log(`\n${title}:`);
+import type { CliOutput } from "../../types";
+
+export function printSection(
+  output: CliOutput,
+  title: string,
+  content: string[],
+): void {
+  output.write(`\n${title}:`);
   for (const line of content) {
-    console.log(`  ${line}`);
+    output.write(`  ${line}`);
   }
 }

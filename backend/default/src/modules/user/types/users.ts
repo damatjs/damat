@@ -25,4 +25,4 @@ export type NewUsers = {
   image?: string | null;
 };
 
-export type UpdateUsers = Partial<Omit<Users, 'id'>>;
+export type UpdateUsers = Partial<Omit<Users, "id">>;

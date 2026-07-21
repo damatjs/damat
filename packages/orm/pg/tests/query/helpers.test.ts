@@ -36,9 +36,7 @@ describe("quoteIdent", () => {
 
 describe("buildTableRef", () => {
   it("qualifies with schema when present", () => {
-    expect(buildTableRef({ schema: "app", name: "user" })).toBe(
-      '"app"."user"',
-    );
+    expect(buildTableRef({ schema: "app", name: "user" })).toBe('"app"."user"');
   });
 
   it("omits schema qualifier when absent", () => {
@@ -81,14 +79,20 @@ describe("buildOrderByClause", () => {
   it("uppercases a lowercase direction/nulls before interpolating", () => {
     expect(
       buildOrderByClause([
-        { column: "name", direction: "asc" as any, nulls: "nulls first" as any },
+        {
+          column: "name",
+          direction: "asc" as any,
+          nulls: "nulls first" as any,
+        },
       ]),
     ).toBe('ORDER BY "name" ASC NULLS FIRST');
   });
 
   it("rejects a direction outside the ASC/DESC whitelist (SQL injection guard)", () => {
     expect(() =>
-      buildOrderByClause([{ column: "name", direction: "; DROP TABLE users" as any }]),
+      buildOrderByClause([
+        { column: "name", direction: "; DROP TABLE users" as any },
+      ]),
     ).toThrow(/Invalid direction/);
   });
 
@@ -155,7 +159,9 @@ describe("assertKnownColumns", () => {
   const known = new Set(["id", "email"]);
 
   it("passes when every key is known", () => {
-    expect(() => assertKnownColumns({ id: 1, email: 2 }, known, "ctx")).not.toThrow();
+    expect(() =>
+      assertKnownColumns({ id: 1, email: 2 }, known, "ctx"),
+    ).not.toThrow();
   });
 
   it("throws with context + column name + known list when a key is unknown", () => {

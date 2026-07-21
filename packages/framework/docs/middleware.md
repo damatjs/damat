@@ -23,7 +23,7 @@ Installs, in order, on `"*"`:
 4. `cors(corsConfigSetter(corsConfig))` — CORS.
 5. `errorHandler(logger)` — try/catch wrapper around `next()`.
 
-Order matters: `requestSetup` runs before `errorHandler` so a `requestId` exists when errors are formatted, and `errorHandler` wraps everything downstream (including route handlers).
+Order matters: `requestSetup` runs before `errorHandler` so a `requestId` exists when errors are formatted. `errorHandler` wraps the downstream middleware chain — but **not** route-handler throws: in Hono v4 an error thrown from a handler is dispatched straight to `app.onError` and never unwinds through middleware, which is why `bootstrap` also installs `app.onError` against the same `handleError` (see [bootstrap.md](./bootstrap.md)).
 
 ## `requestSetup` (`requestSetup.ts`)
 
@@ -37,10 +37,32 @@ For each request:
 
 `userId`/`teamId` for the request log are read from `c.get("user")?.id` / `c.get("team")?.id` (set by app auth middleware if present; default to `"anonymous"`/`"none"`).
 
+## Typed context — `src/context.ts`
+
+The variables `requestSetup` (and app auth middleware) put on the Hono context are typed via a `ContextVariableMap` augmentation, so `c.get(...)`/`c.set(...)` are fully typed in app code with no `as` casts:
+
+```ts
+declare module "hono" {
+  interface ContextVariableMap {
+    requestId: string; // set by requestSetup
+    startTime: number; // set by requestSetup
+    logger: ILogger; // set by requestSetup (request-scoped child logger)
+    user?: AuthUser; // set by the app's auth middleware, so optional
+    team?: AuthTeam;
+    userId?: string;
+  }
+}
+```
+
+`AuthUser`/`AuthTeam` are `{ id: string; [key: string]: unknown }` — apps may carry extra fields; the framework only relies on `id`. Typed accessors (exported from the barrel):
+
+- `getRequestLogger(c)` — the request-scoped child logger `requestSetup` created (carries `requestId`, `method`, `path`); distinct from `getLogger()`, which returns the process-global logger.
+- `getUser(c)` / `getTeam(c)` — the authenticated user/team, `undefined` unless the app's auth middleware set one.
+
 ## CORS — `corsConfigSetter` (`corsConfig.ts`)
 
 ```ts
-function corsConfigSetter(config?: string | CorsConfigType): CorsConfigType
+function corsConfigSetter(config?: string | CorsConfigType): CorsConfigType;
 ```
 
 - `undefined` or `"*"` → permissive defaults (`origin: "*"`).
@@ -52,9 +74,11 @@ Defaults when given a string/empty: methods `GET,POST,PUT,PATCH,DELETE,OPTIONS`;
 ```ts
 interface CorsConfigType {
   origin: string | string[];
-  allowMethods: ("GET"|"POST"|"PUT"|"PATCH"|"DELETE"|"OPTIONS")[];
-  allowHeaders: string[]; exposeHeaders: string[];
-  credentials: boolean; maxAge: number;
+  allowMethods: ("GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS")[];
+  allowHeaders: string[];
+  exposeHeaders: string[];
+  credentials: boolean;
+  maxAge: number;
 }
 ```
 
@@ -64,20 +88,26 @@ interface CorsConfigType {
 
 ```ts
 const errorHandler = (logger) => async (c, next) => {
-  try { await next(); } catch (error) { return handleError(c, error, logger); }
+  try {
+    await next();
+  } catch (error) {
+    return handleError(c, error, logger);
+  }
 };
 ```
+
+Catches errors thrown by downstream **middleware**. Handler-thrown errors are handled by the `app.onError((err, c) => handleError(c, err, logger))` hook that `bootstrap` installs — same `handleError`, different entry point.
 
 ### `handleError(c, error, logger)` (`error/handleError.ts`)
 
 Maps an error to the standard error envelope and logs it. `parseError` classifies:
 
-| Error | status | code | message / details |
-| --- | --- | --- | --- |
-| `AppError` (from `@damatjs/types`) | `error.statusCode` | `error.code` | `error.message` / `error.details` |
-| `ZodError` | 400 | `VALIDATION_ERROR` | "Request validation failed" / mapped issues (`path`, `message`) |
-| `HTTPException` (Hono) | `error.status` | `getErrorCodeFromStatus(status)` | `error.message` |
-| other `Error` | 500 | `INTERNAL_ERROR` | generic; in `NODE_ENV=development`, the real message + stack are included |
+| Error                              | status             | code                             | message / details                                                         |
+| ---------------------------------- | ------------------ | -------------------------------- | ------------------------------------------------------------------------- |
+| `AppError` (from `@damatjs/types`) | `error.statusCode` | `error.code`                     | `error.message` / `error.details`                                         |
+| `ZodError`                         | 400                | `VALIDATION_ERROR`               | "Request validation failed" / mapped issues (`path`, `message`)           |
+| `HTTPException` (Hono)             | `error.status`     | `getErrorCodeFromStatus(status)` | `error.message`                                                           |
+| other `Error`                      | 500                | `INTERNAL_ERROR`                 | generic; in `NODE_ENV=development`, the real message + stack are included |
 
 Response: `{ success: false, error: { code, message, details }, meta: { requestId, timestamp } }`.
 
@@ -99,7 +129,7 @@ Per-method, attached by the router when rate limiting is resolved. Behaviour:
 4. `windowMs = parseWindowToMs(window)`; `key = ratelimit:<identifier>:<path>`.
 5. `checkRateLimit(key, windowMs, requests, redis)` (from `@damatjs/redis`, sliding-window via sorted sets).
 6. Sets `X-RateLimit-Limit/Remaining/Reset`. If not allowed → `Retry-After` header + 429 envelope (`RATE_LIMIT_EXCEEDED` with `retryAfter`/`limit`/`window` details).
-7. On any error in the check → log and pass through (fail-open).
+7. On any error in the check → log it, then: if `failClosed` is set (on the effective config, falling back to the route/method config) → 503 envelope (`RATE_LIMIT_UNAVAILABLE`); otherwise pass through (fail-open, the default).
 
 Window format (`utils/windowParser.ts`): `^(\d+)(s|m|h|d)$` → ms. Invalid formats throw.
 
@@ -107,12 +137,19 @@ Window format (`utils/windowParser.ts`): `^(\d+)(s|m|h|d)$` → ms. Invalid form
 
 ```ts
 type AuthType = "session" | "apiKey" | "flexible" | "none";
-interface AuthMiddlewareOptions { session?: MiddlewareHandler; apiKey?: MiddlewareHandler; flexible?: MiddlewareHandler; }
+interface AuthMiddlewareOptions {
+  session?: MiddlewareHandler;
+  apiKey?: MiddlewareHandler;
+  flexible?: MiddlewareHandler;
+}
 ```
 
 - `type === "none"` → `next()`.
 - If a custom handler for `type` is supplied in `options` → delegate to it.
-- Otherwise → **fail closed**: log an error naming the route and auth type, and return a 401 `UNAUTHORIZED` envelope. The framework does **not** ship a built-in session/apiKey verifier; apps provide one (the default backend has its own auth middleware under `src/api/middleware`). A route that declares auth is never served unauthenticated by mistake.
+- Otherwise → **fail closed**: log an error naming the route and auth type, and
+  return a 401 `UNAUTHORIZED` envelope. When `providers.auth` is bound, the
+  framework supplies these handlers from that module service. A route that
+  declares auth is never served unauthenticated by mistake.
 
 ## Validation — `createValidatorMiddleware(validator)` & `validate` (`validator.ts`)
 
@@ -131,7 +168,8 @@ Re-exports `corsConfig`, `error`, `notFound`, `requestSetup`, `setup`, `rateLimi
 
 ## Gotchas
 
-- **Rate limiting is a no-op without Redis; auth is not.** No Redis → rate limit passes through (fail-open). No app-provided auth handler → any non-`none` auth type returns 401 (fail-closed), so a misconfigured route is rejected rather than silently exposed.
+- **Rate limiting is a no-op without Redis; auth is not.** No Redis → rate limit passes through (fail-open). No bound auth handler → any non-`none` auth type returns 401 (fail-closed), so a misconfigured route is rejected rather than silently exposed.
+- **`failClosed` only covers check failures, not a missing Redis.** A Redis client that exists but errors mid-check triggers the `failClosed` 503 (`RATE_LIMIT_UNAVAILABLE`); when no Redis is configured at all (`!hasRedis()`), the middleware warns and passes through regardless of `failClosed`.
 - **Validator JSON parsing is lenient.** A malformed/missing JSON body silently degrades to query+params; if you require a body, declare a `body` schema so the "Body is required" check fires.
 - **`validate()` throws `ValidationError`; the validator middleware returns a 400 directly.** Two different paths — pick based on whether you're inside a handler (use `validate`) or wiring per-route validation (use the middleware via `validators`).
 - **Error detail leakage is env-gated.** Generic `Error` messages/stacks are only included when `NODE_ENV === "development"`.

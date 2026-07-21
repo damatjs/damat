@@ -41,9 +41,7 @@ describe("SelectBuilder.generateSql — where / order / limit / offset", () => {
   });
 
   it("ORDER BY with direction and nulls", () => {
-    const q = sel()
-      .orderBy("name", "DESC", "NULLS LAST")
-      .generateSql();
+    const q = sel().orderBy("name", "DESC", "NULLS LAST").generateSql();
     expect(q.sql).toBe(
       'SELECT * FROM "app"."user" ORDER BY "name" DESC NULLS LAST',
     );
@@ -101,7 +99,7 @@ describe("SelectBuilder.generateSql — relations (lateral joins)", () => {
     expect(q.sql).toBe(
       'SELECT "_p"."id", "_p"."name", "_rel_posts"."posts" ' +
         'FROM "app"."user" "_p" ' +
-        'LEFT JOIN LATERAL (' +
+        "LEFT JOIN LATERAL (" +
         'SELECT COALESCE(json_agg("_t"), \'[]\'::json) AS "posts" ' +
         'FROM (SELECT "id", "title" FROM "app"."post" "_t" ' +
         'WHERE "_t"."author_id" = "_p"."id" LIMIT 5) "_t"' +
@@ -119,9 +117,7 @@ describe("SelectBuilder.generateSql — relations (lateral joins)", () => {
   });
 
   it("with select [] (no columns) selects all parent columns plus rel column", () => {
-    const q = new SelectBuilder(UserModel)
-      .with({ posts: true })
-      .generateSql();
+    const q = new SelectBuilder(UserModel).with({ posts: true }).generateSql();
     expect(q.sql.startsWith('SELECT "_p".*, "_rel_posts"."posts" FROM')).toBe(
       true,
     );

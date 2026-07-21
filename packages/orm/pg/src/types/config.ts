@@ -6,7 +6,10 @@ export type { Pool, PoolClient, QueryResultRow };
 export type { ILogger };
 
 export interface PgEntityManagerConfig<
-  TModels extends Record<string, ModelDefinition> = Record<string, ModelDefinition>,
+  TModels extends Record<string, ModelDefinition> = Record<
+    string,
+    ModelDefinition
+  >,
 > {
   pool: Pool;
   logger?: ILogger;

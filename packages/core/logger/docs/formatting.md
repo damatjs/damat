@@ -39,7 +39,7 @@ configured `level` (default `"info"` → `1`). The stream is chosen in
 > Threshold ordering caveat: the numeric ordering places `success` (5), `warn` (6),
 > `error` (7), `fatal` (8), and `skip` (9) **above** `info` (1). So setting
 > `level: "warn"` filters out `debug`/`info`/`progress`/`waiting`/`cached`/`success`,
-> while `error`, `fatal`, and `skip` still pass — but so would nothing *between* `info`
+> while `error`, `fatal`, and `skip` still pass — but so would nothing _between_ `info`
 > and `warn` that you might expect to be "more important". Because `skip` is highest, it
 > is only suppressed when `minLevel` is set to `skip`. Keep this monotonic numbering in
 > mind when adding or reordering levels.
@@ -99,8 +99,8 @@ error(message, error?, context?) { this.log("error", message, context, error); }
 fatal(message, error?, context?) { this.log("fatal", message, context, error); } // error → 3rd arg ✘
 ```
 
-`fatal` swaps the positions: the value you pass as the *error* is forwarded into the
-*context* slot, and the *context* you pass goes into the *error* slot. As a result a
+`fatal` swaps the positions: the value you pass as the _error_ is forwarded into the
+_context_ slot, and the _context_ you pass goes into the _error_ slot. As a result a
 `fatal` "error" object is treated as context (and only stringified into context if it is
 a non-empty object), while a context object passed to `fatal` is only rendered as an
 error block if it happens to be an `Error` instance. Prefer `error()` when you need

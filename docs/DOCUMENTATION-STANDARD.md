@@ -4,10 +4,10 @@ How documentation works in this repo, and the rules you (human or AI) **must**
 follow when you change a package. There are two separate tiers — keep them
 separate:
 
-| Tier | Lives in | Answers | Rule |
-|------|----------|---------|------|
-| **Living docs** | package `README.md`, package `docs/`, `docs/guide/`, `MODULES.md` | "How does this work **right now**?" | Always describes the **current** version only. No history, no "new in X", no "deprecated since Y", no upgrade steps. |
-| **Release notes** | `releases/<package>/` | "What **changed** in version N, and how do I move to it?" | One folder per package, one file per version. This is the only place change history and upgrade steps live. |
+| Tier              | Lives in                                                          | Answers                                                   | Rule                                                                                                                 |
+| ----------------- | ----------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **Living docs**   | package `README.md`, package `docs/`, `docs/guide/`, `MODULES.md` | "How does this work **right now**?"                       | Always describes the **current** version only. No history, no "new in X", no "deprecated since Y", no upgrade steps. |
+| **Release notes** | `releases/<package>/`                                             | "What **changed** in version N, and how do I move to it?" | One folder per package, one file per version. This is the only place change history and upgrade steps live.          |
 
 The point: a reader of the living docs never has to mentally subtract old
 behavior. A reader who wants to upgrade goes to `releases/` and gets a precise
@@ -44,6 +44,7 @@ releases/
 ```
 
 Rules:
+
 - **`releases/<package>/<version>.md`** — create one for every version that made a
   **package-relevant** change (an API/behavior/feature change, not a pure
   dependency bump or CI tweak). Each documents the move **from the previous
@@ -74,13 +75,16 @@ Rules:
 Use before/after code when an API or syntax changed.>
 
 ## Added
+
 - <new capabilities; omit the section if none>
 
 ## Changed / improved
+
 - <behavior changes; omit if none>
 
 ## Breaking
-- None.            <!-- or: list each break + why -->
+
+- None. <!-- or: list each break + why -->
 
 ## Action required
 
@@ -89,6 +93,7 @@ exact commands. If nothing is required, say "None — drop-in upgrade." Be expli
 about whether the change is opt-in.>
 
 ## References
+
 - Current behavior: <link to the package README / guide chapter (Tier 1)>
 - Source: <key files, and the commit/PR if known>
 ```
@@ -104,12 +109,12 @@ introduces what the package provides at that baseline.
 Change history for this package. For how it works **now**, read the
 [package README](../../<dir>/README.md) and its [docs](../../<dir>/docs/).
 
-| Version | Summary | Upgrade notes |
-|---------|---------|---------------|
-| 0.1.3 | <one line> | [0.1.3 →](./0.1.3.md) |
-| 0.1.2 | <one line> | [0.1.2 →](./0.1.2.md) |
-| 0.1.1 | Maintenance / dependency bumps | — |
-| 0.1.0 | First published release | [0.1.0 →](./0.1.0.md) |
+| Version | Summary                        | Upgrade notes         |
+| ------- | ------------------------------ | --------------------- |
+| 0.1.3   | <one line>                     | [0.1.3 →](./0.1.3.md) |
+| 0.1.2   | <one line>                     | [0.1.2 →](./0.1.2.md) |
+| 0.1.1   | Maintenance / dependency bumps | —                     |
+| 0.1.0   | First published release        | [0.1.0 →](./0.1.0.md) |
 ```
 
 ---

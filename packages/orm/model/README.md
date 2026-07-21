@@ -9,7 +9,8 @@ metadata — it produces a serializable `TableSchema` (and, grouped, a
 `ModuleSchema`) that the rest of the stack turns into migrations, queries, and
 generated TypeScript row types. It carries no SQL execution of its own. This is
 the package you interact with most when modelling a domain; everything downstream
-(registry, query builder, migration engine, codegen) consumes its output.
+(registry, query builder, migration engine, and schema generators) consumes its
+output.
 
 Part of the [Damat](../../../README.md) monorepo · [Full guide](../../../docs/GUIDE.md) · [Internals](./docs/README.md)
 
@@ -25,8 +26,8 @@ Inside the monorepo it is referenced as a workspace dependency:
 // package.json
 {
   "dependencies": {
-    "@damatjs/orm-model": "*"
-  }
+    "@damatjs/orm-model": "*",
+  },
 }
 ```
 
@@ -52,10 +53,18 @@ You would **not** use this package directly to:
 ## Quick start
 
 ```ts
-import { model, columns, EnumBuilder, toModuleSchema, assertValidRelations } from "@damatjs/orm-model";
+import {
+  model,
+  columns,
+  EnumBuilder,
+  toModuleSchema,
+  assertValidRelations,
+} from "@damatjs/orm-model";
 
 // A named enum (CREATE TYPE ... AS ENUM)
-const OrderStatus = new EnumBuilder(["pending", "shipped", "delivered"]).name("order_status");
+const OrderStatus = new EnumBuilder(["pending", "shipped", "delivered"]).name(
+  "order_status",
+);
 
 const User = model(
   "user",
@@ -71,9 +80,7 @@ const User = model(
     orders: columns.hasMany("order").mappedBy("user"),
   },
   { schema: "store" },
-).indexes([
-  columns.indexes("uniq_users_email").columns(["email"]).unique(),
-]);
+).indexes([columns.indexes("uniq_users_email").columns(["email"]).unique()]);
 
 const Order = model("order", {
   id: columns.id({ prefix: "ord" }).primaryKey(),
@@ -83,10 +90,7 @@ const Order = model("order", {
 
   // owning side — creates the `user_id` FK column on `order`
   user: columns.belongsTo("user").onDelete("CASCADE").indexed(),
-})
-  .constrain([
-    columns.constrains("orders_total_pos").check("total > 0"),
-  ]);
+}).constrain([columns.constrains("orders_total_pos").check("total > 0")]);
 
 // Catch broken relation wiring early
 assertValidRelations([User, Order]);
@@ -106,79 +110,78 @@ Single entry point (`.`). The package re-exports everything under `properties`,
 
 ### Definition entry points
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `model(tableName, properties, options?)` | function | Define a table. Returns a `ModelDefinition`. |
-| `ModelDefinition` | class | A model: holds properties, fluent `.indexes()` / `.constrain()` / `.timestamps()` / `.softDelete()`, and `.toTableSchema()` / `.toTsType()`. |
-| `columns` | object | The builder factory — one method per column type plus `belongsTo`/`hasMany`/`hasOne`/`indexes`/`constrains`. |
-| `toModuleSchema(name, models, options?)` | function | Group models into a `ModuleSchema`, hoisting relations. |
+| Export                                   | Kind     | Summary                                                                                                                                      |
+| ---------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model(tableName, properties, options?)` | function | Define a table. Returns a `ModelDefinition`.                                                                                                 |
+| `ModelDefinition`                        | class    | A model: holds properties, fluent `.indexes()` / `.constrain()` / `.timestamps()` / `.softDelete()`, and `.toTableSchema()` / `.toTsType()`. |
+| `columns`                                | object   | The builder factory — one method per column type plus `belongsTo`/`hasMany`/`hasOne`/`indexes`/`constrains`.                                 |
+| `toModuleSchema(name, models, options?)` | function | Group models into a `ModuleSchema`, hoisting relations.                                                                                      |
 
 ### Column builders (`columns.*` and classes)
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `ColumnBuilder` | class | Base builder: `.primaryKey()`, `.nullable()`, `.unique()`, `.default()`, `.defaultRaw()`, `.array()`, `.fieldName()`, `.toSchema()`, `.toTsType()`. |
-| `IdColumnBuilder` | class | `columns.id({prefix})` — text PK with `generate_id('<prefix>')` default. |
-| `BooleanColumnBuilder` | class | `columns.boolean()`. |
-| `IntegerColumnBuilder` | class | `columns.integer()` → `.bigInt()` / `.smallInt()` / `.serial()` / `.bigSerial()` / `.smallSerial()`. |
-| `NumericColumnBuilder` | class | `columns.numeric(p?, s?)` (decimal) with `.precision()` / `.scale()`. |
-| `RealColumnBuilder`, `DoublePrecisionColumnBuilder`, `MoneyColumnBuilder` | class | `columns.real()`, `columns.doublePrecision()`, `columns.money()`. |
-| `TextColumnBuilder`, `CharacterVaryingColumnBuilder`, `CharacterColumnBuilder` | class | `columns.text()`, `columns.varchar(n?)`, `columns.char(n?)`. |
-| `TimestampColumnBuilder`, `DateColumnBuilder`, `TimeColumnBuilder`, `IntervalColumnBuilder` | class | `columns.timestamp({withTimezone?})`, `columns.date()`, `columns.time()`, `columns.interval()`. |
-| `JsonColumnBuilder` | class | `columns.json({binary?})` / `columns.jsonb()`. |
-| `UuidColumnBuilder` | class | `columns.uuid()` with `.defaultGenerate()`. |
-| `ByteaColumnBuilder` | class | `columns.bytea()`. |
-| `EnumColumnBuilder` | class | `columns.enum(EnumBuilder)`. |
-| `VectorColumnBuilder` | class | `columns.vector(dims)` — `real[]` with fixed dimensions for embeddings. |
+| Export                                                                                      | Kind  | Summary                                                                                                                                             |
+| ------------------------------------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ColumnBuilder`                                                                             | class | Base builder: `.primaryKey()`, `.nullable()`, `.unique()`, `.default()`, `.defaultRaw()`, `.array()`, `.fieldName()`, `.toSchema()`, `.toTsType()`. |
+| `IdColumnBuilder`                                                                           | class | `columns.id({prefix})` — text PK with `generate_id('<prefix>')` default.                                                                            |
+| `BooleanColumnBuilder`                                                                      | class | `columns.boolean()`.                                                                                                                                |
+| `IntegerColumnBuilder`                                                                      | class | `columns.integer()` → `.bigInt()` / `.smallInt()` / `.serial()` / `.bigSerial()` / `.smallSerial()`.                                                |
+| `NumericColumnBuilder`                                                                      | class | `columns.numeric(p?, s?)` (decimal) with `.precision()` / `.scale()`.                                                                               |
+| `RealColumnBuilder`, `DoublePrecisionColumnBuilder`, `MoneyColumnBuilder`                   | class | `columns.real()`, `columns.doublePrecision()`, `columns.money()`.                                                                                   |
+| `TextColumnBuilder`, `CharacterVaryingColumnBuilder`, `CharacterColumnBuilder`              | class | `columns.text()`, `columns.varchar(n?)`, `columns.char(n?)`.                                                                                        |
+| `TimestampColumnBuilder`, `DateColumnBuilder`, `TimeColumnBuilder`, `IntervalColumnBuilder` | class | `columns.timestamp({withTimezone?})`, `columns.date()`, `columns.time()`, `columns.interval()`.                                                     |
+| `JsonColumnBuilder`                                                                         | class | `columns.json({binary?})` / `columns.jsonb()`.                                                                                                      |
+| `UuidColumnBuilder`                                                                         | class | `columns.uuid()` with `.defaultGenerate()`.                                                                                                         |
+| `ByteaColumnBuilder`                                                                        | class | `columns.bytea()`.                                                                                                                                  |
+| `EnumColumnBuilder`                                                                         | class | `columns.enum(EnumBuilder)`.                                                                                                                        |
+| `VectorColumnBuilder`                                                                       | class | `columns.vector(dims)` — `real[]` with fixed dimensions for embeddings.                                                                             |
 
 ### Enums, indexes, constraints
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `EnumBuilder` | class | Named PG enum. `.name()`, `.toSchema()`, `.toTsTypeName()`, `.toTsTypeDeclaration()`. |
-| `IndexBuilder` / `indexBuilder(name)` | class/function | Index: `.columns()`, `.unique()`, `.type()`, `.where()`, `.concurrently()`. |
+| Export                                         | Kind           | Summary                                                                                                                              |
+| ---------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `EnumBuilder`                                  | class          | Named PG enum. `.name()`, `.toSchema()`, `.toTsTypeName()`, `.toTsTypeDeclaration()`.                                                |
+| `IndexBuilder` / `indexBuilder(name)`          | class/function | Index: `.columns()`, `.unique()`, `.type()`, `.where()`, `.concurrently()`.                                                          |
 | `ConstraintBuilder` / `constrainBuilder(name)` | class/function | Table constraint: `.columns()`, `.unique()`, `.primaryKey()`, `.check()`, `.exclude()`, `.indexType()`, `.where()`, `.deferrable()`. |
 
 ### Relations
 
-| Export | Kind | Summary |
-| --- | --- | --- |
+| Export                                                        | Kind           | Summary                                                                                                                                                                 |
+| ------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `BelongsTo` / `BelongsToBuilder` / `belongsTo(target, opts?)` | class/function | Owning side; creates the FK column(s). `.link()`, `.onDelete()`, `.onUpdate()`, `.nullable()`, `.unique()`, `.indexed()`, `.deferrable()`, `.match()`, `.constraint()`. |
-| `HasMany` / `HasManyBuilder` / `hasMany(target, opts?)` | class/function | Inverse 1:N; no DB artifact. `.mappedBy()`. |
-| `HasOne` / `HasOneBuilder` / `hasOne(target, opts?)` | class/function | Inverse 1:1; no DB artifact. `.mappedBy()`. |
-| `Relation` | class | Abstract base for the three relation builders. |
-| `ModelTarget` / `LazyModel` | type | A relation target: `ModelDefinition` \| `() => ModelDefinition` \| `string` table name. |
+| `HasMany` / `HasManyBuilder` / `hasMany(target, opts?)`       | class/function | Inverse 1:N; no DB artifact. `.mappedBy()`.                                                                                                                             |
+| `HasOne` / `HasOneBuilder` / `hasOne(target, opts?)`          | class/function | Inverse 1:1; no DB artifact. `.mappedBy()`.                                                                                                                             |
+| `Relation`                                                    | class          | Abstract base for the three relation builders.                                                                                                                          |
+| `ModelTarget` / `LazyModel`                                   | type           | A relation target: `ModelDefinition` \| `() => ModelDefinition` \| `string` table name.                                                                                 |
 
 ### Relation validation
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `validateRelations(models)` | function | Cross-check live `ModelDefinition`s; returns `{ valid, violations }`. |
-| `assertValidRelations(models)` | function | Throws `RelationValidationError` listing all violations. |
-| `validateRelationSchemas(rels)` / `assertValidRelationSchemas(rels)` | function | Same, but against a serialized `RelationSchema[]`. |
-| `RelationValidationError` | class | Aggregated error carrying `violations` + a formatted message. |
-| `ValidationResult`, `RelationViolation`, `ViolationKind` | type | Validation result shapes. |
+| Export                                                               | Kind     | Summary                                                               |
+| -------------------------------------------------------------------- | -------- | --------------------------------------------------------------------- |
+| `validateRelations(models)`                                          | function | Cross-check live `ModelDefinition`s; returns `{ valid, violations }`. |
+| `assertValidRelations(models)`                                       | function | Throws `RelationValidationError` listing all violations.              |
+| `validateRelationSchemas(rels)` / `assertValidRelationSchemas(rels)` | function | Same, but against a serialized `RelationSchema[]`.                    |
+| `RelationValidationError`                                            | class    | Aggregated error carrying `violations` + a formatted message.         |
+| `ValidationResult`, `RelationViolation`, `ViolationKind`             | type     | Validation result shapes.                                             |
 
 ### Utilities & re-exports
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `toPascalCase`, `toCamelCase`, `toEnumTypeName` | function | String-case helpers used by codegen/type emission. |
-| `pgTypeToTsBase`, `enumTypeToTsBase` | function | Map a `ColumnType` / enum values to a TypeScript type string. |
-| `cleanupIndexSchema` | function | Normalise a user index into an `IndexSchema` (auto-name, column normalisation). |
-| `registerModel`, `getRegisteredModel`, `hasRegisteredModel` | function | The global table-name → model registry that backs string relation targets. |
-| `resolveModuleTarget`, `removeLastS` | function | Target resolution + table→singular helper. |
-| `PropertyValue`, `ModelProperties` | type | The allowed property value union and the model property map. |
+| Export                                                      | Kind     | Summary                                                                         |
+| ----------------------------------------------------------- | -------- | ------------------------------------------------------------------------------- |
+| `toPascalCase`, `toCamelCase`, `toEnumTypeName`             | function | String-case helpers used by codegen/type emission.                              |
+| `pgTypeToTsBase`, `enumTypeToTsBase`                        | function | Map a `ColumnType` / enum values to a TypeScript type string.                   |
+| `cleanupIndexSchema`                                        | function | Normalise a user index into an `IndexSchema` (auto-name, column normalisation). |
+| `registerModel`, `getRegisteredModel`, `hasRegisteredModel` | function | The global table-name → model registry that backs string relation targets.      |
+| `resolveModuleTarget`, `removeLastS`                        | function | Target resolution + table→singular helper.                                      |
+| `PropertyValue`, `ModelProperties`                          | type     | The allowed property value union and the model property map.                    |
 
 Everything from [`@damatjs/orm-type`](../type) (e.g. `ColumnType`, `TableSchema`,
 `ModuleSchema`, `RelationSchema`) is re-exported from this package's root, so
 model code rarely needs to import `@damatjs/orm-type` directly.
 
 > **Note:** the package's `exports` map only has `.`. There is no `codegen`
-> subpath export — the row-type generator that emits files (the `NewX`/`UpdateX`
-> snapshot files) lives outside `src/` and the `codegen` npm script references a
-> module not present in this package's source. Row-type emission you can rely on
-> from this package is `ModelDefinition.toTsType()`.
+> subpath export. Use `@damatjs/schema-codegen` for complete `ModuleSchema` to
+> TypeScript/Zod source generation; row-type emission from this package itself
+> is limited to `ModelDefinition.toTsType()`.
 
 ## How it fits
 
@@ -191,8 +194,9 @@ model code rarely needs to import `@damatjs/orm-type` directly.
 
 - [`@damatjs/orm-core`](../core) — registers `ModelDefinition`s.
 - `@damatjs/orm-pg` — builds queries from `ModelDefinition` and relation builders.
-- `@damatjs/orm-processor`, `@damatjs/orm-migration`, `@damatjs/codegen`,
-  `@damatjs/orm-cli`, `@damatjs/orm-main`.
+- `@damatjs/orm-processor`, `@damatjs/orm-migration`,
+  `@damatjs/schema-codegen`, `@damatjs/module-generator`, `@damatjs/orm-cli`,
+  `@damatjs/orm-main`.
 - `@damatjs/module`, `@damatjs/service`.
 
 ## Documentation

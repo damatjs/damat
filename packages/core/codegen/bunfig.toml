@@ -1,4 +1,0 @@
-[test]
-coverage = true
-coverageThreshold = 1.0
-coveragePathIgnorePatterns = ["**/dist/**", "**/node_modules/**", "**/*.test.ts", "**/tests/**", "**/__tests__/**", "**/__fixtures__/**"]

@@ -6,7 +6,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { parseEnvFile } from './parseEnvFile';
+import { parseEnvFile } from "./parseEnvFile";
 
 /**
  * Load environment variables from .env files.

@@ -18,7 +18,10 @@ function diffOf(prev = moduleSchema(), next = moduleSchema()): SchemaDiff {
 
 describe("reverseDiff › invertible operations", () => {
   it("inverts create_table into drop_table", () => {
-    const diff = diffOf(moduleSchema(), moduleSchema({ tables: [table("t", [idColumn])] }));
+    const diff = diffOf(
+      moduleSchema(),
+      moduleSchema({ tables: [table("t", [idColumn])] }),
+    );
     const rev = reverseDiff(diff);
     expect(rev.hasChanges).toBe(true);
     expect(rev.changes).toHaveLength(1);

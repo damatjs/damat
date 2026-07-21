@@ -1,70 +1,99 @@
-[Damat Guide](../GUIDE.md) › Installing existing modules
+[Damat Guide](../GUIDE.md) › Installing modules
 
 # 14. Installing existing modules
 
-`damat module add <source>` installs a module shadcn-style: it reads the
-module's `module.json`, **splits the module across the app's layers** (see below),
-registers it in `damat.config.ts`, adds its portable tsconfig aliases, regenerates
-the workflow barrels, syncs required env vars into `.env.example`, and installs the
-npm packages it needs. If the module ships any link files, they split into
-`src/links/<moduleId>/` (see below).
+`damat module add <source>` reads a provider `damat.json`, matches its named
+capabilities to the backend's receiver profile, and builds one transactional
+installation plan. A source may be a registry reference, local path, Git/GitHub
+origin, npm artifact, or tarball.
 
-A module is authored **flat** (`workflows/<table>`, `api/routes/<table>`,
-`links/models/`, `tests/`); on install the `<moduleId>/` segment is added so nothing
-collides:
-
-| In the module package | Lands in the app |
-| --- | --- |
-| models, service, config, types, migrations, `lib/` | `src/modules/<moduleId>/` |
-| `api/routes/<table>/` | `src/api/routes/<moduleId>/<table>/` (URL `/<moduleId>/<table>`) |
-| `workflows/<table>/` | `src/workflows/<moduleId>/<table>/` |
-| `links/models/<x>.ts` | `src/links/<moduleId>/models/<x>.ts` |
-| `tests/` | `tests/<moduleId>/` |
-
-Generated routes import workflows from the bare `@workflows` barrel, which the
-install wires up via the `@workflows` / `@workflows/*` and `@<moduleId>/*` tsconfig
-paths it adds.
+Always inspect unfamiliar work first:
 
 ```bash
-# from a registry ref (requires DAMAT_MODULE_REGISTRY)
-damat module add damatjs/user@0.2.0
-
-# from a local path
-damat module add ./packages/modules/user
-
-# from a github shorthand or git URL
-damat module add damatjs/modules/user
-damat module add https://github.com/damatjs/modules.git#main
-
-# then apply the module's migrations and restart the dev server
-bun damat-orm migrate:up
+damat module plan ./modules/user
+damat module add ./modules/user
+damat module list
 ```
 
-Useful commands:
+Installed files, checksums, and immutable provenance are recorded in
+`damat.lock.json`. Collisions are blocked. Updates and removals compare owned
+content and scan for remaining usage.
+
+## Capability routing
+
+The provider declares `install.provides`; a backend created by `damat create`
+declares `install.accepts`. A destination is selected in this order:
+
+1. explicit `--target capability=path`;
+2. matching receiver `accepts`;
+3. provider `fallbackTo`;
+4. a planning error.
+
+Source mode is the normal editable installation path. `--mode source|package`
+overrides the provider default.
+
+## Shared application policy stays user-owned
+
+The installer never silently edits:
+
+- `damat.config.ts`;
+- TypeScript aliases;
+- `.env` or `.env.example`;
+- route/workflow/job/event/pipeline barrels;
+- application call sites;
+- authentication or operational routes.
+
+The installation report includes the provider's integration instructions and
+the exact locations that need review. After installation:
+
+1. register the module in `damat.config.ts`;
+2. add/import its route, workflow, job, event, pipeline, or link capabilities;
+3. add declared environment values;
+4. update any required aliases/barrels;
+5. apply migrations;
+6. restart the backend.
 
 ```bash
-damat module list                # what's installed in this app
-damat module add <src> --force   # overwrite an existing module (incl. shipped link files)
-damat module add <src> --name x  # install under a different id
+bun run db:migrate
+bun run db:status
 ```
 
-**Module-shipped links.** A module can ship cross-module link files (a real
-`defineLink`) under `links/models/`. On `add` they split into `src/links/<moduleId>/`,
-the owner index + top-level aggregator are regenerated, and `links: "./src/links"`
-is ensured in `damat.config.ts`. The link is **dormant** until you run
-`damat-orm migrate:create link:<moduleId>` + `migrate:up`, and harmless if its
-target module isn't installed. The copied files are yours to edit (e.g. to point at
-a target installed under a different id) — a re-install won't clobber them unless you
-pass `--force`. See
-[§17.3 → Links shipped by a module](./17-composing-and-linking-modules.md#links-shipped-by-a-module).
+Use `bun run db:setup` only when the configured database itself may not exist.
 
-**Trust:** registry installs carry an owner + verification status; the install
-gate is controlled by `DAMAT_MODULE_VERIFY` (`off` / `warn` / `require`).
-`rejected`/`revoked` modules are always blocked. Path and git sources are
-trusted as-is (you pointed at them). Details in [MODULES.md](../../MODULES.md).
+## Package mode
 
-Prefer to drive this from an AI assistant? See the
-[next chapter](./15-installing-modules-with-ai.md).
+Package mode resolves immutable artifacts through either a Node package manager
+backend or Damat's package store. It requires the explicit package-mode gate:
+
+```bash
+damat module add npm:@acme/user@1.0.0 \
+  --mode package \
+  --package-backend node \
+  --experimental-package
+```
+
+The runtime loads declared migrations, routes, workflows, jobs, events, and
+pipelines from the resolved package location. Source and package installations
+share the same manifest identities, capability names, integration ownership,
+and trust checks.
+
+## Trust
+
+Registry entries preserve owner, verification, integrity, and pinned source
+metadata. Rejected and revoked artifacts are always blocked. Configure registry
+resolution with `DAMAT_REGISTRY` or the module-registry compatibility variable.
+Direct origins are recorded as unverified provenance.
+
+## Updating and removing
+
+```bash
+damat module update user --yes
+damat module remove user --yes
+```
+
+Review usage warnings before removal. The installer removes owned files, but the
+backend owner must remove shared config, environment, aliases, imports, links,
+and call sites after confirming they are no longer needed.
 
 ---
 

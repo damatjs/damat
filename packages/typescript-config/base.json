@@ -1,8 +1,6 @@
 {
   "compilerOptions": {
-    "lib": [
-      "ES2023"
-    ],
+    "lib": ["ES2023"],
     "target": "ES2023",
     "module": "ESNext",
     "moduleResolution": "bundler",
@@ -27,35 +25,17 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": "../",
     "paths": {
-      "@damatjs/backend": [
-        "./backend/default/src"
-      ],
-      "@damatjs/deps": [
-        "./packages/deps/src"
-      ],
-      "@damatjs/deps/*": [
-        "./packages/deps/src/*"
-      ],
-      "@damatjs/service": [
-        "./packages/service/src"
-      ],
-      "@damatjs/types": [
-        "./packages/core/types/src"
-      ],
-      "@damatjs/cli/*": [
-        "./packages/cli/*"
-      ],
-      "@damatjs/core/*": [
-        "./packages/core/*"
-      ],
-      "@damatjs/workflow-engine": [
-        "./packages/workflow-engine/src"
-      ]
+      "@damatjs/backend": ["./backend/default/src"],
+      "@damatjs/deps": ["./packages/deps/src"],
+      "@damatjs/deps/*": ["./packages/deps/src/*"],
+      "@damatjs/service": ["./packages/service/src"],
+      "@damatjs/types": ["./packages/core/types/src"],
+      "@damatjs/cli/*": ["./packages/cli/*"],
+      "@damatjs/core/*": ["./packages/core/*"],
+      "@damatjs/workflow-engine": ["./packages/workflow-engine/src"]
     }
   },
-  "include": [
-    "${configDir}/src"
-  ],
+  "include": ["${configDir}/src"],
   "exclude": [
     "${configDir}/dist",
     "${configDir}/node_modules",

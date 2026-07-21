@@ -165,13 +165,53 @@ describe("Distributed Locks", () => {
 
     it("returns false when the lock value does not match", async () => {
       await acquireLock("test-lock", 10000, redis);
-      const extended = await extendLock("test-lock", "wrong-value", 10000, redis);
+      const extended = await extendLock(
+        "test-lock",
+        "wrong-value",
+        10000,
+        redis,
+      );
       expect(extended).toBe(false);
     });
 
     it("returns false when the lock does not exist", async () => {
       const extended = await extendLock("missing", "any", 10000, redis);
       expect(extended).toBe(false);
+    });
+  });
+
+  describe("stale tokens after the lock changes hands", () => {
+    it("does not release a re-acquired lock with the previous owner's token", async () => {
+      const staleToken = await acquireLock("test-lock", 100, redis);
+      expect(staleToken).not.toBeNull();
+
+      // The first owner's lock expires and a second owner takes over.
+      redis.advanceTime(150);
+      const newToken = await acquireLock("test-lock", 10000, redis);
+      expect(newToken).not.toBeNull();
+
+      // The first owner comes back late with its now-stale token.
+      const released = await releaseLock("test-lock", staleToken!, redis);
+      expect(released).toBe(false);
+
+      // The second owner's lock must survive the stale release attempt.
+      expect(await redis.get("lock:test-lock")).toBe(newToken);
+    });
+
+    it("does not extend a re-acquired lock with a stale token", async () => {
+      const staleToken = await acquireLock("test-lock", 100, redis);
+      redis.advanceTime(150);
+
+      const newToken = await acquireLock("test-lock", 100, redis);
+      expect(newToken).not.toBeNull();
+
+      const extended = await extendLock("test-lock", staleToken!, 10000, redis);
+      expect(extended).toBe(false);
+
+      // The stale extend must not have re-armed the TTL: the new owner's
+      // 100ms lock still expires on schedule.
+      redis.advanceTime(150);
+      expect(await redis.get("lock:test-lock")).toBeNull();
     });
   });
 

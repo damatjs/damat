@@ -1,10 +1,4 @@
-import {
-  describe,
-  it,
-  expect,
-  mock,
-  beforeEach,
-} from "bun:test";
+import { describe, it, expect, mock, beforeEach } from "bun:test";
 
 // -----------------------------------------------------------------------------
 // Mock @damatjs/redis BEFORE importing the lock module under test.
@@ -31,7 +25,9 @@ const acquireLock = mock(async (_key: string, _ttl: number) => {
     : "lock-value-default";
 });
 
-const releaseLock = mock(async (_key: string, _value: string) => state.releaseResult);
+const releaseLock = mock(
+  async (_key: string, _value: string) => state.releaseResult,
+);
 
 const redisGet = mock(async (_key: string) => state.redisGetValue);
 const redisEval = mock(
@@ -114,7 +110,10 @@ describe("lock/acquire: acquireWorkflowLock", () => {
     expect(res.lockKey).toBe(getLockKey("wf", "id-1"));
     expect(acquireLock).toHaveBeenCalledTimes(1);
     // Called with the full lock key and the requested TTL
-    expect(acquireLock).toHaveBeenCalledWith(getLockKey("wf", "id-1"), DEFAULT_LOCK_TTL_MS);
+    expect(acquireLock).toHaveBeenCalledWith(
+      getLockKey("wf", "id-1"),
+      DEFAULT_LOCK_TTL_MS,
+    );
   });
 
   it("generates a random lockId when none is supplied", async () => {
@@ -133,7 +132,10 @@ describe("lock/acquire: acquireWorkflowLock", () => {
 
   it("fails (acquired: false, no lockValue) when redis denies and no retries", async () => {
     state.acquireResults = [null];
-    const res = await acquireWorkflowLock("wf", { lockId: "id", maxRetries: 0 });
+    const res = await acquireWorkflowLock("wf", {
+      lockId: "id",
+      maxRetries: 0,
+    });
 
     expect(res.acquired).toBe(false);
     expect(res.lockValue).toBeUndefined();
@@ -180,7 +182,10 @@ describe("lock/release: releaseWorkflowLock", () => {
 
     expect(ok).toBe(true);
     expect(releaseLock).toHaveBeenCalledTimes(1);
-    expect(releaseLock).toHaveBeenCalledWith(getLockKey("wf", "id"), "lock-value");
+    expect(releaseLock).toHaveBeenCalledWith(
+      getLockKey("wf", "id"),
+      "lock-value",
+    );
   });
 
   it("returns false when the lock was not held / already expired", async () => {

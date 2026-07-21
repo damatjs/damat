@@ -56,29 +56,29 @@ serve({ fetch: app.fetch, port: 3000 });
 
 Each entry is a subpath export. Versions are pinned in this package's `package.json`.
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `@damatjs/deps` | namespace re-exports | Root entry. Re-exports every library under a namespace: `hono`, `zod`, `effect`, `pg`, `ioredis`, `nanoid`, `uuid` (e.g. `import { zod } from "@damatjs/deps"` then `zod.z`). Avoids name collisions; prefer the subpaths below. |
-| `@damatjs/deps/hono` | curated re-export | `hono` v4 (`Hono`, types like `Context`/`MiddlewareHandler`) **plus** `hono/utils/http-status` (`ContentfulStatusCode`, ...), `hono/http-exception` (`HTTPException`), `hono/secure-headers` (`secureHeaders`), `hono/timing` (`timing`), `hono/cors` (`cors`), and `serve` from `@hono/node-server`. |
-| `@damatjs/deps/zod` | re-export + alias | `zod` v4 (`export * from "zod"`) plus a `z` named export (`import { z } from "@damatjs/deps/zod"`) for v3-style ergonomics. |
-| `@damatjs/deps/effect` | re-export | `effect` v3 (`export * from "effect"`). |
-| `@damatjs/deps/pg` | re-export | node-postgres `pg` v8 (`Pool`, `Client`, ...). |
-| `@damatjs/deps/ioredis` | re-export | `ioredis` v5 (`Redis`, `RedisOptions`, ...). |
-| `@damatjs/deps/nanoid` | re-export | `nanoid` v5 (`nanoid`, `customAlphabet`, ...). |
-| `@damatjs/deps/uuid` | re-export | `uuid` v13 (`v4`, `v7`, ...). Also reachable via the root namespace (`import { uuid } from "@damatjs/deps"`). |
+| Export                  | Kind                 | Summary                                                                                                                                                                                                                                                                                               |
+| ----------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@damatjs/deps`         | namespace re-exports | Root entry. Re-exports every library under a namespace: `hono`, `zod`, `effect`, `pg`, `ioredis`, `nanoid`, `uuid` (e.g. `import { zod } from "@damatjs/deps"` then `zod.z`). Avoids name collisions; prefer the subpaths below.                                                                      |
+| `@damatjs/deps/hono`    | curated re-export    | `hono` v4 (`Hono`, types like `Context`/`MiddlewareHandler`) **plus** `hono/utils/http-status` (`ContentfulStatusCode`, ...), `hono/http-exception` (`HTTPException`), `hono/secure-headers` (`secureHeaders`), `hono/timing` (`timing`), `hono/cors` (`cors`), and `serve` from `@hono/node-server`. |
+| `@damatjs/deps/zod`     | re-export + alias    | `zod` v4 (`export * from "zod"`) plus a `z` named export (`import { z } from "@damatjs/deps/zod"`) for v3-style ergonomics.                                                                                                                                                                           |
+| `@damatjs/deps/effect`  | re-export            | `effect` v3 (`export * from "effect"`).                                                                                                                                                                                                                                                               |
+| `@damatjs/deps/pg`      | re-export            | node-postgres `pg` v8 (`Pool`, `Client`, ...).                                                                                                                                                                                                                                                        |
+| `@damatjs/deps/ioredis` | re-export            | `ioredis` v5 (`Redis`, `RedisOptions`, ...).                                                                                                                                                                                                                                                          |
+| `@damatjs/deps/nanoid`  | re-export            | `nanoid` v5 (`nanoid`, `customAlphabet`, ...).                                                                                                                                                                                                                                                        |
+| `@damatjs/deps/uuid`    | re-export            | `uuid` v13 (`v4`, `v7`, ...). Also reachable via the root namespace (`import { uuid } from "@damatjs/deps"`).                                                                                                                                                                                         |
 
 ### Pinned versions (`package.json` `dependencies`)
 
-| Library | Pinned range |
-| --- | --- |
-| `hono` | `^4.12.0` |
-| `@hono/node-server` | `^1.13.7` |
-| `zod` | `4.3.6` (exact) |
-| `effect` | `^3.19.18` |
-| `pg` | `^8.21.0` |
-| `ioredis` | `^5.9.3` |
-| `nanoid` | `^5.1.6` |
-| `uuid` | `^13.0.0` |
+| Library             | Pinned range    |
+| ------------------- | --------------- |
+| `hono`              | `^4.12.0`       |
+| `@hono/node-server` | `^1.13.7`       |
+| `zod`               | `4.3.6` (exact) |
+| `effect`            | `^3.19.18`      |
+| `pg`                | `^8.21.0`       |
+| `ioredis`           | `^5.9.3`        |
+| `nanoid`            | `^5.1.6`        |
+| `uuid`              | `^13.0.0`       |
 
 ## How it fits
 

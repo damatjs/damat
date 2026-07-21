@@ -5,7 +5,11 @@ import {
   PgRepository,
   PgEntityManager,
 } from "@damatjs/orm-pg";
-import { ColumnSchema, QueryResultRow, RelationSchema } from "@damatjs/orm-type";
+import {
+  ColumnSchema,
+  QueryResultRow,
+  RelationSchema,
+} from "@damatjs/orm-type";
 import {
   CountOptions,
   CreateManyOptions,
@@ -124,20 +128,25 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
     direction?: string;
     nulls?: string;
   }): { column: string; direction?: "ASC" | "DESC"; nulls?: string } {
-    const out: { column: string; direction?: "ASC" | "DESC"; nulls?: string } = {
-      column: o.column,
-    };
+    const out: { column: string; direction?: "ASC" | "DESC"; nulls?: string } =
+      {
+        column: o.column,
+      };
     if (o.direction !== undefined) {
       const dir = String(o.direction).toUpperCase();
       if (dir !== "ASC" && dir !== "DESC") {
-        throw new Error(`[service:${this.modelName}] orderBy.direction must be ASC or DESC`);
+        throw new Error(
+          `[service:${this.modelName}] orderBy.direction must be ASC or DESC`,
+        );
       }
       out.direction = dir as "ASC" | "DESC";
     }
     if (o.nulls !== undefined) {
       const nulls = String(o.nulls).toUpperCase();
       if (nulls !== "NULLS FIRST" && nulls !== "NULLS LAST") {
-        throw new Error(`[service:${this.modelName}] orderBy.nulls must be NULLS FIRST or NULLS LAST`);
+        throw new Error(
+          `[service:${this.modelName}] orderBy.nulls must be NULLS FIRST or NULLS LAST`,
+        );
       }
       out.nulls = nulls;
     }
@@ -156,7 +165,9 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
     if (value === undefined || value === null) return undefined;
     const n = typeof value === "number" ? value : Number(value);
     if (!Number.isInteger(n) || n < 0) {
-      throw new Error(`[service:${this.modelName}] ${ctx} must be a non-negative integer`);
+      throw new Error(
+        `[service:${this.modelName}] ${ctx} must be a non-negative integer`,
+      );
     }
     return n;
   }
@@ -181,8 +192,9 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
   ): Record<string, unknown> | undefined {
     const field = this.softDeleteField(model);
     if (!field || withDeleted) return where;
-    if (where && Object.prototype.hasOwnProperty.call(where, field)) return where;
-    return { ...(where ?? {}), [field]: { isNull: true } };
+    if (where && Object.prototype.hasOwnProperty.call(where, field))
+      return where;
+    return { ...where, [field]: { isNull: true } };
   }
 
   /** The model's updated-at column name (`updated_at`/`updatedAt`), if any. */
@@ -242,7 +254,9 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
   ): Promise<(T & Record<string, any>) | null> {
     const { include } = options;
     const repo = this.getRepository();
-    const result = await repo.findOne(this.buildFindOptions(options, false) as any);
+    const result = await repo.findOne(
+      this.buildFindOptions(options, false) as any,
+    );
 
     if (!result) return null;
 
@@ -260,7 +274,9 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
   ): Promise<(T & Record<string, any>)[]> {
     const { include } = options;
     const repo = this.getRepository();
-    const records = await repo.findMany(this.buildFindOptions(options, true) as any);
+    const records = await repo.findMany(
+      this.buildFindOptions(options, true) as any,
+    );
 
     // If no relations to load, return as-is
     if (!include || include.length === 0 || records.length === 0) {
@@ -390,9 +406,11 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
     }
 
     return this.withCascadeTransaction(async () => {
-      const targets = (await this.getRelatedRepository(this.modelName).findMany({
-        where: options.where,
-      } as any)) as Record<string, any>[];
+      const targets = (await this.getRelatedRepository(this.modelName).findMany(
+        {
+          where: options.where,
+        } as any,
+      )) as Record<string, any>[];
       const { count } = await this.cascade(
         this.model,
         this.modelName,
@@ -417,9 +435,11 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
     }
 
     return this.withCascadeTransaction(async () => {
-      const targets = (await this.getRelatedRepository(this.modelName).findMany({
-        where: options.where,
-      } as any)) as Record<string, any>[];
+      const targets = (await this.getRelatedRepository(this.modelName).findMany(
+        {
+          where: options.where,
+        } as any,
+      )) as Record<string, any>[];
       const { rows } = await this.cascade(
         this.model,
         this.modelName,
@@ -453,11 +473,12 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
     if (name === this.modelName) return this.model;
     const registry = this.entityManager?.getModelRegistry() as
       | {
-        get(n: string): { model?: ModelDefinition } | undefined;
-        getByTableName(n: string): { model?: ModelDefinition } | undefined;
-      }
+          get(n: string): { model?: ModelDefinition } | undefined;
+          getByTableName(n: string): { model?: ModelDefinition } | undefined;
+        }
       | undefined;
-    const model = registry?.get(name)?.model ?? registry?.getByTableName(name)?.model;
+    const model =
+      registry?.get(name)?.model ?? registry?.getByTableName(name)?.model;
     if (!model) {
       throw new Error(
         `Cannot cascade into "${name}": model is not registered with the entity manager.`,
@@ -582,7 +603,13 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
       if (childRows.length === 0) continue;
 
       const childModel = this.resolveModel(childTable);
-      const sub = await this.cascade(childModel, childTable, childRows, mode, visited);
+      const sub = await this.cascade(
+        childModel,
+        childTable,
+        childRows,
+        mode,
+        visited,
+      );
       childCount += sub.count;
     }
 
@@ -608,7 +635,11 @@ export class ModelMethods<T extends QueryResultRow = QueryResultRow> {
   async count(options: CountOptions = {}): Promise<number> {
     const repo = this.getRepository();
     return repo.count(
-      this.applySoftDeleteFilter(options.where, options.withDeleted, this.model),
+      this.applySoftDeleteFilter(
+        options.where,
+        options.withDeleted,
+        this.model,
+      ),
     );
   }
 

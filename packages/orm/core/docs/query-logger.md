@@ -9,12 +9,12 @@ configuration.
 
 ```ts
 export interface QueryLoggerOptions {
-  enabled?: boolean;             // master switch        (default: true)
-  logQueries?: boolean;          // log every query      (default: true)
-  logErrors?: boolean;           // log query errors     (default: true)
-  logSlowQueries?: boolean;      // log slow queries     (default: true)
-  slowQueryThreshold?: number;   // ms threshold         (default: 1000)
-  logTransaction?: boolean;      // log txn boundaries   (default: true)
+  enabled?: boolean; // master switch        (default: true)
+  logQueries?: boolean; // log every query      (default: true)
+  logErrors?: boolean; // log query errors     (default: true)
+  logSlowQueries?: boolean; // log slow queries     (default: true)
+  slowQueryThreshold?: number; // ms threshold         (default: 1000)
+  logTransaction?: boolean; // log txn boundaries   (default: true)
 }
 ```
 
@@ -39,16 +39,19 @@ Every method short-circuits when disabled — the guard is always
 ```ts
 logQuery(sql: string, params?: unknown[]): void
 ```
+
 Debug-logs `"Query executed"` with `{ sql }` (and `params` when non-empty).
 
 ```ts
 logQueryError(error: Error, sql: string, params?: unknown[]): void
 ```
+
 Error-logs `"Query error"` with the `Error` and `{ sql, params? }`.
 
 ```ts
 logSlowQuery(sql: string, duration: number, params?: unknown[]): void
 ```
+
 Warns `"Slow query (<duration>ms)"` **only if** `duration > slowQueryThreshold`.
 Context includes `sql`, `duration`, `threshold`, and `params` when present. Safe
 to call on every query — it self-filters by threshold.
@@ -56,6 +59,7 @@ to call on every query — it self-filters by threshold.
 ```ts
 logTransaction(action: "begin" | "commit" | "rollback"): void
 ```
+
 Debug-logs `"Transaction: <action>"`.
 
 ## Runtime controls
@@ -113,7 +117,7 @@ try {
 - The singleton is module-level state. In tests that assert on logging, reset it
   with `setQueryLogger(new QueryLogger(...))` to avoid leakage between cases.
 - `slowQueryThreshold` is compared with strict `>` — a query exactly at the
-  threshold is *not* logged as slow.
+  threshold is _not_ logged as slow.
 
 ## Extending
 

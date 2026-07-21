@@ -3,7 +3,8 @@ import { Pool } from "@damatjs/deps/pg";
 
 async function testWithPgcrypto() {
   const pool = new Pool({
-    connectionString: "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable"
+    connectionString:
+      "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable",
   });
 
   // Enable pgcrypto
@@ -55,14 +56,21 @@ async function testWithPgcrypto() {
     )
   `);
 
-  await pool.query("INSERT INTO test_id.users (name) VALUES ('Test') RETURNING id");
+  await pool.query(
+    "INSERT INTO test_id.users (name) VALUES ('Test') RETURNING id",
+  );
   const inserted = await pool.query("SELECT * FROM test_id.users");
   console.log("✅ Auto-generated ID:", inserted.rows[0].id);
 
   // Test multiple inserts
-  await pool.query("INSERT INTO test_id.users (name) VALUES ('Test2'), ('Test3') RETURNING id");
+  await pool.query(
+    "INSERT INTO test_id.users (name) VALUES ('Test2'), ('Test3') RETURNING id",
+  );
   const all = await pool.query("SELECT id FROM test_id.users");
-  console.log("✅ All IDs:", all.rows.map(r => r.id));
+  console.log(
+    "✅ All IDs:",
+    all.rows.map((r) => r.id),
+  );
 
   await pool.query("DROP SCHEMA test_id CASCADE");
   await pool.end();

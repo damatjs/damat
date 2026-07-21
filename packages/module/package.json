@@ -1,6 +1,6 @@
 {
   "name": "@damatjs/module",
-  "version": "0.6.0",
+  "version": "1.0.0",
   "description": "Damatjs module system — manifest contract, standalone dev/test harness, and registry tooling for self-contained modules",
   "type": "module",
   "main": "dist/index.js",
@@ -31,16 +31,18 @@
     "!dist/**/__mocks__"
   ],
   "dependencies": {
+    "@damatjs/installer": "workspace:*",
     "@damatjs/deps": "workspace:*",
     "@damatjs/framework": "workspace:*",
     "@damatjs/logger": "workspace:*",
-    "@damatjs/codegen": "workspace:*",
+    "@damatjs/module-generator": "workspace:*",
     "@damatjs/orm-connector": "workspace:*",
     "@damatjs/orm-migration": "workspace:*",
     "@damatjs/orm-model": "workspace:*",
     "@damatjs/orm-type": "workspace:*",
     "@damatjs/services": "workspace:*",
-    "@damatjs/workflow-engine": "workspace:*"
+    "@damatjs/workflow-engine": "workspace:*",
+    "@damatjs/pipelines": "workspace:*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "workspace:*",
@@ -51,6 +53,7 @@
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
     "watch": "tsc --watch",
     "test": "bun test",
-    "prepublishOnly": "test -f dist/index.js || (echo 'dist/index.js missing — run build before publishing' && exit 1)"
+    "prepublishOnly": "test -f dist/index.js || (echo 'dist/index.js missing — run build before publishing' && exit 1)",
+    "lint": "oxlint src"
   }
 }

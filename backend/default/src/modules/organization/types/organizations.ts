@@ -15,4 +15,4 @@ export type NewOrganizations = {
   slug: string;
 };
 
-export type UpdateOrganizations = Partial<Omit<Organizations, 'id'>>;
+export type UpdateOrganizations = Partial<Omit<Organizations, "id">>;

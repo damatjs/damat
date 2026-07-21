@@ -2,7 +2,11 @@ import { describe, it, expect } from "bun:test";
 import { Effect, Scope, Exit } from "@damatjs/deps/effect";
 import { createStep, executeStep } from "../src/step";
 import { RetryPolicies, DEFAULT_RETRY_POLICY } from "../src/config";
-import type { WorkflowContext, WorkflowEngineState, RetryPolicy } from "../src/types";
+import type {
+  WorkflowContext,
+  WorkflowEngineState,
+  RetryPolicy,
+} from "../src/types";
 
 const ctx = (engineState?: WorkflowEngineState): WorkflowContext => ({
   executionId: "exec-cfg",
@@ -114,7 +118,10 @@ describe("config/retry: policy layering precedence", () => {
     let attempts = 0;
     // RetryPolicies.once = { maxAttempts: 1, initialDelayMs: 0 } — relies on the
     // engine default for maxDelayMs/backoffMultiplier.
-    const merged: RetryPolicy = { ...DEFAULT_RETRY_POLICY, ...RetryPolicies.once };
+    const merged: RetryPolicy = {
+      ...DEFAULT_RETRY_POLICY,
+      ...RetryPolicies.once,
+    };
     const step = createStep<number, string>(
       "once-preset",
       async () => {

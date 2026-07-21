@@ -3,8 +3,8 @@
 > Shared error classes and utility types for the Damat framework.
 
 `@damatjs/types` is the lowest-level package in the Damat stack: a zero-dependency
-collection of HTTP-aware error classes (`AppError` and its subclasses) plus a small
-utility export. Almost every other Damat package depends on it so that errors thrown
+collection of HTTP-aware error classes (`AppError` and its subclasses) plus one
+deprecated legacy helper. Almost every other Damat package depends on it so that errors thrown
 deep in the ORM, services, or workflow layers carry a consistent `statusCode` and
 machine-readable `code` all the way up to the HTTP boundary. If you are building on
 Damat, throw these errors instead of bare `Error`s and your HTTP handlers can map them
@@ -75,7 +75,11 @@ try {
 } catch (err) {
   if (err instanceof AppError) {
     // err.statusCode -> 404, err.code -> "NOT_FOUND", err.details -> undefined
-    sendResponse(err.statusCode, { code: err.code, message: err.message, details: err.details });
+    sendResponse(err.statusCode, {
+      code: err.code,
+      message: err.message,
+      details: err.details,
+    });
   } else {
     throw err;
   }
@@ -86,26 +90,26 @@ try {
 
 All exports come from the single entry point `@damatjs/types`.
 
-| Export                | Kind  | Summary                                                                    |
-| --------------------- | ----- | -------------------------------------------------------------------------- |
-| `AppError`            | class | Base error. `statusCode`, `code`, optional `details`. Defaults to 500.     |
-| `ValidationError`     | class | `extends AppError` → 400, code `VALIDATION_ERROR`. Takes `details`.        |
-| `AuthenticationError` | class | `extends AppError` → 401, code `UNAUTHORIZED`. Default message.             |
-| `AuthorizationError`  | class | `extends AppError` → 403, code `FORBIDDEN`. Default message.                |
-| `NotFoundError`       | class | `extends AppError` → 404, code `NOT_FOUND`. Default message `"Not found"`.  |
-| `RateLimitError`      | class | `extends AppError` → 429, code `RATE_LIMITED`. `details.retryAfter?`.       |
-| `initFramework`       | fn    | Legacy no-op: logs `"Framework initialized"` and returns `true`.           |
+| Export                | Kind  | Summary                                                                                                              |
+| --------------------- | ----- | -------------------------------------------------------------------------------------------------------------------- |
+| `AppError`            | class | Base error. `statusCode`, `code`, optional `details`. Defaults to 500.                                               |
+| `ValidationError`     | class | `extends AppError` → 400, code `VALIDATION_ERROR`. Takes `details`.                                                  |
+| `AuthenticationError` | class | `extends AppError` → 401, code `UNAUTHORIZED`. Default message.                                                      |
+| `AuthorizationError`  | class | `extends AppError` → 403, code `FORBIDDEN`. Default message.                                                         |
+| `NotFoundError`       | class | `extends AppError` → 404, code `NOT_FOUND`. Default message `"Not found"`.                                           |
+| `RateLimitError`      | class | `extends AppError` → 429, code `RATE_LIMITED`. `details.retryAfter?`.                                                |
+| `initFramework`       | fn    | **`@deprecated`** no-op: logs `"Framework initialized"` and returns `true`. Removal planned for 0.7 — drop the call. |
 
 ### Error class reference
 
-| Class                 | HTTP status | `code`             | Constructor signature                                  |
-| --------------------- | ----------- | ------------------ | ------------------------------------------------------ |
-| `AppError`            | 500\*       | `INTERNAL_ERROR`\* | `(message, statusCode?, code?, details?)`              |
-| `ValidationError`     | 400         | `VALIDATION_ERROR` | `(message, details?)`                                  |
-| `AuthenticationError` | 401         | `UNAUTHORIZED`     | `(message = "Authentication required")`                |
-| `AuthorizationError`  | 403         | `FORBIDDEN`        | `(message = "Access denied")`                          |
-| `NotFoundError`       | 404         | `NOT_FOUND`        | `(message = "Not found")`                              |
-| `RateLimitError`      | 429         | `RATE_LIMITED`     | `(message, details?: { retryAfter?: number })`         |
+| Class                 | HTTP status | `code`             | Constructor signature                          |
+| --------------------- | ----------- | ------------------ | ---------------------------------------------- |
+| `AppError`            | 500\*       | `INTERNAL_ERROR`\* | `(message, statusCode?, code?, details?)`      |
+| `ValidationError`     | 400         | `VALIDATION_ERROR` | `(message, details?)`                          |
+| `AuthenticationError` | 401         | `UNAUTHORIZED`     | `(message = "Authentication required")`        |
+| `AuthorizationError`  | 403         | `FORBIDDEN`        | `(message = "Access denied")`                  |
+| `NotFoundError`       | 404         | `NOT_FOUND`        | `(message = "Not found")`                      |
+| `RateLimitError`      | 429         | `RATE_LIMITED`     | `(message, details?: { retryAfter?: number })` |
 
 \* `AppError` defaults; both are overridable via constructor arguments.
 

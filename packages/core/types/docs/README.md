@@ -9,11 +9,11 @@ and no subpath exports.
 
 ## Module map
 
-| File                       | Responsibility                                                                 |
-| -------------------------- | ------------------------------------------------------------------------------ |
-| `src/index.ts`             | The entire public API: all error classes + `initFramework`. Single entry point.|
-| `package.json`             | Name `@damatjs/types`, version, `exports` map (`.` → `dist/index.js`).          |
-| `tsconfig.json`            | Extends `@damatjs/typescript-config/base.json`; `rootDir: src`, `outDir: dist`. |
+| File            | Responsibility                                                                  |
+| --------------- | ------------------------------------------------------------------------------- |
+| `src/index.ts`  | The entire public API: all error classes                                        |
+| `package.json`  | Name `@damatjs/types`, version, `exports` map (`.` → `dist/index.js`).          |
+| `tsconfig.json` | Extends `@damatjs/typescript-config/base.json`; `rootDir: src`, `outDir: dist`. |
 
 There is exactly one module of substance. Everything documented here lives in
 [`src/index.ts`](../src/index.ts).
@@ -76,8 +76,6 @@ the specific subclasses.
 - `instanceof` is the intended discriminator. If errors cross a serialization boundary
   (e.g. worker threads, JSON over the wire) the prototype is lost; re-hydrate or switch
   on `code` in that case.
-- `initFramework` is a legacy no-op kept for backwards compatibility. It logs to the
-  console and returns `true`; it is not part of the error system. Do not build on it.
 
 ## Related docs
 

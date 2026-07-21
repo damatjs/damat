@@ -6,12 +6,12 @@ consulted on every name→table resolution and the logger is called on every que
 
 ## Module map
 
-| Path | Responsibility |
-| --- | --- |
-| `src/index.ts` | Public barrel. Exports `ModelRegistry`, `ModelRegistryError`, `QueryLogger`, the three logger helpers, and the `QueryLoggerOptions` / `ModelRegistryEntry` types. |
-| `src/registry.ts` | `ModelRegistry` + `ModelRegistryError`. The name/table index and relation resolver. See [registry.md](./registry.md). |
-| `src/logger.ts` | `QueryLogger`, the global-singleton helpers, and `QueryLoggerOptions`. See [query-logger.md](./query-logger.md). |
-| `src/types.ts` | `ModelRegistryEntry` — the registry record shape. |
+| Path              | Responsibility                                                                                                                                                    |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/index.ts`    | Public barrel. Exports `ModelRegistry`, `ModelRegistryError`, `QueryLogger`, the three logger helpers, and the `QueryLoggerOptions` / `ModelRegistryEntry` types. |
+| `src/registry.ts` | `ModelRegistry` + `ModelRegistryError`. The name/table index and relation resolver. See [registry.md](./registry.md).                                             |
+| `src/logger.ts`   | `QueryLogger`, the global-singleton helpers, and `QueryLoggerOptions`. See [query-logger.md](./query-logger.md).                                                  |
+| `src/types.ts`    | `ModelRegistryEntry` — the registry record shape.                                                                                                                 |
 
 ## Architecture overview
 
@@ -61,9 +61,9 @@ operation.
 - **Columns are snapshotted at registration time.** `register()` calls
   `model.toTableSchema()` and stores `columns` as a plain `string[]`. If a model
   is mutated after registration the cached columns will be stale — register
-  models *after* they are fully defined.
+  models _after_ they are fully defined.
 - **`ModelRegistryError` is exported but not thrown here.** The registry's own
-  methods return `undefined` on a miss; the error type exists so *consumers*
+  methods return `undefined` on a miss; the error type exists so _consumers_
   (e.g. orm-pg entity managers) can throw a consistent error when a lookup must
   succeed. Keep returning `undefined` from registry getters; let callers decide
   whether a miss is fatal.
@@ -74,7 +74,7 @@ operation.
   (`new QueryLogger(opts, logger)`).
 - **All `QueryLogger` methods are gated by `enabled` + a per-category flag.**
   Adding a new log method should follow the same `if (!enabled || !category)
-  return;` guard pattern.
+return;` guard pattern.
 
 ## Safely extending
 

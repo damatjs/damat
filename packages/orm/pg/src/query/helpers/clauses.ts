@@ -14,14 +14,18 @@ export function buildOrderByClause(clauses: OrderByClause[]): string {
     if (c.direction) {
       const dir = String(c.direction).toUpperCase();
       if (!ORDER_DIRECTIONS.has(dir)) {
-        throw new Error(`[query:orderBy] Invalid direction "${c.direction}" (expected ASC or DESC)`);
+        throw new Error(
+          `[query:orderBy] Invalid direction "${c.direction}" (expected ASC or DESC)`,
+        );
       }
       s += ` ${dir}`;
     }
     if (c.nulls) {
       const nulls = String(c.nulls).toUpperCase();
       if (!ORDER_NULLS.has(nulls)) {
-        throw new Error(`[query:orderBy] Invalid nulls "${c.nulls}" (expected NULLS FIRST or NULLS LAST)`);
+        throw new Error(
+          `[query:orderBy] Invalid nulls "${c.nulls}" (expected NULLS FIRST or NULLS LAST)`,
+        );
       }
       s += ` ${nulls}`;
     }

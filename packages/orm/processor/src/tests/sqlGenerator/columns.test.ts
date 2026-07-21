@@ -30,15 +30,27 @@ describe("generateAddColumn", () => {
 describe("generateDropColumn", () => {
   it("emits DROP COLUMN IF EXISTS", () => {
     const sql = generateDropColumn(
-      { type: "drop_column", tableName: "user", columnName: "email", priority: 120 },
+      {
+        type: "drop_column",
+        tableName: "user",
+        columnName: "email",
+        priority: 120,
+      },
       opts,
     );
-    expect(sql).toBe('ALTER TABLE "public"."user" DROP COLUMN IF EXISTS "email"');
+    expect(sql).toBe(
+      'ALTER TABLE "public"."user" DROP COLUMN IF EXISTS "email"',
+    );
   });
 
   it("adds CASCADE when cascadeDrops is set", () => {
     const sql = generateDropColumn(
-      { type: "drop_column", tableName: "user", columnName: "email", priority: 120 },
+      {
+        type: "drop_column",
+        tableName: "user",
+        columnName: "email",
+        priority: 120,
+      },
       { ...opts, cascadeDrops: true },
     );
     expect(sql).toBe(
@@ -48,7 +60,12 @@ describe("generateDropColumn", () => {
 
   it("omits IF EXISTS when safeMode is false", () => {
     const sql = generateDropColumn(
-      { type: "drop_column", tableName: "user", columnName: "email", priority: 120 },
+      {
+        type: "drop_column",
+        tableName: "user",
+        columnName: "email",
+        priority: 120,
+      },
       { ...opts, safeMode: false },
     );
     expect(sql).toBe('ALTER TABLE "public"."user" DROP COLUMN "email"');

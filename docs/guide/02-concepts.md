@@ -1,174 +1,180 @@
 [Damat Guide](../GUIDE.md) › Concepts
 
-# 2. Concepts — modules & the framework
+# 2. Concepts and architecture
 
-This chapter is the **idea** behind Damat: what a module is, why the backend is
-shaped this way, and how the framework turns a folder of modules into a running
-server. Read it once and the rest of the guide will click into place.
+Damat separates reusable domain features from application-owned composition,
+and separates durable truth from optional acceleration. Those two boundaries
+explain most of the framework.
 
-## The problem Damat solves
+## A module is one portable domain blade
 
-Most backend frameworks make you choose between two bad options:
+A module is a self-contained vertical slice:
 
-- a **monolith** where every feature is entangled with every other, so adding
-  billing means touching auth, and reusing a feature in another app means
-  copy-pasting and re-wiring; or
-- a **pile of libraries** you assemble yourself, where there is no standard
-  shape for a feature, no shared lifecycle, and no way to share a whole feature
-  (its tables, migrations, service, and config) as one thing.
-
-Damat's answer is the **module**: a standard, self-contained shape for a feature,
-plus a **framework** that knows how to wire any number of modules together.
-
-## What a module is
-
-A module is a **vertical slice** of a backend — everything one domain concern
-needs, in one folder:
-
-```
-modules/user/
-├── module.json     # the portable contract (name, env, packages, deps, registry)
-├── index.ts        # defineModule(...) — the module's public definition
-├── service.ts      # ModuleService({ models, credentialsSchema }) — data + logic
-├── config/         # a zod schema + a loader for the module's credentials
-├── models/         # ORM model definitions (its tables)
-├── migrations/     # SQL migrations (its schema history)
-└── workflows/      # optional saga workflows
+```text
+module/
+├── damat.json             # identity, capabilities, paths, env, registry metadata
+├── src/
+│   ├── index.ts           # defineModule(...)
+│   ├── service.ts         # generated CRUD + intentional integrations
+│   ├── config/            # credentials schema and loader
+│   ├── models/            # tables owned by this module
+│   ├── migrations/        # this module's schema history
+│   ├── types/             # generated rows, schemas, and registry typing
+│   ├── workflows/         # optional in-process sagas
+│   ├── api/routes/        # optional HTTP surface
+│   ├── jobs/              # optional durable job definitions
+│   ├── events/            # optional event definitions and consumers
+│   └── pipelines/         # optional durable graphs
+└── tests/
 ```
 
-Three properties make this powerful:
+A module owns its schema and credentials. It does not import another module's
+implementation or foreign-key into another module's tables. A module can leave
+a non-binding `pairsWith` hint or ship a dormant link template, but the backend
+owner decides whether and how to compose it.
 
-1. **Self-contained.** A module owns its tables, its migrations, its service,
-   and the env/credentials it needs. Nothing about a module is scattered across
-   the app.
-2. **Portable.** Because the shape is standard and described by `module.json`,
-   the same module can be dropped into any Damat app — `damat module add` copies
-   it in, registers it, syncs its env vars, and installs its npm deps. See
-   [MODULES.md](../../MODULES.md).
-3. **Independently developable.** A module can run and be tested **on its own**,
-   with no surrounding app, using the [`@damatjs/module`](../../packages/module/README.md)
-   harness. You build and verify a feature in isolation, then ship it.
+The complete portable contract is [MODULES.md](../../MODULES.md).
 
-> A useful analogy: modules are to a Damat backend what components are to a
-> frontend — a standard unit you compose, reuse, and share.
+## The backend owns composition
 
-## How the backend is a *framework*
+The application decides:
 
-You write modules and route files; the framework does the wiring. When your app
-starts ([`@damatjs/framework`](../../packages/framework/README.md) drives this),
-it:
+- which modules are installed and registered;
+- which cross-module links are activated;
+- which routes, workflows, jobs, events, and pipelines are imported;
+- which runtime roles execute workers;
+- authentication and authorization for inspection or control APIs;
+- database, Redis, retention, redaction, and deployment policy.
 
-1. **loads & validates config** — reads `damat.config.ts`, including each
-   module's credentials (validated against its zod schema, so bad config fails
-   fast at boot, not at request time);
-2. **connects infrastructure** — opens the PostgreSQL pool
-   ([`orm-connector`](../../packages/orm/connector/README.md) +
-   [`orm-pg`](../../packages/orm/pg/README.md)) and, if `redisUrl` is set,
-   Redis ([`@damatjs/redis`](../../packages/core/redis/README.md));
-3. **initializes modules** — instantiates each module's service against the
-   shared pool and registers it so it can be retrieved anywhere with
-   `getModule(id)`;
-4. **builds the HTTP layer** — scans `src/api/routes/**/route.ts` into a Hono
-   router, applies middleware (CORS, headers, request IDs, error handling), and
-   exposes health/introspection endpoints;
-5. **starts & guards the server** — listens via `@hono/node-server` and installs
-   graceful SIGINT/SIGTERM shutdown.
+`damat module add` installs owned capability files transactionally. It does not
+silently rewrite shared application policy. Its integration report tells the
+backend owner which config, aliases, environment values, barrels, and call sites
+still need attention.
 
-You never write that bootstrap. You declare *what* (modules + routes); the
-framework decides *how* and *when*.
+## The execution primitives
 
-## The four layers you compose
+| Primitive | Use it when                                                               | Durability boundary                                            |
+| --------- | ------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Route     | An HTTP request enters the application                                    | Request lifetime                                               |
+| Service   | Domain data or a new provider integration is needed                       | PostgreSQL transaction when used                               |
+| Workflow  | Several local steps must compensate on failure                            | In-process saga execution                                      |
+| Job       | One deferred unit needs retry, scheduling, progress, or logs              | Persisted run and attempts                                     |
+| Event     | A fact has zero or more consumers                                         | Local bus, Redis broadcast, or persisted per-consumer delivery |
+| Pipeline  | A long process must wait, branch, survive restarts, or expose every stage | Persisted graph, nodes, transitions, signals, and controls     |
 
-```
-            ┌────────────────────────────────────────────┐
-   Routes   │  src/api/routes/**/route.ts  (HTTP surface) │
-            └───────────────┬────────────────────────────┘
-                            │ getModule(id)
-            ┌───────────────▼────────────────────────────┐
-  Workflows │  steps + sagas (multi-step, compensating)   │
-            └───────────────┬────────────────────────────┘
-                            │ calls
-            ┌───────────────▼────────────────────────────┐
-  Services  │  ModuleService: CRUD + transactions + logic │
-            └───────────────┬────────────────────────────┘
-                            │ uses
-            ┌───────────────▼────────────────────────────┐
-   Models   │  the ORM DSL → tables, relations, migrations│
-            └─────────────────────────────────────────────┘
+A workflow and a pipeline are complementary. A workflow is a tightly coupled
+local saga. A pipeline can call that workflow as one durable node inside a much
+longer process.
+
+## The application flow
+
+```text
+HTTP route
+    │
+    ▼
+workflow (optional local saga)
+    │
+    ▼
+step
+    │
+    ▼
+module service ── generated CRUD / transaction / provider integration
+    │
+    ▼
+shared PostgreSQL pool
 ```
 
-1. **Models** define your tables with the [ORM DSL](./05-models.md).
-2. **Services** turn models into typed CRUD plus your business logic
-   ([ModuleService](./07-modules-and-services.md)).
-3. **Modules** bundle models + service + config + migrations into a portable
-   unit registered in `damat.config.ts`.
-4. **Routes** and **workflows** expose and orchestrate that logic
-   ([HTTP](./08-http-apis.md), [workflows](./09-workflows.md)).
+Routes validate and shape transport. Workflows orchestrate. Steps perform the
+business action and compensation. Services expose generated model accessors and
+only genuinely new domain/provider operations. The ORM persists through the
+process's shared pool.
 
-A typical request flows down and back:
-`route → module service (CRUD / transaction) → ORM → Postgres`.
-A multi-step operation that must roll back on failure goes through a workflow:
-`route → workflow → steps → module services`, with the engine running
-compensations in reverse if a step throws.
+Durable work may start from any layer. When a domain write and a job, event, or
+pipeline start must commit together, pass the `ModuleService.transaction`
+executor into the durable API. The rows and acceleration outbox entry then
+commit or roll back atomically.
 
-## When to reach for what
+## PostgreSQL is memory; Redis is acceleration
 
-| You want to… | Use |
-|--------------|-----|
-| Add a table | a [model](./05-models.md) in a module's `models/` |
-| Add reusable data logic | a method on the module's [service](./07-modules-and-services.md) |
-| Expose an endpoint | a [route file](./08-http-apis.md) |
-| Coordinate steps that must roll back | a [workflow](./09-workflows.md) |
-| Cache / rate-limit / queue / lock | [`@damatjs/redis`](./10-redis.md) |
-| Package a feature for reuse | a [module](./13-authoring-modules.md) + `module.json` |
-| Pull in someone else's feature | [install a module](./14-installing-modules.md) |
+PostgreSQL stores the complete durable record:
 
-## How modules compose
+- definitions and immutable versions;
+- payload metadata, results, and errors;
+- attempts, transitions, schedules, leases, and fencing tokens;
+- progress, logs, worker snapshots, control history, and audit activity;
+- acceleration outbox/checkpoints and retention overrides.
 
-Modules stay decoupled, but real apps need them to work together. Damat offers
-three mechanisms:
+Redis stores only rebuildable coordination data:
 
-- **`getModule(id)`** — at runtime, any route, step, or service can fetch another
-  module's service by id. This is the everyday way modules call each other.
-- **Links** (`src/links/`) — declare cross-module relationships *outside* the
-  modules themselves, so neither module hard-depends on the other's tables. A
-  link generates a junction table and a `getModule("link")` service to create,
-  dismiss, fetch, and graph-query across modules. See
-  [`@damatjs/link`](../../packages/link/README.md) for the full model.
-- **Pairing hints** — a module can leave a non-binding `pairsWith` hint in its
-  `module.json` suggesting modules it works well with. It's a comment for the
-  backend owner, who decides what to actually install and link — a module never
-  dictates composition. (A hard `modules` dependency exists as a rare escape
-  hatch; installing warns if one is missing.)
+- wake-up channels and ready identifiers;
+- short-lived worker liveness;
+- inspection invalidations;
+- application cache, sessions, locks, rate limits, and optional broadcast.
 
-## The module lifecycle
+If Redis is unavailable or unauthorized, durable execution continues through
+bounded PostgreSQL fallback. When Redis returns, its projection is rebuilt from
+PostgreSQL. Redis cannot grant a durable lease or decide which worker won.
 
+## One pool per process
+
+Each process creates one PostgreSQL pool and shares it across HTTP, module
+services, jobs, event routing/delivery, pipelines, inspection, and maintenance.
+The pool can hold several physical connections up to its configured maximum.
+Sharing a pool does not mean forcing `max: 1`.
+
+In `runtime.mode: "all"`, one durability coordinator coalesces maintenance and
+wake-ups for all durable subsystems. Dedicated server/worker processes each own
+their local pool and coordinator.
+
+## Runtime roles
+
+| Mode     | HTTP | Workers                                       |
+| -------- | ---- | --------------------------------------------- |
+| `server` | yes  | none                                          |
+| `worker` | no   | selected `jobs`, `events`, and/or `pipelines` |
+| `all`    | yes  | selected enabled workers                      |
+
+The same build can run every role. `DAMAT_RUNTIME_MODE` and
+`DAMAT_WORKER_TYPES` let deployment choose the role without rebuilding.
+
+## Database lifecycle
+
+Development and production intentionally differ:
+
+- `damat create` and `damat module init` collect database credentials and write
+  the local `.env`.
+- Generated development `bun run dev` scripts perform an idempotent database
+  setup preflight.
+- Framework startup itself is read-only and reports missing migrations.
+- Production runs one migration job before any API or worker replicas start.
+
+The backend setup command creates a missing database and applies shared
+durability, jobs, events, pipelines, links, and module migrations. The standalone
+module setup command creates its development database and applies only that
+module's migrations.
+
+## Module lifecycle
+
+```text
+init → database setup → model → migration → codegen → extend → test → validate
+     → publish/plan → install → integrate → backend migration → run
 ```
-author ──► validate ──► (publish) ──► install ──► migrate ──► run
-  │           │                          │           │
-  │           │                          │           └─ damat-orm migrate:up
-  │           │                          └─ damat module add <source>
-  │           └─ damat module validate  (no warnings = registry-ready)
-  └─ damat module init / dev / migration:create / codegen
-```
 
-- **Author & test** a module standalone ([chapter 13](./13-authoring-modules.md)).
-- **Validate** it against the contract; clean it up until it's registry-ready.
-- **Publish** it to a registry (or just push it to git / keep it local).
-- **Install** it into an app — from a registry ref, a path, or git
-  ([chapter 14](./14-installing-modules.md)).
-- **Migrate** to apply its schema, then **run**.
+Authors stop at a portable, validated blade. Backend owners inspect, install,
+compose, migrate, and operate it.
 
-## Trust & the registry
+## Choosing the next chapter
 
-Modules are addressed by **ref** (`user`, `damatjs/user@0.2.0`). A registry maps
-a ref to a fetchable source plus trust metadata — a verifiable **owner** and a
-**verification status** the registry backend stamps (an author cannot
-self-verify). At install time a policy (`DAMAT_MODULE_VERIFY`: `off` / `warn` /
-`require`) decides whether unverified modules may be installed; `rejected` and
-`revoked` modules are always blocked. This is what makes "install a module by
-name" safe. Full model: [MODULES.md](../../MODULES.md) and
-[the AI install chapter](./15-installing-modules-with-ai.md).
+| Goal                                   | Read                                                           |
+| -------------------------------------- | -------------------------------------------------------------- |
+| Create a backend and database          | [Getting started](./03-getting-started.md)                     |
+| Configure runtime roles and durability | [Configuration](./04-configuration.md)                         |
+| Change schema safely                   | [Migrations](./06-migrations.md)                               |
+| Build local compensation               | [Workflows](./09-workflows.md)                                 |
+| Add durable jobs or events             | [Events and jobs](./10b-events-and-jobs.md)                    |
+| Build long-running orchestration       | [Pipelines](./10c-pipelines.md)                                |
+| Author a reusable module               | [Authoring modules](./13-authoring-modules.md)                 |
+| Assemble modules into an app           | [Composing and linking](./17-composing-and-linking-modules.md) |
 
 ---
 

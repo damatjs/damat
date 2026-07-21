@@ -1,4 +1,4 @@
-import { ModuleSchema } from '@damatjs/orm-type';
+import { ModuleSchema } from "@damatjs/orm-type";
 import fs from "node:fs";
 import path from "node:path";
 

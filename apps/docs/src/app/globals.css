@@ -3,6 +3,14 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+.font-system-sans {
+  --font-inter: ui-sans-serif;
+}
+
+.font-system-mono {
+  --font-jetbrains-mono: ui-monospace;
+}
+
 @theme inline {
   --color-canvas: var(--bg);
   --color-surface: var(--surface);
@@ -53,11 +61,11 @@
     --subtle: #fafafa;
     --fg: #0a0a0a;
     --fg-muted: #52525b;
-    --fg-faint: #a1a1aa;
+    --fg-faint: #71717a;
     --border: #e5e5e5;
     --border-strong: #d4d4d8;
-    --accent: #d9640a;
-    --accent-strong: #b34f08;
+    --accent: #b34f08;
+    --accent-strong: #923e06;
     --accent-contrast: #ffffff;
     --accent-soft: rgba(217, 100, 10, 0.09);
     --accent-ring: rgba(217, 100, 10, 0.35);
@@ -67,7 +75,7 @@
     --code-bg: #0d0d0d;
     --code-surface: #161616;
     --code-border: rgba(255, 255, 255, 0.09);
-    --code-faint: #7c7c82;
+    --code-faint: #85858c;
     color-scheme: light;
   }
 
@@ -77,7 +85,7 @@
     --subtle: #141414;
     --fg: #f5f5f5;
     --fg-muted: #a1a1aa;
-    --fg-faint: #6b6b70;
+    --fg-faint: #a1a1aa;
     --border: rgba(255, 255, 255, 0.09);
     --border-strong: rgba(255, 255, 255, 0.17);
     --accent: #f9ab3b;
@@ -90,7 +98,7 @@
     --code-bg: #0d0d0d;
     --code-surface: #161616;
     --code-border: rgba(255, 255, 255, 0.09);
-    --code-faint: #7c7c82;
+    --code-faint: #85858c;
     color-scheme: dark;
   }
 

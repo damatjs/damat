@@ -107,7 +107,10 @@ describe("Redis Service", () => {
     });
 
     it("getRedis returns the underlying ioredis client when initialized", () => {
-      const client = initRedis({ url: "redis://localhost:6379", lazyConnect: true });
+      const client = initRedis({
+        url: "redis://localhost:6379",
+        lazyConnect: true,
+      });
       expect(getRedis()).toBe(client!.client);
     });
   });

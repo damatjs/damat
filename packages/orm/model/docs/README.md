@@ -10,45 +10,45 @@ schema objects (`@damatjs/orm-type` shapes). No SQL is executed here.
 
 ## Split docs
 
-| Doc | Covers |
-| --- | --- |
-| [column-builders.md](./column-builders.md) | `ColumnBuilder` base + every concrete column type, the `columns` factory, `EnumBuilder`. |
-| [relations.md](./relations.md) | `Relation` base, `BelongsTo` / `HasMany` / `HasOne`, target resolution, and the relation validators. |
-| [indexes-and-constraints.md](./indexes-and-constraints.md) | `IndexBuilder`, `ConstraintBuilder`, `cleanupIndexSchema`, auto-naming. |
-| [schema-and-model.md](./schema-and-model.md) | `ModelDefinition`, `model()`, `toTableSchema()`, `toModuleSchema()`, the global model registry, timestamps/soft-delete. |
-| [type-inference.md](./type-inference.md) | `pgTypeToTsBase`, `toTsType()`, enum type emission, the string-case helpers, and the (stale) codegen scripts. |
+| Doc                                                        | Covers                                                                                                                  |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| [column-builders.md](./column-builders.md)                 | `ColumnBuilder` base + every concrete column type, the `columns` factory, `EnumBuilder`.                                |
+| [relations.md](./relations.md)                             | `Relation` base, `BelongsTo` / `HasMany` / `HasOne`, target resolution, and the relation validators.                    |
+| [indexes-and-constraints.md](./indexes-and-constraints.md) | `IndexBuilder`, `ConstraintBuilder`, `cleanupIndexSchema`, auto-naming.                                                 |
+| [schema-and-model.md](./schema-and-model.md)               | `ModelDefinition`, `model()`, `toTableSchema()`, `toModuleSchema()`, the global model registry, timestamps/soft-delete. |
+| [type-inference.md](./type-inference.md)                   | `pgTypeToTsBase`, `toTsType()`, enum type emission, string-case helpers, and generation ownership.                      |
 
 ## Module map
 
-| Path | Responsibility |
-| --- | --- |
-| `src/index.ts` | Root barrel: re-exports `properties`, `schema`, `types`, `utils`. |
-| `src/schema/model.ts` | `ModelDefinition` class + `model()` factory. The orchestrator. |
-| `src/schema/toModuleSchema.ts` | `toModuleSchema()` — groups models, hoists relations. |
-| `src/schema/index.ts` | Re-exports model, `toModuleSchema`, and the relation validators. |
-| `src/types/schema.ts` | `PropertyValue` / `ModelProperties` unions. |
-| `src/types/index.ts` | Re-exports `@damatjs/orm-type` + local `schema.ts`. |
-| `src/properties/index.ts` | Barrel for all property builders. |
-| `src/properties/columns.ts` | The `columns` factory object (the public DSL surface). |
-| `src/properties/column/base.ts` | `ColumnBuilder` — base fluent column + `toSchema()` / `toTsType()`. |
-| `src/properties/column/*.ts` | Concrete column builders (boolean, number, text, time, json, uuid, bytea, enum, id, vector). |
-| `src/properties/enum/base.ts` | `EnumBuilder`. |
-| `src/properties/indexes/base.ts` | `IndexBuilder` (+ `indexBuilder()` factory in `index.ts`). |
-| `src/properties/constraints/base.ts` | `ConstraintBuilder` (+ `constrainBuilder()` factory in `index.ts`). |
-| `src/properties/foreignKeys/base.ts` | **Entirely commented out** — a legacy `ForeignKeyBuilder` superseded by `BelongsTo`. No live exports. |
-| `src/properties/relation/base.ts` | `Relation` abstract base. |
-| `src/properties/relation/belongsToBuilder.ts` | `BelongsTo` (owning side, FK column generation). |
-| `src/properties/relation/hasManyBuilder.ts` | `HasMany` (inverse 1:N). |
-| `src/properties/relation/hasOneBuilder.ts` | `HasOne` (inverse 1:1). |
-| `src/properties/relation/validate/*.ts` | Relation cross-validation (live + schema passes, formatting, error). |
-| `src/utils/pgTypeToTsBase.ts` | `ColumnType` → TS type-string map + `enumTypeToTsBase`. |
-| `src/utils/cleanupIndex.ts` | Index normalisation / auto-naming. |
-| `src/utils/stringConvertor.ts` | `toPascalCase` / `toCamelCase` / `toEnumTypeName`. |
-| `src/utils/target.ts` | `ModelTarget` type + `resolveModuleTarget` + `removeLastS`. |
-| `src/utils/registry.ts` | Global table-name → `ModelDefinition` registry. |
-| `src/errors/*.ts` | `OrmError` hierarchy + `transformPgError`. **Not exported from `src/index.ts`** (see note below). |
-| `src/tests/` | Bun tests + e-commerce fixtures + committed snapshot/generated types. |
-| `scripts/` | `generate-snapshots.ts` (works) and `generate-types.ts` (imports a missing `src/codegen` — stale). |
+| Path                                          | Responsibility                                                                                        |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `src/index.ts`                                | Root barrel: re-exports `properties`, `schema`, `types`, `utils`.                                     |
+| `src/schema/model.ts`                         | `ModelDefinition` class + `model()` factory. The orchestrator.                                        |
+| `src/schema/toModuleSchema.ts`                | `toModuleSchema()` — groups models, hoists relations.                                                 |
+| `src/schema/index.ts`                         | Re-exports model, `toModuleSchema`, and the relation validators.                                      |
+| `src/types/schema.ts`                         | `PropertyValue` / `ModelProperties` unions.                                                           |
+| `src/types/index.ts`                          | Re-exports `@damatjs/orm-type` + local `schema.ts`.                                                   |
+| `src/properties/index.ts`                     | Barrel for all property builders.                                                                     |
+| `src/properties/columns.ts`                   | The `columns` factory object (the public DSL surface).                                                |
+| `src/properties/column/base.ts`               | `ColumnBuilder` — base fluent column + `toSchema()` / `toTsType()`.                                   |
+| `src/properties/column/*.ts`                  | Concrete column builders (boolean, number, text, time, json, uuid, bytea, enum, id, vector).          |
+| `src/properties/enum/base.ts`                 | `EnumBuilder`.                                                                                        |
+| `src/properties/indexes/base.ts`              | `IndexBuilder` (+ `indexBuilder()` factory in `index.ts`).                                            |
+| `src/properties/constraints/base.ts`          | `ConstraintBuilder` (+ `constrainBuilder()` factory in `index.ts`).                                   |
+| `src/properties/foreignKeys/base.ts`          | **Entirely commented out** — a legacy `ForeignKeyBuilder` superseded by `BelongsTo`. No live exports. |
+| `src/properties/relation/base.ts`             | `Relation` abstract base.                                                                             |
+| `src/properties/relation/belongsToBuilder.ts` | `BelongsTo` (owning side, FK column generation).                                                      |
+| `src/properties/relation/hasManyBuilder.ts`   | `HasMany` (inverse 1:N).                                                                              |
+| `src/properties/relation/hasOneBuilder.ts`    | `HasOne` (inverse 1:1).                                                                               |
+| `src/properties/relation/validate/*.ts`       | Relation cross-validation (live + schema passes, formatting, error).                                  |
+| `src/utils/pgTypeToTsBase.ts`                 | `ColumnType` → TS type-string map + `enumTypeToTsBase`.                                               |
+| `src/utils/cleanupIndex.ts`                   | Index normalisation / auto-naming.                                                                    |
+| `src/utils/stringConvertor.ts`                | `toPascalCase` / `toCamelCase` / `toEnumTypeName`.                                                    |
+| `src/utils/target.ts`                         | `ModelTarget` type + `resolveModuleTarget` + `removeLastS`.                                           |
+| `src/utils/registry.ts`                       | Global table-name → `ModelDefinition` registry.                                                       |
+| `src/errors/*.ts`                             | `OrmError` hierarchy + `transformPgError`. **Not exported from `src/index.ts`** (see note below).     |
+| `src/tests/`                                  | Bun tests + e-commerce fixtures + committed snapshot/generated types.                                 |
+| `scripts/`                                    | Internal fixture snapshot and type-generation scripts.                                                |
 
 ## Architecture overview
 

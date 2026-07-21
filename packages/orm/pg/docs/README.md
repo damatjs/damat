@@ -41,30 +41,30 @@ em.repo("user").findMany(opts)
 
 ## Module map
 
-| Path | Responsibility | Doc |
-| --- | --- | --- |
-| `src/index.ts` | Public barrel; also `export const EntityManager = PgEntityManager`. | — |
-| `src/manager/entityManager.ts` | `PgEntityManager` — repo cache, model registry, transactions, raw SQL. | [entity-manager.md](./entity-manager.md) |
-| `src/manager/transactionalEntityManager.ts` | `TransactionalEntityManager` — dynamic `tx.<model>` accessors + savepoints. | [entity-manager.md](./entity-manager.md) |
-| `src/manager/error.ts` | `EntityManagerError`, `QueryExecutionError`. | [entity-manager.md](./entity-manager.md) |
-| `src/repository/repository.ts` | `PgRepository` — ergonomic CRUD returning plain rows / counts. | [repository.md](./repository.md) |
-| `src/repository/factory.ts` | `createRepository` — builds a repo from a model + connection. | [repository.md](./repository.md) |
-| `src/client/base.ts` | `PgModelClient` — per-model CRUD; returns `{ rows, rowCount, descriptor }`. | [client.md](./client.md) |
-| `src/client/ops/**` | Thin `execute*` wrappers: accessor → SQL → `pgExecuteRaw`. | [client.md](./client.md) |
-| `src/client/types.ts` | `PgModelClientLike`, `FindOneOptions`, option re-exports. | [client.md](./client.md) |
-| `src/query/accessor/**` | `ModelAccessor` + option types; pure `model+options → { sql, json }`. | [query-builder.md](./query-builder.md) |
-| `src/query/base.ts` | `QueryBase` — shared where/orderBy/returning + column asserts. | [query-builder.md](./query-builder.md) |
-| `src/query/select/**` | `SelectBuilder`, JSON descriptor, lateral-join relation loading. | [query-builder.md](./query-builder.md), [relations.md](./relations.md) |
-| `src/query/insert/**` | `InsertBuilder` + `ON CONFLICT` (`OnConflictClause`). | [query-builder.md](./query-builder.md) |
-| `src/query/update.ts`, `delete.ts`, `upsert.ts` | `UpdateBuilder`, `DeleteBuilder`, `UpsertBuilder`. | [query-builder.md](./query-builder.md) |
-| `src/query/helpers/where/**` | `buildWhereClause`, `compileCondition` (operator → SQL). | [where.md](./where.md) |
-| `src/query/helpers/{ident,clauses,asserts,assemble}.ts` | Identifier quoting, ORDER BY/RETURNING, column guards, part assembly. | [query-builder.md](./query-builder.md), [where.md](./where.md) |
-| `src/query/relations/**` | Relation resolution + the `with` guard (`assertValidRelationMap`). | [relations.md](./relations.md) |
-| `src/query/types/**` | Where/order types, `ValuesMap`, descriptor re-exports. | [query-builder.md](./query-builder.md) |
-| `src/executor/raw.ts`, `transaction.ts` | `pgExecuteRaw`, `pgTransaction` — driver execution + logging. | [executor.md](./executor.md) |
-| `src/transaction/manager.ts`, `context.ts` | `TransactionManager`, `TransactionContext`. | [transactions.md](./transactions.md) |
-| `src/types/**` | `PgEntityManagerConfig`, `Pg*Result` shapes. | — |
-| `tests/integration.test.ts` | End-to-end CRUD/transaction/relation tests (needs Postgres). | — |
+| Path                                                    | Responsibility                                                              | Doc                                                                    |
+| ------------------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `src/index.ts`                                          | Public barrel; also `export const EntityManager = PgEntityManager`.         | —                                                                      |
+| `src/manager/entityManager.ts`                          | `PgEntityManager` — repo cache, model registry, transactions, raw SQL.      | [entity-manager.md](./entity-manager.md)                               |
+| `src/manager/transactionalEntityManager.ts`             | `TransactionalEntityManager` — dynamic `tx.<model>` accessors + savepoints. | [entity-manager.md](./entity-manager.md)                               |
+| `src/manager/error.ts`                                  | `EntityManagerError`, `QueryExecutionError`.                                | [entity-manager.md](./entity-manager.md)                               |
+| `src/repository/repository.ts`                          | `PgRepository` — ergonomic CRUD returning plain rows / counts.              | [repository.md](./repository.md)                                       |
+| `src/repository/factory.ts`                             | `createRepository` — builds a repo from a model + connection.               | [repository.md](./repository.md)                                       |
+| `src/client/base.ts`                                    | `PgModelClient` — per-model CRUD; returns `{ rows, rowCount, descriptor }`. | [client.md](./client.md)                                               |
+| `src/client/ops/**`                                     | Thin `execute*` wrappers: accessor → SQL → `pgExecuteRaw`.                  | [client.md](./client.md)                                               |
+| `src/client/types.ts`                                   | `PgModelClientLike`, `FindOneOptions`, option re-exports.                   | [client.md](./client.md)                                               |
+| `src/query/accessor/**`                                 | `ModelAccessor` + option types; pure `model+options → { sql, json }`.       | [query-builder.md](./query-builder.md)                                 |
+| `src/query/base.ts`                                     | `QueryBase` — shared where/orderBy/returning + column asserts.              | [query-builder.md](./query-builder.md)                                 |
+| `src/query/select/**`                                   | `SelectBuilder`, JSON descriptor, lateral-join relation loading.            | [query-builder.md](./query-builder.md), [relations.md](./relations.md) |
+| `src/query/insert/**`                                   | `InsertBuilder` + `ON CONFLICT` (`OnConflictClause`).                       | [query-builder.md](./query-builder.md)                                 |
+| `src/query/update.ts`, `delete.ts`, `upsert.ts`         | `UpdateBuilder`, `DeleteBuilder`, `UpsertBuilder`.                          | [query-builder.md](./query-builder.md)                                 |
+| `src/query/helpers/where/**`                            | `buildWhereClause`, `compileCondition` (operator → SQL).                    | [where.md](./where.md)                                                 |
+| `src/query/helpers/{ident,clauses,asserts,assemble}.ts` | Identifier quoting, ORDER BY/RETURNING, column guards, part assembly.       | [query-builder.md](./query-builder.md), [where.md](./where.md)         |
+| `src/query/relations/**`                                | Relation resolution + the `with` guard (`assertValidRelationMap`).          | [relations.md](./relations.md)                                         |
+| `src/query/types/**`                                    | Where/order types, `ValuesMap`, descriptor re-exports.                      | [query-builder.md](./query-builder.md)                                 |
+| `src/executor/raw.ts`, `transaction.ts`                 | `pgExecuteRaw`, `pgTransaction` — driver execution + logging.               | [executor.md](./executor.md)                                           |
+| `src/transaction/manager.ts`, `context.ts`              | `TransactionManager`, `TransactionContext`.                                 | [transactions.md](./transactions.md)                                   |
+| `src/types/**`                                          | `PgEntityManagerConfig`, `Pg*Result` shapes.                                | —                                                                      |
+| `tests/integration.test.ts`                             | End-to-end CRUD/transaction/relation tests (needs Postgres).                | —                                                                      |
 
 ## Two outputs per query: SQL and JSON
 
@@ -78,7 +78,7 @@ re-parsing SQL. Builders never execute; execution is the executor's job. See
 
 - **Identifiers are always quoted, values are always parameterised.** Column/table names go through
   `quoteIdent` (which doubles embedded `"`); user values become `$N` placeholders. The one place a
-  *value* is interpolated into SQL is the transaction isolation level, which is guarded by an
+  _value_ is interpolated into SQL is the transaction isolation level, which is guarded by an
   allow-list (`transaction/manager.ts`). Savepoint names are sanitised to `[a-zA-Z0-9_]`.
 - **Unknown columns fail fast.** `QueryBase` builds a `Set` of known column names from the model and
   every builder asserts against it (`assertKnownColumns` / `assertKnownColumnList`) before emitting SQL —

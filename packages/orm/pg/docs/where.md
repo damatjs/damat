@@ -13,17 +13,27 @@ clauses (`WhereClause`) and **raw** clauses (`RawWhereClause`).
 
 ```ts
 type WhereOperators =
-  | { eq: unknown } | { neq: unknown }
-  | { gt: unknown } | { gte: unknown } | { lt: unknown } | { lte: unknown }
-  | { like: string } | { ilike: string }
-  | { in: unknown[] } | { notIn: unknown[] }
-  | { isNull: true } | { isNotNull: true }
+  | { eq: unknown }
+  | { neq: unknown }
+  | { gt: unknown }
+  | { gte: unknown }
+  | { lt: unknown }
+  | { lte: unknown }
+  | { like: string }
+  | { ilike: string }
+  | { in: unknown[] }
+  | { notIn: unknown[] }
+  | { isNull: true }
+  | { isNotNull: true }
   | { between: [unknown, unknown] };
 
 type WhereConditionValue = unknown | WhereOperators;
 type WhereClause<Cols> = { [K in Cols]?: WhereConditionValue };
 
-interface RawWhereClause { sql: string; params?: unknown[] }
+interface RawWhereClause {
+  sql: string;
+  params?: unknown[];
+}
 ```
 
 A column maps either to a plain value (equality) or to an operator object.
@@ -32,11 +42,11 @@ A column maps either to a plain value (equality) or to an operator object.
 
 ```ts
 function buildWhereClause(
-  whereClauses: WhereClause[],   // object-style (each may carry multiple columns)
-  rawClauses: RawWhereClause[],  // raw SQL fragments
-  params: unknown[],             // mutated in place — placeholders appended
-  known: Set<string>,            // model's known column names
-): string
+  whereClauses: WhereClause[], // object-style (each may carry multiple columns)
+  rawClauses: RawWhereClause[], // raw SQL fragments
+  params: unknown[], // mutated in place — placeholders appended
+  known: Set<string>, // model's known column names
+): string;
 ```
 
 Behaviour:
@@ -54,7 +64,10 @@ AND-ed together. There is no OR combinator at this layer — express OR via a `w
 
 ```ts
 const offset = params.length;
-const renumbered = raw.sql.replace(/\$(\d+)/g, (_, n) => `$${parseInt(n, 10) + offset}`);
+const renumbered = raw.sql.replace(
+  /\$(\d+)/g,
+  (_, n) => `$${parseInt(n, 10) + offset}`,
+);
 if (raw.params) params.push(...raw.params);
 ```
 
@@ -62,8 +75,8 @@ A raw fragment writes its placeholders as if it started at `$1`; the builder shi
 many params already exist so they line up with the shared `params` array. Example:
 
 ```ts
-b.where({ verified: true });                          // → $1
-b.whereRaw({ sql: "age > $1", params: [18] });        // → renumbered to "age > $2"
+b.where({ verified: true }); // → $1
+b.whereRaw({ sql: "age > $1", params: [18] }); // → renumbered to "age > $2"
 // WHERE "verified" = $1 AND age > $2     params: [true, 18]
 ```
 
@@ -74,7 +87,11 @@ b.whereRaw({ sql: "age > $1", params: [18] });        // → renumbered to "age 
 ## `compileCondition` — operator → SQL
 
 ```ts
-function compileCondition(col: string, val: WhereConditionValue, params: unknown[]): string
+function compileCondition(
+  col: string,
+  val: WhereConditionValue,
+  params: unknown[],
+): string;
 ```
 
 `col` is already quoted by the caller. Logic:
@@ -83,17 +100,17 @@ function compileCondition(col: string, val: WhereConditionValue, params: unknown
   the value and emit `<col> = $N` (plain equality).
 - **Operator object**: each recognised key contributes a fragment, AND-ed together.
 
-| Operator | SQL | Notes |
-| --- | --- | --- |
-| `eq` | `= $N` (or `IS NULL` if value is `null`) | |
-| `neq` | `<> $N` (or `IS NOT NULL` if value is `null`) | |
-| `gt` / `gte` / `lt` / `lte` | `> / >= / < / <= $N` | |
-| `like` / `ilike` | `LIKE / ILIKE $N` | |
-| `in` | `IN ($N, …)`; empty array ⇒ `FALSE` | empty `in` matches nothing |
-| `notIn` | `NOT IN ($N, …)`; empty array ⇒ `TRUE` | empty `notIn` matches everything |
-| `isNull` | `IS NULL` | value ignored |
-| `isNotNull` | `IS NOT NULL` | value ignored |
-| `between` | `BETWEEN $lo AND $hi` | two params |
+| Operator                    | SQL                                           | Notes                            |
+| --------------------------- | --------------------------------------------- | -------------------------------- |
+| `eq`                        | `= $N` (or `IS NULL` if value is `null`)      |                                  |
+| `neq`                       | `<> $N` (or `IS NOT NULL` if value is `null`) |                                  |
+| `gt` / `gte` / `lt` / `lte` | `> / >= / < / <= $N`                          |                                  |
+| `like` / `ilike`            | `LIKE / ILIKE $N`                             |                                  |
+| `in`                        | `IN ($N, …)`; empty array ⇒ `FALSE`           | empty `in` matches nothing       |
+| `notIn`                     | `NOT IN ($N, …)`; empty array ⇒ `TRUE`        | empty `notIn` matches everything |
+| `isNull`                    | `IS NULL`                                     | value ignored                    |
+| `isNotNull`                 | `IS NOT NULL`                                 | value ignored                    |
+| `between`                   | `BETWEEN $lo AND $hi`                         | two params                       |
 
 `isOperatorObject` (condition.ts) returns true only when the value is a non-null, non-array object
 whose keys are **all** in the known-operator set and non-empty. This means an object that mixes a valid

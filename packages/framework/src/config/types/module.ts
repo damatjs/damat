@@ -2,10 +2,12 @@ export interface ModuleConfigObject {
   [x: string]: ModuleConfig;
 }
 
+export type { ModuleArtifactLocation as ModuleResolveLocation } from "@damatjs/installer";
+import type { ModuleArtifactLocation } from "@damatjs/installer";
 
 export interface ModuleConfig {
   id?: string;
-  resolve: string;
+  resolve: ModuleArtifactLocation;
   options?: Record<string, unknown>;
   /** Provenance recorded when the module was installed via `damat module add`. */
   source?: ModuleSource;

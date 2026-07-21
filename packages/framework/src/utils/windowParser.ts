@@ -1,7 +1,9 @@
 export function parseWindowToMs(window: string): number {
   const match = window.match(/^(\d+)(s|m|h|d)$/);
   if (!match) {
-    throw new Error(`Invalid window format: ${window}. Use format like "1m", "5m", "1h", "1d"`);
+    throw new Error(
+      `Invalid window format: ${window}. Use format like "1m", "5m", "1h", "1d"`,
+    );
   }
 
   // The regex guarantees a numeric value group and a unit group constrained to

@@ -1,97 +1,68 @@
-# Authoring surface
+# Authoring ownership
 
-Source: `src/authoring.ts`.
+`@damatjs/module` owns the portable module contract and standalone module
+runtime. General application authoring APIs stay with the packages that
+implement them.
 
-`authoring.ts` is a pure re-export module. Its job is to give a module package a
-**single import** for everything it needs, so the only direct dependency the
-module's `package.json` declares is `@damatjs/module`. This insulates module code
-from the versions of the sibling packages underneath.
+## Import map
 
-## What it re-exports
+| Concern                       | Import from                 |
+| ----------------------------- | --------------------------- |
+| module definition and service | `@damatjs/services`         |
+| app registry access           | `@damatjs/framework`        |
+| route contracts               | `@damatjs/framework/router` |
+| model DSL and collection      | `@damatjs/orm-model`        |
+| local saga workflows          | `@damatjs/workflow-engine`  |
+| durable jobs                  | `@damatjs/jobs`             |
+| durable events                | `@damatjs/events`           |
+| durable pipelines             | `@damatjs/pipelines`        |
+| validation                    | `@damatjs/deps/zod`         |
 
-```ts
-// Module definition + service base — from @damatjs/services
-export { defineModule, ModuleService };
-export type { ModuleDefinition, ModuleInstance, ModuleRegistry };
-
-// App-side registry access — from @damatjs/framework
-export { getModule, hasModule, registerModule };
-
-// (Cross-module links are intentionally NOT re-exported — links are an app
-//  concern, authored with @damatjs/framework. See @damatjs/link.)
-
-// ORM model DSL — from @damatjs/orm-model
-export { model, columns };
-
-// Workflow engine — from @damatjs/workflow-engine
-export {
-  createStep, createWorkflow, executeStep, runStep, skipStep,
-  parallel, when, ifElse, RetryPolicies, Effect,
-};
-
-// HTTP route contracts — from @damatjs/framework/router
-export type { RouteHandler, RouteValidator };
-
-// Validation — from @damatjs/deps/zod
-export { z };
-```
-
-Because `src/index.ts` does `export * from "./authoring"`, all of the above are
-also available straight from `@damatjs/module`.
-
-## Typical module file
+Use `@damatjs/module` for its owned surfaces:
 
 ```ts
 import {
-  defineModule,
-  ModuleService,
-  model,
-  columns,
-  z,
+  defineModuleConfig,
+  validateModuleDir,
+  withModule,
 } from "@damatjs/module";
+```
 
-const models = {
-  user: model("user", {
-    id: columns.uuid().primaryKey(),
-    email: columns.text().unique(),
-  }),
-};
+The package also exports pipeline definitions because the standalone runtime
+loads portable pipeline providers. Prefer `@damatjs/pipelines` in module source
+so ownership remains explicit.
 
-const credentialsSchema = z.object({ apiKey: z.string() });
+## Portable module example
 
-export class UserModuleService extends ModuleService({ models, credentialsSchema }) {
-  // custom methods on top of the generated model accessors
-}
+```ts
+import { defineModule, ModuleService } from "@damatjs/services";
+import { collectModels, columns, model } from "@damatjs/orm-model";
 
-export default defineModule("user", {
-  service: UserModuleService,
-  credentials: () => ({ apiKey: process.env.USER_API_KEY! }),
+const Item = model("items", {
+  id: columns.id({ prefix: "itm" }).primaryKey(),
+  name: columns.text(),
+});
+
+export const models = collectModels([Item]);
+export class InventoryService extends ModuleService({ models }) {}
+
+export default defineModule("inventory", {
+  service: InventoryService,
 });
 ```
 
-`defineModule(...)` returns the object the harness and runtime consume — it has at
-least `name`, `service`, and `init()` (see `BootableModule` in
-[harness.md](./harness.md)).
+`ModuleService` supplies the model CRUD surface. Steps call those accessors
+directly; add service methods only for behavior the generated accessors cannot
+express, such as an external provider integration.
 
-## Why this is a separate file
+## Why ownership is explicit
 
-- **Stable surface.** Authors import names, not packages. The underlying packages
-  can be re-organized without touching module code.
-- **Curated.** Only the workflow helpers and ORM/validation pieces a module
-  actually needs are surfaced — not the entire API of each sibling package.
-- **`Effect` is re-exported** so authoring workflows inside a module needs no
-  direct `effect` dependency.
+- Installed source keeps the same imports in a standalone package and backend.
+- Dependency requirements are visible in `package.json` and `damat.json`.
+- Each package can evolve without turning `@damatjs/module` into a second public
+  API for the whole framework.
+- Contract/runtime changes remain separate from application authoring changes.
 
-## Gotchas
-
-- This file has no logic — adding behavior here is a smell. If a re-export needs
-  wrapping, do it in the owning package.
-- Workflow exports here mirror `@damatjs/workflow-engine`; keep them in sync if
-  that package's public surface changes (see
-  [workflow-engine internals](../../workflow-engine/docs/README.md)).
-- Route types come from the `@damatjs/framework/router` subpath; the file-based
-  routes themselves live in the module's `api/routes` dir (served by the runtime).
-- Cross-module link helpers are **deliberately not** part of this surface. A
-  module is single-purpose and does not define links — composition is the app's
-  job, authored with `@damatjs/framework`. See
-  [`@damatjs/link`](../../link/README.md).
+See the [module authoring guide](../../../docs/guide/13-authoring-modules.md) for
+the full route → workflow → step → service layout and the
+[manifest contract](./manifest.md) for portable capabilities.

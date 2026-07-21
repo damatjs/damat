@@ -1,6 +1,7 @@
 [test]
 coverage = true
 coverageThreshold = 1.0
+coverageReporter = ["text", "lcov"]
 coveragePathIgnorePatterns = ["**/dist/**", "**/node_modules/**", "**/*.test.ts", "**/tests/**", "**/__tests__/**", "**/__fixtures__/**", "**/orm-mig-*/**"]
 # reason: `orm-mig-*` are throwaway module fixtures the generator/discovery tests
 # write to os.tmpdir() and dynamically import() (e.g. `export const models = …`).

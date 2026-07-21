@@ -6,7 +6,6 @@ import {
   UserModel,
   VerificationModel,
 } from "./models";
-import { schema } from "./config/schema";
 
 export const models = collectModels([
   VerificationModel,
@@ -17,5 +16,4 @@ export const models = collectModels([
 
 export class UserModuleService extends ModuleService({
   models,
-  credentialsSchema: schema,
-}) { }
+}) {}

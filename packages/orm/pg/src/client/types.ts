@@ -22,8 +22,10 @@ export interface PgModelClientLike<
   withClient(client: PoolClient): PgModelClientLike<T, Cols>;
 }
 
-export interface FindOneOptions<Cols extends string = string>
-  extends Omit<FindOptions<Cols>, "limit" | "offset"> {}
+export interface FindOneOptions<Cols extends string = string> extends Omit<
+  FindOptions<Cols>,
+  "limit" | "offset"
+> {}
 
 export type {
   FindOptions,

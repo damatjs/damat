@@ -1,7 +1,15 @@
 import Link from "next/link";
 
+interface LogoMarkProps {
+  className?: string;
+  gradientId?: string;
+}
+
 /** The "blade" mark — two forged blades meeting at a spark. */
-export function LogoMark({ className }: { className?: string }) {
+export function LogoMark({
+  className,
+  gradientId = "damat-mark",
+}: LogoMarkProps) {
   return (
     <svg
       viewBox="0 0 32 32"
@@ -12,13 +20,13 @@ export function LogoMark({ className }: { className?: string }) {
       height={26}
     >
       <defs>
-        <linearGradient id="damat-mark" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#f9ab3b" />
           <stop offset="0.55" stopColor="#e5760a" />
           <stop offset="1" stopColor="#d9640a" />
         </linearGradient>
       </defs>
-      <rect width="32" height="32" rx="8" fill="url(#damat-mark)" />
+      <rect width="32" height="32" rx="8" fill={`url(#${gradientId})`} />
       <path
         d="M9 22.5 16 7l7 15.5-3.4-1.6-3.6 4.1-3.6-4.1L9 22.5Z"
         fill="#fff"

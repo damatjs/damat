@@ -12,10 +12,7 @@
  *                       agree with each other.
  */
 export type ViolationKind =
-  | "missing_inverse"
-  | "missing_belongsTo"
-  | "wrong_type"
-  | "mappedBy_mismatch";
+  "missing_inverse" | "missing_belongsTo" | "wrong_type" | "mappedBy_mismatch";
 
 // ─── RelationViolation ────────────────────────────────────────────────────────
 

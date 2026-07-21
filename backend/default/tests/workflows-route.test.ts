@@ -24,7 +24,9 @@ afterEach(() => {
 
 type JsonResult = { _data: any; _status: number };
 
-function makeCtx(opts: { json?: unknown; query?: Record<string, string> } = {}) {
+function makeCtx(
+  opts: { json?: unknown; query?: Record<string, string> } = {},
+) {
   const c = {
     req: {
       json: async () => {
@@ -33,7 +35,10 @@ function makeCtx(opts: { json?: unknown; query?: Record<string, string> } = {}) 
       },
       query: (k: string) => opts.query?.[k],
     },
-    json: (data: any, status = 200): JsonResult => ({ _data: data, _status: status }),
+    json: (data: any, status = 200): JsonResult => ({
+      _data: data,
+      _status: status,
+    }),
   };
   return c as any;
 }
@@ -102,9 +107,7 @@ describe("routes › POST /workflows", () => {
   });
 
   it("catches a thrown error (e.g. body parse failure) and returns 500", async () => {
-    const r: JsonResult = await POST(
-      makeCtx({ json: new Error("bad json") }),
-    );
+    const r: JsonResult = await POST(makeCtx({ json: new Error("bad json") }));
     expect(r._status).toBe(500);
     expect(r._data.success).toBe(false);
     expect(r._data.error).toBe("bad json");

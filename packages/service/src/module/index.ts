@@ -1,2 +1,2 @@
-export * from "./define"
-export * from "./type"
+export * from "./define";
+export * from "./type";

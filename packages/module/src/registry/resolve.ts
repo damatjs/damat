@@ -50,7 +50,9 @@ export async function resolveRegistryEntry(
   const entry = lookupEntry(index, ref);
   if (!entry) return null;
 
-  const moduleVerification = entry.verification ?? { status: "unverified" as const };
+  const moduleVerification = entry.verification ?? {
+    status: "unverified" as const,
+  };
 
   if (ref.version) {
     const versionValue = entry.versions?.[ref.version];
@@ -127,7 +129,9 @@ async function loadRegistryIndex(location: string): Promise<RegistryIndex> {
   if (isUrl(location)) {
     const response = await fetch(location);
     if (!response.ok) {
-      throw new Error(`Registry fetch failed (${response.status}): ${location}`);
+      throw new Error(
+        `Registry fetch failed (${response.status}): ${location}`,
+      );
     }
     return validateIndex(await response.json());
   }

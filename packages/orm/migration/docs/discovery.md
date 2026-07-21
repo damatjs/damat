@@ -11,11 +11,11 @@ Find what exists on disk and in code: the migration `.sql` files a module declar
 ```ts
 // src/types/migration.ts
 interface MigrationInfo {
-  name: string;       // filename without ".sql", e.g. "Migration20260316103000_Initial"
-  resolver: string;   // the module resolver this file was found under
-  path: string;       // absolute path to the .sql file
-  timestamp: number;  // 14-digit timestamp parsed from the filename
-  applied: boolean;   // false at discovery; set true by status after consulting the tracker
+  name: string; // filename without ".sql", e.g. "Migration20260316103000_Initial"
+  resolver: string; // the module resolver this file was found under
+  path: string; // absolute path to the .sql file
+  timestamp: number; // 14-digit timestamp parsed from the filename
+  applied: boolean; // false at discovery; set true by status after consulting the tracker
 }
 ```
 
@@ -26,7 +26,9 @@ interface MigrationInfo {
 Source: [`moduleMigrations.ts`](../src/discovery/moduleMigrations.ts)
 
 ```ts
-export function discoverModuleMigrations(moduleResolver: string): MigrationInfo[]
+export function discoverModuleMigrations(
+  moduleResolver: string | Pick<OrmModule, "resolve" | "migrations">,
+): MigrationInfo[];
 ```
 
 1. Looks in `path.join(moduleResolver, "migrations")`. If the directory doesn't exist, returns `[]`.
@@ -34,14 +36,17 @@ export function discoverModuleMigrations(moduleResolver: string): MigrationInfo[
 3. `.sort()`s lexicographically — which, because the timestamp is fixed-width and immediately follows `Migration`, equals chronological order.
 4. Maps each file to a `MigrationInfo`, parsing the timestamp with `/Migration(\d+)/` (defaulting to `0` if it doesn't match), resolving the path absolutely, and setting `applied: false`.
 
-> `moduleResolver` here is the resolver path/string (e.g. `"src/modules/user"` or an `OrmModule.resolve`), **not** an `OrmModule` object.
+Resolved descriptors use their explicit `migrations` directory; string callers
+keep the conventional `<resolver>/migrations` behavior.
 
 ### `discoverAllMigrations(modulesResolver[]): MigrationInfo[]`
 
 Source: [`allMigrations.ts`](../src/discovery/allMigrations.ts)
 
 ```ts
-export function discoverAllMigrations(modulesResolver: string[]): MigrationInfo[]
+export function discoverAllMigrations(
+  modulesResolver: Array<string | Pick<OrmModule, "resolve" | "migrations">>,
+): MigrationInfo[];
 ```
 
 Calls `discoverModuleMigrations` for each resolver, concatenates the results, and sorts the combined list by `timestamp` ascending (oldest first) — giving a global chronological order across modules.
@@ -56,12 +61,13 @@ Source: [`models.ts`](../src/discovery/models.ts)
 export async function discoverModels(
   moduleResolver: string,
   logger?: ILogger,
-): Promise<ModelDefinition[]>
+): Promise<ModelDefinition[]>;
 ```
 
-1. `await import(moduleResolver)` — dynamically imports the module entry.
-2. Reads `value.models` and takes `Object.values(...)` as the `ModelDefinition[]`.
-3. If empty, logs an error (when a logger is passed) and **throws** `No Model has been defined in <resolver>, consider importing models in the module service`.
+1. A file or indexed directory may expose an aggregate named `models` map.
+2. A directory without an index is scanned for `.ts`/`.js` files, collecting
+   exported model definitions.
+3. If empty, logs an error when a logger is passed and throws.
 4. Otherwise logs the count and returns the models.
 
 Used by the generator to build the current `ModuleSchema` via `toModuleSchema`.
@@ -71,8 +77,11 @@ Used by the generator to build the current `ModuleSchema` via `toModuleSchema`.
 - **Strict filename contract.** Only `Migration*.sql` files are seen. A file missing the prefix, using a different extension, or with a non-numeric timestamp segment is either ignored or gets `timestamp: 0` (sorting last among prefixed files, but `.sort()` already ordered by name).
 - **Absolute paths.** `MigrationInfo.path` is `path.resolve`d, so the executor can read it regardless of CWD; the parent `migrationsDir` is joined relative to the resolver.
 - **`applied` is always `false` from discovery.** It is only meaningful after `status.ts` consults the tracker (the executor uses its own applied-name `Set` instead of mutating this flag).
-- **`discoverModels` requires a named `models` export.** The module's entry must expose `models` (an object whose values are `ModelDefinition`s); a missing or empty export throws.
-- **Dynamic import side effects.** `import(moduleResolver)` runs the module's top-level code; ensure module entries are import-safe (no side effects that need a DB connection).
+- **Aggregate and file-per-model layouts work.** Existing named `models` maps
+  remain supported; declared model directories can contain one exported model
+  per file.
+- **Dynamic import side effects.** Model provider files execute during import;
+  keep them free of runtime/database startup work.
 
 ## Safe extension
 

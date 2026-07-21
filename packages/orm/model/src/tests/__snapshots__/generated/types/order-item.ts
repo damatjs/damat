@@ -24,4 +24,4 @@ export type NewOrderItem = {
   product_id: string;
 };
 
-export type UpdateOrderItem = Partial<Omit<OrderItem, 'id'>>;
+export type UpdateOrderItem = Partial<Omit<OrderItem, "id">>;

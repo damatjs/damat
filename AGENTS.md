@@ -1,249 +1,257 @@
-# AGENTS.md — working in the Damat repo with AI
+# AGENTS.md — working in the Damat repository
 
-This file orients an AI coding assistant (Claude Code, Cursor, etc.) working in
-the **Damat** monorepo. It is the machine-facing companion to the human
-[Damat Guide](./docs/GUIDE.md). Read this first, then the specific package
-`docs/` for whatever you're changing.
+This is the machine-facing map for the Damat monorepo. Read it before changing
+the repository, then read the affected package's `README.md` and `docs/` folder.
+The human walkthrough starts in [The Damat Guide](./docs/GUIDE.md).
 
-> Humans: this is written for AI agents, but it's also a concise map of the repo.
+## What Damat is
 
----
+Damat is a composable TypeScript backend framework built on Bun, Hono,
+PostgreSQL, Effect, and optional Redis. Applications combine independently
+authored modules with file-based HTTP routes, in-process workflows, durable
+jobs, durable events, and durable pipelines.
 
-## What Damat is (one paragraph)
+PostgreSQL is the authoritative record for domain data and durable execution.
+Redis is an optional, rebuildable acceleration layer for wake-ups, liveness,
+cache, pub/sub, locks, sessions, and rate limiting. It is never the only copy of
+job, event, pipeline, inspection, or control history.
 
-Damat is a composable TypeScript backend framework (Bun + Hono + Effect-TS +
-Better Auth + PostgreSQL). Apps are assembled from self-contained **modules**
-(models + migrations + service + config + workflows) registered in a single
-`damat.config.ts`. It's a Bun + Turborepo monorepo of ~24 packages plus a
-reference backend.
+## Non-negotiable repository rules
 
----
+1. **Trust source.** Package names and versions come from each `package.json`.
+2. **Use Bun.** Use `bun install`, `bun run`, and `bun test`; never introduce
+   npm, Yarn, or pnpm workflows.
+3. **Keep dependencies deliberate.** Prefer existing `@damatjs/*` packages and
+   curated imports from `@damatjs/deps/<library>`.
+4. **Keep TypeScript strict and ESM.** All packages are `type: module` and use
+   `@damatjs/typescript-config`.
+5. **Keep every code file at 100 physical lines or fewer.** This includes tests,
+   scripts, fixtures, generated code, and production files. Split by concern.
+6. **Keep documentation synchronized.** Living docs describe only current
+   behavior. Upgrade history belongs in `releases/<package>/`. Follow
+   [the documentation standard](./docs/DOCUMENTATION-STANDARD.md).
+7. **Run package tests through package scripts.** At the repository root use
+   `bun run test`, not `bun test`; the root runner isolates package mocks and
+   provisions independent PostgreSQL databases.
+8. **Do not re-export generated CRUD.** `ModuleService` already supplies it.
+   Add only genuinely new domain or integration behavior.
 
-## Ground rules for agents
+## Architecture at a glance
 
-1. **Trust source, not the root README's history.** Package **names** and
-   **versions** come from each package's `package.json`. (The repo was renamed
-   over time — e.g. env is `@damatjs/load-env`, redis is `@damatjs/redis`.)
-2. **Bun, not npm/yarn/pnpm.** Use `bun install`, `bun run <script>`, `bun test`.
-   `packageManager` is pinned to `bun`.
-3. **Don't add heavy dependencies.** `.bunfig.toml` enforces a release-age delay
-   and disables install scripts. Prefer the in-repo `@damatjs/*` packages and
-   the curated re-exports in [`@damatjs/deps`](./packages/deps/README.md).
-4. **TypeScript, ESM, strict.** All packages are `"type": "module"` and extend
-   [`@damatjs/typescript-config`](./packages/typescript-config/README.md).
-5. **Keep docs in sync — two tiers.** Living docs (package `README.md` + `docs/`,
-   the guide) describe the **current version only**; the change history + upgrade
-   steps live in **`releases/<package>/`**. Change a package → update both tiers.
-   Full rules: [Documentation & releases standard](./docs/DOCUMENTATION-STANDARD.md).
-6. **Tests live next to code** (`src/tests/`, `tests/`, or `*.test.ts`). Run the
-   package's `test` script.
-7. **Small, single-purpose files — readability is the highest priority.** No file
-   over ~100 lines; split by concern and subdivide long functions into sibling
-   files/folders rather than piling logic into one file. Don't re-export what a
-   package already provides (e.g. a `ModuleService` accessor's CRUD) — call it
-   directly; only write genuinely new, domain-specific code.
+| Concern                | Owner                      | Runtime role                                                                   |
+| ---------------------- | -------------------------- | ------------------------------------------------------------------------------ |
+| Domain schema and CRUD | Modules + ORM              | PostgreSQL-backed request and service work                                     |
+| HTTP                   | Framework router           | `server` or `all` process                                                      |
+| Workflow               | `@damatjs/workflow-engine` | In-process saga with compensation                                              |
+| Job                    | `@damatjs/jobs`            | One durable deferred unit                                                      |
+| Event                  | `@damatjs/events`          | Ephemeral fact or durable per-consumer delivery                                |
+| Pipeline               | `@damatjs/pipelines`       | Durable, inspectable graph across waits, branches, jobs, events, and workflows |
+| Durability             | `@damatjs/durability`      | Shared transactions, outbox, leases, controls, inspection, retention           |
+| Acceleration           | `@damatjs/redis`           | Optional wake-up, liveness, invalidation, cache, lock, and pub/sub data        |
+| Integration provider   | `@damatjs/provider`        | ModuleService extension selected by role from initialized module references    |
 
----
+Every application process owns exactly one PostgreSQL pool. HTTP, modules,
+jobs, events, pipelines, inspection, and maintenance share it. A pool is a
+bounded concurrency object, not a single physical connection.
 
-## Repo map
+Framework startup checks migration readiness but does not mutate schemas.
+Generated development scripts run an idempotent setup preflight; production
+deployments run one explicit migration job before starting API or workers.
 
-```
+## Repository map
+
+```text
 damat/
-├── damat.config.ts is per-app (see backend/default)
-├── turbo.json                 # build/lint/check-types/dev pipeline
-├── docs/GUIDE.md              # the human usage guide
-├── MODULES.md                 # the module.json manifest contract
-├── AGENTS.md                  # this file
-├── .mcp.json                  # MCP server wiring (module install)
-├── .claude/skills/            # Claude Code skills
-├── backend/default/           # @damatjs/default — reference app
-└── packages/
-    ├── framework/             # @damatjs/framework — app framework (config, router, server, bootstrap)
-    ├── service/               # @damatjs/services — ModuleService, PoolManager, defineModule
-    ├── link/                  # @damatjs/link — cross-module links (junction tables, fetch, graph query)
-    ├── module/                # @damatjs/module — the module system (authoring, manifest, harness, runtime, registry)
-    ├── workflow-engine/       # @damatjs/workflow-engine — saga engine (Effect-TS)
-    ├── deps/                  # @damatjs/deps — pinned external re-exports
-    ├── typescript-config/     # @damatjs/typescript-config — shared tsconfig
-    ├── mcp/                   # @damatjs/mcp — MCP server for module install
-    ├── core/
-    │   ├── cli/               # @damatjs/cli — general CLI framework
-    │   ├── codegen/           # @damatjs/codegen — TypeScript types + zod + CRUD scaffold from models
-    │   ├── env/               # @damatjs/load-env — .env cascade loader
-    │   ├── logger/            # @damatjs/logger — structured logging
-    │   ├── redis/             # @damatjs/redis — cache/queue/lock/session/rate-limit
-    │   └── types/             # @damatjs/types — error classes & shared types
-    ├── orm/
-    │   ├── main/              # @damatjs/orm — umbrella re-export
-    │   ├── model/             # @damatjs/orm-model — fluent model DSL
-    │   ├── pg/                # @damatjs/orm-pg — EntityManager + Repository + query builder
-    │   ├── connector/         # @damatjs/orm-connector — pg pool/connection manager
-    │   ├── migration/         # @damatjs/orm-migration — module-aware migrations
-    │   ├── processor/         # @damatjs/orm-processor — snapshot/diff/SQL generation
-    │   ├── core/              # @damatjs/orm-core — registry + query logging
-    │   ├── type/              # @damatjs/orm-type — shared ORM types
-    │   └── cli/               # @damatjs/orm-cli — `damat-orm` migrations/codegen
-    └── cli/
-        ├── damat/             # @damatjs/damat-cli — `damat` dev/build/module CLI
-        └── create-damat-app/  # @damatjs/create-damat-app — scaffolding
+├── AGENTS.md                       # this repository guide
+├── README.md                       # project overview
+├── MODULES.md                      # damat.json manifest contract
+├── docs/GUIDE.md                   # human guide index
+├── docs/guide/                     # current user documentation
+├── releases/                       # package change and upgrade history
+├── backend/default/                # complete reference backend
+├── packages/
+│   ├── framework/                  # bootstrap, config, router, runtime roles
+│   ├── service/                    # ModuleService, PoolManager, defineModule
+│   ├── module/                     # module contract, harness, runtime, registry
+│   ├── module-generator/           # schema and CRUD slice generation
+│   ├── workflow-engine/            # in-process saga engine
+│   ├── link/                       # app-owned cross-module relationships
+│   ├── installer/                  # transactional capability installation
+│   ├── provider/                   # generic ProviderService base and role contracts
+│   ├── core/
+│   │   ├── durability/             # canonical durable coordination contracts
+│   │   ├── jobs/                   # PostgreSQL-backed background jobs
+│   │   ├── events/                 # typed bus + durable delivery
+│   │   ├── pipelines/              # persisted orchestration graphs
+│   │   ├── redis/                  # cache, pub/sub, locks, acceleration
+│   │   ├── logger/                 # structured logging
+│   │   ├── env/                    # environment cascade
+│   │   └── types/                  # shared errors and types
+│   ├── orm/                        # model, pg, connector, migration, CLI, codegen
+├── provider/                       # auth, payment, and subscription service standards
+│   └── cli/                        # app, module, support, codegen, and damat CLIs
+├── .agents/skills/                 # Codex/agent Damat skills
+└── .claude/skills/                 # synchronized Claude skill copies
 ```
 
-Each package's `docs/README.md` is the internals index — go there before
-editing that package.
+## Canonical commands
 
----
-
-## Commands
+### Repository
 
 ```bash
-bun install                  # install workspace deps
-bun run build                # turbo: build all packages
-bun run dev                  # turbo: dev (persistent)
-bun run lint                 # turbo: lint
-bun run check-types          # turbo: typecheck
-bun run format               # prettier
-bun test                     # tests
-
-# In a Damat app (e.g. backend/default):
-bun run dev                  # damat dev
-bun run db:migrate           # damat-orm migrate:up
-bun run db:status            # damat-orm migrate:status
+bun install
+bun run build                 # serialized dependency-safe Turbo build
+bun run lint
+bun run check-types
+bun run test                  # isolated packages + managed PostgreSQL/Redis
+bun run test:sites            # production builds + desktop/mobile browser tests
+bun run format
 ```
 
-Build order is dependency-driven by Turborepo (`^build`). The dependency spine
-is roughly: `types`/`deps` → `orm-type` → `orm-model` → `orm-core`/`orm-pg`/… →
-`services` → `framework` → `module` → CLIs.
+### Generated backend
 
----
+```bash
+bun run db:setup              # create configured DB and apply every migration
+bun run db:migrate            # apply pending migrations to an existing DB
+bun run db:status
+bun run dev                   # db:setup preflight, then hot-reload server/workers
+bun test
+```
 
-## How to do common tasks
+`damat create <name>` asks for a complete PostgreSQL URL or host, port, user,
+password, and database name. Non-interactive automation can use
+`--database-url` or the individual `--database-*` flags. Use
+`--no-database-setup` or `--no-install` only when intentionally deferring setup.
 
-### Add a column / model to a module
-1. Edit/add a model in `src/modules/<m>/models/` using the
-   [orm-model DSL](./packages/orm/model/README.md).
-2. Export it from the module's `service.ts` `models` map.
-3. `damat module migration:create` (in a module package) **or**
-   `damat-orm migrate:create <name>` (in an app) to generate the migration.
-4. `damat-orm migrate:up`. Optionally `damat codegen <module>` (or `--all`).
+### Standalone module
 
-### Add an HTTP route
-Create `src/api/routes/<path>/route.ts` exporting `GET`/`POST`/… as
-`RouteHandler` or `defineRoute<Params>` from `@damatjs/framework/router`.
-Dynamic segments use `[param]` folders. See
-[framework → router](./packages/framework/docs/router.md).
+```bash
+bun run database:setup        # create dev DB and apply only this module's migrations
+bun run migration:create
+bun run migration:run
+bun run migration:status
+bun run codegen
+bun run validate
+bun run dev                   # module database preflight + standalone server
+bun test
+```
 
-### Create a new module
-`damat module init <name>`, implement `index.ts`/`service.ts`/`models/`, add a
-`module.json` ([MODULES.md](./MODULES.md)), then `damat module validate`. Develop
-and test it standalone with the [`@damatjs/module`](./packages/module/README.md)
-harness (`withModule`/`bootModule`).
+The standalone module command never installs the backend's shared durability,
+jobs, events, or pipeline catalogs. The assembled backend owns those tables.
 
-### Install an existing module
-Prefer the MCP tools (below) or the CLI:
-`damat module add <registry-ref | path | github | git-url>` →
-`damat-orm migrate:up` → restart. See
-[the guide](./docs/guide/14-installing-modules.md).
+## Common work
+
+### Add or change a model
+
+1. Add one model per file with `@damatjs/orm-model`.
+2. Include it in the module service's `collectModels([...])` input.
+3. Generate and review the migration.
+4. Run `bun run db:migrate` in an app or `bun run migration:run` in a module.
+5. Run codegen to refresh types, schemas, registries, and missing CRUD slices.
+
+Relations may target only tables owned by the same module. Cross-module
+relationships are links owned by the backend.
+
+### Add business behavior
+
+Follow `route → workflow → step → service → ORM`.
+
+- Routes validate input, call a workflow, and shape HTTP responses.
+- Workflows orchestrate steps and compensation.
+- Steps call generated model accessors or intentional service methods.
+- Services expose generated CRUD plus new integration/domain operations only.
+- Provider SDK details and pure helpers live in small `src/lib/` files.
 
 ### Add a workflow
-Define steps with `createStep` (forward + compensation) and compose them with
-`createWorkflow`. Steps are directly callable: `(input, ctx) => myStep(input, ctx)`
-for one step, or `yield* myStep(input, ctx)` inside `Effect.gen` for several. Pass
-an optional third arg to override retry/timeout per call —
-`myStep(input, ctx, { timeoutMs, retry })`. See
-[workflow-engine](./packages/workflow-engine/README.md).
 
-### Link two modules (cross-module relationship)
-Modules can't FK into each other, so a many-to-many relationship lives **outside**
-both modules in `src/links/<owner>/` (mirroring a module: `models/`, `index.ts`,
-`migrations/`). The junction table is auto-generated; neither module imports the other.
-1. `src/links/<owner>/models/<a>-<b>.ts`: `export default defineLink({ module, model, field }, { module, model, field })`.
-2. `src/links/<owner>/index.ts`: `export const links = [...]; export const models = collectLinkModels(links);`.
-3. `src/links/index.ts`: aggregate every owner and `export default defineLinkModule(links)`.
-4. Point `damat.config.ts` at it: `links: "./src/links"`.
-5. `damat-orm migrate:create link:<owner>` → `damat-orm migrate:up`, then
-   `damat codegen <module>` so each side gains the linked field.
-6. At runtime use `getModule("link")` → `create` / `dismiss` / `fetch` / `graph`.
-Import `defineLink` / `collectLinkModels` / `defineLinkModule` from
-`@damatjs/framework`. Links are an **app / backend-owner** concern — a module
-never defines them. Full guide: [`@damatjs/link`](./packages/link/README.md).
+Use `createStep` for forward and compensation behavior and `createWorkflow` for
+the local saga. Workflows are in-process and do not persist every boundary. Use
+a pipeline when the outer process must survive restarts, wait, branch, expose
+each stage to operators, or compose multiple durable primitives.
 
----
+### Add a durable job, event, or pipeline
 
-## Installing modules via MCP (for AI assistants)
+- A **job** is one deferred, retryable unit.
+- An **event** is a fact; durable events give each named consumer independent
+  persisted delivery.
+- A **pipeline** is a persisted graph and may call a workflow as one node.
 
-The [`@damatjs/mcp`](./packages/mcp/README.md) server (wired in `.mcp.json`)
-exposes safe tools so you can install modules without hand-editing files:
+Register definitions before framework bootstrap, enable the service in
+`damat.config.ts`, select the worker in `runtime.workers`, and apply migrations.
+Keep payload/result/history canonical in PostgreSQL. Redis may wake work but
+cannot grant leases or decide execution ownership.
 
-| Tool | Use it to |
-|------|-----------|
-| `search_modules` / `list_modules` | discover modules in the registry |
-| `module_info` | inspect a module before installing |
-| `add_module` | install it (runs the audited `damat module add`) |
-| `list_installed` | see what's already installed |
+### Link modules
 
-Recommended flow: **search → module_info → add_module → tell the user to run
-`damat-orm migrate:up` and restart.** Respect the verification gate
-(`DAMAT_MODULE_VERIFY`); never bypass a `rejected`/`revoked` module. Set
-`DAMAT_MODULE_REGISTRY` to enable registry tools; without it, install from a
-path or git URL.
+Links live under the app's `src/links/`, never as foreign keys inside a module.
+Define the link, aggregate it with `defineLinkModule`, add `links` to config,
+generate a `link:<owner>` migration, migrate, and regenerate linked types.
+Runtime access is through `getModule("link")`.
 
-Two Claude Code skills encode the workflows:
-- **`damat-backend`** ([.claude/skills/damat-backend](./.claude/skills/damat-backend/SKILL.md))
-  — backend work **and assembling the app**: models, services, routes, workflows,
-  migrations, run/debug, and installing / linking / composing modules.
-- **`damat-modules`** ([.claude/skills/damat-modules](./.claude/skills/damat-modules/SKILL.md))
-  — authoring one self-contained, shareable module (the blade); no composition.
+### Install a module
 
----
+Prefer the module MCP tools when connected; otherwise use:
 
-## Conventions cheat-sheet
+```bash
+damat module plan <registry-ref|path|git-url>
+damat module add <registry-ref|path|git-url>
+bun run db:migrate
+```
 
-- App code imports `defineConfig`, `defineModule`, `ModuleService`, `getModule`
-  from **`@damatjs/framework`**; standalone module code imports the same surface
-  from **`@damatjs/module`**.
-- `modules` in `damat.config.ts` is a **keyed object** `{ id: { resolve, id } }`,
-  not an array.
-- `ModuleService({ models, credentialsSchema })` — object args, not positional.
-- Models: `model(table, columns).indexes([...]).timestamps().softDelete()`;
-  relations reference the **target table name** (`columns.hasMany("accounts")`).
-- Use `@damatjs/deps/<lib>` (e.g. `@damatjs/deps/zod`) instead of importing
-  `zod`/`hono`/`effect`/`pg`/`ioredis` directly.
-- Cross-module relationships are **links**, not relations, and are an
-  **app/backend-owner** concern: declare them in `src/links/` (never inside a
-  module), wire `links:` in `damat.config.ts`, and reach them at runtime via
-  `getModule("link")`. `defineLink`/`collectLinkModels`/`defineLinkModule` come
-  from `@damatjs/framework` only. A module may suggest pairings with a non-binding
-  `pairsWith` hint in `module.json` but never defines links. See
-  [`@damatjs/link`](./packages/link/README.md).
+Installation is transactional for owned files but intentionally does not edit
+shared app config, aliases, environment files, barrels, or call sites. Review
+the integration notices, wire the installed capabilities, migrate, then restart.
+Never bypass a rejected or revoked registry artifact.
 
----
+## Runtime and durability rules
 
-## Documentation & releases (read before editing docs)
+- `runtime.mode` is `server`, `worker`, or `all`.
+- Worker names are `jobs`, `events`, and `pipelines`.
+- `server` never starts workers.
+- `worker` is headless and must select at least one enabled worker.
+- `all` serves HTTP and starts the selected workers in one process.
+- Healthy Redis uses wake-up-driven processing plus a PostgreSQL safety scan.
+- Missing, unavailable, or unauthorized Redis activates bounded PostgreSQL
+  fallback; it does not make durable work incorrect.
+- Redis ACL users need channel access for `&damat:*` and `&damat-events` when
+  wake-ups and broadcast are enabled.
+- Execution leases and fencing are always PostgreSQL-authoritative.
+- Administrative mutations require actor, reason, timestamp, and idempotency.
 
-Two separate tiers — keep them apart. Full rules:
-[Documentation & releases standard](./docs/DOCUMENTATION-STANDARD.md).
+## Documentation rules
 
-- **Living docs** — package `README.md`, package `docs/`, and `docs/guide/`
-  describe the software **as it is now**. No version annotations ("new in X",
-  "since", "deprecated"), no change history, no upgrade steps. When behavior
-  changes, edit them in place and delete the old description.
-- **Release notes** — [`releases/<package>/`](./releases/README.md) is the change
-  record: one folder per package (its unscoped name), an index `README.md`, and a
-  `<version>.md` per version with package-relevant changes (before → after +
-  action required). Pure dependency/CI bumps are noted in the index, no file.
+Living documentation includes root/package READMEs, package `docs/`,
+`MODULES.md`, and `docs/guide/`. It describes current behavior without version
+history or upgrade language. Package changes also update that package's
+`releases/<name>/next.md` and release index.
 
-**When you change a package**, in the *same* change: (1) update its living docs to
-the new behavior, (2) add `releases/<package>/<new-version>.md`, (3) update
-`releases/<package>/README.md`. A change isn't done until both tiers are updated —
-living docs that mention a version, or a behavior change with no `releases/` entry,
-are defects.
+When changing generated scaffold guidance, update its source document and run
+the generator; never hand-edit only the embedded output.
 
----
+## Skills
 
-## Where to read more
+- `damat-backend` handles backend creation, app assembly, routes, modules,
+  runtime configuration, durable work, migrations, operation, and deployment.
+- `damat-modules` handles authoring one standalone, portable module.
 
-- [docs/GUIDE.md](./docs/GUIDE.md) — full usage walkthrough.
-- [MODULES.md](./MODULES.md) — the `module.json` contract + registry/trust model.
-- [docs/DOCUMENTATION-STANDARD.md](./docs/DOCUMENTATION-STANDARD.md) — docs + releases rules.
-- [releases/](./releases/README.md) — per-package version history & upgrade notes.
-- Any `packages/**/docs/README.md` — that package's internals.
+The canonical copies live in `.agents/skills/`; keep `.claude/skills/`
+synchronized.
+
+## Safety and quality gates
+
+- Never rewrite an applied migration; add a new one.
+- Do not let request handlers, services, or workers construct their own pools.
+- Do not read module credentials ad hoc from `process.env`; use the module schema
+  and loader.
+- Confirm destructive database operations before running them.
+- Run affected package tests with coverage, then repository build, lint, changed
+  line-limit check, and the canonical root test runner.
+
+## References
+
+- [Damat Guide](./docs/GUIDE.md)
+- [Current architecture](./docs/guide/02-concepts.md)
+- [`damat.json` contract](./MODULES.md)
+- [Documentation standard](./docs/DOCUMENTATION-STANDARD.md)
+- [Reference backend](./backend/default/README.md)
+- [Package release notes](./releases/README.md)

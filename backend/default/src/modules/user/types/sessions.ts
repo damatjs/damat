@@ -25,4 +25,4 @@ export type NewSessions = {
   userAgent?: string | null;
 };
 
-export type UpdateSessions = Partial<Omit<Sessions, 'id'>>;
+export type UpdateSessions = Partial<Omit<Sessions, "id">>;

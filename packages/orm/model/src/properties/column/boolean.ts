@@ -1,4 +1,4 @@
-import { ColumnBuilder } from './base';
+import { ColumnBuilder } from "./base";
 
 /**
  * Boolean column builder

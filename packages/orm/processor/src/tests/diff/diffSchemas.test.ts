@@ -258,7 +258,9 @@ describe("diffSchemas › enums", () => {
       throw new Error("expected alter_enum");
     }
     expect(diff.warnings.length).toBeGreaterThan(0);
-    expect(diff.warnings[0]).toContain("Removing values from enum 'user_status'");
+    expect(diff.warnings[0]).toContain(
+      "Removing values from enum 'user_status'",
+    );
   });
 
   it("treats reordered enum values as a no-op (order-insensitive)", () => {

@@ -110,9 +110,9 @@ describe("createInitialMigration", () => {
     expect(path.basename(filePath)).toMatch(/^Migration\d{14}_Initial\.sql$/);
 
     // Snapshot persisted.
-    expect(fs.existsSync(path.join(migrationsDir, "schema-snapshot.json"))).toBe(
-      true,
-    );
+    expect(
+      fs.existsSync(path.join(migrationsDir, "schema-snapshot.json")),
+    ).toBe(true);
 
     const { content } = readMigration(migrationsDir);
     expect(content).toContain("-- Migration: Initial");

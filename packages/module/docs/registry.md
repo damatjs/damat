@@ -5,7 +5,7 @@ Source: `src/registry/types.ts`, `parse.ts`, `format.ts`, `entry.ts`,
 
 The registry layer is how modules will be **addressed, distributed, and trusted**
 once the hosted registry exists. The backend that performs owner-identity and
-source verification is not live yet — but the *contract* (ref grammar, index
+source verification is not live yet — but the _contract_ (ref grammar, index
 schema, readiness checks, the install-time gate) is fixed now so modules can be
 authored registry-ready. `damat module add` already recognizes registry refs and
 will resolve them against a registry once it ships; until then it accepts local
@@ -16,18 +16,18 @@ paths and git sources.
 ```ts
 interface ModuleRef {
   namespace?: string; // publisher/org. Undefined = default namespace
-  name: string;       // kebab-case
-  version?: string;   // semver or dist-tag. Undefined = latest
+  name: string; // kebab-case
+  version?: string; // semver or dist-tag. Undefined = latest
 }
 ```
 
 Addressing forms:
 
-| Input | Parsed |
-| --- | --- |
-| `user` | `{ name: "user" }` |
-| `user@0.2.0` | `{ name: "user", version: "0.2.0" }` |
-| `damatjs/user` | `{ namespace: "damatjs", name: "user" }` |
+| Input                 | Parsed                                                      |
+| --------------------- | ----------------------------------------------------------- |
+| `user`                | `{ name: "user" }`                                          |
+| `user@0.2.0`          | `{ name: "user", version: "0.2.0" }`                        |
+| `damatjs/user`        | `{ namespace: "damatjs", name: "user" }`                    |
 | `damatjs/user@latest` | `{ namespace: "damatjs", name: "user", version: "latest" }` |
 
 ### `parseModuleRef` / `formatModuleRef`
@@ -59,46 +59,50 @@ interface RegistryIndex {
 }
 
 interface RegistryModuleEntry {
-  name?: string;            // informational; the index key is authoritative
-  source: string;           // default fetchable source: git url, github shorthand, or path
+  name?: string; // informational; the index key is authoritative
+  source: string; // default fetchable source: git url, github shorthand, or path
   description?: string;
-  author?: RegistryAuthor;  // mirrored from module.json (display/search)
-  owner?: RegistryOwner;    // verifiable owner — the trust anchor (backend-assigned)
+  author?: RegistryAuthor; // mirrored from damat.json (display/search)
+  owner?: RegistryOwner; // verifiable owner — the trust anchor (backend-assigned)
   verification?: RegistryVerification; // trust stamp (absent ⇒ unverified)
   versions?: Record<string, RegistryVersionEntry | string>; // per version/tag; string ⇒ { source }
-  latest?: string;          // dist-tag → version
-  keywords?: string[]; license?: string; homepage?: string; repository?: string;
+  latest?: string; // dist-tag → version
+  keywords?: string[];
+  license?: string;
+  homepage?: string;
+  repository?: string;
 }
 
 interface RegistryVersionEntry {
   source: string;
-  integrity?: string;       // digest pinned to this version
+  integrity?: string; // digest pinned to this version
   verification?: RegistryVerification; // overrides module-level
 }
 
 interface RegistryOwner {
-  namespace: string;        // e.g. "damatjs"
-  id?: string;              // stable account/org id the backend issued
+  namespace: string; // e.g. "damatjs"
+  id?: string; // stable account/org id the backend issued
   url?: string;
-  verified?: boolean;       // backend verified the owner's identity
+  verified?: boolean; // backend verified the owner's identity
 }
 
 interface RegistryVerification {
   status: VerificationStatus; // unverified | pending | verified | rejected | revoked
-  verifiedBy?: string;        // e.g. "registry.damatjs.com"
-  verifiedAt?: string;        // ISO-8601
-  integrity?: string;         // "sha256-…"
-  reason?: string;            // why rejected/revoked — surfaced to installers
+  verifiedBy?: string; // e.g. "registry.damatjs.com"
+  verifiedAt?: string; // ISO-8601
+  integrity?: string; // "sha256-…"
+  reason?: string; // why rejected/revoked — surfaced to installers
 }
 
-type VerificationStatus = "unverified" | "pending" | "verified" | "rejected" | "revoked";
+type VerificationStatus =
+  "unverified" | "pending" | "verified" | "rejected" | "revoked";
 const VERIFICATION_STATUSES: readonly VerificationStatus[]; // the same five, for iteration
 ```
 
 ### Two planes of control
 
 - **Author plane** — `name/version/author/license/keywords/repository`, declared
-  in `module.json`. The registry mirrors these for search/display.
+  in `damat.json`. The registry mirrors these for search/display.
 - **Registry plane** — `owner` and `verification`, assigned/stamped by the
   backend. **An author cannot self-verify.** These are the trust anchor.
 
@@ -115,15 +119,18 @@ property when extending the schema.
 
 ```ts
 interface ResolvedRegistryModule {
-  source: string;                    // fetchable source for the requested ref
-  version?: string;                  // resolved version/tag when one applied
+  source: string; // fetchable source for the requested ref
+  version?: string; // resolved version/tag when one applied
   owner?: RegistryOwner;
-  verification: RegistryVerification;// effective; version overrides module; never undefined
+  verification: RegistryVerification; // effective; version overrides module; never undefined
   integrity?: string;
-  entry: RegistryModuleEntry;        // the full record (author/keywords/etc)
+  entry: RegistryModuleEntry; // the full record (author/keywords/etc)
 }
 
-function resolveRegistryEntry(ref, registryLocation?): Promise<ResolvedRegistryModule | null>;
+function resolveRegistryEntry(
+  ref,
+  registryLocation?,
+): Promise<ResolvedRegistryModule | null>;
 function resolveRegistryRef(ref, registryLocation?): Promise<string | null>; // just the source
 ```
 
@@ -143,10 +150,10 @@ Algorithm:
    - `entry.versions[version]` missing → throw
      `'Registry has "<ref>" but no source for version "<v>"'`.
    - else `normalizeVersionEntry` it, return `{ source: finalizeSource(...), version,
-     owner, verification: version.verification ?? moduleVerification,
-     integrity: version.integrity ?? version.verification?.integrity, entry }`.
+owner, verification: version.verification ?? moduleVerification,
+integrity: version.integrity ?? version.verification?.integrity, entry }`.
 5. **No version** → return `{ source: finalizeSource(entry.source), version: entry.latest,
-   owner, verification: moduleVerification, integrity: moduleVerification.integrity, entry }`.
+owner, verification: moduleVerification, integrity: moduleVerification.integrity, entry }`.
 
 `moduleVerification` defaults to `{ status: "unverified" }` when the entry has
 none. `finalizeSource` resolves a **relative local** source against the index
@@ -163,8 +170,8 @@ version throws, unindexed ref returns `null`.)
 
 ```ts
 interface ModuleValidationReport {
-  valid: boolean;     // true when there are no errors (warnings allowed)
-  errors: string[];   // block installing/publishing
+  valid: boolean; // true when there are no errors (warnings allowed)
+  errors: string[]; // block installing/publishing
   warnings: string[]; // gaps to fix before publishing
   manifest: ModuleManifest | null;
 }
@@ -174,39 +181,41 @@ function validateModuleDir(moduleDir: string): ModuleValidationReport;
 
 Checks a module dir against the contract:
 
-- **Errors** (block *install* — `damat module add` would fail / produce a broken app):
+- **Errors** (block _install_ — `damat module add` would fail / produce a broken app):
   - directory not found;
   - manifest unreadable/invalid (the `readModuleManifest` error message);
-  - entry file (`paths.entry`, default `./index.ts`) missing;
-  - any *explicitly declared* `paths.{models,migrations,workflows,types}` dir that
+  - no declared or conventional runtime entry exists;
+  - any _explicitly declared_ `paths.{models,migrations,workflows,types}` dir that
     doesn't exist.
-- **Warnings** (block *publishing* — works locally but not registry-ready):
+- **Warnings** (block _publishing_ — works locally but not registry-ready):
   - models dir present but no migrations dir, or migrations dir with no `.sql`;
   - missing `version`, `description`, `author`;
   - missing `registry.license`, `registry.namespace`.
 
 `valid === errors.length === 0`. (Covered by `tests/manifest.test.ts`: a complete
-module is valid with no warnings; missing entry is an error; registry gaps are
-warnings; models-without-migrations warns.)
+module is valid with no warnings; an absent runtime entry is an error; registry
+gaps are warnings; models-without-migrations warns.)
 
 ## The verification gate (`verify.ts`)
 
 The local, offline gate the CLI runs on `damat module add`. It reads the
-verification an index *carries* and applies a policy. When the backend ships, it
-becomes the thing that *stamps* `RegistryVerification`; this gate stays the same.
+verification an index _carries_ and applies a policy. When the backend ships, it
+becomes the thing that _stamps_ `RegistryVerification`; this gate stays the same.
 
 ```ts
 type VerificationPolicy = "off" | "warn" | "require";
 
 interface VerificationDecision {
-  allowed: boolean;            // may the install proceed?
-  status: VerificationStatus;  // the status evaluated
-  message?: string;            // CLI note (reason to warn or block)
+  allowed: boolean; // may the install proceed?
+  status: VerificationStatus; // the status evaluated
+  message?: string; // CLI note (reason to warn or block)
 }
 
 function verificationPolicy(env?): VerificationPolicy;
-function evaluateVerification(verification: RegistryVerification | undefined,
-                             policy?): VerificationDecision;
+function evaluateVerification(
+  verification: RegistryVerification | undefined,
+  policy?,
+): VerificationDecision;
 ```
 
 ### Policy resolution (`verificationPolicy`)
@@ -220,13 +229,13 @@ function evaluateVerification(verification: RegistryVerification | undefined,
 
 Status defaults to `unverified` when verification is `undefined`.
 
-| status | result |
-| --- | --- |
-| `rejected` / `revoked` | **always blocked**, even under `off`; message includes `reason` if present |
-| `verified` | allowed, no message |
-| `unverified` / `pending` + policy `off` | allowed, silent |
+| status                                      | result                                                                          |
+| ------------------------------------------- | ------------------------------------------------------------------------------- |
+| `rejected` / `revoked`                      | **always blocked**, even under `off`; message includes `reason` if present      |
+| `verified`                                  | allowed, no message                                                             |
+| `unverified` / `pending` + policy `off`     | allowed, silent                                                                 |
 | `unverified` / `pending` + policy `require` | **blocked** (message points to `DAMAT_MODULE_VERIFY=warn` or a path/git source) |
-| `unverified` / `pending` + policy `warn` | allowed, with a warning message |
+| `unverified` / `pending` + policy `warn`    | allowed, with a warning message                                                 |
 
 (Tests in `tests/registry.test.ts` assert: verified installs cleanly;
 rejected/revoked blocked under every policy; unverified is warn-allow / require-block /
@@ -236,11 +245,13 @@ off-silent; pending behaves like unverified.)
 
 ```ts
 const ref = parseModuleRef("damatjs/user@0.2.0");
-if (!ref) { /* treat input as a path / git source */ }
-else {
+if (!ref) {
+  /* treat input as a path / git source */
+} else {
   const resolved = await resolveRegistryEntry(ref); // uses DAMAT_MODULE_REGISTRY
-  if (!resolved) { /* not indexed — fall back to path/git */ }
-  else {
+  if (!resolved) {
+    /* not indexed — fall back to path/git */
+  } else {
     const decision = evaluateVerification(resolved.verification); // uses DAMAT_MODULE_VERIFY
     if (!decision.allowed) throw new Error(decision.message);
     if (decision.message) logger.warn(decision.message);
@@ -262,4 +273,4 @@ else {
 - `rejected`/`revoked` ignore policy entirely — there is no env override to install
   them. The only escape is a direct path/git source.
 - The trust anchor is `owner` + `verification` from the **registry plane**, not the
-  `author` an author declares in `module.json`. Don't conflate them.
+  `author` an author declares in `damat.json`. Don't conflate them.

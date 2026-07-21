@@ -114,20 +114,20 @@ seconds hint a caller can surface via a `Retry-After` header.
 
 ## Status-code & code matrix
 
-| Class                 | `statusCode` | `code`             | `name`                | `details` parameter        |
-| --------------------- | ------------ | ------------------ | --------------------- | -------------------------- |
-| `AppError`            | 500 (default) | `INTERNAL_ERROR` (default) | `"AppError"`   | `unknown` (4th arg)        |
-| `ValidationError`     | 400          | `VALIDATION_ERROR` | `"ValidationError"`   | `unknown` (2nd arg)        |
-| `AuthenticationError` | 401          | `UNAUTHORIZED`     | `"AuthenticationError"` | —                        |
-| `AuthorizationError`  | 403          | `FORBIDDEN`        | `"AuthorizationError"`  | —                        |
-| `NotFoundError`       | 404          | `NOT_FOUND`        | `"NotFoundError"`     | —                          |
-| `RateLimitError`      | 429          | `RATE_LIMITED`     | `"RateLimitError"`    | `{ retryAfter?: number }`  |
+| Class                 | `statusCode`  | `code`                     | `name`                  | `details` parameter       |
+| --------------------- | ------------- | -------------------------- | ----------------------- | ------------------------- |
+| `AppError`            | 500 (default) | `INTERNAL_ERROR` (default) | `"AppError"`            | `unknown` (4th arg)       |
+| `ValidationError`     | 400           | `VALIDATION_ERROR`         | `"ValidationError"`     | `unknown` (2nd arg)       |
+| `AuthenticationError` | 401           | `UNAUTHORIZED`             | `"AuthenticationError"` | —                         |
+| `AuthorizationError`  | 403           | `FORBIDDEN`                | `"AuthorizationError"`  | —                         |
+| `NotFoundError`       | 404           | `NOT_FOUND`                | `"NotFoundError"`       | —                         |
+| `RateLimitError`      | 429           | `RATE_LIMITED`             | `"RateLimitError"`      | `{ retryAfter?: number }` |
 
 ## Serialization
 
 There is **no** `toJSON()` on these classes. `Error.message` and `Error.stack` are
 non-enumerable, so `JSON.stringify(new NotFoundError())` yields `{}` for the inherited
-fields. The custom fields (`statusCode`, `code`, `details`) *are* enumerable own
+fields. The custom fields (`statusCode`, `code`, `details`) _are_ enumerable own
 properties and will serialize, but relying on `JSON.stringify(error)` directly is
 fragile.
 

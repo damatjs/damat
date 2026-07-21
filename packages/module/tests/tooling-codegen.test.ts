@@ -36,7 +36,7 @@ export const models = { Category };
 
 /**
  * generateModuleTypes resolves the manifest paths and hands them to the shared
- * @damatjs/codegen core, which only touches the filesystem (no DB). We point it
+ * module-generator core, which only touches the filesystem (no DB). We point it
  * at a minimal module package with no models, so codegen discovers an empty
  * model set and writes the (empty) generated tree — exercising the full
  * manifest-resolution path in codegen.ts without a database.

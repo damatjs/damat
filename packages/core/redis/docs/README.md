@@ -6,21 +6,21 @@ This package is a thin, function-first layer over [ioredis](https://github.com/r
 
 ## Module map
 
-| File / dir | Responsibility | Detail doc |
-| --- | --- | --- |
-| `src/index.ts` | Barrel re-exporting every public symbol. | — |
-| `src/RedisClient.ts` | `RedisClient` class: ioredis wrapper with logging + lifecycle. | [client.md](./client.md) |
-| `src/singleton.ts` | Process-global client (`initRedis`/`getRedis`/`disconnectRedis`/...). | [client.md](./client.md) |
-| `src/client/` | Standalone factory (`createRedis`, `createRedisConnection`, `createRetryStrategy`, `disconnect`). | [client.md](./client.md) |
-| `src/errors/` | `RedisConnectionError`, `RedisNotInitializedError`. | [client.md](./client.md) |
-| `src/types/` | `RedisConfig`, `RedisClientConfig`, rate-limit types, `Redis`/`RedisOptions` re-exports. | [client.md](./client.md) |
-| `src/cache/` | JSON + raw string cache with TTL. | [cache.md](./cache.md) |
-| `src/rateLimit/` | Sliding-window rate limiter (single + multi). | [rate-limit.md](./rate-limit.md) |
-| `src/session/` | Session CRUD + `SessionManager` (auto-extend). | [session.md](./session.md) |
-| `src/lock/` | Distributed locks (Lua-guarded release/extend). | [lock.md](./lock.md) |
-| `src/counter/` | Atomic counters. | [counter.md](./counter.md) |
-| `src/queue/` | `RedisQueue` priority/delay job queue. | [queue.md](./queue.md) |
-| `tests/` | Bun integration tests (require a live Redis). | — |
+| File / dir           | Responsibility                                                                                    | Detail doc                       |
+| -------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `src/index.ts`       | Barrel re-exporting every public symbol.                                                          | —                                |
+| `src/RedisClient.ts` | `RedisClient` class: ioredis wrapper with logging + lifecycle.                                    | [client.md](./client.md)         |
+| `src/singleton.ts`   | Process-global client (`initRedis`/`getRedis`/`disconnectRedis`/...).                             | [client.md](./client.md)         |
+| `src/client/`        | Standalone factory (`createRedis`, `createRedisConnection`, `createRetryStrategy`, `disconnect`). | [client.md](./client.md)         |
+| `src/errors/`        | `RedisConnectionError`, `RedisNotInitializedError`.                                               | [client.md](./client.md)         |
+| `src/types/`         | `RedisConfig`, `RedisClientConfig`, rate-limit types, `Redis`/`RedisOptions` re-exports.          | [client.md](./client.md)         |
+| `src/cache/`         | JSON + raw string cache with TTL, plus tagged group invalidation.                                 | [cache.md](./cache.md)           |
+| `src/rateLimit/`     | Sliding-window rate limiter (single + multi).                                                     | [rate-limit.md](./rate-limit.md) |
+| `src/session/`       | Session CRUD + `SessionManager` (auto-extend).                                                    | [session.md](./session.md)       |
+| `src/lock/`          | Distributed locks (Lua-guarded release/extend).                                                   | [lock.md](./lock.md)             |
+| `src/counter/`       | Atomic counters.                                                                                  | [counter.md](./counter.md)       |
+| `src/queue/`         | `RedisQueue` priority/delay job queue.                                                            | [queue.md](./queue.md)           |
+| `tests/`             | Bun integration tests (require a live Redis).                                                     | —                                |
 
 ## Architecture overview
 
@@ -66,14 +66,15 @@ So the ergonomic call `cacheGet("key")` uses the global client, while `cacheGet(
 
 Each concern namespaces its keys to avoid collisions; counters and the explicit per-call keys are the exceptions.
 
-| Concern | Prefix constant | Value |
-| --- | --- | --- |
-| Cache | `CACHE_PREFIX` | `cache:` |
-| Rate limit | `RATE_LIMIT_PREFIX` | `ratelimit:` |
-| Session | `SESSION_PREFIX` | `session:` |
-| Lock | `LOCK_PREFIX` (exported) | `lock:` |
-| Counter | — | none (caller-controlled key) |
-| Queue | inline | `queue:<name>:{jobs,pending,processing,completed,failed}` |
+| Concern         | Prefix constant               | Value                                                     |
+| --------------- | ----------------------------- | --------------------------------------------------------- |
+| Cache           | `CACHE_PREFIX`                | `cache:`                                                  |
+| Cache tag index | `CACHE_TAG_PREFIX` (exported) | `cache-tag:`                                              |
+| Rate limit      | `RATE_LIMIT_PREFIX`           | `ratelimit:`                                              |
+| Session         | `SESSION_PREFIX`              | `session:`                                                |
+| Lock            | `LOCK_PREFIX` (exported)      | `lock:`                                                   |
+| Counter         | —                             | none (caller-controlled key)                              |
+| Queue           | inline                        | `queue:<name>:{jobs,pending,processing,completed,failed}` |
 
 ## Invariants & design decisions
 

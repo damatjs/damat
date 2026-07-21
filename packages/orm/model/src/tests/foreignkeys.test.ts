@@ -30,7 +30,7 @@ describe("transform › belongsTo / foreign keys", () => {
   it("Product FK constraint references categories table", () => {
     const fk = ProductSchema.toTableSchema().foreignKeys?.find((f) =>
       f.columns.map((c) => c.name).includes("category_id"),
-    )!;
+    );
     expect(fk.referencedTable).toBe("category");
     expect(fk.referencedColumns).toEqual(["id"]);
   });
@@ -38,14 +38,14 @@ describe("transform › belongsTo / foreign keys", () => {
   it("nullable FK sets onDelete to SET NULL", () => {
     const fk = ProductSchema.toTableSchema().foreignKeys?.find((f) =>
       f.columns.map((c) => c.name).includes("category_id"),
-    )!;
+    );
     expect(fk.onDelete).toBe("SET NULL");
   });
 
   it("non-nullable FK has no onDelete", () => {
     const fk = OrderItemSchema.toTableSchema().foreignKeys?.find((f) =>
       f.columns.map((c) => c.name).includes("order_id"),
-    )!;
+    );
     expect(fk.onDelete).toBeUndefined();
   });
 
@@ -103,12 +103,12 @@ describe("transform › belongsTo / foreign keys", () => {
     // FK constraint references the string table name directly.
     const fk = schema.foreignKeys?.find((f) =>
       f.columns.map((c) => c.name).includes("publishing_houses_id"),
-    )!;
+    );
     expect(fk.referencedTable).toBe("publishing_houses");
     expect(fk.referencedColumns).toEqual(["id"]);
 
     // Relation schema points at the string table name.
-    const rel = schema.relations?.find((r) => r.type === "belongsTo")!;
+    const rel = schema.relations?.find((r) => r.type === "belongsTo");
     expect(rel.to).toBe("publishing_houses");
     expect(rel.linkedBy).toEqual(["publishing_houses_id"]);
   });
@@ -147,7 +147,7 @@ describe("transform › belongsTo string target", () => {
 
     const fk = schema.foreignKeys?.find((f) =>
       f.columns.map((c) => c.name).includes("pub_ref"),
-    )!;
+    );
     expect(fk.referencedTable).toBe("publishing_houses");
   });
 
@@ -158,7 +158,7 @@ describe("transform › belongsTo string target", () => {
     });
     const fk = Book.toTableSchema().foreignKeys?.find(
       (f) => f.referencedTable === "publishing_houses",
-    )!;
+    );
     expect(fk.name).toBe("publishing_houses_publishing_houses_id_fk");
   });
 
@@ -169,13 +169,13 @@ describe("transform › belongsTo string target", () => {
     });
     const schema = Book.toTableSchema();
 
-    expect(schema.columns.find((c) => c.name === "publishing_houses_id")!.nullable).toBe(
-      true,
-    );
+    expect(
+      schema.columns.find((c) => c.name === "publishing_houses_id")!.nullable,
+    ).toBe(true);
 
     const fk = schema.foreignKeys?.find(
       (f) => f.referencedTable === "publishing_houses",
-    )!;
+    );
     expect(fk.onDelete).toBe("SET NULL");
     expect(fk.nullable).toBe(true);
   });
@@ -187,13 +187,13 @@ describe("transform › belongsTo string target", () => {
     });
     const schema = Book.toTableSchema();
 
-    expect(schema.columns.find((c) => c.name === "publishing_houses_id")!.unique).toBe(
-      true,
-    );
+    expect(
+      schema.columns.find((c) => c.name === "publishing_houses_id")!.unique,
+    ).toBe(true);
 
     const fk = schema.foreignKeys?.find(
       (f) => f.referencedTable === "publishing_houses",
-    )!;
+    );
     expect(fk.unique).toBe(true);
     expect(fk.indexed).toBe(true);
   });
@@ -208,7 +208,7 @@ describe("transform › belongsTo string target", () => {
     });
     const rel = Book.toTableSchema().relations?.find(
       (r) => r.type === "belongsTo",
-    )!;
+    );
     expect(rel.rule?.onDelete).toBe("CASCADE");
     expect(rel.rule?.onUpdate).toBe("RESTRICT");
   });
@@ -220,7 +220,7 @@ describe("transform › belongsTo string target", () => {
     });
     const rel = Book.toTableSchema().relations?.find(
       (r) => r.type === "belongsTo",
-    )!;
+    );
     // "publishers" → "publisher"
     expect(rel.mappedBy).toEqual(["publisher"]);
   });
@@ -238,7 +238,9 @@ describe("transform › belongsTo string target", () => {
     expect(schema.columns.find((c) => c.name === "vendor_id")).toBeDefined();
     expect(schema.columns.find((c) => c.name === "sku")).toBeDefined();
 
-    const fk = schema.foreignKeys?.find((f) => f.referencedTable === "products")!;
+    const fk = schema.foreignKeys?.find(
+      (f) => f.referencedTable === "products",
+    );
     expect(fk.columns.map((c) => c.name)).toEqual(["vendor_id", "sku"]);
     expect(fk.referencedColumns).toEqual(["vendor_id", "sku"]);
   });

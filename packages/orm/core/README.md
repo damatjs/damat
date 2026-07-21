@@ -25,8 +25,8 @@ Inside the monorepo it is referenced as a workspace dependency:
 // package.json
 {
   "dependencies": {
-    "@damatjs/orm-core": "*"
-  }
+    "@damatjs/orm-core": "*",
+  },
 }
 ```
 
@@ -45,7 +45,7 @@ You would **not** use this package directly to:
 
 - Define models — that is [`@damatjs/orm-model`](../model/README.md).
 - Run SQL, build queries, or manage connections — that is the driver layer
-  (`@damatjs/orm-pg`), which *uses* this package internally.
+  (`@damatjs/orm-pg`), which _uses_ this package internally.
 
 In a typical app you rarely import `@damatjs/orm-core` yourself; the Postgres
 driver and the framework wire it up. You reach for it directly when extending the
@@ -67,9 +67,9 @@ const registry = new ModelRegistry(new Logger({ prefix: "ORM" }));
 registry.registerMany({ User: UserSchema, Order: OrderSchema });
 
 // 3. Look models up by logical name or table name
-const user = registry.get("User");                  // ModelRegistryEntry | undefined
-const byTable = registry.getByTableName("user");    // same entry, indexed by table
-const cols = registry.getColumns("User");           // ["id", "email", ...]
+const user = registry.get("User"); // ModelRegistryEntry | undefined
+const byTable = registry.getByTableName("user"); // same entry, indexed by table
+const cols = registry.getColumns("User"); // ["id", "email", ...]
 
 // 4. Resolve a relation target from a property name
 const orders = registry.resolveRelation("User", "orders"); // Order's entry
@@ -95,29 +95,29 @@ try {
 
 Single entry point (`.`). Exports from `src/index.ts`:
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `ModelRegistry` | class | Indexes `ModelDefinition`s by name and table name; resolves relations and column lists. |
-| `ModelRegistryError` | class | Error thrown by consumers when a model lookup fails (e.g. driver entity managers). |
-| `QueryLogger` | class | Structured logger for queries, slow queries, errors, and transactions. |
-| `getQueryLogger()` | function | Get (lazily creating) the global `QueryLogger` singleton. |
-| `setQueryLogger(logger)` | function | Replace the global singleton with a specific instance. |
-| `configureQueryLogger(options, logger?)` | function | Build a new `QueryLogger` from options and install it as the global. |
-| `QueryLoggerOptions` | type | Options: `enabled`, `logQueries`, `logErrors`, `logSlowQueries`, `slowQueryThreshold`, `logTransaction`. |
-| `ModelRegistryEntry` | type | `{ model, tableName, schema, columns }` — a registry record. |
+| Export                                   | Kind     | Summary                                                                                                  |
+| ---------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------- |
+| `ModelRegistry`                          | class    | Indexes `ModelDefinition`s by name and table name; resolves relations and column lists.                  |
+| `ModelRegistryError`                     | class    | Error thrown by consumers when a model lookup fails (e.g. driver entity managers).                       |
+| `QueryLogger`                            | class    | Structured logger for queries, slow queries, errors, and transactions.                                   |
+| `getQueryLogger()`                       | function | Get (lazily creating) the global `QueryLogger` singleton.                                                |
+| `setQueryLogger(logger)`                 | function | Replace the global singleton with a specific instance.                                                   |
+| `configureQueryLogger(options, logger?)` | function | Build a new `QueryLogger` from options and install it as the global.                                     |
+| `QueryLoggerOptions`                     | type     | Options: `enabled`, `logQueries`, `logErrors`, `logSlowQueries`, `slowQueryThreshold`, `logTransaction`. |
+| `ModelRegistryEntry`                     | type     | `{ model, tableName, schema, columns }` — a registry record.                                             |
 
 Key methods of `ModelRegistry`:
 
-| Method | Summary |
-| --- | --- |
-| `register(name, model)` | Register one model; indexes by name and table name; logs at debug. |
-| `registerMany(models)` | Register a `Record<string, ModelDefinition>`. |
-| `get(name)` / `getByTableName(table)` | Look up an entry. |
-| `getColumns(name)` | Column names for a model (`[]` if unknown). |
-| `getAll()` | The underlying `Map<string, ModelRegistryEntry>`. |
-| `has(name)` | Membership check by logical name. |
-| `getTableNames()` / `getModelNames()` | List indexed table / model names. |
-| `resolveRelation(model, property)` | Resolve the target entry for a relation property. |
+| Method                                | Summary                                                            |
+| ------------------------------------- | ------------------------------------------------------------------ |
+| `register(name, model)`               | Register one model; indexes by name and table name; logs at debug. |
+| `registerMany(models)`                | Register a `Record<string, ModelDefinition>`.                      |
+| `get(name)` / `getByTableName(table)` | Look up an entry.                                                  |
+| `getColumns(name)`                    | Column names for a model (`[]` if unknown).                        |
+| `getAll()`                            | The underlying `Map<string, ModelRegistryEntry>`.                  |
+| `has(name)`                           | Membership check by logical name.                                  |
+| `getTableNames()` / `getModelNames()` | List indexed table / model names.                                  |
+| `resolveRelation(model, property)`    | Resolve the target entry for a relation property.                  |
 
 ## How it fits
 

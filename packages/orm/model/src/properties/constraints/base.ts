@@ -1,8 +1,4 @@
-import {
-  ConstraintType,
-  ExcludeConstraint,
-  ConstraintSchema,
-} from "@/types";
+import { ConstraintType, ExcludeConstraint, ConstraintSchema } from "@/types";
 import { IndexType } from "@/types";
 
 /**
@@ -105,7 +101,6 @@ export class ConstraintBuilder {
 
   /** Convert to ConstraintSchema */
   toSchema(): ConstraintSchema {
-
     if (!this._type) {
       throw new Error(
         `ConstraintBuilder "${this._name}": constraint type must be declared via .unique(), .primaryKey(), .check(), or .exclude()`,

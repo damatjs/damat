@@ -30,7 +30,8 @@ const SINGULAR_S_SUFFIXES = ["ss", "us", "is"] as const;
  */
 function logicalName(endpoint: NamedEndpoint): string {
   const table = endpoint.table;
-  if (SINGULAR_S_SUFFIXES.some((suffix) => table.endsWith(suffix))) return table;
+  if (SINGULAR_S_SUFFIXES.some((suffix) => table.endsWith(suffix)))
+    return table;
   return removeLastS(table);
 }
 

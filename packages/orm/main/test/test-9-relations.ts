@@ -3,9 +3,10 @@ import { Pool } from "@damatjs/deps/pg";
 import { model, columns, toModuleSchema } from "@damatjs/orm-model";
 import { PgModelClient } from "@damatjs/orm-pg";
 import { bootstrapDatabase } from "@damatjs/orm-migration";
-import { generateMigration } from '@damatjs/orm-processor';
+import { generateMigration } from "@damatjs/orm-processor";
 
-const DB_URL = "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable";
+const DB_URL =
+  "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable";
 
 async function testRelations() {
   console.log("=".repeat(80));
@@ -35,9 +36,7 @@ async function testRelations() {
       content: columns.text().nullable(),
       authorId: columns.id({ prefix: "usr" }), // FK to user
       createdAt: columns.timestamp({ withTimezone: true }).defaultNow(),
-    }).foreignKeys([
-      columns.foreignKey("authorId").references("user", "id"),
-    ]);
+    }).foreignKeys([columns.foreignKey("authorId").references("user", "id")]);
 
     const CommentSchema = model("comment", {
       id: columns.id({ prefix: "cmt" }).primaryKey(),
@@ -54,7 +53,11 @@ async function testRelations() {
 
     // Generate and execute migration
     console.log("\n2. Generating and executing migration...");
-    const schema = toModuleSchema("rel_test", [UserSchema, PostSchema, CommentSchema]);
+    const schema = toModuleSchema("rel_test", [
+      UserSchema,
+      PostSchema,
+      CommentSchema,
+    ]);
     const migration = generateMigration.generateFromSnapshot(schema);
 
     await pool.query("DROP SCHEMA IF EXISTS rel_test CASCADE");
@@ -77,8 +80,10 @@ async function testRelations() {
     `);
 
     console.log(`   ✅ Foreign keys: ${fkCheck.rows.length} constraints`);
-    fkCheck.rows.forEach(fk => {
-      console.log(`      - ${fk.table_name}.${fk.column_name} → ${fk.foreign_table}`);
+    fkCheck.rows.forEach((fk) => {
+      console.log(
+        `      - ${fk.table_name}.${fk.column_name} → ${fk.foreign_table}`,
+      );
     });
 
     // Create PgModelClients
@@ -104,7 +109,7 @@ async function testRelations() {
       data: {
         title: "First Post",
         content: "Hello World",
-        authorId: userId
+        authorId: userId,
       },
       returning: ["id", "title"],
     });
@@ -114,7 +119,7 @@ async function testRelations() {
       data: {
         title: "Second Post",
         content: "Another one",
-        authorId: userId
+        authorId: userId,
       },
       returning: ["id", "title"],
     });
@@ -126,50 +131,58 @@ async function testRelations() {
       data: {
         content: "Great post!",
         postId: post1Id,
-        authorId: userId
+        authorId: userId,
       },
     });
     await commentClient.create({
       data: {
         content: "Nice!",
         postId: post1Id,
-        authorId: userId
+        authorId: userId,
       },
     });
     await commentClient.create({
       data: {
         content: "Interesting",
         postId: post2Id,
-        authorId: userId
+        authorId: userId,
       },
     });
     console.log(`   ✅ Comments created: 3 total`);
 
     // Test 1: Manual JOIN - User with Posts
     console.log("\n5. Testing user → posts relation (manual JOIN)...");
-    const userWithPosts = await pool.query(`
+    const userWithPosts = await pool.query(
+      `
       SELECT u.id, u.name, p.id as post_id, p.title
       FROM rel_test.user u
       LEFT JOIN rel_test.post p ON p."authorId" = u.id
       WHERE u.id = $1
-    `, [userId]);
+    `,
+      [userId],
+    );
 
     console.log(`   ✅ Found user with ${userWithPosts.rows.length} posts`);
-    userWithPosts.rows.forEach(row => {
-      console.log(`      - ${row.name} wrote: ${row.title || '(no post)'}`);
+    userWithPosts.rows.forEach((row) => {
+      console.log(`      - ${row.name} wrote: ${row.title || "(no post)"}`);
     });
 
     // Test 2: Manual JOIN - Post with Comments
     console.log("\n6. Testing post → comments relation (manual JOIN)...");
-    const postWithComments = await pool.query(`
+    const postWithComments = await pool.query(
+      `
       SELECT p.id, p.title, c.id as comment_id, c.content
       FROM rel_test.post p
       LEFT JOIN rel_test.comment c ON c."postId" = p.id
       WHERE p.id = $1
-    `, [post1Id]);
+    `,
+      [post1Id],
+    );
 
-    console.log(`   ✅ Post "${post1.rows[0].title}" has ${postWithComments.rows.filter(r => r.comment_id).length} comments`);
-    postWithComments.rows.forEach(row => {
+    console.log(
+      `   ✅ Post "${post1.rows[0].title}" has ${postWithComments.rows.filter((r) => r.comment_id).length} comments`,
+    );
+    postWithComments.rows.forEach((row) => {
       if (row.content) {
         console.log(`      - Comment: "${row.content}"`);
       }
@@ -177,7 +190,8 @@ async function testRelations() {
 
     // Test 3: Manual JOIN - Full hierarchy
     console.log("\n7. Testing full hierarchy (user → posts → comments)...");
-    const fullHierarchy = await pool.query(`
+    const fullHierarchy = await pool.query(
+      `
       SELECT 
         u.name as author,
         p.title as post_title,
@@ -187,12 +201,14 @@ async function testRelations() {
       LEFT JOIN rel_test.comment c ON c."postId" = p.id
       WHERE u.id = $1
       ORDER BY p.title, c.id
-    `, [userId]);
+    `,
+      [userId],
+    );
 
     console.log("   Full hierarchy:");
     let currentUser = "";
     let currentPost = "";
-    fullHierarchy.rows.forEach(row => {
+    fullHierarchy.rows.forEach((row) => {
       if (row.author !== currentUser) {
         currentUser = row.author;
         console.log(`   📁 User: ${row.author}`);
@@ -215,7 +231,7 @@ async function testRelations() {
       GROUP BY u.id, u.name
     `);
 
-    postCounts.rows.forEach(row => {
+    postCounts.rows.forEach((row) => {
       console.log(`   ✅ ${row.name}: ${row.post_count} posts`);
     });
 
@@ -225,11 +241,11 @@ async function testRelations() {
       await postClient.create({
         data: {
           title: "Invalid Post",
-          authorId: "invalid_user_id"
+          authorId: "invalid_user_id",
         },
       });
       console.log("   ❌ FK constraint FAILED - should have thrown error");
-    } catch (error) {
+    } catch {
       console.log("   ✅ FK constraint working - rejected invalid user_id");
     }
 
@@ -246,7 +262,6 @@ async function testRelations() {
     console.log("   - Relation data loading: ✅ Working");
     console.log("   - Aggregation queries: ✅ Working");
     console.log("   - FK enforcement: ✅ Working");
-
   } catch (error) {
     console.error("\n❌ TEST FAILED:", error);
     throw error;

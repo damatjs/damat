@@ -10,7 +10,7 @@
  *
  * Two planes, by who controls them:
  * - The module author declares `name/version/author/license/keywords/repository`
- *   in their `module.json` (see ModuleManifest). The registry mirrors those for
+ *   in their `damat.json` module metadata. The registry mirrors those for
  *   search and display.
  * - The registry backend assigns `owner` and stamps `verification` — an author
  *   cannot self-verify. These are the trust anchor (see ./verify).
@@ -20,71 +20,14 @@
  * existing registries keep working as the richer fields are added.
  */
 
-/** Trust state a module can be in, as stamped by the registry backend. */
-export type VerificationStatus =
-  | "unverified"
-  | "pending"
-  | "verified"
-  | "rejected"
-  | "revoked";
+import type {
+  RegistryAuthor,
+  RegistryOwner,
+  RegistryVerification,
+  RegistryVersionEntry,
+} from "./trust";
 
-export const VERIFICATION_STATUSES: readonly VerificationStatus[] = [
-  "unverified",
-  "pending",
-  "verified",
-  "rejected",
-  "revoked",
-];
-
-/** Author identity, mirrored from the module manifest. */
-export interface RegistryAuthor {
-  name: string;
-  email?: string;
-  url?: string;
-}
-
-/**
- * The verifiable owner of a module — the registry account that published it.
- * This is the trust anchor: the backend ties a module to an owner it has
- * identified, so installers know who stands behind the code.
- */
-export interface RegistryOwner {
-  /** Registry namespace the module publishes under, e.g. "damatjs" */
-  namespace: string;
-  /** Stable account/org id the registry backend issued for the owner */
-  id?: string;
-  /** Public profile / organisation URL */
-  url?: string;
-  /** Whether the registry has verified this owner's identity */
-  verified?: boolean;
-}
-
-/**
- * Verification a module carries, stamped by the registry backend. Absent on an
- * entry means it has never been checked (treated as "unverified").
- */
-export interface RegistryVerification {
-  /** Trust state set by the registry backend */
-  status: VerificationStatus;
-  /** Authority that performed the check, e.g. "registry.damatjs.com" */
-  verifiedBy?: string;
-  /** ISO-8601 timestamp of the check */
-  verifiedAt?: string;
-  /** Integrity digest of the published source, e.g. "sha256-…" */
-  integrity?: string;
-  /** Why a module is rejected/revoked — surfaced to installers */
-  reason?: string;
-}
-
-/** A pinned source for one version/tag, optionally with its own verification. */
-export interface RegistryVersionEntry {
-  /** Fetchable source for this exact version (git url, github shorthand, path) */
-  source: string;
-  /** Integrity digest pinned to this version */
-  integrity?: string;
-  /** Per-version verification, overriding the module-level status */
-  verification?: RegistryVerification;
-}
+export * from "./trust";
 
 /**
  * One module in a registry index. Keyed by its ref (namespace/name) in
@@ -123,10 +66,3 @@ export interface RegistryIndex {
  * `{ source, description, versions }` shape; it is a subset of the entry above.
  */
 export type RegistryIndexEntry = RegistryModuleEntry;
-
-/** Normalize a version source, which may be a bare string or a full entry. */
-export function normalizeVersionEntry(
-  value: RegistryVersionEntry | string,
-): RegistryVersionEntry {
-  return typeof value === "string" ? { source: value } : value;
-}

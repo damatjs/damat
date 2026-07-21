@@ -28,9 +28,9 @@ const ep = (
 
 describe("naming — defaultPivotTable", () => {
   test("keeps module_model when they differ on a side", () => {
-    expect(defaultPivotTable(ep("billing", "invoice"), ep("user", "user"))).toBe(
-      "billing_invoice_user",
-    );
+    expect(
+      defaultPivotTable(ep("billing", "invoice"), ep("user", "user")),
+    ).toBe("billing_invoice_user");
   });
 
   test("is order-sensitive (table name follows left,right argument order)", () => {
@@ -59,13 +59,19 @@ describe("naming — defaultPivotTable", () => {
 
 describe("naming — pivotColumns", () => {
   test("defaults to <model>_id on each side", () => {
-    const { leftColumn, rightColumn } = pivotColumns(ep("u", "user"), ep("o", "org"));
+    const { leftColumn, rightColumn } = pivotColumns(
+      ep("u", "user"),
+      ep("o", "org"),
+    );
     expect(leftColumn).toBe("user_id");
     expect(rightColumn).toBe("org_id");
   });
 
   test("qualifies with module id only when both columns would collide", () => {
-    const { leftColumn, rightColumn } = pivotColumns(ep("a", "note"), ep("b", "note"));
+    const { leftColumn, rightColumn } = pivotColumns(
+      ep("a", "note"),
+      ep("b", "note"),
+    );
     expect(leftColumn).toBe("a_note_id");
     expect(rightColumn).toBe("b_note_id");
   });
@@ -105,7 +111,9 @@ describe("pivot — buildPivotModel", () => {
   };
 
   test("creates id + both FK columns + soft-delete timestamps", () => {
-    const cols = buildPivotModel(base).toTableSchema().columns.map((c) => c.name);
+    const cols = buildPivotModel(base)
+      .toTableSchema()
+      .columns.map((c) => c.name);
     expect(cols).toContain("id");
     expect(cols).toContain("user_id");
     expect(cols).toContain("org_id");
@@ -119,7 +127,10 @@ describe("pivot — buildPivotModel", () => {
     expect(names).toContain("user_org_user_id_idx");
     expect(names).toContain("user_org_org_id_idx");
     const unique = idx.find((i) => i.unique);
-    expect(unique?.columns.map((c) => c.name).sort()).toEqual(["org_id", "user_id"]);
+    expect(unique?.columns.map((c) => c.name).sort()).toEqual([
+      "org_id",
+      "user_id",
+    ]);
   });
 
   test("merges database.extraColumns into the junction model", () => {
@@ -134,7 +145,9 @@ describe("pivot — buildPivotModel", () => {
   });
 
   test("foreignKeys option produces FK constraints; default emits none", () => {
-    expect(buildPivotModel(base).toTableSchema().foreignKeys ?? []).toHaveLength(0);
+    expect(
+      buildPivotModel(base).toTableSchema().foreignKeys ?? [],
+    ).toHaveLength(0);
     const withFk = buildPivotModel({
       ...base,
       foreignKeys: {
@@ -142,7 +155,9 @@ describe("pivot — buildPivotModel", () => {
         right: { table: "orgs", reference: "id" },
       },
     });
-    expect((withFk.toTableSchema().foreignKeys ?? []).length).toBeGreaterThan(0);
+    expect((withFk.toTableSchema().foreignKeys ?? []).length).toBeGreaterThan(
+      0,
+    );
   });
 
   test("FK constraints reference the given table/column and cascade on delete", () => {
@@ -163,14 +178,26 @@ describe("pivot — buildPivotModel", () => {
 
 describe("registry — resolve with module disambiguation", () => {
   // Two links that share the model name "item" but in different modules.
-  const a = defineLink({ module: "store", model: "item" }, { module: "tax", model: "rate" });
-  const b = defineLink({ module: "wms", model: "item" }, { module: "loc", model: "bin" });
+  const a = defineLink(
+    { module: "store", model: "item" },
+    { module: "tax", model: "rate" },
+  );
+  const b = defineLink(
+    { module: "wms", model: "item" },
+    { module: "loc", model: "bin" },
+  );
   const registry = new LinkRegistry([a, b]);
 
   test("module qualifier selects the right link when model names collide", () => {
-    const r1 = registry.resolve({ module: "store", model: "item" }, { model: "rate" });
+    const r1 = registry.resolve(
+      { module: "store", model: "item" },
+      { model: "rate" },
+    );
     expect(r1.other.model).toBe("rate");
-    const r2 = registry.resolve({ module: "wms", model: "item" }, { model: "bin" });
+    const r2 = registry.resolve(
+      { module: "wms", model: "item" },
+      { model: "bin" },
+    );
     expect(r2.other.model).toBe("bin");
   });
 
@@ -181,16 +208,22 @@ describe("registry — resolve with module disambiguation", () => {
   });
 
   test("orientation flips fromColumn/toColumn", () => {
-    const fwd = registry.resolve({ model: "item", module: "store" }, { model: "rate" });
-    const rev = registry.resolve({ model: "rate" }, { model: "item", module: "store" });
+    const fwd = registry.resolve(
+      { model: "item", module: "store" },
+      { model: "rate" },
+    );
+    const rev = registry.resolve(
+      { model: "rate" },
+      { model: "item", module: "store" },
+    );
     expect(fwd.fromColumn).toBe(rev.toColumn);
     expect(fwd.toColumn).toBe(rev.fromColumn);
   });
 
   test("resolve throws for an undefined pair", () => {
-    expect(() => registry.resolve({ model: "item" }, { model: "ghost" })).toThrow(
-      /No link defined/,
-    );
+    expect(() =>
+      registry.resolve({ model: "item" }, { model: "ghost" }),
+    ).toThrow(/No link defined/);
   });
 });
 
@@ -262,7 +295,10 @@ describe("config — resolveLinkModuleEntries", () => {
       fs.writeFileSync(path.join(d, "index.js"), "module.exports = {};");
     }
     const entries = resolveLinkModuleEntries(["./alpha", "./beta"], root);
-    expect(entries.map((e) => e.id).sort()).toEqual(["link:alpha", "link:beta"]);
+    expect(entries.map((e) => e.id).sort()).toEqual([
+      "link:alpha",
+      "link:beta",
+    ]);
     fs.rmSync(root, { recursive: true, force: true });
   });
 
@@ -306,10 +342,7 @@ describe("config — resolveLinkMigrationModules edge cases", () => {
 
     // A symlink pointing at a missing target: statSync (which follows symlinks)
     // throws ENOENT, exercising the try/catch -> continue branch.
-    fs.symlinkSync(
-      path.join(root, "nowhere"),
-      path.join(linksDir, "broken"),
-    );
+    fs.symlinkSync(path.join(root, "nowhere"), path.join(linksDir, "broken"));
 
     // A valid owner module alongside the broken entry still resolves.
     const owner = path.join(linksDir, "user");

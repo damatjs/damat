@@ -1,11 +1,16 @@
-import path from "node:path";
-import { pathToFileURL } from "node:url";
 import type { ModuleConfig } from "../config";
 import type { ModuleInstance, ModuleRegistry } from "@damatjs/services";
+import { resolveModuleArtifact, type ResolvedModule } from "@damatjs/installer";
+import { moduleLocationId } from "./moduleLocation";
+import { pathToFileURL } from "node:url";
 
 const moduleRegistry = new Map<string, ModuleInstance<any>>();
+const resolvedModules = new Map<string, ResolvedModule>();
 
-export function registerModule(name: string, module: ModuleInstance<any>): void {
+export function registerModule(
+  name: string,
+  module: ModuleInstance<any>,
+): void {
   module.init();
   moduleRegistry.set(name, module);
 }
@@ -37,28 +42,35 @@ export function hasModule(name: string): boolean {
 
 export function clearModules(): void {
   moduleRegistry.clear();
+  resolvedModules.clear();
 }
 
 export function getAllModules(): Map<string, ModuleInstance<any>> {
   return moduleRegistry;
 }
 
-export async function initModules(modules: ModuleConfig[], cwd: string): Promise<void> {
-  for (const moduleConfig of modules) {
-    const modulePath = path.resolve(cwd, moduleConfig.resolve);
-    const moduleUrl = pathToFileURL(modulePath).href;
+export function getResolvedModules(): Map<string, ResolvedModule> {
+  return resolvedModules;
+}
 
-    const moduleExports = await import(moduleUrl);
+export async function initModules(
+  modules: ModuleConfig[],
+  cwd: string,
+): Promise<void> {
+  for (const moduleConfig of modules) {
+    const moduleId = moduleConfig.id ?? moduleLocationId(moduleConfig.resolve);
+    const resolved = resolveModuleArtifact(moduleConfig.resolve, cwd, moduleId);
+    const moduleImport = pathToFileURL(resolved.entry).href;
+    const moduleExports = await import(moduleImport);
     const moduleInstance = moduleExports.default;
 
     if (!moduleInstance || typeof moduleInstance.init !== "function") {
       throw new Error(
-        `Module at "${moduleConfig.resolve}" must default-export the result of defineModule()`,
+        `Module at "${moduleImport}" must default-export the result of defineModule()`,
       );
     }
 
-    const moduleId = moduleConfig.id ?? path.basename(moduleConfig.resolve);
-
     registerModule(moduleId, moduleInstance);
+    resolvedModules.set(moduleId, resolved);
   }
 }

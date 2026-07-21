@@ -1,5 +1,6 @@
 import type { StepConfig } from "./step";
-import type { MaxRetriesExceededError } from "../errors";
+import type { CompensationError, MaxRetriesExceededError } from "../errors";
+import type { WorkflowExecutionObserver } from "./observer";
 
 /**
  * Engine-internal bookkeeping carried through the context.
@@ -10,6 +11,12 @@ export interface WorkflowEngineState {
   compensationsRun: number;
   /** Number of compensation functions that threw */
   compensationsFailed: number;
+  /**
+   * The errors thrown by failed compensation functions, in the order they
+   * occurred. Compensation failures never cascade (the workflow's original
+   * error stands); this preserves them for the workflow result.
+   */
+  compensationErrors?: CompensationError[];
   /** Workflow-level step defaults, layered under each step's own config */
   defaultStepConfig?: StepConfig;
   /**
@@ -18,6 +25,8 @@ export interface WorkflowEngineState {
    * result error so callers see MAX_RETRIES_EXCEEDED. @internal
    */
   retriesExceeded?: MaxRetriesExceededError;
+  /** Optional execution telemetry sink used by durable pipeline adapters. */
+  observer?: WorkflowExecutionObserver;
 }
 
 /**

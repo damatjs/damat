@@ -16,7 +16,7 @@ export default defineConfig({
     nodeEnv: "development",
     loggerConfig: {
       level: "debug",
-      format: "pretty",       // "json" | "pretty" | "simple"
+      format: "pretty", // "json" | "pretty" | "simple"
       timestamp: true,
       prefix: "server",
     },
@@ -26,19 +26,40 @@ export default defineConfig({
       corsConfig: process.env.FRONTEND_CORS,
     },
   },
+  services: {
+    // The reference inspection clients reuse this same policy.
+    durability: {
+      inspectionVisibility: "metadata",
+      redaction: { keys: ["password", "token", "secret"] },
+      retentionMs: 90 * 24 * 60 * 60 * 1_000,
+      acceleration: { enabled: true },
+    },
+    jobs: { queue: "reports", concurrency: 2 },
+    events: { durable: { concurrency: 2 } },
+    pipelines: { queue: "pipelines", concurrency: 2 },
+  },
+  runtime: {
+    mode: "all", // "server" | "worker" | "all"
+    workers: ["jobs", "events", "pipelines"],
+    shutdownGraceMs: 30_000,
+  },
   // `modules` is an OBJECT keyed by module id (not an array):
   modules: {
     user: {
-      resolve: "./src/modules/user",   // path to the module's folder
+      resolve: "./src/modules/user", // path to the module's folder
       id: "user",
     },
+  },
+  providers: {
+    auth: { module: "user" },
   },
 });
 ```
 
-> **Heads up:** older docs showed `modules` as an array — it is now a keyed
-> object `{ [id]: { resolve, id } }`. When you install a module with
-> `damat module add`, this block is updated for you.
+`modules` is keyed by module id; an explicit `id` override is optional.
+`providers` binds a standardized role to one of those initialized module
+services. `damat module add` installs both ordinary and provider modules, then
+reports the app-owned configuration still required.
 
 See [`@damatjs/framework` → config internals](../../packages/framework/docs/config.md)
 for the full `ProjectConfig`/`HttpConfig` type reference.
@@ -57,18 +78,38 @@ so local overrides win:
 
 Common variables (see the default backend's `.env.example` for the full set):
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | ✅ | PostgreSQL connection string |
-| `REDIS_URL` | — | Redis URL (enables cache/queues/locks/rate limiting) |
-| `NODE_ENV` | — | `development` \| `production` \| `test` |
-| `PORT` / `HOST` | — | HTTP bind |
-| `BETTER_AUTH_SECRET` | ✅* | Auth secret (min 32 chars) — *if using the auth module* |
-| `DAMAT_MODULE_REGISTRY` | — | Module registry index (for `module add` / MCP) |
-| `DAMAT_MODULE_VERIFY` | — | `off` \| `warn` \| `require` install policy |
+| Variable                | Required | Description                                                              |
+| ----------------------- | -------- | ------------------------------------------------------------------------ |
+| `DATABASE_URL`          | ✅*      | PostgreSQL — required by modules, jobs, durable events, and migrations   |
+| `REDIS_URL`             | —        | Cache/pub-sub/lock backend and optional durable-work wake-up accelerator |
+| `NODE_ENV`              | —        | `development` \| `production` \| `test`                                  |
+| `PORT` / `HOST`         | —        | HTTP bind                                                                |
+| `DAMAT_RUNTIME_MODE`    | —        | Overrides `runtime.mode`: `server` \| `worker` \| `all`                  |
+| `DAMAT_WORKER_TYPES`    | —        | Overrides `runtime.workers`: comma-separated `jobs,events,pipelines`     |
+| `DAMAT_MODULE_REGISTRY` | —        | Module registry index (for `module add` / MCP)                           |
+| `DAMAT_MODULE_VERIFY`   | —        | `off` \| `warn` \| `require` install policy                              |
 
-Modules declare their own env vars in `module.json`; `damat module add` syncs
-them into `.env.example` for you (see [Authoring a module](./13-authoring-modules.md)).
+Modules declare their environment requirements in `damat.json`. `damat module
+add` reports those requirements; the backend owner updates `.env` and
+`.env.example` after review (see [Authoring a module](./13-authoring-modules.md)).
+
+Runtime environment overrides are independent. Values are trimmed, worker
+names are deduplicated, and unknown modes or capabilities fail startup. In
+`worker` and `all`, a selected capability must be enabled under `services`.
+`server` never starts workers and ignores known worker selections.
+
+Durable jobs, events, and pipelines do not require Redis. PostgreSQL polling,
+leases, recovery, and persisted inspection remain active without it. Redis
+stores rebuildable wake-up, liveness, and invalidation data; PostgreSQL stores
+the canonical execution and visual history.
+
+Every process creates one PostgreSQL pool and shares it across HTTP, modules,
+jobs, events, pipelines, inspection, and maintenance. Do not configure separate
+pools for those services or reduce the shared pool to one physical connection.
+
+Generated development scripts run `database:setup` before startup. Framework
+bootstrap itself only checks migration readiness. Production should run one
+explicit migration job before any server or worker process.
 
 ## The mental model
 

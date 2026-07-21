@@ -189,10 +189,7 @@ describe("PoolManager lifecycle", () => {
     });
 
     it("reads counters directly from the pool when no connection manager", () => {
-      setup(
-        makePool({ totalCount: 8, idleCount: 6, waitingCount: 0 }),
-        null,
-      );
+      setup(makePool({ totalCount: 8, idleCount: 6, waitingCount: 0 }), null);
       expect(PoolManager.getStats()).toEqual({
         totalConnections: 8,
         idleConnections: 6,

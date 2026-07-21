@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach } from "bun:test";
-import { registerCommand, getCommand, getAllCommands, getRegistry } from "../cli/registry";
+import {
+  registerCommand,
+  getCommand,
+  getAllCommands,
+  getRegistry,
+} from "../cli/registry";
 import type { Command, CommandResult } from "../cli/types";
 
 describe("CommandRegistry", () => {
@@ -8,7 +13,7 @@ describe("CommandRegistry", () => {
     for (const cmd of registry.getAll()) {
       try {
         (registry as any).commands.delete(cmd.name);
-      } catch { }
+      } catch {}
     }
   });
 
@@ -41,7 +46,9 @@ describe("CommandRegistry", () => {
 
     registerCommand(command);
 
-    expect(() => registerCommand(command)).toThrow("Command 'duplicate:test' is already registered");
+    expect(() => registerCommand(command)).toThrow(
+      "Command 'duplicate:test' is already registered",
+    );
   });
 
   it("getAll returns all registered commands", () => {

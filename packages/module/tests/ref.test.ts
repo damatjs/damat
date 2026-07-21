@@ -36,7 +36,12 @@ describe("module refs", () => {
   });
 
   test("round-trips through format", () => {
-    for (const input of ["user", "user@0.2.0", "damatjs/user", "damatjs/user@latest"]) {
+    for (const input of [
+      "user",
+      "user@0.2.0",
+      "damatjs/user",
+      "damatjs/user@latest",
+    ]) {
       expect(formatModuleRef(parseModuleRef(input)!)).toBe(input);
     }
   });

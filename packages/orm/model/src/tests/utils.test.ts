@@ -208,7 +208,12 @@ describe("pgTypeToTsBase", () => {
   });
 
   it("maps float / exact-numeric to number", () => {
-    for (const t of ["real", "double precision", "numeric", "decimal"] as const) {
+    for (const t of [
+      "real",
+      "double precision",
+      "numeric",
+      "decimal",
+    ] as const) {
       expect(pgTypeToTsBase(t)).toBe("number");
     }
   });

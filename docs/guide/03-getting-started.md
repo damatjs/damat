@@ -8,8 +8,9 @@
   TypeScript directly; there is no separate compile step in dev).
 - **PostgreSQL 15+** — with the [`pgvector`](https://github.com/pgvector/pgvector)
   extension if you want vector columns.
-- **Redis 7+** *(optional)* — only needed for cache, queues, distributed locks,
-  sessions, and rate limiting.
+- **Redis 7+** _(optional)_ — cache, pub/sub, locks, sessions, rate limiting,
+  and low-latency durable-work wake-ups. Durable jobs/events/pipelines continue
+  through PostgreSQL without it.
 
 No Postgres or Redis on your machine yet? This minimal `docker-compose.yml`
 gives you both:
@@ -38,20 +39,19 @@ docker compose up -d
 ## Option A — scaffold a new app (recommended)
 
 ```bash
-bunx create-damat-app@latest my-app
+bunx @damatjs/damat-cli@latest create my-app
 cd my-app
-bun install
-cp .env.example .env        # then edit DATABASE_URL etc.
-bun run db:migrate          # apply migrations
-bun run dev                 # start the dev server (hot reload)
+bun run dev                 # DB preflight, then hot-reload server
 ```
 
-`create-damat-app` scaffolds a working app — a `damat.config.ts`, an example
-`user` module (models, service, config, migrations), file-based routes under
-`src/api/routes/`, and `package.json` scripts wired to the `damat` and
-`damat-orm` CLIs — and can optionally create a Postgres database for you. See
-[its docs](../../packages/cli/create-damat-app/README.md) for flags
-(`--module`, `--use-bun`, `--directory-path`, …).
+`damat create` writes `damat.config.ts`, the application capability receiver,
+file-based routes, complete durability dependencies, `.env`, and package
+scripts. It initializes Git and runs `bun install`. It accepts a full PostgreSQL
+URL or prompts for host, port, user, hidden password, and database; then it
+creates the database and applies module, durability, jobs, durable-event, and
+pipeline migrations. Use
+`--no-database-setup` to defer that work or pass the connection noninteractively
+with `--database-url`. See [its docs](../../packages/cli/app/README.md) for flags.
 
 ## Option B — run the reference backend (requires cloning the repo)
 
@@ -68,8 +68,8 @@ bun run build                       # build all packages
 
 cd backend/default
 cp .env.example .env
-docker-compose up -d db redis       # start Postgres + Redis
-bun run db:migrate                  # apply migrations
+docker compose up -d db redis       # start Postgres + Redis
+bun run db:setup                    # create/verify DB + apply migrations
 bun run dev                         # start at http://localhost:6543
 ```
 
@@ -103,7 +103,10 @@ my-app/
     │       ├── migrations/   # SQL migrations
     │       └── types/        # generated row types + zod schemas
     ├── links/               # cross-module relationships
-    └── workflows/           # saga workflows + steps
+    ├── workflows/           # in-process saga workflows + steps
+    ├── jobs/                # durable background work
+    ├── events/              # durable event definitions and handlers
+    └── pipelines/           # durable branching orchestration
 ```
 
 The two files you touch most: **`damat.config.ts`**

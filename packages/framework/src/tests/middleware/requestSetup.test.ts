@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Hono } from "@damatjs/deps/hono";
-import { setGlobalLoggerInstance, clearGlobalLogger } from "../../services/logger";
+import {
+  setGlobalLoggerInstance,
+  clearGlobalLogger,
+} from "../../services/logger";
 import { requestSetup } from "../../middleware/requestSetup";
 
 // ---------------------------------------------------------------------------
@@ -101,7 +104,9 @@ describe("requestSetup", () => {
       headers: { "user-agent": "test-agent", "x-forwarded-for": "1.2.3.4" },
     });
 
-    const started = recorded.debugCalls.find((d) => d.msg === "Request started");
+    const started = recorded.debugCalls.find(
+      (d) => d.msg === "Request started",
+    );
     expect(started).toBeDefined();
     expect(started!.meta.userAgent).toBe("test-agent");
     expect(started!.meta.ip).toBe("1.2.3.4");
@@ -115,7 +120,9 @@ describe("requestSetup", () => {
 
     await app.request("/", { headers: { "x-real-ip": "9.9.9.9" } });
 
-    const started = recorded.debugCalls.find((d) => d.msg === "Request started");
+    const started = recorded.debugCalls.find(
+      (d) => d.msg === "Request started",
+    );
     expect(started!.meta.ip).toBe("9.9.9.9");
   });
 

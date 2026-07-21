@@ -1,43 +1,76 @@
+import { loadConfigAsync } from "./config";
+import {
+  resolveRuntime,
+  resolveShutdownGraceMs,
+  startHttpRuntime,
+  startResolvedRuntime,
+  type RuntimeEnvironment,
+} from "./runtime";
+import { initLogger, initializeServices } from "./services";
+import { registerShutdown, setupShutdownHandlers } from "./shutdown";
 
-import { initializeServices, getLogger } from "./services";
-import { bootstrap } from "./bootstrap";
-import { startServer } from "./server";
-import { setupShutdownHandlers, registerShutdown } from "./shutdown";
-import { loadConfigAsync } from './config';
-
-export async function start(cwd: string = process.cwd()): Promise<void> {
-  const config = await loadConfigAsync(cwd);
-  const services = await initializeServices(config);
-
-  const healthCheck = services.healthChecks
-    ? { version: "2.0.0", checks: services.healthChecks }
-    : undefined;
-
-
-  const routesDirPath = config.projectConfig.http.api?.entryRouterPath ?? `/src/api/routes`;
-  const routesDir = `${cwd}/${routesDirPath}`;
-
-  const { app, config: serverConfig } = await bootstrap({
-    routesDir,
-    projectConfig: config.projectConfig,
-    healthCheck,
-  });
-
-  const logger = getLogger();
-  setupShutdownHandlers(logger);
-
-  for (const handler of services.shutdownHandlers) {
-    registerShutdown(handler);
-  }
-
-  startServer(app, serverConfig, getLogger());
+export interface EntryDependencies {
+  loadConfigAsync: typeof loadConfigAsync;
+  initializeServices: typeof initializeServices;
+  startHttpRuntime: typeof startHttpRuntime;
+  initLogger: typeof initLogger;
+  setupShutdownHandlers: typeof setupShutdownHandlers;
+  registerShutdown: typeof registerShutdown;
 }
 
-export async function runEntry(): Promise<void> {
+const defaultDependencies: EntryDependencies = {
+  loadConfigAsync,
+  initializeServices,
+  startHttpRuntime,
+  initLogger,
+  setupShutdownHandlers,
+  registerShutdown,
+};
+
+export async function start(
+  cwd: string = process.cwd(),
+  environment: RuntimeEnvironment = process.env,
+  overrides: Partial<EntryDependencies> = {},
+): Promise<void> {
+  const dependencies = { ...defaultDependencies, ...overrides };
+  const config = await dependencies.loadConfigAsync(cwd);
+  const runtime = resolveRuntime(config, environment);
+  const graceMs = resolveShutdownGraceMs(config.runtime?.shutdownGraceMs);
+  const logger = dependencies.initLogger(config.projectConfig.loggerConfig);
+  await config.hooks?.beforeServices?.({
+    config: config.projectConfig,
+    logger,
+  });
+  dependencies.setupShutdownHandlers(
+    logger,
+    graceMs === undefined ? {} : { graceMs },
+  );
+  await startResolvedRuntime(runtime, {
+    initialize: async (resolvedRuntime) => {
+      const services = await dependencies.initializeServices(
+        config,
+        cwd,
+        resolvedRuntime,
+      );
+      await config.hooks?.afterServices?.({
+        config: config.projectConfig,
+        logger,
+      });
+      return services;
+    },
+    startHttp: (services) =>
+      dependencies.startHttpRuntime(config, cwd, services),
+    register: dependencies.registerShutdown,
+  });
+}
+
+export async function runEntry(
+  startApplication: () => Promise<void> = start,
+): Promise<void> {
   try {
-    await start();
+    await startApplication();
   } catch (e) {
-    console.error("Failed to start server:", e);
+    console.error("Failed to start runtime:", e);
     process.exit(1);
   }
 }

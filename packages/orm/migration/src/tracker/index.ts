@@ -1,36 +1,9 @@
-/**
- * Migration Tracker
- *
- * Manages the migration tracking table in the database using pg Pool.
- */
+import type { DurabilityExecutor } from "@damatjs/durability";
+import { migrationId } from "./id";
+import { MIGRATION_TRACKER_SCHEMA, MIGRATION_TRACKER_TABLE } from "./schema";
+import type { AppliedMigration } from "./types";
 
-import type { Pool } from "@damatjs/deps/pg";
-
-/** Name of the migration tracking table */
-const TABLE_NAME = "_damat_migration_logs";
-
-/**
- * Collision-free value for the `id` PK column.
- *
- * A plain `${module}_${name}` join is ambiguous: module `a_b` + name `c` and
- * module `a` + name `b_c` both collapse to `a_b_c`, so one row could clobber
- * the other on the `id` PK. Length-prefixing the module makes the boundary
- * unforgeable, so distinct (module, name) pairs always yield distinct ids.
- * Correctness never depends on this value — reads and upserts key off the
- * UNIQUE(module, name) columns — but the column is NOT NULL, so we still fill it.
- */
-function syntheticId(module: string, name: string): string {
-  return `${module.length}_${module}_${name}`;
-}
-
-/**
- * Record of an applied migration from the database.
- */
-export interface AppliedMigration {
-  module: string;
-  name: string;
-  applied_at: Date;
-}
+export type { AppliedMigration } from "./types";
 
 /**
  * Migration tracking table operations.
@@ -49,36 +22,14 @@ export interface AppliedMigration {
  * ```
  */
 export class MigrationTracker {
-  private pool: Pool;
-  private tableName = TABLE_NAME;
-
-  constructor(pool: Pool) {
-    this.pool = pool;
-  }
+  constructor(private executor: DurabilityExecutor) {}
 
   /**
    * Ensure the migration tracking table exists.
    * Creates the table and indexes if they don't exist.
    */
   async ensureTable(): Promise<void> {
-    await this.pool.query(`
-            CREATE TABLE IF NOT EXISTS "${this.tableName}" (
-                "id"                 TEXT        PRIMARY KEY,
-                "module"             TEXT        NOT NULL,
-                "name"               TEXT        NOT NULL,
-                "applied_at"         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                "reverted_at"        TIMESTAMPTZ,
-                "execution_time_ms"  INTEGER,
-                "status"             TEXT        NOT NULL DEFAULT 'applied',
-                UNIQUE ("module", "name")
-            );
-
-            CREATE INDEX IF NOT EXISTS "idx_${this.tableName}_module"
-                ON "${this.tableName}" ("module");
-
-            CREATE INDEX IF NOT EXISTS "idx_${this.tableName}_status"
-                ON "${this.tableName}" ("status");
-        `);
+    await this.executor.query(MIGRATION_TRACKER_SCHEMA);
   }
 
   /**
@@ -88,9 +39,9 @@ export class MigrationTracker {
    */
   async getApplied(moduleName?: string): Promise<AppliedMigration[]> {
     if (moduleName) {
-      const res = await this.pool.query<AppliedMigration>(
+      const res = await this.executor.query<AppliedMigration>(
         `SELECT module, name, applied_at
-                 FROM "${this.tableName}"
+                 FROM "${MIGRATION_TRACKER_TABLE}"
                  WHERE status = 'applied' AND module = $1
                  ORDER BY applied_at ASC`,
         [moduleName],
@@ -98,9 +49,9 @@ export class MigrationTracker {
       return res.rows;
     }
 
-    const res = await this.pool.query<AppliedMigration>(
+    const res = await this.executor.query<AppliedMigration>(
       `SELECT module, name, applied_at
-             FROM "${this.tableName}"
+             FROM "${MIGRATION_TRACKER_TABLE}"
              WHERE status = 'applied'
              ORDER BY applied_at ASC`,
     );
@@ -114,18 +65,19 @@ export class MigrationTracker {
     module: string,
     name: string,
     executionTimeMs: number,
+    executor: DurabilityExecutor = this.executor,
   ): Promise<void> {
     // Conflict resolution targets UNIQUE(module, name), never the `id` PK, so
     // an id collision between two distinct (module, name) pairs can't clobber.
-    await this.pool.query(
-      `INSERT INTO "${this.tableName}" (id, module, name, execution_time_ms, status)
+    await executor.query(
+      `INSERT INTO "_damat_migration_logs" (id, module, name, execution_time_ms, status)
              VALUES ($1, $2, $3, $4, 'applied')
              ON CONFLICT (module, name) DO UPDATE SET
                  applied_at         = NOW(),
                  reverted_at        = NULL,
                  execution_time_ms  = $4,
                  status             = 'applied'`,
-      [syntheticId(module, name), module, name, executionTimeMs],
+      [migrationId(module, name), module, name, executionTimeMs],
     );
   }
 
@@ -135,8 +87,8 @@ export class MigrationTracker {
   async recordReverted(module: string, name: string): Promise<void> {
     // Key off (module, name) so pre-existing rows written with the old
     // `${module}_${name}` id scheme still match regardless of id format.
-    await this.pool.query(
-      `UPDATE "${this.tableName}"
+    await this.executor.query(
+      `UPDATE "_damat_migration_logs"
              SET reverted_at = NOW(), status = 'reverted'
              WHERE module = $1 AND name = $2`,
       [module, name],

@@ -65,7 +65,7 @@ export function diffEnums(
         if (removeValues.length > 0) {
           warnings.push(
             `Removing values from enum '${name}' is not directly supported in PostgreSQL. ` +
-            `You may need to create a new enum type and migrate existing data.`,
+              `You may need to create a new enum type and migrate existing data.`,
           );
         }
       }

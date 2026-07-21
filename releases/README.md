@@ -19,19 +19,41 @@ your target version.
 
 ## Versioning
 
-All Damat packages are released **in lockstep** — a release moves *every*
-published package to the same version, whether or not its own code changed. So
-there is a single version to care about, not one per package.
+All active Damat packages are released **in lockstep** — a release moves every
+published package to the same version, whether or not its own code changed.
 
-**Current version: `0.6.0`** — every published `@damatjs/*` package, with one
-exception: **`@damatjs/codegen` is at `2.1.0`**. It was published to npm at
-`1.0.0` independently, so it cannot be renumbered down to the shared line; it
-stays on its own version until the lockstep line catches up past it.
+**Current source version: `1.0.0`** for every active public package.
+`@damatjs/codegen` is archived at its last npm release, `2.1.0`, and is not part
+of the workspace or active publication set.
 
 A package's folder only carries a `<version>.md` (and a detailed index row) for
-versions where *its own* code changed; for a lockstep bump with no change of its
+versions where _its own_ code changed; for a lockstep bump with no change of its
 own, the package simply moves to the shared version with no new note. That is why
 a package can sit at `0.6.0` while the newest version it actually links is older.
+
+## 1.0.0 stable release
+
+This is the first stable Damat release. Install the CLI from npm's `latest`
+channel:
+
+```bash
+bunx @damatjs/damat-cli@latest create my-app
+```
+
+This release establishes shared PostgreSQL infrastructure, durable jobs
+and named-consumer events, durable pipelines, transaction composition,
+deterministic system migrations, headless operational inspection, selectable
+runtime roles, and standardized integration providers. See
+[`durability`](./durability/), [`jobs`](./jobs/),
+[`events`](./events/), [`services`](./services/),
+[`pipelines`](./pipelines/),
+[`orm-migration`](./orm-migration/), [`orm-cli`](./orm-cli/), and
+[`framework`](./framework/). Provider contracts are tracked under
+[`provider`](./provider/), [`auth`](./auth/), [`payment`](./payment/),
+and [`subscription`](./subscription/). Adaptive Redis
+acceleration and pool observability
+are tracked under [`redis`](./redis/), [`orm-connector`](./orm-connector/), and
+the [`default` reference backend](./default/).
 
 What changed in `0.6.0` — a hardening release across the line:
 [`redis`](./redis/0.6.0.md) made its hot paths atomic and non-blocking;
@@ -56,24 +78,37 @@ snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
 ## Packages
 
 ### Framework & app
+
 - [`framework`](./framework/) — `@damatjs/framework`
+- [`default`](./default/) — `@damatjs/default` reference backend
 - [`services`](./services/) — `@damatjs/services`
 - [`module`](./module/) — `@damatjs/module`
+- [`module-generator`](./module-generator/) — `@damatjs/module-generator`
+  (Damat discovery, filesystem output, registries, scaffolds, barrels)
 - [`link`](./link/) — `@damatjs/link`
 - [`workflow-engine`](./workflow-engine/) — `@damatjs/workflow-engine`
+- [`pipelines`](./pipelines/) — `@damatjs/pipelines`
+- [`installer`](./installer/) — `@damatjs/installer`
 
 ### ORM
+
 - [`orm`](./orm/) — `@damatjs/orm`
 - [`orm-model`](./orm-model/) — `@damatjs/orm-model`
 - [`orm-pg`](./orm-pg/) — `@damatjs/orm-pg`
 - [`orm-connector`](./orm-connector/) — `@damatjs/orm-connector`
 - [`orm-migration`](./orm-migration/) — `@damatjs/orm-migration`
 - [`orm-processor`](./orm-processor/) — `@damatjs/orm-processor`
-- [`codegen`](./codegen/) — `@damatjs/codegen`
+- [`codegen`](./codegen/) — archived `@damatjs/codegen` history
+- [`schema-codegen`](./schema-codegen/) — `@damatjs/schema-codegen` (pure schema
+  rendering)
 - [`orm-core`](./orm-core/) — `@damatjs/orm-core`
 - [`orm-type`](./orm-type/) — `@damatjs/orm-type`
 
 ### Core
+
+- [`durability`](./durability/) — `@damatjs/durability`
+- [`jobs`](./jobs/) — `@damatjs/jobs`
+- [`events`](./events/) — `@damatjs/events`
 - [`logger`](./logger/) — `@damatjs/logger`
 - [`redis`](./redis/) — `@damatjs/redis`
 - [`load-env`](./load-env/) — `@damatjs/load-env`
@@ -82,8 +117,21 @@ snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
 - [`deps`](./deps/) — `@damatjs/deps`
 - [`typescript-config`](./typescript-config/) — `@damatjs/typescript-config`
 
+### Providers
+
+- [`provider`](./provider/) — `@damatjs/provider`
+- [`auth`](./auth/) — `@damatjs/auth`
+- [`payment`](./payment/) — `@damatjs/payment`
+- [`subscription`](./subscription/) — `@damatjs/subscription`
+
 ### CLIs & AI
+
 - [`damat-cli`](./damat-cli/) — `@damatjs/damat-cli`
+- [`cli-app`](./cli-app/) — `@damatjs/cli-app`
+- [`cli-codegen`](./cli-codegen/) — `@damatjs/cli-codegen`
+- [`cli-kit`](./cli-kit/) — `@damatjs/cli-kit`
+- [`cli-module`](./cli-module/) — `@damatjs/cli-module`
+- [`cli-support`](./cli-support/) — `@damatjs/cli-support`
 - [`orm-cli`](./orm-cli/) — `@damatjs/orm-cli`
-- [`create-damat-app`](./create-damat-app/) — `@damatjs/create-damat-app`
+- [`create-damat-app`](./create-damat-app/) — `@damatjs/create-damat-app` (retired 0.7 — use `bunx @damatjs/damat-cli create`)
 - [`mcp`](./mcp/) — `@damatjs/mcp`

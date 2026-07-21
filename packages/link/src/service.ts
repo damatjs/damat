@@ -2,11 +2,7 @@ import { ModuleService } from "@damatjs/services";
 import type { ModelDefinition } from "@damatjs/orm-model";
 import type { PgEntityManager } from "@damatjs/orm-pg";
 import type { TransactionOptions } from "@damatjs/orm-type";
-import type {
-  LinkDefinition,
-  LinkModelRef,
-  LinkRowRef,
-} from "./types";
+import type { LinkDefinition, LinkModelRef, LinkRowRef } from "./types";
 import { LinkRegistry, collectLinkModels } from "./registry";
 import { resolveLinkedModule } from "./resolver";
 import { toCamelCase } from "./util";
@@ -28,7 +24,10 @@ import {
 interface LinkServiceBase {
   readonly em: PgEntityManager;
   models: ModelDefinition[];
-  transaction<R>(cb: () => Promise<R>, options?: TransactionOptions): Promise<R>;
+  transaction<R>(
+    cb: () => Promise<R>,
+    options?: TransactionOptions,
+  ): Promise<R>;
 }
 
 /**
@@ -70,7 +69,10 @@ export function createLinkService(links: LinkDefinition[]) {
      * leaves an existing live link untouched — and returns the row. No
      * check-then-insert window.
      */
-    async create(from: LinkRowRef, to: LinkRowRef): Promise<Record<string, any>> {
+    async create(
+      from: LinkRowRef,
+      to: LinkRowRef,
+    ): Promise<Record<string, any>> {
       const o = registry.resolve(from, to);
       return this.#pivot(o.link).upsert({
         data: { [o.fromColumn]: from.id, [o.toColumn]: to.id },
@@ -83,13 +85,20 @@ export function createLinkService(links: LinkDefinition[]) {
     async dismiss(from: LinkRowRef, to: LinkRowRef): Promise<number> {
       const o = registry.resolve(from, to);
       const rows = await this.#pivot(o.link).softDelete({
-        where: { [o.fromColumn]: from.id, [o.toColumn]: to.id, deleted_at: null },
+        where: {
+          [o.fromColumn]: from.id,
+          [o.toColumn]: to.id,
+          deleted_at: null,
+        },
       });
       return rows.length;
     }
 
     /** Raw junction rows linking `from` to the `to` model (excludes dismissed). */
-    async list(from: LinkRowRef, to: LinkModelRef): Promise<Record<string, any>[]> {
+    async list(
+      from: LinkRowRef,
+      to: LinkModelRef,
+    ): Promise<Record<string, any>[]> {
       const o = registry.resolve(from, to);
       return this.#pivot(o.link).findMany({
         where: { [o.fromColumn]: from.id, deleted_at: null },
@@ -137,7 +146,7 @@ export function createLinkService(links: LinkDefinition[]) {
       }
       return methods.findMany({
         ...opts,
-        where: { ...(opts.where ?? {}), [o.other.primaryKey]: { in: ids } },
+        where: { ...opts.where, [o.other.primaryKey]: { in: ids } },
       });
     }
 
@@ -178,7 +187,8 @@ export function createLinkService(links: LinkDefinition[]) {
         where?: Record<string, unknown> | undefined;
         skip?: number | undefined;
         take?: number | undefined;
-        orderBy?: Array<{ column: string; direction?: "ASC" | "DESC" }> | undefined;
+        orderBy?:
+          Array<{ column: string; direction?: "ASC" | "DESC" }> | undefined;
       },
     ): Promise<Record<string, any>[]> {
       const svc = resolveLinkedModule(moduleId);
@@ -227,7 +237,9 @@ export function createLinkService(links: LinkDefinition[]) {
       for (const { name, child, oriented } of linkChildren) {
         if (rows.length === 0) break;
         const pivot = this.#pivot(oriented.link);
-        const pkValues = rows.map((r) => r[oriented.self.primaryKey]).filter(Boolean);
+        const pkValues = rows
+          .map((r) => r[oriented.self.primaryKey])
+          .filter(Boolean);
         const pivotRows = await pivot.findMany({
           where: { [oriented.fromColumn]: { in: pkValues }, deleted_at: null },
           select: [oriented.fromColumn, oriented.toColumn],
@@ -244,12 +256,19 @@ export function createLinkService(links: LinkDefinition[]) {
         }
 
         const otherIds = [
-          ...new Set(pivotRows.map((pr) => pr[oriented.toColumn]).filter(Boolean)),
+          ...new Set(
+            pivotRows.map((pr) => pr[oriented.toColumn]).filter(Boolean),
+          ),
         ];
         const otherRows = otherIds.length
-          ? await this.#resolveNode(oriented.other.module, oriented.other.model, child, {
-              where: { [oriented.other.primaryKey]: { in: otherIds } },
-            })
+          ? await this.#resolveNode(
+              oriented.other.module,
+              oriented.other.model,
+              child,
+              {
+                where: { [oriented.other.primaryKey]: { in: otherIds } },
+              },
+            )
           : [];
         const otherById = new Map<string, Record<string, any>>(
           otherRows.map((o) => [o[oriented.other.primaryKey] ?? o.id, o]),
@@ -257,7 +276,9 @@ export function createLinkService(links: LinkDefinition[]) {
 
         for (const row of rows) {
           const linkedIds = byFrom.get(row[oriented.self.primaryKey]) ?? [];
-          const linked = linkedIds.map((id) => otherById.get(id)).filter(Boolean);
+          const linked = linkedIds
+            .map((id) => otherById.get(id))
+            .filter(Boolean);
           row[name] = oriented.other.isList ? linked : (linked[0] ?? null);
         }
       }

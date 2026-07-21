@@ -38,7 +38,8 @@ function foreignKeyColumn(column: string, target: PivotForeignKeyTarget) {
  * index keeps lookups in both directions fast.
  */
 export function buildPivotModel(input: BuildPivotInput): ModelDefinition {
-  const { table, leftColumn, rightColumn, idPrefix, foreignKeys, options } = input;
+  const { table, leftColumn, rightColumn, idPrefix, foreignKeys, options } =
+    input;
 
   const leftCol = foreignKeys
     ? foreignKeyColumn(leftColumn, foreignKeys.left)
@@ -51,11 +52,14 @@ export function buildPivotModel(input: BuildPivotInput): ModelDefinition {
     id: columns.id({ prefix: idPrefix }).primaryKey(),
     [leftColumn]: leftCol,
     [rightColumn]: rightCol,
-    ...(options.database?.extraColumns ?? {}),
+    ...options.database?.extraColumns,
   };
 
   const pivot = model(table, props).indexes([
-    columns.indexes(`${table}_pair_uniq`).columns([leftColumn, rightColumn]).unique(),
+    columns
+      .indexes(`${table}_pair_uniq`)
+      .columns([leftColumn, rightColumn])
+      .unique(),
     columns.indexes(`${table}_${leftColumn}_idx`).columns([leftColumn]),
     columns.indexes(`${table}_${rightColumn}_idx`).columns([rightColumn]),
   ]);

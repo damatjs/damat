@@ -1,4 +1,10 @@
-import { existsSync, mkdirSync, appendFileSync, statSync, renameSync } from "fs";
+import {
+  existsSync,
+  mkdirSync,
+  appendFileSync,
+  statSync,
+  renameSync,
+} from "fs";
 import { join } from "path";
 import type { LogEntry, FileTransportConfig } from "./types";
 
@@ -27,7 +33,8 @@ export class FileTransport {
     this.dir = config.dir ?? "logs";
     this.maxSizeBytes = config.maxSizeBytes ?? 10 * 1024 * 1024;
 
-    this.enabled = config.enabled === true ||
+    this.enabled =
+      config.enabled === true ||
       process.env.LOG_FILE === "true" ||
       process.env.LOG_FILE === "1" ||
       process.env.LOGGING_FILE_ON === "true" ||
@@ -36,7 +43,10 @@ export class FileTransport {
     if (!this.enabled) return;
     this.ensureDir();
     if (config.bufferFlushMs !== 0) {
-      this.flushInterval = setInterval(() => this.flush(), config.bufferFlushMs ?? 1000);
+      this.flushInterval = setInterval(
+        () => this.flush(),
+        config.bufferFlushMs ?? 1000,
+      );
     }
   }
 
@@ -68,7 +78,9 @@ export class FileTransport {
 
   private formatLog(entry: LogEntry): string {
     const ctx = entry.context ? ` ${JSON.stringify(entry.context)}` : "";
-    const err = entry.error ? `\n  ${entry.error.name}: ${entry.error.message}\n  ${entry.error.stack ?? ""}` : "";
+    const err = entry.error
+      ? `\n  ${entry.error.name}: ${entry.error.message}\n  ${entry.error.stack ?? ""}`
+      : "";
     return `[${entry.timestamp}] [${entry.level.toUpperCase()}] ${entry.message}${ctx}${err}\n`;
   }
 

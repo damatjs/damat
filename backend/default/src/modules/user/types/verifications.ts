@@ -17,4 +17,4 @@ export type NewVerifications = {
   expiresAt: Date;
 };
 
-export type UpdateVerifications = Partial<Omit<Verifications, 'id'>>;
+export type UpdateVerifications = Partial<Omit<Verifications, "id">>;

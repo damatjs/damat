@@ -33,7 +33,7 @@ The shared base every backend package extends. Full contents:
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
     "baseUrl": "../",
-    "paths": { /* monorepo aliases, see below */ }
+    "paths": {/* monorepo aliases, see below */},
   },
   "include": ["${configDir}/src"],
   "exclude": [
@@ -47,8 +47,8 @@ The shared base every backend package extends. Full contents:
     "${configDir}/**/__tests__/**",
     "${configDir}/**/__mocks__/**",
     "${configDir}/**/__fixtures__/**",
-    "${configDir}/**/__snapshots__/**"
-  ]
+    "${configDir}/**/__snapshots__/**",
+  ],
 }
 ```
 
@@ -59,21 +59,21 @@ emitted declaration build.
 
 ### Why each option
 
-| Option | Effect / rationale |
-| --- | --- |
-| `target` / `lib` `ES2023` | Targets a modern runtime (Bun / current Node). No down-leveling. |
-| `module: "ESNext"` + `moduleResolution: "bundler"` | The monorepo ships pure ESM (`"type": "module"`). `bundler` resolution allows extensionless imports while still honouring `exports` maps. |
-| `moduleDetection: "force"` | Treats every file as a module, avoiding accidental global scripts. |
-| `isolatedModules: true` | Guarantees every file can be transpiled standalone (required for fast per-file tooling and Bun). |
+| Option                                                                                                        | Effect / rationale                                                                                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `target` / `lib` `ES2023`                                                                                     | Targets a modern runtime (Bun / current Node). No down-leveling.                                                                                                                                                                |
+| `module: "ESNext"` + `moduleResolution: "bundler"`                                                            | The monorepo ships pure ESM (`"type": "module"`). `bundler` resolution allows extensionless imports while still honouring `exports` maps.                                                                                       |
+| `moduleDetection: "force"`                                                                                    | Treats every file as a module, avoiding accidental global scripts.                                                                                                                                                              |
+| `isolatedModules: true`                                                                                       | Guarantees every file can be transpiled standalone (required for fast per-file tooling and Bun).                                                                                                                                |
 | `strict` + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes` + `noImplicitReturns` + `noUnusedLocals` | Maximum type safety. `noUncheckedIndexedAccess` is why index/array access in the source is frequently guarded (e.g. router/scanner code uses `?`/`!`). `exactOptionalPropertyTypes` is why many optional fields are typed as `T | undefined` explicitly. |
-| `composite: true` + `incremental: true` | Enables TypeScript project references and `.tsbuildinfo` caching — the foundation for `tsc --build` and Turborepo's incremental builds. |
-| `declaration` + `declarationMap` + `sourceMap` | Emit `.d.ts`, declaration maps, and source maps for every package so published types and go-to-definition work. |
-| `emitDecoratorMetadata` + `experimentalDecorators` | Enables decorator syntax + runtime metadata (used by ORM/model code in the monorepo). |
-| `esModuleInterop` + `resolveJsonModule` | Smooth CJS interop and JSON imports. |
-| `skipLibCheck` | Skips type-checking of `.d.ts` dependencies to keep builds fast. |
-| `forceConsistentCasingInFileNames` | Avoids cross-platform casing bugs. |
-| `outDir: "${configDir}/dist"` | `${configDir}` expands to the directory of the **extending** config, so each package emits to its own `dist/` without re-declaring the path. |
-| `baseUrl: "../"` + `paths` | Resolve `@damatjs/*` imports to package `src/` during development so editor/`tsc` can follow types before a build exists. |
+| `composite: true` + `incremental: true`                                                                       | Enables TypeScript project references and `.tsbuildinfo` caching — the foundation for `tsc --build` and Turborepo's incremental builds.                                                                                         |
+| `declaration` + `declarationMap` + `sourceMap`                                                                | Emit `.d.ts`, declaration maps, and source maps for every package so published types and go-to-definition work.                                                                                                                 |
+| `emitDecoratorMetadata` + `experimentalDecorators`                                                            | Enables decorator syntax + runtime metadata (used by ORM/model code in the monorepo).                                                                                                                                           |
+| `esModuleInterop` + `resolveJsonModule`                                                                       | Smooth CJS interop and JSON imports.                                                                                                                                                                                            |
+| `skipLibCheck`                                                                                                | Skips type-checking of `.d.ts` dependencies to keep builds fast.                                                                                                                                                                |
+| `forceConsistentCasingInFileNames`                                                                            | Avoids cross-platform casing bugs.                                                                                                                                                                                              |
+| `outDir: "${configDir}/dist"`                                                                                 | `${configDir}` expands to the directory of the **extending** config, so each package emits to its own `dist/` without re-declaring the path.                                                                                    |
+| `baseUrl: "../"` + `paths`                                                                                    | Resolve `@damatjs/*` imports to package `src/` during development so editor/`tsc` can follow types before a build exists.                                                                                                       |
 
 ### `paths` aliases in `base.json`
 
@@ -113,9 +113,9 @@ emitted declaration build.
       "@damatjs/ui": ["./packages/ui/src"],
       "@damatjs/typescript-config": ["./packages/typescript-config/src"],
       "@damatjs/eslint-config": ["./packages/eslint-config/src"],
-      "@damatjs/tailwind-config": ["./packages/tailwind-config/src"]
-    }
-  }
+      "@damatjs/tailwind-config": ["./packages/tailwind-config/src"],
+    },
+  },
 }
 ```
 
@@ -128,8 +128,8 @@ For Next.js apps. `noEmit: true` (Next.js owns the build), `jsx: "preserve"` (Ne
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "./base.json",
   "compilerOptions": {
-    "jsx": "react-jsx"
-  }
+    "jsx": "react-jsx",
+  },
 }
 ```
 

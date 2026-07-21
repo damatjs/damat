@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, spyOn } from "bun:test";
+import { describe, it, expect, afterEach, spyOn } from "bun:test";
 import { Formatter } from "../formatter";
 import { Colorizer } from "../colorizer";
 
@@ -66,7 +66,11 @@ describe("Formatter.formatEntry: json mode", () => {
   it("includes error info in json", () => {
     const f = plainFormatter("json");
     const e = entry({ error: { name: "Error", message: "x", stack: "s" } });
-    expect(JSON.parse(out_(f, e)).error).toEqual({ name: "Error", message: "x", stack: "s" });
+    expect(JSON.parse(out_(f, e)).error).toEqual({
+      name: "Error",
+      message: "x",
+      stack: "s",
+    });
   });
 });
 
@@ -131,8 +135,12 @@ describe("Formatter.formatEntry: pretty mode structure", () => {
 describe("Formatter.formatEntry: simple mode", () => {
   it("behaves like pretty (non-json) for structure", () => {
     // The implementation treats any non-"json" format the same in formatEntry.
-    const pretty = plainFormatter("pretty").formatEntry(entry({ timestamp: "" }));
-    const simple = plainFormatter("simple").formatEntry(entry({ timestamp: "" }));
+    const pretty = plainFormatter("pretty").formatEntry(
+      entry({ timestamp: "" }),
+    );
+    const simple = plainFormatter("simple").formatEntry(
+      entry({ timestamp: "" }),
+    );
     expect(simple).toBe(pretty);
   });
 });

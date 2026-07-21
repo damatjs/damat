@@ -29,14 +29,12 @@ export interface ConnectionStatus {
 export interface PoolStats {
   totalCount: number;
   idleCount: number;
+  activeCount: number;
   waitingCount: number;
 }
 
 export type TransactionIsolationLevel =
-  | "READ UNCOMMITTED"
-  | "READ COMMITTED"
-  | "REPEATABLE READ"
-  | "SERIALIZABLE";
+  "READ UNCOMMITTED" | "READ COMMITTED" | "REPEATABLE READ" | "SERIALIZABLE";
 
 export interface TransactionOptions {
   isolationLevel?: TransactionIsolationLevel;

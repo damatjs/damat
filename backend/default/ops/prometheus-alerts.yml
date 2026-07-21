@@ -1,0 +1,26 @@
+groups:
+  - name: damat-api
+    rules:
+      - alert: DamatApiUnavailable
+        expr: up{job="damat-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Damat API is unavailable
+      - alert: DamatApiErrorRateHigh
+        expr: >-
+          rate(damat_http_errors_total[5m]) /
+          clamp_min(rate(damat_http_requests_total[5m]), 0.001) > 0.01
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: Damat API 5xx rate exceeds one percent
+      - alert: DamatApiMemoryHigh
+        expr: damat_process_resident_memory_bytes > 1073741824
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: Damat API resident memory exceeds one GiB

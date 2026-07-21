@@ -34,7 +34,7 @@ describe("CLI Errors", () => {
     const error = new MissingRequiredOptionError("output", "build");
 
     expect(error.message).toBe(
-      "Missing required option '--output' for command 'build'"
+      "Missing required option '--output' for command 'build'",
     );
     expect(error.name).toBe("MissingRequiredOptionError");
     expect(error.exitCode).toBe(1);
@@ -63,7 +63,7 @@ describe("CLI Errors", () => {
     const error = new CommandRegistrationError("test", "already registered");
 
     expect(error.message).toBe(
-      "Failed to register command 'test': already registered"
+      "Failed to register command 'test': already registered",
     );
     expect(error.name).toBe("CommandRegistrationError");
     expect(error.exitCode).toBe(1);
@@ -71,8 +71,12 @@ describe("CLI Errors", () => {
 
   test("all errors should be instances of CliError", () => {
     expect(new CommandNotFoundError("test")).toBeInstanceOf(CliError);
-    expect(new MissingRequiredOptionError("opt", "cmd")).toBeInstanceOf(CliError);
+    expect(new MissingRequiredOptionError("opt", "cmd")).toBeInstanceOf(
+      CliError,
+    );
     expect(new ConfigLoadError("file")).toBeInstanceOf(CliError);
-    expect(new CommandRegistrationError("cmd", "reason")).toBeInstanceOf(CliError);
+    expect(new CommandRegistrationError("cmd", "reason")).toBeInstanceOf(
+      CliError,
+    );
   });
 });

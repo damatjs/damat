@@ -9,7 +9,7 @@ export class AppError extends Error {
     message: string,
     statusCode: number = 500,
     code: string = "INTERNAL_ERROR",
-    details?: unknown
+    details?: unknown,
   ) {
     super(message);
     this.name = "AppError";
@@ -53,9 +53,3 @@ export class AuthorizationError extends AppError {
     this.name = "AuthorizationError";
   }
 }
-
-// Re-export initFramework for backwards compatibility if needed
-export const initFramework = () => {
-  console.log("Framework initialized");
-  return true;
-};

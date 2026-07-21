@@ -8,7 +8,7 @@ export function log(
   details?: string,
 ): void {
   const fullMessage = details ? `${message} ${details}` : message;
-  
+
   switch (level) {
     case "info":
       migrationLogger.info(fullMessage);

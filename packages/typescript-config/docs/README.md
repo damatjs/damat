@@ -4,13 +4,13 @@ Maintainer notes for the shared TypeScript presets. This package contributes onl
 
 ## Module map
 
-| File | Responsibility |
-| --- | --- |
-| `package.json` | Declares the package as `private`, version `0.0.0`. No `exports` map — presets are resolved by relative path (`@damatjs/typescript-config/base.json`). |
-| `base.json` | The single source of truth for compiler behaviour across the monorepo. Every backend package extends it. |
-| `nextjs.json` | Frontend preset for Next.js apps. Extends `base.json`. |
-| `react-library.json` | Frontend preset for React component libraries. Extends `base.json`. |
-| `docs/` | This documentation. |
+| File                 | Responsibility                                                                                                                                         |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `package.json`       | Declares the package as `private`, version `0.0.0`. No `exports` map — presets are resolved by relative path (`@damatjs/typescript-config/base.json`). |
+| `base.json`          | The single source of truth for compiler behaviour across the monorepo. Every backend package extends it.                                               |
+| `nextjs.json`        | Frontend preset for Next.js apps. Extends `base.json`.                                                                                                 |
+| `react-library.json` | Frontend preset for React component libraries. Extends `base.json`.                                                                                    |
+| `docs/`              | This documentation.                                                                                                                                    |
 
 ## Architecture overview
 
@@ -26,7 +26,7 @@ See [`architecture.md`](./architecture.md) for the full field-by-field breakdown
 
 - **One base, many extenders.** All monorepo strictness/output decisions live in `base.json` so they can be changed in one place. Resist duplicating options into individual package configs.
 - **Project references everywhere.** `base.json` sets `composite: true` and `incremental: true`, which is what allows `tsc --build` and Turborepo caching to work. Packages that extend it inherit these — do not turn them off lightly.
-- **`outDir` is relative to the extending config.** `base.json` uses `"outDir": "${configDir}/dist"`. `${configDir}` resolves to the directory of the *extending* tsconfig, so each package emits into its own `dist/` without restating the path. Packages may still restate `outDir`/`rootDir` (most do) for clarity.
+- **`outDir` is relative to the extending config.** `base.json` uses `"outDir": "${configDir}/dist"`. `${configDir}` resolves to the directory of the _extending_ tsconfig, so each package emits into its own `dist/` without restating the path. Packages may still restate `outDir`/`rootDir` (most do) for clarity.
 - **Bun is opt-in.** `base.json` does not include `"types": ["bun"]`; backend packages add it themselves. This keeps the base usable by frontend packages that do not run on Bun.
 - **Monorepo `paths` live in the base.** `base.json` defines `baseUrl: "../"` and aliases like `@damatjs/deps` → `./packages/deps/src`. These are tuned for editor/`tsc` resolution against source during development; published packages resolve through their real `exports` maps.
 

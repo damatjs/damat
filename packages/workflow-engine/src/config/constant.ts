@@ -1,5 +1,5 @@
 import type { RequiredStepConfig, RequiredWorkflowConfig } from "../types";
-import { DEFAULT_RETRY_POLICY } from './retry/default';
+import { DEFAULT_RETRY_POLICY } from "./retry/default";
 
 /**
  * Default step configuration

@@ -3,7 +3,7 @@ import type { ModuleAuthor, ModuleEnvVar, ModuleManifest } from "./types";
 const MODULE_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
 
 /**
- * Validate a parsed module.json. Returns the manifest typed, or throws
+ * Validate the normalized legacy-shaped module runtime contract, or throw
  * with a message suitable for CLI output.
  */
 export function validateModuleManifest(raw: unknown): ModuleManifest {
@@ -55,7 +55,9 @@ export function validateModuleManifest(raw: unknown): ModuleManifest {
       typeof manifest.packages !== "object" ||
       Array.isArray(manifest.packages))
   ) {
-    throw new Error('module.json "packages" must be an object of name -> range');
+    throw new Error(
+      'module.json "packages" must be an object of name -> range',
+    );
   }
   if (manifest.modules !== undefined && !Array.isArray(manifest.modules)) {
     throw new Error('module.json "modules" must be an array of module ids');

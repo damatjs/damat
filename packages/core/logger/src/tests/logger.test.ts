@@ -60,7 +60,9 @@ describe("Logger: level filtering", () => {
     log.info("b");
     log.error("c"); // error ordinal 7 < skip ordinal 9 -> suppressed
     log.skip("d"); // skip ordinal 9 -> passes
-    const all = [...plainLog(cap), ...cap.errorLines().map(stripAnsi)].join("\n");
+    const all = [...plainLog(cap), ...cap.errorLines().map(stripAnsi)].join(
+      "\n",
+    );
     expect(all).not.toContain("a");
     expect(all).not.toContain("b");
     expect(all).not.toContain("c");
@@ -136,7 +138,9 @@ describe("Logger: message + metadata formatting", () => {
     const log = new Logger({ level: "debug" }); // timestamp default true
     log.info("hello");
     // matches YYYY-MM-DD HH:mm:ss.mmm
-    expect(plainLog(cap)[0]).toMatch(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/);
+    expect(plainLog(cap)[0]).toMatch(
+      /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/,
+    );
   });
 
   it("omits timestamp when disabled", () => {
@@ -176,7 +180,13 @@ describe("Logger: error/fatal error argument handling", () => {
 describe("Logger.request", () => {
   it("logs status >= 500 as error", () => {
     const log = new Logger({ timestamp: false, level: "debug" });
-    log.request({ requestId: "r1", method: "GET", path: "/x", status: 500, duration: 12 });
+    log.request({
+      requestId: "r1",
+      method: "GET",
+      path: "/x",
+      status: 500,
+      duration: 12,
+    });
     const out = cap.errorLines().map(stripAnsi).join("\n");
     expect(out).toContain("GET /x 500 12ms");
     expect(out).toContain("ERROR");
@@ -184,8 +194,20 @@ describe("Logger.request", () => {
 
   it("logs 4xx as warn and 2xx as info, embedding requestId in context", () => {
     const log = new Logger({ timestamp: false, level: "debug" });
-    log.request({ requestId: "r4", method: "POST", path: "/y", status: 404, duration: 3 });
-    log.request({ requestId: "r2", method: "GET", path: "/z", status: 200, duration: 1 });
+    log.request({
+      requestId: "r4",
+      method: "POST",
+      path: "/y",
+      status: 404,
+      duration: 3,
+    });
+    log.request({
+      requestId: "r2",
+      method: "GET",
+      path: "/z",
+      status: 200,
+      duration: 1,
+    });
 
     const warn = cap.warnLines().map(stripAnsi).join("\n");
     expect(warn).toContain("POST /y 404 3ms");
@@ -224,13 +246,19 @@ describe("Logger.request", () => {
       duration: 0,
       error: new Error("upstream"),
     });
-    expect(cap.errorLines().map(stripAnsi).join("\n")).toContain("Error: upstream");
+    expect(cap.errorLines().map(stripAnsi).join("\n")).toContain(
+      "Error: upstream",
+    );
   });
 });
 
 describe("Logger: json format", () => {
   it("emits a single-line JSON object with level/message/context", () => {
-    const log = new Logger({ timestamp: false, level: "debug", format: "json" });
+    const log = new Logger({
+      timestamp: false,
+      level: "debug",
+      format: "json",
+    });
     log.info("structured", { k: "v" });
     const parsed = JSON.parse(cap.logLines()[0]);
     expect(parsed.level).toBe("info");
@@ -258,7 +286,11 @@ describe("Logger: prefix and child/withPrefix factory", () => {
   // prefix "base:sub", and ChildLogger forwards its own prefix to the parent's
   // logWithPrefix entry point — so the composed ":sub" segment reaches output.
   it("withPrefix() child emits the composed prefix, not just the parent's", () => {
-    const log = new Logger({ timestamp: false, level: "debug", prefix: "base" });
+    const log = new Logger({
+      timestamp: false,
+      level: "debug",
+      prefix: "base",
+    });
     const c = log.withPrefix("sub");
     c.info("hi");
     expect(plainLog(cap)[0]).toContain("[base:sub]");

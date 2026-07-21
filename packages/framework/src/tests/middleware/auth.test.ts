@@ -11,7 +11,9 @@ afterEach(() => clearGlobalLogger());
 describe("createAuthMiddleware", () => {
   it("passes through immediately for type 'none' without invoking custom handlers", async () => {
     const app = new Hono();
-    const custom = mock(async (_c: unknown, next: () => Promise<void>) => next());
+    const custom = mock(async (_c: unknown, next: () => Promise<void>) =>
+      next(),
+    );
     app.use("*", createAuthMiddleware("none", { session: custom as never }));
     app.get("/", (c) => c.text("ok"));
 
@@ -26,7 +28,10 @@ describe("createAuthMiddleware", () => {
     const sessionMw = mock(async (c: any, _next: () => Promise<void>) =>
       c.json({ via: "session" }, 201),
     );
-    app.use("*", createAuthMiddleware("session", { session: sessionMw as never }));
+    app.use(
+      "*",
+      createAuthMiddleware("session", { session: sessionMw as never }),
+    );
     app.get("/", (c) => c.text("handler"));
 
     const res = await app.request("/");
@@ -37,8 +42,12 @@ describe("createAuthMiddleware", () => {
 
   it("selects the custom middleware keyed by the auth type (apiKey)", async () => {
     const app = new Hono();
-    const apiKeyMw = mock(async (_c: unknown, next: () => Promise<void>) => next());
-    const sessionMw = mock(async (_c: unknown, next: () => Promise<void>) => next());
+    const apiKeyMw = mock(async (_c: unknown, next: () => Promise<void>) =>
+      next(),
+    );
+    const sessionMw = mock(async (_c: unknown, next: () => Promise<void>) =>
+      next(),
+    );
     app.use(
       "*",
       createAuthMiddleware("apiKey", {

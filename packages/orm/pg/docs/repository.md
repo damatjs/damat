@@ -15,7 +15,7 @@ function createRepository<T>(
   connection: Pool | PoolClient | { getPool: () => Pool },
   logger: ILogger,
   isInTransaction = false,
-): PgRepository<T>
+): PgRepository<T>;
 ```
 
 Connection resolution:
@@ -32,9 +32,12 @@ Used by `PgEntityManager` (pool-bound, `isInTransaction = false`) and `Transacti
 ## `PgRepository`
 
 ```ts
-class PgRepository<T extends QueryResultRow = QueryResultRow, Cols extends string = string> {
+class PgRepository<
+  T extends QueryResultRow = QueryResultRow,
+  Cols extends string = string,
+> {
   public readonly client: PgModelClient<T, Cols>;
-  constructor(config: PgRepositoryConfig) // { model, connection, logger, isInTransaction? }
+  constructor(config: PgRepositoryConfig); // { model, connection, logger, isInTransaction? }
 }
 ```
 
@@ -44,28 +47,28 @@ execution, so passing a `PoolClient` makes the repo transactional and passing a 
 
 ### Read methods
 
-| Method | Returns | Notes |
-| --- | --- | --- |
-| `findMany(opt = {})` | `T[]` | `client.findMany(opt).rows`. |
-| `findOne(opt = {})` | `T \| undefined` | `opt` excludes `limit`/`offset`; returns `rows[0]`. |
-| `findById(id, opt = {})` | `T \| undefined` | `findOne({ ...opt, where: { id } })`. |
-| `findManyByIds(ids, opt = {})` | `T[]` | `findMany({ ...opt, where: { id: { in: ids } } })`. |
-| `count(where?)` | `number` | `SELECT COUNT(*) FROM (<findMany sql>) as subquery`; parses the count. |
-| `exists(where)` | `boolean` | `SELECT EXISTS(<findOne sql>) as exists`. |
+| Method                         | Returns          | Notes                                                                  |
+| ------------------------------ | ---------------- | ---------------------------------------------------------------------- |
+| `findMany(opt = {})`           | `T[]`            | `client.findMany(opt).rows`.                                           |
+| `findOne(opt = {})`            | `T \| undefined` | `opt` excludes `limit`/`offset`; returns `rows[0]`.                    |
+| `findById(id, opt = {})`       | `T \| undefined` | `findOne({ ...opt, where: { id } })`.                                  |
+| `findManyByIds(ids, opt = {})` | `T[]`            | `findMany({ ...opt, where: { id: { in: ids } } })`.                    |
+| `count(where?)`                | `number`         | `SELECT COUNT(*) FROM (<findMany sql>) as subquery`; parses the count. |
+| `exists(where)`                | `boolean`        | `SELECT EXISTS(<findOne sql>) as exists`.                              |
 
 ### Write methods
 
-| Method | Returns | Notes |
-| --- | --- | --- |
-| `create(opt)` | `T` | Throws `"Failed to create record: no rows returned"` if no row comes back. |
-| `createMany(opt)` | `T[]` | Bulk insert. |
-| `update(opt)` | `T[]` | All updated rows. |
-| `updateOne(set, where, returning?)` | `T \| undefined` | Convenience for `update({ set, where, returning }).rows[0]`. |
-| `delete(opt)` | `number` | Returns `rowCount`. |
-| `deleteById(id, returning?)` | `T \| undefined` | `delete({ where: { id }, returning }).rows[0]`. |
-| `upsert(opt)` | `T` | Throws `"Upsert failed: no rows returned"` if no row comes back. |
-| `upsertMany(opt)` | `T[]` | Bulk insert-or-update; all affected rows. |
-| `getAccessor()` | `ModelAccessor` | Escape hatch to the underlying accessor. |
+| Method                              | Returns          | Notes                                                                      |
+| ----------------------------------- | ---------------- | -------------------------------------------------------------------------- |
+| `create(opt)`                       | `T`              | Throws `"Failed to create record: no rows returned"` if no row comes back. |
+| `createMany(opt)`                   | `T[]`            | Bulk insert.                                                               |
+| `update(opt)`                       | `T[]`            | All updated rows.                                                          |
+| `updateOne(set, where, returning?)` | `T \| undefined` | Convenience for `update({ set, where, returning }).rows[0]`.               |
+| `delete(opt)`                       | `number`         | Returns `rowCount`.                                                        |
+| `deleteById(id, returning?)`        | `T \| undefined` | `delete({ where: { id }, returning }).rows[0]`.                            |
+| `upsert(opt)`                       | `T`              | Throws `"Upsert failed: no rows returned"` if no row comes back.           |
+| `upsertMany(opt)`                   | `T[]`            | Bulk insert-or-update; all affected rows.                                  |
+| `getAccessor()`                     | `ModelAccessor`  | Escape hatch to the underlying accessor.                                   |
 
 Option types (`FindOptions`, `CreateOptions`, `UpdateOptions`, `DeleteOptions`, `UpsertOptions`,
 `UpsertManyOptions`, `CreateManyOptions`) are documented in [query-builder.md](./query-builder.md).

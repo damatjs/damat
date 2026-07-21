@@ -35,7 +35,13 @@ describe("NoopLogger: all leveled methods are silent no-ops", () => {
     n.error("h", new Error("x"));
     n.fatal("i", new Error("y"));
     n.skip("j");
-    n.request({ requestId: "r", method: "GET", path: "/", status: 500, duration: 1 });
+    n.request({
+      requestId: "r",
+      method: "GET",
+      path: "/",
+      status: 500,
+      duration: 1,
+    });
     expect(log).not.toHaveBeenCalled();
     expect(warn).not.toHaveBeenCalled();
     expect(error).not.toHaveBeenCalled();
@@ -67,7 +73,9 @@ describe("NoopLogger: child / withPrefix produce more noops", () => {
 
   it("nested child/withPrefix never throw", () => {
     const n = new NoopLogger();
-    expect(() => n.child({ a: 1 }).child({ b: 2 }).withPrefix("p").info("x")).not.toThrow();
+    expect(() =>
+      n.child({ a: 1 }).child({ b: 2 }).withPrefix("p").info("x"),
+    ).not.toThrow();
   });
 });
 

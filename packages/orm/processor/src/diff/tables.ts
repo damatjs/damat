@@ -50,7 +50,11 @@ export function diffTable(
       ...diffColumns(newTable.name, oldTable.columns, newTable.columns),
     );
     changes.push(
-      ...diffIndexes(newTable.name, oldTable.indexes ?? [], newTable.indexes ?? []),
+      ...diffIndexes(
+        newTable.name,
+        oldTable.indexes ?? [],
+        newTable.indexes ?? [],
+      ),
     );
     changes.push(
       ...diffForeignKeys(

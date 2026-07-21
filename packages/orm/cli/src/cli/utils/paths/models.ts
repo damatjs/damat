@@ -4,7 +4,7 @@ import path from "node:path";
 export function resolveModelsPath(
   // options: PathOptions & { cliModelsDir?: string | undefined },
   moduleResolver: string,
-  cwd: string = process.cwd()
+  _cwd: string = process.cwd(),
 ): string {
   // if (options.cliModelsDir) {
   //   return path.isAbsolute(options.cliModelsDir)

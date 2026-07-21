@@ -19,7 +19,7 @@ links + `query.graph`.
 
 Modules are isolated vertical slices — they don't share tables and can't FK into
 each other. But real apps need a user to belong to organizations, a product to
-have categories, etc. A **link** declares that relationship *outside* both
+have categories, etc. A **link** declares that relationship _outside_ both
 modules (in `src/links/`), generates a junction table to store it, and exposes a
 service to manage and traverse it. Modules stay decoupled; the relationship is
 first-class.
@@ -99,8 +99,11 @@ export default defineLinkModule(links);
 ```ts
 // damat.config.ts
 export default defineConfig({
-  projectConfig: { /* … */ },
-  modules: { user: { resolve: "./src/modules/user" }, organization: { resolve: "./src/modules/organization" } },
+  projectConfig: {/* … */},
+  modules: {
+    user: { resolve: "./src/modules/user" },
+    organization: { resolve: "./src/modules/organization" },
+  },
   links: "./src/links",
 });
 ```
@@ -122,12 +125,16 @@ extends each module's entity with the linked module's type — via a sibling
 `<table>.links.ts` that merges onto the base interface (the model-generated
 `<table>.ts` stays untouched):
 
+`@damatjs/cli-codegen` coordinates this augmentation around
+`@damatjs/module-generator`; the base schema files come from
+`@damatjs/schema-codegen`.
+
 ```ts
 // modules/user/types/users.links.ts  (auto-generated)
 import type { Organizations } from "../../organization/types";
 declare module "./users" {
   interface Users {
-    organizations?: Organizations[];   // the actual linked entity, not the junction
+    organizations?: Organizations[]; // the actual linked entity, not the junction
   }
 }
 ```
@@ -145,12 +152,24 @@ const link = getModule("link");
 
 // Manage links. create is idempotent AND race-safe — one INSERT … ON CONFLICT
 // against the unique pair index (revives a dismissed link); dismiss soft-deletes.
-await link.create({ module: "user", model: "users", id: u.id }, { module: "organization", model: "organizations", id: o.id });
-await link.dismiss({ module: "user", model: "users", id: u.id }, { module: "organization", model: "organizations", id: o.id });
+await link.create(
+  { module: "user", model: "users", id: u.id },
+  { module: "organization", model: "organizations", id: o.id },
+);
+await link.dismiss(
+  { module: "user", model: "users", id: u.id },
+  { module: "organization", model: "organizations", id: o.id },
+);
 
 // Fetch the linked module's records (either direction)
-const orgs  = await link.fetch({ module: "user", model: "users", id: u.id }, { module: "organization", model: "organizations" });
-const users = await link.fetch({ module: "organization", model: "organizations", id: o.id }, { module: "user", model: "users" });
+const orgs = await link.fetch(
+  { module: "user", model: "users", id: u.id },
+  { module: "organization", model: "organizations" },
+);
+const users = await link.fetch(
+  { module: "organization", model: "organizations", id: o.id },
+  { module: "user", model: "users" },
+);
 
 // Nested graph query across modules — Damat's analogue of query.graph
 const { data } = await link.graph({
@@ -169,13 +188,13 @@ const { data } = await link.graph({
 
 ## API
 
-| Export | Purpose |
-|--------|---------|
-| `defineLink(left, right, options?)` | Build a link + its junction model. |
-| `collectLinkModels(links)` | The `models` map a links dir exports (for migrate/codegen). |
-| `defineLinkModule(links, id?)` | A `defineModule`-compatible link module. |
-| `getModule("link")` → `LinkService` | `create` / `dismiss` / `list` / `listLinkedIds` / `fetch` / `graph`. |
-| `setLinkModuleResolver(fn)` | Framework-internal: injects `getModule` for hydration. |
-| `resolveLinkModuleEntries(links, cwd)` | Framework/CLI-internal: resolves `config.links`. |
+| Export                                 | Purpose                                                              |
+| -------------------------------------- | -------------------------------------------------------------------- |
+| `defineLink(left, right, options?)`    | Build a link + its junction model.                                   |
+| `collectLinkModels(links)`             | The `models` map a links dir exports (for migrate/codegen).          |
+| `defineLinkModule(links, id?)`         | A `defineModule`-compatible link module.                             |
+| `getModule("link")` → `LinkService`    | `create` / `dismiss` / `list` / `listLinkedIds` / `fetch` / `graph`. |
+| `setLinkModuleResolver(fn)`            | Framework-internal: injects `getModule` for hydration.               |
+| `resolveLinkModuleEntries(links, cwd)` | Framework/CLI-internal: resolves `config.links`.                     |
 
 See [`docs/README.md`](./docs/README.md) for internals.

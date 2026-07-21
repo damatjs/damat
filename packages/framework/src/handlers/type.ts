@@ -1,11 +1,13 @@
 export interface HealthCheckFn {
-    (): Promise<{ status: string; latency?: number }>;
+  (): Promise<{ status: string; latency?: number }>;
 }
 
 export interface HealthCheckOptions {
-    checks?: {
+  checks?:
+    | {
         database?: HealthCheckFn;
         redis?: HealthCheckFn;
-    } | undefined;
-    version?: string | undefined;
+      }
+    | undefined;
+  version?: string | undefined;
 }

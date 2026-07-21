@@ -59,14 +59,10 @@ mock.module("@damatjs/framework", () => ({
     state.moduleLoaded && name === "user" ? fakeUserService : null,
 }));
 
-const {
-  createProfileStep,
-  sendWelcomeEmailStep,
-  setupDefaultsStep,
-} = await import("@/workflows/user/steps/user-onboarding");
-const { userOnboardingWorkflow } = await import(
-  "@/workflows/user/workflows/user"
-);
+const { createProfileStep, sendWelcomeEmailStep, setupDefaultsStep } =
+  await import("@/workflows/user/steps/user-onboarding");
+const { userOnboardingWorkflow } =
+  await import("@/workflows/user/workflows/user");
 
 const ctx: WorkflowContext = {
   executionId: "exec_test",
@@ -120,7 +116,11 @@ describe("steps › createProfileStep.invoke", () => {
       ctx,
     );
     // invoke now returns a StepResponse; the row is on `.output`.
-    expect(out.output).toEqual({ id: "usr_test", email: "new@user.co", name: "New User" });
+    expect(out.output).toEqual({
+      id: "usr_test",
+      email: "new@user.co",
+      name: "New User",
+    });
 
     expect(fakeUserService.users.create).toHaveBeenCalledTimes(1);
     const callArg = state.createCalls[0]!;
@@ -152,7 +152,7 @@ describe("steps › createProfileStep.invoke", () => {
     );
     expect(fakeUserService.users.delete).toHaveBeenCalledTimes(1);
     expect(state.deleteCalls[0]).toEqual({
-      where: { id: "usr_42" }
+      where: { id: "usr_42" },
     });
   });
 

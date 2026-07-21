@@ -1,6 +1,6 @@
 import type { Redis } from "../types";
 import { getRedis } from "../singleton";
-import { CACHE_PREFIX } from './constant';
+import { CACHE_PREFIX } from "./constant";
 
 // =============================================================================
 // RAW STRING CACHE (no JSON serialization)
@@ -14,8 +14,11 @@ import { CACHE_PREFIX } from './constant';
  * @param key - Cache key (automatically prefixed with "cache:")
  * @returns Raw string value or null if not found
  */
-export async function cacheGetRaw(key: string, client?: Redis): Promise<string | null> {
-    const redis = client || getRedis();
-    const value = await redis.get(CACHE_PREFIX + key);
-    return value || null;
+export async function cacheGetRaw(
+  key: string,
+  client?: Redis,
+): Promise<string | null> {
+  const redis = client || getRedis();
+  const value = await redis.get(CACHE_PREFIX + key);
+  return value || null;
 }

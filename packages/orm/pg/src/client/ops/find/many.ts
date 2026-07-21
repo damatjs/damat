@@ -11,6 +11,10 @@ export async function executeFindMany<
   options: FindOptions<Cols> = {},
 ): Promise<PgSelectResult<T>> {
   const { sql, json } = client.accessor.findMany(options);
-  const { rows, rowCount } = await pgExecuteRaw<T>(client._conn, sql, client._logger);
+  const { rows, rowCount } = await pgExecuteRaw<T>(
+    client._conn,
+    sql,
+    client._logger,
+  );
   return { rows, rowCount, descriptor: json as SelectDescriptor };
 }

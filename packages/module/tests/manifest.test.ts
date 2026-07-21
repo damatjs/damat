@@ -42,9 +42,9 @@ describe("validateModuleManifest", () => {
   });
 
   test("accepts author as a string or an object, rejects other shapes", () => {
-    expect(validateModuleManifest({ name: "x", author: "Jane <j@x.co>" }).author).toBe(
-      "Jane <j@x.co>",
-    );
+    expect(
+      validateModuleManifest({ name: "x", author: "Jane <j@x.co>" }).author,
+    ).toBe("Jane <j@x.co>");
     expect(
       validateModuleManifest({ name: "x", author: { name: "Jane" } }).author,
     ).toEqual({ name: "Jane" });
@@ -130,7 +130,9 @@ describe("validateModuleDir (registry readiness)", () => {
     try {
       const report = validateModuleDir(dir);
       expect(report.valid).toBe(false);
-      expect(report.errors.join("\n")).toContain('Entry "./index.ts" not found');
+      expect(report.errors.join("\n")).toContain(
+        'Entry "./index.ts" not found',
+      );
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -163,7 +165,7 @@ describe("validateModuleDir (registry readiness)", () => {
     try {
       const report = validateModuleDir(dir);
       expect(report.valid).toBe(true);
-      expect(report.warnings.join("\n")).toContain("no \"./migrations\"");
+      expect(report.warnings.join("\n")).toContain('no "./migrations"');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

@@ -13,7 +13,9 @@ import { MAX_PAGE_SIZE } from "../../service/type";
 function makeRepo(overrides: Record<string, any> = {}) {
   return {
     create: mock(async (o: any) => ({ id: 1, ...o.data })),
-    createMany: mock(async (o: any) => o.data.map((d: any, i: number) => ({ id: i + 1, ...d }))),
+    createMany: mock(async (o: any) =>
+      o.data.map((d: any, i: number) => ({ id: i + 1, ...d })),
+    ),
     findOne: mock(async () => ({ id: 1, name: "row" })),
     findMany: mock(async () => [{ id: 1 }, { id: 2 }]),
     update: mock(async (o: any) => [{ id: 1, ...o.set }]),
@@ -28,10 +30,12 @@ function makeRepo(overrides: Record<string, any> = {}) {
  * Fake EM that returns a single primary repo for `modelName` and arbitrary
  * "related" repos by name. Used to drive relation loading.
  */
-function makeEM(opts: {
-  primaryRepo?: any;
-  relatedRepos?: Record<string, any>;
-} = {}) {
+function makeEM(
+  opts: {
+    primaryRepo?: any;
+    relatedRepos?: Record<string, any>;
+  } = {},
+) {
   const primaryRepo = opts.primaryRepo ?? makeRepo();
   const relatedRepos = opts.relatedRepos ?? {};
   return {
@@ -44,11 +48,13 @@ function makeEM(opts: {
   } as any;
 }
 
-function makeModel(opts: {
-  name?: string;
-  deletedAtField?: string;
-  relations?: any[];
-} = {}) {
+function makeModel(
+  opts: {
+    name?: string;
+    deletedAtField?: string;
+    relations?: any[];
+  } = {},
+) {
   return {
     _name: opts.name ?? "user",
     _deletedAtField: opts.deletedAtField,
@@ -99,16 +105,27 @@ describe("ModelMethods", () => {
   describe("create / createMany", () => {
     it("forwards create options to repo.create", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       const res = await m.create({ data: { name: "Ada" }, returning: ["id"] });
       expect(res).toEqual({ id: 1, name: "Ada" });
       expect(repo.create).toHaveBeenCalledTimes(1);
-      expect(repo.create.mock.calls[0][0]).toEqual({ data: { name: "Ada" }, returning: ["id"] });
+      expect(repo.create.mock.calls[0][0]).toEqual({
+        data: { name: "Ada" },
+        returning: ["id"],
+      });
     });
 
     it("forwards each item then calls repo.createMany", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       const res = await m.createMany({ data: [{ name: "a" }, { name: "b" }] });
       expect(res).toHaveLength(2);
       expect(repo.createMany).toHaveBeenCalledTimes(1);
@@ -117,8 +134,14 @@ describe("ModelMethods", () => {
 
   describe("find", () => {
     it("returns the row when no include is requested", async () => {
-      const repo = makeRepo({ findOne: mock(async () => ({ id: 5, name: "x" })) });
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const repo = makeRepo({
+        findOne: mock(async () => ({ id: 5, name: "x" })),
+      });
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       const res = await m.find({ where: { id: 5 } });
       expect(res).toEqual({ id: 5, name: "x" });
     });
@@ -136,25 +159,39 @@ describe("ModelMethods", () => {
 
     it("returns null when the repository finds nothing", async () => {
       const repo = makeRepo({ findOne: mock(async () => null) });
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       expect(await m.find({ where: { id: 999 } })).toBeNull();
     });
 
     it("returns null even when include is requested but the row is missing", async () => {
       const repo = makeRepo({ findOne: mock(async () => null) });
       const m = new ModelMethods(
-        makeModel({ relations: [{ from: "posts", to: "post", type: "hasMany" }] }),
+        makeModel({
+          relations: [{ from: "posts", to: "post", type: "hasMany" }],
+        }),
         "user",
         makeEM({ primaryRepo: repo }),
       );
-      expect(await m.find({ where: { id: 999 }, include: ["posts"] })).toBeNull();
+      expect(
+        await m.find({ where: { id: 999 }, include: ["posts"] }),
+      ).toBeNull();
     });
   });
 
   describe("findMany", () => {
     it("returns records unchanged when no include is requested", async () => {
-      const repo = makeRepo({ findMany: mock(async () => [{ id: 1 }, { id: 2 }]) });
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const repo = makeRepo({
+        findMany: mock(async () => [{ id: 1 }, { id: 2 }]),
+      });
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       const res = await m.findMany({ where: { active: true } });
       expect(res).toEqual([{ id: 1 }, { id: 2 }]);
     });
@@ -162,9 +199,14 @@ describe("ModelMethods", () => {
     it("returns an empty array without attempting relation loading", async () => {
       const repo = makeRepo({ findMany: mock(async () => []) });
       const relatedRepo = makeRepo();
-      const em = makeEM({ primaryRepo: repo, relatedRepos: { post: relatedRepo } });
+      const em = makeEM({
+        primaryRepo: repo,
+        relatedRepos: { post: relatedRepo },
+      });
       const m = new ModelMethods(
-        makeModel({ relations: [{ from: "posts", to: "post", type: "hasMany" }] }),
+        makeModel({
+          relations: [{ from: "posts", to: "post", type: "hasMany" }],
+        }),
         "user",
         em,
       );
@@ -179,12 +221,22 @@ describe("ModelMethods", () => {
       const primary = makeRepo({
         findOne: mock(async () => ({ id: 1, author_id: 42 })),
       });
-      const authorRepo = makeRepo({ findOne: mock(async () => ({ id: 42, name: "Ada" })) });
-      const em = makeEM({ primaryRepo: primary, relatedRepos: { author: authorRepo } });
+      const authorRepo = makeRepo({
+        findOne: mock(async () => ({ id: 42, name: "Ada" })),
+      });
+      const em = makeEM({
+        primaryRepo: primary,
+        relatedRepos: { author: authorRepo },
+      });
       const m = new ModelMethods(
         makeModel({
           relations: [
-            { from: "author", to: "author", type: "belongsTo", linkedBy: ["author_id"] },
+            {
+              from: "author",
+              to: "author",
+              type: "belongsTo",
+              linkedBy: ["author_id"],
+            },
           ],
         }),
         "post",
@@ -198,9 +250,14 @@ describe("ModelMethods", () => {
 
     it("returns null for a belongsTo relation with no linkedBy column", async () => {
       const primary = makeRepo({ findOne: mock(async () => ({ id: 1 })) });
-      const em = makeEM({ primaryRepo: primary, relatedRepos: { author: makeRepo() } });
+      const em = makeEM({
+        primaryRepo: primary,
+        relatedRepos: { author: makeRepo() },
+      });
       const m = new ModelMethods(
-        makeModel({ relations: [{ from: "author", to: "author", type: "belongsTo" }] }),
+        makeModel({
+          relations: [{ from: "author", to: "author", type: "belongsTo" }],
+        }),
         "post",
         em,
       );
@@ -209,12 +266,22 @@ describe("ModelMethods", () => {
     });
 
     it("returns null for a belongsTo relation when the FK value is empty", async () => {
-      const primary = makeRepo({ findOne: mock(async () => ({ id: 1, author_id: null })) });
-      const em = makeEM({ primaryRepo: primary, relatedRepos: { author: makeRepo() } });
+      const primary = makeRepo({
+        findOne: mock(async () => ({ id: 1, author_id: null })),
+      });
+      const em = makeEM({
+        primaryRepo: primary,
+        relatedRepos: { author: makeRepo() },
+      });
       const m = new ModelMethods(
         makeModel({
           relations: [
-            { from: "author", to: "author", type: "belongsTo", linkedBy: ["author_id"] },
+            {
+              from: "author",
+              to: "author",
+              type: "belongsTo",
+              linkedBy: ["author_id"],
+            },
           ],
         }),
         "post",
@@ -226,8 +293,13 @@ describe("ModelMethods", () => {
 
     it("loads a hasMany relation using the model name FK by default", async () => {
       const primary = makeRepo({ findOne: mock(async () => ({ id: 7 })) });
-      const postRepo = makeRepo({ findMany: mock(async () => [{ id: 1 }, { id: 2 }]) });
-      const em = makeEM({ primaryRepo: primary, relatedRepos: { post: postRepo } });
+      const postRepo = makeRepo({
+        findMany: mock(async () => [{ id: 1 }, { id: 2 }]),
+      });
+      const em = makeEM({
+        primaryRepo: primary,
+        relatedRepos: { post: postRepo },
+      });
       const m = new ModelMethods(
         makeModel({
           name: "user",
@@ -246,24 +318,36 @@ describe("ModelMethods", () => {
     it("loads a hasMany relation using mappedBy to derive the FK column", async () => {
       const primary = makeRepo({ findOne: mock(async () => ({ id: 7 })) });
       const postRepo = makeRepo({ findMany: mock(async () => [{ id: 9 }]) });
-      const em = makeEM({ primaryRepo: primary, relatedRepos: { post: postRepo } });
+      const em = makeEM({
+        primaryRepo: primary,
+        relatedRepos: { post: postRepo },
+      });
       const m = new ModelMethods(
         makeModel({
           name: "user",
-          relations: [{ from: "posts", to: "post", type: "hasMany", mappedBy: ["owner"] }],
+          relations: [
+            { from: "posts", to: "post", type: "hasMany", mappedBy: ["owner"] },
+          ],
         }),
         "user",
         em,
       );
 
       await m.find({ where: { id: 7 }, include: ["posts"] });
-      expect(postRepo.findMany).toHaveBeenCalledWith({ where: { owner_id: 7 } });
+      expect(postRepo.findMany).toHaveBeenCalledWith({
+        where: { owner_id: 7 },
+      });
     });
 
     it("loads a hasOne relation returning a single record", async () => {
       const primary = makeRepo({ findOne: mock(async () => ({ id: 7 })) });
-      const profileRepo = makeRepo({ findOne: mock(async () => ({ id: 1, bio: "hi" })) });
-      const em = makeEM({ primaryRepo: primary, relatedRepos: { profile: profileRepo } });
+      const profileRepo = makeRepo({
+        findOne: mock(async () => ({ id: 1, bio: "hi" })),
+      });
+      const em = makeEM({
+        primaryRepo: primary,
+        relatedRepos: { profile: profileRepo },
+      });
       const m = new ModelMethods(
         makeModel({
           name: "user",
@@ -275,26 +359,40 @@ describe("ModelMethods", () => {
 
       const res: any = await m.find({ where: { id: 7 }, include: ["profile"] });
       expect(res.profile).toEqual({ id: 1, bio: "hi" });
-      expect(profileRepo.findOne).toHaveBeenCalledWith({ where: { user_id: 7 } });
+      expect(profileRepo.findOne).toHaveBeenCalledWith({
+        where: { user_id: 7 },
+      });
     });
 
     it("skips include names that don't match any relation", async () => {
-      const primary = makeRepo({ findOne: mock(async () => ({ id: 1, name: "x" })) });
+      const primary = makeRepo({
+        findOne: mock(async () => ({ id: 1, name: "x" })),
+      });
       const em = makeEM({ primaryRepo: primary });
       const m = new ModelMethods(
-        makeModel({ relations: [{ from: "posts", to: "post", type: "hasMany" }] }),
+        makeModel({
+          relations: [{ from: "posts", to: "post", type: "hasMany" }],
+        }),
         "user",
         em,
       );
-      const res: any = await m.find({ where: { id: 1 }, include: ["nonexistent"] });
+      const res: any = await m.find({
+        where: { id: 1 },
+        include: ["nonexistent"],
+      });
       expect(res).toEqual({ id: 1, name: "x" });
       expect(res.nonexistent).toBeUndefined();
     });
 
     it("loads relations for every record in findMany", async () => {
-      const primary = makeRepo({ findMany: mock(async () => [{ id: 1 }, { id: 2 }]) });
+      const primary = makeRepo({
+        findMany: mock(async () => [{ id: 1 }, { id: 2 }]),
+      });
       const postRepo = makeRepo({ findMany: mock(async () => [{ id: 99 }]) });
-      const em = makeEM({ primaryRepo: primary, relatedRepos: { post: postRepo } });
+      const em = makeEM({
+        primaryRepo: primary,
+        relatedRepos: { post: postRepo },
+      });
       const m = new ModelMethods(
         makeModel({
           name: "user",
@@ -326,8 +424,14 @@ describe("ModelMethods", () => {
 
   describe("update / delete", () => {
     it("maps update `data` onto the repository's `set` contract", async () => {
-      const repo = makeRepo({ update: mock(async (o: any) => [{ id: 1, ...o.set }]) });
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const repo = makeRepo({
+        update: mock(async (o: any) => [{ id: 1, ...o.set }]),
+      });
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       const res = await m.update({ where: { id: 1 }, data: { name: "new" } });
       expect(res).toEqual([{ id: 1, name: "new" }]);
       // service-level `data` is forwarded as the repository's `set` (the same
@@ -339,7 +443,11 @@ describe("ModelMethods", () => {
 
     it("forwards delete options and returns the affected count", async () => {
       const repo = makeRepo({ delete: mock(async () => 4) });
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       const res = await m.delete({ where: { id: 1 } });
       expect(res).toBe(4);
     });
@@ -348,7 +456,11 @@ describe("ModelMethods", () => {
   describe("softDelete / restore", () => {
     it("softDelete sets the default deleted_at field to a Date", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeModel({ deletedAtField: undefined }), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel({ deletedAtField: undefined }),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       await m.softDelete({ where: { id: 1 }, returning: ["id"] });
       const arg = repo.update.mock.calls[0][0];
       expect(arg.set.deleted_at).toBeInstanceOf(Date);
@@ -358,7 +470,11 @@ describe("ModelMethods", () => {
 
     it("softDelete honors a custom deletedAt field name", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeModel({ deletedAtField: "archived_at" }), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel({ deletedAtField: "archived_at" }),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       await m.softDelete({ where: { id: 1 } });
       const arg = repo.update.mock.calls[0][0];
       expect(arg.set.archived_at).toBeInstanceOf(Date);
@@ -367,7 +483,11 @@ describe("ModelMethods", () => {
 
     it("restore nulls out the default deleted_at field", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeModel({ deletedAtField: undefined }), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel({ deletedAtField: undefined }),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       await m.restore({ where: { id: 1 } });
       const arg = repo.update.mock.calls[0][0];
       expect(arg.set).toEqual({ deleted_at: null });
@@ -375,7 +495,11 @@ describe("ModelMethods", () => {
 
     it("restore honors a custom deletedAt field name", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeModel({ deletedAtField: "archived_at" }), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel({ deletedAtField: "archived_at" }),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       await m.restore({ where: { id: 1 }, returning: ["id"] });
       const arg = repo.update.mock.calls[0][0];
       expect(arg.set).toEqual({ archived_at: null });
@@ -392,7 +516,13 @@ describe("ModelMethods", () => {
         toTableSchema: () => ({
           relations: [],
           columns: [
-            { name: "id", type: "integer", nullable: false, primaryKey: true, autoincrement: true },
+            {
+              name: "id",
+              type: "integer",
+              nullable: false,
+              primaryKey: true,
+              autoincrement: true,
+            },
             { name: "name", type: "text", nullable: false },
             { name: "age", type: "integer", nullable: true },
           ],
@@ -402,29 +532,49 @@ describe("ModelMethods", () => {
 
     it("rejects create data that is missing a required column", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeValidatingModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeValidatingModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       expect(m.create({ data: { age: 30 } })).rejects.toThrow();
       expect(repo.create).not.toHaveBeenCalled();
     });
 
     it("rejects create data whose column has the wrong type", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeValidatingModel(), "user", makeEM({ primaryRepo: repo }));
-      expect(m.create({ data: { name: "Ada", age: "not-a-number" } })).rejects.toThrow();
+      const m = new ModelMethods(
+        makeValidatingModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
+      expect(
+        m.create({ data: { name: "Ada", age: "not-a-number" } }),
+      ).rejects.toThrow();
       expect(repo.create).not.toHaveBeenCalled();
     });
 
     it("accepts valid create data and forwards it to the repository", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeValidatingModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeValidatingModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       const res = await m.create({ data: { name: "Ada", age: 30 } });
       expect(res).toEqual({ id: 1, name: "Ada", age: 30 });
       expect(repo.create).toHaveBeenCalledTimes(1);
     });
 
     it("treats update validation as partial (required columns may be absent)", async () => {
-      const repo = makeRepo({ update: mock(async (o: any) => [{ id: 1, ...o.set }]) });
-      const m = new ModelMethods(makeValidatingModel(), "user", makeEM({ primaryRepo: repo }));
+      const repo = makeRepo({
+        update: mock(async (o: any) => [{ id: 1, ...o.set }]),
+      });
+      const m = new ModelMethods(
+        makeValidatingModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       // `name` is required on create but partial updates omit it without error.
       const res = await m.update({ where: { id: 1 }, data: { age: 31 } });
       expect(res).toEqual([{ id: 1, age: 31 }]);
@@ -432,8 +582,14 @@ describe("ModelMethods", () => {
 
     it("still rejects an update whose supplied column has the wrong type", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeValidatingModel(), "user", makeEM({ primaryRepo: repo }));
-      expect(m.update({ where: { id: 1 }, data: { age: "oops" } })).rejects.toThrow();
+      const m = new ModelMethods(
+        makeValidatingModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
+      expect(
+        m.update({ where: { id: 1 }, data: { age: "oops" } }),
+      ).rejects.toThrow();
       expect(repo.update).not.toHaveBeenCalled();
     });
   });
@@ -443,7 +599,11 @@ describe("ModelMethods", () => {
       const repo = makeRepo({
         upsert: mock(async (o: any) => ({ id: 1, ...o.data })),
       });
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       const res = await m.upsert({
         data: { email: "a@b.com", name: "Ada" },
         onConflict: ["email"],
@@ -466,7 +626,11 @@ describe("ModelMethods", () => {
           o.data.map((d: any, i: number) => ({ id: i + 1, ...d })),
         ),
       });
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       const res = await m.upsertMany({
         data: [{ email: "a@b.com" }, { email: "c@d.com" }],
         onConflict: ["email"],
@@ -485,15 +649,28 @@ describe("ModelMethods", () => {
         toTableSchema: () => ({
           relations: [],
           columns: [
-            { name: "id", type: "integer", nullable: false, primaryKey: true, autoincrement: true },
+            {
+              name: "id",
+              type: "integer",
+              nullable: false,
+              primaryKey: true,
+              autoincrement: true,
+            },
             { name: "name", type: "text", nullable: false },
             { name: "age", type: "integer", nullable: true },
           ],
         }),
       } as any;
-      const m = new ModelMethods(validatingModel, "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        validatingModel,
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       expect(
-        m.upsertMany({ data: [{ name: "ok" }, { age: 5 }], onConflict: ["id"] }),
+        m.upsertMany({
+          data: [{ name: "ok" }, { age: 5 }],
+          onConflict: ["id"],
+        }),
       ).rejects.toThrow();
       expect(repo.upsertMany).not.toHaveBeenCalled();
     });
@@ -504,8 +681,16 @@ describe("ModelMethods", () => {
       const repo = makeRepo({
         updateOne: mock(async (set: any) => ({ id: 1, ...set })),
       });
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
-      const res = await m.updateOne({ where: { id: 1 }, data: { name: "new" }, returning: ["id", "name"] });
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
+      const res = await m.updateOne({
+        where: { id: 1 },
+        data: { name: "new" },
+        returning: ["id", "name"],
+      });
       expect(res).toEqual({ id: 1, name: "new" });
       const [set, where, returning] = repo.updateOne.mock.calls[0];
       expect(set).toEqual({ name: "new" });
@@ -515,15 +700,27 @@ describe("ModelMethods", () => {
 
     it("returns null when the repository updates no row", async () => {
       const repo = makeRepo({ updateOne: mock(async () => undefined) });
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
-      expect(await m.updateOne({ where: { id: 999 }, data: { name: "x" } })).toBeNull();
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
+      expect(
+        await m.updateOne({ where: { id: 999 }, data: { name: "x" } }),
+      ).toBeNull();
     });
   });
 
   describe("findById / findOne", () => {
     it("findById builds a where on id and returns the row", async () => {
-      const repo = makeRepo({ findOne: mock(async () => ({ id: 5, name: "x" })) });
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const repo = makeRepo({
+        findOne: mock(async () => ({ id: 5, name: "x" })),
+      });
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       const res = await m.findById(5);
       expect(res).toEqual({ id: 5, name: "x" });
       expect(repo.findOne).toHaveBeenCalledWith({ where: { id: 5 } });
@@ -531,24 +728,42 @@ describe("ModelMethods", () => {
 
     it("findById returns null when nothing is found", async () => {
       const repo = makeRepo({ findOne: mock(async () => null) });
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       expect(await m.findById("missing")).toBeNull();
     });
 
     it("findOne forwards an arbitrary where to find", async () => {
-      const repo = makeRepo({ findOne: mock(async () => ({ id: 1, email: "a@b.com" })) });
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const repo = makeRepo({
+        findOne: mock(async () => ({ id: 1, email: "a@b.com" })),
+      });
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       const res = await m.findOne({ email: "a@b.com" });
       expect(res).toEqual({ id: 1, email: "a@b.com" });
-      expect(repo.findOne).toHaveBeenCalledWith({ where: { email: "a@b.com" } });
+      expect(repo.findOne).toHaveBeenCalledWith({
+        where: { email: "a@b.com" },
+      });
     });
 
     it("findById loads requested relations through find", async () => {
       const primary = makeRepo({ findOne: mock(async () => ({ id: 7 })) });
       const postRepo = makeRepo({ findMany: mock(async () => [{ id: 1 }]) });
-      const em = makeEM({ primaryRepo: primary, relatedRepos: { post: postRepo } });
+      const em = makeEM({
+        primaryRepo: primary,
+        relatedRepos: { post: postRepo },
+      });
       const m = new ModelMethods(
-        makeModel({ name: "user", relations: [{ from: "posts", to: "post", type: "hasMany" }] }),
+        makeModel({
+          name: "user",
+          relations: [{ from: "posts", to: "post", type: "hasMany" }],
+        }),
         "user",
         em,
       );
@@ -560,7 +775,11 @@ describe("ModelMethods", () => {
   describe("count / exists", () => {
     it("count forwards the where clause and returns the number", async () => {
       const repo = makeRepo({ count: mock(async () => 12) });
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       const res = await m.count({ where: { active: true } });
       expect(res).toBe(12);
       expect(repo.count).toHaveBeenCalledWith({ active: true });
@@ -568,14 +787,22 @@ describe("ModelMethods", () => {
 
     it("count works with no options (undefined where)", async () => {
       const repo = makeRepo({ count: mock(async () => 0) });
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       expect(await m.count()).toBe(0);
       expect(repo.count).toHaveBeenCalledWith(undefined);
     });
 
     it("exists forwards the where clause and returns the boolean", async () => {
       const repo = makeRepo({ exists: mock(async () => false) });
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       const res = await m.exists({ where: { email: "x@y.z" } });
       expect(res).toBe(false);
       expect(repo.exists).toHaveBeenCalledWith({ email: "x@y.z" });
@@ -585,21 +812,33 @@ describe("ModelMethods", () => {
   describe("pagination + option sanitization", () => {
     it("maps take/skip onto the ORM's limit/offset", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       await m.findMany({ take: 10, skip: 20 });
       expect(repo.findMany).toHaveBeenCalledWith({ limit: 10, offset: 20 });
     });
 
     it("caps take at MAX_PAGE_SIZE", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       await m.findMany({ take: 10_000_000 });
       expect(repo.findMany.mock.calls[0][0].limit).toBe(MAX_PAGE_SIZE);
     });
 
     it("does not paginate a single-row find", async () => {
       const repo = makeRepo({ findOne: mock(async () => ({ id: 1 })) });
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       await m.find({ where: { id: 1 }, take: 5, skip: 5 } as any);
       expect(repo.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
     });
@@ -616,7 +855,11 @@ describe("ModelMethods", () => {
 
     it("drops whereRaw/allowFullTable smuggled into find options", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       await m.findMany({
         where: { active: true },
         whereRaw: { sql: "1=1" },
@@ -627,7 +870,11 @@ describe("ModelMethods", () => {
 
     it("uppercases and forwards a valid orderBy direction/nulls", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       await m.findMany({
         orderBy: [{ column: "name", direction: "asc", nulls: "nulls last" }],
       } as any);
@@ -639,7 +886,9 @@ describe("ModelMethods", () => {
     it("rejects an invalid orderBy direction (injection guard)", async () => {
       const m = new ModelMethods(makeModel(), "user", makeEM());
       expect(
-        m.findMany({ orderBy: [{ column: "name", direction: "; DROP" }] } as any),
+        m.findMany({
+          orderBy: [{ column: "name", direction: "; DROP" }],
+        } as any),
       ).rejects.toThrow(/direction/);
     });
 
@@ -652,7 +901,11 @@ describe("ModelMethods", () => {
 
     it("delete forwards only where + returning (never allowFullTable)", async () => {
       const repo = makeRepo({ delete: mock(async () => 1) });
-      const m = new ModelMethods(makeModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       await m.delete({ where: { id: 1 }, allowFullTable: true } as any);
       expect(repo.delete).toHaveBeenCalledWith({
         where: { id: 1 },
@@ -676,7 +929,11 @@ describe("ModelMethods", () => {
 
     it("injects deleted_at IS NULL into findMany", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeSoftDeleteModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeSoftDeleteModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       await m.findMany({ where: { active: true } });
       expect(repo.findMany.mock.calls[0][0].where).toEqual({
         active: true,
@@ -686,28 +943,46 @@ describe("ModelMethods", () => {
 
     it("injects the filter into find, count and exists", async () => {
       const repo = makeRepo({ findOne: mock(async () => ({ id: 1 })) });
-      const m = new ModelMethods(makeSoftDeleteModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeSoftDeleteModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       await m.find({ where: { id: 1 } });
       expect(repo.findOne.mock.calls[0][0].where).toEqual({
         id: 1,
         deleted_at: { isNull: true },
       });
       await m.count({ where: { a: 1 } });
-      expect(repo.count.mock.calls[0][0]).toEqual({ a: 1, deleted_at: { isNull: true } });
+      expect(repo.count.mock.calls[0][0]).toEqual({
+        a: 1,
+        deleted_at: { isNull: true },
+      });
       await m.exists({ where: { a: 1 } });
-      expect(repo.exists.mock.calls[0][0]).toEqual({ a: 1, deleted_at: { isNull: true } });
+      expect(repo.exists.mock.calls[0][0]).toEqual({
+        a: 1,
+        deleted_at: { isNull: true },
+      });
     });
 
     it("withDeleted bypasses the filter", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeSoftDeleteModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeSoftDeleteModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       await m.findMany({ withDeleted: true });
       expect(repo.findMany.mock.calls[0][0].where).toBeUndefined();
     });
 
     it("respects an explicit deleted_at filter from the caller", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeSoftDeleteModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeSoftDeleteModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       await m.findMany({ where: { deleted_at: { isNotNull: true } } });
       expect(repo.findMany.mock.calls[0][0].where).toEqual({
         deleted_at: { isNotNull: true },
@@ -754,7 +1029,11 @@ describe("ModelMethods", () => {
 
     it("stamps updated_at on update", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeTsModel(), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeTsModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       await m.update({ where: { id: 1 }, data: { name: "x" } });
       const set = repo.update.mock.calls[0][0].set;
       expect(set.name).toBe("x");
@@ -764,21 +1043,38 @@ describe("ModelMethods", () => {
     it("does not overwrite an updated_at the caller set explicitly", async () => {
       const repo = makeRepo();
       const explicit = new Date(0);
-      const m = new ModelMethods(makeTsModel(), "user", makeEM({ primaryRepo: repo }));
-      await m.update({ where: { id: 1 }, data: { name: "x", updated_at: explicit } });
+      const m = new ModelMethods(
+        makeTsModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
+      await m.update({
+        where: { id: 1 },
+        data: { name: "x", updated_at: explicit },
+      });
       expect(repo.update.mock.calls[0][0].set.updated_at).toBe(explicit);
     });
 
     it("stamps updated_at on updateOne", async () => {
-      const repo = makeRepo({ updateOne: mock(async (set: any) => ({ id: 1, ...set })) });
-      const m = new ModelMethods(makeTsModel(), "user", makeEM({ primaryRepo: repo }));
+      const repo = makeRepo({
+        updateOne: mock(async (set: any) => ({ id: 1, ...set })),
+      });
+      const m = new ModelMethods(
+        makeTsModel(),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       await m.updateOne({ where: { id: 1 }, data: { name: "x" } });
       expect(repo.updateOne.mock.calls[0][0].updated_at).toBeInstanceOf(Date);
     });
 
     it("supports the camelCase updatedAt column name", async () => {
       const repo = makeRepo();
-      const m = new ModelMethods(makeTsModel("updatedAt"), "user", makeEM({ primaryRepo: repo }));
+      const m = new ModelMethods(
+        makeTsModel("updatedAt"),
+        "user",
+        makeEM({ primaryRepo: repo }),
+      );
       await m.update({ where: { id: 1 }, data: { name: "x" } });
       expect(repo.update.mock.calls[0][0].set.updatedAt).toBeInstanceOf(Date);
     });
@@ -787,7 +1083,10 @@ describe("ModelMethods", () => {
       const repo = makeRepo();
       const model = {
         _name: "u",
-        toTableSchema: () => ({ relations: [], columns: [{ name: "id" }, { name: "name" }] }),
+        toTableSchema: () => ({
+          relations: [],
+          columns: [{ name: "id" }, { name: "name" }],
+        }),
       } as any;
       const m = new ModelMethods(model, "u", makeEM({ primaryRepo: repo }));
       await m.update({ where: { id: 1 }, data: { name: "x" } });

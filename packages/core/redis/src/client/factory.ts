@@ -10,6 +10,7 @@ export function createRedisConnection(config: RedisConfig): Redis {
     maxRetriesPerRequest: config.maxRetriesPerRequest ?? 3,
     retryStrategy: createRetryStrategy,
     lazyConnect: config.lazyConnect ?? true,
+    enableReadyCheck: false,
     ...config.options,
   });
 }

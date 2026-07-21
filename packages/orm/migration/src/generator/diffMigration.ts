@@ -9,17 +9,18 @@
 
 import fs from "node:fs";
 import path from "node:path";
-
-import { log } from "../logger";
-import { getMigrationTemplateWithSQL } from "../utils/template";
-import { generateTimestamp } from "../utils/timestamp";
-import { diffSchemas, generateMigration, loadSnapshot, saveSnapshot } from "@damatjs/orm-processor";
+import { diffSchemas, loadSnapshot } from "@damatjs/orm-processor";
 import { toModuleSchema } from "@damatjs/orm-model";
 import { discoverModels } from "../discovery";
+import { writeDiffMigration } from "./writeDiffMigration";
 import type {
   CreateDiffMigrationOptions,
   DiffMigrationResult,
 } from "@damatjs/orm-processor";
+
+export interface DiffMigrationLayout {
+  migrationsDir?: string;
+}
 
 /**
  * Create a migration based on the difference between the current model
@@ -48,13 +49,14 @@ export async function createDiffMigration(
   moduleName: string,
   moduleResolver: string,
   options: CreateDiffMigrationOptions = {},
+  layout: DiffMigrationLayout = {},
 ): Promise<DiffMigrationResult> {
-
   if (!fs.existsSync(moduleResolver)) {
     throw new Error(`Module '${moduleName}' not found at ${moduleResolver}`);
   }
 
-  const migrationsDir = path.join(moduleResolver, "migrations");
+  const migrationsDir =
+    layout.migrationsDir ?? path.join(moduleResolver, "migrations");
 
   if (!fs.existsSync(migrationsDir)) {
     fs.mkdirSync(migrationsDir, { recursive: true });
@@ -83,46 +85,11 @@ export async function createDiffMigration(
     };
   }
 
-  // Generate migration SQL from the diff
-  const migration = generateMigration.generateFromDiff(diff, options);
-
-  // Use the capitalized module name as the migration label
-  const now = new Date();
-  const timestamp = generateTimestamp(now);
-  const label = moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
-  const className = `Migration${timestamp}_${label}`;
-  const filename = `${className}.sql`;
-  const filePath = path.join(migrationsDir, filename);
-
-  const template = getMigrationTemplateWithSQL(
-    className,
-    label,
+  return writeDiffMigration({
     moduleName,
-    now,
-    migration,
-  );
-
-  fs.writeFileSync(filePath, template);
-  log("success", `Created migration: ${moduleName}/${filename}`);
-
-  // Update snapshot if requested (default: true)
-  if (options.updateSnapshot !== false) {
-    saveSnapshot(migrationsDir, currentSnapshot);
-    log("info", `Updated schema snapshot for ${moduleName}`);
-  }
-
-  // Log warnings
-  if (migration.warnings.length > 0) {
-    for (const warning of migration.warnings) {
-      log("warn", warning);
-    }
-  }
-
-  return {
-    filePath,
-    hasChanges: diff.hasChanges,
+    migrationsDir,
     diff,
-    migration,
-    warnings: migration.warnings,
-  };
+    currentSnapshot,
+    options,
+  });
 }

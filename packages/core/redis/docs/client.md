@@ -10,20 +10,25 @@ Own the connection to Redis and hand a `Redis` (ioredis) instance to everything 
 
 ```ts
 interface RedisConfig {
-  url: string;                       // e.g. "redis://localhost:6379"
-  maxRetriesPerRequest?: number;     // default 3
-  lazyConnect?: boolean;             // default true
-  options?: Partial<RedisOptions>;   // spread onto the ioredis constructor
+  url: string; // e.g. "redis://localhost:6379"
+  maxRetriesPerRequest?: number; // default 3
+  lazyConnect?: boolean; // default true
+  options?: Partial<RedisOptions>; // spread onto the ioredis constructor
 }
 
 interface RedisClientConfig extends RedisConfig {
-  logger?: ILogger;                  // defaults to console
-  name?: string;                     // connection label for logs, default "default"
-  debug?: boolean;                   // log "reconnecting" events, default false
+  logger?: ILogger; // defaults to console
+  name?: string; // connection label for logs, default "default"
+  debug?: boolean; // log "reconnecting" events, default false
 }
 ```
 
 `Redis` and `RedisOptions` are re-exported from `@damatjs/deps/ioredis` (`src/types/redis.ts`, `src/types/config.ts`).
+
+Framework durability uses the singleton for one multiplexed subscriber and a
+rebuildable coordination projection. Authenticated users need Redis ACL channel
+patterns `&damat:*` and `&damat-events` in addition to their command and key
+rules. Redis is never the canonical store for durable payloads or history.
 
 ## Factory — `src/client/factory.ts`
 
@@ -40,14 +45,19 @@ new Redis(config.url, {
   maxRetriesPerRequest: config.maxRetriesPerRequest ?? 3,
   retryStrategy: createRetryStrategy,
   lazyConnect: config.lazyConnect ?? true,
-  ...config.options,             // caller options win (spread last)
+  enableReadyCheck: false,
+  ...config.options, // caller options win (spread last)
 });
 ```
+
+The default skips ioredis's `INFO`-based readiness probe so restricted ACL
+users do not need server-inspection permission. Framework startup performs an
+authenticated `PING`; set `options.enableReadyCheck` explicitly to opt back in.
 
 `src/client/index.ts` adds the public, singleton-free helpers:
 
 ```ts
-function createRedis(config: RedisConfig): Redis;        // alias of createRedisConnection
+function createRedis(config: RedisConfig): Redis; // alias of createRedisConnection
 async function disconnect(client: Redis): Promise<void>; // client.quit()
 ```
 
@@ -60,11 +70,11 @@ Class wrapper used by the singleton. It does **not** add caching/locking logic �
 ```ts
 class RedisClient {
   constructor(config: RedisClientConfig);
-  get client(): Redis;          // underlying ioredis instance
-  get isConnected(): boolean;   // tracked via connect/close events
-  connect(): Promise<void>;     // redis.connect()
-  disconnect(): Promise<void>;  // redis.quit() + connected = false
-  ping(): Promise<boolean>;     // true iff reply === "PONG", never throws
+  get client(): Redis; // underlying ioredis instance
+  get isConnected(): boolean; // tracked via connect/close events
+  connect(): Promise<void>; // redis.connect()
+  disconnect(): Promise<void>; // redis.quit() + connected = false
+  ping(): Promise<boolean>; // true iff reply === "PONG", never throws
 }
 ```
 
@@ -83,7 +93,10 @@ Behavior:
 A module-level `globalClient: RedisClient | null`.
 
 ```ts
-function initRedis(config?: RedisClientConfig, logger?: ILogger): RedisClient | null;
+function initRedis(
+  config?: RedisClientConfig,
+  logger?: ILogger,
+): RedisClient | null;
 async function connectRedis(): Promise<Redis>;
 function getRedis(): Redis;
 function getRedisClient(): RedisClient;
@@ -99,7 +112,9 @@ async function disconnectRedis(): Promise<void>;
 ## Errors — `src/errors/index.ts`
 
 ```ts
-class RedisConnectionError extends Error { constructor(message, cause?: Error) }
+class RedisConnectionError extends Error {
+  constructor(message, cause?: Error);
+}
 class RedisNotInitializedError extends Error {
   // default message: "Redis not initialized. Call initRedis() first."
 }

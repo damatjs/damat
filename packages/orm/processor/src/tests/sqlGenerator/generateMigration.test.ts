@@ -17,7 +17,9 @@ import {
 
 describe("generateFromDiff", () => {
   it("returns no statements for an empty diff", () => {
-    const result = generateFromDiff(diffSchemas(moduleSchema(), moduleSchema()));
+    const result = generateFromDiff(
+      diffSchemas(moduleSchema(), moduleSchema()),
+    );
     expect(result.upStatements).toEqual([]);
     expect(result.description).toBe("No changes");
     expect(result.warnings).toEqual([]);
@@ -47,12 +49,19 @@ describe("generateFromDiff", () => {
     const next = moduleSchema({
       enums: [statusEnum],
       tables: [
-        table("user", [idColumn, col("status", { type: "enum", enum: "user_status" })]),
+        table("user", [
+          idColumn,
+          col("status", { type: "enum", enum: "user_status" }),
+        ]),
       ],
     });
     const result = generateFromDiff(diffSchemas(moduleSchema(), next));
-    const enumIdx = result.upStatements.findIndex((s) => s.includes("CREATE TYPE"));
-    const tableIdx = result.upStatements.findIndex((s) => s.includes("CREATE TABLE"));
+    const enumIdx = result.upStatements.findIndex((s) =>
+      s.includes("CREATE TYPE"),
+    );
+    const tableIdx = result.upStatements.findIndex((s) =>
+      s.includes("CREATE TABLE"),
+    );
     expect(enumIdx).toBeGreaterThanOrEqual(0);
     expect(tableIdx).toBeGreaterThan(enumIdx);
   });
@@ -60,7 +69,10 @@ describe("generateFromDiff", () => {
   it("orders add_index and add_foreign_key after the table they belong to", () => {
     // Diff an existing table that gains an index and an FK.
     const prev = moduleSchema({
-      tables: [table("user", [idColumn]), table("post", [idColumn, col("user_id")])],
+      tables: [
+        table("user", [idColumn]),
+        table("post", [idColumn, col("user_id")]),
+      ],
     });
     const next = moduleSchema({
       tables: [
@@ -79,8 +91,12 @@ describe("generateFromDiff", () => {
       ],
     });
     const result = generateFromDiff(diffSchemas(prev, next));
-    const idxIdx = result.upStatements.findIndex((s) => s.includes("CREATE INDEX"));
-    const fkIdx = result.upStatements.findIndex((s) => s.includes("ADD CONSTRAINT"));
+    const idxIdx = result.upStatements.findIndex((s) =>
+      s.includes("CREATE INDEX"),
+    );
+    const fkIdx = result.upStatements.findIndex((s) =>
+      s.includes("ADD CONSTRAINT"),
+    );
     expect(idxIdx).toBeGreaterThanOrEqual(0);
     expect(fkIdx).toBeGreaterThan(idxIdx); // index (40) before FK (50)
   });
@@ -96,14 +112,26 @@ describe("generateFromDiff", () => {
       onDelete,
     });
     const prev = moduleSchema({
-      tables: [table("post", [idColumn, col("user_id")], { foreignKeys: [fk("CASCADE")] })],
+      tables: [
+        table("post", [idColumn, col("user_id")], {
+          foreignKeys: [fk("CASCADE")],
+        }),
+      ],
     });
     const next = moduleSchema({
-      tables: [table("post", [idColumn, col("user_id")], { foreignKeys: [fk("SET NULL")] })],
+      tables: [
+        table("post", [idColumn, col("user_id")], {
+          foreignKeys: [fk("SET NULL")],
+        }),
+      ],
     });
     const result = generateFromDiff(diffSchemas(prev, next));
-    const dropIdx = result.upStatements.findIndex((s) => s.includes("DROP CONSTRAINT"));
-    const addIdx = result.upStatements.findIndex((s) => s.includes("ADD CONSTRAINT"));
+    const dropIdx = result.upStatements.findIndex((s) =>
+      s.includes("DROP CONSTRAINT"),
+    );
+    const addIdx = result.upStatements.findIndex((s) =>
+      s.includes("ADD CONSTRAINT"),
+    );
     expect(dropIdx).toBeGreaterThanOrEqual(0);
     expect(addIdx).toBeGreaterThanOrEqual(0);
     expect(dropIdx).toBeLessThan(addIdx);
@@ -127,8 +155,12 @@ describe("generateFromDiff", () => {
       ],
     });
     const result = generateFromDiff(diffSchemas(prev, next));
-    const dropIdx = result.upStatements.findIndex((s) => s.includes("DROP INDEX"));
-    const createIdx = result.upStatements.findIndex((s) => s.includes("CREATE") && s.includes("INDEX") && !s.includes("DROP"));
+    const dropIdx = result.upStatements.findIndex((s) =>
+      s.includes("DROP INDEX"),
+    );
+    const createIdx = result.upStatements.findIndex(
+      (s) => s.includes("CREATE") && s.includes("INDEX") && !s.includes("DROP"),
+    );
     expect(dropIdx).toBeGreaterThanOrEqual(0);
     expect(createIdx).toBeGreaterThanOrEqual(0);
     expect(dropIdx).toBeLessThan(createIdx);
@@ -149,7 +181,9 @@ describe("generateFromDiff", () => {
       tables: [
         table("post", [idColumn, col("user_id")], {
           foreignKeys: [fk("CASCADE")],
-          indexes: [{ name: "post_user_idx", columns: ["user_id"], unique: false }],
+          indexes: [
+            { name: "post_user_idx", columns: ["user_id"], unique: false },
+          ],
         }),
       ],
     });
@@ -157,7 +191,9 @@ describe("generateFromDiff", () => {
       tables: [
         table("post", [idColumn, col("user_id")], {
           foreignKeys: [fk("SET NULL")],
-          indexes: [{ name: "post_user_idx", columns: ["user_id"], unique: true }],
+          indexes: [
+            { name: "post_user_idx", columns: ["user_id"], unique: true },
+          ],
         }),
       ],
     });
@@ -196,14 +232,22 @@ describe("generateFromDiff", () => {
     });
     const next = moduleSchema({
       tables: [
-        table("t", [col("c", { type: "bigint", nullable: false, default: "0" })]),
+        table("t", [
+          col("c", { type: "bigint", nullable: false, default: "0" }),
+        ]),
       ],
     });
     const result = generateFromDiff(diffSchemas(prev, next));
     expect(result.upStatements.length).toBe(3);
-    expect(result.upStatements.some((s) => s.includes("TYPE BIGINT"))).toBe(true);
-    expect(result.upStatements.some((s) => s.includes("SET NOT NULL"))).toBe(true);
-    expect(result.upStatements.some((s) => s.includes("SET DEFAULT 0"))).toBe(true);
+    expect(result.upStatements.some((s) => s.includes("TYPE BIGINT"))).toBe(
+      true,
+    );
+    expect(result.upStatements.some((s) => s.includes("SET NOT NULL"))).toBe(
+      true,
+    );
+    expect(result.upStatements.some((s) => s.includes("SET DEFAULT 0"))).toBe(
+      true,
+    );
   });
 });
 
@@ -215,12 +259,13 @@ describe("generateFromSnapshot", () => {
       moduleName: "shop",
       enums: [statusEnum],
       tables: [
-        table("user", [
-          idColumn,
-          col("status", { type: "enum", enum: "user_status" }),
-        ], {
-          indexes: [{ name: "user_status_idx", columns: ["status"] }],
-        }),
+        table(
+          "user",
+          [idColumn, col("status", { type: "enum", enum: "user_status" })],
+          {
+            indexes: [{ name: "user_status_idx", columns: ["status"] }],
+          },
+        ),
         table("post", [idColumn, col("author_id")], {
           foreignKeys: [
             {
@@ -246,7 +291,9 @@ describe("generateFromSnapshot", () => {
     expect(tableIdx).toBeLessThan(indexIdx);
     expect(indexIdx).toBeLessThan(fkIdx);
 
-    expect(result.description).toContain('Baseline migration for module "shop"');
+    expect(result.description).toContain(
+      'Baseline migration for module "shop"',
+    );
     expect(result.description).toContain("2 table(s)");
   });
 
@@ -317,8 +364,12 @@ describe("up/down migration via diff + reverse", () => {
 
     const down = generateFromDiff(reverseDiff(diff));
     // reverse order: drop table before drop enum
-    const dropTableIdx = down.upStatements.findIndex((s) => s.includes("DROP TABLE"));
-    const dropEnumIdx = down.upStatements.findIndex((s) => s.includes("DROP TYPE"));
+    const dropTableIdx = down.upStatements.findIndex((s) =>
+      s.includes("DROP TABLE"),
+    );
+    const dropEnumIdx = down.upStatements.findIndex((s) =>
+      s.includes("DROP TYPE"),
+    );
     expect(dropTableIdx).toBeGreaterThanOrEqual(0);
     expect(dropEnumIdx).toBeGreaterThan(dropTableIdx);
   });
@@ -347,7 +398,9 @@ describe("up/down migration via diff + reverse", () => {
       moduleSchema({ enums: [statusEnumExtended] }),
     );
     const up = generateFromDiff(diff).upStatements;
-    expect(up.some((s) => s.includes("ADD VALUE IF NOT EXISTS 'banned'"))).toBe(true);
+    expect(up.some((s) => s.includes("ADD VALUE IF NOT EXISTS 'banned'"))).toBe(
+      true,
+    );
 
     const down = generateFromDiff(reverseDiff(diff)).upStatements;
     expect(down.some((s) => s.includes("-- Removing enum values"))).toBe(true);

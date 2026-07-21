@@ -9,19 +9,19 @@ built-in `fs`/`path` and raw ANSI escape codes — no external packages.
 
 ## Module map
 
-| File / dir              | Responsibility                                                                          |
-| ----------------------- | --------------------------------------------------------------------------------------- |
+| File / dir              | Responsibility                                                                                                                                                 |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/index.ts`          | Public API barrel. Re-exports `types`, `logger`, `child`, `noop`, `file-transport`, `global`, `utils`. **Does not** export `colorizer`, `colors`, `formatter`. |
-| `src/types.ts`          | All interfaces & type aliases: `LogLevel`, `LogFormat`, `LoggerConfig`, `LogContext`, `LogEntry`, `RequestLogData`, `FileTransportConfig`, `ILogger`. |
-| `src/colors.ts`         | ANSI codes (`COLORS`), per-level styles (`LEVEL_STYLES`), numeric thresholds (`LOG_LEVELS`). *(internal)* |
-| `src/colorizer.ts`      | `Colorizer` — TTY/color detection and text styling. *(internal)*                        |
-| `src/formatter.ts`      | `Formatter` — timestamp generation and entry → string for each format. *(internal)*     |
-| `src/file-transport.ts` | `FileTransport` — buffering, size rotation, `.log` + `.md` rendering, env-var gating.    |
-| `src/logger.ts`         | `Logger` — the main implementation; wires formatter + file transport, level filtering.  |
-| `src/child.ts`          | `ChildLogger` — context/prefix inheritance, delegates to parent `Logger`.               |
-| `src/noop.ts`           | `NoopLogger` + shared `NOOP_LOGGER` — discards all output.                              |
-| `src/global.ts`         | Process-global singleton, lifecycle helpers, and top-level convenience functions.       |
-| `src/utils.ts`          | `separator` / `successBanner` / `errorBanner` — standalone console banners.             |
+| `src/types.ts`          | All interfaces & type aliases: `LogLevel`, `LogFormat`, `LoggerConfig`, `LogContext`, `LogEntry`, `RequestLogData`, `FileTransportConfig`, `ILogger`.          |
+| `src/colors.ts`         | ANSI codes (`COLORS`), per-level styles (`LEVEL_STYLES`), numeric thresholds (`LOG_LEVELS`). _(internal)_                                                      |
+| `src/colorizer.ts`      | `Colorizer` — TTY/color detection and text styling. _(internal)_                                                                                               |
+| `src/formatter.ts`      | `Formatter` — timestamp generation and entry → string for each format. _(internal)_                                                                            |
+| `src/file-transport.ts` | `FileTransport` — buffering, size rotation, `.log` + `.md` rendering, env-var gating.                                                                          |
+| `src/logger.ts`         | `Logger` — the main implementation; wires formatter + file transport, level filtering.                                                                         |
+| `src/child.ts`          | `ChildLogger` — context/prefix inheritance, delegates to parent `Logger`.                                                                                      |
+| `src/noop.ts`           | `NoopLogger` + shared `NOOP_LOGGER` — discards all output.                                                                                                     |
+| `src/global.ts`         | Process-global singleton, lifecycle helpers, and top-level convenience functions.                                                                              |
+| `src/utils.ts`          | `separator` / `successBanner` / `errorBanner` — standalone console banners.                                                                                    |
 
 ## Architecture overview
 

@@ -26,5 +26,8 @@ export * from "./generator";
 // Tracker
 export * from "./tracker";
 
+// System migrations
+export * from "./system";
+
 // Re-export logger utilities for convenience
 export { log, separator, successBanner, errorBanner } from "./logger";

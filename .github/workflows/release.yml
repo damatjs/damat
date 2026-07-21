@@ -2,52 +2,38 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    tags: ["v*"]
 
 jobs:
   release:
-    name: Test, build & publish packages to npm
+    name: Verify and publish packages
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     permissions:
       contents: read
-      # Required for npm --provenance (sigstore OIDC token).
       id-token: write
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v5
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.9
+          bun-version: 1.3.14
 
-      # The committed lockfile matches a clean checkout: the gitignored
-      # `modules/*` workspaces are dev-only and are NOT recorded in bun.lock,
-      # so a frozen install is reproducible here. If this step ever fails,
-      # a lockfile generated with a local modules/* workspace present was
-      # committed — regenerate bun.lock without it.
-      - name: Install dependencies
+      - name: Install frozen dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build packages
-        run: bun run build --filter='./packages/**'
+      - name: Run complete release gate
+        run: bun run check:release
 
-      # Gate publishing on the same checks as the test workflow: the default
-      # app is bundled by `damat build` (no tsc), so type-check it explicitly,
-      # then run the full package + app test suites.
-      - name: Type-check default app
-        run: bun --filter='./backend/**' run typecheck
+      - name: Verify tag matches the lockstep package version
+        run: bun scripts/verify-release-tag.ts
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
 
-      - name: Test packages + default app
-        run: bun run test --filter='./packages/**' --filter='./backend/**'
-
-      - name: Create .npmrc
+      - name: Configure npm authentication
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
-      # Packs with `bun pm pack` (rewrites workspace:* to concrete versions —
-      # `changeset publish` shells out to `npm publish`, which does not) and
-      # publishes each tarball with npm --provenance. Already-published
-      # versions are skipped, so re-running after a partial failure is safe.
-      - name: Publish to npm
+      - name: Publish provenance-bearing packages
         run: bun scripts/publish-packages.ts

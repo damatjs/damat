@@ -17,8 +17,8 @@ export interface ModelRegistryEntry {
 }
 ```
 
-Each entry caches the table name, the (optional) PG schema, and the *flat list of
-column names* — extracted once at registration, not recomputed per lookup.
+Each entry caches the table name, the (optional) PG schema, and the _flat list of
+column names_ — extracted once at registration, not recomputed per lookup.
 
 ## Construction
 
@@ -49,7 +49,7 @@ registerMany(models: Record<string, ModelDefinition>): void
 `registerMany()` just iterates `Object.entries(models)` and calls `register()`.
 
 > **Gotcha:** columns are snapshotted at registration time. `toTableSchema()` is
-> evaluated *now*, so a model mutated afterwards (e.g. another `.indexes()` /
+> evaluated _now_, so a model mutated afterwards (e.g. another `.indexes()` /
 > `.constrain()` call) will not update the cached `columns`. Register fully-built
 > models.
 
@@ -98,12 +98,15 @@ Steps:
 
 ```ts
 export class ModelRegistryError extends Error {
-  constructor(message: string) { super(message); this.name = "ModelRegistryError"; }
+  constructor(message: string) {
+    super(message);
+    this.name = "ModelRegistryError";
+  }
 }
 ```
 
 Plain named error. The registry itself never throws it — getters return
-`undefined`. It exists for *consumers* to throw on a required-but-missing model,
+`undefined`. It exists for _consumers_ to throw on a required-but-missing model,
 e.g. orm-pg's entity managers:
 
 ```ts

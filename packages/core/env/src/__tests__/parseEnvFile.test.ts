@@ -75,7 +75,9 @@ describe("parseEnvFile", () => {
     });
 
     it("strips an inline comment from an unquoted value", () => {
-      expect(parseEnvFile("FOO=bar # trailing comment")).toEqual({ FOO: "bar" });
+      expect(parseEnvFile("FOO=bar # trailing comment")).toEqual({
+        FOO: "bar",
+      });
     });
 
     it("strips an inline comment with no space before #", () => {

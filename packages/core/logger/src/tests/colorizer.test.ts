@@ -72,7 +72,9 @@ describe("Colorizer: enable detection (supportsColor)", () => {
 describe("Colorizer: colorize / bold / dim", () => {
   it("wraps text in color + reset when enabled", () => {
     const c = colorOn();
-    expect(c.colorize("hello", COLORS.green)).toBe(`${COLORS.green}hello${COLORS.reset}`);
+    expect(c.colorize("hello", COLORS.green)).toBe(
+      `${COLORS.green}hello${COLORS.reset}`,
+    );
     expect(c.bold("b")).toBe(`${COLORS.bold}b${COLORS.reset}`);
     expect(c.dim("d")).toBe(`${COLORS.dim}d${COLORS.reset}`);
   });
@@ -88,7 +90,9 @@ describe("Colorizer: colorize / bold / dim", () => {
 describe("Colorizer: timestamp", () => {
   it("dims the timestamp when enabled", () => {
     const c = colorOn();
-    expect(c.timestamp("2020-01-01")).toBe(`${COLORS.dim}2020-01-01${COLORS.reset}`);
+    expect(c.timestamp("2020-01-01")).toBe(
+      `${COLORS.dim}2020-01-01${COLORS.reset}`,
+    );
   });
 
   it("returns plain timestamp when disabled", () => {
@@ -108,8 +112,12 @@ describe("Colorizer: level badge + padded label", () => {
   it("pads short labels to width 5 when disabled (no color codes)", () => {
     const c = colorOff();
     // info label is "INFO " (already 5), debug is "DEBUG" (5)
-    expect(c.level("info")).toBe(`${LEVEL_STYLES.info.badge} ${"INFO ".padEnd(5)}`);
-    expect(c.level("debug")).toBe(`${LEVEL_STYLES.debug.badge} ${"DEBUG".padEnd(5)}`);
+    expect(c.level("info")).toBe(
+      `${LEVEL_STYLES.info.badge} ${"INFO ".padEnd(5)}`,
+    );
+    expect(c.level("debug")).toBe(
+      `${LEVEL_STYLES.debug.badge} ${"DEBUG".padEnd(5)}`,
+    );
   });
 
   it("WAITING label exceeds 5 chars so padEnd is a no-op", () => {
@@ -167,7 +175,11 @@ describe("Colorizer: context", () => {
 describe("Colorizer: errorInfo", () => {
   it("includes name, message and stack, dimming the stack when enabled", () => {
     const c = colorOn();
-    const out = c.errorInfo({ name: "TypeError", message: "bad", stack: "at foo" });
+    const out = c.errorInfo({
+      name: "TypeError",
+      message: "bad",
+      stack: "at foo",
+    });
     expect(out).toBe(
       `\n${COLORS.red + COLORS.bold}TypeError${COLORS.reset}: ${COLORS.red}bad${COLORS.reset}` +
         `\n${COLORS.dim}at foo${COLORS.reset}`,
@@ -176,7 +188,11 @@ describe("Colorizer: errorInfo", () => {
 
   it("omits the stack line when stack is undefined", () => {
     const c = colorOff();
-    const out = c.errorInfo({ name: "Error", message: "oops", stack: undefined });
+    const out = c.errorInfo({
+      name: "Error",
+      message: "oops",
+      stack: undefined,
+    });
     expect(out).toBe("\nError: oops");
     expect(out).not.toContain("\n  ");
   });

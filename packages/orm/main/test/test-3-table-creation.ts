@@ -7,7 +7,7 @@ export async function test3_CreateTables(pool: Pool, sqlStatements: string[]) {
 
   // Replace public with orm_test schema
   const sql = sqlStatements
-    .map(s => s.replace(/"public"\./g, '"orm_test".'))
+    .map((s) => s.replace(/"public"\./g, '"orm_test".'))
     .join(";\n");
 
   try {
@@ -18,7 +18,10 @@ export async function test3_CreateTables(pool: Pool, sqlStatements: string[]) {
       WHERE table_schema = 'orm_test'
     `);
 
-    console.log("✅ Tables created:", result.rows.map(r => r.table_name).join(", "));
+    console.log(
+      "✅ Tables created:",
+      result.rows.map((r) => r.table_name).join(", "),
+    );
     return true;
   } catch (error: any) {
     console.log("❌ Table creation failed:", error.message);

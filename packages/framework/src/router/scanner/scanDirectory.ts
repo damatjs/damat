@@ -1,7 +1,7 @@
 import { readdirSync, statSync, existsSync } from "fs";
 import { join } from "path";
 import type { ScannedRoute } from "../types";
-import { folderToUrlPath } from './folderToUrlPath';
+import { folderToUrlPath } from "./folderToUrlPath";
 
 export function scanDirectory(
   dir: string,

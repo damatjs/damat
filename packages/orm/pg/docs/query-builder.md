@@ -20,7 +20,7 @@ WHERE-clause compilation is split out into [where.md](./where.md); relation (`wi
 class ModelAccessor<Cols extends string = string> {
   readonly _model: ModelDefinition;
   readonly builders: {
-    readonly select: SelectBuilder<Cols>;   // getters — fresh builder per access
+    readonly select: SelectBuilder<Cols>; // getters — fresh builder per access
     readonly insert: InsertBuilder<Cols>;
     readonly update: UpdateBuilder<Cols>;
     readonly delete: DeleteBuilder<Cols>;
@@ -31,16 +31,16 @@ class ModelAccessor<Cols extends string = string> {
 
 Each method returns `QueryResult<D> = { sql: BuiltQuery; json: D }`:
 
-| Method | Descriptor | Builder used |
-| --- | --- | --- |
-| `findMany(options = {})` | `SelectDescriptor` | `SelectBuilder` |
-| `findOne(options = {})` | `SelectDescriptor` | `SelectBuilder` (+ `LIMIT 1`) |
-| `create(options)` | `InsertDescriptor` | `InsertBuilder` |
-| `createMany(options)` | `InsertDescriptor` | `InsertBuilder` |
-| `update(options)` | `UpdateDescriptor` | `UpdateBuilder` |
-| `delete(options)` | `DeleteDescriptor` | `DeleteBuilder` |
-| `upsert(options)` | `UpsertDescriptor` | `UpsertBuilder` |
-| `upsertMany(options)` | `UpsertDescriptor` | `UpsertBuilder` |
+| Method                   | Descriptor         | Builder used                  |
+| ------------------------ | ------------------ | ----------------------------- |
+| `findMany(options = {})` | `SelectDescriptor` | `SelectBuilder`               |
+| `findOne(options = {})`  | `SelectDescriptor` | `SelectBuilder` (+ `LIMIT 1`) |
+| `create(options)`        | `InsertDescriptor` | `InsertBuilder`               |
+| `createMany(options)`    | `InsertDescriptor` | `InsertBuilder`               |
+| `update(options)`        | `UpdateDescriptor` | `UpdateBuilder`               |
+| `delete(options)`        | `DeleteDescriptor` | `DeleteBuilder`               |
+| `upsert(options)`        | `UpsertDescriptor` | `UpsertBuilder`               |
+| `upsertMany(options)`    | `UpsertDescriptor` | `UpsertBuilder`               |
 
 The actual option→builder wiring lives in `accessor/find.ts` and `accessor/mutate.ts` (the
 `executeFind*` / `execute*` functions), which each: construct a fresh builder, apply the options, and
@@ -57,14 +57,18 @@ return `{ sql: b.generateSql(), json: b.generateJson() }`.
 
 ```ts
 interface FindOptions<Cols> {
-  select?: Cols[];                 // omit ⇒ SELECT *
-  where?: WhereClause<Cols>;       // object-style conditions (see where.md)
+  select?: Cols[]; // omit ⇒ SELECT *
+  where?: WhereClause<Cols>; // object-style conditions (see where.md)
   whereRaw?: RawWhereClause | RawWhereClause[];
-  orderBy?: Array<{ column: Cols; direction?: "ASC"|"DESC"; nulls?: "NULLS FIRST"|"NULLS LAST" }>;
+  orderBy?: Array<{
+    column: Cols;
+    direction?: "ASC" | "DESC";
+    nulls?: "NULLS FIRST" | "NULLS LAST";
+  }>;
   limit?: number;
   offset?: number;
   distinct?: boolean;
-  with?: RelationIncludeMap;       // eager relation loading (see relations.md)
+  with?: RelationIncludeMap; // eager relation loading (see relations.md)
 }
 ```
 
@@ -73,8 +77,16 @@ interface FindOptions<Cols> {
 ### `CreateOptions` / `CreateManyOptions`
 
 ```ts
-interface CreateOptions<Cols>     { data: ValuesMap<Cols>;   returning?: Cols[]; onConflict?: OnConflictClause<Cols> }
-interface CreateManyOptions<Cols> { data: ValuesMap<Cols>[]; returning?: Cols[]; onConflict?: OnConflictClause<Cols> }
+interface CreateOptions<Cols> {
+  data: ValuesMap<Cols>;
+  returning?: Cols[];
+  onConflict?: OnConflictClause<Cols>;
+}
+interface CreateManyOptions<Cols> {
+  data: ValuesMap<Cols>[];
+  returning?: Cols[];
+  onConflict?: OnConflictClause<Cols>;
+}
 ```
 
 ### `UpdateOptions` / `DeleteOptions`
@@ -85,13 +97,13 @@ interface UpdateOptions<Cols> {
   where?: WhereClause<Cols>;
   whereRaw?: RawWhereClause | RawWhereClause[];
   returning?: Cols[];
-  allowFullTable?: boolean;   // opt-in to update with no WHERE
+  allowFullTable?: boolean; // opt-in to update with no WHERE
 }
 interface DeleteOptions<Cols> {
   where?: WhereClause<Cols>;
   whereRaw?: RawWhereClause | RawWhereClause[];
   returning?: Cols[];
-  allowFullTable?: boolean;   // opt-in to delete with no WHERE
+  allowFullTable?: boolean; // opt-in to delete with no WHERE
 }
 ```
 
@@ -99,10 +111,10 @@ interface DeleteOptions<Cols> {
 
 ```ts
 interface UpsertOptions<Cols> {
-  data: ValuesMap<Cols>;        // (UpsertManyOptions: ValuesMap<Cols>[])
-  onConflict: Cols[];           // → ON CONFLICT (col, …)
-  updateColumns?: Cols[];       // columns to update on conflict (via EXCLUDED)
-  set?: ValuesMap<Cols>;        // explicit overrides; take precedence over EXCLUDED fallback
+  data: ValuesMap<Cols>; // (UpsertManyOptions: ValuesMap<Cols>[])
+  onConflict: Cols[]; // → ON CONFLICT (col, …)
+  updateColumns?: Cols[]; // columns to update on conflict (via EXCLUDED)
+  set?: ValuesMap<Cols>; // explicit overrides; take precedence over EXCLUDED fallback
   returning?: Cols[];
 }
 ```
@@ -123,12 +135,12 @@ this._tableRef        = { name: model._tableName, schema?: model._schemaName };
 
 Shared chainable methods (each returns `this`):
 
-| Method | Effect | Guard |
-| --- | --- | --- |
-| `where(clause)` | pushes an object-style WHERE | validated at SQL build (see where.md) |
-| `whereRaw(clause)` | pushes a raw SQL fragment | — |
-| `orderBy(column, direction?, nulls?)` | pushes an ORDER BY | `assertKnownColumnList([column])` |
-| `returning(cols = [])` | sets RETURNING columns | `assertKnownColumnList(cols)` |
+| Method                                | Effect                       | Guard                                 |
+| ------------------------------------- | ---------------------------- | ------------------------------------- |
+| `where(clause)`                       | pushes an object-style WHERE | validated at SQL build (see where.md) |
+| `whereRaw(clause)`                    | pushes a raw SQL fragment    | —                                     |
+| `orderBy(column, direction?, nulls?)` | pushes an ORDER BY           | `assertKnownColumnList([column])`     |
+| `returning(cols = [])`                | sets RETURNING columns       | `assertKnownColumnList(cols)`         |
 
 Protected build helpers: `_buildWhere(params)`, `_buildOrderBy()`, `_buildReturning()`, `_table()`,
 `_assertCols(obj, ctx)`, `_assertColList(names, ctx)`. Subclasses implement `generateSql(): BuiltQuery`
@@ -186,7 +198,11 @@ INSERT INTO <table> (col, …) VALUES ($1, …), ($n, …) [ON CONFLICT …] RET
 
 ```ts
 type OnConflictAction = "nothing" | "update";
-interface OnConflictClause<Cols> { conflictColumns?: Cols[]; action: OnConflictAction; set?: ValuesMap<Cols> }
+interface OnConflictClause<Cols> {
+  conflictColumns?: Cols[];
+  action: OnConflictAction;
+  set?: ValuesMap<Cols>;
+}
 ```
 
 `buildOnConflictSql`:
@@ -253,16 +269,16 @@ So `set` overrides `EXCLUDED` for the keys it names, and `updateColumns` narrows
 
 [`helpers/`](../src/query/helpers):
 
-| Helper | File | Purpose |
-| --- | --- | --- |
-| `quoteIdent(name)` | ident.ts | `"name"` with embedded `"` doubled — identifier safety. |
-| `buildTableRef(ref)` | ident.ts | `"schema"."table"` or `"table"`. |
-| `assembleQuery(parts, params)` | assemble.ts | Filters empty parts, joins with spaces ⇒ `{ sql, params }`. |
-| `buildOrderByClause(clauses)` | clauses.ts | `ORDER BY "col" DIR NULLS …`. |
-| `buildReturningClause(cols)` | clauses.ts | `RETURNING *` when empty, else quoted list. |
-| `assertKnownColumns` / `assertKnownColumnList` | asserts.ts | Column-existence guards. |
-| `columnNameSet(columns)` | asserts.ts | `Set<string>` of column names. |
-| `buildWhereClause` / `compileCondition` | where/* | WHERE compilation — see [where.md](./where.md). |
+| Helper                                         | File        | Purpose                                                     |
+| ---------------------------------------------- | ----------- | ----------------------------------------------------------- |
+| `quoteIdent(name)`                             | ident.ts    | `"name"` with embedded `"` doubled — identifier safety.     |
+| `buildTableRef(ref)`                           | ident.ts    | `"schema"."table"` or `"table"`.                            |
+| `assembleQuery(parts, params)`                 | assemble.ts | Filters empty parts, joins with spaces ⇒ `{ sql, params }`. |
+| `buildOrderByClause(clauses)`                  | clauses.ts  | `ORDER BY "col" DIR NULLS …`.                               |
+| `buildReturningClause(cols)`                   | clauses.ts  | `RETURNING *` when empty, else quoted list.                 |
+| `assertKnownColumns` / `assertKnownColumnList` | asserts.ts  | Column-existence guards.                                    |
+| `columnNameSet(columns)`                       | asserts.ts  | `Set<string>` of column names.                              |
+| `buildWhereClause` / `compileCondition`        | where/*     | WHERE compilation — see [where.md](./where.md).             |
 
 ## Types (`query/types/**`)
 

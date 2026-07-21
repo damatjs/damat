@@ -3,7 +3,8 @@ import { Pool } from "@damatjs/deps/pg";
 
 async function testGenerateId() {
   const pool = new Pool({
-    connectionString: "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable"
+    connectionString:
+      "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable",
   });
 
   // Create the function using pgcrypto or timestamp+random
@@ -37,7 +38,9 @@ async function testGenerateId() {
     )
   `);
 
-  await pool.query("INSERT INTO test_id.users (name) VALUES ('Test') RETURNING id, name");
+  await pool.query(
+    "INSERT INTO test_id.users (name) VALUES ('Test') RETURNING id, name",
+  );
   const inserted = await pool.query("SELECT * FROM test_id.users");
   console.log("✅ Auto-generated ID in table:", inserted.rows[0].id);
 

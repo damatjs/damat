@@ -32,4 +32,4 @@ export type NewProduct = {
   category_id?: string | null;
 };
 
-export type UpdateProduct = Partial<Omit<Product, 'id'>>;
+export type UpdateProduct = Partial<Omit<Product, "id">>;

@@ -3,7 +3,12 @@ import { parseCommandArgs } from "../run/buildCommand";
 import type { CommandOption } from "../types";
 
 const defs: CommandOption[] = [
-  { name: "typecheck", description: "Type-check", type: "boolean", default: true },
+  {
+    name: "typecheck",
+    description: "Type-check",
+    type: "boolean",
+    default: true,
+  },
   { name: "minify", description: "Minify", type: "boolean", default: false },
   { name: "output", alias: "o", description: "Output", type: "string" },
   { name: "port", description: "Port", type: "number" },

@@ -1,9 +1,5 @@
 import { bootModule } from "./boot";
-import type {
-  BootableModule,
-  BootModuleOptions,
-  BootedModule,
-} from "./types";
+import type { BootableModule, BootModuleOptions, BootedModule } from "./types";
 
 /**
  * Boot a module, run a function against it, and always tear down.

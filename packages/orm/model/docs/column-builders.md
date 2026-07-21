@@ -48,19 +48,19 @@ The base class all column types extend. Protected state plus a fluent API.
 
 ```ts
 class ColumnBuilder {
-  constructor(type: ColumnType)
+  constructor(type: ColumnType);
 
-  primaryKey(): this
-  nullable(): this
-  unique(): this
-  default(value: string | number | boolean): this   // string values are auto-single-quoted
-  defaultRaw(expression: string): this               // raw SQL expression, no quoting
-  array(): this
-  fieldName(name: string): this                      // DB column name ≠ property name
-  _setName(name: string): this                       // internal: set by ModelDefinition
+  primaryKey(): this;
+  nullable(): this;
+  unique(): this;
+  default(value: string | number | boolean): this; // string values are auto-single-quoted
+  defaultRaw(expression: string): this; // raw SQL expression, no quoting
+  array(): this;
+  fieldName(name: string): this; // DB column name ≠ property name
+  _setName(name: string): this; // internal: set by ModelDefinition
 
-  toSchema(): ColumnSchema
-  toTsType(): string
+  toSchema(): ColumnSchema;
+  toTsType(): string;
 }
 ```
 
@@ -84,9 +84,9 @@ Behavior notes:
    type name (`_enumTsType`) directly, bypassing the map.
 2. Array wrap: `Array<base>` when `.array()`.
 3. Nullability: append `| null`. If the base is a union (e.g. an object literal
-   that itself contains ` | `) and the column is nullable but not an array, it is
+   that itself contains `|`) and the column is nullable but not an array, it is
    parenthesised: `(base) | null`. The union-detection (`baseNeedsParens`) scans
-   for a top-level ` | ` outside `{}`/`<>` nesting.
+   for a top-level `|` outside `{}`/`<>` nesting.
 
 Examples (from the source doc-comment):
 
@@ -107,7 +107,7 @@ Most subclasses just call `super("<type>")`. The ones with extra behavior:
 ### `IdColumnBuilder` (`id.ts`)
 
 ```ts
-columns.id({ prefix: "usr" }).primaryKey()
+columns.id({ prefix: "usr" }).primaryKey();
 ```
 
 - SQL type `text`, defaults to **not nullable**.
@@ -163,7 +163,7 @@ when an argument is passed.
 
 ```ts
 const Status = new EnumBuilder(["a", "b"]).name("Status");
-columns.enum(Status)
+columns.enum(Status);
 ```
 
 At construction it copies the enum's name into both `_enum` (the PG type
@@ -174,8 +174,8 @@ referencing a named `CREATE TYPE`.
 ### `VectorColumnBuilder` (`vector.ts`)
 
 ```ts
-columns.vector(1536)            // real[] with length=1536
-columns.vector(768).dimensions(512)
+columns.vector(1536); // real[] with length=1536
+columns.vector(768).dimensions(512);
 ```
 
 SQL type `real`, always `array = true`, with the dimension stored in `length`.
@@ -188,11 +188,11 @@ Declares a named PG enum once; columns reference it by name.
 
 ```ts
 class EnumBuilder {
-  constructor(values: string[])
-  name(name: string): this            // PG type name AND TS alias name
-  toSchema(): EnumSchema              // { name, values }
-  toTsTypeName(): string             // "Status"
-  toTsTypeDeclaration(): string      // "export type Status = 'a' | 'b';"
+  constructor(values: string[]);
+  name(name: string): this; // PG type name AND TS alias name
+  toSchema(): EnumSchema; // { name, values }
+  toTsTypeName(): string; // "Status"
+  toTsTypeDeclaration(): string; // "export type Status = 'a' | 'b';"
 }
 ```
 

@@ -1,149 +1,61 @@
-import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { getRegistry, clearRegistry, registerCommand, getCommand, getAllCommands } from "../registry";
+import { describe, expect, test } from "bun:test";
+import { createCommandRegistry } from "../registry";
 import type { Command } from "../types";
 
+function command(name: string, overrides: Partial<Command> = {}): Command {
+  return {
+    name,
+    description: `${name} command`,
+    handler: async () => ({ exitCode: 0 }),
+    ...overrides,
+  };
+}
+
 describe("CommandRegistry", () => {
-  beforeEach(() => {
-    clearRegistry();
+  test("registers commands, aliases, and unique command values", () => {
+    const registry = createCommandRegistry();
+    const build = command("build", { aliases: ["b"] });
+    registry.register(build);
+
+    expect(registry.get("build")).toBe(build);
+    expect(registry.get("b")).toBe(build);
+    expect(registry.getAll()).toEqual([build]);
+    expect(registry.has("build")).toBe(true);
+    expect(registry.get("missing")).toBeUndefined();
   });
 
-  afterEach(() => {
-    clearRegistry();
+  test("namespaces nested commands and aliases", () => {
+    const registry = createCommandRegistry();
+    const up = command("up", { aliases: ["u"] });
+    registry.register(command("db", { subcommands: [up] }));
+
+    expect(registry.get("db:up")).toBe(up);
+    expect(registry.get("db:u")).toBe(up);
   });
 
-  test("should register and retrieve a command", () => {
-    const cmd: Command = {
-      name: "test",
-      description: "Test command",
-      handler: async () => ({ exitCode: 0 }),
-    };
-
-    registerCommand(cmd);
-    const retrieved = getCommand("test");
-
-    expect(retrieved).toBeDefined();
-    expect(retrieved?.name).toBe("test");
-    expect(retrieved?.description).toBe("Test command");
+  test("keeps an already-prefixed nested command name", () => {
+    const registry = createCommandRegistry();
+    const up = command("db:up");
+    registry.register(command("db", { subcommands: [up] }));
+    expect(registry.get("db:up")).toBe(up);
   });
 
-  test("should return undefined for non-existent command", () => {
-    const retrieved = getCommand("nonexistent");
-    expect(retrieved).toBeUndefined();
+  test("rejects duplicate commands and aliases", () => {
+    const registry = createCommandRegistry();
+    registry.register(command("build", { aliases: ["b"] }));
+
+    expect(() => registry.register(command("build"))).toThrow(
+      "command already registered",
+    );
+    expect(() =>
+      registry.register(command("test", { aliases: ["b"] })),
+    ).toThrow("alias 'b' already registered");
   });
 
-  test("should get all registered commands", () => {
-    const cmd1: Command = {
-      name: "test1",
-      description: "Test 1",
-      handler: async () => ({ exitCode: 0 }),
-    };
-    const cmd2: Command = {
-      name: "test2",
-      description: "Test 2",
-      handler: async () => ({ exitCode: 0 }),
-    };
-
-    registerCommand(cmd1);
-    registerCommand(cmd2);
-
-    const all = getAllCommands();
-    expect(all.length).toBe(2);
-    expect(all.map(c => c.name)).toContain("test1");
-    expect(all.map(c => c.name)).toContain("test2");
-  });
-
-  test("should register command with aliases", () => {
-    const cmd: Command = {
-      name: "build",
-      description: "Build command",
-      aliases: ["b", "bld"],
-      handler: async () => ({ exitCode: 0 }),
-    };
-
-    registerCommand(cmd);
-
-    expect(getCommand("build")).toBeDefined();
-    expect(getCommand("b")).toBeDefined();
-    expect(getCommand("bld")).toBeDefined();
-  });
-
-  test("should throw when registering duplicate command", () => {
-    const cmd: Command = {
-      name: "duplicate",
-      description: "Duplicate",
-      handler: async () => ({ exitCode: 0 }),
-    };
-
-    registerCommand(cmd);
-
-    expect(() => registerCommand(cmd)).toThrow();
-  });
-
-  test("should register subcommands", () => {
-    const parent: Command = {
-      name: "migrate",
-      description: "Migration commands",
-      subcommands: [
-        {
-          name: "migrate:up",
-          description: "Run migrations",
-          handler: async () => ({ exitCode: 0 }),
-        },
-        {
-          name: "migrate:down",
-          description: "Rollback migrations",
-          handler: async () => ({ exitCode: 0 }),
-        },
-      ],
-      handler: async () => ({ exitCode: 0 }),
-    };
-
-    registerCommand(parent);
-
-    expect(getCommand("migrate")).toBeDefined();
-    expect(getCommand("migrate:up")).toBeDefined();
-    expect(getCommand("migrate:down")).toBeDefined();
-  });
-
-  test("should check if command exists", () => {
-    const registry = getRegistry();
-    const cmd: Command = {
-      name: "exists",
-      description: "Exists command",
-      handler: async () => ({ exitCode: 0 }),
-    };
-
-    expect(registry.has("exists")).toBe(false);
-    registerCommand(cmd);
-    expect(registry.has("exists")).toBe(true);
-  });
-
-  test("should clear all commands", () => {
-    const cmd: Command = {
-      name: "clear-test",
-      description: "Clear test",
-      handler: async () => ({ exitCode: 0 }),
-    };
-
-    registerCommand(cmd);
-    expect(getCommand("clear-test")).toBeDefined();
-
-    clearRegistry();
-    expect(getCommand("clear-test")).toBeUndefined();
-  });
-
-  test("should not duplicate commands in getAll", () => {
-    const cmd: Command = {
-      name: "alias-test",
-      description: "Alias test",
-      aliases: ["at"],
-      handler: async () => ({ exitCode: 0 }),
-    };
-
-    registerCommand(cmd);
-
-    const all = getAllCommands();
-    const names = all.map(c => c.name);
-    expect(names.filter(n => n === "alias-test").length).toBe(1);
+  test("clear removes every registration", () => {
+    const registry = createCommandRegistry();
+    registry.register(command("build"));
+    registry.clear();
+    expect(registry.getAll()).toEqual([]);
   });
 });

@@ -2,123 +2,112 @@
 
 # 7. Modules & services
 
-A module is the unit of composition (see [Concepts](./02-concepts.md)). It has
-three small pieces.
+A module owns one domain slice: models, migrations, typed configuration, a
+service, and optional routes or orchestration providers. The backend decides
+which modules to assemble and supplies their shared infrastructure.
 
-## 7.1 The service
+## 7.1 Models become service accessors
 
-`ModuleService({ models, credentialsSchema })` returns a base class that
-**auto-generates CRUD** for every model you register, keyed by the model's name.
+Collect the module's ORM models, then pass them to `ModuleService`:
 
 ```ts
-// src/modules/user/service.ts
-import { ModuleService } from "@damatjs/framework";
-import { UserModel, AccountModel, SessionModel, VerificationModel } from "./models";
-import { schema } from "./config/schema";
+import { ModuleService } from "@damatjs/services";
+import { collectModels, columns, model } from "@damatjs/orm-model";
 
-export const models = {
-  user: UserModel,
-  account: AccountModel,
-  session: SessionModel,
-  verification: VerificationModel,
-};
+const User = model("users", {
+  id: columns.id({ prefix: "usr" }).primaryKey(),
+  email: columns.text().unique(),
+}).timestamps();
 
-export class UserModuleService extends ModuleService({
-  models,
-  credentialsSchema: schema,
-}) {
-  // Add domain methods on top of the generated CRUD:
-  async findByEmail(email: string) {
-    return this.user.find({ where: { email } });
-  }
-
-  async createWithAccount(email: string, provider: string) {
-    return this.transaction(async () => {
-      const user = await this.user.create({ data: { email } });
-      await this.account.create({ data: { userId: user.id, provider } });
-      return user;
-    });
-  }
-}
+export const models = collectModels([User]);
+export class UserService extends ModuleService({ models }) {}
 ```
 
-Each registered model gets methods like `create`, `createMany`, `upsert`,
-`upsertMany`, `find`, `findById`, `findOne`, `findMany`, `update`, `updateOne`,
-`delete` (with optional `cascade`), `softDelete` (with optional `cascade`),
-`restore`, `count`, `exists`, plus `this.transaction(cb)`. Full list and options:
-[`@damatjs/services` → module-service internals](../../packages/service/docs/module-service.md).
+The table name determines the camel-cased accessor. `users` becomes
+`service.users`, with create, find, update, delete, upsert, count, relation, and
+transaction operations. Do not add methods that merely rename those accessors.
 
-## 7.2 Credentials (config)
+## 7.2 Layer business behavior
 
-A module declares a zod schema for the config it needs and a loader that reads it
-from the environment. This keeps secrets typed and validated at startup.
+The normal request path is:
+
+```text
+route → workflow → step → service accessor or integration
+```
+
+- Routes validate input, call a workflow, and shape the HTTP response.
+- Workflows express local saga order, retry, and compensation.
+- Steps perform one meaningful action and own its compensation.
+- Services provide generated model accessors and genuinely new integrations.
+
+A step can call the typed module registry directly:
 
 ```ts
-// src/modules/user/config/schema.ts
+import { getModule } from "@damatjs/framework";
+
+const users = getModule("user");
+const user = await users.users.create({ data: { email: input.email } });
+```
+
+Keep provider-specific SDK work in small `src/lib/<provider>.ts` files and
+expose it through a service method. Multi-stage, restartable orchestration is a
+pipeline; background work is a job; delivery to durable subscribers is an
+event. See [Durable events and jobs](./10b-events-and-jobs.md) and
+[Pipelines](./10c-pipelines.md).
+
+## 7.3 Typed credentials
+
+Declare the module's configuration schema and load values from the environment:
+
+```ts
 import { z } from "@damatjs/deps/zod";
-export const schema = z.object({
-  betterAuth: z.object({
-    betterAuthSecret: z.string().min(32),
-    sessionMaxAge: z.coerce.number().default(604800),
-  }),
-});
 
-// src/modules/user/config/load.ts
+export const schema = z.object({ apiKey: z.string().min(16) });
 export const load = (env: NodeJS.ProcessEnv) => ({
-  betterAuth: {
-    betterAuthSecret: env.BETTER_AUTH_SECRET,
-    sessionMaxAge: env.SESSION_MAX_AGE,
-  },
+  apiKey: env.PROVIDER_API_KEY,
 });
 ```
 
-## 7.3 The module definition
+Register required environment names in the module's `damat.json`. Installers
+report them, but the backend owner decides where secrets are stored.
+
+## 7.4 Define and register the module
+
+Portable module packages import definition APIs from `@damatjs/services`:
 
 ```ts
-// src/modules/user/index.ts
-import { defineModule } from "@damatjs/framework";
-import { UserModuleService, models } from "./service";
-import credentials from "./config";   // { schema, load }
+import { defineModule } from "@damatjs/services";
+import credentials from "./config";
+import { models, UserService } from "./service";
 
-export const USER_MODULE = "user";
-export { UserModuleService, models };
-
-export default defineModule(USER_MODULE, {
-  service: UserModuleService,
+export { models, UserService };
+export default defineModule("user", {
+  service: UserService,
   credentials: credentials.load,
 });
 ```
 
-Register it in `damat.config.ts` (see [Configuration](./04-configuration.md)).
-At runtime, get a module's service anywhere with `getModule`:
+An app-owned module may use the curated `@damatjs/framework` surface described
+in the root [AGENTS.md](../../AGENTS.md). Register the module under a stable key
+in `damat.config.ts`; `getModule(key)` then returns its typed service.
 
-```ts
-import { getModule } from "@damatjs/framework";
-const users = getModule("user");
-await users.user.create({ data: { email: "a@b.co" } });
-```
+## 7.5 Relate independent modules with links
 
-> The same module can be **developed and tested in isolation** as a standalone
-> package — see [Authoring a module](./13-authoring-modules.md).
-
-## 7.4 Relating modules
-
-`getModule(id)` is how one module *calls* another. To declare a **data
-relationship** between two independent modules without either importing the
-other, use a **cross-module link** (`@damatjs/link`). Links live at the app level
-under `src/links/`, generate a junction table, and surface the related records on
-each module's own entity type:
+One module never imports another module's internals or creates a cross-module
+foreign key. The backend owns links under `src/links/`, migrates their junction
+tables, and queries them through `getModule("link")`.
 
 ```ts
 const link = getModule("link");
 const { data } = await link.graph({
-  module: "user", entity: "user",
-  fields: ["*", "organizations.*"],   // follows the link to the other module
+  module: "user",
+  entity: "users",
+  fields: ["*", "organizations.*"],
 });
 ```
 
-Authoring a link, wiring `damat.config.ts`, and migrating it are covered in the
-[`@damatjs/link` README](../../packages/link/README.md).
+See the [`@damatjs/link` README](../../packages/link/README.md) for the complete
+definition, migration, and graph-query flow.
 
 ---
 

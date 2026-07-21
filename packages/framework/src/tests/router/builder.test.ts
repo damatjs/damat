@@ -82,8 +82,12 @@ describe("createFileRouter", () => {
     expect(methods).toEqual(["DELETE", "GET", "POST"]);
 
     expect((await fr.router.request("/multi")).status).toBe(200);
-    expect((await fr.router.request("/multi", { method: "POST" })).status).toBe(200);
-    expect((await fr.router.request("/multi", { method: "DELETE" })).status).toBe(200);
+    expect((await fr.router.request("/multi", { method: "POST" })).status).toBe(
+      200,
+    );
+    expect(
+      (await fr.router.request("/multi", { method: "DELETE" })).status,
+    ).toBe(200);
   });
 
   it("logs an error and throws a wrapped error when a route file throws on import", async () => {
@@ -109,7 +113,9 @@ describe("createFileRouter", () => {
     const { logger } = recordingLogger();
     const fr = await createFileRouter({ routesDir: root, logger });
 
-    const route = fr.routes.find((r) => r.path === "/limited" && r.method === "GET");
+    const route = fr.routes.find(
+      (r) => r.path === "/limited" && r.method === "GET",
+    );
     expect(route).toBeDefined();
     expect(route!.hasRateLimit).toBe(true);
     expect(route!.hasMiddleware).toBe(true);
@@ -128,7 +134,9 @@ describe("createFileRouter", () => {
     const { logger } = recordingLogger();
     const fr = await createFileRouter({ routesDir: root, logger });
 
-    const route = fr.routes.find((r) => r.path === "/secured" && r.method === "GET");
+    const route = fr.routes.find(
+      (r) => r.path === "/secured" && r.method === "GET",
+    );
     expect(route).toBeDefined();
     expect(route!.hasAuth).toBe(true);
 
@@ -165,7 +173,11 @@ describe("createFileRouter", () => {
     writeRoute("widgets", `export const GET = (c) => c.text("ok");`);
 
     const { logger } = recordingLogger();
-    const fr = await createFileRouter({ routesDir: root, basePath: "/api", logger });
+    const fr = await createFileRouter({
+      routesDir: root,
+      basePath: "/api",
+      logger,
+    });
 
     expect(fr.routes[0]!.path).toBe("/api/widgets");
     expect((await fr.router.request("/api/widgets")).status).toBe(200);
@@ -190,7 +202,9 @@ describe("createFileRouter", () => {
 
     // Exercise the registered handlers so the fixtures are fully covered.
     expect((await fr.router.request("/a")).status).toBe(200);
-    expect((await fr.router.request("/b", { method: "POST" })).status).toBe(200);
+    expect((await fr.router.request("/b", { method: "POST" })).status).toBe(
+      200,
+    );
   });
 
   it("logs scanning + per-route registration details when debug is enabled", async () => {
@@ -201,7 +215,9 @@ describe("createFileRouter", () => {
 
     // The scan summary and the per-route registration line are both logged.
     expect(infos.some((i) => /Scanning routes/.test(i.msg))).toBe(true);
-    expect(infos.some((i) => /Registered route: GET \/dbg/.test(i.msg))).toBe(true);
+    expect(infos.some((i) => /Registered route: GET \/dbg/.test(i.msg))).toBe(
+      true,
+    );
     expect((await fr.router.request("/dbg")).status).toBe(200);
   });
 
@@ -237,7 +253,9 @@ describe("createFileRouter", () => {
     const { logger } = recordingLogger();
     const fr = await createFileRouter({ routesDir: root, logger });
 
-    const route = fr.routes.find((r) => r.path === "/validated" && r.method === "GET");
+    const route = fr.routes.find(
+      (r) => r.path === "/validated" && r.method === "GET",
+    );
     expect(route!.hasValidator).toBe(true);
 
     // The validator runs and passes the request through to the handler.
@@ -262,6 +280,8 @@ describe("createFileRouter", () => {
 
     // Exercise the registered handlers so the fixture is fully covered.
     expect((await fr.router.request("/list")).status).toBe(200);
-    expect((await fr.router.request("/list", { method: "POST" })).status).toBe(200);
+    expect((await fr.router.request("/list", { method: "POST" })).status).toBe(
+      200,
+    );
   });
 });

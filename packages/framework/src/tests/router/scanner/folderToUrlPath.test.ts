@@ -25,7 +25,7 @@ describe("folderToUrlPath", () => {
 
     it("converts multiple dynamic params", () => {
       expect(folderToUrlPath("users/[userId]/posts/[postId]")).toBe(
-        "users/:userId/posts/:postId"
+        "users/:userId/posts/:postId",
       );
     });
 
@@ -48,7 +48,7 @@ describe("folderToUrlPath", () => {
   describe("complex patterns", () => {
     it("handles combination of params and catch-all", () => {
       expect(folderToUrlPath("users/[userId]/[...actions]")).toBe(
-        "users/:userId/*"
+        "users/:userId/*",
       );
     });
 

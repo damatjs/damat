@@ -44,7 +44,11 @@ describe("ModelRegistry › register", () => {
   it("logs a debug message on registration with column count and schema", () => {
     registry.register(
       "User",
-      makeModel({ tableName: "users", schemaName: "store", columns: ["id", "email"] }),
+      makeModel({
+        tableName: "users",
+        schemaName: "store",
+        columns: ["id", "email"],
+      }),
     );
 
     const debugCalls = logger.callsTo("debug");
@@ -53,15 +57,21 @@ describe("ModelRegistry › register", () => {
     expect(debugCalls[0]!.args[1]).toEqual({ columns: 2, schema: "store" });
   });
 
-  it("defaults the logged schema to \"public\" when none is set", () => {
+  it('defaults the logged schema to "public" when none is set', () => {
     registry.register("Cat", makeModel({ tableName: "cats", columns: ["id"] }));
     const [, ctx] = logger.callsTo("debug")[0]!.args;
     expect(ctx).toEqual({ columns: 1, schema: "public" });
   });
 
   it("overwrites an existing entry registered under the same name (last write wins)", () => {
-    registry.register("User", makeModel({ tableName: "users_v1", columns: ["id"] }));
-    registry.register("User", makeModel({ tableName: "users_v2", columns: ["id", "x"] }));
+    registry.register(
+      "User",
+      makeModel({ tableName: "users_v1", columns: ["id"] }),
+    );
+    registry.register(
+      "User",
+      makeModel({ tableName: "users_v2", columns: ["id", "x"] }),
+    );
 
     const entry = registry.get("User");
     expect(entry!.tableName).toBe("users_v2");
@@ -106,7 +116,10 @@ describe("ModelRegistry › get / has", () => {
 
 describe("ModelRegistry › getByTableName", () => {
   beforeEach(() => {
-    registry.register("User", makeModel({ tableName: "users", columns: ["id"] }));
+    registry.register(
+      "User",
+      makeModel({ tableName: "users", columns: ["id"] }),
+    );
   });
 
   it("resolves an entry from its table name", () => {
@@ -123,7 +136,10 @@ describe("ModelRegistry › getByTableName", () => {
     // Re-registering under the same model name but a different table name adds a
     // second table-index entry; the old table name still points at the (now
     // overwritten) model name, demonstrating current index behavior.
-    registry.register("User", makeModel({ tableName: "members", columns: ["id"] }));
+    registry.register(
+      "User",
+      makeModel({ tableName: "members", columns: ["id"] }),
+    );
 
     expect(registry.getByTableName("members")!.tableName).toBe("members");
     // Old table name still maps to model name "User", which now resolves to the
@@ -134,7 +150,10 @@ describe("ModelRegistry › getByTableName", () => {
 
 describe("ModelRegistry › getColumns", () => {
   it("returns the columns for a registered model", () => {
-    registry.register("User", makeModel({ tableName: "users", columns: ["id", "email"] }));
+    registry.register(
+      "User",
+      makeModel({ tableName: "users", columns: ["id", "email"] }),
+    );
     expect(registry.getColumns("User")).toEqual(["id", "email"]);
   });
 
@@ -145,8 +164,14 @@ describe("ModelRegistry › getColumns", () => {
 
 describe("ModelRegistry › listing & iteration", () => {
   beforeEach(() => {
-    registry.register("User", makeModel({ tableName: "users", columns: ["id"] }));
-    registry.register("Post", makeModel({ tableName: "posts", columns: ["id"] }));
+    registry.register(
+      "User",
+      makeModel({ tableName: "users", columns: ["id"] }),
+    );
+    registry.register(
+      "Post",
+      makeModel({ tableName: "posts", columns: ["id"] }),
+    );
   });
 
   it("getModelNames lists names in insertion order", () => {
@@ -183,12 +208,22 @@ describe("ModelRegistry › resolveRelation", () => {
     // resolveRelation matches on the relation's `from` value (the property name
     // on this model, e.g. "author"), then follows `to: "authors"` to look up the
     // target entry by table name.
-    registry.register("Author", makeModel({ tableName: "authors", columns: ["id"] }));
+    registry.register(
+      "Author",
+      makeModel({ tableName: "authors", columns: ["id"] }),
+    );
     registry.register(
       "Post",
       makeModel({
         tableName: "posts",
-        relations: [{ fromTable: "posts", from: "author", to: "authors", type: "belongsTo" }],
+        relations: [
+          {
+            fromTable: "posts",
+            from: "author",
+            to: "authors",
+            type: "belongsTo",
+          },
+        ],
       }),
     );
 
@@ -204,7 +239,14 @@ describe("ModelRegistry › resolveRelation", () => {
       "Post",
       makeModel({
         tableName: "posts",
-        relations: [{ fromTable: "posts", from: "author", to: "authors", type: "belongsTo" }],
+        relations: [
+          {
+            fromTable: "posts",
+            from: "author",
+            to: "authors",
+            type: "belongsTo",
+          },
+        ],
       }),
     );
     // The property name "author" matches the relation, but table "authors" is
@@ -212,16 +254,26 @@ describe("ModelRegistry › resolveRelation", () => {
     expect(registry.resolveRelation("Post", "author")).toBeUndefined();
   });
 
-  it("does NOT match on a RelationSchema key such as \"from\" or \"to\"", () => {
+  it('does NOT match on a RelationSchema key such as "from" or "to"', () => {
     // The lookup is by the relation's property name (its `from` value), NOT by
     // the keys of the RelationSchema object. Passing a key name like "from" or
     // "to" must not match any relation.
-    registry.register("Author", makeModel({ tableName: "authors", columns: ["id"] }));
+    registry.register(
+      "Author",
+      makeModel({ tableName: "authors", columns: ["id"] }),
+    );
     registry.register(
       "Post",
       makeModel({
         tableName: "posts",
-        relations: [{ fromTable: "posts", from: "author", to: "authors", type: "belongsTo" }],
+        relations: [
+          {
+            fromTable: "posts",
+            from: "author",
+            to: "authors",
+            type: "belongsTo",
+          },
+        ],
       }),
     );
     expect(registry.resolveRelation("Post", "from")).toBeUndefined();

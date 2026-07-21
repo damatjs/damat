@@ -107,9 +107,9 @@ describe("defineModule", () => {
           }
         },
       });
-      mod.service.value;
-      mod.service.value;
-      mod.service.value;
+      void mod.service.value;
+      void mod.service.value;
+      void mod.service.value;
       expect(ctor).toBe(1);
     });
 
@@ -215,7 +215,9 @@ describe("defineModule", () => {
         },
       });
       mod.init();
-      expect(logSpy).toHaveBeenCalledWith("instance setup", { module: "loggable" });
+      expect(logSpy).toHaveBeenCalledWith("instance setup", {
+        module: "loggable",
+      });
     });
   });
 

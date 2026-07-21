@@ -1,33 +1,34 @@
-import type { CliConfig, Command } from "../types";
+import type { CliDefinition, CliOutput, Command } from "../types";
 import { formatCommandLine } from "./formatCommandLine";
 
 export function printDefaultHelp(
-  config: CliConfig,
-  commands: Command[]
+  definition: CliDefinition,
+  commands: Command[],
+  output: CliOutput,
 ): void {
-  const cliName = config.name;
+  const cliName = definition.name;
 
-  console.log(`\nUsage: ${cliName} [command] [options]\n`);
+  output.write(`\nUsage: ${cliName} [command] [options]\n`);
 
-  if (config.description) {
-    console.log(`${config.description}\n`);
+  if (definition.description) {
+    output.write(`${definition.description}\n`);
   }
 
   if (commands.length > 0) {
-    console.log("Commands:");
+    output.write("Commands:");
     for (const cmd of commands) {
-      console.log(formatCommandLine(cmd));
+      output.write(formatCommandLine(cmd));
     }
-    console.log("");
+    output.write();
   }
 
-  console.log("Global Options:");
-  console.log("  -h, --help           Show help");
-  console.log("  -v, --version        Show version");
-  if (config.verbose?.enabled !== false) {
-    console.log("  --verbose            Enable verbose output");
+  output.write("Global Options:");
+  output.write("  -h, --help           Show help");
+  output.write("  -v, --version        Show version");
+  if (definition.verbose?.enabled === true) {
+    output.write("  --verbose            Enable verbose output");
   }
-  console.log("");
+  output.write();
 
-  console.log(`Run '${cliName} help <command>' for more information.\n`);
+  output.write(`Run '${cliName} help <command>' for more information.\n`);
 }

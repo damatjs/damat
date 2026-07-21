@@ -4,7 +4,7 @@ import { MissingRequiredOptionError } from "../../errors";
 export function validateOptions(
   options: Record<string, unknown>,
   optionDefs: CommandOption[] | undefined,
-  commandName: string
+  commandName: string,
 ): void {
   if (!optionDefs) return;
 

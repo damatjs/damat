@@ -122,7 +122,11 @@ describe("formatViolations", () => {
 
   it("renders wrong_type with the found type and expected fix", () => {
     const out = formatViolations([
-      violation({ kind: "wrong_type", sourceType: "belongsTo", foundType: "column" }),
+      violation({
+        kind: "wrong_type",
+        sourceType: "belongsTo",
+        foundType: "column",
+      }),
     ]);
     expect(out).toContain("found: column");
     expect(out).toContain("hasMany(...) or hasOne(...)");
@@ -130,7 +134,11 @@ describe("formatViolations", () => {
 
   it("renders wrong_type expecting belongsTo when source is hasMany", () => {
     const out = formatViolations([
-      violation({ kind: "wrong_type", sourceType: "hasMany", foundType: undefined }),
+      violation({
+        kind: "wrong_type",
+        sourceType: "hasMany",
+        foundType: undefined,
+      }),
     ]);
     expect(out).toContain("found: unknown");
     expect(out).toContain("belongsTo(...)");

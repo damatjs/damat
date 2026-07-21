@@ -12,15 +12,15 @@ the stack depends only on a plain `Pool`.
 
 ## Module map
 
-| File | Responsibility |
-| --- | --- |
-| `src/index.ts` | Defines `ConnectionManager`; re-exports `./tools/*` and `./tools/config`. The package's public surface. |
-| `src/tools/index.ts` | Barrel re-exporting `error`, `listeners`, `status`. |
-| `src/tools/error.ts` | `ConnectionError` — `Error` subclass with an optional `cause`. |
-| `src/tools/listeners.ts` | `setupPoolListeners(pool, logger)` — wires pool lifecycle events to the logger. |
-| `src/tools/status.ts` | `fetchPoolStats(pool)` and `performHealthCheck(pool, updateStatus)`. |
-| `src/tools/config.ts` | `productionPoolConfig` / `developmentPoolConfig` / `testPoolConfig` presets. |
-| `src/tests/**` | Bun tests; require a reachable Postgres (`DATABASE_URL`, default `postgres://postgres:Password@0.0.0.0:5432/damatjs`). |
+| File                     | Responsibility                                                                                                         |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `src/index.ts`           | Defines `ConnectionManager`; re-exports `./tools/*` and `./tools/config`. The package's public surface.                |
+| `src/tools/index.ts`     | Barrel re-exporting `error`, `listeners`, `status`.                                                                    |
+| `src/tools/error.ts`     | `ConnectionError` — `Error` subclass with an optional `cause`.                                                         |
+| `src/tools/listeners.ts` | `setupPoolListeners(pool, logger)` — wires pool lifecycle events to the logger.                                        |
+| `src/tools/status.ts`    | `fetchPoolStats(pool)` and `performHealthCheck(pool, updateStatus)`.                                                   |
+| `src/tools/config.ts`    | `productionPoolConfig` / `developmentPoolConfig` / `testPoolConfig` presets.                                           |
+| `src/tests/**`           | Bun tests; require a reachable Postgres (`DATABASE_URL`, default `postgres://postgres:Password@0.0.0.0:5432/damatjs`). |
 
 ## Architecture overview
 
@@ -44,7 +44,7 @@ it delegates to, which keeps them independently unit-testable (the tests call `s
    - constructs `new Pool(config)`,
    - calls `setupPoolListeners(pool, logger)` when a logger is present,
    - acquires one client to verify connectivity, then releases it and sets `isConnectedFlag = true`.
-   The in-flight promise is cached so concurrent/repeat calls share one pool (idempotency).
+     The in-flight promise is cached so concurrent/repeat calls share one pool (idempotency).
 3. `healthCheck()` delegates to `performHealthCheck`, which runs `SELECT 1` and updates the connected flag.
 4. `disconnect()` ends the pool and resets all internal state so the manager can reconnect later.
 

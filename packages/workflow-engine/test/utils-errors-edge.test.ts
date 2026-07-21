@@ -51,7 +51,12 @@ describe("errors: cause wrapping", () => {
 
   it("supports a chain of wrapped causes (StepExecution -> CompensationError -> Compensation cause)", () => {
     const root = new Error("db offline");
-    const compErr = new CompensationError("rollback", "could not undo", root, "wf");
+    const compErr = new CompensationError(
+      "rollback",
+      "could not undo",
+      root,
+      "wf",
+    );
     const exec = new StepExecutionError("step", "failed", compErr, "wf");
 
     expect(exec.cause).toBe(compErr);
@@ -148,7 +153,11 @@ describe("utils/parallel: aggregation edges", () => {
   });
 
   it("fails with the failing branch's StepExecutionError when one of many fails", async () => {
-    const ok1 = runStep(createStep<void, number>("ok1", async () => 1), undefined as never, ctx());
+    const ok1 = runStep(
+      createStep<void, number>("ok1", async () => 1),
+      undefined as never,
+      ctx(),
+    );
     const bad = runStep(
       createStep<void, number>("bad", async () => {
         throw new Error("the parallel failure");
@@ -156,7 +165,11 @@ describe("utils/parallel: aggregation edges", () => {
       undefined as never,
       ctx(),
     );
-    const ok2 = runStep(createStep<void, number>("ok2", async () => 2), undefined as never, ctx());
+    const ok2 = runStep(
+      createStep<void, number>("ok2", async () => 2),
+      undefined as never,
+      ctx(),
+    );
 
     const exit = await run(parallel(ok1, bad, ok2));
     expect(Exit.isFailure(exit)).toBe(true);
@@ -167,7 +180,10 @@ describe("utils/parallel: aggregation edges", () => {
 
   it("unwraps StepResponse outputs inside the aggregated tuple", async () => {
     const a = runStep(
-      createStep<void, string, string>("a", async () => new StepResponse("out-a", "comp-a")),
+      createStep<void, string, string>(
+        "a",
+        async () => new StepResponse("out-a", "comp-a"),
+      ),
       undefined as never,
       ctx(),
     );
@@ -229,11 +245,15 @@ describe("utils/ifElse: branching edges", () => {
     });
 
     const t = await run(ifElse(true, yes, no, 1, ctx()));
-    expect(Exit.isSuccess(t) && (t as Exit.Success<string, never>).value).toBe("Y");
+    expect(Exit.isSuccess(t) && (t as Exit.Success<string, never>).value).toBe(
+      "Y",
+    );
     expect(ran).toEqual(["yes"]);
 
     const f = await run(ifElse(false, yes, no, 1, ctx()));
-    expect(Exit.isSuccess(f) && (f as Exit.Success<string, never>).value).toBe("N");
+    expect(Exit.isSuccess(f) && (f as Exit.Success<string, never>).value).toBe(
+      "N",
+    );
     expect(ran).toEqual(["yes", "no"]);
   });
 

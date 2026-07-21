@@ -1,5 +1,5 @@
 import { describe, expect, test, mock } from "bun:test";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { applyModuleMigrations } from "../src/harness/migrate";

@@ -1,11 +1,14 @@
+import { join } from "node:path";
 import type { AppConfig, ProjectConfig } from "@damatjs/framework";
 import type { ModuleManifest } from "../manifest/types";
 import type { ModuleAppConfig } from "../config/types";
 
 export interface BuildModuleAppConfigInput {
-  /** Directory holding module.json (the module's source dir) */
+  /** Directory holding the module manifest and source entry. */
   moduleDir: string;
   manifest: ModuleManifest;
+  /** Concrete runtime entry resolved from manifest metadata or convention. */
+  entry?: string;
   /** Author overrides from module.config.ts */
   moduleConfig: ModuleAppConfig;
   /** Port override (takes precedence over config and env) */
@@ -23,7 +26,7 @@ export const DEFAULT_MODULE_PORT = 7654;
 export function buildModuleAppConfig(
   input: BuildModuleAppConfigInput,
 ): AppConfig {
-  const { moduleDir, manifest, moduleConfig, port } = input;
+  const { moduleDir, manifest, moduleConfig, entry, port } = input;
   const overrides = moduleConfig.projectConfig ?? {};
 
   const projectConfig: ProjectConfig = {
@@ -53,7 +56,11 @@ export function buildModuleAppConfig(
     projectConfig,
     modules: {
       [manifest.name]: {
-        resolve: moduleDir,
+        resolve:
+          entry ??
+          (manifest.paths?.entry
+            ? join(moduleDir, manifest.paths.entry)
+            : moduleDir),
         id: manifest.name,
       },
     },

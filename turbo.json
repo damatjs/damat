@@ -3,45 +3,47 @@
   "ui": "tui",
   "tasks": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        ".env*"
-      ],
-      "outputs": [
-        "dist/**",
-        ".damat/dist/**",
-        ".next/**",
-        "!.next/cache/**"
-      ],
+      "dependsOn": ["^build", "check-types"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist/**", ".damat/dist/**", ".next/**", "!.next/cache/**"],
       "env": [
+        "DOCS_ORIGIN",
+        "NEXT_PUBLIC_DOCS_URL",
+        "NEXT_PUBLIC_DOMAIN_URL",
+        "NEXT_PUBLIC_GOOGLE_ANALYTICS",
+        "NEXT_PUBLIC_REGISTRY_URL",
+        "NEXT_PUBLIC_SITE_URL",
+        "SITE_DESCRIPTION",
+        "SITE_NAME",
         "SKIP_BACKEND"
       ]
     },
     "lint": {
-      "dependsOn": [
-        "^lint"
-      ]
+      "dependsOn": ["^lint"]
     },
     "check-types": {
-      "dependsOn": [
-        "^check-types"
-      ]
+      "dependsOn": ["^build"]
     },
     "dev": {
       "cache": false,
       "persistent": true
     },
     "test": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
+      "cache": false,
       "outputs": [],
       "env": [
         "DATABASE_URL",
-        "REDIS_URL"
+        "REDIS_URL",
+        "DAMAT_DURABILITY_DATABASE_URL",
+        "DAMAT_JOBS_DATABASE_URL",
+        "DAMAT_EVENTS_DATABASE_URL",
+        "DAMAT_PIPELINES_DATABASE_URL",
+        "DAMAT_LINK_DATABASE_URL",
+        "DAMAT_SERVICES_DATABASE_URL",
+        "DAMAT_ORM_PG_DATABASE_URL",
+        "DAMAT_RECOVERY_DATABASE_URL",
+        "DAMAT_RECOVERY_REDIS_URL"
       ]
     }
   }

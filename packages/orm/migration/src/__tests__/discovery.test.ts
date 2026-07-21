@@ -55,7 +55,11 @@ describe("discoverModuleMigrations", () => {
     expect(result[0]!.applied).toBe(false);
     expect(result[0]!.resolver).toBe(moduleDir);
     expect(result[0]!.path).toBe(
-      path.resolve(moduleDir, "migrations", "Migration20260316103000_Initial.sql"),
+      path.resolve(
+        moduleDir,
+        "migrations",
+        "Migration20260316103000_Initial.sql",
+      ),
     );
   });
 

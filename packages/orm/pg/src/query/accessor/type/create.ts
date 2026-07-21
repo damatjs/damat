@@ -1,6 +1,4 @@
-import {
-  ValuesMap,
-} from "../../types";
+import { ValuesMap } from "../../types";
 import type { OnConflictClause } from "../../insert";
 
 /**

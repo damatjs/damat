@@ -18,7 +18,11 @@ export const listModules: ToolDef = {
       summarizeEntry(key, entry),
     );
     return {
-      text: JSON.stringify({ registry: loc, count: modules.length, modules }, null, 2),
+      text: JSON.stringify(
+        { registry: loc, count: modules.length, modules },
+        null,
+        2,
+      ),
     };
   },
 };

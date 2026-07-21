@@ -30,7 +30,11 @@ describe("pgExecuteRaw", () => {
     const boom = new Error("connection reset");
     const conn = new FakeConn({ throwOn: () => boom });
     await expect(
-      pgExecuteRaw(conn as any, { sql: "SELECT 1", params: [] }, noopQueryLogger),
+      pgExecuteRaw(
+        conn as any,
+        { sql: "SELECT 1", params: [] },
+        noopQueryLogger,
+      ),
     ).rejects.toThrow("connection reset");
   });
 });

@@ -49,10 +49,14 @@ class FakeRedis {
 }
 
 mock.module("@damatjs/deps/pg", () => ({ Pool: FakePgPool }));
-mock.module("@damatjs/deps/ioredis", () => ({ Redis: FakeRedis, default: FakeRedis }));
+mock.module("@damatjs/deps/ioredis", () => ({
+  Redis: FakeRedis,
+  default: FakeRedis,
+}));
 
 const { initializeServices } = await import("../../services/index");
-const { closeDatabase, getConnectionManager } = await import("../../services/database");
+const { closeDatabase, getConnectionManager } =
+  await import("../../services/database");
 const { disconnectRedis, hasRedis } = await import("../../services/redis");
 const { clearModules } = await import("../../services/moduleService");
 
@@ -88,14 +92,19 @@ describe("initializeServices (database configured)", () => {
       SCRATCH,
     );
 
-    expect(instances.shutdownHandlers.map((h) => h.name)).toEqual(["database", "logger"]);
+    expect(instances.shutdownHandlers.map((h) => h.name)).toEqual([
+      "database",
+      "logger",
+    ]);
 
     const health = await instances.healthChecks!.database!();
     expect(health.status).toBe("healthy");
     expect(typeof health.latency).toBe("number");
 
     // The database shutdown handler runs cleanly.
-    await instances.shutdownHandlers.find((h) => h.name === "database")!.handler();
+    await instances.shutdownHandlers
+      .find((h) => h.name === "database")!
+      .handler();
   });
 
   it("reports an unhealthy db check when the health probe throws", async () => {
@@ -118,7 +127,9 @@ describe("initializeServices (database configured)", () => {
 
   it("uses an explicit services.database config when provided", async () => {
     const cfg = config({ databaseUrl: "postgres://u:p@localhost:5432/d" });
-    cfg.services = { database: { connectionString: "postgres://explicit" } as never };
+    cfg.services = {
+      database: { connectionString: "postgres://explicit" } as never,
+    };
 
     const instances = await initializeServices(cfg, SCRATCH);
     const health = await instances.healthChecks!.database!();

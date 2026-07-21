@@ -28,7 +28,7 @@ export class CommandRegistryImpl implements CommandRegistry {
         if (this.commands.has(aliasName)) {
           throw new CommandRegistrationError(
             name,
-            `alias '${aliasName}' already registered`
+            `alias '${aliasName}' already registered`,
           );
         }
         this.commands.set(aliasName, command);

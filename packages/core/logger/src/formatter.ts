@@ -24,7 +24,8 @@ export class Formatter {
     level: LogLevel;
     message: string;
     context: Record<string, unknown> | undefined;
-    error: { name: string; message: string; stack: string | undefined } | undefined;
+    error:
+      { name: string; message: string; stack: string | undefined } | undefined;
     prefix: string | undefined;
   }): string {
     if (this.format === "json") {

@@ -1,10 +1,17 @@
-import { ModuleConfigObject } from './module';
+import { ModuleConfigObject } from "./module";
 import type { ProjectConfig } from "./project";
-import { ServicesConfig } from './services';
+import { ServicesConfig } from "./services";
+import type { LifecycleHooks } from "./hooks";
+import type { RuntimeConfig } from "./runtime";
+import type { ProviderBindings } from "@damatjs/provider";
 
 export interface AppConfig {
   projectConfig: ProjectConfig;
   modules?: ModuleConfigObject;
+  /** Provider roles bound to already configured module services. */
+  providers?: ProviderBindings;
+  /** Optional bootstrap lifecycle hooks — see LifecycleHooks for the stages. */
+  hooks?: LifecycleHooks;
   /**
    * Cross-module links. A path (or paths) to a directory whose `index.ts`
    * default-exports `defineLinkModule(...)` and exports `models` — typically
@@ -13,4 +20,5 @@ export interface AppConfig {
    */
   links?: string | string[];
   services?: ServicesConfig;
+  runtime?: RuntimeConfig;
 }

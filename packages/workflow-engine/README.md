@@ -8,9 +8,10 @@
 > steps, registered compensations) lives in memory for the duration of a run.
 > There is no durable journal and no crash recovery: if the process crashes or
 > is killed mid-workflow, compensations for already-completed steps will **not**
-> run and the run cannot be resumed. The saga gives you rollback on *failure*
+> run and the run cannot be resumed. The saga gives you rollback on _failure_
 > inside a live process — for crash-safe guarantees, pair it with idempotent
-> steps, reconciliation jobs, or an external saga log.
+> steps, reconciliation jobs, or use it as a node inside a durable
+> [`@damatjs/pipelines`](../core/pipelines/README.md) graph.
 
 Part of the [Damat](../../README.md) monorepo · [Full guide](../../docs/GUIDE.md) · [Internals](./docs/README.md)
 
@@ -78,7 +79,11 @@ const placeOrder = createWorkflow(
   (input: { items: string[] }, ctx) =>
     Effect.gen(function* () {
       const order = yield* executeStep(createOrder, input, ctx);
-      const payment = yield* executeStep(chargeCard, { orderId: order.id }, ctx);
+      const payment = yield* executeStep(
+        chargeCard,
+        { orderId: order.id },
+        ctx,
+      );
       return { order, payment };
     }),
   { timeoutMs: 60_000 },
@@ -88,30 +93,60 @@ const result = await placeOrder.execute({ items: ["sku-1"] });
 if (result.success) {
   console.log(result.result, result.durationMs);
 } else {
-  // If chargeCard failed, createOrder's compensation already ran.
-  console.error(result.error.code, result.compensated);
+  // If chargeCard failed, createOrder's compensation already ran. Any
+  // compensation that itself threw is listed in result.compensationErrors
+  // (empty array when none failed) — the original error is never replaced.
+  console.error(
+    result.error.code,
+    result.compensated,
+    result.compensationErrors,
+  );
 }
 ```
 
+## Execution observation and cancellation
+
+`execute` and `executeWithLock` accept an optional execution-options argument.
+It can provide a stable execution ID, an outer `AbortSignal`, and an async
+observer. Observers receive workflow, step-attempt, and compensation
+start/success/failure events with timing and identity only. Observer failures
+are logged and never replace the workflow result.
+
+```ts
+const result = await placeOrder.execute(
+  input,
+  { correlationId },
+  {
+    executionId: nodeExecutionId,
+    signal: jobContext.signal,
+    observer: async (event) => audit(event),
+  },
+);
+```
+
+The pipeline runtime uses this seam to associate an in-process saga's internal
+steps with its durable workflow node. The workflow owns local compensation; the
+pipeline owns durable scheduling before and after the call.
+
 ## API
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `createStep(name, invoke, compensate?, config?)` | function | Build a typed `StepDefinition<I, O, C>`. `invoke` returns a `StepResponse<O, C>`; `compensate(compensateInput, ctx)` gets the `C` payload. |
-| `StepResponse(output, compensateInput?)` | class | `invoke`'s return: `output` flows downstream, `compensateInput` is delivered to `compensate` (required when `C` excludes `undefined`). |
-| `executeStep(step, input, ctx, overrideConfig?)` | function | Run a step inside a workflow generator (handles timeout, retry, compensation registration). The optional `overrideConfig` layers per-call timeout/retry on top of the step's own config. |
-| `step(input, ctx, overrideConfig?)` | call | A `StepDefinition` is callable: `step(input, ctx)` ≡ `executeStep(step, input, ctx)`, with the same optional per-call override. |
-| `createWorkflow(name, definition, config?)` | function | Build a `WorkflowDefinition<I, O>` exposing `execute` and `executeWithLock`. |
-| `runStep(step, input, ctx, overrideConfig?)` | function | Alias of `executeStep` for readability. |
-| `skipStep(value)` | function | An effect that immediately succeeds with `value` (for conditional branches). |
-| `parallel(...effects)` | function | Run step effects concurrently; resolves to a tuple of outputs. |
-| `when(cond, step, input, ctx, default)` | function | Run `step` if `cond`, else return `default`. |
-| `ifElse(cond, ifTrue, ifFalse, input, ctx)` | function | Run one of two steps by condition. |
-| `acquireWorkflowLock` / `releaseWorkflowLock` / `extendWorkflowLock` / `isWorkflowLocked` | function | Manual distributed-lock primitives (Redis-backed). |
-| `RetryPolicies` | const | Presets: `none`, `once`, `standard`, `aggressive`, `patient`. |
-| `DEFAULT_RETRY_POLICY` / `DEFAULT_STEP_CONFIG` / `DEFAULT_WORKFLOW_CONFIG` | const | Engine defaults (no retries, 30s step / 5min workflow timeout). |
-| `WorkflowError`, `StepExecutionError`, `StepTimeoutError`, `MaxRetriesExceededError`, `CompensationError`, `WorkflowLockError` | class | Error hierarchy; all extend `WorkflowError` and carry a `code`. |
-| `Effect`, `Scope` | re-export | Re-exported from `effect` so callers don't add a direct dependency. |
+| Export                                                                                                                         | Kind      | Summary                                                                                                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `createStep(name, invoke, compensate?, config?)`                                                                               | function  | Build a typed `StepDefinition<I, O, C>`. `invoke` returns a `StepResponse<O, C>`; `compensate(compensateInput, ctx)` gets the `C` payload.                                               |
+| `StepResponse(output, compensateInput?)`                                                                                       | class     | `invoke`'s return: `output` flows downstream, `compensateInput` is delivered to `compensate` (required when `C` excludes `undefined`).                                                   |
+| `executeStep(step, input, ctx, overrideConfig?)`                                                                               | function  | Run a step inside a workflow generator (handles timeout, retry, compensation registration). The optional `overrideConfig` layers per-call timeout/retry on top of the step's own config. |
+| `step(input, ctx, overrideConfig?)`                                                                                            | call      | A `StepDefinition` is callable: `step(input, ctx)` ≡ `executeStep(step, input, ctx)`, with the same optional per-call override.                                                          |
+| `createWorkflow(name, definition, config?)`                                                                                    | function  | Build a `WorkflowDefinition<I, O>` exposing `execute` and `executeWithLock`.                                                                                                             |
+| `runStep(step, input, ctx, overrideConfig?)`                                                                                   | function  | Alias of `executeStep` for readability.                                                                                                                                                  |
+| `skipStep(value)`                                                                                                              | function  | An effect that immediately succeeds with `value` (for conditional branches).                                                                                                             |
+| `parallel(...effects)`                                                                                                         | function  | Run step effects concurrently; resolves to a tuple of outputs.                                                                                                                           |
+| `when(cond, step, input, ctx, default)`                                                                                        | function  | Run `step` if `cond`, else return `default`.                                                                                                                                             |
+| `ifElse(cond, ifTrue, ifFalse, input, ctx)`                                                                                    | function  | Run one of two steps by condition.                                                                                                                                                       |
+| `acquireWorkflowLock` / `releaseWorkflowLock` / `extendWorkflowLock` / `isWorkflowLocked`                                      | function  | Manual distributed-lock primitives (Redis-backed).                                                                                                                                       |
+| `RetryPolicies`                                                                                                                | const     | Presets: `none`, `once`, `standard`, `aggressive`, `patient`.                                                                                                                            |
+| `DEFAULT_RETRY_POLICY` / `DEFAULT_STEP_CONFIG` / `DEFAULT_WORKFLOW_CONFIG`                                                     | const     | Engine defaults (no retries, 30s step / 5min workflow timeout).                                                                                                                          |
+| `WorkflowError`, `StepExecutionError`, `StepTimeoutError`, `MaxRetriesExceededError`, `CompensationError`, `WorkflowLockError` | class     | Error hierarchy; all extend `WorkflowError` and carry a `code`.                                                                                                                          |
+| `Effect`, `Scope`                                                                                                              | re-export | Re-exported from `effect` so callers don't add a direct dependency.                                                                                                                      |
 
 Key types: `StepDefinition<I,O>`, `WorkflowDefinition<I,O>`, `WorkflowContext`, `WorkflowResult<T>` (`WorkflowSuccess<T>` \| `WorkflowFailure`), `StepConfig`, `WorkflowConfig`, `RetryPolicy`, `WorkflowLockConfig`, `WorkflowLockResult`.
 

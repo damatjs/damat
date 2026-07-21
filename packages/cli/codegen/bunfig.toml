@@ -1,0 +1,14 @@
+[test]
+coverage = true
+coverageThreshold = 1.0
+coverageReporter = ["text", "lcov"]
+coveragePathIgnorePatterns = [
+  "**/dist/**",
+  "**/node_modules/**",
+  "**/*.test.ts",
+  "**/tests/**",
+  "**/orm/model/src/**",
+]
+
+# package-codegen imports a fixture through the workspace's source mapping.
+# orm-model owns and enforces coverage for that source in its own test task.

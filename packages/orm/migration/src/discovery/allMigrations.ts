@@ -1,5 +1,8 @@
 import type { MigrationInfo } from "../types";
+import type { OrmModule } from "@damatjs/orm-type";
 import { discoverModuleMigrations } from "./moduleMigrations";
+
+type MigrationSource = string | Pick<OrmModule, "resolve" | "migrations">;
 
 /**
  * Discover and collect migrations from the provided module resolvers,
@@ -21,9 +24,8 @@ import { discoverModuleMigrations } from "./moduleMigrations";
  * ```
  */
 export function discoverAllMigrations(
-  modulesResolver: string[],
+  modulesResolver: MigrationSource[],
 ): MigrationInfo[] {
-
   const migrations: MigrationInfo[] = [];
 
   for (const moduleResolver of modulesResolver) {

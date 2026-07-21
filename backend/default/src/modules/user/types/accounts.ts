@@ -35,4 +35,4 @@ export type NewAccounts = {
   password?: string | null;
 };
 
-export type UpdateAccounts = Partial<Omit<Accounts, 'id'>>;
+export type UpdateAccounts = Partial<Omit<Accounts, "id">>;

@@ -17,4 +17,4 @@ export type NewCategory = {
   description?: string | null;
 };
 
-export type UpdateCategory = Partial<Omit<Category, 'id'>>;
+export type UpdateCategory = Partial<Omit<Category, "id">>;

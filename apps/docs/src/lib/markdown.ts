@@ -114,7 +114,7 @@ function rehypeRewriteLinks(ctx: RenderContext) {
         // External or in-page — leave as-is, but mark external links.
         if (/^https?:\/\//.test(href)) {
           node.properties.target = "_blank";
-          node.properties.rel = "noreferrer noopener";
+          node.properties.rel = ["noreferrer", "noopener"];
         }
         return;
       }
@@ -140,7 +140,7 @@ function rehypeRewriteLinks(ctx: RenderContext) {
       );
       node.properties.href = `${GITHUB_BLOB}/${resolved}${cleanHash}`;
       node.properties.target = "_blank";
-      node.properties.rel = "noreferrer noopener";
+      node.properties.rel = ["noreferrer", "noopener"];
     });
   };
 }

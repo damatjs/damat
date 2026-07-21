@@ -2,12 +2,11 @@ import type { MiddlewareHandler } from "@damatjs/deps/hono";
 import { hasRedis, getRedis, checkRateLimit } from "../services/redis";
 import { getLogger } from "../services/logger";
 import { parseWindowToMs } from "../utils/windowParser";
-import { HttpRateLimitConfig } from '../config';
-
+import { HttpRateLimitConfig } from "../config";
 
 export function createRateLimitMiddleware(
   config: HttpRateLimitConfig,
-  globalConfig?: HttpRateLimitConfig
+  globalConfig?: HttpRateLimitConfig,
 ): MiddlewareHandler {
   return async (c, next) => {
     const logger = getLogger();
@@ -20,7 +19,7 @@ export function createRateLimitMiddleware(
     const redis = getRedis();
 
     const apiKey = c.req.header("x-api-key");
-    const userId = c.get("userId") as string | undefined;
+    const userId = c.get("userId");
     const forwardedFor = c.req.header("x-forwarded-for");
     const firstIp = forwardedFor?.split(",")[0];
     const ip = firstIp ? firstIp.trim() : "unknown";
@@ -40,10 +39,12 @@ export function createRateLimitMiddleware(
           effectiveConfig = tierConfig;
         }
       } catch (err) {
-        logger.error("Failed to get user tier for rate limit", err instanceof Error ? err : undefined);
+        logger.error(
+          "Failed to get user tier for rate limit",
+          err instanceof Error ? err : undefined,
+        );
       }
     }
-
 
     if (apiKey && globalConfig?.getApiKeyTier) {
       try {
@@ -52,7 +53,10 @@ export function createRateLimitMiddleware(
           effectiveConfig = tierConfig;
         }
       } catch (err) {
-        logger.error("Failed to get API key tier for rate limit", err instanceof Error ? err : undefined);
+        logger.error(
+          "Failed to get API key tier for rate limit",
+          err instanceof Error ? err : undefined,
+        );
       }
     }
 
@@ -60,7 +64,12 @@ export function createRateLimitMiddleware(
     const key = `ratelimit:${identifier}:${c.req.path}`;
 
     try {
-      const result = await checkRateLimit(key, windowMs, effectiveConfig.requests, redis);
+      const result = await checkRateLimit(
+        key,
+        windowMs,
+        effectiveConfig.requests,
+        redis,
+      );
 
       c.header("X-RateLimit-Limit", String(effectiveConfig.requests));
       c.header("X-RateLimit-Remaining", String(result.remaining));
@@ -68,24 +77,49 @@ export function createRateLimitMiddleware(
 
       if (!result.allowed) {
         c.header("Retry-After", String(result.retryAfter || 0));
-        return c.json({
-          success: false,
-          error: {
-            code: "RATE_LIMIT_EXCEEDED",
-            message: "Too many requests. Please try again later.",
-            details: {
-              retryAfter: result.retryAfter,
-              limit: effectiveConfig.requests,
-              window: effectiveConfig.window,
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: "RATE_LIMIT_EXCEEDED",
+              message: "Too many requests. Please try again later.",
+              details: {
+                retryAfter: result.retryAfter,
+                limit: effectiveConfig.requests,
+                window: effectiveConfig.window,
+              },
+            },
+            meta: {
+              requestId: c.get("requestId") || "unknown",
+              timestamp: new Date().toISOString(),
             },
           },
-          meta: { requestId: c.get("requestId") || "unknown", timestamp: new Date().toISOString() },
-        }, 429);
+          429,
+        );
       }
 
       return next();
     } catch (err) {
-      logger.error("Rate limit check failed", err instanceof Error ? err : undefined);
+      logger.error(
+        "Rate limit check failed",
+        err instanceof Error ? err : undefined,
+      );
+      if (effectiveConfig.failClosed ?? config.failClosed) {
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: "RATE_LIMIT_UNAVAILABLE",
+              message: "Rate limiting is unavailable. Please try again later.",
+            },
+            meta: {
+              requestId: c.get("requestId") || "unknown",
+              timestamp: new Date().toISOString(),
+            },
+          },
+          503,
+        );
+      }
       return next();
     }
   };

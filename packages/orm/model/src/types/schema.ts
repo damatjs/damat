@@ -9,10 +9,7 @@ import {
  * Property types that can be used in model definition
  */
 export type PropertyValue =
-  | ColumnBuilder
-  | BelongsToBuilder
-  | HasManyBuilder
-  | HasOneBuilder;
+  ColumnBuilder | BelongsToBuilder | HasManyBuilder | HasOneBuilder;
 
 /**
  * Model properties definition

@@ -13,4 +13,5 @@ coverage = true
 # lines (or below 95% functions) still fails. Restore `functions = 1.0` once
 # Bun's function counting is fixed.
 coverageThreshold = { lines = 1.0, functions = 0.95, statements = 1.0 }
+coverageReporter = ["text", "lcov"]
 coveragePathIgnorePatterns = ["**/dist/**", "**/node_modules/**", "**/*.test.ts", "**/tests/**", "**/__tests__/**", "**/__fixtures__/**"]

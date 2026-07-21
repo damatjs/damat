@@ -1,9 +1,17 @@
 # Migrate commands
 
+`database:setup` lives beside the migrate group. It loads the same configured
+URL, connects to the target, and on PostgreSQL `3D000` checks/creates that
+database through the standard `postgres` database. It then calls `migrate:up`,
+so database creation and all selected system/module migrations form one setup
+command. Every target/admin client is closed in `finally` paths.
+
 The `migrate` group lives in `src/cli/commands/migrate/`. The parent
 `migrate` command (`index.ts`) only lists its subcommands; the real work is in
 the four leaves. All four call `loadModules("damat.config.ts", ctx.cwd)` and bail
-with `exitCode: 1` if the config is missing or has no modules.
+with `exitCode: 1` if the config is missing. `migrate:list` and
+`migrate:create` require modules. `migrate:up` and `migrate:status` can instead
+operate on selected system migrations when the module map is empty.
 
 `loadModules` returns ordinary modules **and** cross-module link migration
 modules (one `link:<owner>` per `src/links/<owner>` directory declared under
@@ -14,7 +22,7 @@ regular module.
 
 ```
 migrate (parent, lists subcommands)
-├─ migrate:up      → runMigrations(pool, modules)
+├─ migrate:up      → runMigrations(pool, modules, { systemMigrations })
 ├─ migrate:status  → getMigrationStatus / getModuleMigrationStatus
 ├─ migrate:list    → discoverAllMigrations
 └─ migrate:create  → createInitialMigration | createDiffMigration
@@ -26,13 +34,13 @@ Run all pending migrations across every module.
 
 Behaviour:
 
-1. `loadModules("damat.config.ts", ctx.cwd)` → `OrmModuleContainer`; error if
-   empty.
+1. Load modules and enabled built-in system migrations; error only when both
+   sets are empty.
 2. `loadDatabaseUrl("damat.config.ts", ctx.cwd)` → `{ databaseUrl }`; error if
    empty/falsy.
 3. `const pool = new Pool({ connectionString: databaseUrl })` (from
    `@damatjs/deps/pg`).
-4. `const results = await runMigrations(pool, modules)` (from
+4. `runMigrations(pool, modules, { systemMigrations })` (from
    `@damatjs/orm-migration`).
 5. `hasFailures = results.some(r => !r.success)` → logs failure/success
    accordingly.
@@ -51,15 +59,16 @@ positional `module` arg is also accepted (`ctx.options.module || ctx.args[0]`).
 
 Behaviour:
 
-1. Load modules + database URL (same guards as `migrate:up`).
+1. Load modules and enabled system migrations; error only when both sets are
+   empty, then load the database URL.
 2. Open a `Pool`.
 3. **Scoped** (a module name was given): look up `modules[moduleName]` (error if
-   absent), then `getModuleMigrationStatus(pool, moduleConfig.resolve)`. Logs
+   absent), then `getModuleMigrationStatus(pool, moduleConfig)`. The full
+   descriptor preserves both the migration discovery path and tracker name. Logs
    `"<name>: <applied> applied, <pending> pending"` (level `success` when
    `pending === 0`, else `info`), then each migration (`success` if applied).
-4. **All modules** (no name): `getMigrationStatus(pool, Object.values(modules)
-   .map(m => m.resolve))`; iterate `status.modules`, logging the same per-module
-   summary and per-migration lines.
+4. **All modules** (no name): call `getMigrationStatus(pool, modules, {
+systemMigrations })`; system-owner entries appear before module entries.
 5. `finally { await pool.end() }`.
 
 ```bash
@@ -100,9 +109,9 @@ Behaviour:
 3. `isInitial = !snapshotExist(resolvedMigrationsDir)` (from
    `@damatjs/orm-processor`).
 4. **Initial** (`isInitial`): `createInitialMigration(moduleName,
-   moduleConfig.resolve)` → logs the created file path.
+moduleConfig.resolve)` → logs the created file path.
 5. **Diff** (snapshot exists): `createDiffMigration(moduleName,
-   moduleConfig.resolve)`:
+moduleConfig.resolve)`:
    - `result.hasChanges === false` → `logger.skip("No changes detected.")`,
      return `0`.
    - else → log the file path and any `result.warnings`.
@@ -130,3 +139,9 @@ bun damat-orm migrate:create link:user  # junction tables for the user owner's l
   a new db command, keep that pattern to avoid leaking connections in CI.
 - The heavy ORM packages are loaded with `await import(...)` inside each handler,
   not at module top level — preserve that for fast CLI startup.
+- `loadSystemMigrations` selects the shared durability catalog when
+  `services.jobs` or `services.events.durable` is enabled. Jobs additionally
+  selects `@damatjs/jobs`; durable events select `@damatjs/events`. The stable
+  combined order is shared durability, jobs, then events. Catalog collection
+  sorts by migration order, owner, and ID, so both `migrate:up` and the
+  all-owner `migrate:status` view receive the same deterministic sequence.

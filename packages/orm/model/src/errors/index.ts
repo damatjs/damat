@@ -7,18 +7,18 @@ export class OrmError extends Error {
   constructor(
     message: string,
     public readonly code: string,
-    public readonly details?: Record<string, unknown>
+    public readonly details?: Record<string, unknown>,
   ) {
     super(message);
-    this.name = 'OrmError';
+    this.name = "OrmError";
   }
 }
 
 // Database Connection Errors
 export class ConnectionError extends OrmError {
   constructor(message: string, details?: Record<string, unknown>) {
-    super(message, 'CONNECTION_ERROR', details);
-    this.name = 'ConnectionError';
+    super(message, "CONNECTION_ERROR", details);
+    this.name = "ConnectionError";
   }
 }
 
@@ -28,18 +28,18 @@ export class QueryError extends OrmError {
     message: string,
     public readonly sql: string,
     public readonly params?: unknown[],
-    details?: Record<string, unknown>
+    details?: Record<string, unknown>,
   ) {
-    super(message, 'QUERY_ERROR', { sql, params, ...details });
-    this.name = 'QueryError';
+    super(message, "QUERY_ERROR", { sql, params, ...details });
+    this.name = "QueryError";
   }
 }
 
 // Model Errors
 export class ModelError extends OrmError {
   constructor(message: string, details?: Record<string, unknown>) {
-    super(message, 'MODEL_ERROR', details);
-    this.name = 'ModelError';
+    super(message, "MODEL_ERROR", details);
+    this.name = "ModelError";
   }
 }
 
@@ -48,10 +48,10 @@ export class ValidationError extends OrmError {
   constructor(
     message: string,
     public readonly field: string,
-    public readonly value: unknown
+    public readonly value: unknown,
   ) {
-    super(message, 'VALIDATION_ERROR', { field, value });
-    this.name = 'ValidationError';
+    super(message, "VALIDATION_ERROR", { field, value });
+    this.name = "ValidationError";
   }
 }
 
@@ -59,14 +59,14 @@ export class ValidationError extends OrmError {
 export class NotFoundError extends OrmError {
   constructor(
     public readonly model: string,
-    public readonly criteria: Record<string, unknown>
+    public readonly criteria: Record<string, unknown>,
   ) {
     super(
       `${model} not found with criteria: ${JSON.stringify(criteria)}`,
-      'NOT_FOUND',
-      { model, criteria }
+      "NOT_FOUND",
+      { model, criteria },
     );
-    this.name = 'NotFoundError';
+    this.name = "NotFoundError";
   }
 }
 
@@ -75,22 +75,22 @@ export class DuplicateError extends OrmError {
   constructor(
     public readonly model: string,
     public readonly field: string,
-    public readonly value: unknown
+    public readonly value: unknown,
   ) {
     super(
       `${model} with ${field}="${value}" already exists`,
-      'DUPLICATE_ERROR',
-      { model, field, value }
+      "DUPLICATE_ERROR",
+      { model, field, value },
     );
-    this.name = 'DuplicateError';
+    this.name = "DuplicateError";
   }
 }
 
 // Transaction Error
 export class TransactionError extends OrmError {
   constructor(message: string, details?: Record<string, unknown>) {
-    super(message, 'TRANSACTION_ERROR', details);
-    this.name = 'TransactionError';
+    super(message, "TRANSACTION_ERROR", details);
+    this.name = "TransactionError";
   }
 }
 
@@ -99,9 +99,9 @@ export class MigrationError extends OrmError {
   constructor(
     message: string,
     public readonly migration?: string,
-    details?: Record<string, unknown>
+    details?: Record<string, unknown>,
   ) {
-    super(message, 'MIGRATION_ERROR', { migration, ...details });
-    this.name = 'MigrationError';
+    super(message, "MIGRATION_ERROR", { migration, ...details });
+    this.name = "MigrationError";
   }
 }

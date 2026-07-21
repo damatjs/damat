@@ -38,15 +38,15 @@ after a real method/field (e.g. `transaction`, `pool`) keeps the method, and you
 
 ### Methods
 
-| Method | Behaviour |
-| --- | --- |
-| `registerModel(name, model)` | Registers in the `ModelRegistry`, eagerly creates+caches a `PgRepository`, and installs the `em.<name>` accessor. |
-| `getRepository<T>(name)` / `repo<T>(name)` | Returns the cached repo; throws `ModelRegistryError` if the model is not registered; lazily creates+caches on first access. |
-| `transaction<R>(cb, options?)` / `tx<R>(cb, options?)` | Runs `cb` inside a transaction; `cb` receives a `TransactionalEntityManager` (typed with `tx.<model>` accessors). |
-| `raw<T>(sql, params?, ctx?)` / `execute<T>(sql, params?)` | Runs raw SQL on the pool; returns `{ rows, rowCount }`; wraps driver errors in `QueryExecutionError`. |
-| `getPool()` | The underlying `Pool`. |
-| `getModelRegistry()` | The `ModelRegistry`. |
-| `getRegisteredModels()` | `string[]` of registered model names. |
+| Method                                                    | Behaviour                                                                                                                   |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `registerModel(name, model)`                              | Registers in the `ModelRegistry`, eagerly creates+caches a `PgRepository`, and installs the `em.<name>` accessor.           |
+| `getRepository<T>(name)` / `repo<T>(name)`                | Returns the cached repo; throws `ModelRegistryError` if the model is not registered; lazily creates+caches on first access. |
+| `transaction<R>(cb, options?)` / `tx<R>(cb, options?)`    | Runs `cb` inside a transaction; `cb` receives a `TransactionalEntityManager` (typed with `tx.<model>` accessors).           |
+| `raw<T>(sql, params?, ctx?)` / `execute<T>(sql, params?)` | Runs raw SQL on the pool; returns `{ rows, rowCount }`; wraps driver errors in `QueryExecutionError`.                       |
+| `getPool()`                                               | The underlying `Pool`.                                                                                                      |
+| `getModelRegistry()`                                      | The `ModelRegistry`.                                                                                                        |
+| `getRegisteredModels()`                                   | `string[]` of registered model names.                                                                                       |
 
 ### Repository caching
 
@@ -105,7 +105,11 @@ The constructor installs a getter for each model name (from `modelsConfig` keys,
 
 ```ts
 for (const key of modelNames) {
-  Object.defineProperty(this, key, { get: () => this.getRepository(key), enumerable: true, configurable: true });
+  Object.defineProperty(this, key, {
+    get: () => this.getRepository(key),
+    enumerable: true,
+    configurable: true,
+  });
 }
 ```
 
@@ -131,12 +135,12 @@ operation runs inside the active transaction. They are cached for the lifetime o
 
 ### Other methods
 
-| Method | Behaviour |
-| --- | --- |
+| Method                                       | Behaviour                                                       |
+| -------------------------------------------- | --------------------------------------------------------------- |
 | `query<T>(sql, params?)` / `execute<T>(...)` | Raw SQL on the transaction client (`transactionContext.query`). |
-| `createSavepoint(name)` | `SAVEPOINT <name>` (name sanitised by the context). |
-| `rollbackToSavepoint(name)` | `ROLLBACK TO SAVEPOINT <name>`. |
-| `releaseSavepoint(name)` | `RELEASE SAVEPOINT <name>`. |
+| `createSavepoint(name)`                      | `SAVEPOINT <name>` (name sanitised by the context).             |
+| `rollbackToSavepoint(name)`                  | `ROLLBACK TO SAVEPOINT <name>`.                                 |
+| `releaseSavepoint(name)`                     | `RELEASE SAVEPOINT <name>`.                                     |
 
 ## Errors (`manager/error.ts`)
 

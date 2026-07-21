@@ -1,4 +1,4 @@
-import { ColumnBuilder } from './base';
+import { ColumnBuilder } from "./base";
 
 /**
  * UUID column builder

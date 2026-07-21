@@ -1,77 +1,221 @@
-version: '3.8'
+x-app-environment: &app-environment
+  NODE_ENV: production
+  DATABASE_URL: "postgresql://damat_runtime:${DAMAT_RUNTIME_PASSWORD:?set DAMAT_RUNTIME_PASSWORD}@db:5432/damatjs"
+  REDIS_URL: "${REDIS_URL:-}"
+  METRICS_TOKEN: "${METRICS_TOKEN:?set METRICS_TOKEN}"
+  PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:?set PUBLIC_BASE_URL}"
+  RELEASE_VERSION: "${RELEASE_VERSION:?set RELEASE_VERSION}"
+  DAMAT_ALLOW_INSECURE_INTERNAL_NETWORK: "true"
+
+x-app: &app
+  image: "${DAMAT_IMAGE:-damat-default:local}"
+  build:
+    context: ../..
+    dockerfile: backend/default/Dockerfile
+  init: true
+  read_only: true
+  tmpfs: ["/tmp"]
+  cap_drop: ["ALL"]
+  security_opt: ["no-new-privileges:true"]
+  stop_grace_period: 40s
+  restart: unless-stopped
 
 services:
-  api:
-    build: .
-    ports:
-      - "9000:9000"
+  migrate:
+    <<: *app
+    command: ["bun", "run", "db:migrate"]
     environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/damatjs?schema=public
-      - REDIS_URL=redis://redis:6379
-    env_file:
-      - .env
+      <<: *app-environment
+      DATABASE_URL: "postgresql://damat_migrator:${DAMAT_MIGRATOR_PASSWORD:?set DAMAT_MIGRATOR_PASSWORD}@db:5432/damatjs"
+    restart: "no"
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - app-network
+
+  api:
+    <<: *app
+    command: ["bun", "run", "start"]
+    environment:
+      <<: *app-environment
+      DAMAT_RUNTIME_MODE: server
+      PORT: 9000
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports: ["${DAMAT_BIND_ADDRESS:-127.0.0.1}:9000:9000"]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bun",
+          "--eval",
+          "fetch('http://localhost:9000/health').then(r=>{if(!r.ok)process.exit(1)})",
+        ]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 5
+
+  jobs:
+    <<: *app
+    command: ["bun", "run", "start"]
+    environment:
+      <<: *app-environment
+      DAMAT_RUNTIME_MODE: worker
+      DAMAT_WORKER_TYPES: jobs
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  events:
+    <<: *app
+    command: ["bun", "run", "start"]
+    environment:
+      <<: *app-environment
+      DAMAT_RUNTIME_MODE: worker
+      DAMAT_WORKER_TYPES: events
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  pipelines:
+    <<: *app
+    command: ["bun", "run", "start"]
+    environment:
+      <<: *app-environment
+      DAMAT_RUNTIME_MODE: worker
+      DAMAT_WORKER_TYPES: pipelines
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  acceptance:
+    <<: *app
+    profiles: [operations]
+    command: ["bun", "ops/database-acceptance.ts"]
+    environment:
+      <<: *app-environment
+      MIGRATION_DATABASE_URL: "postgresql://damat_migrator:${DAMAT_MIGRATOR_PASSWORD:?set DAMAT_MIGRATOR_PASSWORD}@db:5432/damatjs"
+    restart: "no"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  worker-acceptance:
+    <<: *app
+    profiles: [operations]
+    command: ["bun", "ops/durable-work-acceptance.ts"]
+    environment: *app-environment
+    restart: "no"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
 
   db:
-    image: pgvector/pgvector:pg16
+    image: "${POSTGRES_IMAGE:-pgvector/pgvector:pg16}"
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=damatjs
+      POSTGRES_USER: damat_bootstrap
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}"
+      POSTGRES_DB: damatjs
+      DAMAT_MIGRATOR_PASSWORD: "${DAMAT_MIGRATOR_PASSWORD:?set DAMAT_MIGRATOR_PASSWORD}"
+      DAMAT_RUNTIME_PASSWORD: "${DAMAT_RUNTIME_PASSWORD:?set DAMAT_RUNTIME_PASSWORD}"
+      DAMAT_BACKUP_PASSWORD: "${DAMAT_BACKUP_PASSWORD:?set DAMAT_BACKUP_PASSWORD}"
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+      - ./postgres/init-roles.sh:/docker-entrypoint-initdb.d/10-damat-roles.sh:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U damat_bootstrap -d damatjs"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
     restart: unless-stopped
-    networks:
-      - app-network
 
   redis:
-    image: redis:7-alpine
-    command: redis-server --appendonly yes
+    image: "${REDIS_IMAGE:-redis:7-alpine}"
+    entrypoint: ["/bin/sh", "/etc/redis/damat-entrypoint.sh"]
+    user: redis
+    profiles: [accelerator]
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD:?set REDIS_PASSWORD}"
     volumes:
       - redis-data:/data
-    ports:
-      - "6379:6379"
+      - ./redis/entrypoint.sh:/etc/redis/damat-entrypoint.sh:ro
+    tmpfs: ["/tmp"]
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+      test:
+        [
+          "CMD-SHELL",
+          "redis-cli --no-auth-warning -u redis://damat:$${REDIS_PASSWORD}@127.0.0.1:6379 ping",
+        ]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
     restart: unless-stopped
-    networks:
-      - app-network
 
-  # Optional: Adminer for database management
-  adminer:
-    image: adminer
-    ports:
-      - "8080:8080"
+  redis-acceptance:
+    <<: *app
+    profiles: [accelerator]
+    command: ["bun", "ops/redis-acceptance.ts"]
+    environment: *app-environment
+    restart: "no"
     depends_on:
-      - db
-    restart: unless-stopped
-    networks:
-      - app-network
-    profiles:
-      - tools
+      redis:
+        condition: service_healthy
+
+  backup:
+    image: "${POSTGRES_IMAGE:-pgvector/pgvector:pg16}"
+    profiles: [operations]
+    environment:
+      PGPASSWORD: "${DAMAT_BACKUP_PASSWORD:?set DAMAT_BACKUP_PASSWORD}"
+    volumes: ["backups:/backups"]
+    command:
+      - sh
+      - -ec
+      - >-
+        pg_dump --host=db --username=damat_backup --dbname=damatjs
+        --format=custom --file=/backups/latest.dump.tmp &&
+        mv /backups/latest.dump.tmp /backups/latest.dump
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  restore-db:
+    image: "${POSTGRES_IMAGE:-pgvector/pgvector:pg16}"
+    profiles: [operations]
+    environment:
+      POSTGRES_USER: damat_restore
+      POSTGRES_PASSWORD: "${RESTORE_PASSWORD:?set RESTORE_PASSWORD}"
+      POSTGRES_DB: damat_restore
+    tmpfs: ["/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U damat_restore -d damat_restore"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  restore-drill:
+    image: "${POSTGRES_IMAGE:-pgvector/pgvector:pg16}"
+    profiles: [operations]
+    environment:
+      PGPASSWORD: "${RESTORE_PASSWORD:?set RESTORE_PASSWORD}"
+    volumes: ["backups:/backups:ro"]
+    command:
+      - sh
+      - -ec
+      - >-
+        pg_restore --host=restore-db --username=damat_restore
+        --dbname=damat_restore --no-owner --no-acl --exit-on-error
+        /backups/latest.dump &&
+        test "$(psql --host=restore-db --username=damat_restore
+        --dbname=damat_restore --tuples-only --no-align
+        --command="SELECT COUNT(*) FROM pg_tables WHERE schemaname='public'")" -gt 0
+    depends_on:
+      restore-db:
+        condition: service_healthy
 
 volumes:
   postgres-data:
   redis-data:
-
-networks:
-  app-network:
-    driver: bridge
+  backups:

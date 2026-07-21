@@ -1,5 +1,9 @@
 import { type Command, reportError } from "@damatjs/cli";
-import { loadDatabaseUrl, loadModules } from "@/cli/utils/load";
+import {
+  loadDatabaseUrl,
+  loadModules,
+  loadSystemMigrations,
+} from "@/cli/utils/load";
 import { OrmModuleContainer } from "@/cli/types";
 
 const migrateStatus: Command = {
@@ -18,29 +22,34 @@ const migrateStatus: Command = {
     const { getMigrationStatus, getModuleMigrationStatus } =
       await import("@damatjs/orm-migration");
 
-    // Load modules from damat.config.ts
     let modules: OrmModuleContainer;
+    let systemMigrations: Awaited<ReturnType<typeof loadSystemMigrations>>;
     try {
       modules = await loadModules("damat.config.ts", ctx.cwd);
+      systemMigrations = await loadSystemMigrations("damat.config.ts", ctx.cwd);
     } catch (error) {
       reportError(ctx.logger, error, { prefix: "Failed to load config" });
       return { exitCode: 1 };
     }
 
-    if (!modules || Object.keys(modules).length === 0) {
-      ctx.logger.error("No modules found in 'damat.config.ts'");
+    if (
+      (!modules || Object.keys(modules).length === 0) &&
+      systemMigrations.length === 0
+    ) {
+      ctx.logger.error("No module or system migrations found");
       return { exitCode: 1 };
     }
 
     const moduleName = (ctx.options.module as string) || ctx.args[0];
 
-    // Load database URL from damat.config.ts
     let databaseUrl: string;
     try {
       const config = await loadDatabaseUrl("damat.config.ts", ctx.cwd);
       databaseUrl = config.databaseUrl;
     } catch (error) {
-      reportError(ctx.logger, error, { prefix: "Failed to load database config" });
+      reportError(ctx.logger, error, {
+        prefix: "Failed to load database config",
+      });
       return { exitCode: 1 };
     }
 
@@ -59,8 +68,6 @@ const migrateStatus: Command = {
           ctx.logger.error(`Module '${moduleName}' not found in config`);
           return { exitCode: 1 };
         }
-        // Pass the full module descriptor: migrations are discovered via
-        // `resolve`, but the tracker table is keyed by module name.
         const status = await getModuleMigrationStatus(pool, moduleConfig);
         ctx.logger[status.module.pending > 0 ? "info" : "success"](
           `${status.module.name}: ${status.module.applied} applied, ${status.module.pending} pending`,
@@ -69,7 +76,9 @@ const migrateStatus: Command = {
           ctx.logger[m.applied ? "success" : "info"](`${m.name}`);
         }
       } else {
-        const status = await getMigrationStatus(pool, modules);
+        const status = await getMigrationStatus(pool, modules, {
+          systemMigrations,
+        });
         for (const mod of status.modules) {
           ctx.logger[mod.pending > 0 ? "info" : "success"](
             `${mod.name}: ${mod.applied} applied, ${mod.pending} pending`,

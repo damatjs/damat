@@ -10,14 +10,6 @@ export function setupPoolListeners(pool: Pool, logger: ILogger): void {
     logger.debug("New client connected to pool");
   });
 
-  pool.on("acquire", () => {
-    logger.debug("Client acquired from pool");
-  });
-
-  pool.on("release", () => {
-    logger.debug("Client released back to pool");
-  });
-
   pool.on("remove", () => {
     logger.debug("Client removed from pool");
   });

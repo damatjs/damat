@@ -20,9 +20,7 @@ export const UserModel = model("users", {
   // relations reference the target table name
   accounts: columns.hasMany("accounts"),
   sessions: columns.hasMany("sessions"),
-}).indexes([
-  columns.indexes().columns(["email"]).unique(),
-]);
+}).indexes([columns.indexes().columns(["email"]).unique()]);
 
 export default UserModel;
 ```
@@ -31,18 +29,18 @@ export default UserModel;
 
 The DSL covers the PostgreSQL type system. Common builders:
 
-| Group | Builders |
-|-------|----------|
-| Identity | `id({ prefix? })`, `uuid()` |
-| Strings | `text()`, `varchar(length?)`, `char(length?)` |
-| Numbers | `integer()`, `numeric(precision?, scale?)`, `real()`, `doublePrecision()`, `money()` |
-| Boolean | `boolean()` |
-| Temporal | `timestamp({ withTimezone? })`, `date()`, `time()`, `interval()` |
-| JSON | `json()`, `jsonb()` |
-| Binary | `bytea()` |
-| Enum | `enum(values)` |
-| Vector | `vector(dimensions)` — pgvector |
-| Relations | `belongsTo(target)`, `hasMany(target)`, `hasOne(target)` |
+| Group     | Builders                                                                             |
+| --------- | ------------------------------------------------------------------------------------ |
+| Identity  | `id({ prefix? })`, `uuid()`                                                          |
+| Strings   | `text()`, `varchar(length?)`, `char(length?)`                                        |
+| Numbers   | `integer()`, `numeric(precision?, scale?)`, `real()`, `doublePrecision()`, `money()` |
+| Boolean   | `boolean()`                                                                          |
+| Temporal  | `timestamp({ withTimezone? })`, `date()`, `time()`, `interval()`                     |
+| JSON      | `json()`, `jsonb()`                                                                  |
+| Binary    | `bytea()`                                                                            |
+| Enum      | `enum(values)`                                                                       |
+| Vector    | `vector(dimensions)` — pgvector                                                      |
+| Relations | `belongsTo(target)`, `hasMany(target)`, `hasOne(target)`                             |
 
 Modifiers chain: `.primaryKey()`, `.unique()`, `.nullable()`,
 `.default(value)`, `.defaultNow()`, `.length(n)`, `.name("col_name")`,
@@ -57,10 +55,10 @@ export const AccountModel = model("accounts", {
   id: columns.id({ prefix: "acc" }).primaryKey(),
   userId: columns.text(),
   provider: columns.text(),
-  user: columns.belongsTo("users"),   // FK -> users
+  user: columns.belongsTo("users"), // FK -> users
 })
   .indexes([columns.indexes().columns(["userId"])])
-  .timestamps();                       // adds createdAt / updatedAt
+  .timestamps(); // adds createdAt / updatedAt
 ```
 
 Relations like `belongsTo`/`hasMany` are for tables **within one module**. To

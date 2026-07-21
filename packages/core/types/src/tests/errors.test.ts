@@ -1,4 +1,4 @@
-import { describe, it, expect, spyOn } from "bun:test";
+import { describe, it, expect } from "bun:test";
 
 import {
   AppError,
@@ -7,7 +7,6 @@ import {
   NotFoundError,
   AuthenticationError,
   AuthorizationError,
-  initFramework,
 } from "../index";
 
 describe("AppError", () => {
@@ -114,7 +113,9 @@ describe("AuthenticationError", () => {
   });
 
   it("accepts a custom message", () => {
-    expect(new AuthenticationError("token expired").message).toBe("token expired");
+    expect(new AuthenticationError("token expired").message).toBe(
+      "token expired",
+    );
   });
 });
 
@@ -155,17 +156,5 @@ describe("error hierarchy", () => {
   it("subclasses are distinguishable from one another", () => {
     expect(new ValidationError("a")).not.toBeInstanceOf(NotFoundError);
     expect(new NotFoundError()).not.toBeInstanceOf(ValidationError);
-  });
-});
-
-describe("initFramework", () => {
-  it("returns true and logs an initialization message", () => {
-    const log = spyOn(console, "log").mockImplementation(() => {});
-    try {
-      expect(initFramework()).toBe(true);
-      expect(log).toHaveBeenCalledWith("Framework initialized");
-    } finally {
-      log.mockRestore();
-    }
   });
 });

@@ -24,13 +24,18 @@ import { getModule } from "@damatjs/framework";
 
 export const createProfileStep = createStep<NewUser, User, string>(
   "create-profile",
-  async (input, ctx) => {                       // forward
+  async (input, ctx) => {
+    // forward
     const users = getModule("user");
-    const user = await users.user.create({ data: { email: input.email }, returning: ["id", "email"] });
+    const user = await users.user.create({
+      data: { email: input.email },
+      returning: ["id", "email"],
+    });
     // output = the user (downstream); compensateInput = its id (for rollback).
     return new StepResponse(user, user.id);
   },
-  async (userId, ctx) => {                       // compensation (rollback)
+  async (userId, ctx) => {
+    // compensation (rollback)
     getModule("user").user.delete({ where: { id: userId } });
   },
   { timeoutMs: 10_000, description: "Create user profile" },
@@ -46,7 +51,10 @@ generator by calling them directly — no `executeStep` noise:
 ```ts
 import { createWorkflow, Effect } from "@damatjs/workflow-engine";
 
-export const userOnboardingWorkflow = createWorkflow<NewUser, { user: User; emailSent: boolean }>(
+export const userOnboardingWorkflow = createWorkflow<
+  NewUser,
+  { user: User; emailSent: boolean }
+>(
   "user-onboarding",
   (input, ctx) =>
     Effect.gen(function* () {
@@ -95,13 +103,13 @@ override either per definition or per call. For retries, either write a policy
 inline (`{ maxAttempts, initialDelayMs, maxDelayMs, backoffMultiplier }`) or
 use a preset from `RetryPolicies`:
 
-| Preset | Behavior |
-|--------|----------|
-| `none` | no retries |
-| `once` | one immediate retry |
-| `standard` | 3 attempts, 100ms → 5s exponential backoff |
-| `aggressive` | 5 attempts, 50ms → 10s |
-| `patient` | 3 attempts, 1s → 30s, ×3 backoff |
+| Preset       | Behavior                                   |
+| ------------ | ------------------------------------------ |
+| `none`       | no retries                                 |
+| `once`       | one immediate retry                        |
+| `standard`   | 3 attempts, 100ms → 5s exponential backoff |
+| `aggressive` | 5 attempts, 50ms → 10s                     |
+| `patient`    | 3 attempts, 1s → 30s, ×3 backoff           |
 
 On failure the result's `error` is a typed `WorkflowError` — look at
 `error.code` (`STEP_TIMEOUT`, `MAX_RETRIES_EXCEEDED`, …) plus `compensated` and

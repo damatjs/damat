@@ -29,12 +29,12 @@ describe("validateModuleManifest (edge cases)", () => {
     expect(() =>
       validateModuleManifest({ name: "x", modules: "user" }),
     ).toThrow('"modules" must be an array');
-    expect(() =>
-      validateModuleManifest({ name: "x", packages: null }),
-    ).toThrow('"packages" must be an object');
-    expect(() =>
-      validateModuleManifest({ name: "x", registry: null }),
-    ).toThrow('"registry" must be an object');
+    expect(() => validateModuleManifest({ name: "x", packages: null })).toThrow(
+      '"packages" must be an object',
+    );
+    expect(() => validateModuleManifest({ name: "x", registry: null })).toThrow(
+      '"registry" must be an object',
+    );
   });
 });
 
@@ -52,7 +52,9 @@ describe("readModuleManifest (edge cases)", () => {
 
 describe("validateModuleDir (remaining branches)", () => {
   test("reports a missing module directory", () => {
-    const report = validateModuleDir(join(tmpdir(), "damat-does-not-exist-xyz"));
+    const report = validateModuleDir(
+      join(tmpdir(), "damat-does-not-exist-xyz"),
+    );
     expect(report.valid).toBe(false);
     expect(report.errors[0]).toContain("Module directory not found");
     expect(report.manifest).toBeNull();
@@ -116,7 +118,9 @@ describe("validateModuleDir (remaining branches)", () => {
       writeFileSync(join(dir, "migrations", "README.md"), "not sql\n");
       const report = validateModuleDir(dir);
       expect(report.valid).toBe(true);
-      expect(report.warnings.join("\n")).toContain("contains no .sql migrations");
+      expect(report.warnings.join("\n")).toContain(
+        "contains no .sql migrations",
+      );
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

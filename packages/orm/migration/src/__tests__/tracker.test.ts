@@ -33,9 +33,7 @@ describe("MigrationTracker.ensureTable", () => {
 
     expect(queries).toHaveLength(1);
     const sql = norm(queries[0]!.sql);
-    expect(sql).toContain(
-      'CREATE TABLE IF NOT EXISTS "_damat_migration_logs"',
-    );
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS "_damat_migration_logs"');
     // Key columns and the uniqueness guard.
     expect(sql).toContain('"id" TEXT PRIMARY KEY');
     expect(sql).toContain('UNIQUE ("module", "name")');
@@ -52,7 +50,11 @@ describe("MigrationTracker.ensureTable", () => {
 describe("MigrationTracker.getApplied", () => {
   it("filters by module with status='applied' and oldest-first ordering", async () => {
     const canned: AppliedMigration[] = [
-      { module: "user", name: "Migration1_Initial", applied_at: new Date("2026-01-01") },
+      {
+        module: "user",
+        name: "Migration1_Initial",
+        applied_at: new Date("2026-01-01"),
+      },
     ];
     const { pool, queries } = makeFakePool(canned as any);
 

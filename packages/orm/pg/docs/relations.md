@@ -12,16 +12,22 @@ model's relation builders (`BelongsTo` / `HasMany` / `HasOne` from `@damatjs/orm
 ## Option shape
 
 ```ts
-interface RelationIncludeMap { [relationName: string]: RelationIncludeOptions | boolean }
+interface RelationIncludeMap {
+  [relationName: string]: RelationIncludeOptions | boolean;
+}
 
 interface RelationIncludeOptions<Cols> {
   select?: Cols[];
   where?: WhereClause<Cols>;
   whereRaw?: RawWhereClause | RawWhereClause[];
-  orderBy?: Array<{ column: Cols; direction?: "ASC"|"DESC"; nulls?: "NULLS FIRST"|"NULLS LAST" }>;
+  orderBy?: Array<{
+    column: Cols;
+    direction?: "ASC" | "DESC";
+    nulls?: "NULLS FIRST" | "NULLS LAST";
+  }>;
   limit?: number;
   offset?: number;
-  with?: RelationIncludeMap;   // nesting is supported (recursively)
+  with?: RelationIncludeMap; // nesting is supported (recursively)
 }
 ```
 
@@ -31,9 +37,14 @@ Usage:
 user.findMany({
   select: ["id", "email"],
   with: {
-    posts: { select: ["id", "title"], where: { published: true }, orderBy: [{ column: "createdAt", direction: "DESC" }], limit: 5 },
-    profile: true,            // include with defaults (all columns)
-    bannedFlag: false,        // explicitly excluded (skipped)
+    posts: {
+      select: ["id", "title"],
+      where: { published: true },
+      orderBy: [{ column: "createdAt", direction: "DESC" }],
+      limit: 5,
+    },
+    profile: true, // include with defaults (all columns)
+    bannedFlag: false, // explicitly excluded (skipped)
   },
 });
 ```

@@ -1,14 +1,13 @@
 # @damatjs/orm-cli
 
-> `damat-orm` — the standalone CLI for Damat ORM migrations and code generation.
+> `damat-orm` — the standalone CLI for Damat ORM migrations.
 
 `@damatjs/orm-cli` ships the `damat-orm` binary: a small, config-driven command
-line tool that runs module migrations and generates TypeScript types from your
-ORM model definitions. It reads `damat.config.ts` to discover modules, the
-cross-module links under `links`, and the database URL, then delegates the real
-work to the `@damatjs/orm-*` packages. It is built on the shared `@damatjs/cli`
-runner, so commands, options, banner, and help formatting come from the same
-framework as the rest of the Damat CLIs.
+line tool that runs system and module migrations. It reads `damat.config.ts` to discover
+modules, the cross-module links under `links`, and the database URL, then
+delegates the real work to the `@damatjs/orm-*` packages. It is built on the
+shared `@damatjs/cli` runner, so commands, options, banner, and help formatting
+come from the same framework as the rest of the Damat CLIs.
 
 Part of the [Damat](../../../README.md) monorepo · [Full guide](../../../docs/GUIDE.md) · [Internals](./docs/README.md)
 
@@ -33,22 +32,44 @@ damat-orm <command> [args] [options]
 
 ## Commands
 
-Two top-level command groups, each with subcommands. Running a group with no
-subcommand prints the available subcommands.
-
-| Command | Description | Example |
-|---|---|---|
-| `migrate:up` | Run all pending migrations across every module | `damat-orm migrate:up` |
+| Command                   | Description                                             | Example                         |
+| ------------------------- | ------------------------------------------------------- | ------------------------------- |
+| `database:setup`          | Create the configured database and apply migrations     | `damat-orm database:setup`      |
+| `migrate:up`              | Run all pending migrations across every module          | `damat-orm migrate:up`          |
 | `migrate:status [module]` | Show applied/pending counts (optionally for one module) | `damat-orm migrate:status user` |
-| `migrate:list` | List modules that have migrations, with counts | `damat-orm migrate:list` |
-| `migrate:create <module>` | Create an initial or diff migration for a module | `damat-orm migrate:create user` |
+| `migrate:list`            | List modules that have migrations, with counts          | `damat-orm migrate:list`        |
+| `migrate:create <module>` | Create an initial or diff migration for a module        | `damat-orm migrate:create user` |
 
 > `migrate:status` also accepts `--module <name>` / `-m <name>` as an
 > alternative to the positional argument.
 >
 > **Type generation lives elsewhere.** `damat-orm` is migrations-only — generate
 > row types/zod/registry with `damat codegen <module>` (in an app) or
-> `damat module codegen` (in a module package), both over `@damatjs/codegen`.
+> `damat module codegen` (in a module package). Both commands use
+> `@damatjs/module-generator`, which consumes `@damatjs/schema-codegen`.
+
+All migration commands honor a resolved module's declared migration directory,
+including immutable packages whose SQL lives below `src/migrations`.
+
+When durable events are enabled, `migrate:up` applies the shared durability
+catalog followed by the events catalog before module migrations. Enabling jobs
+selects shared durability followed by jobs. Enabling pipelines selects shared
+durability, jobs, then pipelines because pipeline action/workflow nodes use the
+durable job runtime. With every capability enabled the stable owner order is
+shared durability, jobs, events, then pipelines. The all-module
+`migrate:status` view includes each enabled system owner. A module-scoped
+status request remains limited to that module.
+
+`database:setup` first connects to the configured target. PostgreSQL error
+`3D000` triggers a server-level check through the standard `postgres` database;
+the command safely creates the requested database when absent and then delegates
+to `migrate:up`. Existing databases and repeated migration runs are idempotent.
+The configured user needs `CREATEDB` only when the target does not exist.
+Every command propagates its handler result to the process exit status, so
+configuration, connection, and migration failures are nonzero in CI and scripts.
+Configuration imports are cache-busted through the operating-system temporary
+directory rather than beside the source, so migration jobs can keep the
+application filesystem read-only.
 
 ### Cross-module links
 
@@ -82,9 +103,9 @@ tables that join models living in different modules.
 
 ## When to use
 
-- **Use `damat-orm`** when you want to drive migrations and type generation
-  directly — in CI, scripts, or a non-Damat-app project that still uses the
-  Damat ORM and a `damat.config.ts`.
+- **Use `damat-orm`** when you want to drive migrations directly — in CI,
+  scripts, or a non-Damat-app project that still uses the Damat ORM and a
+  `damat.config.ts`.
 - **Inside a full Damat backend**, the `damat` CLI (`@damatjs/damat-cli`) is the
   day-to-day entry point; it shells out to `bun damat-orm migrate:up` after
   installing a module. Both read the same `damat.config.ts`.
@@ -129,9 +150,9 @@ bun damat codegen user
 
 Notes grounded in the source:
 
-- The config file name is fixed to `damat.config.ts`; module `resolve` paths are
-  resolved relative to the config file's directory and may be relative or
-  absolute.
+- The config file name is fixed to `damat.config.ts`. Source paths resolve
+  relative to it; Node and Damat descriptors resolve immutable artifact roots
+  and their manifest-declared migrations.
 - The database URL is read from `projectConfig.databaseUrl`, falling back to
   `services.database` (`connectionString`, or host/port/user/password/database
   fields used to build one).
@@ -155,8 +176,9 @@ Notes grounded in the source:
   (`runMigrations`, `createInitialMigration`, `createDiffMigration`,
   `getMigrationStatus`, `discoverModels`, `discoverAllMigrations`).
 - `@damatjs/orm-processor` — `snapshotExist` (initial-vs-diff decision).
-- `@damatjs/orm-model` — `toModuleSchema` (builds the schema for codegen).
-- `@damatjs/codegen` — `generateFilesMap` (turns a schema into type files).
+- `@damatjs/orm-model` — schema construction used by the unregistered internal
+  type-generation handler.
+- `@damatjs/schema-codegen` — pure file-map generation used by that handler.
 - `@damatjs/link` — `resolveLinkMigrationModules` (discovers `link:<owner>`
   migration modules) and `renderLinkAugmentations` (the `<table>.links.ts`
   files woven into linked modules' generated types).

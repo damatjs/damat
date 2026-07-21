@@ -8,16 +8,16 @@ deliberately tiny: it is a re-export aggregator with no behaviour of its own.
 
 ## Module map
 
-| File | Responsibility |
-|---|---|
-| `src/index.ts` | Root `.` export — `export *` from all five sub-packages |
-| `src/model.ts` | `export * from "@damatjs/orm-model"` (subpath `./model`) |
-| `src/connector.ts` | `export * from "@damatjs/orm-connector"` (subpath `./connector`) |
-| `src/migration.ts` | `export * from "@damatjs/orm-migration"` (subpath `./migration`) |
-| `src/processor.ts` | `export * from "@damatjs/orm-processor"` (subpath `./processor`) |
-| `src/pg.ts` | `export * from "@damatjs/orm-pg"` (subpath `./pg`) |
+| File                        | Responsibility                                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------- |
+| `src/index.ts`              | Root `.` export — `export *` from all five sub-packages                                           |
+| `src/model.ts`              | `export * from "@damatjs/orm-model"` (subpath `./model`)                                          |
+| `src/connector.ts`          | `export * from "@damatjs/orm-connector"` (subpath `./connector`)                                  |
+| `src/migration.ts`          | `export * from "@damatjs/orm-migration"` (subpath `./migration`)                                  |
+| `src/processor.ts`          | `export * from "@damatjs/orm-processor"` (subpath `./processor`)                                  |
+| `src/pg.ts`                 | `export * from "@damatjs/orm-pg"` (subpath `./pg`)                                                |
 | `src/tests/exports.test.ts` | Smoke tests for the re-export wiring (every subpath resolves; barrel aggregates the sub-packages) |
-| `package.json` `exports` | Maps each subpath to its compiled `dist/*.js` + `.d.ts` |
+| `package.json` `exports`    | Maps each subpath to its compiled `dist/*.js` + `.d.ts`                                           |
 
 ## Architecture overview
 

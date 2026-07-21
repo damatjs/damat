@@ -1,10 +1,17 @@
 // Test Type Generation with Real Database
 import { Pool } from "@damatjs/deps/pg";
-import { model, columns, toModuleSchema, generateTypes, EnumBuilder } from "@damatjs/orm-model";
+import {
+  model,
+  columns,
+  toModuleSchema,
+  generateTypes,
+  EnumBuilder,
+} from "@damatjs/orm-model";
 import { writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
 
-const DB_URL = "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable";
+const DB_URL =
+  "postgres://postgres:Password@0.0.0.0:5432/testt?sslmode=disable";
 
 async function testTypeGeneration() {
   console.log("=".repeat(80));
@@ -17,11 +24,10 @@ async function testTypeGeneration() {
     // 1. Define models with various types
     console.log("\n1. Defining models...");
 
-
     const ProductStatusEnumName = new EnumBuilder([
       "draft",
       "active",
-      "archived"
+      "archived",
     ]).name("product_status");
 
     const ProductStatusEnum = columns.enum(ProductStatusEnumName);
@@ -45,21 +51,19 @@ async function testTypeGeneration() {
       published: columns.boolean().default(false),
       authorId: columns.id({ prefix: "usr" }),
       createdAt: columns.timestamp({ withTimezone: true }).defaultNow(),
-    }).indexes([
-      columns.indexes("idx_posts_author").columns(["authorId"]),
-    ]);
+    }).indexes([columns.indexes("idx_posts_author").columns(["authorId"])]);
 
     console.log("   ✅ Models defined");
 
     // 2. Create module schema with enums
     console.log("\n2. Creating module schema...");
-    const schema = toModuleSchema(
-      "blog",
-      [UserSchema, PostSchema],
-      { enums: [ProductStatusEnum] }
-    );
+    const schema = toModuleSchema("blog", [UserSchema, PostSchema], {
+      enums: [ProductStatusEnum],
+    });
     console.log("   ✅ Module schema created");
-    console.log(`   Tables: ${schema.tables.map((t: any) => t.name).join(", ")}`);
+    console.log(
+      `   Tables: ${schema.tables.map((t: any) => t.name).join(", ")}`,
+    );
     console.log(`   Enums: ${schema.enums.map((e: any) => e.name).join(", ")}`);
 
     // 3. Generate TypeScript types
@@ -97,27 +101,39 @@ async function testTypeGeneration() {
     const lines = typeOutput.split("\n");
 
     console.log("\n   --- ProductStatusEnum ---");
-    const enumStart = lines.findIndex(l => l.includes("export type ProductStatusEnum"));
+    const enumStart = lines.findIndex((l) =>
+      l.includes("export type ProductStatusEnum"),
+    );
     if (enumStart >= 0) {
       console.log("   " + lines.slice(enumStart, enumStart + 1).join("\n   "));
     }
 
     console.log("\n   --- User Interface ---");
-    const userStart = lines.findIndex(l => l.includes("export interface User {"));
+    const userStart = lines.findIndex((l) =>
+      l.includes("export interface User {"),
+    );
     if (userStart >= 0) {
       console.log("   " + lines.slice(userStart, userStart + 12).join("\n   "));
     }
 
     console.log("\n   --- NewUser Type ---");
-    const newUserStart = lines.findIndex(l => l.includes("export type NewUser ="));
+    const newUserStart = lines.findIndex((l) =>
+      l.includes("export type NewUser ="),
+    );
     if (newUserStart >= 0) {
-      console.log("   " + lines.slice(newUserStart, newUserStart + 6).join("\n   "));
+      console.log(
+        "   " + lines.slice(newUserStart, newUserStart + 6).join("\n   "),
+      );
     }
 
     console.log("\n   --- UpdateUser Type ---");
-    const updateUserStart = lines.findIndex(l => l.includes("export type UpdateUser ="));
+    const updateUserStart = lines.findIndex((l) =>
+      l.includes("export type UpdateUser ="),
+    );
     if (updateUserStart >= 0) {
-      console.log("   " + lines.slice(updateUserStart, updateUserStart + 1).join("\n   "));
+      console.log(
+        "   " + lines.slice(updateUserStart, updateUserStart + 1).join("\n   "),
+      );
     }
 
     // 6. Verify types match TypeScript expectations
@@ -144,7 +160,8 @@ async function testTypeGeneration() {
 
     // 7. Verify New* types omit auto fields
     console.log("\n7. Verifying New* types...");
-    const newUserType = typeOutput.match(/export type NewUser = \{[^}]+\}/s)?.[0] || "";
+    const newUserType =
+      typeOutput.match(/export type NewUser = \{[^}]+\}/s)?.[0] || "";
 
     if (newUserType.includes("id:")) {
       throw new Error("NewUser should not include 'id'");
@@ -162,7 +179,9 @@ async function testTypeGeneration() {
 
     // 8. Verify Update* types
     console.log("\n8. Verifying Update* types...");
-    if (!typeOutput.includes("export type UpdateUser = Partial<Omit<User, 'id'>>")) {
+    if (
+      !typeOutput.includes("export type UpdateUser = Partial<Omit<User, 'id'>>")
+    ) {
       throw new Error("UpdateUser type incorrect");
     }
     console.log("   ✅ Update* types are correct");
@@ -170,7 +189,6 @@ async function testTypeGeneration() {
     console.log("\n" + "=".repeat(80));
     console.log("✅ ALL TYPE GENERATION TESTS PASSED");
     console.log("=".repeat(80));
-
   } catch (error) {
     console.error("\n❌ TEST FAILED:", error);
     throw error;

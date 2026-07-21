@@ -54,10 +54,14 @@ export function OpenSource({ stats }: { stats: SiteStats }) {
           {cells.map(([value, label]) => (
             <div key={label} className="bg-canvas p-5 sm:p-6">
               <dt className="sr-only">{label}</dt>
-              <dd className="display text-3xl font-medium text-ink">{value}</dd>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted">
-                {label}
-              </p>
+              <dd>
+                <span className="display block text-3xl font-medium text-ink">
+                  {value}
+                </span>
+                <span className="mt-1.5 block text-sm leading-relaxed text-muted">
+                  {label}
+                </span>
+              </dd>
             </div>
           ))}
         </dl>

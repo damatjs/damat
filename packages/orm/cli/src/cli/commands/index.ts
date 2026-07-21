@@ -1,10 +1,11 @@
 import type { Command } from "@damatjs/cli";
+import databaseSetupCommand from "./database";
 import migrateCommand from "./migrate";
 
 // Codegen now lives in the damat CLI (`damat codegen` / `damat module codegen`)
-// over the agnostic `@damatjs/codegen` core. `damat-orm` is migrations only.
-const allCommands: Command[] = [migrateCommand];
+// over `@damatjs/module-generator`. `damat-orm` is migrations only.
+const allCommands: Command[] = [databaseSetupCommand, migrateCommand];
 
-export { migrateCommand };
+export { databaseSetupCommand, migrateCommand };
 
 export default allCommands;

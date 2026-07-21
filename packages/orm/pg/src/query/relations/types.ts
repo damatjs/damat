@@ -1,4 +1,4 @@
-import type { ModelDefinition } from '@damatjs/orm-model';
+import type { ModelDefinition } from "@damatjs/orm-model";
 import type { OrderDirection, WhereClause, RawWhereClause } from "../types";
 
 export interface RelationIncludeOptions<Cols extends string = string> {

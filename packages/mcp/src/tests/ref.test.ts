@@ -41,7 +41,9 @@ describe("parseModuleRef", () => {
   });
 
   test("allows digits and hyphens in names", () => {
-    expect(parseModuleRef("billing-stripe2")).toEqual({ name: "billing-stripe2" });
+    expect(parseModuleRef("billing-stripe2")).toEqual({
+      name: "billing-stripe2",
+    });
   });
 
   test("rejects names that start with a digit", () => {
@@ -79,7 +81,9 @@ describe("formatModuleRef", () => {
   });
 
   test("formats name@version without namespace", () => {
-    expect(formatModuleRef({ name: "user", version: "1.0.0" })).toBe("user@1.0.0");
+    expect(formatModuleRef({ name: "user", version: "1.0.0" })).toBe(
+      "user@1.0.0",
+    );
   });
 
   test("round-trips with parseModuleRef", () => {

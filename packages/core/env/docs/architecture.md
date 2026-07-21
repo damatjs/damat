@@ -66,7 +66,7 @@ is read, parsed, and merged into `process.env`. This means:
   (highest-priority) file to write it wins.
 - The effective precedence is therefore:
   `.env.{env}.local` > `.env.{env}` > `.env.local` > `.env`,
-  realized by *override*, not by *selection*.
+  realized by _override_, not by _selection_.
 
 This matches the function's JSDoc, which lists the order as `.env` → `.env.local` →
 `.env.{environment}` → `.env.{environment}.local` with "later files override earlier".
@@ -78,7 +78,7 @@ Before the loop, `loadEnv` snapshots the current keys of `process.env` into a
 
 - It is written to `process.env[key]` **only if** `value` is truthy **and** `key` is
   **not** in `preexisting`.
-- Consequence 1 — **system/process env wins:** any variable already present *before*
+- Consequence 1 — **system/process env wins:** any variable already present _before_
   `loadEnv` ran (exported in the shell, injected by the platform, set earlier in the
   process) is preserved.
 - Consequence 2 — **later files still override earlier files:** the snapshot is frozen
@@ -106,10 +106,10 @@ export const parseEnvFile = (content: string): Record<string, string> => {
 
   for (const line of content.split("\n")) {
     const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;     // blanks & comments
+    if (!trimmed || trimmed.startsWith("#")) continue; // blanks & comments
 
     const eqIndex = trimmed.indexOf("=");
-    if (eqIndex === -1) continue;                          // no '=' → skip
+    if (eqIndex === -1) continue; // no '=' → skip
 
     const key = trimmed.slice(0, eqIndex).trim();
     let value = trimmed.slice(eqIndex + 1).trim();
@@ -121,7 +121,7 @@ export const parseEnvFile = (content: string): Record<string, string> => {
       const closingQuote = value.indexOf("'", 1);
       if (closingQuote !== -1) value = value.slice(1, closingQuote);
     } else {
-      const commentIndex = value.indexOf("#");             // inline comment (unquoted only)
+      const commentIndex = value.indexOf("#"); // inline comment (unquoted only)
       if (commentIndex !== -1) value = value.slice(0, commentIndex).trim();
     }
 
@@ -152,17 +152,17 @@ export const parseEnvFile = (content: string): Record<string, string> => {
 
 ### Examples
 
-| Line                          | Parsed result                |
-| ----------------------------- | ---------------------------- |
-| `PORT=3000`                   | `PORT` → `"3000"`            |
-| `NAME = My App`               | `NAME` → `"My App"`         |
-| `NAME="My App" # comment`     | `NAME` → `"My App"`         |
-| `NOTE=value # inline`         | `NOTE` → `"value"`          |
-| `QUOTED='a#b'`                | `QUOTED` → `"a#b"` (`#` kept inside quotes) |
-| `URL=postgres://a:b@h/db`     | `URL` → `"postgres://a:b@h/db"` |
-| `# whole line comment`        | (skipped)                    |
-| `NOVALUE`                     | (skipped — no `=`)           |
-| `EMPTY=`                      | `EMPTY` → `""` (dropped by `loadEnv`'s truthy guard) |
+| Line                      | Parsed result                                        |
+| ------------------------- | ---------------------------------------------------- |
+| `PORT=3000`               | `PORT` → `"3000"`                                    |
+| `NAME = My App`           | `NAME` → `"My App"`                                  |
+| `NAME="My App" # comment` | `NAME` → `"My App"`                                  |
+| `NOTE=value # inline`     | `NOTE` → `"value"`                                   |
+| `QUOTED='a#b'`            | `QUOTED` → `"a#b"` (`#` kept inside quotes)          |
+| `URL=postgres://a:b@h/db` | `URL` → `"postgres://a:b@h/db"`                      |
+| `# whole line comment`    | (skipped)                                            |
+| `NOVALUE`                 | (skipped — no `=`)                                   |
+| `EMPTY=`                  | `EMPTY` → `""` (dropped by `loadEnv`'s truthy guard) |
 
 ### What it does **not** support
 

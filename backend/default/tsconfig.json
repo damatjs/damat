@@ -1,32 +1,17 @@
 {
   "extends": "@damatjs/typescript-config/base.json",
   "compilerOptions": {
-    "types": [
-      "bun"
-    ],
+    "types": ["bun"],
     "rootDir": ".",
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
-      ],
-      "@workflows/*": [
-        "./src/workflows/*"
-      ],
-      "@user/*": [
-        "./src/modules/user/*"
-      ],
-      "@organization/*": [
-        "./src/modules/organization/*"
-      ],
-      "@workflows": [
-        "./src/workflows"
-      ],
-    },
+      "@/*": ["src/*"],
+      "@workflows/*": ["./src/workflows/*"],
+      "@user/*": ["./src/modules/user/*"],
+      "@organization/*": ["./src/modules/organization/*"],
+      "@workflows": ["./src/workflows"]
+    }
   },
-  "include": [
-    "src/**/*",
-    "damat.config.ts"
-  ]
+  "include": ["src/**/*", "ops/**/*", "damat.config.ts"]
 }

@@ -7,7 +7,8 @@ speaks. It defines the interfaces and unions that describe a database
 connection, a serialized schema (columns, tables, enums, foreign keys,
 constraints, indexes, relations, modules), and the JSON descriptors for queries.
 It ships **only types** — no runtime code, no classes, no functions — so it can
-be imported anywhere (model DSL, query builder, migration engine, CLI, codegen)
+be imported anywhere (model DSL, query builder, migration engine, CLI, schema
+generation)
 without pulling in implementation. It sits at the very bottom of the ORM stack:
 everything depends on it, it depends on almost nothing.
 
@@ -25,8 +26,8 @@ Inside the monorepo it is referenced as a workspace dependency:
 // package.json
 {
   "dependencies": {
-    "@damatjs/orm-type": "*"
-  }
+    "@damatjs/orm-type": "*",
+  },
 }
 ```
 
@@ -99,66 +100,66 @@ driver types from `@damatjs/deps` and four type groups: `connection`, `model`,
 
 ### Re-exported driver types
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `Pool` | type | node-postgres `Pool` (from `@damatjs/deps/pg`). |
-| `PoolClient` | type | A pooled client checked out for a transaction. |
-| `QueryResultRow` | type | Row shape returned by the pg driver. |
+| Export           | Kind | Summary                                         |
+| ---------------- | ---- | ----------------------------------------------- |
+| `Pool`           | type | node-postgres `Pool` (from `@damatjs/deps/pg`). |
+| `PoolClient`     | type | A pooled client checked out for a transaction.  |
+| `QueryResultRow` | type | Row shape returned by the pg driver.            |
 
 ### Connection types (`connection/`)
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `DbConnection` | interface | Connection abstraction: `pool`, `query`, `transaction`, `getClient`, `close`, `isConnected`, `getStats`. |
-| `DbPoolConfig` | interface | Pool options (`connectionString`/host/port/user/…, `min`, `max`, timeouts, `ssl`). |
-| `DbPoolConfigWithExtras` | type | `DbPoolConfig` plus `allowExitOnIdle`. |
-| `DbConnectionConfig` | interface | `{ database: string \| DbPoolConfig }`. |
-| `ConnectionStatus` | interface | `{ connected, poolStats, lastChecked }`. |
-| `PoolStats` | interface | `{ totalCount, idleCount, waitingCount }`. |
-| `TransactionOptions` | interface | `{ isolationLevel?, readOnly?, deferrable? }`. |
-| `TransactionIsolationLevel` | type | `"READ UNCOMMITTED" \| "READ COMMITTED" \| "REPEATABLE READ" \| "SERIALIZABLE"`. |
-| `EntityConstructor<T>` | type | `new () => T`. |
-| `QueryContext` | interface | `{ schema?, timezone?, debug? }`. |
+| Export                      | Kind      | Summary                                                                                                  |
+| --------------------------- | --------- | -------------------------------------------------------------------------------------------------------- |
+| `DbConnection`              | interface | Connection abstraction: `pool`, `query`, `transaction`, `getClient`, `close`, `isConnected`, `getStats`. |
+| `DbPoolConfig`              | interface | Pool options (`connectionString`/host/port/user/…, `min`, `max`, timeouts, `ssl`).                       |
+| `DbPoolConfigWithExtras`    | type      | `DbPoolConfig` plus `allowExitOnIdle`.                                                                   |
+| `DbConnectionConfig`        | interface | `{ database: string \| DbPoolConfig }`.                                                                  |
+| `ConnectionStatus`          | interface | `{ connected, poolStats, lastChecked }`.                                                                 |
+| `PoolStats`                 | interface | `{ totalCount, idleCount, waitingCount }`.                                                               |
+| `TransactionOptions`        | interface | `{ isolationLevel?, readOnly?, deferrable? }`.                                                           |
+| `TransactionIsolationLevel` | type      | `"READ UNCOMMITTED" \| "READ COMMITTED" \| "REPEATABLE READ" \| "SERIALIZABLE"`.                         |
+| `EntityConstructor<T>`      | type      | `new () => T`.                                                                                           |
+| `QueryContext`              | interface | `{ schema?, timezone?, debug? }`.                                                                        |
 
 ### Model / schema types (`model/`)
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `ColumnType` | type | Union of ~80 PostgreSQL SQL type names (`"integer"`, `"text"`, `"jsonb"`, …). |
-| `ColumnSchema` | interface | A serialized column (name, type, nullability, default, length/scale, enum, array, …). |
-| `TableSchema` | interface | A serialized table: columns, indexes, foreignKeys, constraints, relations. |
-| `ModuleSchema` | interface | A collection of tables + enums + hoisted relationships. |
-| `EnumSchema` | interface | Named PG enum (`name`, `values`, optional `schema`). |
-| `IndexType` | type | `"btree" \| "hash" \| "gin" \| "gist" \| "brin"`. |
-| `IndexSchema` / `IndexColumn` | interface | Index definition and per-column order. |
-| `ConstraintType` / `ConstraintSchema` | type | `unique` / `primary_key` / `check` / `exclude` constraint union. |
-| `UniqueConstraint`, `PrimaryKeyConstraint`, `CheckConstraint`, `ExcludeConstraint` | interface | Per-kind constraint shapes. |
-| `ForeignKeyAction` | type | `"CASCADE" \| "SET NULL" \| "SET DEFAULT" \| "RESTRICT" \| "NO ACTION"`. |
-| `ForeignKeySchema` / `ForeignKeyType` / `ForeignKeySchemaMatch` | type | FK constraint, FK column (`{name,type}`), and `"SIMPLE" \| "FULL"`. |
-| `RelationType` / `RelationSchema` | type | `belongsTo`/`hasMany`/`hasOne` and the module-level relation record. |
-| `RelationOptions`, `LinkConfig`, `ConstraintOptions` | interface | Builder-level option payloads consumed by the model DSL. |
-| `OrmModule` / `OrmModuleContainer` | interface | Module manifest entry and keyed container. |
+| Export                                                                             | Kind      | Summary                                                                               |
+| ---------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------- |
+| `ColumnType`                                                                       | type      | Union of ~80 PostgreSQL SQL type names (`"integer"`, `"text"`, `"jsonb"`, …).         |
+| `ColumnSchema`                                                                     | interface | A serialized column (name, type, nullability, default, length/scale, enum, array, …). |
+| `TableSchema`                                                                      | interface | A serialized table: columns, indexes, foreignKeys, constraints, relations.            |
+| `ModuleSchema`                                                                     | interface | A collection of tables + enums + hoisted relationships.                               |
+| `EnumSchema`                                                                       | interface | Named PG enum (`name`, `values`, optional `schema`).                                  |
+| `IndexType`                                                                        | type      | `"btree" \| "hash" \| "gin" \| "gist" \| "brin"`.                                     |
+| `IndexSchema` / `IndexColumn`                                                      | interface | Index definition and per-column order.                                                |
+| `ConstraintType` / `ConstraintSchema`                                              | type      | `unique` / `primary_key` / `check` / `exclude` constraint union.                      |
+| `UniqueConstraint`, `PrimaryKeyConstraint`, `CheckConstraint`, `ExcludeConstraint` | interface | Per-kind constraint shapes.                                                           |
+| `ForeignKeyAction`                                                                 | type      | `"CASCADE" \| "SET NULL" \| "SET DEFAULT" \| "RESTRICT" \| "NO ACTION"`.              |
+| `ForeignKeySchema` / `ForeignKeyType` / `ForeignKeySchemaMatch`                    | type      | FK constraint, FK column (`{name,type}`), and `"SIMPLE" \| "FULL"`.                   |
+| `RelationType` / `RelationSchema`                                                  | type      | `belongsTo`/`hasMany`/`hasOne` and the module-level relation record.                  |
+| `RelationOptions`, `LinkConfig`, `ConstraintOptions`                               | interface | Builder-level option payloads consumed by the model DSL.                              |
+| `OrmModule` / `OrmModuleContainer`                                                 | interface | Module manifest entry and keyed container.                                            |
 
 ### Query types (`query/`)
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `WhereOperators` | type | Operator union: `eq`, `neq`, `gt/gte/lt/lte`, `like/ilike`, `in/notIn`, `isNull/isNotNull`, `between`. |
-| `WhereClause<Cols>` / `WhereConditionValue` | type | Column→condition map and a single condition value. |
-| `RawWhereClause` | interface | `{ sql, params? }` escape hatch. |
-| `OrderByClause` / `OrderDirection` | interface/type | Order spec and `"ASC" \| "DESC"`. |
-| `BuiltQuery` | interface | `{ sql, params }` — output of a query builder. |
-| `SelectDescriptor`, `InsertDescriptor`, `UpdateDescriptor`, `DeleteDescriptor`, `UpsertDescriptor` | interface | JSON descriptors per operation. |
-| `QueryDescriptor` | type | Discriminated union of the five descriptors above. |
-| `RelationDescriptor` | interface | Nested-load descriptor used inside `SelectDescriptor.with`. |
-| `WhereConditionJson` / `OrderByJson` | type/interface | Serializable counterparts of the clause types. |
+| Export                                                                                             | Kind           | Summary                                                                                                |
+| -------------------------------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------ |
+| `WhereOperators`                                                                                   | type           | Operator union: `eq`, `neq`, `gt/gte/lt/lte`, `like/ilike`, `in/notIn`, `isNull/isNotNull`, `between`. |
+| `WhereClause<Cols>` / `WhereConditionValue`                                                        | type           | Column→condition map and a single condition value.                                                     |
+| `RawWhereClause`                                                                                   | interface      | `{ sql, params? }` escape hatch.                                                                       |
+| `OrderByClause` / `OrderDirection`                                                                 | interface/type | Order spec and `"ASC" \| "DESC"`.                                                                      |
+| `BuiltQuery`                                                                                       | interface      | `{ sql, params }` — output of a query builder.                                                         |
+| `SelectDescriptor`, `InsertDescriptor`, `UpdateDescriptor`, `DeleteDescriptor`, `UpsertDescriptor` | interface      | JSON descriptors per operation.                                                                        |
+| `QueryDescriptor`                                                                                  | type           | Discriminated union of the five descriptors above.                                                     |
+| `RelationDescriptor`                                                                               | interface      | Nested-load descriptor used inside `SelectDescriptor.with`.                                            |
+| `WhereConditionJson` / `OrderByJson`                                                               | type/interface | Serializable counterparts of the clause types.                                                         |
 
 ### Migration types (`migration/`)
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| `OrmModule` | interface | `{ id, name, path, resolve, kind? }` module manifest entry. `kind?: "module" \| "link"` tags a cross-module link directory (`"link"`); ordinary modules leave it `undefined`. |
-| `OrmModuleContainer` | interface | `{ [key]: OrmModule }` keyed module map. |
+| Export               | Kind      | Summary                                                                                                          |
+| -------------------- | --------- | ---------------------------------------------------------------------------------------------------------------- |
+| `OrmModule`          | interface | Artifact identity plus optional resolved entry/model/migration paths, mutability, package name, and link `kind`. |
+| `OrmModuleContainer` | interface | `{ [key]: OrmModule }` keyed module map.                                                                         |
 
 > Both `OrmModule` and `OrmModuleContainer` live under `migration/index.ts`. The
 > `module.ts` file under `model/` defines `ModuleSchema` (schema snapshot), which
@@ -177,8 +178,9 @@ driver types from `@damatjs/deps` and four type groups: `connection`, `model`,
   builders that produce `TableSchema` / `ModuleSchema`.
 - [`@damatjs/orm-core`](../core) — registry & logger.
 - `@damatjs/orm-pg`, `@damatjs/orm-processor`, `@damatjs/orm-connector`,
-  `@damatjs/orm-migration`, `@damatjs/codegen`, `@damatjs/orm-cli` — the
-  driver, query, migration, and tooling layers.
+  `@damatjs/orm-migration`, `@damatjs/schema-codegen`,
+  `@damatjs/module-generator`, `@damatjs/orm-cli` — the driver, query,
+  migration, generation, and tooling layers.
 - `@damatjs/framework`, `@damatjs/module`, `@damatjs/service` — higher-level
   framework packages.
 

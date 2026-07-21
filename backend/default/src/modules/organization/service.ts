@@ -4,4 +4,4 @@ import { OrganizationModel } from "./models";
 
 export const models = collectModels([OrganizationModel]);
 
-export class OrganizationModuleService extends ModuleService({ models }) { }
+export class OrganizationModuleService extends ModuleService({ models }) {}

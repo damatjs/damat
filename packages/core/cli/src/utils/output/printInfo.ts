@@ -1,14 +1,15 @@
-import type { ILogger } from "@damatjs/logger";
+import type { CliLogger, CliOutput } from "../../types";
 
 export function printInfo(
-  logger: ILogger,
+  logger: CliLogger,
+  output: CliOutput,
   message: string,
-  details?: string
+  details?: string,
 ): void {
-  console.log("");
+  output.write();
   logger.info(message);
   if (details) {
-    console.log(details);
+    output.write(details);
   }
-  console.log("");
+  output.write();
 }

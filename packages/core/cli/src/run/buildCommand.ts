@@ -1,5 +1,4 @@
-import { Logger } from "@damatjs/logger";
-import type { CliConfig, CommandContext, CommandOption } from "../types";
+import type { CliRuntime, CommandContext, CommandOption } from "../types";
 
 /**
  * Parse raw argv tokens against a command's option definitions.
@@ -23,7 +22,9 @@ export function parseCommandArgs(
   const findDef = (token: string): CommandOption | undefined => {
     const isLong = token.startsWith("--");
     const name = token.replace(/^--?/, "");
-    return optionDefs.find((d) => (isLong ? d.name === name : d.alias === name));
+    return optionDefs.find((d) =>
+      isLong ? d.name === name : d.alias === name,
+    );
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -54,7 +55,8 @@ export function parseCommandArgs(
       if (!def) continue; // unknown flag — ignore rather than fail
 
       if (def.type === "boolean") {
-        options[def.name] = inlineValue !== undefined ? inlineValue !== "false" : true;
+        options[def.name] =
+          inlineValue !== undefined ? inlineValue !== "false" : true;
       } else {
         const value = inlineValue ?? args[++i];
         if (value === undefined) continue;
@@ -70,18 +72,16 @@ export function parseCommandArgs(
 
 export function buildCommandContext(
   commandName: string,
+  rawArgs: readonly string[],
   options: Record<string, unknown>,
-  logger: Logger,
-  config: CliConfig
+  runtime: Pick<CliRuntime, "cwd" | "logger">,
 ): CommandContext {
-  const positionalArgs = extractPositionalArgs(process.argv.slice(2).filter(a => a !== commandName));
-
   return {
     command: commandName,
-    args: positionalArgs,
+    args: extractPositionalArgs([...rawArgs]),
     options,
-    logger,
-    cwd: process.cwd(),
+    logger: runtime.logger,
+    cwd: runtime.cwd,
   };
 }
 

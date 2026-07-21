@@ -1,5 +1,8 @@
 import { describe, it, expect } from "bun:test";
-import { corsConfigSetter, type CorsConfigType } from "../../middleware/corsConfig";
+import {
+  corsConfigSetter,
+  type CorsConfigType,
+} from "../../middleware/corsConfig";
 
 describe("corsConfigSetter", () => {
   describe("defaults", () => {

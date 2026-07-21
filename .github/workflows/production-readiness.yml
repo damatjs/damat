@@ -1,0 +1,158 @@
+name: Production readiness
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  staging-drill:
+    name: Production-like deployment and recovery drill
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Create disposable secrets
+        shell: bash
+        run: |
+          for name in POSTGRES_PASSWORD DAMAT_MIGRATOR_PASSWORD DAMAT_RUNTIME_PASSWORD DAMAT_BACKUP_PASSWORD RESTORE_PASSWORD REDIS_PASSWORD METRICS_TOKEN BETTER_AUTH_SECRET; do
+            value="$(openssl rand -hex 32)"
+            echo "::add-mask::$value"
+            echo "$name=$value" >> "$GITHUB_ENV"
+            if [ "$name" = REDIS_PASSWORD ]; then redis_password="$value"; fi
+            if [ "$name" = DAMAT_RUNTIME_PASSWORD ]; then runtime_password="$value"; fi
+            if [ "$name" = DAMAT_MIGRATOR_PASSWORD ]; then migrator_password="$value"; fi
+          done
+          echo "REDIS_URL=redis://damat:${redis_password}@redis:6379" >> "$GITHUB_ENV"
+          echo "DATABASE_URL=postgresql://damat_runtime:${runtime_password}@db:5432/damatjs" >> "$GITHUB_ENV"
+          echo "MIGRATION_DATABASE_URL=postgresql://damat_migrator:${migrator_password}@db:5432/damatjs" >> "$GITHUB_ENV"
+          echo "PUBLIC_BASE_URL=https://staging.invalid" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=sha-${GITHUB_SHA}" >> "$GITHUB_ENV"
+          echo "NODE_ENV=production" >> "$GITHUB_ENV"
+          echo "DAMAT_ALLOW_INSECURE_INTERNAL_NETWORK=true" >> "$GITHUB_ENV"
+          echo "DAMAT_ALLOW_UNPINNED_IMAGES=true" >> "$GITHUB_ENV"
+          echo "REQUIRED_SECRET_NAMES=BETTER_AUTH_SECRET" >> "$GITHUB_ENV"
+
+      - name: Validate production environment policy
+        run: bun run --cwd backend/default ops:validate
+
+      - name: Start PostgreSQL and authenticated Redis
+        run: >-
+          docker compose -f backend/default/docker-compose.yml
+          --profile accelerator up -d db redis
+
+      - name: Wait for authenticated Redis
+        shell: bash
+        run: |
+          for attempt in {1..30}; do
+            if docker compose -f backend/default/docker-compose.yml exec -T redis sh -ec \
+              'redis-cli --no-auth-warning -u "redis://damat:${REDIS_PASSWORD}@127.0.0.1:6379" ping' >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Redis did not become ready" >&2
+          exit 1
+
+      - name: Build and start isolated runtime roles
+        run: >-
+          docker compose -f backend/default/docker-compose.yml
+          --profile accelerator up --build -d
+          migrate api jobs events pipelines
+
+      - name: Smoke test health, routes, and protected metrics
+        run: bun run --cwd backend/default ops:smoke
+
+      - name: Verify least-privilege PostgreSQL roles
+        run: >-
+          docker compose -f backend/default/docker-compose.yml
+          --profile operations run --rm acceptance
+
+      - name: Verify authenticated restricted Redis
+        run: >-
+          docker compose -f backend/default/docker-compose.yml
+          --profile accelerator run --rm redis-acceptance
+
+      - name: Execute live job, event, and pipeline work
+        run: >-
+          docker compose -f backend/default/docker-compose.yml
+          --profile operations run --rm worker-acceptance
+
+      - name: Execute durable work with Redis unavailable
+        shell: bash
+        run: |
+          docker compose -f backend/default/docker-compose.yml --profile accelerator stop redis
+          docker compose -f backend/default/docker-compose.yml --profile operations run --rm \
+            -e REDIS_URL= -e ACCEPTANCE_MODE=postgres-fallback worker-acceptance
+          docker compose -f backend/default/docker-compose.yml --profile accelerator start redis
+          for attempt in {1..30}; do
+            if docker compose -f backend/default/docker-compose.yml exec -T redis sh -ec \
+              'redis-cli --no-auth-warning -u "redis://damat:${REDIS_PASSWORD}@127.0.0.1:6379" ping' >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Redis did not recover" >&2
+          exit 1
+
+      - name: Load acceptance
+        env:
+          LOAD_REQUESTS: 2000
+          LOAD_CONCURRENCY: 40
+        run: bun run --cwd backend/default ops:load
+
+      - name: Create database backup
+        run: >-
+          docker compose -f backend/default/docker-compose.yml
+          --profile operations run --rm backup
+
+      - name: Start disposable restore target
+        run: >-
+          docker compose -f backend/default/docker-compose.yml
+          --profile operations up -d restore-db
+
+      - name: Restore backup with exit-on-error
+        run: >-
+          docker compose -f backend/default/docker-compose.yml
+          --profile operations run --rm restore-drill
+
+      - name: Exercise runtime rollback
+        shell: bash
+        run: |
+          docker tag damat-default:local damat-default:rollback-drill
+          DAMAT_ALLOW_MUTABLE_ROLLBACK=true bun run --cwd backend/default ops:rollback -- damat-default:rollback-drill
+          bun run --cwd backend/default ops:smoke
+
+      - name: Record immutable local artifact identity
+        shell: bash
+        run: |
+          docker image inspect damat-default:local --format='{{.Id}}' > release-artifact.txt
+          sha256sum bun.lock >> release-artifact.txt
+          git rev-parse HEAD >> release-artifact.txt
+
+      - name: Upload release evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-readiness-${{ github.sha }}
+          path: release-artifact.txt
+
+      - name: Capture container logs
+        if: failure()
+        run: docker compose -f backend/default/docker-compose.yml logs --no-color
+
+      - name: Remove disposable infrastructure
+        if: always()
+        run: >-
+          docker compose -f backend/default/docker-compose.yml
+          --profile accelerator --profile operations down --volumes --remove-orphans

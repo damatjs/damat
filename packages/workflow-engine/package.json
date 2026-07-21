@@ -1,6 +1,6 @@
 {
   "name": "@damatjs/workflow-engine",
-  "version": "0.6.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,6 +9,9 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
+  },
+  "engines": {
+    "bun": ">=1.1.0"
   },
   "publishConfig": {
     "access": "public"
@@ -41,6 +44,7 @@
     "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
     "watch": "tsc --watch",
     "test": "bun test",
-    "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)"
+    "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)",
+    "lint": "oxlint src"
   }
 }

@@ -62,7 +62,9 @@ describe("Session", () => {
     });
 
     it("does not error on non-existent session", async () => {
-      await expect(deleteSession("nonexistent", redis)).resolves.toBeUndefined();
+      await expect(
+        deleteSession("nonexistent", redis),
+      ).resolves.toBeUndefined();
     });
   });
 

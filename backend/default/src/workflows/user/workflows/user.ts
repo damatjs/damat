@@ -4,14 +4,18 @@ import {
   sendWelcomeEmailStep,
   setupDefaultsStep,
 } from "../steps/user-onboarding";
-import { NewUsers, Users, Verifications } from "@/modules/user/types";
+import { NewUsers, Users } from "@/modules/user/types";
+import {
+  serializeVerification,
+  type SerializedVerification,
+} from "./serialize";
 
 export const userOnboardingWorkflow = createWorkflow<
   NewUsers,
   {
     user: Users;
     emailSent: boolean;
-    settings: Verifications;
+    settings: SerializedVerification;
   }
 >(
   "user-onboarding",
@@ -36,7 +40,7 @@ export const userOnboardingWorkflow = createWorkflow<
       return {
         user,
         emailSent: emailResult.sent,
-        settings,
+        settings: serializeVerification(settings),
       };
     }),
   {

@@ -6,7 +6,7 @@ it's easy to read and easy to publish as a docs site. A machine-readable map of
 the whole thing (chapters + packages) lives in
 [`guide.json`](./guide.json).
 
-> **New to Damat?** Read [Introduction](./guide/01-introduction.md) and
+> **Starting with Damat?** Read [Introduction](./guide/01-introduction.md) and
 > [Concepts](./guide/02-concepts.md), then follow
 > [Getting started](./guide/03-getting-started.md). Already set up? Jump straight
 > to the chapter you need below.
@@ -16,23 +16,29 @@ the whole thing (chapters + packages) lives in
 ## Chapters
 
 ### Start here
+
 1. [Introduction](./guide/01-introduction.md) — what Damat is and the package map
-2. [Concepts — modules & the framework](./guide/02-concepts.md) — the idea and mental model
-3. [Getting started](./guide/03-getting-started.md) — install, scaffold, project structure
-4. [Configuration & environment](./guide/04-configuration.md) — `damat.config.ts` and env vars
+2. [Concepts and architecture](./guide/02-concepts.md) — modules, durable primitives, PostgreSQL, Redis, and process roles
+3. [Getting started](./guide/03-getting-started.md) — scaffold, database creation, migrations, and project structure
+4. [Configuration & environment](./guide/04-configuration.md) — `damat.config.ts`, runtime workers, and env vars
 
 ### Build
+
 5. [Defining models (the ORM DSL)](./guide/05-models.md)
 6. [Migrations](./guide/06-migrations.md)
 7. [Modules & services](./guide/07-modules-and-services.md)
    - 7b. [Querying & CRUD](./guide/07b-crud-reference.md) — the generated service methods, where operators, transactions
 8. [Building HTTP APIs](./guide/08-http-apis.md)
+   - 8b. [Authentication](./guide/08b-authentication.md) — provider contracts and adapters
 9. [Workflows (the saga engine)](./guide/09-workflows.md)
 10. [Redis: cache, queue, locks, rate limiting](./guide/10-redis.md)
+    - 10b. [Events & background jobs](./guide/10b-events-and-jobs.md) — ephemeral events, durable delivery, jobs, inspection, recovery, and worker runtimes
+    - 10c. [Durable pipelines](./guide/10c-pipelines.md) — persisted orchestration across jobs, events, workflows, waits, and branches
 11. [Logging](./guide/11-logging.md)
 12. [The default backend, end to end](./guide/12-default-backend.md)
 
 ### Modules & sharing
+
 13. [Authoring a module](./guide/13-authoring-modules.md) — build one self-contained module (the blade)
 14. [Installing existing modules](./guide/14-installing-modules.md)
     - 14b. [Publishing modules](./guide/14b-publishing-modules.md) — list a module in a registry, verification, run your own
@@ -41,6 +47,7 @@ the whole thing (chapters + packages) lives in
 17. [Composing & linking modules](./guide/17-composing-and-linking-modules.md) — the backend owner assembles the blades
 
 ### Operate & reference
+
 18. [CLI reference](./guide/18-cli-reference.md)
 19. [Deployment](./guide/19-deployment.md)
 20. [Package reference](./guide/20-package-reference.md)
@@ -53,7 +60,7 @@ the whole thing (chapters + packages) lives in
 - This page is the **index**. Each chapter is a standalone page under
   [`docs/guide/`](./guide/) with prev/next navigation.
 - **Usage** lives here. For the **internals** of any package (if you're changing
-  its code), follow the *Internals* links into each package's `docs/` folder, or
+  its code), follow the _Internals_ links into each package's `docs/` folder, or
   see the [Package reference](./guide/20-package-reference.md).
 - Related top-level docs: the [module manifest contract (MODULES.md)](../MODULES.md)
   and the [AI contributor guide (AGENTS.md)](../AGENTS.md).

@@ -19,18 +19,27 @@ Start from the [package map](./01-introduction.md#the-package-map), or jump in:
   [connector](../../packages/orm/connector/README.md) ·
   [migration](../../packages/orm/migration/README.md) ·
   [processor](../../packages/orm/processor/README.md) ·
-  [codegen](../../packages/core/codegen/README.md) ·
+  [schema-codegen](../../packages/core/schema-codegen/README.md) ·
   [core](../../packages/orm/core/README.md) ·
   [type](../../packages/orm/type/README.md)
-- **Core:** [logger](../../packages/core/logger/README.md) ·
+- **Generation:** [module-generator](../../packages/module-generator/README.md)
+- **Providers:** [provider](../../packages/provider/README.md) ·
+  [auth](../../provider/auth/README.md) ·
+  [payment](../../provider/payment/README.md) ·
+  [subscription](../../provider/subscription/README.md)
+- **Core:** [durability](../../packages/core/durability/README.md) ·
+  [logger](../../packages/core/logger/README.md) ·
   [redis](../../packages/core/redis/README.md) ·
+  [events](../../packages/core/events/README.md) ·
+  [jobs](../../packages/core/jobs/README.md) ·
+  [pipelines](../../packages/core/pipelines/README.md) ·
   [load-env](../../packages/core/env/README.md) ·
   [types](../../packages/core/types/README.md) ·
   [cli](../../packages/core/cli/README.md) ·
   [deps](../../packages/deps/README.md)
 - **CLIs & AI:** [damat-cli](../../packages/cli/damat/README.md) ·
+  [cli-codegen](../../packages/cli/codegen/README.md) ·
   [orm-cli](../../packages/orm/cli/README.md) ·
-  [create-damat-app](../../packages/cli/create-damat-app/README.md) ·
   [mcp](../../packages/mcp/README.md)
 - **Reference app:** [@damatjs/default](../../backend/default/README.md)
 - [Module manifest reference (MODULES.md)](../../MODULES.md)
@@ -38,6 +47,12 @@ Start from the [package map](./01-introduction.md#the-package-map), or jump in:
 
 A machine-readable map of the whole site (chapters + packages) lives in
 [`docs/guide.json`](../guide.json).
+
+`@damatjs/durability` owns the shared PostgreSQL transaction, migration,
+idempotency, worker-registry, redaction, cursor, and operational contracts.
+`@damatjs/jobs`, `@damatjs/pipelines`, and the durable side of `@damatjs/events`
+build on that foundation. `@damatjs/framework` configures and orchestrates their
+selected runtime roles.
 
 ---
 
