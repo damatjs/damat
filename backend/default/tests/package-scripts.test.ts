@@ -17,3 +17,9 @@ test("backend scripts do not depend on install-time workspace bin links", () => 
   expect(scripts["db:status"]).toBe(`${orm} migrate:status`);
   expect(scripts["db:create"]).toBe(`${orm} migrate:create`);
 });
+
+test("backend unit tests isolate process-global mocks and registries", () => {
+  expect(scripts["test:unit"]).toBe(
+    "bun test --isolate --path-ignore-patterns=tests/recovery.test.ts",
+  );
+});
