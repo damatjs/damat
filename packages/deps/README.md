@@ -72,7 +72,7 @@ Each entry is a subpath export. Versions are pinned in this package's `package.j
 | Library             | Pinned range    |
 | ------------------- | --------------- |
 | `hono`              | `^4.12.0`       |
-| `@hono/node-server` | `^1.13.7`       |
+| `@hono/node-server` | `^2.0.10`       |
 | `zod`               | `4.3.6` (exact) |
 | `effect`            | `^3.19.18`      |
 | `pg`                | `^8.21.0`       |

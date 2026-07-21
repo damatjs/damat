@@ -82,8 +82,7 @@
     "@damatjs/jobs": "workspace:*",
     "@damatjs/pipelines": "workspace:*",
     "@damatjs/provider": "workspace:*",
-    "@damatjs/redis": "workspace:*",
-    "@hono/node-server": "^1.13.7"
+    "@damatjs/redis": "workspace:*"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "workspace:*",

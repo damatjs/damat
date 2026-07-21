@@ -106,7 +106,7 @@ From `package.json` `dependencies`:
 | Library             | Range      | Notes                                                   |
 | ------------------- | ---------- | ------------------------------------------------------- |
 | `hono`              | `^4.12.0`  | Core HTTP framework.                                    |
-| `@hono/node-server` | `^1.13.7`  | `serve` adapter (re-exported from the `hono` subpath).  |
+| `@hono/node-server` | `^2.0.10`  | `serve` adapter (re-exported from the `hono` subpath).  |
 | `zod`               | `4.3.6`    | **Exact pin** (no caret) for validator/error stability. |
 | `effect`            | `^3.19.18` | Effect-TS.                                              |
 | `pg`                | `^8.21.0`  | node-postgres.                                          |
