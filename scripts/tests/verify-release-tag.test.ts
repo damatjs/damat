@@ -15,6 +15,15 @@ test("accepts the exact shared prerelease tag", () => {
   ).toBe("1.0.0-beta.0");
 });
 
+test("accepts the exact shared build-metadata tag", () => {
+  expect(
+    verifyReleaseTag("v1.0.0+0.2", [
+      pkg("@damatjs/framework", "1.0.0+0.2"),
+      pkg("@damatjs/jobs", "1.0.0+0.2"),
+    ]),
+  ).toBe("1.0.0+0.2");
+});
+
 test("rejects tag mismatches and shared version drift", () => {
   expect(() =>
     verifyReleaseTag("v1.0.0", [pkg("@damatjs/framework", "1.0.0-beta.0")]),

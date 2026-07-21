@@ -1,6 +1,6 @@
 # @damatjs/auth
 
-## 1.0.0
+## 1.0.0+0.2
 
 ### Major Changes
 
@@ -12,8 +12,8 @@
 ### Patch Changes
 
 - Updated dependencies [8011ac8]
-  - @damatjs/deps@1.0.0
-  - @damatjs/provider@1.0.0
-  - @damatjs/services@1.0.0
+  - @damatjs/deps@1.0.0+0.2
+  - @damatjs/provider@1.0.0+0.2
+  - @damatjs/services@1.0.0+0.2
 
 See [`releases/auth`](../../releases/auth) for release notes.

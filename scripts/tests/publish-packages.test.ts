@@ -62,6 +62,13 @@ describe("prerelease publishing", () => {
         provenance: false,
       }),
     ).not.toContain("--tag");
+    expect(distTagFor("1.0.0+0.2")).toBeUndefined();
+    expect(
+      publishCommand("package.tgz", "1.0.0+0.2", {
+        dryRun: true,
+        provenance: false,
+      }),
+    ).not.toContain("--tag");
   });
 
   test("never reports a dry run as an actual publication", () => {

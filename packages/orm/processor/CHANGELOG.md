@@ -1,6 +1,6 @@
 # @damatjs/orm-processor
 
-## 1.0.0
+## 1.0.0+0.2
 
 ### Major Changes
 
@@ -12,10 +12,10 @@
 ### Patch Changes
 
 - Updated dependencies [8011ac8]
-  - @damatjs/deps@1.0.0
-  - @damatjs/orm-model@1.0.0
-  - @damatjs/orm-type@1.0.0
-  - @damatjs/types@1.0.0
+  - @damatjs/deps@1.0.0+0.2
+  - @damatjs/orm-model@1.0.0+0.2
+  - @damatjs/orm-type@1.0.0+0.2
+  - @damatjs/types@1.0.0+0.2
 
 ## 1.0.0-beta.0
 

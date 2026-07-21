@@ -34,7 +34,10 @@ export function parseReleaseNote(
   const npmName = h1
     ? h1
         .replace(/^# /, "")
-        .replace(/\s+\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/, "")
+        .replace(
+          /\s+\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/,
+          "",
+        )
         .trim()
     : pkg;
   return {

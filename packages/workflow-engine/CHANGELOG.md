@@ -1,6 +1,6 @@
 # @damatjs/workflow-engine
 
-## 1.0.0
+## 1.0.0+0.2
 
 ### Major Changes
 
@@ -12,9 +12,9 @@
 ### Patch Changes
 
 - Updated dependencies [8011ac8]
-  - @damatjs/deps@1.0.0
-  - @damatjs/logger@1.0.0
-  - @damatjs/redis@1.0.0
+  - @damatjs/deps@1.0.0+0.2
+  - @damatjs/logger@1.0.0+0.2
+  - @damatjs/redis@1.0.0+0.2
 
 ## 1.0.0-beta.0
 

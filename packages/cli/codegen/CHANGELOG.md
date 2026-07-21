@@ -1,6 +1,6 @@
 # @damatjs/cli-codegen
 
-## 1.0.0
+## 1.0.0+0.2
 
 ### Major Changes
 
@@ -12,11 +12,11 @@
 ### Patch Changes
 
 - Updated dependencies [8011ac8]
-  - @damatjs/cli@1.0.0
-  - @damatjs/link@1.0.0
-  - @damatjs/module-generator@1.0.0
-  - @damatjs/orm-cli@1.0.0
-  - @damatjs/orm-migration@1.0.0
+  - @damatjs/cli@1.0.0+0.2
+  - @damatjs/link@1.0.0+0.2
+  - @damatjs/module-generator@1.0.0+0.2
+  - @damatjs/orm-cli@1.0.0+0.2
+  - @damatjs/orm-migration@1.0.0+0.2
 
 ## 1.0.0-beta.0
 
