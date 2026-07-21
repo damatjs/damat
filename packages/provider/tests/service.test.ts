@@ -1,7 +1,5 @@
 import { expect, mock, test } from "bun:test";
 import { z } from "@damatjs/deps/zod";
-import { PoolManager } from "@damatjs/services";
-import { ProviderService } from "../src";
 
 const emitted: Array<{ event: string; payload: unknown }> = [];
 
@@ -12,6 +10,10 @@ mock.module("@damatjs/events", () => ({
     },
   }),
 }));
+
+// Load the event-dependent service graph only after its boundary is mocked.
+const { PoolManager } = await import("@damatjs/services");
+const { ProviderService } = await import("../src");
 
 test("ProviderService preserves the complete ModuleService surface", async () => {
   emitted.length = 0;
