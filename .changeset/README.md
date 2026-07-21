@@ -13,16 +13,17 @@ Select every package whose public behavior changed. Changesets promotes the
 whole fixed group to one version while preserving package-specific changelog
 entries.
 
-## Beta releases
+## Prerelease releases
 
-The repository is currently in Changesets `beta` pre mode. To prepare the next
-beta after adding its changesets:
+The repository is in normal stable mode. To prepare a future beta after adding
+its changesets, enter prerelease mode first:
 
 ```bash
+bunx changeset pre enter beta
 bun run version-packages
 bun install
 bun run check:release
-RELEASE_TAG=v1.0.0-beta.0 bun scripts/verify-release-tag.ts
+RELEASE_TAG=v1.1.0-beta.0 bun scripts/verify-release-tag.ts
 bun scripts/publish-packages.ts --dry-run
 ```
 
@@ -31,13 +32,14 @@ published under the npm `beta` dist-tag; the publisher must never move `latest`.
 Commit the prepared version, merge it to `main`, and tag that exact commit as
 `v<shared-version>`. The tag workflow repeats every release gate before publish.
 
-## Stable release
+## Stable releases
 
-Exit pre mode only when the beta exit criteria are met:
+When promoting a tested prerelease, exit pre mode before versioning:
 
 ```bash
 bunx changeset pre exit
 bun run version-packages
+bun install
 ```
 
 Do not publish or push a release tag from a dirty checkout. Package release

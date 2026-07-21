@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/cli-codegen",
   "description": "Damat application code generation CLI capability",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

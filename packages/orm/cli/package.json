@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/orm-cli",
   "description": "Damatjs ORM CLI - database migration commands",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/provider",
   "description": "ModuleService-based provider authoring and role binding contracts for Damat",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

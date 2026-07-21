@@ -2,6 +2,6 @@
 
 Current behavior: [package README](../../provider/subscription/README.md).
 
-| Version      | Summary                                     | Upgrade notes                  |
-| ------------ | ------------------------------------------- | ------------------------------ |
-| 1.0.0-beta.0 | Strict subscription module service standard | [details →](./1.0.0-beta.0.md) |
+| Version | Summary                                     | Upgrade notes           |
+| ------- | ------------------------------------------- | ----------------------- |
+| 1.0.0   | Strict subscription module service standard | [details →](./1.0.0.md) |

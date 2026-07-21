@@ -22,25 +22,25 @@ your target version.
 All active Damat packages are released **in lockstep** — a release moves every
 published package to the same version, whether or not its own code changed.
 
-**Current source version: `1.0.0-beta.0`** for every active public package.
+**Current source version: `1.0.0`** for every active public package.
 `@damatjs/codegen` is archived at its last npm release, `2.1.0`, and is not part
-of the workspace or beta publication set.
+of the workspace or active publication set.
 
 A package's folder only carries a `<version>.md` (and a detailed index row) for
 versions where _its own_ code changed; for a lockstep bump with no change of its
 own, the package simply moves to the shared version with no new note. That is why
 a package can sit at `0.6.0` while the newest version it actually links is older.
 
-## 1.0.0-beta.0 early launch
+## 1.0.0 stable release
 
-This is a prerelease for early adopters, not the stable `1.0.0` declaration.
-Install the CLI from npm's `beta` channel without moving consumers of `latest`:
+This is the first stable Damat release. Install the CLI from npm's `latest`
+channel:
 
 ```bash
-bunx @damatjs/damat-cli@beta create my-app
+bunx @damatjs/damat-cli@latest create my-app
 ```
 
-This beta establishes shared PostgreSQL infrastructure, durable jobs
+This release establishes shared PostgreSQL infrastructure, durable jobs
 and named-consumer events, durable pipelines, transaction composition,
 deterministic system migrations, headless operational inspection, selectable
 runtime roles, and standardized integration providers. See
@@ -50,7 +50,7 @@ runtime roles, and standardized integration providers. See
 [`orm-migration`](./orm-migration/), [`orm-cli`](./orm-cli/), and
 [`framework`](./framework/). Provider contracts are tracked under
 [`provider`](./provider/), [`auth`](./auth/), [`payment`](./payment/),
-[`subscription`](./subscription/), and [`api-key`](./api-key/). Adaptive Redis
+and [`subscription`](./subscription/). Adaptive Redis
 acceleration and pool observability
 are tracked under [`redis`](./redis/), [`orm-connector`](./orm-connector/), and
 the [`default` reference backend](./default/).
