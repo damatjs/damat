@@ -51,9 +51,9 @@
     "@damatjs/workflow-engine": "1.0.0"
   },
   "devDependencies": {
-    "@damatjs/auth": "1.0.0",
-    "@damatjs/payment": "1.0.0",
-    "@damatjs/subscription": "1.0.0",
+    "@damatjs/provider-auth": "1.0.0",
+    "@damatjs/provider-payment": "1.0.0",
+    "@damatjs/provider-subscription": "1.0.0",
     "@damatjs/typescript-config": "*",
     "@types/bun": "1.3.9",
     "@types/node": "^22.10.2",

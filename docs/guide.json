@@ -334,7 +334,9 @@
           "dir": "packages/module-generator",
           "readme": "packages/module-generator/README.md",
           "docsIndex": "packages/module-generator/docs/README.md",
-          "docs": ["packages/module-generator/docs/README.md"]
+          "docs": [
+            "packages/module-generator/docs/README.md"
+          ]
         },
         {
           "name": "@damatjs/link",
@@ -342,7 +344,9 @@
           "dir": "packages/link",
           "readme": "packages/link/README.md",
           "docsIndex": "packages/link/docs/README.md",
-          "docs": ["packages/link/docs/README.md"]
+          "docs": [
+            "packages/link/docs/README.md"
+          ]
         },
         {
           "name": "@damatjs/workflow-engine",
@@ -526,7 +530,9 @@
           "dir": "packages/core/events",
           "readme": "packages/core/events/README.md",
           "docsIndex": "packages/core/events/docs/README.md",
-          "docs": ["packages/core/events/docs/README.md"]
+          "docs": [
+            "packages/core/events/docs/README.md"
+          ]
         },
         {
           "name": "@damatjs/jobs",
@@ -534,7 +540,9 @@
           "dir": "packages/core/jobs",
           "readme": "packages/core/jobs/README.md",
           "docsIndex": "packages/core/jobs/docs/README.md",
-          "docs": ["packages/core/jobs/docs/README.md"]
+          "docs": [
+            "packages/core/jobs/docs/README.md"
+          ]
         },
         {
           "name": "@damatjs/load-env",
@@ -609,7 +617,7 @@
           "docs": []
         },
         {
-          "name": "@damatjs/auth",
+          "name": "@damatjs/provider-auth",
           "description": "Strict ModuleService-based authentication provider contract for Damat",
           "dir": "provider/auth",
           "readme": "provider/auth/README.md",
@@ -617,7 +625,7 @@
           "docs": []
         },
         {
-          "name": "@damatjs/payment",
+          "name": "@damatjs/provider-payment",
           "description": "Strict ModuleService-based payment provider contract for Damat",
           "dir": "provider/payment",
           "readme": "provider/payment/README.md",
@@ -625,7 +633,7 @@
           "docs": []
         },
         {
-          "name": "@damatjs/subscription",
+          "name": "@damatjs/provider-subscription",
           "description": "Strict ModuleService-based subscription provider contract for Damat",
           "dir": "provider/subscription",
           "readme": "provider/subscription/README.md",
@@ -643,7 +651,9 @@
           "dir": "packages/cli/damat",
           "readme": "packages/cli/damat/README.md",
           "docsIndex": "packages/cli/damat/docs/README.md",
-          "docs": ["packages/cli/damat/docs/README.md"]
+          "docs": [
+            "packages/cli/damat/docs/README.md"
+          ]
         },
         {
           "name": "@damatjs/cli-codegen",
@@ -651,7 +661,9 @@
           "dir": "packages/cli/codegen",
           "readme": "packages/cli/codegen/README.md",
           "docsIndex": "packages/cli/codegen/docs/README.md",
-          "docs": ["packages/cli/codegen/docs/README.md"]
+          "docs": [
+            "packages/cli/codegen/docs/README.md"
+          ]
         },
         {
           "name": "@damatjs/orm-cli",
@@ -672,7 +684,9 @@
           "dir": "packages/mcp",
           "readme": "packages/mcp/README.md",
           "docsIndex": "packages/mcp/docs/README.md",
-          "docs": ["packages/mcp/docs/README.md"]
+          "docs": [
+            "packages/mcp/docs/README.md"
+          ]
         }
       ]
     }

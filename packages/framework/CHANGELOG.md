@@ -12,7 +12,7 @@
 ### Patch Changes
 
 - Updated dependencies [8011ac8]
-  - @damatjs/auth@1.0.0
+  - @damatjs/provider-auth@1.0.0
   - @damatjs/deps@1.0.0
   - @damatjs/durability@1.0.0
   - @damatjs/events@1.0.0
@@ -41,7 +41,7 @@
 ### Patch Changes
 
 - Updated dependencies
-  - @damatjs/auth@1.0.0-beta.0
+  - @damatjs/provider-auth@1.0.0-beta.0
   - @damatjs/deps@1.0.0-beta.0
   - @damatjs/durability@1.0.0-beta.0
   - @damatjs/events@1.0.0-beta.0
@@ -52,11 +52,11 @@
   - @damatjs/orm-connector@1.0.0-beta.0
   - @damatjs/orm-type@1.0.0-beta.0
   - @damatjs/pipelines@1.0.0-beta.0
-  - @damatjs/payment@1.0.0-beta.0
+  - @damatjs/provider-payment@1.0.0-beta.0
   - @damatjs/provider@1.0.0-beta.0
   - @damatjs/redis@1.0.0-beta.0
   - @damatjs/services@1.0.0-beta.0
-  - @damatjs/subscription@1.0.0-beta.0
+  - @damatjs/provider-subscription@1.0.0-beta.0
   - @damatjs/types@1.0.0-beta.0
   - @damatjs/workflow-engine@1.0.0-beta.0
 

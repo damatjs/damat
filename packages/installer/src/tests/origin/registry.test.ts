@@ -15,7 +15,7 @@ describe("registry acquisition", () => {
       owner: "damat",
       verification: "verified" as const,
       integrity: "sha256-registry",
-      packageReference: "@damatjs/auth@git+sha",
+      packageReference: "@damatjs/provider-auth@git+sha",
     });
     const artifact = await acquireArtifact(
       { type: "registry", ref: "auth@stable" },
@@ -23,7 +23,7 @@ describe("registry acquisition", () => {
     );
     expect(artifact.request).toEqual({ type: "registry", ref: "auth@stable" });
     expect(artifact.expectedIntegrity).toBe("sha256-registry");
-    expect(artifact.packageReference).toBe("@damatjs/auth@git+sha");
+    expect(artifact.packageReference).toBe("@damatjs/provider-auth@git+sha");
     expect(artifact.metadata).toMatchObject({
       registryRef: "auth@stable",
       owner: "damat",

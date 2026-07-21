@@ -4,7 +4,7 @@ import {
   type AuthCredentials,
   type AuthPrincipal,
   type AuthProvider,
-} from "@damatjs/auth";
+} from "@damatjs/provider-auth";
 import type { Context, MiddlewareHandler } from "@damatjs/deps/hono";
 import type { ILogger } from "@damatjs/logger";
 import { unauthorized } from "../middleware/auth";

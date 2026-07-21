@@ -1,4 +1,4 @@
-# @damatjs/auth — release notes
+# @damatjs/provider-auth — release notes
 
 Current behavior: [package README](../../provider/auth/README.md).
 

@@ -1,4 +1,4 @@
-import { AuthProviderService } from "@damatjs/auth";
+import { AuthProviderService } from "@damatjs/provider-auth";
 import { defineModule } from "@damatjs/services";
 
 const Base = AuthProviderService({ models: {} });
@@ -34,7 +34,7 @@ class BackendAuthProvider extends Base {
       ? { id: "backend-user", keyId: "backend-key", scopes: [] }
       : null;
   }
-  async revokeApiKey(): Promise<void> {}
+  async revokeApiKey(): Promise<void> { }
 }
 
 export default defineModule("test-auth", {

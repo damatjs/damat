@@ -9,15 +9,15 @@ module runtime, share the application database pool, and expose routes through
 the normal module route mechanism.
 
 [`@damatjs/provider`](../../packages/provider/README.md) exports the generic
-`ProviderService` base. [`@damatjs/auth`](../../provider/auth/README.md),
-[`@damatjs/payment`](../../provider/payment/README.md), and
-[`@damatjs/subscription`](../../provider/subscription/README.md) add strict
+`ProviderService` base. [`@damatjs/provider-auth`](../../provider/auth/README.md),
+[`@damatjs/provider-payment`](../../provider/payment/README.md), and
+[`@damatjs/provider-subscription`](../../provider/subscription/README.md) add strict
 role-specific method contracts.
 
 ## Write a standard provider service
 
 ```ts
-import { PaymentProviderService } from "@damatjs/payment";
+import { PaymentProviderService } from "@damatjs/provider-payment";
 import { models } from "./models";
 
 const Base = PaymentProviderService({

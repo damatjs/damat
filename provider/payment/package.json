@@ -1,5 +1,5 @@
 {
-  "name": "@damatjs/payment",
+  "name": "@damatjs/provider-payment",
   "description": "Strict ModuleService-based payment provider contract for Damat",
   "version": "1.0.0",
   "type": "module",

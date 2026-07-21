@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
-import type { AuthProvider } from "@damatjs/auth";
-import type { PaymentProvider } from "@damatjs/payment";
-import type { SubscriptionProvider } from "@damatjs/subscription";
+import type { AuthProvider } from "@damatjs/provider-auth";
+import type { PaymentProvider } from "@damatjs/provider-payment";
+import type { SubscriptionProvider } from "@damatjs/provider-subscription";
 import { Hono } from "@damatjs/deps/hono";
 import { clearModules, clearProviders, getProvider } from "@damatjs/framework";
 import { initializeServices } from "@damatjs/framework/services";

@@ -13,7 +13,7 @@ The strict base extends `ModuleService`, so models, generated accessors,
 transactions, cache, events, and credential validation remain available.
 
 ```ts
-import { AuthProviderService } from "@damatjs/auth";
+import { AuthProviderService } from "@damatjs/provider-auth";
 import { models } from "./models";
 
 const Base = AuthProviderService({ models });
@@ -109,7 +109,7 @@ malformed principals fail closed. Framework logs and serialization redact the
 credentials, and successful verification populates `user`, `userId`, and the
 optional organization `team` in request context.
 
-Full contract: [`@damatjs/auth`](../../provider/auth/README.md).
+Full contract: [`@damatjs/provider-auth`](../../provider/auth/README.md).
 
 ---
 

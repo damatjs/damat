@@ -1,4 +1,4 @@
-# @damatjs/payment
+# @damatjs/provider-payment
 
 ## 1.0.0
 

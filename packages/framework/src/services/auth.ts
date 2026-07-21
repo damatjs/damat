@@ -1,4 +1,4 @@
-import { assertAuthProvider, type AuthProvider } from "@damatjs/auth";
+import { assertAuthProvider, type AuthProvider } from "@damatjs/provider-auth";
 import type { ILogger } from "@damatjs/logger";
 import type { AppConfig } from "../config";
 import type { AuthMiddlewareOptions } from "../middleware/auth";

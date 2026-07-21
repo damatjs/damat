@@ -1,4 +1,4 @@
-# `@damatjs/subscription`
+# `@damatjs/provider-subscription`
 
 Subscription contracts implemented by ordinary Damat module services.
 

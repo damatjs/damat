@@ -1,4 +1,4 @@
-# @damatjs/auth
+# @damatjs/provider-auth
 
 ## 1.0.0
 

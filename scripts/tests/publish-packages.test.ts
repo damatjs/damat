@@ -11,7 +11,7 @@ import { discoverPackages } from "../publish/workspaces";
 describe("prerelease publishing", () => {
   test("discovers auth with provider bases and excludes archived codegen", () => {
     const packages = discoverPackages(resolve(import.meta.dir, "../.."));
-    const auth = packages.filter(({ name }) => name === "@damatjs/auth");
+    const auth = packages.filter(({ name }) => name === "@damatjs/provider-auth");
     expect(auth).toHaveLength(1);
     expect(auth[0]?.dir.endsWith("provider/auth")).toBe(true);
     const archived = "@damatjs/" + "codegen";

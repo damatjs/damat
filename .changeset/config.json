@@ -4,7 +4,7 @@
   "commit": false,
   "fixed": [
     [
-      "@damatjs/auth",
+      "@damatjs/provider-auth",
       "@damatjs/cli",
       "@damatjs/cli-app",
       "@damatjs/cli-codegen",
@@ -33,14 +33,14 @@
       "@damatjs/orm-pg",
       "@damatjs/orm-processor",
       "@damatjs/orm-type",
-      "@damatjs/payment",
+      "@damatjs/provider-payment",
       "@damatjs/pipelines",
       "@damatjs/provider",
       "@damatjs/redis",
       "@damatjs/registry-client",
       "@damatjs/schema-codegen",
       "@damatjs/services",
-      "@damatjs/subscription",
+      "@damatjs/provider-subscription",
       "@damatjs/types",
       "@damatjs/workflow-engine"
     ]
@@ -49,5 +49,8 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@damatjs/typescript-config", "@damatjs/default"]
+  "ignore": [
+    "@damatjs/typescript-config",
+    "@damatjs/default"
+  ]
 }

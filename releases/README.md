@@ -124,9 +124,9 @@ snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
 ### Providers
 
 - [`provider`](./provider/) — `@damatjs/provider`
-- [`auth`](./auth/) — `@damatjs/auth`
-- [`payment`](./payment/) — `@damatjs/payment`
-- [`subscription`](./subscription/) — `@damatjs/subscription`
+- [`auth`](./auth/) — `@damatjs/provider-auth`
+- [`payment`](./payment/) — `@damatjs/provider-payment`
+- [`subscription`](./subscription/) — `@damatjs/provider-subscription`
 
 ### CLIs & AI
 

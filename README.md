@@ -126,9 +126,9 @@ version history.
 | Package                                                      | Description                                                        |
 | ------------------------------------------------------------ | ------------------------------------------------------------------ |
 | [`@damatjs/provider`](./packages/provider/README.md)         | `ModuleService` provider-role authoring base and binding contracts |
-| [`@damatjs/auth`](./provider/auth/README.md)                 | Auth and API-key service contract plus strict authoring base       |
-| [`@damatjs/payment`](./provider/payment/README.md)           | Strict payment service contract                                    |
-| [`@damatjs/subscription`](./provider/subscription/README.md) | Strict recurring subscription service contract                     |
+| [`@damatjs/provider-auth`](./provider/auth/README.md)                 | Auth and API-key service contract plus strict authoring base       |
+| [`@damatjs/provider-payment`](./provider/payment/README.md)           | Strict payment service contract                                    |
+| [`@damatjs/provider-subscription`](./provider/subscription/README.md) | Strict recurring subscription service contract                     |
 
 ### CLIs & AI
 

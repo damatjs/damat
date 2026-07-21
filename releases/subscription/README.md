@@ -1,4 +1,4 @@
-# @damatjs/subscription — release notes
+# @damatjs/provider-subscription — release notes
 
 Current behavior: [package README](../../provider/subscription/README.md).
 

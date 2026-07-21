@@ -68,7 +68,7 @@
   "author": "Abel Lamesgen",
   "dependencies": {
     "@damatjs/logger": "workspace:*",
-    "@damatjs/auth": "workspace:*",
+    "@damatjs/provider-auth": "workspace:*",
     "@damatjs/installer": "workspace:*",
     "@damatjs/deps": "workspace:*",
     "@damatjs/durability": "workspace:*",

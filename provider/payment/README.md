@@ -1,4 +1,4 @@
-# `@damatjs/payment`
+# `@damatjs/provider-payment`
 
 Payment contracts implemented by ordinary Damat module services.
 

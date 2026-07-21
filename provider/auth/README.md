@@ -1,4 +1,4 @@
-# `@damatjs/auth`
+# `@damatjs/provider-auth`
 
 Strict authentication provider contracts for ordinary Damat module services.
 

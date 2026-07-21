@@ -1,4 +1,4 @@
-import { PaymentProviderService } from "@damatjs/payment";
+import { PaymentProviderService } from "@damatjs/provider-payment";
 import { defineModule } from "@damatjs/services";
 
 const Base = PaymentProviderService({ models: {} });

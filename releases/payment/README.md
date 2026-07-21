@@ -1,4 +1,4 @@
-# @damatjs/payment — release notes
+# @damatjs/provider-payment — release notes
 
 Current behavior: [package README](../../provider/payment/README.md).
 

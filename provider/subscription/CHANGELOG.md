@@ -1,4 +1,4 @@
-# @damatjs/subscription
+# @damatjs/provider-subscription
 
 ## 1.0.0
 

@@ -1,5 +1,5 @@
 {
-  "name": "@damatjs/subscription",
+  "name": "@damatjs/provider-subscription",
   "description": "Strict ModuleService-based subscription provider contract for Damat",
   "version": "1.0.0",
   "type": "module",

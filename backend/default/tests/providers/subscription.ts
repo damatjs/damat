@@ -1,4 +1,4 @@
-import { SubscriptionProviderService } from "@damatjs/subscription";
+import { SubscriptionProviderService } from "@damatjs/provider-subscription";
 import { defineModule } from "@damatjs/services";
 
 const Base = SubscriptionProviderService({ models: {} });

@@ -1,4 +1,4 @@
-import type { AuthCredentials } from "@damatjs/auth";
+import type { AuthCredentials } from "@damatjs/provider-auth";
 
 export function normalizeAuthCredentials(headers: Headers): AuthCredentials {
   const normalized: Record<string, string> = {};

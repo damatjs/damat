@@ -1,5 +1,5 @@
 {
-  "name": "@damatjs/auth",
+  "name": "@damatjs/provider-auth",
   "description": "Strict ModuleService-based authentication provider contract for Damat",
   "version": "1.0.0",
   "type": "module",
