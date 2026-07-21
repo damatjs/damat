@@ -38,12 +38,20 @@ export function distTagFor(version: string, override?: string) {
   return normalized;
 }
 
+export function assertNpmPublishableVersion(version: string): void {
+  if (version.includes("+"))
+    throw new Error(
+      `npm package version ${version} must not include SemVer build metadata; npm normalizes it during publication`,
+    );
+}
+
 export function publishCommand(
   tarball: string,
   version: string,
   options: PublishOptions,
   tagOverride?: string,
 ) {
+  assertNpmPublishableVersion(version);
   const command = ["npm", "publish", tarball, "--access", "public"];
   const tag = distTagFor(version, tagOverride);
   if (tag) command.push("--tag", tag);

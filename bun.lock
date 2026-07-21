@@ -122,7 +122,7 @@
     },
     "packages/cli/app": {
       "name": "@damatjs/cli-app",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/cli": "workspace:*",
         "@damatjs/cli-support": "workspace:*",
@@ -137,7 +137,7 @@
     },
     "packages/cli/codegen": {
       "name": "@damatjs/cli-codegen",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/cli": "workspace:*",
         "@damatjs/link": "workspace:*",
@@ -153,7 +153,7 @@
     },
     "packages/cli/damat": {
       "name": "@damatjs/damat-cli",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "bin": {
         "damat": "./dist/cli.js",
       },
@@ -173,7 +173,7 @@
     },
     "packages/cli/kit": {
       "name": "@damatjs/cli-kit",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/cli": "workspace:*",
         "@damatjs/cli-support": "workspace:*",
@@ -187,7 +187,7 @@
     },
     "packages/cli/module": {
       "name": "@damatjs/cli-module",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/cli": "workspace:*",
         "@damatjs/cli-support": "workspace:*",
@@ -205,7 +205,7 @@
     },
     "packages/cli/support": {
       "name": "@damatjs/cli-support",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/cli": "workspace:*",
         "@damatjs/installer": "workspace:*",
@@ -218,7 +218,7 @@
     },
     "packages/core/cli": {
       "name": "@damatjs/cli",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "cac": "^6.7.14",
       },
@@ -230,7 +230,7 @@
     },
     "packages/core/durability": {
       "name": "@damatjs/durability",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
       },
@@ -242,7 +242,7 @@
     },
     "packages/core/env": {
       "name": "@damatjs/load-env",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "devDependencies": {
         "@damatjs/typescript-config": "workspace:*",
         "@types/bun": "1.3.9",
@@ -252,7 +252,7 @@
     },
     "packages/core/events": {
       "name": "@damatjs/events",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/durability": "workspace:*",
@@ -267,7 +267,7 @@
     },
     "packages/core/jobs": {
       "name": "@damatjs/jobs",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/durability": "workspace:*",
@@ -281,7 +281,7 @@
     },
     "packages/core/logger": {
       "name": "@damatjs/logger",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "devDependencies": {
         "@damatjs/typescript-config": "workspace:*",
         "@types/bun": "1.3.9",
@@ -290,7 +290,7 @@
     },
     "packages/core/pipelines": {
       "name": "@damatjs/pipelines",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/durability": "workspace:*",
@@ -307,7 +307,7 @@
     },
     "packages/core/redis": {
       "name": "@damatjs/redis",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/logger": "workspace:*",
@@ -321,7 +321,7 @@
     },
     "packages/core/schema-codegen": {
       "name": "@damatjs/schema-codegen",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/orm-type": "workspace:*",
       },
@@ -334,7 +334,7 @@
     },
     "packages/core/types": {
       "name": "@damatjs/types",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "devDependencies": {
         "@damatjs/typescript-config": "workspace:*",
         "@types/bun": "1.3.9",
@@ -343,7 +343,7 @@
     },
     "packages/deps": {
       "name": "@damatjs/deps",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@hono/node-server": "^1.13.7",
         "effect": "^3.19.18",
@@ -363,7 +363,7 @@
     },
     "packages/framework": {
       "name": "@damatjs/framework",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/auth": "workspace:*",
         "@damatjs/deps": "workspace:*",
@@ -392,7 +392,7 @@
     },
     "packages/installer": {
       "name": "@damatjs/installer",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "devDependencies": {
         "@damatjs/typescript-config": "workspace:*",
         "@types/bun": "1.3.9",
@@ -401,7 +401,7 @@
     },
     "packages/link": {
       "name": "@damatjs/link",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/logger": "workspace:*",
@@ -423,7 +423,7 @@
     },
     "packages/mcp": {
       "name": "@damatjs/mcp",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "bin": {
         "damat-mcp": "./bin/damat-mcp.ts",
       },
@@ -434,7 +434,7 @@
     },
     "packages/module": {
       "name": "@damatjs/module",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/framework": "workspace:*",
@@ -457,7 +457,7 @@
     },
     "packages/module-generator": {
       "name": "@damatjs/module-generator",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/logger": "workspace:*",
         "@damatjs/orm-migration": "workspace:*",
@@ -474,7 +474,7 @@
     },
     "packages/orm/cli": {
       "name": "@damatjs/orm-cli",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "bin": {
         "damat-orm": "./dist/bin.js",
       },
@@ -503,7 +503,7 @@
     },
     "packages/orm/connector": {
       "name": "@damatjs/orm-connector",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/logger": "workspace:*",
@@ -518,7 +518,7 @@
     },
     "packages/orm/core": {
       "name": "@damatjs/orm-core",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/logger": "workspace:*",
         "@damatjs/orm-model": "workspace:*",
@@ -532,7 +532,7 @@
     },
     "packages/orm/main": {
       "name": "@damatjs/orm",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/orm-connector": "workspace:*",
@@ -549,7 +549,7 @@
     },
     "packages/orm/migration": {
       "name": "@damatjs/orm-migration",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/durability": "workspace:*",
@@ -568,7 +568,7 @@
     },
     "packages/orm/model": {
       "name": "@damatjs/orm-model",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/orm-type": "workspace:*",
@@ -582,7 +582,7 @@
     },
     "packages/orm/pg": {
       "name": "@damatjs/orm-pg",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/logger": "workspace:*",
         "@damatjs/orm-core": "workspace:*",
@@ -601,7 +601,7 @@
     },
     "packages/orm/processor": {
       "name": "@damatjs/orm-processor",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/orm-model": "workspace:*",
@@ -617,7 +617,7 @@
     },
     "packages/orm/type": {
       "name": "@damatjs/orm-type",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
       },
@@ -629,7 +629,7 @@
     },
     "packages/provider": {
       "name": "@damatjs/provider",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/services": "workspace:*",
@@ -642,7 +642,7 @@
     },
     "packages/registry-client": {
       "name": "@damatjs/registry-client",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "devDependencies": {
         "@damatjs/typescript-config": "workspace:*",
         "@types/bun": "1.3.9",
@@ -651,7 +651,7 @@
     },
     "packages/service": {
       "name": "@damatjs/services",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/durability": "workspace:*",
@@ -677,7 +677,7 @@
     },
     "packages/workflow-engine": {
       "name": "@damatjs/workflow-engine",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/logger": "workspace:*",
@@ -691,7 +691,7 @@
     },
     "provider/auth": {
       "name": "@damatjs/auth",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/provider": "workspace:*",
@@ -705,7 +705,7 @@
     },
     "provider/payment": {
       "name": "@damatjs/payment",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/provider": "workspace:*",
@@ -719,7 +719,7 @@
     },
     "provider/subscription": {
       "name": "@damatjs/subscription",
-      "version": "1.0.0+0.2",
+      "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
         "@damatjs/provider": "workspace:*",

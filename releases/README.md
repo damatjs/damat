@@ -22,7 +22,7 @@ your target version.
 All active Damat packages are released **in lockstep** — a release moves every
 published package to the same version, whether or not its own code changed.
 
-**Current source version: `1.0.0+0.2`** for every active public package.
+**Current source version: `1.0.0`** for every active public package.
 `@damatjs/codegen` is archived at its last npm release, `2.1.0`, and is not part
 of the workspace or active publication set.
 
@@ -33,9 +33,9 @@ a package can sit at `0.6.0` while the newest version it actually links is older
 
 ## 1.0.0 stable release
 
-The first stable npm publication uses the exact package version `1.0.0+0.2`
-and Git tag `v1.0.0+0.2`. The build metadata records the corrected release
-coordination; it does not change the stable `1.0.0` API or SemVer precedence.
+The first stable npm publication uses package version `1.0.0` and corrective
+Git tag `v1.0.0+0.2`. The build metadata stays on the tag because npm normalizes
+it out of package versions; it does not change the stable API or precedence.
 
 This is the first stable Damat release. Install the CLI from npm's `latest`
 channel:

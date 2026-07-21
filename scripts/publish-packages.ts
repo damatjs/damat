@@ -1,6 +1,10 @@
 /** Pack and publish every public package with workspace ranges resolved. */
 import { resolve } from "node:path";
-import { isPublished, publicationSummary } from "./publish/commands";
+import {
+  assertNpmPublishableVersion,
+  isPublished,
+  publicationSummary,
+} from "./publish/commands";
 import { publishPackage } from "./publish/package";
 import { discoverPackages } from "./publish/workspaces";
 
@@ -10,6 +14,7 @@ const options = {
   provenance: process.env.GITHUB_ACTIONS === "true",
 };
 const packages = discoverPackages(root);
+for (const pkg of packages) assertNpmPublishableVersion(pkg.version);
 console.log(
   `Found ${packages.length} public packages${options.dryRun ? " (dry run)" : ""}.`,
 );

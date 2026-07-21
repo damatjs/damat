@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/events",
   "description": "Typed ephemeral subscriptions and transactional PostgreSQL durable events for Damat apps",
-  "version": "1.0.0+0.2",
+  "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

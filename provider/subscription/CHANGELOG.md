@@ -1,6 +1,6 @@
 # @damatjs/subscription
 
-## 1.0.0+0.2
+## 1.0.0
 
 ### Major Changes
 
@@ -12,8 +12,8 @@
 ### Patch Changes
 
 - Updated dependencies [8011ac8]
-  - @damatjs/deps@1.0.0+0.2
-  - @damatjs/provider@1.0.0+0.2
-  - @damatjs/services@1.0.0+0.2
+  - @damatjs/deps@1.0.0
+  - @damatjs/provider@1.0.0
+  - @damatjs/services@1.0.0
 
 See [`releases/subscription`](../../releases/subscription) for release notes.

@@ -62,13 +62,15 @@ describe("prerelease publishing", () => {
         provenance: false,
       }),
     ).not.toContain("--tag");
-    expect(distTagFor("1.0.0+0.2")).toBeUndefined();
-    expect(
+  });
+
+  test("rejects build metadata in npm package versions", () => {
+    expect(() =>
       publishCommand("package.tgz", "1.0.0+0.2", {
         dryRun: true,
         provenance: false,
       }),
-    ).not.toContain("--tag");
+    ).toThrow("must not include SemVer build metadata");
   });
 
   test("never reports a dry run as an actual publication", () => {

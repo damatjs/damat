@@ -1,6 +1,6 @@
 # @damatjs/jobs
 
-## 1.0.0+0.2
+## 1.0.0
 
 ### Major Changes
 
@@ -12,9 +12,9 @@
 ### Patch Changes
 
 - Updated dependencies [8011ac8]
-  - @damatjs/deps@1.0.0+0.2
-  - @damatjs/durability@1.0.0+0.2
-  - @damatjs/logger@1.0.0+0.2
+  - @damatjs/deps@1.0.0
+  - @damatjs/durability@1.0.0
+  - @damatjs/logger@1.0.0
 
 ## 1.0.0-beta.0
 

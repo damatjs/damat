@@ -1,6 +1,6 @@
 {
   "name": "@damatjs/module",
-  "version": "1.0.0+0.2",
+  "version": "1.0.0",
   "description": "Damatjs module system — manifest contract, standalone dev/test harness, and registry tooling for self-contained modules",
   "type": "module",
   "main": "dist/index.js",

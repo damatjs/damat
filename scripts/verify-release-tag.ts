@@ -13,9 +13,19 @@ export function verifyReleaseTag(
     );
   const version = packages[0]?.version;
   if (!version) throw new Error("No shared public packages were discovered");
+  if (version.includes("+"))
+    throw new Error(
+      "Public npm package versions must not include SemVer build metadata",
+    );
   const expected = `v${version}`;
-  if (tag !== expected)
-    throw new Error(`Release tag ${tag || "<missing>"} must equal ${expected}`);
+  const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const accepted = new RegExp(
+    `^v${escaped}(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$`,
+  );
+  if (!accepted.test(tag))
+    throw new Error(
+      `Release tag ${tag || "<missing>"} must equal ${expected} or add valid build metadata`,
+    );
   return version;
 }
 
