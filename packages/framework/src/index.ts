@@ -16,6 +16,12 @@ export {
   registerModule,
 } from "./services/moduleService";
 export { resolveModuleImport } from "./services/moduleLocation";
+export {
+  bindProviders,
+  clearProviders,
+  getAllProviders,
+  getProvider,
+} from "./services/providers";
 
 export * from "@damatjs/services";
 export * from "@damatjs/link";
@@ -23,3 +29,4 @@ export * from "@damatjs/events";
 export * from "@damatjs/jobs";
 export * from "@damatjs/durability";
 export * from "@damatjs/pipelines";
+export * from "@damatjs/provider";

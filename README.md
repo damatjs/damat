@@ -9,8 +9,7 @@ PostgreSQL remains authoritative; Redis is an optional acceleration and
 application-infrastructure layer.
 
 > Built with [Bun](https://bun.sh), [Hono](https://hono.dev),
-> [Effect-TS](https://effect.website), [Better Auth](https://better-auth.com),
-> and PostgreSQL.
+> [Effect-TS](https://effect.website), and PostgreSQL.
 
 ---
 
@@ -103,7 +102,6 @@ version history.
 | [`@damatjs/orm-migration`](./packages/orm/migration/README.md)        | Module-aware migration system                                                |
 | [`@damatjs/orm-processor`](./packages/orm/processor/README.md)        | Schema snapshot, diff, and SQL generation                                    |
 | [`@damatjs/schema-codegen`](./packages/core/schema-codegen/README.md) | Pure TypeScript and Zod source generation from module schemas                |
-| [`@damatjs/codegen`](./packages/core/codegen/README.md)               | Compatibility facade for the code-generation owner packages                  |
 | [`@damatjs/orm-core`](./packages/orm/core/README.md)                  | Model registry + query logging                                               |
 | [`@damatjs/orm-type`](./packages/orm/type/README.md)                  | Shared ORM types                                                             |
 
@@ -123,14 +121,14 @@ version history.
 | [`@damatjs/deps`](./packages/deps/README.md)                           | Pinned external dependency re-exports                                |
 | [`@damatjs/typescript-config`](./packages/typescript-config/README.md) | Shared tsconfig presets                                              |
 
-### Auth
+### Providers
 
-| Package                                                              | Description                                                                 |
-| -------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| [`@damatjs/auth`](./packages/auth/core/README.md)                    | Provider-agnostic auth contract + middleware; build your own provider on it |
-| [`@damatjs/auth-better-auth`](./packages/auth/better-auth/README.md) | Better Auth adapter (runs in your backend)                                  |
-| [`@damatjs/auth-clerk`](./packages/auth/clerk/README.md)             | Clerk adapter (hosted, verify-only)                                         |
-| [`@damatjs/auth-auth0`](./packages/auth/auth0/README.md)             | Auth0 adapter (JWKS verify-only)                                            |
+| Package                                                      | Description                                                        |
+| ------------------------------------------------------------ | ------------------------------------------------------------------ |
+| [`@damatjs/provider`](./packages/provider/README.md)         | `ModuleService` provider-role authoring base and binding contracts |
+| [`@damatjs/auth`](./provider/auth/README.md)                 | Auth and API-key service contract plus strict authoring base       |
+| [`@damatjs/payment`](./provider/payment/README.md)           | Strict payment service contract                                    |
+| [`@damatjs/subscription`](./provider/subscription/README.md) | Strict recurring subscription service contract                     |
 
 ### CLIs & AI
 
@@ -159,6 +157,7 @@ bun run lint         # lint
 bun run check-types  # typecheck
 bun run format       # prettier
 bun run test         # isolated tests + managed PostgreSQL/Redis + coverage audit
+bun run test:sites   # production browser routes, interactions, and accessibility
 ```
 
 The root test runner migrates a dedicated recovery database, executes real
@@ -176,18 +175,18 @@ common changes.
 
 ## Tech stack
 
-| Category     | Technology            |
-| ------------ | --------------------- |
-| Runtime      | Bun 1.3+              |
-| Language     | TypeScript 5.x (ESM)  |
-| HTTP         | Hono 4.x              |
-| ORM          | damat-orm (in-repo)   |
-| Database     | PostgreSQL + pgvector |
-| Acceleration | Redis 7 (ioredis)     |
-| Auth         | Better Auth 1.x       |
-| Workflows    | Effect-TS 3.x         |
-| Validation   | Zod 4.x               |
-| Monorepo     | Turborepo             |
+| Category     | Technology                                             |
+| ------------ | ------------------------------------------------------ |
+| Runtime      | Bun 1.3+                                               |
+| Language     | TypeScript 5.x (ESM)                                   |
+| HTTP         | Hono 4.x                                               |
+| ORM          | damat-orm (in-repo)                                    |
+| Database     | PostgreSQL + pgvector                                  |
+| Acceleration | Redis 7 (ioredis)                                      |
+| Auth         | Provider contract (engine supplied by the application) |
+| Workflows    | Effect-TS 3.x                                          |
+| Validation   | Zod 4.x                                                |
+| Monorepo     | Turborepo                                              |
 
 ---
 

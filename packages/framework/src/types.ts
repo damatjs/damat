@@ -19,12 +19,7 @@ export interface HealthCheckFn {
 
 export interface HealthCheckConfig {
   version?: string | undefined;
-  checks?:
-    | {
-        database?: HealthCheckFn;
-        redis?: HealthCheckFn;
-      }
-    | undefined;
+  checks?: Record<string, HealthCheckFn | undefined> | undefined;
 }
 
 export interface BootstrapOptions {
@@ -33,8 +28,6 @@ export interface BootstrapOptions {
   projectConfig: ProjectConfig;
   healthCheck?: HealthCheckConfig | undefined;
   authHandlers?: AuthMiddlewareOptions | undefined;
-  /** Mount provider-owned auth routes (Better Auth's `/api/auth/*`) before the file router. */
-  authRoutes?: ((app: Hono) => void) | undefined;
   hooks?: LifecycleHooks | undefined;
 }
 

@@ -18,7 +18,7 @@ Maintainer notes for the core framework. This index gives the module map, the en
 | `src/handlers/`             | Built-in routes: `/` info (`/damat`), route introspection (`/damat/api/routes`), `/health`. See [handlers.md](./handlers.md).                                                                                                                                  |
 | `src/server/index.ts`       | `startServer` via `@hono/node-server`. See [server-and-shutdown.md](./server-and-shutdown.md).                                                                                                                                                                 |
 | `src/shutdown/index.ts`     | Signal handlers + shutdown-handler registry. See [server-and-shutdown.md](./server-and-shutdown.md).                                                                                                                                                           |
-| `src/services/`             | Logger, database, Redis, modules/providers, auth, event broadcast, durability readiness, optional wakeups, selected job/event workers, and cross-module link wiring. See [services.md](./services.md).                                                         |
+| `src/services/`             | Logger, database, Redis, modules, provider-role bindings, auth, event broadcast, durability readiness, optional wakeups, selected durable workers, and cross-module link wiring. See [services.md](./services.md).                                             |
 | `src/utils/windowParser.ts` | `parseWindowToMs("1m" \| "5m" \| "1h" \| "1d")` for rate-limit windows.                                                                                                                                                                                        |
 | `src/tests/`                | `bun:test` suites: health handler, router helpers/response, scanner (`folderToUrlPath`, `sortRoutes`), services (logger, redis).                                                                                                                               |
 
@@ -30,7 +30,7 @@ damat.config.ts + process environment
         │ hooks.beforeServices
         ▼
 initializeServices(config, cwd, runtime)
-        │ logger → PostgreSQL → Redis → modules/providers → auth/publishers
+        │ logger → PostgreSQL → Redis → modules → role bindings → auth/publishers
         │ → durable migration readiness → selected workers
         │ hooks.afterServices
         ▼
@@ -52,12 +52,12 @@ register phased shutdown handlers
 3. **`hooks.beforeServices`** — if configured, awaited with the configured
    logger before the remaining services initialize.
 4. **Init shared services** — the logger is reused, then PostgreSQL, Redis,
-   modules/providers, auth, and optional event publishers initialize in
+   modules, provider-role bindings, auth, and optional event publishers initialize in
    dependency order.
-5. **Durable readiness** — jobs or durable events configure the pool-backed
+5. **Durable readiness** — jobs, durable events, or pipelines configure the pool-backed
    durability client and verify every selected system migration. Failure tells
    the operator to run `damat-orm migrate:up`.
-6. **Start selected workers** — job and/or durable-event workers start only when
+6. **Start selected workers** — job, event, and/or pipeline workers start only when
    the resolved runtime selects them, after module definitions are registered.
 7. **`hooks.afterServices`** — if configured, awaited after service startup.
 8. **Register shutdown** — service handlers are registered by phase.

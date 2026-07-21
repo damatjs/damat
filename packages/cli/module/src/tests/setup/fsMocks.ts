@@ -15,9 +15,11 @@ export const mockExistsSync = mock(
   (path: string) => state.existsMap[path] ?? state.existsDefault,
 );
 export const mockMkdirSync = mock((_path: string, _options?: unknown) => {});
-export const mockWriteFileSync = mock((path: string, content: string) =>
-  writeCalls.push({ path, content }),
-);
+export const mockWriteFileSync = mock((path: string, content: string) => {
+  writeCalls.push({ path, content });
+  state.readFileMap[path] = content;
+  state.existsMap[path] = true;
+});
 export const mockUnlinkSync = mock((path: string) => unlinkCalls.push(path));
 export const mockRmSync = mock((path: string, opts?: unknown) =>
   rmCalls.push({ path, opts }),

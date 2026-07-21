@@ -36,7 +36,7 @@ export function createHealthRoute(
       {
         status: allHealthy ? "healthy" : "degraded",
         timestamp: new Date().toISOString(),
-        version: options?.version || "2.0.0",
+        version: options?.version || "unknown",
         checks,
       },
       allHealthy ? 200 : 503,

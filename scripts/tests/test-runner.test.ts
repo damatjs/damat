@@ -57,6 +57,7 @@ test("root tests provision crash-recovery dependencies", async () => {
   expect(runner).toContain("startTestRedis");
   expect(runner).toContain("prepareRecoveryDatabase");
   expect(runner).toContain('"--max-concurrency=1"');
+  expect(runner).toContain('"--output-logs=errors-only"');
   const turbo = await readJson("turbo.json");
   expect(turbo.tasks.test.env).toContain("DAMAT_RECOVERY_DATABASE_URL");
   expect(turbo.tasks.test.env).toContain("DAMAT_RECOVERY_REDIS_URL");

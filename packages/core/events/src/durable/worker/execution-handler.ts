@@ -13,6 +13,7 @@ export async function runEventDeliveryHandler(
   handler: DurableEventHandler,
   controller: AbortController,
   heartbeat: () => Promise<void>,
+  settleHeartbeat: () => Promise<void> = async () => {},
 ): Promise<void> {
   const timer = options.batchHeartbeats
     ? undefined
@@ -33,11 +34,14 @@ export async function runEventDeliveryHandler(
     const result = normalizeEventDeliveryResult(
       await handler(claim.payload, context),
     );
+    stopHeartbeat();
+    await settleHeartbeat();
     if (!controller.signal.aborted) {
       await completeEventDeliverySuccess(claim, result);
     }
   } finally {
     stopHeartbeat();
+    await settleHeartbeat();
     controller.signal.removeEventListener("abort", stopHeartbeat);
   }
 }

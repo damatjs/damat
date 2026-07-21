@@ -22,8 +22,11 @@ Start from the [package map](./01-introduction.md#the-package-map), or jump in:
   [schema-codegen](../../packages/core/schema-codegen/README.md) ·
   [core](../../packages/orm/core/README.md) ·
   [type](../../packages/orm/type/README.md)
-- **Generation:** [module-generator](../../packages/module-generator/README.md) ·
-  [codegen compatibility facade](../../packages/core/codegen/README.md)
+- **Generation:** [module-generator](../../packages/module-generator/README.md)
+- **Providers:** [provider](../../packages/provider/README.md) ·
+  [auth](../../provider/auth/README.md) ·
+  [payment](../../provider/payment/README.md) ·
+  [subscription](../../provider/subscription/README.md)
 - **Core:** [durability](../../packages/core/durability/README.md) ·
   [logger](../../packages/core/logger/README.md) ·
   [redis](../../packages/core/redis/README.md) ·

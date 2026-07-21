@@ -27,6 +27,11 @@ jobs:
       - name: Run complete release gate
         run: bun run check:release
 
+      - name: Verify tag matches the lockstep package version
+        run: bun scripts/verify-release-tag.ts
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+
       - name: Configure npm authentication
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 

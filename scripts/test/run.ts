@@ -36,7 +36,15 @@ try {
   await prepareRecoveryDatabase(recoveryUrl);
   const turboArgs = process.argv.slice(2);
   const passed = await run(
-    ["bunx", "turbo", "run", "test", "--concurrency=1", ...turboArgs],
+    [
+      "bunx",
+      "turbo",
+      "run",
+      "test",
+      "--concurrency=1",
+      "--output-logs=errors-only",
+      ...turboArgs,
+    ],
     {
       ...process.env,
       ...managed.packageUrls,

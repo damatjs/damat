@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/durability",
   "description": "Shared PostgreSQL durability contracts and infrastructure",
-  "version": "0.6.0",
+  "version": "1.0.0-beta.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

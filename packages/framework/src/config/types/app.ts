@@ -3,10 +3,13 @@ import type { ProjectConfig } from "./project";
 import { ServicesConfig } from "./services";
 import type { LifecycleHooks } from "./hooks";
 import type { RuntimeConfig } from "./runtime";
+import type { ProviderBindings } from "@damatjs/provider";
 
 export interface AppConfig {
   projectConfig: ProjectConfig;
   modules?: ModuleConfigObject;
+  /** Provider roles bound to already configured module services. */
+  providers?: ProviderBindings;
   /** Optional bootstrap lifecycle hooks — see LifecycleHooks for the stages. */
   hooks?: LifecycleHooks;
   /**

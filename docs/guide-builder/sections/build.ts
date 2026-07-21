@@ -36,9 +36,17 @@ export const buildSection: GuideSectionDefinition = {
       id: "authentication",
       title: "Authentication",
       summary:
-        "Integrate Better Auth, Clerk, Auth0 — or your own provider — via services.auth; typed c.get('user').",
+        "Bind an auth module for sessions and API keys, then use typed request principals.",
       file: "08b-authentication.md",
       order: 8.5,
+    },
+    {
+      id: "providers",
+      title: "Integration providers",
+      summary:
+        "ModuleService-based auth, payment, subscription, and custom provider standards.",
+      file: "08c-providers.md",
+      order: 8.6,
     },
     {
       id: "workflows",

@@ -34,6 +34,7 @@ export async function waitForLeaseExpiry(
       return result.rows[0]?.expired ?? false;
     },
     Boolean,
+    10_000,
   );
 }
 

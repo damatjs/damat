@@ -24,7 +24,7 @@ export class WorkerShutdown {
     await this.dependencies.markStopping(this.id);
     if (await this.active().drain(graceMs)) return true;
     this.waitingForDrain = true;
-    this.active().abort();
+    await this.active().abort();
     return !this.active().size;
   }
 

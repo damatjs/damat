@@ -1,7 +1,10 @@
 import { Hono } from "@damatjs/deps/hono";
 import type { FileRouter } from "../router";
 
-export function createRootRoute(fileRouter: FileRouter): Hono {
+export function createRootRoute(
+  fileRouter: FileRouter,
+  version = "unknown",
+): Hono {
   const rootRouter = new Hono();
 
   rootRouter.get("/damat", (c) => {
@@ -19,9 +22,9 @@ export function createRootRoute(fileRouter: FileRouter): Hono {
     };
 
     return c.json({
-      name: "Damatjs Backend Infrustcutre",
-      version: "1.0.0",
-      description: "Backend Infrustcutre to build and not repeat.",
+      name: "Damat.js Backend Infrastructure",
+      version,
+      description: "Composable backend infrastructure for Damat applications.",
       documentation: "https://docs.damatjs.com",
       defaultEndpoints: endpoints,
     });

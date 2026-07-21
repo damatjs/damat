@@ -1,10 +1,9 @@
 # @damatjs/cli-module
 
-Standalone capabilities for authoring and installing Damat modules, plus the
-auth-storage scaffold.
+Standalone capabilities for authoring and installing Damat modules.
 
 ```ts
-import { authCliCapability, moduleCliCapability } from "@damatjs/cli-module";
+import { moduleCliCapability } from "@damatjs/cli-module";
 ```
 
 `module plan/add/list/update/remove` use the same transactional engine as Kit
@@ -16,6 +15,10 @@ The installer owns only files it adds. It never edits `damat.config.ts`,
 `tsconfig.json`, `.env*`, barrels, or call sites; commands report that work for
 the user or AI. Module scaffolds write root `damat.json` and rely on
 conventional `src/index.ts` discovery.
+
+Provider modules use these same commands and remain `kind: "module"`. Their
+installation instructions tell the backend owner which top-level provider role
+to bind after registering the installed module.
 
 The package also owns module init/dev/build/validation, migrations, codegen,
 and the embedded authoring guide.

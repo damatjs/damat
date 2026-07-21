@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/framework",
   "description": "Damatjs framework for handling everything",
-  "version": "0.6.0",
+  "version": "1.0.0-beta.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -68,6 +68,7 @@
   "author": "Abel Lamesgen",
   "dependencies": {
     "@damatjs/logger": "workspace:*",
+    "@damatjs/auth": "workspace:*",
     "@damatjs/installer": "workspace:*",
     "@damatjs/deps": "workspace:*",
     "@damatjs/durability": "workspace:*",
@@ -80,12 +81,12 @@
     "@damatjs/events": "workspace:*",
     "@damatjs/jobs": "workspace:*",
     "@damatjs/pipelines": "workspace:*",
+    "@damatjs/provider": "workspace:*",
     "@damatjs/redis": "workspace:*",
     "@hono/node-server": "^1.13.7"
   },
   "devDependencies": {
     "@damatjs/typescript-config": "workspace:*",
-    "@damatjs/auth": "workspace:*",
     "@types/bun": "1.3.9",
     "hono": "^4.12.0",
     "typescript": "^5.9.3"

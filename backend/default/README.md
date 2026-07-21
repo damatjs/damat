@@ -42,7 +42,7 @@ tests also emit LCOV for the repository source-inclusion audit.
 | Capability          | Location                            | What it demonstrates                                                            |
 | ------------------- | ----------------------------------- | ------------------------------------------------------------------------------- |
 | Configuration       | `damat.config.ts`                   | Database, optional Redis, runtime roles, durable services, modules, and links   |
-| User module         | `src/modules/user/`                 | Models, generated service accessors, auth configuration, and migrations         |
+| User module         | `src/modules/user/`                 | Models, generated service accessors, and preserved migration history            |
 | Organization module | `src/modules/organization/`         | A second independent module                                                     |
 | Links               | `src/links/`                        | App-owned cross-module relationships                                            |
 | HTTP routes         | `src/api/routes/`                   | File routing, dynamic parameters, auth, and workflows                           |
@@ -135,8 +135,8 @@ roles. The runtime role cannot create schemas or own tables. PostgreSQL is not
 published, API binding defaults to `127.0.0.1`, and application containers are
 non-root, read-only, capability-free, and protected from privilege escalation.
 Use private managed services and deployment-secret injection in production.
-The reference user module also requires a unique `BETTER_AUTH_SECRET` of at
-least 32 characters; Compose derives its public auth URL from `PUBLIC_BASE_URL`.
+The reference backend is vendor-neutral and does not select an auth provider.
+An application that installs one binds its module through `providers.auth`.
 
 Redis is an optional accelerator profile. Enable it and provide its URL:
 
@@ -192,7 +192,7 @@ and a replacement records recovery before claiming a new attempt. Redis loss
 does not lose work or inspection history. On recovery, the framework rebuilds
 Redis coordination indexes from PostgreSQL. Database effects that
 must survive retries should use `context.withIdempotency`, while external
-providers should receive the same stable idempotency key when supported.
+integrations should receive the same stable idempotency key when supported.
 
 ## More documentation
 

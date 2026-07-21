@@ -23,7 +23,7 @@ test("aborting before execution setup is safe", async () => {
   const execution = startJobExecution(claim, {
     heartbeatIntervalMs: 5_000,
   });
-  execution.abort();
+  await execution.abort();
   await execution.promise;
   expect((await getJobRun(claim.id))?.status).toBe("dead_lettered");
 });

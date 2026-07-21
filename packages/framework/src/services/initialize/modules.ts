@@ -15,7 +15,10 @@ export async function initializeModules(
   cwd: string,
 ): Promise<void> {
   const modules = [
-    ...Object.values(config.modules ?? {}),
+    ...Object.entries(config.modules ?? {}).map(([id, module]) => ({
+      ...module,
+      id: module.id ?? id,
+    })),
     ...resolveLinkModuleEntries(config.links, cwd).map((entry) => ({
       id: entry.id,
       resolve: entry.resolve,

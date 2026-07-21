@@ -7,7 +7,7 @@ jobs, and durable events.
 ## Responsibility
 
 `initializeServices` brings up the shared application layer before optional HTTP:
-logger, PostgreSQL, Redis, modules/providers, auth/publishers, durable readiness,
+logger, PostgreSQL, Redis, modules, provider bindings, auth/publishers, durable readiness,
 and the workers selected by the resolved runtime. It returns health checks and
 phased shutdown registrations.
 
@@ -21,10 +21,11 @@ async function initializeServices(
 ): Promise<ServiceInstances>;
 
 interface ServiceInstances {
-  healthChecks?: { database?: HealthCheckFn; redis?: HealthCheckFn };
+  healthChecks?: Record<string, HealthCheckFn | undefined>;
   shutdownHandlers: ShutdownRegistration[];
   modules?: Map<string, ModuleInstance<any>>;
   resolvedModules?: Map<string, ResolvedModule>;
+  providers?: Map<string, unknown>;
   auth?: AuthRuntime;
   durabilityCoordinator?: DurabilityCoordinator;
 }
@@ -46,29 +47,32 @@ Steps:
      degraded operation, and continue with PostgreSQL-authoritative fallback.
    - Register `disconnectRedis()` in the `redis` shutdown phase.
    - Set `healthChecks.redis` to a real ping (`getRedis().ping()`); else `{ status: "not configured" }`.
-4. **Modules + links + providers** — initialize app/link modules, load their
-   workflow/job/event/pipeline providers, expose resolved modules, and install
-   the link resolver.
-5. **Auth and event broadcast** — initialize the configured auth adapter and
-   Redis event broadcast. Their shutdown registrations stop new external work
-   in the `claims` phase.
-6. **Durable readiness** — when jobs, durable events, or pipelines are enabled,
+4. **Modules + links** — initialize app/link modules, load their
+   workflow/job/event/pipeline definition files, expose resolved modules, and
+   install the link resolver.
+5. **Provider bindings** — validate each top-level `providers.<role>.module`,
+   resolve its already initialized module service, reject role markers that do
+   not match, and retain that exact service reference.
+6. **Auth and event broadcast** — validate the bound auth service's session and
+   API-key operations, build framework-owned route handlers, and initialize
+   optional Redis event broadcast.
+7. **Durable readiness** — when jobs, durable events, or pipelines are enabled,
    create the global durability client from `PoolManager.getPool()` and verify
    shared plus capability-specific system migrations. Missing database config
    fails startup. Missing migrations fail with `Run: damat-orm migrate:up`
    guidance.
-7. **Durability acceleration** — create one coordinator, subscriber transport,
+8. **Durability acceleration** — create one coordinator, subscriber transport,
    transactional-outbox relay, Redis projection rebuild, and publisher gate per
    process. A committed outbox write prompts the relay after commit; several
    writes in one transaction coalesce into one prompt. Capability failure
    disables both durable publishers/subscribers, activates PostgreSQL fallback,
    and retries with bounded backoff.
-8. **Selected workers** — start only capabilities in `runtime.workers`:
+9. **Selected workers** — start only capabilities in `runtime.workers`:
    `JobWorker` for jobs, `DurableEventRouter` + `DurableEventWorker` for events,
    and the pipeline graph router plus internal action worker for pipelines.
    Definitions are already loaded. In `worker` and `all` modes, selecting an
    unavailable capability fails visibly.
-9. **Logger shutdown** — register `closeLogger()` in the final `logger` phase.
+10. **Logger shutdown** — register `closeLogger()` in the final `logger` phase.
 
 `server` resolves no workers, `worker` starts selected workers without HTTP,
 and `all` may start workers and HTTP. Worker stop methods stage their own claim
@@ -77,7 +81,10 @@ once in the framework's `claims` phase. Because `server` never executes
 workers, it drops known worker selections without validating their service
 availability; unknown capability names remain invalid in every mode.
 
-`bootstrap` wraps `instances.healthChecks` as `{ version: "2.0.0", checks }` for the `/health` route; `entry` `registerShutdown`s every handler.
+The HTTP runtime wraps `instances.healthChecks` with
+`projectConfig.releaseVersion` for `/health`; if no immutable application
+identity is configured it reports `"unknown"`. `entry` registers every shutdown
+handler.
 
 ## Logger (`logger.ts`)
 
@@ -149,17 +156,20 @@ async function initModules(modules: ModuleConfig[], cwd): Promise<void>;
 
 ```ts
 interface ServiceInstances {
-  healthChecks?: { database?: HealthCheckFn; redis?: HealthCheckFn };
+  healthChecks?: Record<string, HealthCheckFn | undefined>;
   shutdownHandlers: ShutdownRegistration[];
   modules?: Map<string, ModuleInstance<any>>;
   resolvedModules?: Map<string, ResolvedModule>;
+  providers?: Map<string, unknown>;
   auth?: AuthRuntime;
 }
 ```
 
 ## Gotchas
 
-- **Order is enforced here.** The pool is set up (`initDatabase` → `PoolManager.setup`) before modules are initialized (`initModules` → `init()` → service construction, which requires the pool). Don't reorder these steps.
+- **Order is enforced here.** The pool is set up before modules, and modules
+  initialize before role bindings. A provider binding never constructs another
+  service or database context; don't reorder these stages.
 - **No DB / no Redis is valid until a dependent service is enabled.** Omitting
   either URL skips that subsystem and health reports `"not configured"`.
   Enabling jobs or durable events requires PostgreSQL. Redis event broadcast,

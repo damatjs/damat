@@ -39,6 +39,7 @@ describe("damat create — scaffold", () => {
     const config = written("my-api/damat.config.ts")!.content;
     expect(config).toContain("modules: {}");
     expect(config).toContain('prefix: "my-api"');
+    expect(config).toContain("releaseVersion: process.env.RELEASE_VERSION");
     expect(config).toContain('mode: "all"');
     expect(config).toContain('workers: ["jobs", "events", "pipelines"]');
     expect(config).toContain('inspectionVisibility: "metadata"');

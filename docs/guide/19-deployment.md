@@ -116,8 +116,8 @@ distinct bootstrap, migration, runtime, and backup roles and is not published.
 The API binds to localhost by default. Application containers are non-root,
 read-only, capability-free, and protected from privilege escalation. Use
 private managed PostgreSQL and deployment-secret injection outside local
-evaluation. The reference user module requires a unique 32-character-or-longer
-`BETTER_AUTH_SECRET`; its external URL comes from `PUBLIC_BASE_URL`.
+evaluation. The vendor-neutral reference backend does not select an auth
+provider; installed provider modules declare their own reviewed secrets.
 Redis is an optional `accelerator` profile:
 
 ```bash

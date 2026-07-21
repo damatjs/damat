@@ -13,6 +13,7 @@ const production = process.env.NODE_ENV === "production";
 
 export default defineConfig({
   projectConfig: {
+    releaseVersion: process.env.RELEASE_VERSION ?? "development",
     databaseUrl: process.env.DATABASE_URL ?? "",
     redisUrl: process.env.REDIS_URL,
     nodeEnv:

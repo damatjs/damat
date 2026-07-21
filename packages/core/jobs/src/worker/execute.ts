@@ -9,7 +9,7 @@ import type { ClaimedJobRun, ExecuteJobOptions } from "./types";
 
 export interface JobExecution {
   promise: Promise<void>;
-  abort(): void;
+  abort(): Promise<void>;
   heartbeat(executor?: DurabilityExecutor): Promise<void>;
 }
 
@@ -30,15 +30,11 @@ export function startJobExecution(
     options.leaseMs ?? 30_000,
     controller,
   );
-  let stopHeartbeat = () => {};
-  const promise = runClaim(claim, options, controller, heartbeat, (stop) => {
-    stopHeartbeat = stop;
-  });
   return {
-    promise,
-    abort: () => {
+    promise: runClaim(claim, options, controller, heartbeat),
+    abort: async () => {
       controller.abort();
-      stopHeartbeat();
+      await heartbeat.stop();
     },
     heartbeat: heartbeat.run,
   };
@@ -49,7 +45,6 @@ async function runClaim(
   options: ExecuteJobOptions,
   controller: AbortController,
   heartbeat: ReturnType<typeof createJobHeartbeatControl>,
-  setStopHeartbeat: (stop: () => void) => void,
 ): Promise<void> {
   const definition = getJobDefinition(claim.name);
   if (!definition) {
@@ -73,7 +68,7 @@ async function runClaim(
       definition.handler,
       controller,
       heartbeat.run,
-      setStopHeartbeat,
+      heartbeat.stop,
     );
     if (heartbeat.cancellationRequested) await completeJobCancellation(claim);
   } catch (error) {

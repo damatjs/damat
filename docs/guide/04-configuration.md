@@ -50,11 +50,16 @@ export default defineConfig({
       id: "user",
     },
   },
+  providers: {
+    auth: { module: "user" },
+  },
 });
 ```
 
-`modules` is a keyed object `{ [id]: { resolve, id } }`. `damat module add`
-updates this block when a module is installed.
+`modules` is keyed by module id; an explicit `id` override is optional.
+`providers` binds a standardized role to one of those initialized module
+services. `damat module add` installs both ordinary and provider modules, then
+reports the app-owned configuration still required.
 
 See [`@damatjs/framework` → config internals](../../packages/framework/docs/config.md)
 for the full `ProjectConfig`/`HttpConfig` type reference.
@@ -81,7 +86,6 @@ Common variables (see the default backend's `.env.example` for the full set):
 | `PORT` / `HOST`         | —        | HTTP bind                                                                |
 | `DAMAT_RUNTIME_MODE`    | —        | Overrides `runtime.mode`: `server` \| `worker` \| `all`                  |
 | `DAMAT_WORKER_TYPES`    | —        | Overrides `runtime.workers`: comma-separated `jobs,events,pipelines`     |
-| `BETTER_AUTH_SECRET`    | ✅*      | Auth secret (min 32 chars) — _if using the auth module_                  |
 | `DAMAT_MODULE_REGISTRY` | —        | Module registry index (for `module add` / MCP)                           |
 | `DAMAT_MODULE_VERIFY`   | —        | `off` \| `warn` \| `require` install policy                              |
 

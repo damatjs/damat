@@ -10,7 +10,7 @@ export async function runJobHandler(
   handler: JobHandler,
   controller: AbortController,
   heartbeat: () => Promise<void>,
-  setStopHeartbeat: (stop: () => void) => void,
+  settleHeartbeat: () => Promise<void>,
 ): Promise<void> {
   const timer = options.batchHeartbeats
     ? undefined
@@ -25,12 +25,16 @@ export async function runJobHandler(
   const stopHeartbeat = () => {
     if (timer) clearInterval(timer);
   };
-  setStopHeartbeat(stopHeartbeat);
+  controller.signal.addEventListener("abort", stopHeartbeat, { once: true });
   try {
     const context = createJobRunContext(claim, controller, options);
     const result = normalizeJobResult(await handler(claim.payload, context));
+    stopHeartbeat();
+    await settleHeartbeat();
     if (!controller.signal.aborted) await completeJobSuccess(claim, result);
   } finally {
     stopHeartbeat();
+    await settleHeartbeat();
+    controller.signal.removeEventListener("abort", stopHeartbeat);
   }
 }

@@ -85,7 +85,7 @@ export class DurableEventWorkerRuntime {
       let drained = await this.components.active.drain(graceMs);
       if (!drained) {
         this.finalizer.waitForDrain();
-        this.components.active.abort();
+        await this.components.active.abort();
         drained = await this.components.active.drain(50);
       }
       if (drained) await this.finalizer.finish();

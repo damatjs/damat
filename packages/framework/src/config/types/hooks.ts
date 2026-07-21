@@ -19,7 +19,7 @@ export type LifecycleHook = (ctx: LifecycleHookContext) => void | Promise<void>;
  *
  *   beforeServices — after configured logger init, before db/redis/module init
  *   afterServices  — services are up, routes not yet built
- *   beforeRoutes   — the Hono app exists, no routes registered yet
+ *   beforeRoutes   — the Hono app exists, no endpoint routes registered yet
  *   afterRoutes    — all routes registered, just before the 404 handler
  */
 export interface LifecycleHooks {

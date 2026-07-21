@@ -41,6 +41,10 @@ const nextConfig: NextConfig = {
     return [
       { source: "/docs", destination: `${DOCS_ORIGIN}/docs` },
       { source: "/docs/:path*", destination: `${DOCS_ORIGIN}/docs/:path*` },
+      {
+        source: "/docs-static/:path*",
+        destination: `${DOCS_ORIGIN}/docs-static/:path*`,
+      },
     ];
   },
 };

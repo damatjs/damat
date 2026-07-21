@@ -35,8 +35,6 @@ test("hardens application containers and binds HTTP locally", () => {
     expect(compose).toContain(setting);
   expect(service("api")).toContain("127.0.0.1}:9000:9000");
   expect(compose).toContain("${METRICS_TOKEN:?set METRICS_TOKEN}");
-  expect(compose).toContain("${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET}");
-  expect(compose).toContain("REQUIRED_SECRET_NAMES: BETTER_AUTH_SECRET");
 });
 
 test("separates bootstrap, migration, runtime, and backup database roles", () => {

@@ -2,6 +2,7 @@ import { recoveryRedisUrl, type RedisMode } from "./context";
 import type { RecoveryNames } from "./definitions";
 
 export type RecoveryChild = ReturnType<typeof Bun.spawn>;
+const workerReadyTimeoutMs = 5_000;
 
 export async function spawnWorker(
   names: RecoveryNames,
@@ -37,7 +38,7 @@ async function waitUntilReady(child: RecoveryChild, redis: RedisMode) {
   const reader = child.stdout.getReader();
   const ready = await Promise.race([
     readReadyMarker(reader, redis),
-    Bun.sleep(2_000).then(() => false),
+    Bun.sleep(workerReadyTimeoutMs).then(() => false),
   ]);
   if (!ready) await reader.cancel();
   reader.releaseLock();
@@ -73,5 +74,11 @@ export async function stopChild(child?: RecoveryChild): Promise<void> {
     throw error;
   }
   await Promise.race([child.exited, Bun.sleep(1_000)]);
-  if (child.exitCode === null) await killHard(child);
+  if (child.exitCode === null) {
+    try {
+      await killHard(child);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+    }
+  }
 }

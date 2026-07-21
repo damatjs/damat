@@ -22,8 +22,7 @@ interface BootstrapOptions {
   routeProviders?: Array<{ routesDir: string; basePath: string }>;
   projectConfig: ProjectConfig; // port/host/cors/api/rateLimit/auth + nodeEnv
   healthCheck?: HealthCheckConfig; // { version?, checks?: { database?, redis? } }
-  authHandlers?: AuthMiddlewareOptions; // app-provided session/apiKey/flexible verifiers
-  authRoutes?: (app: Hono) => void; // provider-owned HTTP routes
+  authHandlers?: AuthMiddlewareOptions; // built from the bound auth module
   hooks?: LifecycleHooks; // beforeRoutes/afterRoutes run here (see config.md)
 }
 
@@ -39,14 +38,14 @@ interface BootstrapResult {
 2. `const app = new Hono()`.
 3. `app.onError((err, c) => handleError(c, err, logger))` — Hono v4 routes handler-thrown errors straight to `onError` (they never unwind through middleware), so this is what gives handler throws the JSON error envelope; the `errorHandler` middleware alone never sees them.
 4. `setupMiddleware({ app, logger, corsConfig: projectConfig.http.corsConfig })` — installs the global middleware stack (see [middleware.md](./middleware.md)).
-5. If `hooks.beforeRoutes` is set, `await` it with `{ config: projectConfig, logger, app }` — the app exists but no routes are registered yet; a throwing hook fails startup.
-6. `createFileRouter({ routesDir, debug: nodeEnv === "development", logger, rateLimit: http.rateLimit, auth: http.auth, authHandlers })` — scans and builds the file router (see [router.md](./router.md)). `debug` enables per-route logging.
+5. If `hooks.beforeRoutes` is set, `await` it with `{ config: projectConfig, logger, app }` — global middleware is installed, but no endpoint routes are registered yet; a throwing hook fails startup.
+6. Build and aggregate the application file router plus every normal module
+   route directory. Provider module routes use this same path.
 7. Mount the file router at the API base: `app.route(http.api?.entryRouter ?? "/api", fileRouter.router)`.
-8. **Dev-only:** if `nodeEnv === "development"`, log the formatted route list and mount `createRootRoute` (`/damat`) and `createApiRoutesRoute` (`/damat/api/routes`).
+8. **Dev-only:** if `nodeEnv === "development"`, mount `createRootRoute` (`/damat`) and `createApiRoutesRoute` (`/damat/api/routes`).
 9. If `healthCheck` is provided, mount `createHealthRoute(healthCheck, http.api?.healthCheckRouter)` (default path `/health`).
-10. If `hooks.afterRoutes` is set, `await` it with `{ config: projectConfig, logger, app }` — every route is registered; the 404 handler is not installed yet.
-11. `app.notFound(notFoundHandler)`.
-12. Return `{ app, config: { port, host, nodeEnv } }`.
+10. If `hooks.afterRoutes` is set, await it before the 404 handler.
+11. `app.notFound(notFoundHandler)` and return the app/server config.
 
 ## `entry.start(cwd?)`
 
@@ -66,7 +65,7 @@ Pipeline (`entry.ts`):
 3. Validate `config.runtime?.shutdownGraceMs`, initialize the configured logger,
    run `hooks.beforeServices`, and install single-flight signal handlers.
 4. `initializeServices(config, cwd, runtime)` reuses that logger, then initializes
-   database, Redis, modules/providers, auth/publishers, durable readiness, and
+   database, Redis, modules, provider bindings, auth/publishers, durable readiness, and
    selected workers in order.
 5. Run `hooks.afterServices` and register every service shutdown handler.
 6. If `runtime.servesHttp` is false, return without scanning routes or opening
@@ -91,10 +90,10 @@ interface HealthCheckFn {
 }
 interface HealthCheckConfig {
   version?: string;
-  checks?: { database?: HealthCheckFn; redis?: HealthCheckFn };
+  checks?: Record<string, HealthCheckFn | undefined>;
 }
 type RuntimeMode = "server" | "worker" | "all";
-type WorkerCapability = "jobs" | "events";
+type WorkerCapability = "jobs" | "events" | "pipelines";
 ```
 
 `BootstrapResult.app` is typed `Hono` (via `@damatjs/deps/hono`), so callers get a real Hono instance without casting.

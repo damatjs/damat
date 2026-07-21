@@ -8,16 +8,6 @@ export async function initializeAuth(
   instances: ServiceInstances,
   logger: ILogger,
 ): Promise<void> {
-  const auth = await initAuth(config, logger);
-  if (!auth) return;
-  instances.auth = auth;
-  if (!auth.shutdown) return;
-  instances.shutdownHandlers.push({
-    name: "auth",
-    phase: "claims",
-    handler: async () => {
-      await auth.shutdown!();
-      logger.info("Auth provider shut down");
-    },
-  });
+  const auth = initAuth(config, logger);
+  if (auth) instances.authRuntime = auth;
 }

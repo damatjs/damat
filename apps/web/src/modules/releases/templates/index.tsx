@@ -8,12 +8,12 @@ export function ReleasesTemplate({
   lockstep,
   independent,
   currentVersion,
-  codegenVersion,
+  archivedCodegenVersion,
 }: {
   lockstep: ReleaseGroup[];
   independent: ReleaseGroup[];
   currentVersion: string;
-  codegenVersion: string;
+  archivedCodegenVersion: string;
 }) {
   return (
     <div className="mx-auto max-w-7xl border-line lg:border-x">
@@ -49,14 +49,16 @@ export function ReleasesTemplate({
           className="border-t border-line px-6 py-16 lg:px-10"
         >
           <h2 className="display text-2xl font-semibold text-ink sm:text-3xl">
-            The independent line
+            Archived independent history
           </h2>
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted">
-            <span className="font-mono text-ink">@damatjs/codegen</span> was
-            published to npm at 1.0.0 before the shared line existed, so it runs
-            ahead on its own version — currently{" "}
-            <span className="font-mono text-ink">v{codegenVersion}</span> — and
-            rejoins the lockstep once the shared line passes it.
+            <span className="font-mono text-ink">@damatjs/codegen</span> is
+            archived at its last npm release,{" "}
+            <span className="font-mono text-ink">
+              v{archivedCodegenVersion}
+            </span>
+            . Its former APIs are owned by @damatjs/schema-codegen and
+            @damatjs/module-generator; these notes remain for migration history.
           </p>
           <div className="mt-10">
             {independent.map((group) => (

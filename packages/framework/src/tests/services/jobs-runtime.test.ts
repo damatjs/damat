@@ -7,9 +7,7 @@ import {
   startWorkers,
   workerState,
 } from "./initialize-events-jobs-fixture";
-import {
-  getWorkerWakeupRedis,
-} from "../../services/initialize/wakeup";
+import { getWorkerWakeupRedis } from "../../services/initialize/wakeup";
 
 beforeEach(reset);
 

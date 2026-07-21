@@ -4,7 +4,8 @@
 
 `@damatjs/framework` turns one `damat.config.ts` and application build into an
 HTTP server, a selected durable-worker process, or both. It initializes the
-logger, PostgreSQL, optional Redis, modules/providers, and auth before checking
+logger, PostgreSQL, optional Redis, modules, provider-role bindings, and auth
+request handlers before checking
 migration readiness. It starts one process-level durability coordinator and
 Redis wake-up transport after readiness, then starts selected job/event/pipeline workers and
 builds the Hono HTTP app only when the resolved runtime serves HTTP.
@@ -59,6 +60,10 @@ export default defineConfig({
     user: { resolve: "./src/modules/user", id: "user" },
     billing: { resolve: { type: "package", name: "@acme/billing" } },
     audit: { resolve: { type: "damat", path: "audit" } },
+    auth: { resolve: "./src/modules/auth" },
+  },
+  providers: {
+    auth: { module: "auth" },
   },
   links: "./src/links",
   runtime: {
@@ -86,6 +91,12 @@ and optional capabilities without copying them into app source. Packaged routes
 mount below `/<module-id>` in the API router; workflow, job, event, and pipeline
 providers load before selected workers start. Damat paths stay in
 `.damat/packages`.
+
+Each `providers` entry selects an already initialized module service for one
+standardized role. The framework never creates a second service or database
+context. Provider-owned persistence, credentials, routes, workflows, health,
+and shutdown behavior use normal module/application mechanisms. Auth route
+protection remains explicit through route config or `projectConfig.http.auth`.
 
 `links` points at a directory whose `index.ts` default-exports `defineLinkModule(...)` and exports `models`. The framework registers it as a `link` module, so cross-module links boot, migrate, and type-generate alongside your modules.
 
@@ -165,7 +176,7 @@ export default defineConfig({
   hooks: {
     beforeServices: ({ config, logger }) => {}, // after config load, before db/redis/modules
     afterServices: ({ config, logger }) => {}, // services up, routes not built yet
-    beforeRoutes: ({ app, config, logger }) => {}, // Hono app exists, no routes yet
+    beforeRoutes: ({ app, config, logger }) => {}, // Hono app exists, no endpoint routes yet
     afterRoutes: ({ app, config, logger }) => {}, // all routes registered, before the 404 handler
   },
   services: {
@@ -205,13 +216,13 @@ The package has many subpath exports. Import the narrowest one you need.
 | `@damatjs/framework/handlers`   | module | `createRootRoute`, `createApiRoutesRoute`, `createHealthRoute`, plus `HealthCheckOptions`/`HealthCheckFn`.                                                                                                                                                                                                                                |
 | `@damatjs/framework/server`     | module | `startServer(app, config, logger)` — runs Hono and returns an idempotent async close handle.                                                                                                                                                                                                                                              |
 | `@damatjs/framework/shutdown`   | module | Phased shutdown registry and runner: `setupShutdownHandlers`, `registerShutdown`, `runShutdownHandlers`, `ShutdownPhase`.                                                                                                                                                                                                                 |
-| `@damatjs/framework/services`   | module | Service wiring: `initializeServices(config, cwd?, runtime)`, logger, database, Redis, modules, auth, durable readiness, and selected workers.                                                                                                                                                                                             |
+| `@damatjs/framework/services`   | module | Service wiring: `initializeServices(config, cwd?, runtime)`, logger, database, Redis, modules, provider-role bindings, auth handlers, durable readiness, and selected workers. Includes typed `getProvider(role)`.                                                                                                                        |
 
 Key types: `AppConfig`, `RuntimeConfig`, `RuntimeMode`, `WorkerCapability`,
 `ResolvedRuntime`, `ProjectConfig`, `HttpConfig`, `LifecycleHooks`,
 `BootstrapOptions`, `BootstrapResult`, `ServerConfig`, `HealthCheckConfig`,
 `ShutdownRegistration`, `ShutdownPhase`, `RouteModule`, `RouteValidator`,
-`AuthType`, `AuthUser`, `AuthTeam`.
+`AuthType`, `AuthUser`, `AuthTeam`, `ProviderBinding`, and `ProviderBindings`.
 
 The barrel also ships `src/context.ts`: a `ContextVariableMap` augmentation (`requestId`, `startTime`, `logger`, plus optional `user`/`team`/`userId`) so `c.get(...)`/`c.set(...)` are fully typed in app code — no casts — with `getRequestLogger(c)`, `getUser(c)`, and `getTeam(c)` as typed accessors.
 

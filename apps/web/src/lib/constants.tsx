@@ -33,7 +33,8 @@ export const GITHUB_URL = `https://github.com/${GITHUB_REPO}`;
  * (e.g. https://docs.damatjs.com/docs); unset, links stay on /docs and the
  * multi-zone proxy in next.config.mjs serves them.
  */
-export const DOCS_URL = process.env.NEXT_PUBLIC_DOCS_URL ?? "/docs";
+export const DOCS_URL =
+  process.env.NEXT_PUBLIC_DOCS_URL?.replace(/\/$/, "") || "/docs";
 
 /** Link to a docs chapter: docsUrl('getting-started'). */
 export function docsUrl(slug = ""): string {

@@ -1,0 +1,49 @@
+{
+  "name": "@damatjs/subscription",
+  "description": "Strict ModuleService-based subscription provider contract for Damat",
+  "version": "1.0.0-beta.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/damatjs/damat",
+    "directory": "provider/subscription"
+  },
+  "license": "MIT",
+  "files": [
+    "dist",
+    "!dist/**/tests"
+  ],
+  "author": "Abel Lamesgen",
+  "dependencies": {
+    "@damatjs/provider": "workspace:*",
+    "@damatjs/services": "workspace:*",
+    "@damatjs/deps": "workspace:*"
+  },
+  "devDependencies": {
+    "@damatjs/typescript-config": "workspace:*",
+    "@types/bun": "1.3.9",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "rm -rf tsconfig.tsbuildinfo dist && tsc",
+    "watch": "tsc --watch",
+    "test": "bun test && bun run test:types",
+    "test:types": "tsc -p tsconfig.types.json",
+    "lint": "oxlint src tests",
+    "prepublishOnly": "test -f dist/index.js || (echo 'Error: dist/index.js not found. Run bun run build first.' && exit 1)"
+  }
+}

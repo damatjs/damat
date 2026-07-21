@@ -34,7 +34,9 @@ export class ActiveEventDeliveries {
     );
   }
 
-  abort(): void {
-    for (const execution of this.executions) execution.abort();
+  async abort(): Promise<void> {
+    await Promise.allSettled(
+      [...this.executions].map((execution) => execution.abort()),
+    );
   }
 }

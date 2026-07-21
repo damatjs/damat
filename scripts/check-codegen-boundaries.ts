@@ -4,15 +4,12 @@ import { join } from "node:path";
 const roots = ["packages", "backend", "apps", "scripts"];
 const failures: string[] = [];
 const releaseHistory = new Set([
-  "apps/web/src/lib/data/releases.ts",
   "apps/web/src/modules/releases/templates/index.tsx",
 ]);
 
 function allowed(file: string): boolean {
   return (
-    file.startsWith("packages/core/codegen/") ||
-    file === "scripts/check-codegen-boundaries.ts" ||
-    releaseHistory.has(file)
+    file === "scripts/check-codegen-boundaries.ts" || releaseHistory.has(file)
   );
 }
 

@@ -116,7 +116,9 @@ again while that worker is running is idempotent. A worker instance is one-shot:
 after stop begins, another `start()` throws synchronously; construct a new
 worker to run again. `stop()` stops new claims, marks the worker as stopping,
 waits up to the grace period, then aborts unfinished handler signals and stops
-renewing their leases. The registry remains `stopping` while handler code is
+renewing their leases. Shutdown and terminal transitions wait for an in-flight
+renewal to settle, so no heartbeat can extend a lease after either boundary
+returns. The registry remains `stopping` while handler code is
 still running and changes to `stopped` only after it settles and PostgreSQL
 persists that transition. Persistence failures reject `stop()` and a later
 `stop()` retries them. Registry heartbeats and reconciliation remain active

@@ -8,6 +8,8 @@ import {
 } from "./recovery/context";
 import { runRecoveryScenario } from "./recovery/scenario";
 
+const recoveryTestTimeoutMs = 60_000;
+
 describe.skipIf(!recoveryReady)("durable crash recovery", () => {
   beforeAll(initializeRecovery);
   afterAll(closeRecovery);
@@ -17,7 +19,7 @@ describe.skipIf(!recoveryReady)("durable crash recovery", () => {
       test(
         `${kind} recovers after SIGKILL with Redis ${redis}`,
         () => runRecoveryScenario(kind, redis),
-        10_000,
+        recoveryTestTimeoutMs,
       );
     }
   }

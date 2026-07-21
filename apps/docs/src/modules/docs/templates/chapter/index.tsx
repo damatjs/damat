@@ -1,4 +1,5 @@
 import { GitHubIcon } from "@/assets/icons/gitHub";
+import { stripChapterTitle } from "@/lib/chapterHtml";
 import type { Doc } from "@/lib/content";
 import { GITHUB_BLOB } from "@/lib/repo";
 import { Pager } from "@/modules/docs/components/pager";
@@ -7,6 +8,7 @@ import { TocRail } from "@/modules/docs/components/tocRail";
 /** One doc chapter: eyebrow + title + lede header, prose body, pager, TOC. */
 export function ChapterTemplate({ doc }: { doc: Doc }) {
   const { chapter, prev, next, html, toc } = doc;
+  const bodyHtml = stripChapterTitle(html);
 
   return (
     <div className="flex gap-10">
@@ -25,7 +27,7 @@ export function ChapterTemplate({ doc }: { doc: Doc }) {
           <article
             className="prose mt-8"
             // biome-ignore lint/security/noDangerouslySetInnerHtml: trusted HTML from our own markdown pipeline over repo-controlled content
-            dangerouslySetInnerHTML={{ __html: html }}
+            dangerouslySetInnerHTML={{ __html: bodyHtml }}
           />
 
           <div className="mt-10 flex items-center justify-between border-t border-line pt-6 text-sm">

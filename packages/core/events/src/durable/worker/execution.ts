@@ -12,7 +12,7 @@ import { resolveExecutionOptions } from "./execution-options";
 
 export interface EventDeliveryExecution {
   promise: Promise<void>;
-  abort(): void;
+  abort(): Promise<void>;
   heartbeat(executor?: DurabilityExecutor): Promise<void>;
 }
 
@@ -29,7 +29,10 @@ export function startEventDeliveryExecution(
   );
   return {
     promise: runClaim(claim, options, controller, heartbeat),
-    abort: () => controller.abort(),
+    abort: async () => {
+      controller.abort();
+      await heartbeat.stop();
+    },
     heartbeat: heartbeat.run,
   };
 }
@@ -64,6 +67,7 @@ async function runClaim(
       definition.handler,
       controller,
       heartbeat.run,
+      heartbeat.stop,
     );
     if (heartbeat.cancellationRequested) {
       await completeEventDeliveryFailure(

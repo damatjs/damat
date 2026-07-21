@@ -5,9 +5,10 @@
     "build": "turbo run build --concurrency=1",
     "dev": "turbo run dev",
     "test": "bun scripts/test/run.ts",
+    "test:sites": "bun scripts/test/sites.ts",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check:lines": "bun scripts/check-code-lines.ts packages backend apps scripts",
+    "check:lines": "bun scripts/check-code-lines.ts packages provider backend apps scripts e2e",
     "check:lines:cli": "bun scripts/check-code-lines.ts packages/core/cli packages/cli/support packages/cli/app packages/cli/kit packages/cli/module packages/cli/codegen packages/cli/damat",
     "check:lines:installer": "bun scripts/check-code-lines.ts packages/installer",
     "check:codegen-boundaries": "bun scripts/check-codegen-boundaries.ts",
@@ -22,7 +23,9 @@
     "release": "bun run build && bun scripts/publish-packages.ts"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
     "@changesets/cli": "^2.31.0",
+    "@playwright/test": "1.61.1",
     "oxlint": "^1.73.0",
     "prettier": "^3.7.4",
     "turbo": "2.9.14",
@@ -40,9 +43,9 @@
     "backend/*",
     "modules/*",
     "packages/*",
-    "packages/auth/*",
     "packages/cli/*",
     "packages/core/*",
-    "packages/orm/*"
+    "packages/orm/*",
+    "provider/*"
   ]
 }

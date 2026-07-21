@@ -42,6 +42,7 @@ export function clearConfigCache(): void;
 interface AppConfig {
   projectConfig: ProjectConfig; // required
   modules?: ModuleConfigObject; // map id -> ModuleConfig
+  providers?: Record<string, { module: string }>; // role -> module id
   hooks?: LifecycleHooks; // bootstrap lifecycle hooks (see below)
   links?: string | string[]; // cross-module link dir(s), e.g. "./src/links"
   services?: ServicesConfig;
@@ -102,7 +103,7 @@ type LifecycleHook = (ctx: LifecycleHookContext) => void | Promise<void>;
 interface LifecycleHooks {
   beforeServices?: LifecycleHook; // after configured logger init, before db/redis/module init
   afterServices?: LifecycleHook; // services are up, routes not yet built
-  beforeRoutes?: LifecycleHook; // the Hono app exists, no routes registered yet
+  beforeRoutes?: LifecycleHook; // the Hono app exists, no endpoint routes registered yet
   afterRoutes?: LifecycleHook; // all routes registered, just before the 404 handler
 }
 
@@ -169,14 +170,12 @@ interface ServicesConfig {
       relayBatchSize?: number;
     };
   };
-  auth?: {
-    // pluggable auth provider (@damatjs/auth-*); optional, dynamically loaded
-    provider: "better-auth" | "clerk" | "auth0" | string; // short name → @damatjs/auth-<name>; a "/" value is verbatim
-    options?: Record<string, unknown>; // passed to the adapter factory (keys, table names, …)
-    onAuthenticated?: (principal, c) => void | Promise<void>; // opt-in per-request local-user sync hook
-  };
 }
 ```
+
+`projectConfig.releaseVersion` is the immutable application/deployment identity
+reported by `/health` and development metadata. Production deployments should
+set it from their release artifact or commit digest.
 
 `services.jobs` enables the durable job capability.
 `services.events.durable` enables the durable event capability.
@@ -226,14 +225,17 @@ Each lifecycle hook is awaited at its stage; a hook that throws fails startup lo
 
 - `projectConfig.databaseUrl` / `services.database` → `initDatabase` → `PoolManager.setup`.
 - `projectConfig.redisUrl` / `services.redis` → `initRedis` + `connectRedis`.
+- `projectConfig.releaseVersion` → operational health and development metadata.
 - `services.events` / `services.jobs` / `services.pipelines` / `services.durability` → event broadcast,
   PostgreSQL migration readiness, optional Redis wakeups, and the selected
   durable workers — see [services.md](./services.md).
 - `runtime` plus `DAMAT_RUNTIME_MODE` / `DAMAT_WORKER_TYPES` →
   `resolveRuntime` → conditional worker and HTTP startup.
-- `services.auth` → `initializeServices` calls `initAuth` (after the database, so a persisting provider gets the pool): it dynamically imports the adapter package, builds the provider, and returns `{ handlers, mountRoutes?, shutdown? }`. `entry.start` threads `authHandlers`/`authRoutes` into `bootstrap` (provider routes mount before the file router). Nothing is imported when `services.auth` is unset; a provider set but not installed fails boot with a clear install message.
+- `providers` → role-to-module validation after module initialization. Each
+  binding stores the exact module service reference; `providers.auth` also
+  validates the auth/API-key contract and builds route authentication handlers.
 - `hooks` → `entry.start` (`beforeServices`/`afterServices`) and `bootstrap` (`beforeRoutes`/`afterRoutes`).
-- `modules` → `initModules(Object.values(config.modules), cwd)` → each module's `init()`.
+- `modules` → keyed module configs → each module's `init()` exactly once.
 - `links` → `resolveLinkModuleEntries(config.links, cwd)` (from `@damatjs/link`) → appended to the module configs as `link` module(s), then `initModules` initializes them alongside `modules`. `getModule("link")` then resolves the link service.
 - `http.port` / `http.host` / `nodeEnv` → `ServerConfig` for `startServer` when
   the resolved runtime serves HTTP.

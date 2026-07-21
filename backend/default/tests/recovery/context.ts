@@ -48,7 +48,7 @@ export async function configureRedis(mode: RedisMode): Promise<void> {
   initRedis({
     url,
     maxRetriesPerRequest: 0,
-    options: { connectTimeout: 50, retryStrategy: () => null },
+    options: { connectTimeout: 500, retryStrategy: () => null },
   });
   const connected = await connectRedis().then(
     () => true,

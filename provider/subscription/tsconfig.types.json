@@ -1,0 +1,5 @@
+{
+  "extends": "@damatjs/typescript-config/base.json",
+  "compilerOptions": { "types": ["bun"], "noEmit": true },
+  "include": ["src", "tests/contracts.ts", "tests/providerModule.ts"]
+}

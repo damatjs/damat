@@ -34,14 +34,19 @@ test("router wake-up triggers immediate poll", async () => {
     wakeupRedis: redis,
   });
   router.start();
-  await waitUntil(() => listener !== undefined);
-  const event = await durability.transaction((executor) =>
-    publishDurableEvent(uniqueEvent("immediate"), {}, { executor }),
-  );
-  listener!(EVENT_WAKEUP_CHANNEL, '{"kind":"events","target":"router"}');
-  await waitUntil(() => routed(event.id));
-  await router.stop();
-  expect(await routed(event.id)).toBe(true);
+  let eventId: string | undefined;
+  try {
+    await waitUntil(() => listener !== undefined);
+    const event = await durability.transaction((executor) =>
+      publishDurableEvent(uniqueEvent("immediate"), {}, { executor }),
+    );
+    eventId = event.id;
+    listener!(EVENT_WAKEUP_CHANNEL, '{"kind":"events","target":"router"}');
+    await waitUntil(() => routed(event.id));
+  } finally {
+    await router.stop();
+  }
+  expect(await routed(eventId!)).toBe(true);
 });
 
 test("periodic PostgreSQL polling continues with Redis connected", async () => {
@@ -51,12 +56,17 @@ test("periodic PostgreSQL polling continues with Redis connected", async () => {
     wakeupRedis: redis,
   });
   router.start();
-  const event = await durability.transaction((executor) =>
-    publishDurableEvent(uniqueEvent("polling"), {}, { executor }),
-  );
-  await waitUntil(() => routed(event.id));
-  await router.stop();
-  expect(await routed(event.id)).toBe(true);
+  let eventId: string | undefined;
+  try {
+    const event = await durability.transaction((executor) =>
+      publishDurableEvent(uniqueEvent("polling"), {}, { executor }),
+    );
+    eventId = event.id;
+    await waitUntil(() => routed(event.id));
+  } finally {
+    await router.stop();
+  }
+  expect(await routed(eventId!)).toBe(true);
 });
 
 async function routed(id: string): Promise<boolean> {

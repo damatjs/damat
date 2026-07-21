@@ -30,8 +30,10 @@ export async function startHttpRuntime(
   services: ServiceInstances,
   dependencies: HttpRuntimeDependencies = defaultDependencies,
 ): Promise<ServerHandle> {
+  const releaseVersion =
+    config.projectConfig.releaseVersion?.trim() || "unknown";
   const healthCheck = services.healthChecks
-    ? { version: "2.0.0", checks: services.healthChecks }
+    ? { version: releaseVersion, checks: services.healthChecks }
     : undefined;
   const path =
     config.projectConfig.http.api?.entryRouterPath ?? "src/api/routes";
@@ -47,9 +49,8 @@ export async function startHttpRuntime(
     projectConfig: config.projectConfig,
     healthCheck,
     hooks: config.hooks,
-    ...(services.auth ? { authHandlers: services.auth.handlers } : {}),
-    ...(services.auth?.mountRoutes
-      ? { authRoutes: services.auth.mountRoutes }
+    ...(services.authRuntime
+      ? { authHandlers: services.authRuntime.handlers }
       : {}),
   });
   return dependencies.startServer(app, serverConfig, dependencies.getLogger());

@@ -9,10 +9,10 @@ test("HTTP runtime forwards configured routes, health, hooks, and auth", async (
   const fixture = createHttpFixture();
   const beforeRoutes = async () => {};
   const authHandler: MiddlewareHandler = async (_context, next) => next();
-  const authRoutes = () => {};
   const database = async () => ({ status: "up" });
   const config: AppConfig = {
     projectConfig: {
+      releaseVersion: "sha-production",
       http: {
         port: 3000,
         host: "localhost",
@@ -28,9 +28,8 @@ test("HTTP runtime forwards configured routes, health, hooks, and auth", async (
       ["billing", { routes: "/modules/billing/routes" }],
       ["catalog", { routes: undefined }],
     ]),
-    auth: {
+    authRuntime: {
       handlers: { session: authHandler },
-      mountRoutes: authRoutes,
     },
   } as unknown as ServiceInstances;
 
@@ -48,10 +47,9 @@ test("HTTP runtime forwards configured routes, health, hooks, and auth", async (
         { routesDir: "/modules/billing/routes", basePath: "/billing" },
       ],
       projectConfig: config.projectConfig,
-      healthCheck: { version: "2.0.0", checks: { database } },
+      healthCheck: { version: "sha-production", checks: { database } },
       hooks: { beforeRoutes },
       authHandlers: { session: authHandler },
-      authRoutes,
     },
   ]);
   expect(fixture.serverCalls).toEqual([

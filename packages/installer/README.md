@@ -35,16 +35,16 @@ import {
 
 const origin = parseOriginRequest({
   type: "git",
-  url: "https://github.com/example/auth-provider.git",
+  url: "https://github.com/example/auth-module.git",
   ref: "main",
 });
 
 const recipe = parseInstallRecipe({
   schemaVersion: 1,
-  id: "auth-provider",
-  kind: "provider",
+  id: "auth-module",
+  kind: "module",
   install: { modes: ["source", "package"], default: "source" },
-  mappings: [{ from: "src/**", to: "src/providers/auth" }],
+  mappings: [{ from: "src/**", to: "src/modules/auth" }],
 });
 
 const manifest = parseDamatManifest({

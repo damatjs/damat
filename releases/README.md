@@ -19,30 +19,39 @@ your target version.
 
 ## Versioning
 
-All Damat packages are released **in lockstep** — a release moves _every_
-published package to the same version, whether or not its own code changed. So
-there is a single version to care about, not one per package.
+All active Damat packages are released **in lockstep** — a release moves every
+published package to the same version, whether or not its own code changed.
 
-**Current version: `0.6.0`** — every published `@damatjs/*` package, with one
-exception: **`@damatjs/codegen` is at `2.1.0`**. It was published to npm at
-`1.0.0` independently, so it cannot be renumbered down to the shared line; it
-stays on its own version until the lockstep line catches up past it.
+**Current source version: `1.0.0-beta.0`** for every active public package.
+`@damatjs/codegen` is archived at its last npm release, `2.1.0`, and is not part
+of the workspace or beta publication set.
 
 A package's folder only carries a `<version>.md` (and a detailed index row) for
 versions where _its own_ code changed; for a lockstep bump with no change of its
 own, the package simply moves to the shared version with no new note. That is why
 a package can sit at `0.6.0` while the newest version it actually links is older.
 
-## Unreleased
+## 1.0.0-beta.0 early launch
 
-The durability phase establishes shared PostgreSQL infrastructure, durable jobs
-and named-consumer events, durable pipelines, transaction composition, deterministic system
-migrations, headless operational inspection, and selectable server/jobs/events
-runtime roles. See [`durability`](./durability/), [`jobs`](./jobs/),
+This is a prerelease for early adopters, not the stable `1.0.0` declaration.
+Install the CLI from npm's `beta` channel without moving consumers of `latest`:
+
+```bash
+bunx @damatjs/damat-cli@beta create my-app
+```
+
+This beta establishes shared PostgreSQL infrastructure, durable jobs
+and named-consumer events, durable pipelines, transaction composition,
+deterministic system migrations, headless operational inspection, selectable
+runtime roles, and standardized integration providers. See
+[`durability`](./durability/), [`jobs`](./jobs/),
 [`events`](./events/), [`services`](./services/),
 [`pipelines`](./pipelines/),
 [`orm-migration`](./orm-migration/), [`orm-cli`](./orm-cli/), and
-[`framework`](./framework/). Adaptive Redis acceleration and pool observability
+[`framework`](./framework/). Provider contracts are tracked under
+[`provider`](./provider/), [`auth`](./auth/), [`payment`](./payment/),
+[`subscription`](./subscription/), and [`api-key`](./api-key/). Adaptive Redis
+acceleration and pool observability
 are tracked under [`redis`](./redis/), [`orm-connector`](./orm-connector/), and
 the [`default` reference backend](./default/).
 
@@ -89,7 +98,7 @@ snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
 - [`orm-connector`](./orm-connector/) — `@damatjs/orm-connector`
 - [`orm-migration`](./orm-migration/) — `@damatjs/orm-migration`
 - [`orm-processor`](./orm-processor/) — `@damatjs/orm-processor`
-- [`codegen`](./codegen/) — `@damatjs/codegen` (compatibility facade)
+- [`codegen`](./codegen/) — archived `@damatjs/codegen` history
 - [`schema-codegen`](./schema-codegen/) — `@damatjs/schema-codegen` (pure schema
   rendering)
 - [`orm-core`](./orm-core/) — `@damatjs/orm-core`
@@ -107,6 +116,13 @@ snake_case tables ([`orm-pg`](./orm-pg/0.4.1.md),
 - [`cli`](./cli/) — `@damatjs/cli`
 - [`deps`](./deps/) — `@damatjs/deps`
 - [`typescript-config`](./typescript-config/) — `@damatjs/typescript-config`
+
+### Providers
+
+- [`provider`](./provider/) — `@damatjs/provider`
+- [`auth`](./auth/) — `@damatjs/auth`
+- [`payment`](./payment/) — `@damatjs/payment`
+- [`subscription`](./subscription/) — `@damatjs/subscription`
 
 ### CLIs & AI
 

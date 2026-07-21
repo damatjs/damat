@@ -1,4 +1,5 @@
 import type { MiddlewareHandler } from "@damatjs/deps/hono";
+import type { Context } from "@damatjs/deps/hono";
 import { getLogger } from "../services/logger";
 import type { AuthType } from "../router/types";
 
@@ -29,19 +30,20 @@ export function createAuthMiddleware(
     logger.error(
       `Auth type "${type}" has no configured handler for ${c.req.method} ${c.req.path}; rejecting request`,
     );
-    return c.json(
-      {
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
-        },
-        meta: {
-          requestId: c.get("requestId") || "unknown",
-          timestamp: new Date().toISOString(),
-        },
-      },
-      401,
-    );
+    return unauthorized(c);
   };
+}
+
+export function unauthorized(c: Context): Response {
+  return c.json(
+    {
+      success: false,
+      error: { code: "UNAUTHORIZED", message: "Authentication required" },
+      meta: {
+        requestId: c.get("requestId") || "unknown",
+        timestamp: new Date().toISOString(),
+      },
+    },
+    401,
+  );
 }

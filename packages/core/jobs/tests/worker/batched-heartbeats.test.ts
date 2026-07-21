@@ -51,7 +51,7 @@ test("active job leases share one heartbeat transaction", async () => {
   let aborted = 0;
   active.track({
     promise: executionDone,
-    abort: () => {},
+    abort: async () => {},
     heartbeat: async (executor) => {
       await executor!.query("HEARTBEAT");
       observed();
@@ -59,7 +59,9 @@ test("active job leases share one heartbeat transaction", async () => {
   });
   active.track({
     promise: executionDone,
-    abort: () => aborted++,
+    abort: async () => {
+      aborted += 1;
+    },
     heartbeat: async () => {
       throw new Error("lost lease");
     },

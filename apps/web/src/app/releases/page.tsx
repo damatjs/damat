@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { SITE } from "@/lib/constants";
-import { getCodegenVersion, getReleaseTimeline } from "@/lib/data/releases";
+import {
+  getArchivedCodegenVersion,
+  getReleaseTimeline,
+} from "@/lib/data/releases";
 import { breadcrumbJsonLd } from "@/lib/utils/jsonLd";
 import { ReleasesTemplate } from "@/modules/releases/templates";
 
@@ -46,7 +49,7 @@ export default function ReleasesPage() {
         lockstep={lockstep}
         independent={independent}
         currentVersion={current}
-        codegenVersion={getCodegenVersion()}
+        archivedCodegenVersion={getArchivedCodegenVersion()}
       />
     </>
   );

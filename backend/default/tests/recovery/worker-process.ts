@@ -32,7 +32,7 @@ const redisMode = required("RECOVERY_REDIS_MODE");
 initRedis({
   url: required("RECOVERY_REDIS_URL"),
   maxRetriesPerRequest: 0,
-  options: { connectTimeout: 50, retryStrategy: () => null },
+  options: { connectTimeout: 500, retryStrategy: () => null },
 });
 const connected = await connectRedis().then(
   () => true,
@@ -45,8 +45,8 @@ const wakeupRedis = getRedis();
 const common = {
   concurrency: 1,
   pollIntervalMs: 10,
-  leaseMs: 250,
-  heartbeatIntervalMs: 50,
+  leaseMs: 5_000,
+  heartbeatIntervalMs: 500,
   registryHeartbeatIntervalMs: 25,
   retryIntervalMs: 10,
   reconcileIntervalMs: 10,

@@ -50,7 +50,9 @@ write matches:
 
 Heartbeat renews both the run lease and attempt heartbeat. It returns the
 persisted cancellation state so the execution loop can abort the handler's
-signal. Progress and logs never extend a lease.
+signal. Per-execution renewals are serialized, and terminal transitions stop
+the interval and await any in-flight renewal before writing an outcome.
+Progress and logs never extend a lease.
 
 ## Execution context
 

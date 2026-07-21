@@ -6,6 +6,7 @@ import { initializeRedis } from "./initialize/redis";
 import { initializeEventBroadcast } from "./initialize/events";
 import { initializeModules } from "./initialize/modules";
 import { initializeAuth } from "./initialize/auth";
+import { initializeProviders } from "./initialize/providers";
 import { initializeDurability } from "./initialize/durability";
 import { initializePipelineDefinitions } from "./initialize/pipelines";
 import { resolveRuntime, startWorkers, type ResolvedRuntime } from "../runtime";
@@ -23,6 +24,7 @@ export async function initializeServices(
   await initializeDatabase(config, instances, logger);
   await initializeRedis(config, instances, logger);
   await initializeModules(config, instances, cwd);
+  await initializeProviders(config, instances, logger);
   await initializeAuth(config, instances, logger);
   await initializeEventBroadcast(config, instances, logger);
   const coordinator = await initializeDurability(config, instances);
@@ -46,3 +48,9 @@ export * from "./database";
 export * from "./redis";
 export * from "./moduleService";
 export * from "./moduleProviders";
+export * from "./providers";
+export type {
+  ProviderBinding,
+  ProviderBindings,
+  ProviderRegistry,
+} from "@damatjs/provider";

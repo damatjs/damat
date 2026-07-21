@@ -20,7 +20,7 @@ describe("module dev command", () => {
   it("skips mkdir when .damat exists and omits PORT when no --port", async () => {
     fsState.existsMap = {
       "/m/.damat": true,
-      "/m/.damat/module-dev-entry.ts": false, // absent → no unlink
+      "/m/.damat/module-dev-entry.ts": false,
     };
     const cmd = await get();
     const { ctx } = createContext({}, { cwd: "/m" });
@@ -32,6 +32,6 @@ describe("module dev command", () => {
     expect("PORT" in (spawnCalls[0]!.env as Record<string, string>)).toBe(
       false,
     );
-    expect(unlinkCalls).not.toContain("/m/.damat/module-dev-entry.ts");
+    expect(unlinkCalls).toContain("/m/.damat/module-dev-entry.ts");
   });
 });

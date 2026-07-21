@@ -21,6 +21,13 @@ async function waitForHealth(): Promise<Record<string, unknown>> {
 const health = await waitForHealth();
 if (health.status !== "healthy")
   throw new Error(`unexpected health: ${health.status}`);
+if (
+  process.env.RELEASE_VERSION &&
+  health.version !== process.env.RELEASE_VERSION
+)
+  throw new Error(
+    `health version ${health.version} does not match ${process.env.RELEASE_VERSION}`,
+  );
 const posts = await fetch(`${base}/api/posts`);
 const postsBody: unknown = posts.ok ? await posts.json() : undefined;
 const routeSucceeded =
@@ -28,8 +35,7 @@ const routeSucceeded =
   postsBody !== null &&
   "success" in postsBody &&
   postsBody.success === true;
-if (!routeSucceeded)
-  throw new Error("HTTP route smoke failed");
+if (!routeSucceeded) throw new Error("HTTP route smoke failed");
 if ((await fetch(`${base}/metrics`)).status !== 401)
   throw new Error("metrics endpoint is not protected");
 const metrics = await fetch(`${base}/metrics`, {

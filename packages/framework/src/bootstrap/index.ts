@@ -19,7 +19,6 @@ export async function bootstrap(
     projectConfig,
     healthCheck,
     authHandlers,
-    authRoutes,
     hooks,
   } = options;
 
@@ -40,11 +39,7 @@ export async function bootstrap(
     corsConfig: projectConfig.http.corsConfig,
   });
 
-  // Provider-owned auth endpoints (Better Auth sign-in/session) mount before
-  // the file router so `/api/auth/*` is served by the provider, not the router.
-  if (authRoutes) authRoutes(app);
-
-  // The app exists but no routes are registered yet. A throwing hook fails
+  // The app exists but no endpoint routes are registered yet. A throwing hook fails
   // startup — never boot a half-configured server.
   if (hooks?.beforeRoutes)
     await hooks.beforeRoutes({ config: projectConfig, logger, app });
@@ -63,7 +58,13 @@ export async function bootstrap(
   //   logger.info(fileRouter.getRouteList());
 
   if (projectConfig.nodeEnv === "development")
-    app.route("", createRootRoute(fileRouter));
+    app.route(
+      "",
+      createRootRoute(
+        fileRouter,
+        projectConfig.releaseVersion ?? healthCheck?.version,
+      ),
+    );
   if (projectConfig.nodeEnv === "development")
     app.route("", createApiRoutesRoute(fileRouter));
 
@@ -78,7 +79,6 @@ export async function bootstrap(
     await hooks.afterRoutes({ config: projectConfig, logger, app });
 
   app.notFound(notFoundHandler);
-
   return {
     app,
     config: {

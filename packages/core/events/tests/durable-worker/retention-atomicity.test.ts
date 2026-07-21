@@ -18,14 +18,14 @@ test("retention rolls back cleanup and completed audit before recording failure"
   await routeDurableEvents();
   const root = new Error("forced deletion failure");
   const actor = { id: crypto.randomUUID(), type: "system" as const };
-  const client = failAfterCleanup(root);
+  const client = failAfterCleanup(root, event.id);
 
   await expect(
     runEventRetention({
       actor,
       client,
       batchSize: 10,
-      terminalBefore: new Date(Date.now() + 700_000_000),
+      terminalBefore: new Date(Date.now() + 10_000_000_000),
     }),
   ).rejects.toBe(root);
   const retained = await pool.query(
@@ -62,12 +62,21 @@ test("failed audit never masks the retention failure", async () => {
   ).rejects.toBe(root);
 });
 
-function failAfterCleanup(root: Error): DurabilityClient {
+function failAfterCleanup(root: Error, deletedId?: string): DurabilityClient {
   return {
     ...durability,
     transaction: (callback) =>
       durability.transaction(async (executor) => {
         await callback(executor);
+        if (deletedId) {
+          const deleted = await executor.query(
+            `SELECT 1 FROM "_damat_event_outbox" WHERE "id"=$1`,
+            [deletedId],
+          );
+          if (deleted.rowCount !== 0) {
+            throw new Error("retention did not delete the eligible event");
+          }
+        }
         throw root;
       }),
   };

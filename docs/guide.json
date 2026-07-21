@@ -132,7 +132,15 @@
           "title": "Authentication",
           "slug": "authentication",
           "path": "docs/guide/08b-authentication.md",
-          "summary": "Integrate Better Auth, Clerk, Auth0 — or your own provider — via services.auth; typed c.get('user')."
+          "summary": "Bind an auth module for sessions and API keys, then use typed request principals."
+        },
+        {
+          "id": "providers",
+          "order": 8.6,
+          "title": "Integration providers",
+          "slug": "providers",
+          "path": "docs/guide/08c-providers.md",
+          "summary": "ModuleService-based auth, payment, subscription, and custom provider standards."
         },
         {
           "id": "workflows",
@@ -479,19 +487,6 @@
       ]
     },
     {
-      "group": "Compatibility",
-      "packages": [
-        {
-          "name": "@damatjs/codegen",
-          "description": "Compatibility facade for Damat code generation",
-          "dir": "packages/core/codegen",
-          "readme": "packages/core/codegen/README.md",
-          "docsIndex": "packages/core/codegen/docs/README.md",
-          "docs": ["packages/core/codegen/docs/README.md"]
-        }
-      ]
-    },
-    {
       "group": "Core",
       "packages": [
         {
@@ -603,37 +598,37 @@
       ]
     },
     {
-      "group": "Auth",
+      "group": "Providers",
       "packages": [
         {
+          "name": "@damatjs/provider",
+          "description": "ModuleService-based provider authoring and role binding contracts for Damat",
+          "dir": "packages/provider",
+          "readme": "packages/provider/README.md",
+          "docsIndex": null,
+          "docs": []
+        },
+        {
           "name": "@damatjs/auth",
-          "description": "Provider-agnostic auth contract for Damat: verify sessions/tokens from Better Auth, Clerk, or Auth0 and populate the request principal",
-          "dir": "packages/auth/core",
-          "readme": "packages/auth/core/README.md",
+          "description": "Strict ModuleService-based authentication provider contract for Damat",
+          "dir": "provider/auth",
+          "readme": "provider/auth/README.md",
           "docsIndex": null,
           "docs": []
         },
         {
-          "name": "@damatjs/auth-better-auth",
-          "description": "Better Auth provider adapter for Damat — in-backend auth, wired into the framework's auth middleware",
-          "dir": "packages/auth/better-auth",
-          "readme": "packages/auth/better-auth/README.md",
+          "name": "@damatjs/payment",
+          "description": "Strict ModuleService-based payment provider contract for Damat",
+          "dir": "provider/payment",
+          "readme": "provider/payment/README.md",
           "docsIndex": null,
           "docs": []
         },
         {
-          "name": "@damatjs/auth-clerk",
-          "description": "Clerk provider adapter for Damat — verify Clerk sessions and populate the request principal",
-          "dir": "packages/auth/clerk",
-          "readme": "packages/auth/clerk/README.md",
-          "docsIndex": null,
-          "docs": []
-        },
-        {
-          "name": "@damatjs/auth-auth0",
-          "description": "Auth0 provider adapter for Damat — verify Auth0 access tokens via JWKS and populate the request principal",
-          "dir": "packages/auth/auth0",
-          "readme": "packages/auth/auth0/README.md",
+          "name": "@damatjs/subscription",
+          "description": "Strict ModuleService-based subscription provider contract for Damat",
+          "dir": "provider/subscription",
+          "readme": "provider/subscription/README.md",
           "docsIndex": null,
           "docs": []
         }

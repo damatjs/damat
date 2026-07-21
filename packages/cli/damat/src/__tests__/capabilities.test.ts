@@ -13,7 +13,6 @@ test("Damat composes the exact compatible command order", async () => {
     "barrel",
     "module",
     "kit",
-    "auth",
   ]);
   expect(damatCommands.find(({ name }) => name === "module")?.aliases).toEqual([
     "m",

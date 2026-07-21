@@ -40,7 +40,9 @@ test("drain keeps maintenance active until before stopped", async () => {
   await waitUntil(
     async () => (await deliveryRow(item.id)).status === "running",
   );
-  const stopping = worker.stop({ graceMs: 2_000 });
+  // Keep the drain deadline beyond waitUntil's observation window. Equal
+  // deadlines race under CI load and can stop maintenance before it is seen.
+  const stopping = worker.stop({ graceMs: 10_000 });
   await waitUntil(async () => (await record(worker.id))?.state === "stopping");
   const drainingAt = (await record(worker.id))!.lastHeartbeatAt;
   await waitUntil(

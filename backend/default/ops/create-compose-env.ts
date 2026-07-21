@@ -11,7 +11,6 @@ for (const name of [
   "RESTORE_PASSWORD",
   "REDIS_PASSWORD",
   "METRICS_TOKEN",
-  "BETTER_AUTH_SECRET",
 ])
   values[name] = secret();
 const git = Bun.spawnSync(["git", "rev-parse", "--short=12", "HEAD"]);
@@ -26,7 +25,6 @@ Object.assign(values, {
   MIGRATION_DATABASE_URL: `postgresql://damat_migrator:${values.DAMAT_MIGRATOR_PASSWORD}@db:5432/damatjs`,
   DAMAT_ALLOW_INSECURE_INTERNAL_NETWORK: "true",
   DAMAT_ALLOW_UNPINNED_IMAGES: "true",
-  REQUIRED_SECRET_NAMES: "BETTER_AUTH_SECRET",
 });
 const output = `${Object.entries(values)
   .map(([name, value]) => `${name}=${value}`)

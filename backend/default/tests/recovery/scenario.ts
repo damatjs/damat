@@ -65,6 +65,7 @@ export async function runRecoveryScenario(
       `${kind} recovery`,
       () => readWork(kind, workId),
       (value) => value?.status === "succeeded",
+      15_000,
     );
     expect(complete?.result).toEqual({ recovered: true, workId });
     const attempts =

@@ -2,7 +2,7 @@
   "modules": {
     "damatjs/user": {
       "source": "https://github.com/damatjs/modules.git#main",
-      "description": "Authentication, sessions and accounts built on Better Auth.",
+      "description": "Vendor-neutral authentication, sessions, and accounts module.",
       "latest": "0.2.0",
       "versions": {
         "0.1.0": "https://github.com/damatjs/modules.git#user-v0.1.0",

@@ -48,6 +48,7 @@ job, event, pipeline, inspection, or control history.
 | Pipeline               | `@damatjs/pipelines`       | Durable, inspectable graph across waits, branches, jobs, events, and workflows |
 | Durability             | `@damatjs/durability`      | Shared transactions, outbox, leases, controls, inspection, retention           |
 | Acceleration           | `@damatjs/redis`           | Optional wake-up, liveness, invalidation, cache, lock, and pub/sub data        |
+| Integration provider   | `@damatjs/provider`        | ModuleService extension selected by role from initialized module references    |
 
 Every application process owns exactly one PostgreSQL pool. HTTP, modules,
 jobs, events, pipelines, inspection, and maintenance share it. A pool is a
@@ -76,6 +77,7 @@ damat/
 │   ├── workflow-engine/            # in-process saga engine
 │   ├── link/                       # app-owned cross-module relationships
 │   ├── installer/                  # transactional capability installation
+│   ├── provider/                   # generic ProviderService base and role contracts
 │   ├── core/
 │   │   ├── durability/             # canonical durable coordination contracts
 │   │   ├── jobs/                   # PostgreSQL-backed background jobs
@@ -86,7 +88,7 @@ damat/
 │   │   ├── env/                    # environment cascade
 │   │   └── types/                  # shared errors and types
 │   ├── orm/                        # model, pg, connector, migration, CLI, codegen
-│   ├── auth/                       # provider contract and adapters
+├── provider/                       # auth, payment, and subscription service standards
 │   └── cli/                        # app, module, support, codegen, and damat CLIs
 ├── .agents/skills/                 # Codex/agent Damat skills
 └── .claude/skills/                 # synchronized Claude skill copies
@@ -102,6 +104,7 @@ bun run build                 # serialized dependency-safe Turbo build
 bun run lint
 bun run check-types
 bun run test                  # isolated packages + managed PostgreSQL/Redis
+bun run test:sites            # production builds + desktop/mobile browser tests
 bun run format
 ```
 

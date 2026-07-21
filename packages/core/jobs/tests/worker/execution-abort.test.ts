@@ -29,8 +29,7 @@ test("aborting active execution stops heartbeats and preserves its lease", async
   });
   const execution = startJobExecution(claim!, { heartbeatIntervalMs: 5 });
   await waitUntil(() => signal !== undefined);
-  execution.abort();
-  await Bun.sleep(15);
+  await execution.abort();
   const before = await heartbeatAt(item.run.id);
   await Bun.sleep(20);
   expect(await heartbeatAt(item.run.id)).toEqual(before);

@@ -6,7 +6,17 @@
       "dependsOn": ["^build", "check-types"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**", ".damat/dist/**", ".next/**", "!.next/cache/**"],
-      "env": ["SKIP_BACKEND"]
+      "env": [
+        "DOCS_ORIGIN",
+        "NEXT_PUBLIC_DOCS_URL",
+        "NEXT_PUBLIC_DOMAIN_URL",
+        "NEXT_PUBLIC_GOOGLE_ANALYTICS",
+        "NEXT_PUBLIC_REGISTRY_URL",
+        "NEXT_PUBLIC_SITE_URL",
+        "SITE_DESCRIPTION",
+        "SITE_NAME",
+        "SKIP_BACKEND"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]

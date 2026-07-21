@@ -1,17 +1,5 @@
 import { describe, it, expect } from "bun:test";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HTTP route handlers. These are framework route handlers that receive a Hono
-// `Context`. We invoke them with a minimal fake context that implements only the
-// surface the handlers touch (`c.req.json/query/param`, `c.json`). No live HTTP
-// server, no DB — the handler LOGIC runs and is counted toward coverage.
-//
-// The auth route (`auth/[auth]/route.ts`), the auth middleware and the auth
-// util are currently all commented-out source (they require a live Postgres +
-// Better Auth + Redis to run). We still import them so they register as covered
-// (a comment-only module has no executable statements → 100%).
-// ─────────────────────────────────────────────────────────────────────────────
-
 import { GET as PostsGET } from "@/api/routes/posts/route";
 import { GET as UsersGET, POST as UsersPOST } from "@/api/routes/users/route";
 import {
@@ -19,12 +7,6 @@ import {
   PUT as UserPUT,
   DELETE as UserDELETE,
 } from "@/api/routes/users/[userId]/route";
-
-// Importing these covers the (commented-out) auth source files.
-import * as authRoute from "@/api/routes/auth/[auth]/route";
-import * as authMiddleware from "@/api/middleware";
-import * as authMiddlewareAuth from "@/api/middleware/auth";
-import * as authUtil from "@/utils/auth";
 
 type CtxOpts = {
   json?: unknown;
@@ -49,15 +31,6 @@ function makeCtx(opts: CtxOpts = {}) {
   };
   return c as any;
 }
-
-describe("routes › auth source (commented-out, live-DB only)", () => {
-  it("exports nothing yet but imports cleanly", () => {
-    expect(Object.keys(authRoute)).toEqual([]);
-    expect(Object.keys(authMiddleware)).toEqual([]);
-    expect(Object.keys(authMiddlewareAuth)).toEqual([]);
-    expect(Object.keys(authUtil)).toEqual([]);
-  });
-});
 
 describe("routes › GET /posts", () => {
   it("returns the static list of posts", async () => {
