@@ -436,8 +436,11 @@
       "version": "1.0.0",
       "dependencies": {
         "@damatjs/deps": "workspace:*",
+        "@damatjs/durability": "workspace:*",
+        "@damatjs/events": "workspace:*",
         "@damatjs/framework": "workspace:*",
         "@damatjs/installer": "workspace:*",
+        "@damatjs/jobs": "workspace:*",
         "@damatjs/logger": "workspace:*",
         "@damatjs/module-generator": "workspace:*",
         "@damatjs/orm-connector": "workspace:*",

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { rmSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   PoolManager,
   enableHealthChecks,
@@ -31,7 +32,7 @@ describe("startModuleApp", () => {
       expect(running.app).toBeDefined();
       expect(initSpy).toHaveBeenCalledTimes(1);
       expect(PoolManager.isInitialized()).toBe(false);
-      await running.stop();
+      await Promise.all([running.stop(), running.stop()]);
     }));
 
   test("applies migrations when DATABASE_URL is set", () =>
@@ -67,5 +68,23 @@ describe("startModuleApp", () => {
       const running = await startModuleApp({ packageDir: root, port: 0 });
       await running.stop();
       expect(order).toEqual(["first", "second"]);
+    }));
+
+  test("cleans initialized services when route bootstrap fails", () =>
+    withPackage(async (root) => {
+      const routes = join(root, "src", "api", "routes", "broken");
+      mkdirSync(routes, { recursive: true });
+      writeFileSync(
+        join(routes, "route.ts"),
+        'throw new Error("route boom");\n',
+      );
+      const cleaned: string[] = [];
+      useShutdownHandlers([
+        { handler: async () => void cleaned.push("services") },
+      ]);
+      await expect(
+        startModuleApp({ packageDir: root, port: 0 }),
+      ).rejects.toThrow("route boom");
+      expect(cleaned).toEqual(["services"]);
     }));
 });

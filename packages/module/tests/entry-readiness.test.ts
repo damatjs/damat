@@ -51,7 +51,7 @@ describe("module entry integration", () => {
     expect(validateModuleDir(locateModuleDir(root)).errors).toEqual([]);
   });
 
-  test("registers the resolved entry supplied by runtime", () => {
+  test("registers the artifact root so providers remain discoverable", () => {
     const entry = "/module/src/index.ts";
     const config = buildModuleAppConfig({
       moduleDir: "/module",
@@ -59,6 +59,6 @@ describe("module entry integration", () => {
       moduleConfig: {},
       entry,
     });
-    expect(config.modules.billing.resolve).toBe(entry);
+    expect(config.modules.billing.resolve).toBe("/module");
   });
 });

@@ -1,46 +1,76 @@
-import { join } from "node:path";
-import type { AppConfig, ProjectConfig } from "@damatjs/framework";
+import type {
+  AppConfig,
+  ProjectConfig,
+  ServicesConfig,
+} from "@damatjs/framework";
+import type { LogLevel } from "@damatjs/logger";
 import type { ModuleManifest } from "../manifest/types";
 import type { ModuleAppConfig } from "../config/types";
+import {
+  detectModuleCapabilities,
+  type ModuleRuntimeCapabilities,
+} from "./capabilities";
 
 export interface BuildModuleAppConfigInput {
-  /** Directory holding the module manifest and source entry. */
   moduleDir: string;
   manifest: ModuleManifest;
-  /** Concrete runtime entry resolved from manifest metadata or convention. */
   entry?: string;
-  /** Author overrides from module.config.ts */
   moduleConfig: ModuleAppConfig;
-  /** Port override (takes precedence over config and env) */
   port?: number;
+  capabilities?: ModuleRuntimeCapabilities;
 }
 
-/** Default port for standalone module dev servers */
 export const DEFAULT_MODULE_PORT = 7654;
+export const MODULE_DEV_POLL_INTERVAL_MS = 250;
+export const MODULE_DEV_SHUTDOWN_GRACE_MS = 5_000;
 
-/**
- * Build a full framework AppConfig for running ONE module standalone.
- * The module author only supplies module.config.ts overrides; defaults
- * cover everything else.
- */
+function developmentServices(
+  capabilities: ModuleRuntimeCapabilities,
+): ServicesConfig | undefined {
+  if (!capabilities.durable) return undefined;
+  return {
+    durability: { pollIntervalMs: MODULE_DEV_POLL_INTERVAL_MS },
+    ...(capabilities.jobs ? { jobs: { concurrency: 1 } } : {}),
+    ...(capabilities.events
+      ? {
+          events: {
+            durable: {
+              concurrency: 1,
+              router: { pollIntervalMs: MODULE_DEV_POLL_INTERVAL_MS },
+            },
+          },
+        }
+      : {}),
+    ...(capabilities.pipelines ? { pipelines: { concurrency: 1 } } : {}),
+  };
+}
+
 export function buildModuleAppConfig(
   input: BuildModuleAppConfigInput,
 ): AppConfig {
-  const { moduleDir, manifest, moduleConfig, entry, port } = input;
+  const { moduleDir, manifest, moduleConfig, port } = input;
   const overrides = moduleConfig.projectConfig ?? {};
+  const { databaseUrl: configuredDatabaseUrl, ...projectOverrides } = overrides;
+  const capabilities =
+    input.capabilities ?? detectModuleCapabilities(moduleDir, manifest);
+  const services = developmentServices(capabilities);
 
   const projectConfig: ProjectConfig = {
-    databaseUrl: process.env.DATABASE_URL ?? "",
     redisUrl: process.env.REDIS_URL,
     nodeEnv:
       (process.env.NODE_ENV as ProjectConfig["nodeEnv"]) ?? "development",
     loggerConfig: {
-      level: "debug",
+      level: (process.env.LOG_LEVEL as LogLevel | undefined) ?? "debug",
       format: "pretty",
       timestamp: true,
       prefix: manifest.name,
     },
-    ...overrides,
+    ...projectOverrides,
+    ...(capabilities.requiresDatabase
+      ? {
+          databaseUrl: configuredDatabaseUrl ?? process.env.DATABASE_URL ?? "",
+        }
+      : {}),
     http: {
       host: process.env.HOST || "0.0.0.0",
       ...overrides.http,
@@ -54,13 +84,15 @@ export function buildModuleAppConfig(
 
   return {
     projectConfig,
+    ...(services ? { services } : {}),
+    runtime: {
+      mode: "all",
+      workers: capabilities.workers,
+      shutdownGraceMs: MODULE_DEV_SHUTDOWN_GRACE_MS,
+    },
     modules: {
       [manifest.name]: {
-        resolve:
-          entry ??
-          (manifest.paths?.entry
-            ? join(moduleDir, manifest.paths.entry)
-            : moduleDir),
+        resolve: moduleDir,
         id: manifest.name,
       },
     },

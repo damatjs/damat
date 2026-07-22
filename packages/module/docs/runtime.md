@@ -1,137 +1,108 @@
 # Runtime — module as a live app
 
-Source: `src/runtime/start.ts`, `src/runtime/entry.ts`,
-`src/runtime/appConfig.ts`, `src/runtime/locate.ts`, `src/runtime/types.ts`, and
-`src/manifest/entry.ts`.
+Source: `src/runtime/plan.ts`, `src/runtime/capabilities.ts`,
+`src/runtime/migrations.ts`, `src/runtime/start.ts`, `src/runtime/server.ts`,
+`src/runtime/entry.ts`, and `src/runtime/appConfig.ts`.
 
-The runtime runs **one module package as a live HTTP app** — the framework's full
-stack (middleware, file-based routes from the module's `api/routes` dir, health
-checks), with just this module registered. This is what `damat module dev` boots,
-and what in-process API tests start with `port: 0`.
+The runtime runs one module package as a capability-aware development host. It
+uses the framework HTTP stack, imports manifest-declared provider barrels, and
+starts local PostgreSQL-backed workers for declared jobs, durable events, and
+pipelines. Installed modules still provide definitions only; an assembled
+backend chooses production queues, concurrency, Redis, retention, and process
+roles.
 
-## `startModuleApp`
+## Runtime plan
 
-```ts
-function startModuleApp(
-  options?: StartModuleAppOptions,
-): Promise<RunningModuleApp>;
+`resolveModuleRuntimePlan(options)` reads `damat.json` and `module.config.ts`
+without importing the module entry or provider files. The returned public
+`ModuleRuntimePlan` includes the normalized manifest, detected
+`ModuleRuntimeCapabilities`, framework config, package/module roots, and route
+base path.
+
+Models, migrations, jobs, events, and pipelines are database-backed. A declared
+manifest path enables its capability; conventional directories are detected for
+legacy manifests. A service/routes-only module omits database initialization
+even if `DATABASE_URL` happens to exist. A database-backed module without
+`DATABASE_URL` fails before providers, migrations, or workers start.
+
+Declared durable capabilities use development policy:
+
+- runtime mode `all` with only the declared workers;
+- concurrency `1`;
+- canonical job and pipeline queues;
+- 250 ms PostgreSQL polling;
+- optional Redis acceleration when `REDIS_URL` is configured.
+
+The framework module resolver receives the artifact root, not the entry file.
+It therefore honors custom manifest paths and imports workflow, job, event, and
+pipeline providers exactly once before worker startup.
+
+## Startup order
+
+`startModuleApp(options)` performs this sequence:
+
+1. Resolve the runtime plan and validate/probe the requested port. Port `0` is
+   accepted and resolved to an ephemeral port.
+2. Require `DATABASE_URL` only when the plan is database-backed.
+3. Initialize logger, PostgreSQL, optional Redis, the module, and its provider
+   definition files.
+4. In the framework pre-durability callback, run one advisory-lock-protected
+   migration pass for the module plus the required system catalogs.
+5. Verify durability readiness, synchronize pipeline definitions, and start the
+   selected workers.
+6. Bootstrap file routes from the manifest-declared path and bind HTTP using the
+   configured host.
+
+System catalogs are selected narrowly: durability for any durable capability,
+jobs for jobs or pipelines, durable events for events, and pipelines for
+pipelines. Normal framework startup remains schema-read-only; this migration
+callback belongs only to standalone development.
+
+`startModuleApp` retains a second bind-time address-collision guard after the
+initial probe. `RunningModuleApp.port` is always the actual bound port and
+`routeBasePath` is the configured API mount (default `/api`).
+
+## CLI readiness and shutdown
+
+`runModuleEntry()` prints readiness directly to the terminal after HTTP is
+listening:
+
+```text
+✓ Module "inventory" ready at http://localhost:7654
+  Routes mounted under http://localhost:7654/api
+  Press Ctrl-C to stop
 ```
 
-Step by step (`start.ts`):
+This output does not use the application logger, so it remains visible with
+`LOG_LEVEL=fatal`. SIGINT and SIGTERM share one idempotent stop promise.
+The development watcher sends SIGTERM and awaits that promise before launching
+the next runtime, preventing duplicate worker registrations across reloads.
 
-1. `packageDir = options.packageDir ?? process.cwd()`.
-2. `moduleDir = locateModuleDir(packageDir)` — finds the module manifest.
-3. `manifest = readModuleManifest(moduleDir)`.
-4. `entry = resolveModuleEntry(moduleDir, manifest)`.
-5. `moduleConfig = await loadModuleConfig(packageDir)` (the author's `module.config.ts`).
-6. `config = buildModuleAppConfig({ moduleDir, manifest, entry, moduleConfig, port? })`.
-7. `services = await initializeServices(config, packageDir)` — database + redis +
-   logger + this module's registration. `logger = getLogger()`.
-8. **Migrate** — if `config.projectConfig.databaseUrl` is set,
-   `applyModuleMigrations(PoolManager.getPool(), moduleDir, manifest, logger)`.
-   The module owns its schema, applied before serving.
-9. **Health check** — if `services.healthChecks` exists, build
-   `{ version: manifest.version ?? "0.0.0", checks }`.
-10. `bootstrap({ routesDir: join(moduleDir, "api", "routes"), projectConfig, healthCheck? })`
-    → `{ app, config: serverConfig }` (the Hono app).
-11. `serve({ fetch: app.fetch, port: serverConfig.port }, cb)` and resolve once
-    bound; log `"Module \"<name>\" running"` with the URL.
-12. Return `RunningModuleApp` — `{ app, server, port, manifest, stop }`.
+Shutdown stops HTTP, worker claims/routers, runtime bindings, Redis, durability
+globals, PostgreSQL, and the logger in phase order. All handlers are attempted
+even if one fails. Partial startup failures run the same cleanup for every
+resource that was initialized.
 
-`stop()` closes the server, then runs every `services.shutdownHandlers` handler
-(db/redis/logger), swallowing individual errors so they don't mask each other.
+## Port behavior
 
-## `runModuleEntry`
+Port precedence is `options.port` → `PORT` → `module.config.ts` → `7654`.
+Values must be integers from 0 through 65535. Fixed ports are probed before
+database creation, module imports, or migrations. An occupied port throws
+`ModulePortInUseError`; port `0` reports the actual selected port after binding.
+
+## Public result
 
 ```ts
-function runModuleEntry(): Promise<void>;
-```
-
-The entry point `damat module dev` generates dev-entry files for. It just calls
-`startModuleApp()` on the cwd and keeps the server running; on failure it logs and
-`process.exit(1)`.
-
-## `locateModuleDir`
-
-```ts
-function locateModuleDir(packageDir: string): string;
-```
-
-Finds the directory holding a module manifest:
-
-1. Check the package root for `damat.json`.
-2. Check `<packageDir>/src` for either filename.
-3. Throw a clear error when neither location contains a manifest.
-
-Used by the runtime _and_ the tooling (`createModuleMigration`, `generateModuleTypes`).
-
-## `buildModuleAppConfig` + `DEFAULT_MODULE_PORT`
-
-```ts
-const DEFAULT_MODULE_PORT = 7654;
-function buildModuleAppConfig(input: BuildModuleAppConfigInput): AppConfig;
-```
-
-Builds a full framework `AppConfig` for running one module standalone:
-
-```ts
-const overrides = moduleConfig.projectConfig ?? {};
-projectConfig = {
-  databaseUrl: process.env.DATABASE_URL ?? "",
-  redisUrl: process.env.REDIS_URL,
-  nodeEnv: (process.env.NODE_ENV as ...) ?? "development",
-  loggerConfig: { level: "debug", format: "pretty", timestamp: true, prefix: manifest.name },
-  ...overrides,
-  http: {
-    host: process.env.HOST || "0.0.0.0",
-    ...overrides.http,
-    port: port
-        ?? (process.env.PORT ? Number(process.env.PORT) : undefined)
-        ?? overrides.http?.port
-        ?? DEFAULT_MODULE_PORT,
-  },
-};
-return { projectConfig, modules: { [manifest.name]: { resolve: entry, id: manifest.name } } };
-```
-
-The entry field is not required in `damat.json`. Runtime discovery checks
-`index.ts`, `index.js`, `src/index.ts`, and `src/index.js`; a declared entry
-overrides that convention.
-
-**Port precedence** (highest first): `options.port` → `PORT` env →
-`module.config.ts` `http.port` → `7654`. Pass `port: 0` for an ephemeral port
-(API tests read the bound port back from `RunningModuleApp.port`).
-
-## Types
-
-```ts
-interface StartModuleAppOptions {
-  packageDir?: string; // module package root (has package.json / module.config.ts). Default: cwd
-  port?: number; // override. Default: PORT env, module.config, then 7654. Use 0 for random.
-}
-
 interface RunningModuleApp {
-  app: Hono; // for direct fetch-style testing
-  server: ModuleServerHandle; // node server handle (matches @hono/node-server)
-  port: number; // the port actually bound
+  app: Hono;
+  server: ModuleServerHandle;
+  port: number;
   manifest: ModuleManifest;
-  stop(): Promise<void>; // stop server + run all shutdown handlers
-}
-
-interface ModuleServerHandle {
-  close(callback?: (err?: Error) => void): void;
+  capabilities: ModuleRuntimeCapabilities;
+  routeBasePath: string;
+  stop(): Promise<void>;
 }
 ```
 
-## Gotchas
-
-- The runtime reads config from **two** places: `module.config.ts` from
-  `packageDir`, and the module manifest from `moduleDir` (`src/` or root). They are not
-  the same directory in the package layout.
-- Migrations only run when `databaseUrl` is non-empty — an app started without
-  `DATABASE_URL` serves routes but skips migrating (the empty-string default makes
-  this a runtime condition, not a crash).
-- Routes are file-based under `<moduleDir>/api/routes`; if that dir is absent the
-  app still boots (health/middleware), it just serves no module routes.
-- `stop()` must be awaited in tests to release the port and close db/redis;
-  forgetting it leaks connections across test files.
+Always await `stop()` in tests. Repeated calls share the same shutdown work and
+the port is reusable after it resolves.

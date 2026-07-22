@@ -45,7 +45,7 @@ describe("universal module manifest", () => {
         manifest,
         moduleConfig: {},
       }).modules.billing?.resolve,
-    ).toBe(join(root, "index.ts"));
+    ).toBe(root);
     expect(locateModuleDir(root)).toBe(root);
   });
 

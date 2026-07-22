@@ -1,9 +1,13 @@
 import type { Hono } from "@damatjs/deps/hono";
 import type { ModuleManifest } from "../manifest/types";
+import type { ModuleRuntimeCapabilities } from "./capabilities";
+
+export type { ModuleRuntimeCapabilities } from "./capabilities";
 
 /** Structural handle for the underlying node server (matches @hono/node-server) */
 export interface ModuleServerHandle {
   close(callback?: (err?: Error) => void): void;
+  once?(event: "error", listener: (error: Error) => void): unknown;
 }
 
 export interface StartModuleAppOptions {
@@ -22,6 +26,10 @@ export interface RunningModuleApp {
   port: number;
   /** The module's manifest */
   manifest: ModuleManifest;
+  /** Capabilities enabled by the standalone development host. */
+  capabilities: ModuleRuntimeCapabilities;
+  /** HTTP base path under which the module's routes are mounted. */
+  routeBasePath: string;
   /** Stop the server and run all shutdown handlers (db, redis, logger) */
   stop(): Promise<void>;
 }

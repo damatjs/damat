@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "kind": "module",
+  "name": "standalone-durable-fixture",
+  "version": "1.0.0",
+  "module": {
+    "entry": "./src/index.ts",
+    "migrations": "./src/schema",
+    "routes": "./src/http",
+    "jobs": "./src/providers/jobs.ts",
+    "events": "./src/providers/events.ts",
+    "pipelines": "./src/providers/pipelines.ts"
+  }
+}

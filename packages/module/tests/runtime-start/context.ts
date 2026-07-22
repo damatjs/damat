@@ -6,17 +6,25 @@ import { PoolManager } from "@damatjs/services";
 
 let healthChecks = false;
 let shutdownHandlers: { handler: () => Promise<void> | void }[] = [];
-
+const testLogger = { info() {}, warn() {}, error() {}, debug() {} } as never;
 const realServices = await import(
   Bun.resolveSync("@damatjs/framework/services", import.meta.dir)
 );
 
-export const initSpy = mock(async () => ({
-  healthChecks: healthChecks
-    ? { database: async () => ({ status: "ok", data: {} }) }
-    : undefined,
-  shutdownHandlers,
-}));
+export const initSpy = mock(async (config, _cwd, _runtime, options) => {
+  const instances = {
+    healthChecks: healthChecks
+      ? { database: async () => ({ status: "ok", data: {} }) }
+      : undefined,
+    shutdownHandlers: shutdownHandlers.map((item, index) => ({
+      ...item,
+      name: `test-${index}`,
+      phase: "postgres" as const,
+    })),
+  };
+  await options?.beforeDurability?.({ config, instances, logger: testLogger });
+  return instances;
+});
 
 mock.module("@damatjs/framework/services", () => ({
   ...realServices,
@@ -25,7 +33,6 @@ mock.module("@damatjs/framework/services", () => ({
 
 export const { startModuleApp } = await import("../../src/runtime/start");
 export { PoolManager };
-
 function fakePool() {
   const client = {
     query: mock(async () => ({ rows: [], rowCount: 0 })),
@@ -44,7 +51,7 @@ function fakePool() {
 export function seedPool(): void {
   PoolManager.setup({
     pool: fakePool() as never,
-    logger: { info() {}, warn() {}, error() {}, debug() {} } as never,
+    logger: testLogger,
     connectionManager: null as never,
   });
 }

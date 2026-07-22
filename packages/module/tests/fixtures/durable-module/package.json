@@ -1,0 +1,8 @@
+{
+  "name": "@damatjs-tests/standalone-durable-fixture",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "damat module dev"
+  }
+}

@@ -153,9 +153,9 @@ config.
 - `createModuleMigration` and `generateModuleTypes` do not touch the database —
   they diff against the snapshot and read model files. `runModuleMigration` /
   `runModuleMigrationStatus` do connect (they need `DATABASE_URL`), but stay
-  scoped to this module. During an actual `damat module dev`/test boot, applying
-  migrations is the harness/runtime's job (`applyModuleMigrations`, see
-  [harness.md](./harness.md)); the tooling functions are the explicit
-  CLI-invoked path.
+  scoped to this module. `damat module dev` owns one combined module/system
+  migration pass before durability and workers initialize. The harness uses the
+  same capability-to-catalog mapping with the declared module migration path;
+  explicit migration commands remain module-only.
 - Re-running codegen overwrites generated types and the registry, but never
   overwrites existing CRUD scaffold files.

@@ -1,7 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import net from "node:net";
 import { serve, Hono } from "@damatjs/deps/hono";
-import { closeServer, resolveServerPort } from "../src/runtime/server";
+import {
+  assertServerPortAvailable,
+  closeServer,
+  ModulePortInUseError,
+  resolveServerPort,
+  startHttpServer,
+} from "../src/runtime/server";
 
 /**
  * Guards the harness teardown contract: `closeServer` (used by
@@ -14,6 +20,38 @@ import { closeServer, resolveServerPort } from "../src/runtime/server";
  * guard — but it fails fast instead of hanging if the force-close regresses.)
  */
 describe("closeServer", () => {
+  test("validates ports and detects an occupied fixed port", async () => {
+    await expect(assertServerPortAvailable(-1)).rejects.toThrow(
+      "Invalid module server port",
+    );
+    await expect(assertServerPortAvailable(0)).resolves.toBeUndefined();
+    const blocker = net.createServer();
+    await new Promise<void>((resolve) =>
+      blocker.listen(0, "127.0.0.1", resolve),
+    );
+    const address = blocker.address();
+    const port = typeof address === "object" && address ? address.port : 0;
+    try {
+      await expect(resolveServerPort(port)).rejects.toBeInstanceOf(
+        ModulePortInUseError,
+      );
+    } finally {
+      await new Promise<void>((resolve) => blocker.close(() => resolve()));
+    }
+  });
+
+  test("maps a bind-time address collision", async () => {
+    const error = Object.assign(new Error("occupied"), { code: "EADDRINUSE" });
+    const serve = (_options: unknown, _ready: unknown) =>
+      ({
+        once: (_event: string, listener: (reason: Error) => void) =>
+          queueMicrotask(() => listener(error)),
+      }) as never;
+    await expect(
+      startHttpServer(() => new Response("ok"), 0, "127.0.0.1", serve as never),
+    ).rejects.toBeInstanceOf(ModulePortInUseError);
+  });
+
   test("resolves promptly with a held-open keep-alive connection + unread body", async () => {
     const app = new Hono();
     app.post("/x", (c) => c.json({ ok: true })); // never reads the request body

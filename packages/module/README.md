@@ -70,8 +70,17 @@ bun run build
 bun test
 ```
 
-Shared durability, jobs, durable-event, and pipeline catalogs belong to the
-assembled backend and are not installed by module-local setup.
+`bun run dev` is exactly `damat module dev`. It creates the configured database
+when needed, runs one migration pass for the module plus the system catalogs
+required by its declared jobs/events/pipelines, starts local workers, and prints
+readiness after HTTP binds even when application logs are suppressed. Fixed
+ports are checked before database or module startup; pass `--port 0` for an
+ephemeral port. Source reloads stop the current HTTP server and workers before
+starting the next runtime, so durable worker registrations do not accumulate.
+
+The explicit `database:setup` and `migration:*` commands remain module-scoped.
+Installed modules supply durable definitions only; the assembled backend owns
+production migrations, workers, queues, concurrency, Redis, and operations.
 
 Migration creation, migration run/status, and codegen resolve the manifest's
 declared `models`, `migrations`, `types`, `workflows`, and `routes` paths. The
@@ -91,7 +100,10 @@ await withModule(inventory, { moduleDir }, async ({ service }) => {
 ```
 
 The harness resolves database configuration, creates one pool, applies the
-module's migrations, initializes the module, and guarantees teardown.
+module's declared migration path plus the local system catalogs required by
+declared durable capabilities, initializes the module, and guarantees teardown.
+Migration failure rejects boot and closes both shared pool state and the
+connection.
 
 ## Portable capabilities
 

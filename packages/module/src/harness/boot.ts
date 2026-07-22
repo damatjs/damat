@@ -44,18 +44,23 @@ export async function bootModule<TService extends object>(
   PoolManager.setup({ pool, logger, connectionManager: connection });
 
   let manifest: ModuleManifest | null = null;
-  if (options.moduleDir) {
-    manifest = readModuleManifest(options.moduleDir);
-    await applyModuleMigrations(
-      pool,
-      options.moduleDir,
-      manifest,
-      logger,
-      options.migrate,
-    );
+  try {
+    if (options.moduleDir) {
+      manifest = readModuleManifest(options.moduleDir);
+      await applyModuleMigrations(
+        pool,
+        options.moduleDir,
+        manifest,
+        logger,
+        options.migrate,
+      );
+    }
+    module.init();
+  } catch (error) {
+    PoolManager.reset();
+    await connection.disconnect();
+    throw error;
   }
-
-  module.init();
 
   return {
     service: module.service,

@@ -5,10 +5,10 @@ Source: `src/harness/boot.ts`, `src/harness/with.ts`, `src/harness/types.ts`,
 
 The harness boots a single module **without an HTTP server** — it wires the same
 infrastructure the framework uses in production (`ConnectionManager` +
-`PoolManager`), applies the module's own migrations, calls `module.init()`, and
-hands back the module's `service` for direct calls. This is what makes a module
-developable and testable in its own repository before it is ever added to a
-backend.
+`PoolManager`), applies the declared module migration path and required local
+durable catalogs, calls `module.init()`, and hands back the module's `service`
+for direct calls. This is what makes a module developable and testable in its
+own repository before it is ever added to a backend.
 
 ## `bootModule`
 
@@ -33,8 +33,9 @@ Step by step (`boot.ts`):
 6. **Init** — `module.init()`.
 7. **Return** `BootedModule`: `{ service, pool, connection, manifest, teardown }`.
 
-`teardown` calls `PoolManager.reset()` and `connection.disconnect()`. **Always
-call it** (use `withModule` to guarantee it).
+`teardown` calls `PoolManager.reset()` and `connection.disconnect()`. A manifest,
+migration, or module-init failure performs the same cleanup before rejecting.
+**Always call teardown** after successful boot (use `withModule` to guarantee it).
 
 ## `withModule`
 
@@ -126,12 +127,15 @@ function applyModuleMigrations(
 ): Promise<void>;
 ```
 
-1. Resolve the migrations dir: `manifest.paths?.migrations ?? "./migrations"`.
-2. `shouldMigrate = force ?? existsSync(migrationsPath)` — i.e. run when forced,
-   else only when the dir exists.
-3. `runMigrations(pool, { [name]: { id, name, path: moduleDir, resolve: moduleDir } })`
-   where `name = manifest.name ?? basename(moduleDir)`.
-4. Log `"Migrations applied for module \"<name>\""`.
+1. If `force === false`, return without module or system migrations.
+2. Resolve and preserve the exact manifest-declared migrations directory.
+3. Detect models, migrations, jobs, events, and pipelines from the manifest.
+4. Collect durability plus the jobs, durable-event, and pipeline catalogs
+   required by those capabilities.
+5. Run system migrations and the optional module resolver together through the
+   official advisory-lock-protected runner.
+6. Reject any unsuccessful result; otherwise log
+   `"Migrations applied for module \"<name>\""`.
 
 > `applyModuleMigrations` is **internal** to the package but is shared: the
 > runtime (`start.ts`) imports it directly to migrate before serving.
@@ -145,6 +149,5 @@ function applyModuleMigrations(
   shared pool. Boot/teardown sequentially.
 - Without `moduleDir`, no migrations run and `manifest` is `null` — useful for
   pure-service tests where the schema already exists.
-- `migrate: false` skips migrations even when `moduleDir` is set; `migrate: true`
-  forces them even if the migrations dir doesn't exist yet (will error in
-  `runMigrations` if there's nothing to run).
+- `migrate: false` skips both module and local system migrations even when
+  `moduleDir` is set; `migrate: true` forces the module migration resolver.

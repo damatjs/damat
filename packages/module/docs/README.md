@@ -64,30 +64,36 @@ The manifest determines which optional capabilities actually exist.
 resolve artifact and manifest
   → resolve DATABASE_URL / database config
   → create one connection manager and shared pool
-  → apply only this module's migrations
+  → apply declared module migrations + required local durable catalogs
   → initialize module service
   → execute caller callback
   → module teardown
   → close/reset pool
 ```
 
-The harness assumes one standalone module per process. It does not apply the
-assembled backend's shared durability catalogs.
+The harness assumes one standalone module per process. It applies the local
+durability, jobs, durable-event, and pipeline catalogs required by the module's
+declared capabilities; an assembled backend still owns production migration
+and worker policy.
 
 ## Runtime lifecycle
 
 ```text
 load damat.json + module.config.ts
-  → build one-module AppConfig
-  → initialize services
-  → apply module migrations
+  → detect capabilities and probe the port
+  → initialize database + module/provider definitions
+  → apply required system + module migrations once
+  → verify durability and start declared local workers
   → bootstrap file routes
   → serve
-  → graceful shutdown
+  → ordered, idempotent shutdown
 ```
 
-The generated `bun run dev` script runs `database:setup` before entering this
-runtime, so a missing development database is created first.
+`damat module dev` creates a missing development database before entering the
+watcher. Service-only modules skip PostgreSQL even when a stray URL exists.
+Database-backed modules require `DATABASE_URL` before providers are imported.
+Each watched reload awaits the current runtime's ordered shutdown before
+starting a replacement.
 
 ## Tooling flow
 
@@ -121,9 +127,9 @@ the trust gate.
 - Module names are stable kebab-case identities.
 - Convention resolves standard entries and paths; explicit paths override it.
 - Harness/runtime create one pool and close it deterministically.
-- Module-local migration commands never apply shared system catalogs.
-- A module may provide durable definitions but host policy enables and operates
-  their workers.
+- Explicit module migration commands never apply shared system catalogs.
+- Standalone development enables declared durable definitions with local
+  defaults; installed modules leave production policy to the backend.
 - Installation does not mutate user-owned shared application files.
 
 ## Extending the package

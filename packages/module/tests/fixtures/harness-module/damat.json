@@ -1,0 +1,11 @@
+{
+  "$schema": "https://damat.dev/schemas/damat-v1.json",
+  "schemaVersion": 1,
+  "kind": "module",
+  "name": "harness-fixture",
+  "version": "1.0.0",
+  "module": {
+    "migrations": "./db/schema",
+    "events": "./src/events"
+  }
+}

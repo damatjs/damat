@@ -77,9 +77,10 @@ So `module.config.ts` only needs to specify what differs from the defaults.
 
 - The config is read from the **package root** (`packageDir`), not the module
   source dir (`src/`). The runtime resolves them separately.
-- `databaseUrl` / `redisUrl` are intentionally **not** part of `ModuleAppConfig` —
-  they always come from `DATABASE_URL` / `REDIS_URL` env vars. Overrides here are
-  for non-secret, non-connection settings.
+- Prefer `DATABASE_URL` / `REDIS_URL` for connection settings. PostgreSQL is
+  included only for a database-backed runtime plan; service-only modules ignore
+  a stray `DATABASE_URL`.
+- `LOG_LEVEL` supplies the default logger level. A `loggerConfig` override wins.
 - Port precedence (highest first): `startModuleApp({ port })` → `PORT` env →
   `module.config.ts` `http.port` → `DEFAULT_MODULE_PORT` (7654). See
   [runtime.md](./runtime.md).

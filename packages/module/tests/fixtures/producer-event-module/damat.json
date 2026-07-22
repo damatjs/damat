@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "kind": "module",
+  "name": "producer-event-fixture",
+  "version": "1.0.0",
+  "module": {
+    "entry": "./src/index.ts",
+    "events": "./src/events.ts"
+  }
+}
