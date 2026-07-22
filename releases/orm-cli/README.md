@@ -6,6 +6,7 @@ Change history for this package. For how it works **now**, read the
 
 | Version       | Summary                                                                                                    | Upgrade notes         |
 | ------------- | ---------------------------------------------------------------------------------------------------------- | --------------------- |
+| Unreleased    | Config bundling preserves optional `pg-cloudflare` dependency semantics                                    | [next →](./next.md)   |
 | 1.0.0         | PostgreSQL creation plus durability, jobs, events, and pipeline migrations                                 | [next →](./1.0.0.md)  |
 | 0.6.0         | `migrate:status` passes full module descriptors — status tracked by module name, discovery by resolve path | [0.6.0 →](./0.6.0.md) |
 | 0.1.4 – 0.5.0 | Lockstep bumps — no CLI surface change                                                                     | —                     |

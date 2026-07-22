@@ -17,6 +17,8 @@ await runCli({
 
 It provides `create`, `clone`, `dev`, `start`, and `build`. Configuration is
 optional: commands only read `damat.config.ts` when the operation needs it.
+`build` runs the project's installed TypeScript compiler with
+`bun run tsc --noEmit` before bundling; `--no-typecheck` skips that gate.
 Created backends include a receiver `damat.json` for modules, routes,
 workflows, jobs, events, pipelines, links, tests, migrations, models, and types.
 Creation accepts a complete PostgreSQL URL or prompts for host, port, user,

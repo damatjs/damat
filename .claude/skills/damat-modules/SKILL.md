@@ -56,6 +56,9 @@ bun run dev               # database preflight + standalone server
 bun test
 ```
 
+Module builds use the project's installed TypeScript compiler through
+`bun run tsc --noEmit`; they do not resolve a compiler from the registry.
+
 A fresh scaffold intentionally declares only the `module` and `tests`
 capabilities and creates no empty optional provider directories. Add a manifest
 capability path only when its real artifact exists. Its empty-model service must

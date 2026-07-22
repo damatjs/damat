@@ -34,14 +34,18 @@ written directly to the terminal and shutdown is ordered and idempotent.
 
 ## Action required
 
-All five packages require version bumps; do not publish them in this change.
-Release and upgrade the coordinated five-package set together:
+The standalone runtime requires the coordinated five-package set:
 `@damatjs/module`, `@damatjs/cli-module`, `@damatjs/framework`,
 `@damatjs/damat-cli`, and `@damatjs/services`. Services is a required member,
 not an incidental extra: service-only scaffolds depend on its database-free
-empty-model initialization. Ensure every declared capability path is
-intentional and set `DATABASE_URL` for modules that declare models, migrations,
-jobs, events, or pipelines.
+empty-model initialization.
+
+The current unpublished branch also carries the six-package tooling chain
+(`@damatjs/orm-cli`, `@damatjs/cli-support`, `@damatjs/cli-codegen`,
+`@damatjs/cli-app`, `@damatjs/cli-module`, `@damatjs/damat-cli`), producing a
+nine-package version-bump union. Do not publish any member from this change.
+Ensure every declared capability path is intentional and set `DATABASE_URL`
+for modules that declare models, migrations, jobs, events, or pipelines.
 
 ## References
 

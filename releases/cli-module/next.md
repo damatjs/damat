@@ -12,6 +12,9 @@ pass. The watcher forwards SIGINT/SIGTERM.
 It also supervises reloads itself, awaiting the old HTTP/workers/resource
 shutdown before launching the next child.
 
+`damat module build` now invokes the module project's installed compiler with
+`bun run tsc --noEmit`, avoiding `bun x` and registry resolution.
+
 Generated packages now use:
 
 ```json
@@ -32,6 +35,8 @@ Generated packages now use:
   durable work, reload, collision preflight, Ctrl-C, and port reuse.
 - Fresh scaffolds declare only their implemented `module` and `tests`
   capabilities; optional provider paths appear only when files exist.
+- Module build preserves validation, skip flags, inherited output, and exit
+  status while selecting the project-local TypeScript compiler.
 
 ## Breaking
 
@@ -40,12 +45,18 @@ Generated packages now use:
 
 ## Action required
 
-All five packages require version bumps; do not publish them in this change.
-Release and upgrade `@damatjs/module`, `@damatjs/cli-module`,
-`@damatjs/framework`, `@damatjs/damat-cli`, and `@damatjs/services` together.
-Services is required for database-free empty-model scaffolds. Existing module
-libraries must change `scripts.dev` to `damat module dev`; the Damat library's
-142 manifests and its synchronization generator have been upgraded in source.
+The standalone runtime remains a coordinated five-package set:
+`@damatjs/module`, `@damatjs/cli-module`, `@damatjs/framework`,
+`@damatjs/damat-cli`, and `@damatjs/services`. The local-compiler/config-loader
+tooling change is a six-package chain: `@damatjs/orm-cli`,
+`@damatjs/cli-support`, `@damatjs/cli-codegen`, `@damatjs/cli-app`,
+`@damatjs/cli-module`, and `@damatjs/damat-cli`.
+
+Those overlapping sets form a nine-package version-bump union. Do not publish
+any member from this change. Services is required for database-free empty-model
+scaffolds. Existing module libraries must change `scripts.dev` to
+`damat module dev`; the Damat library's 142 manifests and its synchronization
+generator have been upgraded in source.
 
 ## References
 

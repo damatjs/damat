@@ -1,0 +1,19 @@
+# @damatjs/cli-codegen Unreleased
+
+> Application codegen no longer requires a direct `pg-cloudflare` dependency.
+
+## Fixed
+
+- Module discovery inherits the ORM config loader's optional PostgreSQL
+  transport externalization.
+- Codegen behavior, output ownership, and module selection are unchanged.
+
+## Release coordination
+
+This is part of the six-package tooling chain: `@damatjs/orm-cli`,
+`@damatjs/cli-support`, `@damatjs/cli-codegen`, `@damatjs/cli-app`,
+`@damatjs/cli-module`, and `@damatjs/damat-cli`.
+
+Together with the standalone-runtime work, the unpublished branch has a
+nine-package version-bump union: those six plus `@damatjs/module`,
+`@damatjs/framework`, and `@damatjs/services`. Do not publish from this change.

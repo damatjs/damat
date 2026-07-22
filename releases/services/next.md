@@ -8,8 +8,11 @@
 
 ## Release
 
-- All five packages require version bumps; do not publish them in this change.
-  This is a required member of the coordinated release, not an incidental
-  supporting bump. Release `@damatjs/module`, `@damatjs/cli-module`,
-  `@damatjs/framework`, `@damatjs/damat-cli`, and `@damatjs/services` together.
-  Do not publish any member from this change.
+- The standalone runtime requires the coordinated five-package set:
+  `@damatjs/module`, `@damatjs/cli-module`, `@damatjs/framework`,
+  `@damatjs/damat-cli`, and `@damatjs/services`. This package is a required
+  member, not an incidental supporting bump.
+- The current unpublished branch also includes `@damatjs/orm-cli`,
+  `@damatjs/cli-support`, `@damatjs/cli-codegen`, and `@damatjs/cli-app`. With
+  the two overlapping CLI packages, the version-bump union is nine. Do not
+  publish any member from this change.

@@ -131,6 +131,19 @@ isolates package mocks and provisions independent PostgreSQL databases. Running
 plain `bun test` at the repository root discovers every test in one Bun process
 and can leak package mocks across suites.
 
+## Build tries to resolve TypeScript or codegen asks for `pg-cloudflare`
+
+`damat build` and `damat module build` run `bun run tsc --noEmit` from the
+target project. Install `typescript` in that project when the compiler is
+missing; the build never uses `bun x` or registry resolution. Use
+`--no-typecheck` only when intentionally deferring the gate.
+
+Application migrations and codegen bundle `damat.config.ts` with the optional
+`pg-cloudflare` transport external. A direct application dependency is not
+required merely to load config or generate code. If an older CLI reports that
+module as missing, upgrade the coordinated Damat tooling packages rather than
+adding a scaffold dependency.
+
 Package internals live in each package's `docs/` folder. The repository map and
 quality gates are in [AGENTS.md](../../AGENTS.md).
 

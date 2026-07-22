@@ -10,6 +10,9 @@ capability-aware migration path, prints unconditional readiness, reports port 0,
 and forwards shutdown signals.
 Reloads are serialized through graceful child shutdown rather than Bun's hard
 process restart, so worker registrations do not accumulate.
+The composed app and module build commands now select the target project's
+installed compiler with `bun run tsc --noEmit`. Application codegen also keeps
+the optional `pg-cloudflare` transport external during config bundling.
 
 ## Changed / improved
 
@@ -17,6 +20,8 @@ process restart, so worker registrations do not accumulate.
 - Standalone durable definitions execute locally with PostgreSQL defaults.
 - The composed CLI test suite now runs the exact generated `bun run dev` command
   against isolated PostgreSQL and verifies the full process lifecycle.
+- App and module builds no longer use `bun x` or registry resolution.
+- Consumers no longer add `pg-cloudflare` merely to run application codegen.
 
 ## Breaking
 
@@ -24,12 +29,17 @@ process restart, so worker registrations do not accumulate.
 
 ## Action required
 
-All five packages require version bumps; do not publish them in this change.
-Release and upgrade `@damatjs/module`, `@damatjs/cli-module`,
-`@damatjs/framework`, `@damatjs/damat-cli`, and `@damatjs/services` together.
-Services is required for fresh database-free empty-model modules. Update
-consumer `scripts.dev` entries manually; the Damat library's 142 module
-packages and generator have been migrated in its source repository.
+The standalone runtime remains a coordinated five-package set:
+`@damatjs/module`, `@damatjs/cli-module`, `@damatjs/framework`,
+`@damatjs/damat-cli`, and `@damatjs/services`. The config-loader/local-compiler
+tooling change is a six-package chain: `@damatjs/orm-cli`,
+`@damatjs/cli-support`, `@damatjs/cli-codegen`, `@damatjs/cli-app`,
+`@damatjs/cli-module`, and `@damatjs/damat-cli`.
+
+Those overlapping sets form a nine-package version-bump union. Do not publish
+any member from this change. Services is required for fresh database-free
+empty-model modules. Update consumer `scripts.dev` entries manually; the Damat
+library's 142 module packages and generator have been migrated in source.
 
 ## References
 

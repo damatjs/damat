@@ -3,6 +3,8 @@
 Shared Damat-specific helpers used by independent CLI capability packages.
 This package owns system Git detection, Bun type-check execution, best-effort
 temporary-file cleanup, and safe `bun add` argument construction.
+Type-check execution uses `bun run tsc --noEmit` from the target project, so it
+selects the installed project-local TypeScript compiler without registry lookup.
 It also owns reusable PostgreSQL creation options, URL validation, and terminal
 prompts. Password and full-URL input are not echoed by the interactive prompt.
 It also adapts CLI contexts to the headless installer: origin and registry

@@ -77,6 +77,10 @@ bun test
 
 Development preflights are idempotent. Production uses one explicit migration
 job before API or worker replicas; framework startup never mutates schemas.
+App builds use the project's installed TypeScript compiler through
+`bun run tsc --noEmit`, without registry resolution. Application codegen keeps
+the optional `pg-cloudflare` transport external while loading config, so do not
+add it as a direct dependency solely to make codegen work.
 
 ## Durable architecture
 

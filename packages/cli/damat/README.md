@@ -23,6 +23,11 @@ bun damat --help
 The executable preserves this top-level order: `create`, `clone`, `dev`,
 `start`, `build`, `codegen`, `barrel`, `module`, `kit`, `auth`.
 
+App and module builds use each target project's installed TypeScript compiler
+through `bun run tsc --noEmit`. Application codegen leaves the optional
+`pg-cloudflare` transport external while loading `damat.config.ts`, so consumer
+projects do not need a direct dependency for codegen.
+
 For embedding a neutral command runtime, use `@damatjs/cli` directly. For
 command behavior and package-level APIs, use the owning capability README.
 

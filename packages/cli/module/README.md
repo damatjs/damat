@@ -43,4 +43,7 @@ Ctrl-C guidance, and reports the actual port selected by `--port 0`. On a source
 change, the CLI asks the current child to shut down, awaits worker and resource
 cleanup, and only then starts its replacement.
 
+`module build` type-checks with the module project's installed TypeScript
+compiler through `bun run tsc --noEmit`; it does not use registry resolution.
+
 See [internals](./docs/README.md) and the [manifest contract](../../../MODULES.md).

@@ -9,7 +9,7 @@
 | `damat create <name>`               | Scaffold a durable app, collect PostgreSQL credentials, install, create DB, and migrate. Accepts `--database-url` or individual `--database-*` fields; setup/install/git can be deferred explicitly            |
 | `damat clone <src> [dir]`           | git clone with extras: github shorthand + `#ref`, subdirectory extraction, `--fresh` (new history), `--name` (package rename), `--install`, `--depth`. Overlays the system git — clear error if git is missing |
 | `damat dev`                         | Start the dev server with hot reload                                                                                                                                                                           |
-| `damat build`                       | Type-check the whole app (`tsc --noEmit`), then bundle for production. Fails on any type error; `--no-typecheck` skips the check                                                                               |
+| `damat build`                       | Type-check with the installed local compiler (`bun run tsc --noEmit`), then bundle for production. Fails on any type error; `--no-typecheck` skips the check                                                   |
 | `damat start`                       | Start the production server                                                                                                                                                                                    |
 | `damat codegen <module>` \| `--all` | Use the `@damatjs/cli-codegen` adapter to generate types + zod + registry and scaffold CRUD once. Name a module, or pass `--all` for every module in the config                                                |
 | `damat barrel [dir]`                | Recursively (re)write `index.ts` barrels so one bare import (`@workflows`) re-exports a whole tree (default `src/workflows`)                                                                                   |
@@ -26,7 +26,7 @@
 | `damat module migration:status`     | Show this module's applied vs pending migrations                                                                                                                                                               |
 | `damat module codegen`              | Generate types + zod + registry and scaffold CRUD once in a module package through `@damatjs/module-generator`                                                                                                 |
 | `damat module validate`             | Contract + registry-readiness check                                                                                                                                                                            |
-| `damat module build`                | Release gate for a module: type-check (`tsc --noEmit`) + contract validate. `--no-typecheck` / `--no-validate` skip a step                                                                                     |
+| `damat module build`                | Release gate: local `bun run tsc --noEmit` + contract validation. `--no-typecheck` / `--no-validate` skip a step                                                                                               |
 | `damat kit add <src>`               | Install any `damat.json` kit through the same source/package engine as modules                                                                                                                                 |
 | `damat kit plan <src>`              | Preview kit capability mapping and operations                                                                                                                                                                  |
 | `damat kit list`                    | List kit records in `damat.lock.json`                                                                                                                                                                          |
@@ -51,6 +51,9 @@
 Both codegen commands are CLI adapters over `@damatjs/module-generator`.
 The generator uses `@damatjs/schema-codegen` for the pure
 `ModuleSchema`-to-TypeScript/Zod transformation.
+Application codegen externalizes `pg-cloudflare` while bundling
+`damat.config.ts`; consumers do not install that optional `pg` transport unless
+their own runtime selects it.
 
 ## Scaffolding ([docs](../../packages/cli/damat/README.md))
 

@@ -25,7 +25,9 @@ Steps:
 3. Import via `loadConfigModule`: bundle the config to a unique file under the
    operating-system temporary directory, import it, and remove it in `finally`.
    Unchanged source is reused within the process so registration side effects
-   run once; edited source is rebuilt. `config = mod.default ?? mod`.
+   run once; edited source is rebuilt. The bundle leaves `pg-cloudflare`
+   external because it is an optional `pg` transport, so consumers do not add a
+   direct dependency for config loading. `config = mod.default ?? mod`.
 4. For each key in `config.modules`:
    - `id = module.id ?? moduleName` (falls back to the object key).
    - `resolvedPath = isAbsolute(module.resolve) ? module.resolve :

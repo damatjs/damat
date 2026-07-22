@@ -16,6 +16,10 @@ an aggregate index or individual model files. Package registry types derive the
 service from the resolved default module entry and require no package-root
 exports. `barrel` regenerates workflow barrels.
 
+Application config loading keeps `pg-cloudflare` external while bundling
+`damat.config.ts`. The package remains an optional `pg` transport; codegen
+consumers do not declare it directly.
+
 The capability is a command adapter over `@damatjs/module-generator`. Pure
 schema source comes from `@damatjs/schema-codegen` through that generator.
 

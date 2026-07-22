@@ -27,12 +27,15 @@ and cross-process broadcast while PostgreSQL polling and local events continue.
 
 ## Action required
 
-All five packages require version bumps; do not publish them in this change.
-Release and upgrade `@damatjs/module`, `@damatjs/cli-module`,
+The standalone runtime requires the coordinated five-package set. Release and
+upgrade `@damatjs/module`, `@damatjs/cli-module`,
 `@damatjs/framework`, `@damatjs/damat-cli`, and `@damatjs/services` together.
-Update exhaustive shutdown phase handling. Application startup remains
-schema-read-only; use the callback only when the embedding runtime owns the
-pre-durability initialization and its cleanup contract.
+The current unpublished branch also includes `@damatjs/orm-cli`,
+`@damatjs/cli-support`, `@damatjs/cli-codegen`, and `@damatjs/cli-app`; with the
+two overlapping CLI packages, the version-bump union is nine. Do not publish
+any member from this change. Update exhaustive shutdown phase handling.
+Application startup remains schema-read-only; use the callback only when the
+embedding runtime owns the pre-durability initialization and cleanup contract.
 
 ## References
 

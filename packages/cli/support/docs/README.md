@@ -6,7 +6,7 @@
 | `database/`             | PostgreSQL options, hidden prompts, URL building, and selection.  |
 | `git.ts`                | Detect system Git and produce actionable errors.                  |
 | `gitSource.ts`          | Parse Git URLs and GitHub source shorthand.                       |
-| `runTypeCheck.ts`       | Run `bun x tsc --noEmit` through the active Bun executable.       |
+| `runTypeCheck.ts`       | Run local `bun run tsc --noEmit` from the target project.         |
 | `packages/validate.ts`  | Validate package names and ranges.                                |
 | `packages/install.ts`   | Build safe `bun add` arguments and return output.                 |
 | `installer/origin.ts`   | Parse paths, Git, registry, npm, and tarball arguments.           |
@@ -16,3 +16,6 @@
 
 The package is a leaf above `@damatjs/cli`. App, kit, and module capabilities
 may depend on it, but it never imports those packages or the composer.
+The type-check helper inherits output and exit status, skips missing
+`tsconfig.json` files, and never asks Bun to resolve or download a registry
+package.

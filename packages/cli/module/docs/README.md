@@ -34,3 +34,6 @@ readiness independent of the application logger.
 `databaseSetup.ts` remains an explicit module-only command: it creates the
 selected database and delegates to `migration:run`. Installed backends still
 own system catalogs and operational policy.
+
+`module build` invokes `bun run tsc --noEmit` in the module directory before
+contract validation. `--no-typecheck` skips that local compiler gate.

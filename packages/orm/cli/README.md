@@ -69,7 +69,9 @@ Every command propagates its handler result to the process exit status, so
 configuration, connection, and migration failures are nonzero in CI and scripts.
 Configuration imports are cache-busted through the operating-system temporary
 directory rather than beside the source, so migration jobs can keep the
-application filesystem read-only.
+application filesystem read-only. Config bundling also leaves `pg-cloudflare`
+external. It remains an optional transport of `pg`; applications do not need to
+declare it merely to run migrations or application codegen.
 
 ### Cross-module links
 
