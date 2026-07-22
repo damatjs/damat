@@ -24,7 +24,7 @@ describe("module build command", () => {
     // The type-check runs through the active Bun executable.
     expect(spawnCalls[0]!.cmd).toEqual([
       process.execPath,
-      "x",
+      "run",
       "tsc",
       "--noEmit",
     ]);

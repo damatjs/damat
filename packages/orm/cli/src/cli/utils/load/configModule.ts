@@ -15,6 +15,7 @@ async function bundleConfig(filePath: string): Promise<string> {
     entrypoints: [filePath],
     target: "bun",
     format: "esm",
+    external: ["pg-cloudflare"],
   });
   const output = result.outputs[0];
   if (!output) throw new Error(`Config bundle produced no output: ${filePath}`);

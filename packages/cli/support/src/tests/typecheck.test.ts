@@ -31,7 +31,7 @@ describe("runTypeCheck", () => {
     expect(await runTypeCheck({ cwd: "/app", logger, label: "app" })).toBe(0);
     expect(spawnCalls[0]?.cmd).toEqual([
       process.execPath,
-      "x",
+      "run",
       "tsc",
       "--noEmit",
     ]);

@@ -45,6 +45,23 @@ test("reuses an unchanged config without replaying registrations", async () => {
   expect(second).toBe(first);
 });
 
+test("keeps the optional Cloudflare PostgreSQL transport external", async () => {
+  const root = mkdtempSync(join(tmpdir(), "damat-cloudflare-config-"));
+  roots.push(root);
+  const driver = join(root, "driver.ts");
+  const config = join(root, "damat.config.ts");
+  writeFileSync(
+    driver,
+    'export function cloudflareOnly() { return require("pg-cloudflare"); }\n',
+  );
+  writeFileSync(
+    config,
+    'import { cloudflareOnly } from "./driver";\n' +
+      "export default { marker: 3, cloudflareOnly };\n",
+  );
+  expect((await loadConfigModule(config)).default.marker).toBe(3);
+});
+
 test("reports configuration bundle failures", async () => {
   const root = mkdtempSync(join(tmpdir(), "damat-invalid-config-"));
   roots.push(root);

@@ -42,7 +42,7 @@ describe("buildCommand.handler — type-check gate", () => {
     expect(logger.info).toHaveBeenCalledWith("Type-checking app...");
     expect(spawnCalls[0]!.cmd).toEqual([
       process.execPath,
-      "x",
+      "run",
       "tsc",
       "--noEmit",
     ]);
@@ -65,7 +65,7 @@ describe("buildCommand.handler — type-check gate", () => {
     expect(spawnCalls).toHaveLength(1); // only tsc; no entry/config build
     expect(spawnCalls[0]!.cmd).toEqual([
       process.execPath,
-      "x",
+      "run",
       "tsc",
       "--noEmit",
     ]);
@@ -84,7 +84,7 @@ describe("buildCommand.handler — type-check gate", () => {
 
     expect(logger.info).not.toHaveBeenCalledWith("Type-checking app...");
     expect(spawnCalls).toHaveLength(1); // entry build only, no tsc
-    expect(spawnCalls[0]!.cmd[0]).toBe("bun"); // the entry bundle, not `bun x tsc`
+    expect(spawnCalls[0]!.cmd[0]).toBe("bun"); // entry bundle, not local tsc
     expect(spawnCalls[0]!.cmd).toContain("/project/.damat/build-entry.ts");
   });
 });
