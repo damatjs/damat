@@ -7,6 +7,7 @@ import {
   getAllDurableEventDefinitions,
 } from "@damatjs/events";
 import type { AppConfig } from "../../config";
+import { hasRedis } from "../redis";
 import type { ServiceInstances } from "../types";
 import { commonWorkerOptions } from "./workerOptions";
 
@@ -14,11 +15,18 @@ export async function initializeEventBroadcast(
   config: AppConfig,
   instances: ServiceInstances,
   logger: ILogger,
+  redisAvailable: () => boolean = hasRedis,
 ): Promise<void> {
   if (!config.services?.events?.broadcast) return;
   if (!config.projectConfig.redisUrl) {
     logger.warn(
       "services.events.broadcast is set but projectConfig.redisUrl is not — events stay in-process",
+    );
+    return;
+  }
+  if (!redisAvailable()) {
+    logger.warn(
+      "Event broadcast has no live Redis connection — events stay in-process",
     );
     return;
   }
@@ -39,7 +47,7 @@ export function initializeDurableEvents(
   instances: ServiceInstances,
   _logger: ILogger,
   cleanupSharedIdempotency = true,
-): { router: DurableEventRouter; worker: DurableEventWorker } | undefined {
+): { router: DurableEventRouter; worker?: DurableEventWorker } | undefined {
   const events = config.services?.events?.durable;
   if (!events) return undefined;
   const router = new DurableEventRouter({
@@ -54,6 +62,9 @@ export function initializeDurableEvents(
       consumer,
     })),
   );
+  router.start();
+  registerStop(instances, "event-router", () => router.stop());
+  if (!consumers.length) return { router };
   const worker = new DurableEventWorker({
     consumers,
     ...commonWorkerOptions(
@@ -66,9 +77,7 @@ export function initializeDurableEvents(
     cleanupSharedIdempotency,
     batchHeartbeats: true,
   });
-  router.start();
   worker.start();
-  registerStop(instances, "event-router", () => router.stop());
   registerStop(instances, "event-worker", () =>
     worker.stop(
       config.runtime?.shutdownGraceMs === undefined

@@ -50,7 +50,7 @@ export async function initializePipelineDefinitions(
   await syncPipelineDefinitions();
   instances.shutdownHandlers.push({
     name: "pipeline-globals",
-    phase: "postgres",
+    phase: "bindings",
     handler: () => {
       clearJobTerminalListener();
       clearPipelineRuntimeBindings();

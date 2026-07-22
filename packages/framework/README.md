@@ -10,6 +10,11 @@ migration readiness. It starts one process-level durability coordinator and
 Redis wake-up transport after readiness, then starts selected job/event/pipeline workers and
 builds the Hono HTTP app only when the resolved runtime serves HTTP.
 
+Low-level embedders may pass `initializeServices` a `beforeDurability` callback.
+It runs after database/module/provider-definition loading and before durability
+readiness or workers; failures run ordered partial cleanup. Normal application
+startup does not supply it and never mutates schemas.
+
 It sits at the top of the Damat backend stack: it depends on `@damatjs/services`,
 `@damatjs/redis`, the ORM packages, `@damatjs/logger`, `@damatjs/types`,
 `@damatjs/workflow-engine`, `@damatjs/link`, `@damatjs/events`, `@damatjs/jobs`,

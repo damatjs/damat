@@ -27,7 +27,7 @@ Use it when:
 Do **not** use it:
 
 - As a general-purpose ORM — model definitions come from `@damatjs/orm-model`; this package consumes them.
-- Without initializing a pool first — instantiating a generated service throws unless `PoolManager.setup({ pool, logger, connectionManager })` has run (the framework does this for you when `databaseUrl` is configured).
+- Without initializing a pool first when the service declares models — model-backed services throw unless `PoolManager.setup({ pool, logger, connectionManager })` has run. A service-only module with `models: {}` can initialize without PostgreSQL; its custom methods must not use `em`, generated accessors, or `transaction()`.
 
 ## Quick start
 

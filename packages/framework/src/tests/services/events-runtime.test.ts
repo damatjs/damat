@@ -4,6 +4,7 @@ import {
   instances,
   logger,
   reset,
+  state,
   startWorkers,
   workerState,
 } from "./initialize-events-jobs-fixture";
@@ -59,4 +60,22 @@ test("events selection fails when durable events are unavailable", () => {
       servesHttp: false,
     }),
   ).toThrow(/events.*not enabled/i);
+});
+
+test("producer-only events start a router without an event worker", async () => {
+  state.eventDefinitions = [{ name: "mail.sent", consumers: new Map() }];
+  const value = config();
+  value.services = { events: { durable: {} } };
+  const services = instances();
+  startWorkers(value, services, logger as never, {
+    mode: "worker",
+    workers: ["events"],
+    servesHttp: false,
+  });
+  expect(workerState.started).toEqual(["router"]);
+  expect(workerState.events).toEqual([]);
+  expect(services.shutdownHandlers.map(({ name }) => name)).toEqual([
+    "event-router",
+  ]);
+  await services.shutdownHandlers[0]!.handler();
 });

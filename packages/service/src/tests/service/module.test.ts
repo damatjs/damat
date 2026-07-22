@@ -15,6 +15,20 @@ describe("ModuleService construction", () => {
     );
   });
 
+  test("constructs a service-only module without a pool", () => {
+    const Base = ModuleService({ models: {} });
+    const service = new (Base as never)() as InstanceType<typeof Base>;
+    expect(service.getModels).toEqual([]);
+    expect(PoolManager.isInitialized()).toBe(false);
+  });
+
+  test("binds a service-only module when a pool is available", () => {
+    initializeModuleService();
+    const Base = ModuleService({ models: {} });
+    const service = new (Base as never)() as InstanceType<typeof Base>;
+    expect(service.inTransaction).toBe(false);
+  });
+
   test("registers every model and exposes definitions", () => {
     const em = initializeModuleService();
     const user = fakeModuleModel("user");

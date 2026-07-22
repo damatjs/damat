@@ -27,7 +27,15 @@ Every registration names its ordered phase:
 
 ```ts
 type ShutdownPhase =
-  "http" | "claims" | "drain" | "heartbeat" | "redis" | "postgres" | "logger";
+  | "http"
+  | "claims"
+  | "drain"
+  | "heartbeat"
+  | "bindings"
+  | "redis"
+  | "durability"
+  | "postgres"
+  | "logger";
 
 interface ShutdownRegistration {
   name: string;
@@ -44,9 +52,11 @@ Use `registerShutdown(registration)` to append a handler.
    worker claims.
 3. **Drain** — allow registered in-flight work to finish up to `graceMs`.
 4. **Heartbeat / reconciliation** — stop lease renewal and maintenance loops.
-5. **Redis** — close Redis transports.
-6. **PostgreSQL** — close the database pool.
-7. **Logger** — emit shutdown completion and close logging last.
+5. **Bindings** — clear process-local pipeline/job runtime bindings.
+6. **Redis** — close Redis transports.
+7. **Durability** — clear process-global durability clients.
+8. **PostgreSQL** — close the database pool.
+9. **Logger** — emit shutdown completion and close logging last.
 
 Handlers within one phase run concurrently with `Promise.allSettled`. Each
 failure is logged with its handler and phase, and later handlers and phases
@@ -81,6 +91,8 @@ abort while retaining lease-based recovery.
 - Auth shutdown, ephemeral event broadcast, the process-wide Redis acceleration
   transport/relay, durable event router/worker, and job worker → `claims`.
 - Redis disconnect → `redis`.
+- Pipeline/job runtime binding cleanup → `bindings`.
+- Durability global cleanup → `durability`.
 - PostgreSQL disconnect and `PoolManager.reset()` → `postgres`.
 - Logger close → `logger`.
 

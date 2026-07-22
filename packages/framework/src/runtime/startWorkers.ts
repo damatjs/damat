@@ -42,7 +42,7 @@ export function startWorkers(
     );
     if (events) {
       targets.router = events.router;
-      targets.event = events.worker;
+      if (events.worker) targets.event = events.worker;
     }
   }
   if (runtime.workers.includes("pipelines")) {

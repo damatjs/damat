@@ -18,7 +18,7 @@ test("event broadcast and durable jobs register independent shutdowns", async ()
     jobs: {},
   };
   const services = instances();
-  await initializeEventBroadcast(value, services, logger as never);
+  await initializeEventBroadcast(value, services, logger as never, () => true);
   initializeJobs(value, services, logger as never);
   expect(services.shutdownHandlers.map(({ name }) => name)).toEqual([
     "event-broadcast",

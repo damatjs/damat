@@ -54,7 +54,7 @@ The order matters; the framework enforces it at boot:
 
 1. **Pool setup.** Something (the framework's `initDatabase`, or a test) calls `PoolManager.setup({ pool, logger, connectionManager })`. This constructs the `PgEntityManager` and stores all three on `globalThis`.
 2. **Module registration.** The framework imports each module's default export (a `ModuleInstance` from `defineModule`) and calls `init()`, which **constructs** the service for the first time.
-3. **Service construction.** The generated `ModuleService` constructor parses credentials, asserts the pool is initialized, registers each model, and creates a per-instance base `ModelMethods` map with the configured wrappers.
+3. **Service construction.** The generated `ModuleService` constructor parses credentials. With models it asserts the pool is initialized, registers each model, and creates a per-instance base `ModelMethods` map. With no models it remains database-free.
 4. **Use.** Accessing `service.<model>` returns a stable proxy. Each method call
    resolves the current async transaction's methods when present, otherwise the
    service instance's base methods.
@@ -73,7 +73,7 @@ The order matters; the framework enforces it at boot:
 
 - **`PoolManager` state lives on `globalThis`, not class statics.** Keyed by `Symbol.for("damatjs.services.poolManager")`. This is deliberate: if two copies of `@damatjs/services` end up in one process (a linked dev package next to an installed one), class statics would be per-copy and the second copy would see an uninitialized pool. The global symbol guarantees a single shared pool/entity manager.
 - **Construct-on-init, not cache-forever.** `defineModule`'s `init()` always constructs a fresh instance. After a `PoolManager.reset()` (tests, harness reboot), re-initializing yields a service bound to the _current_ pool instead of one holding a stale connection.
-- **Service construction requires an initialized pool.** The `ModuleService` constructor throws `"PoolManager not initialized..."` if `PoolManager.isInitialized()` is false. This surfaces misordered startup immediately.
+- **Model-backed construction requires an initialized pool.** The constructor throws `"PoolManager not initialized..."` when models exist and `PoolManager.isInitialized()` is false. `models: {}` is the service-only exception; database APIs remain unavailable.
 - **Accessor names are camelCased model keys.** `toCamelCase` only lowercases the first character (`account` → `account`, `Verification` → `verification`, `APIKey` → `aPIKey`). It does **not** convert snake_case or kebab-case (see `module-service.md` gotchas).
 - **Relation FK conventions are by-convention.** `loadRelation` infers FK column names (`<model>_id`) from relation metadata; non-standard FK naming will not resolve. See `module-service.md`.
 - **Opt-in wrappers layer cache → events → logging.** Cache is innermost, logging outermost. So one `query` log line covers a cache hit and a database read alike, and a write's event fires only after the write succeeded and its cache invalidation ran. All three are `Proxy` wrappers over `ModelMethods`; with no config flag set nothing is wrapped and every call behaves exactly as before. Details in `module-service.md`.

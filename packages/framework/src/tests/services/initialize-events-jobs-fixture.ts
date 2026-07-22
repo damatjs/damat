@@ -15,6 +15,9 @@ export const state = {
   readiness: [] as unknown[],
   readinessError: undefined as Error | undefined,
   warnings: [] as string[],
+  eventDefinitions: [
+    { name: "mail.sent", consumers: new Map([["audit", {}]]) },
+  ],
 };
 export { workerState };
 export class FakeNotMigratedError extends Error {}
@@ -27,9 +30,7 @@ mock.module("@damatjs/events", () => ({
   parseEventWakeup: parseWakeup,
   clearEventWakeupPublisher: () => {},
   configureEventWakeupPublisher: () => workerState.publishers.push("events"),
-  getAllDurableEventDefinitions: () => [
-    { name: "mail.sent", consumers: new Map([["audit", {}]]) },
-  ],
+  getAllDurableEventDefinitions: () => state.eventDefinitions,
 }));
 mock.module("@damatjs/durability", () =>
   durabilityRuntimeMock(state, FakeNotMigratedError),
@@ -50,14 +51,13 @@ mock.module("@damatjs/services", () => ({
     getPool: () => managedPool ?? sharedPool,
   },
 }));
-export const { initializeEventBroadcast } =
-  await import("../../services/initialize/events");
+const eventServices = await import("../../services/initialize/events");
+export const { initializeEventBroadcast, initializeDurableEvents } =
+  eventServices;
 export const { initializeJobs } =
   await import("../../services/initialize/jobs");
 export const { initializeDurability } =
   await import("../../services/initialize/durability");
-export const { initializeDurableEvents } =
-  await import("../../services/initialize/events");
 export const { startWorkers } = await import("../../runtime/startWorkers");
 export const logger = {
   debug: () => {},
@@ -74,7 +74,6 @@ export const logger = {
   withPrefix: () => logger,
   request: () => {},
 };
-
 export function config(): AppConfig {
   return {
     projectConfig: {
@@ -83,11 +82,9 @@ export function config(): AppConfig {
     },
   };
 }
-
 export function instances(): ServiceInstances {
   return { healthChecks: {}, shutdownHandlers: [] };
 }
-
 export function reset(): void {
   managedPool = sharedPool;
   state.broadcasts.length = 0;
@@ -96,4 +93,7 @@ export function reset(): void {
   state.readiness.length = 0;
   state.readinessError = undefined;
   state.warnings.length = 0;
+  state.eventDefinitions = [
+    { name: "mail.sent", consumers: new Map([["audit", {}]]) },
+  ];
 }

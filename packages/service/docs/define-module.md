@@ -69,7 +69,7 @@ export function defineModule<TService extends object>(name, definition) {
 Key points:
 
 1. **Credentials are parsed eagerly**, at `defineModule` call time, by invoking `definition.credentials(process.env)`. The result is exposed as `instance.credentials`.
-2. **The service is constructed lazily**, on first access to any property of `proxy.service` (or explicitly via `init()`). This matters because the service's constructor requires `PoolManager` to already be initialized — deferring construction lets you `defineModule(...)` at import time, before the pool exists, and only construct once the framework has set up the pool.
+2. **The service is constructed lazily**, on first access to any property of `proxy.service` (or explicitly via `init()`). Model-backed constructors require `PoolManager` to be initialized; service-only constructors with `models: {}` do not.
 3. **`init()` always constructs a fresh instance.** It is not memoized away. So calling `init()` after a `PoolManager.reset()` rebinds the service to the new pool/entity manager rather than reusing a stale one. The framework's `registerModule` calls `init()` exactly for this reason.
 4. **Methods are bound.** The `get` trap binds functions to the underlying instance so `const { create } = module.service` style destructuring still works.
 
@@ -128,6 +128,6 @@ Without augmentation, pass the type explicitly: `getModule<UserModuleService>("u
 ## Gotchas
 
 - **Eager credentials, lazy service.** If `definition.credentials(process.env)` throws (e.g. a zod loader that validates), it throws at `defineModule` time / import time — not at first use. Keep the loader pure and defensive.
-- **First property access constructs the service.** Merely _reading_ a property (even a getter like `service.credentials` in tests) triggers construction, which requires `PoolManager.isInitialized()`. Don't touch the proxy before the pool is up unless you intend to construct.
+- **First property access constructs the service.** Merely _reading_ a property triggers construction. Do not touch a model-backed proxy before the pool is up; `models: {}` service-only proxies are database-free.
 - **`init()` is re-entrant by design.** Calling it again replaces the instance. This is intentional for test/harness reboots; it is also why the framework calls `init()` in `registerModule`.
 - **The default export must be the `defineModule` result.** `initModules` checks for `typeof moduleInstance.init === "function"` and throws otherwise.

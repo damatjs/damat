@@ -34,12 +34,13 @@ export function ModuleService<
           passedCredentials,
         ) as never;
       }
+      this.models = Object.values(models);
       if (!PoolManager.isInitialized()) {
+        if (this.models.length === 0) return;
         throw new Error(
           "PoolManager not initialized. Call PoolManager.setup(pool) before creating service instances.",
         );
       }
-      this.models = Object.values(models);
       state.initialize(this, this.em);
     }
 

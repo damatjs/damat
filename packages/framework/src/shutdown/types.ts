@@ -3,7 +3,9 @@ export const SHUTDOWN_PHASES = [
   "claims",
   "drain",
   "heartbeat",
+  "bindings",
   "redis",
+  "durability",
   "postgres",
   "logger",
 ] as const;

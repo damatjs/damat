@@ -62,7 +62,7 @@ export async function initializeDurability(
   setDurabilityClient(client);
   instances?.shutdownHandlers.push({
     name: "durability-globals",
-    phase: "postgres",
+    phase: "durability",
     handler: () => clearDurabilityClient(),
   });
   const acceleration = config.services?.durability?.acceleration;

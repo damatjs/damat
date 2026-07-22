@@ -11,13 +11,16 @@ logger, PostgreSQL, Redis, modules, provider bindings, auth/publishers, durable 
 and the workers selected by the resolved runtime. It returns health checks and
 phased shutdown registrations.
 
-## `initializeServices(config, cwd?)` (`index.ts`)
+## `initializeServices(config, cwd?, runtime?, options?)` (`index.ts`)
 
 ```ts
 async function initializeServices(
   config: AppConfig,
   cwd = process.cwd(),
   runtime = resolveRuntime(config, {}),
+  options?: {
+    beforeDurability?: ({ config, instances, logger }) => Promise<void> | void;
+  },
 ): Promise<ServiceInstances>;
 
 interface ServiceInstances {
@@ -50,29 +53,39 @@ Steps:
 4. **Modules + links** — initialize app/link modules, load their
    workflow/job/event/pipeline definition files, expose resolved modules, and
    install the link resolver.
-5. **Provider bindings** — validate each top-level `providers.<role>.module`,
+5. **Optional pre-durability initialization** — after the pool, module services,
+   and manifest-declared workflow/job/event/pipeline files are loaded, await
+   `options.beforeDurability`. The callback may prepare service-owned state that
+   durability readiness depends on. A failure triggers ordered cleanup of every
+   initialized registration and closes the logger before the original error is
+   rethrown. Normal framework startup does not supply this callback and remains
+   schema-read-only; standalone module development uses it for its migration
+   pass.
+6. **Provider bindings** — validate each top-level `providers.<role>.module`,
    resolve its already initialized module service, reject role markers that do
    not match, and retain that exact service reference.
-6. **Auth and event broadcast** — validate the bound auth service's session and
+7. **Auth and event broadcast** — validate the bound auth service's session and
    API-key operations, build framework-owned route handlers, and initialize
-   optional Redis event broadcast.
-7. **Durable readiness** — when jobs, durable events, or pipelines are enabled,
+   optional Redis event broadcast. A configured but unavailable Redis transport
+   logs degraded operation and leaves events in-process.
+8. **Durable readiness** — when jobs, durable events, or pipelines are enabled,
    create the global durability client from `PoolManager.getPool()` and verify
    shared plus capability-specific system migrations. Missing database config
    fails startup. Missing migrations fail with `Run: damat-orm migrate:up`
    guidance.
-8. **Durability acceleration** — create one coordinator, subscriber transport,
+9. **Durability acceleration** — create one coordinator, subscriber transport,
    transactional-outbox relay, Redis projection rebuild, and publisher gate per
    process. A committed outbox write prompts the relay after commit; several
    writes in one transaction coalesce into one prompt. Capability failure
    disables both durable publishers/subscribers, activates PostgreSQL fallback,
    and retries with bounded backoff.
-9. **Selected workers** — start only capabilities in `runtime.workers`:
-   `JobWorker` for jobs, `DurableEventRouter` + `DurableEventWorker` for events,
-   and the pipeline graph router plus internal action worker for pipelines.
-   Definitions are already loaded. In `worker` and `all` modes, selecting an
-   unavailable capability fails visibly.
-10. **Logger shutdown** — register `closeLogger()` in the final `logger` phase.
+10. **Selected workers** — start only capabilities in `runtime.workers`:
+    `JobWorker` for jobs, `DurableEventRouter` + `DurableEventWorker` for events,
+    and the pipeline graph router plus internal action worker for pipelines.
+    Definitions are already loaded. Producer-only durable events start the
+    router without an empty consumer worker. In `worker` and `all` modes,
+    selecting an unavailable capability fails visibly.
+11. **Logger shutdown** — register `closeLogger()` in the final `logger` phase.
 
 `server` resolves no workers, `worker` starts selected workers without HTTP,
 and `all` may start workers and HTTP. Worker stop methods stage their own claim
@@ -168,7 +181,8 @@ interface ServiceInstances {
 ## Gotchas
 
 - **Order is enforced here.** The pool is set up before modules, and modules
-  initialize before role bindings. A provider binding never constructs another
+  and provider definition files initialize before the optional pre-durability
+  callback and role bindings. A provider binding never constructs another
   service or database context; don't reorder these stages.
 - **No DB / no Redis is valid until a dependent service is enabled.** Omitting
   either URL skips that subsystem and health reports `"not configured"`.

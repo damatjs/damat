@@ -8,7 +8,7 @@ import type { AppConfig } from "../config";
 import { AccelerationRelay } from "../services/initialize/accelerationRelay";
 import { WorkerWakeupTransport } from "../services/initialize/wakeupTransport";
 import type { WakeupTargets } from "../services/initialize/wakeupTargets";
-import { getRedis } from "../services/redis";
+import { getRedis, hasRedis } from "../services/redis";
 import type { ServiceInstances } from "../services/types";
 
 export function startWorkerWakeups(
@@ -24,6 +24,7 @@ export function startWorkerWakeups(
     ? acceleration.enabled === false
     : config.services?.durability?.wakeups === false;
   if (!coordinator || !config.projectConfig.redisUrl || disabled) return;
+  if (!redis && !hasRedis()) return;
   const client = redis ?? getRedis();
   let transport!: WorkerWakeupTransport;
   const relay = new AccelerationRelay(

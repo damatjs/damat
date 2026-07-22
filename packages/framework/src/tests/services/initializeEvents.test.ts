@@ -15,7 +15,7 @@ test("event broadcast remains independently Redis-backed", async () => {
   value.projectConfig.redisUrl = "redis://test";
   value.services = { events: { broadcast: true, channel: "custom" } };
   const services = instances();
-  await initializeEventBroadcast(value, services, logger as never);
+  await initializeEventBroadcast(value, services, logger as never, () => true);
   expect(state.broadcasts).toEqual([{ channel: "custom" }]);
   expect(services.shutdownHandlers.map(({ name }) => name)).toEqual([
     "event-broadcast",
@@ -29,5 +29,19 @@ test("event broadcast warns without Redis", async () => {
   value.services = { events: { broadcast: true } };
   await initializeEventBroadcast(value, instances(), logger as never);
   expect(state.warnings[0]).toContain("redisUrl");
+  expect(state.broadcasts).toEqual([]);
+});
+
+test("event broadcast degrades when configured Redis is unavailable", async () => {
+  const value = config();
+  value.projectConfig.redisUrl = "redis://unavailable";
+  value.services = { events: { broadcast: true } };
+  await initializeEventBroadcast(
+    value,
+    instances(),
+    logger as never,
+    () => false,
+  );
+  expect(state.warnings[0]).toContain("no live Redis connection");
   expect(state.broadcasts).toEqual([]);
 });

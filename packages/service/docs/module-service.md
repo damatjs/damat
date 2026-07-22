@@ -65,10 +65,11 @@ The returned `abstract class GeneratedModuleService` has:
 ### Constructor steps
 
 1. **Validate credentials** with zod (`.parse`, so it throws `ZodError` on bad input) — only if a schema was supplied.
-2. **Assert the pool is initialized** — throws otherwise.
-3. **Register each model** with the entity manager and create a per-service
+2. **Return early for `models: {}` when no pool exists** — credentials-only or integration services do not require PostgreSQL. If a pool exists, they still bind so `transaction()` remains available.
+3. **Assert the pool is initialized for model-backed services** — throws otherwise.
+4. **Register each model** with the entity manager and create a per-service
    base `ModelMethods` map.
-4. **Apply the opt-in wrappers** in a fixed order — cache innermost, then events, logging outermost. Each is a `Proxy` over the previous layer; with none of the three config switches set, the bare `ModelMethods` goes into the map unchanged.
+5. **Apply the opt-in wrappers** in a fixed order — cache innermost, then events, logging outermost. Each is a `Proxy` over the previous layer; with none of the three config switches set, the bare `ModelMethods` goes into the map unchanged.
 
 ### Per-model accessors
 
@@ -318,7 +319,7 @@ internal to the factory.
 ## Gotchas
 
 - **`toCamelCase` only lowercases the first character.** Accessor for a model keyed `"user_profile"` is `service.user_profile` (the underscore is kept). Choose model keys that read well as JS identifiers (`account`, `verification`, `apiKey`). It does not convert snake_case/kebab-case/PascalCase fully.
-- **Construct after the pool is up.** Instantiating a generated service before `PoolManager.setup(...)` throws. The framework guarantees ordering; in tests, call `PoolManager.setup(...)` (or use a harness) before `new YourService(...)`.
+- **Construct model-backed services after the pool is up.** Instantiating a generated service with models before `PoolManager.setup(...)` throws. `models: {}` may initialize without PostgreSQL, but its custom methods cannot use `em`, generated accessors, or `transaction()`.
 - **Model methods are isolated.** Each service instance owns its base accessor
   map, and every top-level transaction owns a separate transaction-bound map.
   Overlapping transactions are safe on the same instance.
