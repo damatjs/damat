@@ -37,11 +37,19 @@ bun run migration:status
 bun run codegen
 bun run validate
 bun run build
+bun run dev               # capability-aware local server and workers
 bun test
 ```
 
-Standalone setup never applies shared durability, jobs, durable-event, or
-pipeline catalogs. The assembled backend owns those migrations.
+The explicit setup/migration commands remain module-scoped. `bun run dev`
+creates the database when required, applies this module plus only the system
+catalogs required by declared durable capabilities in one pass, and starts
+local workers with development defaults. It prints the bound URL and `/api`
+mount after listening, including with `LOG_LEVEL=fatal`.
+
+Installed modules supply definitions only. The assembled backend owns
+production migrations, worker roles, queues, concurrency, Redis, retention,
+and operational policy.
 
 ## Package shape
 
@@ -137,6 +145,11 @@ Definitions must be importable before backend bootstrap. The module does not
 select the host runtime, queues, concurrency, retention, Redis, or operational
 routes. Record required host wiring in `install.instructions`.
 
+Standalone development detects these declarations from `damat.json`, loads
+custom provider paths, and runs their PostgreSQL-backed workers locally. A
+database-backed module without `DATABASE_URL` fails before provider imports;
+service-only modules skip PostgreSQL even if a stray URL exists.
+
 A pipeline may invoke a workflow as one node. Use workflows for local sagas and
 pipelines for persisted outer orchestration that waits, branches, survives
 restarts, or needs complete operational visibility.
@@ -209,9 +222,11 @@ await withModule(inventory, { moduleDir }, async ({ service }) => {
 });
 ```
 
-The harness uses a real PostgreSQL database, applies this module's migrations,
-and owns its pool lifecycle. Test one module per process. Test durable definition
-and graph validity locally; test host runtime wiring in a backend integration.
+The harness uses a real PostgreSQL database, applies the module's declared
+migration path and the local catalogs required by its durable capabilities,
+and owns its pool lifecycle. Test one module per process. Use `startModuleApp({
+port: 0 })` when an integration test also needs standalone routes and local
+durable workers; production policy still belongs in a backend integration.
 
 ## Validate and share
 

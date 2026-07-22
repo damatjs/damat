@@ -107,9 +107,11 @@ Every process creates one PostgreSQL pool and shares it across HTTP, modules,
 jobs, events, pipelines, inspection, and maintenance. Do not configure separate
 pools for those services or reduce the shared pool to one physical connection.
 
-Generated development scripts run `database:setup` before startup. Framework
-bootstrap itself only checks migration readiness. Production should run one
-explicit migration job before any server or worker process.
+Generated backend development scripts run `database:setup` before startup.
+Standalone module development performs its capability-aware migration pass
+inside `damat module dev`, before durability or workers. Normal framework
+bootstrap only checks migration readiness. Production should run one explicit
+migration job before any server or worker process.
 
 ## The mental model
 

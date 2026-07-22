@@ -128,6 +128,12 @@ selection starts one router plus the internal action/workflow job worker. A
 direct job node still needs a job worker for that job's queue; an event node
 needs the durable event definition and, for delivery, event workers.
 
+A standalone module that declares pipelines gets a local pipeline router/worker
+from `damat module dev`; declared jobs and events enable their local workers too.
+The command applies the required durability, jobs, event, and pipeline catalogs
+before readiness, using PostgreSQL without requiring Redis. Installed modules
+do not carry that policy into a backend.
+
 All process roles share the same PostgreSQL pool. Redis provides only wake-ups
 and a rebuildable ready projection. Healthy acceleration leaves a 30-second
 PostgreSQL safety scan; an unavailable or unauthorized Redis falls back within

@@ -1,0 +1,40 @@
+# @damatjs/framework Unreleased
+
+> Service initialization now exposes a pre-durability boundary with deterministic partial cleanup.
+
+## What changed
+
+`initializeServices` accepts an optional `beforeDurability` callback after the
+database, module services, and manifest provider definitions load, but before
+durability readiness, provider-role wiring, or workers. A thrown error runs all
+registered cleanup phases and preserves the original failure.
+
+Shutdown now has explicit `bindings` and `durability` phases so process-local
+runtime bindings and global durability clients are cleared before PostgreSQL.
+Producer-only durable events start their router without constructing an empty
+consumer worker. Redis connection or authentication failure disables wakeups
+and cross-process broadcast while PostgreSQL polling and local events continue.
+
+## Added
+
+- `ServiceInitializationOptions` and `runServiceShutdownHandlers`.
+- `bindings` and `durability` shutdown phases.
+
+## Breaking
+
+- Exhaustive consumers of `ShutdownPhase` must accept the two additional values.
+- This package requires a version bump before release.
+
+## Action required
+
+All five packages require version bumps; do not publish them in this change.
+Release and upgrade `@damatjs/module`, `@damatjs/cli-module`,
+`@damatjs/framework`, `@damatjs/damat-cli`, and `@damatjs/services` together.
+Update exhaustive shutdown phase handling. Application startup remains
+schema-read-only; use the callback only when the embedding runtime owns the
+pre-durability initialization and its cleanup contract.
+
+## References
+
+- Current behavior: [services](../../packages/framework/docs/services.md)
+- Source: `packages/framework/src/services/`, `packages/framework/src/shutdown/`

@@ -74,8 +74,11 @@ damat module migration:status    # show this module's applied vs pending migrati
 the module's name, so `migration:run` is idempotent too. See
 [Authoring a module](./13-authoring-modules.md).
 
-The standalone command never applies shared durability/jobs/events/pipeline
-catalogs. Those belong to the assembled backend after the module is installed.
+These explicit standalone migration commands never apply system catalogs.
+`damat module dev` is the development exception: it combines the module
+migration with only the catalogs required by its declared durable capabilities,
+before starting local workers. The assembled backend owns those migrations after
+installation.
 
 ---
 

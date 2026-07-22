@@ -56,8 +56,23 @@ bun run dev               # database preflight + standalone server
 bun test
 ```
 
-Standalone setup never applies shared durability, jobs, durable-event, or
-pipeline catalogs. The backend owner applies them after installation.
+A fresh scaffold intentionally declares only the `module` and `tests`
+capabilities and creates no empty optional provider directories. Add a manifest
+capability path only when its real artifact exists. Its empty-model service must
+plan, load, and start without PostgreSQL; a stray `DATABASE_URL` does not make a
+service-only module database-backed.
+
+Explicit `database:setup` and migration commands remain module-only. Standalone
+`dev` applies the system catalogs required by the module's declared durable
+capabilities and starts local workers so those definitions are executable. Once
+installed, the backend owner controls catalogs, workers, queues, concurrency,
+Redis policy, and operations.
+
+Models, migrations, jobs, events, and pipelines require PostgreSQL. Durable
+workers use PostgreSQL polling when Redis is absent, unavailable, or
+unauthorized, while ephemeral broadcast stays local. A producer-only durable
+event is valid: standalone development starts its router without constructing
+an empty consumer worker.
 
 ## The blade boundary
 
@@ -101,8 +116,9 @@ shared migrations, dashboards, and deployment.
 └── tests/
 ```
 
-Not every module needs every optional folder. Declare only capabilities the
-artifact intentionally provides.
+Not every module needs every optional folder. A new scaffold has none of them.
+Declare only capabilities the artifact intentionally provides, including when
+using non-conventional custom paths.
 
 ## Codegen-first development
 
@@ -273,9 +289,20 @@ await withModule(module, { moduleDir }, async ({ service }) => {
 });
 ```
 
-Harness tests require PostgreSQL and apply this module's migrations. Test one
-module per process. Test provider definitions and graph validation locally;
-test host runtime wiring in an assembled backend integration.
+Harness tests require PostgreSQL and preserve the manifest-declared migration
+path. They apply the module migration and the local durability/jobs/events/
+pipelines catalogs required by declared capabilities in one official pass. Any
+unsuccessful migration rejects boot and clears shared pool and connection state.
+`migrate: false` deliberately skips both module and local system migrations.
+Test one module per process. Keep assembled-backend policy tests in the backend.
+
+When changing standalone startup, add a real `damat module dev` subprocess test;
+mocked command handlers and direct `startModuleApp()` tests are not sufficient.
+Run with `LOG_LEVEL=fatal`, wait for terminal readiness, call `/health`, exercise
+declared custom-path capabilities, collide a second fixed-port invocation, and
+send Ctrl-C. Assert one migration pass, actionable collision output, watcher
+exit, and port reuse. Use `--port 0` so the test also verifies the reported
+bound port and `/api` mount.
 
 ## Validate and publish
 
@@ -297,3 +324,7 @@ The backend owner should still inspect `damat module plan` before installing.
 - Never activate cross-module composition from the blade.
 - Never store host credentials or policy in the module.
 - Update living docs and package release records when behavior changes.
+- Keep `@damatjs/module`, `@damatjs/cli-module`, `@damatjs/framework`,
+  `@damatjs/damat-cli`, and `@damatjs/services` on a compatible coordinated
+  release. Services is required for database-free empty-model modules; it is
+  not an optional supporting bump.

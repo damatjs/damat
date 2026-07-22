@@ -78,9 +78,9 @@ services: {
 },
 ```
 
-Self-published messages are deduped, and a broken broadcast is logged only
-after local subscribers already ran. The framework connects and disconnects the
-transport for you.
+Self-published messages are deduped. Missing, unauthorized, or unavailable
+Redis logs degraded broadcast and leaves local subscribers active. The
+framework connects and disconnects a live transport for you.
 
 ### Durable events
 
@@ -190,6 +190,12 @@ services: {
 Jobs require `projectConfig.databaseUrl` and current migrations. On a fresh
 backend use `bun run db:setup`; after schema changes use `bun run db:migrate`.
 Redis is optional; PostgreSQL fallback always remains available.
+
+Inside a standalone module, declaring jobs or durable events in `damat.json`
+makes `damat module dev` install the required local catalogs and run concurrency
+1 workers with 250 ms PostgreSQL polling. This is development policy only.
+After installation, the backend must enable the services, select process roles,
+and apply backend migrations itself.
 
 ## Commit domain data and durable work together
 

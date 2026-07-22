@@ -143,8 +143,8 @@ Development and production intentionally differ:
 
 - `damat create` and `damat module init` collect database credentials and write
   the local `.env`.
-- Generated development `bun run dev` scripts perform an idempotent database
-  setup preflight.
+- Generated backend `bun run dev` scripts perform database setup preflight;
+  standalone module dev performs one capability-aware migration pass itself.
 - Framework startup itself is read-only and reports missing migrations.
 - Production runs one migration job before any API or worker replicas start.
 

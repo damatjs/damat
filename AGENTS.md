@@ -132,12 +132,14 @@ bun run migration:run
 bun run migration:status
 bun run codegen
 bun run validate
-bun run dev                   # module database preflight + standalone server
+bun run dev                   # module DB/catalog preflight + server/workers
 bun test
 ```
 
-The standalone module command never installs the backend's shared durability,
-jobs, events, or pipeline catalogs. The assembled backend owns those tables.
+Standalone `dev` installs the catalogs required by the module's declared durable
+capabilities and starts local development workers. Explicit module migration
+commands remain module-only. After installation, the assembled backend owns
+catalog migrations, worker selection, queues, concurrency, and operations.
 
 ## Common work
 
@@ -244,6 +246,10 @@ synchronized.
 - Do not read module credentials ad hoc from `process.env`; use the module schema
   and loader.
 - Confirm destructive database operations before running them.
+- Startup/lifecycle changes require a real CLI subprocess regression: suppress
+  app logs, wait for readiness, call health/capabilities, test a port collision,
+  signal shutdown, and prove port reuse. Unit mocks and line coverage alone do
+  not prove process behavior.
 - Run affected package tests with coverage, then repository build, lint, changed
   line-limit check, and the canonical root test runner.
 

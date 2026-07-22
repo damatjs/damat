@@ -23,9 +23,12 @@ job first.
 
 ## Standalone module cannot start
 
-Run `bun run database:setup` inside the module package. It creates the module's
-development database and applies only that module's migrations. Verify `.env`
-contains the selected `DATABASE_URL`.
+For a database-backed module, verify `.env` contains `DATABASE_URL`; `bun run
+dev` creates the database and runs the required module/system migration pass.
+An occupied fixed port fails before that work with a `--port <port>` hint. Use
+`damat module dev --port 0` to request an ephemeral port.
+If active worker rows increase after a source reload, upgrade the CLI; the
+watcher must await the old runtime's shutdown before starting its replacement.
 
 ## Unknown runtime mode or worker
 

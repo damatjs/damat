@@ -247,9 +247,13 @@ await withModule(module, { moduleDir }, async ({ service }) => {
 });
 ```
 
-The harness creates one pool, applies the module's migrations, initializes the
+The harness creates one pool, applies the declared module migration path plus
+the local catalogs required by declared durable capabilities, initializes the
 service, and guarantees teardown. `damat module dev` runs the same module with
-the framework HTTP stack and its routes.
+the framework HTTP stack and its routes. It detects declared durable
+capabilities, applies their local system catalogs with the module migration,
+and starts development workers before reporting the actual bound port. A source
+reload gracefully stops those workers and HTTP before starting the replacement.
 
 ## 16.14 Installation capabilities
 

@@ -199,8 +199,9 @@ Use `pairsWith` for a suggestion. A module may ship a dormant link template;
 the backend owner chooses whether to activate it with a link migration.
 
 Standalone `bun run database:setup` creates the module development database and
-applies only that module's migrations. Shared durability, jobs, events, and
-pipeline catalogs are installed by the assembled backend.
+applies only that module's migrations. The standalone harness and `module dev`
+also install capability-required catalogs for local execution. The assembled
+backend remains the owner of those catalogs and worker policy in production.
 
 ## Source and package installation
 
