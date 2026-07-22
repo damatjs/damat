@@ -1,5 +1,27 @@
 # @damatjs/module
 
+## 1.0.1
+
+### Patch Changes
+
+- bug fixes and small patches
+- Updated dependencies
+  - @damatjs/durability@1.0.1
+  - @damatjs/events@1.0.1
+  - @damatjs/jobs@1.0.1
+  - @damatjs/logger@1.0.1
+  - @damatjs/pipelines@1.0.1
+  - @damatjs/deps@1.0.1
+  - @damatjs/framework@1.0.1
+  - @damatjs/installer@1.0.1
+  - @damatjs/module-generator@1.0.1
+  - @damatjs/orm-connector@1.0.1
+  - @damatjs/orm-migration@1.0.1
+  - @damatjs/orm-model@1.0.1
+  - @damatjs/orm-type@1.0.1
+  - @damatjs/services@1.0.1
+  - @damatjs/workflow-engine@1.0.1
+
 ## 1.0.0
 
 ### Major Changes

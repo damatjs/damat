@@ -1,5 +1,15 @@
 # @damatjs/provider-auth
 
+## 1.0.1
+
+### Patch Changes
+
+- bug fixes and small patches
+- Updated dependencies
+  - @damatjs/deps@1.0.1
+  - @damatjs/provider@1.0.1
+  - @damatjs/services@1.0.1
+
 ## 1.0.0
 
 ### Major Changes

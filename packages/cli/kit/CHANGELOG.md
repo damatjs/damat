@@ -1,5 +1,15 @@
 # @damatjs/cli-kit
 
+## 1.0.1
+
+### Patch Changes
+
+- bug fixes and small patches
+- Updated dependencies
+  - @damatjs/cli-support@1.0.1
+  - @damatjs/cli@1.0.1
+  - @damatjs/installer@1.0.1
+
 ## 1.0.0
 
 ### Major Changes

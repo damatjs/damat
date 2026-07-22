@@ -1,5 +1,11 @@
 # @damatjs/installer
 
+## 1.0.1
+
+### Patch Changes
+
+- bug fixes and small patches
+
 ## 1.0.0
 
 ### Major Changes

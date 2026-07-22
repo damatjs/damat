@@ -1,5 +1,26 @@
 # @damatjs/orm-cli
 
+## 1.0.1
+
+### Patch Changes
+
+- bug fixes and small patches
+- Updated dependencies
+  - @damatjs/cli@1.0.1
+  - @damatjs/durability@1.0.1
+  - @damatjs/events@1.0.1
+  - @damatjs/jobs@1.0.1
+  - @damatjs/logger@1.0.1
+  - @damatjs/pipelines@1.0.1
+  - @damatjs/schema-codegen@1.0.1
+  - @damatjs/deps@1.0.1
+  - @damatjs/installer@1.0.1
+  - @damatjs/link@1.0.1
+  - @damatjs/orm-migration@1.0.1
+  - @damatjs/orm-model@1.0.1
+  - @damatjs/orm-processor@1.0.1
+  - @damatjs/orm-type@1.0.1
+
 ## 1.0.0
 
 ### Major Changes

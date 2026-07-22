@@ -1,5 +1,16 @@
 # @damatjs/orm-processor
 
+## 1.0.1
+
+### Patch Changes
+
+- bug fixes and small patches
+- Updated dependencies
+  - @damatjs/types@1.0.1
+  - @damatjs/deps@1.0.1
+  - @damatjs/orm-model@1.0.1
+  - @damatjs/orm-type@1.0.1
+
 ## 1.0.0
 
 ### Major Changes

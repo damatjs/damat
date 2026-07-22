@@ -1,5 +1,13 @@
 # @damatjs/schema-codegen
 
+## 1.0.1
+
+### Patch Changes
+
+- bug fixes and small patches
+- Updated dependencies
+  - @damatjs/orm-type@1.0.1
+
 ## 1.0.0
 
 ### Major Changes

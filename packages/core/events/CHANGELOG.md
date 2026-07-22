@@ -1,5 +1,16 @@
 # @damatjs/events
 
+## 1.0.1
+
+### Patch Changes
+
+- bug fixes and small patches
+- Updated dependencies
+  - @damatjs/durability@1.0.1
+  - @damatjs/logger@1.0.1
+  - @damatjs/redis@1.0.1
+  - @damatjs/deps@1.0.1
+
 ## 1.0.0
 
 ### Major Changes
