@@ -41,20 +41,6 @@ export function scaffoldModule(
     "tests/contract.test.ts": contractTestTemplate(name),
     "AGENTS.md": AGENTS_GUIDE,
   };
-  for (const directory of [
-    "src/models",
-    "src/migrations",
-    "src/workflows",
-    "src/jobs",
-    "src/events",
-    "src/pipelines",
-    "src/links",
-    "src/types",
-    "src/api/routes",
-    "tests",
-  ]) {
-    mkdirSync(join(targetDir, directory), { recursive: true });
-  }
   for (const [relative, content] of Object.entries(files)) {
     const path = join(targetDir, relative);
     mkdirSync(join(path, ".."), { recursive: true });

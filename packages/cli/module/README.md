@@ -23,10 +23,24 @@ to bind after registering the installed module.
 The package also owns module init/dev/build/validation, migrations, codegen,
 and the embedded authoring guide.
 
+A fresh scaffold declares only the `module` and `tests` capabilities it
+actually contains. Model, migration, route, workflow, job, event, pipeline,
+link, and generated type paths are added only when those artifacts exist, so a
+new package can be planned, loaded, and started immediately.
+
 `module init` accepts or interactively collects PostgreSQL credentials, writes
 both `.env.example` and ignored `.env`, installs dependencies, creates the
 module development database, and applies that module's migrations. Its
 `database:setup` command is intentionally module-scoped: a backend remains the
 owner of shared durability, jobs, durable-event, and pipeline catalogs.
+
+`module dev` owns development preflight and lifecycle. It loads the environment
+and normalized capability plan, rejects an occupied fixed port before creating
+the watcher or database pool, creates a missing database only for a
+database-backed module, and then starts the watched standalone runtime. The
+child prints readiness directly after listening, including the `/api` mount and
+Ctrl-C guidance, and reports the actual port selected by `--port 0`. On a source
+change, the CLI asks the current child to shut down, awaits worker and resource
+cleanup, and only then starts its replacement.
 
 See [internals](./docs/README.md) and the [manifest contract](../../../MODULES.md).

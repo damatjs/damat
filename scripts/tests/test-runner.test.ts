@@ -23,6 +23,7 @@ test("type checks build dependency declarations without task races", async () =>
 });
 
 const databasePackages = [
+  ["packages/cli/damat", "DAMAT_CLI_DATABASE_URL"],
   ["packages/core/durability", "DAMAT_DURABILITY_DATABASE_URL"],
   ["packages/core/jobs", "DAMAT_JOBS_DATABASE_URL"],
   ["packages/core/events", "DAMAT_EVENTS_DATABASE_URL"],

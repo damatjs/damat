@@ -17,10 +17,20 @@ TypeScript aliases, environment, barrels, and call sites user-owned.
 Module and auth scaffolds omit redundant entry metadata. Standard
 `src/index.ts` or sibling `index.ts` entries are discovered by
 `@damatjs/module`; custom layouts declare an explicit override.
+Fresh module profiles expose only the implemented `module` and `tests`
+capabilities. Optional paths are not represented by empty placeholder folders.
 
 `scripts/embedAgents.ts` embeds the scaffold guide before build.
 
 `init/` uses the shared PostgreSQL selection contract, then installs and invokes
-`damat module database:setup`. The scaffold's dev script repeats that idempotent
-preflight. `databaseSetup.ts` creates the selected database and delegates only
-to `migration:run`; it never applies backend-owned system catalogs.
+`damat module database:setup`. Generated `package.json` uses
+`"dev": "damat module dev"`. The dev command resolves capabilities and probes
+the port before creating `.damat` or starting its watcher; database-backed
+modules get database creation followed by one runtime-owned migration pass.
+Service-only modules skip PostgreSQL. The CLI supervises a plain Bun child,
+gracefully stops it before each reload, forwards SIGINT/SIGTERM, and keeps child
+readiness independent of the application logger.
+
+`databaseSetup.ts` remains an explicit module-only command: it creates the
+selected database and delegates to `migration:run`. Installed backends still
+own system catalogs and operational policy.

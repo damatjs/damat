@@ -44,7 +44,7 @@
   "scripts": {
     "build": "rm -rf tsconfig.tsbuildinfo dist && bun scripts/embedVersion.ts && tsc && chmod +x dist/cli.js",
     "check-types": "tsc --noEmit",
-    "test": "bun test",
+    "test": "bun ../../../scripts/test/package.ts DAMAT_CLI_DATABASE_URL",
     "dev": "bun run build --watch",
     "postinstall": "chmod +x dist/cli.js || true",
     "prepublishOnly": "test -f dist/cli.js || (echo 'Error: dist/cli.js is missing. Run bun run build first.' && exit 1)",

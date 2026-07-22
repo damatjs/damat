@@ -43,11 +43,16 @@ bun run migration:create   # diff models -> SQL migration
 bun run migration:run      # apply this module's migrations to DATABASE_URL
 bun run migration:status   # show applied vs pending migrations
 bun run codegen            # types + zod + registry + CRUD scaffold
-bun run dev                # repeats DB setup, then runs its server + /health
+bun run dev                # capability preflight, one migration pass, server/workers
 bun test                   # contract test always; service/api tests when DATABASE_URL is set
 bun run build              # type-check + contract validate — the release gate
 bun run validate           # resolve every manifest readiness warning
 \`\`\`
+
+\`bun run dev\` prints the bound URL and \`/api\` mount after the server is ready,
+even with \`LOG_LEVEL=fatal\`. A fixed-port collision fails before the watcher or
+database starts; use \`damat module dev --port 0\` for an ephemeral port. Source
+reloads await the current server and workers stopping before restarting.
 
 ## Stay portable
 

@@ -12,17 +12,15 @@ import {
   expect,
   createContext,
 } from "./context";
+import { getModuleDevCommand } from "./devContext";
 
 describe("module dev command", () => {
-  const get = async () =>
-    (await import("../../commands/module/dev")).moduleDevCommand;
-
   it("skips mkdir when .damat exists and omits PORT when no --port", async () => {
     fsState.existsMap = {
       "/m/.damat": true,
       "/m/.damat/module-dev-entry.ts": false,
     };
-    const cmd = await get();
+    const cmd = await getModuleDevCommand();
     const { ctx } = createContext({}, { cwd: "/m" });
     const res = await cmd.handler(ctx);
     expect(res.exitCode).toBe(0);

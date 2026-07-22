@@ -23,10 +23,11 @@ import {
 } from "./fsMocks";
 import { loadEnvCalls, mockLoadEnv } from "./env";
 import { mockSpawnSync, spawnSyncCalls } from "./process";
-import { spawnCalls } from "./spawn";
+import { resetSpawnHandler, spawnCalls } from "./spawn";
 import { resetSetup, state } from "./state";
 
 export function resetMocks(): void {
+  resetSpawnHandler();
   for (const calls of [
     spawnCalls,
     writeCalls,

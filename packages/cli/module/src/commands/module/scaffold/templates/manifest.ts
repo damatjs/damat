@@ -1,6 +1,7 @@
 import { moduleCapabilities, moduleInstructions } from "../../profile";
 
 export function manifestTemplate(name: string): string {
+  const capabilities = moduleCapabilities("src/");
   return `${JSON.stringify(
     {
       $schema: "https://damat.dev/schemas/damat-v1.json",
@@ -12,22 +13,16 @@ export function manifestTemplate(name: string): string {
         modes: ["source", "package"],
         default: "source",
         packageBackends: ["node", "damat"],
-        provides: moduleCapabilities("src/"),
+        provides: {
+          module: capabilities.module,
+          tests: capabilities.tests,
+        },
         usageHints: [{ token: name }],
         instructions: moduleInstructions(name),
       },
       module: {
         description: `${name} module`,
-        models: "./src/models",
-        migrations: "./src/migrations",
-        routes: "./src/api/routes",
-        workflows: "./src/workflows",
-        jobs: "./src/jobs",
-        events: "./src/events",
-        pipelines: "./src/pipelines",
-        links: "./src/links",
         tests: "./tests",
-        types: "./src/types",
         env: [],
         registry: { namespace: "", license: "MIT", keywords: [] },
       },

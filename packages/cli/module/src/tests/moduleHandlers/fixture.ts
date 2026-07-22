@@ -1,6 +1,7 @@
 import { mock } from "bun:test";
 import * as realModule from "@damatjs/module";
 import { resetMocks } from "../setup";
+import { devFixture, resetDevFixture } from "./devFixture";
 
 export const mm = {
   generateResult: {
@@ -29,12 +30,7 @@ export const mm = {
   } as Record<string, unknown>,
   parseRef: null as { name: string } | null,
   registryRecord: null as Record<string, unknown> | null,
-  verification: { allowed: true, status: "verified", message: "" } as {
-    allowed: boolean;
-    status: string;
-    message?: string;
-  },
-  calls: [] as string[],
+  ...devFixture,
 };
 
 export function resetHandlerFixture(): void {
@@ -62,8 +58,7 @@ export function resetHandlerFixture(): void {
   };
   mm.parseRef = null;
   mm.registryRecord = null;
-  mm.verification = { allowed: true, status: "verified", message: "" };
-  mm.calls = [];
+  resetDevFixture(mm);
 }
 
 mock.module("@damatjs/module", () => ({
@@ -89,4 +84,16 @@ mock.module("@damatjs/module", () => ({
   parseModuleRef: () => mm.parseRef,
   formatModuleRef: (ref: { name: string }) => ref.name,
   resolveRegistryEntry: async () => mm.registryRecord,
+  resolveModuleRuntimePlan: async () => {
+    mm.calls.push("runtime-plan");
+    return mm.runtimePlan;
+  },
+  assertServerPortAvailable: async () => {
+    mm.calls.push("port-check");
+    if (mm.portError) throw mm.portError;
+  },
+  assertModuleDatabaseConfigured: () => {
+    mm.calls.push("database-check");
+    if (mm.databaseError) throw mm.databaseError;
+  },
 }));

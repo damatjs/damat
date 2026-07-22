@@ -11,7 +11,7 @@ application composes or operates those capabilities.
 - Use strict TypeScript and ESM.
 - Keep every code file at 100 physical lines or fewer.
 - Read `damat.json` before changing package layout or capabilities.
-- Run `bun run database:setup` before database-backed development.
+- Use `bun run dev` for capability-aware database preflight and local workers.
 
 The generated `.env` contains the selected development `DATABASE_URL`.
 Module initialization either accepts a complete URL or asks for host, port,
@@ -26,16 +26,20 @@ bun run migration:create # generate the next migration from model changes
 bun run migration:run    # apply this module's pending migrations
 bun run migration:status
 bun run codegen           # rows, zod, registry, and missing CRUD slices
-bun run dev               # database preflight + standalone HTTP runtime
+bun run dev               # DB/catalog preflight + standalone HTTP/workers
 bun run validate          # manifest and publishing readiness
 bun run typecheck
 bun run build             # typecheck + validate
 bun test
 ```
 
-Standalone database setup never applies the assembled backend's shared
-durability, jobs, durable-event, or pipeline catalogs. The backend owner applies
-those after installation.
+The explicit `database:setup` and migration commands apply only this module's
+migrations. `bun run dev` additionally installs the system catalogs required by
+declared durable capabilities and starts local workers with development
+defaults. After installation, the backend owner chooses migrations, workers,
+queues, concurrency, Redis, retention, and operations.
+During source reload, the development watcher awaits HTTP and worker shutdown
+before starting the next runtime.
 
 ## The blade rule
 
@@ -81,6 +85,9 @@ deployment belong to the backend owner.
 
 Optional directories need not contain placeholder code. Keep `damat.json`
 capability paths synchronized with what the package actually provides.
+A fresh scaffold declares only `module` and `tests`; add models, migrations,
+routes, workflows, jobs, events, pipelines, links, and types to the manifest
+only when their real files exist.
 
 ## Codegen-first flow
 
@@ -258,9 +265,16 @@ await withModule(module, { moduleDir }, async ({ service }) => {
 });
 ```
 
-The harness applies this module's migrations and owns its pool lifecycle. Test
-one module per process. Test durable definition/graph validity locally and host
-runtime wiring in an assembled backend integration.
+The harness applies the manifest-declared migration path and the local catalogs
+required by declared durable capabilities. An unsuccessful migration rejects
+boot and clears the connection and shared pool state; `migrate: false` skips the
+whole migration preflight. Test one module per process.
+
+A durable event definition with no local consumer is a valid producer-only
+module: standalone development starts its router without an empty worker.
+Missing or unauthorized Redis degrades wakeups to PostgreSQL polling and keeps
+ephemeral events local; it must not abort module startup. Test host runtime
+policy separately in an assembled backend integration.
 
 ## Validate and share
 

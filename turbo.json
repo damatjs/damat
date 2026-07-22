@@ -34,6 +34,7 @@
       "outputs": [],
       "env": [
         "DATABASE_URL",
+        "DAMAT_CLI_DATABASE_URL",
         "REDIS_URL",
         "DAMAT_DURABILITY_DATABASE_URL",
         "DAMAT_JOBS_DATABASE_URL",
