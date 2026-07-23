@@ -38,7 +38,8 @@ damat --verbose module dev
 damat module dev --verbose
 ```
 
-Both forms pass verbose mode to module command error handling and print the
-underlying stack. Without the flag, failures retain the concise retry hint.
+Both forms pass verbose mode to module command error handling and print one
+handled-error summary followed by the underlying stack. Without the flag,
+failures retain the concise retry hint.
 
 See [composer internals](./docs/README.md) and the [Damat guide](../../../docs/GUIDE.md).

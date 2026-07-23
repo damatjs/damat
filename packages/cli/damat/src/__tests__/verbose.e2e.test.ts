@@ -26,10 +26,14 @@ describe("Damat global verbose option", () => {
     ["after commands", ["module", "dev", "--verbose"]],
   ])("shows module failure stacks %s", async (_label, args) => {
     const result = await invoke(args);
+    const summary = "Module development preflight failed:";
+    const detail = "No damat.json or module.json found";
     expect(result.code).toBe(1);
     expect(result.output).toContain("Verbose mode enabled");
     expect(result.output).toContain("at locateModuleDir");
     expect(result.output).not.toContain("Unknown command");
+    expect(result.output.match(new RegExp(summary, "g"))).toHaveLength(1);
+    expect(result.output.match(new RegExp(detail, "g"))).toHaveLength(2);
   });
 
   test("keeps stacks hidden without verbose", async () => {

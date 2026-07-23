@@ -68,11 +68,16 @@ export class Colorizer {
     message: string;
     stack: string | undefined;
   }): string {
+    const heading = `${error.name}: ${error.message}`;
+    if (error.stack) {
+      const stack = error.stack.startsWith(heading)
+        ? error.stack
+        : `${heading}\n${error.stack}`;
+      return `\n${this.dim(stack)}`;
+    }
     const name = this.colorize(error.name, COLORS.red + COLORS.bold);
     const message = this.colorize(error.message, COLORS.red);
-    let output = `\n${name}: ${message}`;
-    if (error.stack) output += `\n${this.dim(error.stack)}`;
-    return output;
+    return `\n${name}: ${message}`;
   }
 
   prefix(prefix: string): string {

@@ -33,6 +33,8 @@ Use it when you want:
 
 - A consistent structured logger across all Damat packages, with `context` objects and
   error capture (name/message/stack).
+- Error stacks in pretty output are rendered once; the stack's own first line
+  supplies the error name and message.
 - Pretty colorized output in development and machine-readable `json` in production
   (switch with one config field).
 - Per-request or per-module loggers via `child(context)` / `withPrefix(name)` that

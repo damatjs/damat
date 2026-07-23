@@ -60,9 +60,9 @@ Color is enabled when `config.colors` is truthy **and** `supportsColor()` return
 
 Styling helpers: `bold`, `dim`, `timestamp` (dim), `level` (badge + padded label in the
 level color), `message` (red for error/fatal, yellow for warn, green for success, dim for
-skip, cyan for cached, plain otherwise), `context` (dim JSON), `errorInfo` (red name +
-message, dimmed stack), `prefix` (magenta `[name]`). When disabled, every helper returns
-the text unchanged.
+skip, cyan for cached, plain otherwise), `context` (dim JSON), `errorInfo`
+(dimmed stack, or a red name/message when no stack exists), `prefix` (magenta
+`[name]`). When disabled, every helper returns the text unchanged.
 
 ## `Formatter`
 
@@ -84,6 +84,10 @@ Returns a local timestamp string `YYYY-MM-DD HH:MM:SS.mmm` (zero-padded). Called
   `timestamp` (if any) · `level` (colorized badge+label) · `prefix` (if any) ·
   `message` (colorized by level) · `context` (dim JSON, only if non-empty), then appends
   the colorized `errorInfo` block on its own lines if an error is present.
+
+When a normalized error includes a stack, `errorInfo` prints that stack directly
+because its first line already contains the error name and message. This avoids
+duplicating the same summary immediately before the stack.
 
 > `simple` is not special-cased in `formatEntry()` — only `json` branches; every
 > non-`json` format (including `simple`) takes the `pretty` path. If you want `simple` to
