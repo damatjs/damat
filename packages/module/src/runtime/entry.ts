@@ -11,7 +11,7 @@ interface ModuleEntryDependencies {
   notifyStopping: () => void;
 }
 
-export const MODULE_ENTRY_STOPPING_MESSAGE = "damat:module-entry-stopping";
+const MODULE_ENTRY_STOPPING_MESSAGE = "damat:module-entry-stopping";
 
 const defaultDependencies: ModuleEntryDependencies = {
   start: startModuleApp,

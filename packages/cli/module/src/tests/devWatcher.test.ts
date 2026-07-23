@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { MODULE_ENTRY_STOPPING_MESSAGE } from "@damatjs/module";
-import { spawnModuleDevChild } from "../commands/module/devWatcherChild";
+import {
+  MODULE_DEV_CHILD_STOPPING_MESSAGE,
+  spawnModuleDevChild,
+} from "../commands/module/devWatcherChild";
 import { watcherFixture } from "./devWatcherFixture";
 
 describe("module development watcher", () => {
@@ -84,7 +86,7 @@ describe("module development watcher", () => {
     expect(calls[0]).toHaveProperty("ipc", expect.any(Function));
     expect(calls[1]).toHaveProperty("env.PORT", "0");
     const ipc = (calls[0] as { ipc: (message: unknown) => void }).ipc;
-    ipc(MODULE_ENTRY_STOPPING_MESSAGE);
+    ipc(MODULE_DEV_CHILD_STOPPING_MESSAGE);
     await expect(child.shutdownStarted).resolves.toBeUndefined();
   });
 });

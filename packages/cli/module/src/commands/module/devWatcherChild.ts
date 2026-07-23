@@ -1,5 +1,7 @@
 import { spawn } from "bun";
-import { MODULE_ENTRY_STOPPING_MESSAGE } from "@damatjs/module";
+
+export const MODULE_DEV_CHILD_STOPPING_MESSAGE =
+  "damat:module-entry-stopping";
 
 export interface ModuleDevChild {
   exited: Promise<number>;
@@ -27,7 +29,7 @@ export function spawnModuleDevChild(
     stdout: "inherit",
     stderr: "inherit",
     ipc: (message) => {
-      if (message === MODULE_ENTRY_STOPPING_MESSAGE) acknowledge();
+      if (message === MODULE_DEV_CHILD_STOPPING_MESSAGE) acknowledge();
     },
     env: {
       ...process.env,
