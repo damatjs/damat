@@ -4,7 +4,7 @@ const servers = [
   ["web", 3020],
   ["docs", 3030],
   ["registry", 3031],
-] as const;
+];
 
 export default defineConfig({
   testDir: "./e2e",

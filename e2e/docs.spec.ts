@@ -3,10 +3,7 @@ import { expect, test } from "@playwright/test";
 import { assertAccessible, assertDocument, assertMetadata } from "./support";
 
 const base = "http://127.0.0.1:3030";
-interface GuideMap {
-  guide: Array<{ chapters: Array<{ slug: string; title: string }> }>;
-}
-const guide = JSON.parse(readFileSync("docs/guide.json", "utf8")) as GuideMap;
+const guide = JSON.parse(readFileSync("docs/guide.json", "utf8"));
 const chapters = guide.guide.flatMap((section) => section.chapters);
 
 test.describe("documentation site", () => {

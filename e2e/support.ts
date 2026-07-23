@@ -1,8 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type APIRequestContext, type Page } from "@playwright/test";
+import { expect } from "@playwright/test";
 
-export async function assertDocument(page: Page, url: string): Promise<void> {
-  const errors: string[] = [];
+export async function assertDocument(page, url) {
+  const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
@@ -19,7 +19,7 @@ export async function assertDocument(page: Page, url: string): Promise<void> {
   await expect(page.locator("h1")).toHaveCount(1);
   expect(await page.title()).not.toBe("");
   const facts = await page.evaluate(() => {
-    const ids = [...document.querySelectorAll<HTMLElement>("[id]")].map(
+    const ids = [...document.querySelectorAll("[id]")].map(
       (element) => element.id,
     );
     const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
@@ -53,7 +53,7 @@ export async function assertDocument(page: Page, url: string): Promise<void> {
   expect(errors, `Browser errors for ${url}`).toEqual([]);
 }
 
-export async function assertAccessible(page: Page): Promise<void> {
+export async function assertAccessible(page) {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.evaluate(() => new Promise(requestAnimationFrame));
   const results = await new AxeBuilder({ page })
@@ -68,10 +68,10 @@ export async function assertAccessible(page: Page): Promise<void> {
 }
 
 export async function assertMetadata(
-  request: APIRequestContext,
-  base: string,
+  request,
+  base,
   ogPath = "/og?title=Browser%20audit",
-): Promise<void> {
+) {
   const [robots, sitemap, og] = await Promise.all([
     request.get(`${base}/robots.txt`),
     request.get(`${base}/sitemap.xml`),
