@@ -249,8 +249,9 @@ synchronized.
 - Startup/lifecycle changes require a real CLI subprocess regression: suppress
   app logs, wait for readiness, call health/capabilities, test a port collision,
   write Ctrl-C through a controlling PTY, assert worker stop records, and prove
-  port reuse. A parent-only `child.kill("SIGINT")`, unit mocks, and line
-  coverage do not prove foreground process-group behavior.
+  port reuse. Include repeated signals and the outer `bun run` SIGHUP path. A
+  parent-only `child.kill("SIGINT")`, unit mocks, and line coverage do not prove
+  foreground process-group behavior.
 - Run affected package tests with coverage, then repository build, lint, changed
   line-limit check, and the canonical root test runner.
 

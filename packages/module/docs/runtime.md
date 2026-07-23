@@ -74,12 +74,14 @@ listening:
 ```
 
 This output does not use the application logger, so it remains visible with
-`LOG_LEVEL=fatal`. SIGINT and SIGTERM share one idempotent stop promise.
+`LOG_LEVEL=fatal`. SIGINT, SIGTERM, and SIGHUP share one idempotent stop promise.
 The child notifies its supervising watcher as soon as that promise starts.
 When a terminal sends Ctrl-C to the whole foreground process group, the
 watcher therefore avoids sending the child a second SIGINT during asynchronous
-worker cleanup. A signal delivered only to the parent is still forwarded after
-a short acknowledgement window.
+worker cleanup. Parent-only shutdown requests use IPC and reserve an
+operating-system signal for an unacknowledged fallback. Persistent child
+handlers also absorb repeated interrupts and the SIGHUP emitted when an outer
+`bun run` terminal layer exits.
 The development watcher sends SIGTERM and awaits that promise before launching
 the next runtime, preventing duplicate worker registrations across reloads.
 

@@ -7,7 +7,8 @@
 The executable composes the updated `@damatjs/cli-module`: `damat module dev`
 now fails occupied ports before watcher/database startup, performs one
 capability-aware migration path, prints unconditional readiness, reports port 0,
-and forwards shutdown signals.
+and coordinates shutdown through an acknowledged IPC request with a bounded
+signal fallback.
 Reloads are serialized through graceful child shutdown rather than Bun's hard
 process restart, so worker registrations do not accumulate.
 Foreground-terminal shutdown coordinates parent and child signal handling so
@@ -32,6 +33,8 @@ the optional `pg-cloudflare` transport external during config bundling.
 - A controlling-PTY regression verifies interactive Ctrl-C worker timestamps
   and port reuse; module failure regressions cover both global verbose
   placements and concise non-verbose output.
+- Outer `bun run` terminal hangup reuses the in-progress module stop instead of
+  terminating worker cleanup.
 
 ## Breaking
 

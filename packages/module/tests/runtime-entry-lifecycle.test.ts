@@ -1,7 +1,6 @@
 import { describe, expect, mock, test } from "bun:test";
 import type { RunningModuleApp } from "../src";
 import { ModulePortInUseError, runModuleEntry } from "../src";
-
 function running(stop = mock(async () => {})): RunningModuleApp {
   return {
     app: {} as never,
@@ -15,19 +14,20 @@ function running(stop = mock(async () => {})): RunningModuleApp {
     stop,
   };
 }
-
 describe("runModuleEntry lifecycle", () => {
   test("prints readiness and stops once when signaled", async () => {
     const lines: string[] = [];
     const exits: number[] = [];
     const notices: string[] = [];
     const signals = new Map<NodeJS.Signals, () => void>();
+    let requestStop = (_message: unknown) => {};
     const stop = mock(async () => {});
     await runModuleEntry({
       start: async () => running(stop),
       log: (line) => lines.push(line),
       exit: (code) => void exits.push(code),
-      once: (signal, listener) => void signals.set(signal, listener),
+      on: (signal, listener) => void signals.set(signal, listener),
+      onMessage: (listener) => void (requestStop = listener),
       notifyStopping: () => void notices.push("stopping"),
     });
     expect(lines).toEqual([
@@ -36,13 +36,15 @@ describe("runModuleEntry lifecycle", () => {
       "  Press Ctrl-C to stop",
     ]);
     signals.get("SIGINT")!();
+    signals.get("SIGINT")!();
     signals.get("SIGTERM")!();
+    signals.get("SIGHUP")!();
+    requestStop("damat:module-entry-stop");
     await Bun.sleep(0);
     expect(stop).toHaveBeenCalledTimes(1);
     expect(notices).toEqual(["stopping"]);
     expect(exits).toEqual([0]);
   });
-
   test("reports port collisions without the generic startup message", async () => {
     const errors: unknown[][] = [];
     const exits: number[] = [];
@@ -57,7 +59,6 @@ describe("runModuleEntry lifecycle", () => {
     ]);
     expect(exits).toEqual([1]);
   });
-
   test("reports shutdown failures", async () => {
     const errors: unknown[][] = [];
     const exits: number[] = [];
@@ -66,17 +67,17 @@ describe("runModuleEntry lifecycle", () => {
       start: async () => running(mock(async () => Promise.reject("stop"))),
       error: (...values) => void errors.push(values),
       exit: (code) => void exits.push(code),
-      once: (_name, listener) => void (signal = listener),
+      on: (_name, listener) => void (signal = listener),
     });
     signal();
     await Bun.sleep(0);
     expect(errors[0]?.[0]).toBe("Failed to stop module:");
     expect(exits).toEqual([1]);
   });
-
   test("registers the default process signal handlers", async () => {
     const beforeInterrupt = new Set(process.listeners("SIGINT"));
     const beforeTerminate = new Set(process.listeners("SIGTERM"));
+    const beforeHangup = new Set(process.listeners("SIGHUP"));
     await runModuleEntry({
       start: async () => running(),
       log: () => {},
@@ -90,6 +91,10 @@ describe("runModuleEntry lifecycle", () => {
     for (const listener of process.listeners("SIGTERM")) {
       if (beforeTerminate.has(listener)) continue;
       process.off("SIGTERM", listener);
+    }
+    for (const listener of process.listeners("SIGHUP")) {
+      if (beforeHangup.has(listener)) continue;
+      process.off("SIGHUP", listener);
     }
   });
 });

@@ -21,18 +21,18 @@ function forwardSignals(child: ModuleDevWatcher): () => void {
   };
   const interrupt = () => forward("SIGINT");
   const terminate = () => forward("SIGTERM");
-  process.once("SIGINT", interrupt);
-  process.once("SIGTERM", terminate);
+  const hangup = () => forward("SIGHUP");
+  process.on("SIGINT", interrupt);
+  process.on("SIGTERM", terminate);
+  process.on("SIGHUP", hangup);
   return () => {
     process.off("SIGINT", interrupt);
     process.off("SIGTERM", terminate);
+    process.off("SIGHUP", hangup);
   };
 }
 
-function reportPreflightError(
-  ctx: CommandContext,
-  error: unknown,
-) {
+function reportPreflightError(ctx: CommandContext, error: unknown) {
   if (error instanceof ModulePortInUseError) {
     ctx.logger.error(error.message);
     ctx.logger.error("Use: damat module dev --port <port>");

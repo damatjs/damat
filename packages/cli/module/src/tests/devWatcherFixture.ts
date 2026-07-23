@@ -7,6 +7,7 @@ interface ControlledChild {
   acknowledge(): void;
   finish(code: number): void;
   kill: ReturnType<typeof mock>;
+  send: ReturnType<typeof mock>;
 }
 
 function child(): ControlledChild {
@@ -18,6 +19,7 @@ function child(): ControlledChild {
     acknowledge,
     finish,
     kill: mock(() => {}),
+    send: mock(() => {}),
   };
 }
 

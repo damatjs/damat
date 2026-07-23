@@ -71,6 +71,7 @@ describe("module dev preflight and signals", () => {
     });
     const beforeInterrupt = new Set(process.listeners("SIGINT"));
     const beforeTerminate = new Set(process.listeners("SIGTERM"));
+    const beforeHangup = new Set(process.listeners("SIGHUP"));
     const { ctx } = createContext({}, { cwd: "/m" });
     const pending = (await getModuleDevCommand()).handler(ctx);
     await Bun.sleep(0);
@@ -80,13 +81,19 @@ describe("module dev preflight and signals", () => {
     const terminate = process
       .listeners("SIGTERM")
       .find((item) => !beforeTerminate.has(item));
+    const hangup = process
+      .listeners("SIGHUP")
+      .find((item) => !beforeHangup.has(item));
     expect(listener).toBeDefined();
     listener!();
+    listener!();
     terminate!();
+    hangup!();
     expect(kill).toHaveBeenCalledWith("SIGINT");
     expect(kill).toHaveBeenCalledTimes(1);
     finish(0);
     expect((await pending).exitCode).toBe(0);
     expect(process.listeners("SIGINT")).not.toContain(listener!);
+    expect(process.listeners("SIGHUP")).not.toContain(hangup!);
   });
 });

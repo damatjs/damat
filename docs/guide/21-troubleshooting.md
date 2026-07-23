@@ -31,7 +31,9 @@ If active worker rows increase after a source reload, upgrade the CLI; the
 watcher must await the old runtime's shutdown before starting its replacement.
 If interactive Ctrl-C leaves active worker rows, verify the CLI includes the
 foreground-process-group acknowledgement fix; parent-only signal tests do not
-exercise the duplicate-SIGINT race.
+exercise the duplicate-SIGINT race. The module runtime must also keep its
+idempotent handlers active for repeated interrupts and the terminal SIGHUP that
+can follow when an outer `bun run` process exits.
 
 For startup details, either `damat --verbose module dev` or
 `damat module dev --verbose` prints the full underlying stack.

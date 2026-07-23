@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  MODULE_DEV_CHILD_STOP_MESSAGE,
   MODULE_DEV_CHILD_STOPPING_MESSAGE,
   spawnModuleDevChild,
 } from "../commands/module/devWatcherChild";
@@ -20,7 +21,10 @@ describe("module development watcher", () => {
     await Bun.sleep(0);
     expect(fixture.children).toHaveLength(2);
     watcher.kill("SIGINT");
-    await Bun.sleep(110);
+    expect(fixture.children[1]!.send).toHaveBeenCalledWith(
+      MODULE_DEV_CHILD_STOP_MESSAGE,
+    );
+    await Bun.sleep(510);
     expect(fixture.children[1]!.kill).toHaveBeenCalledWith("SIGINT");
     fixture.children[1]!.finish(0);
     expect(await watcher.exited).toBe(0);
@@ -40,8 +44,11 @@ describe("module development watcher", () => {
     const fixture = watcherFixture();
     const watcher = fixture.start();
     watcher.kill("SIGINT");
+    expect(fixture.children[0]!.send).toHaveBeenCalledWith(
+      MODULE_DEV_CHILD_STOP_MESSAGE,
+    );
     fixture.children[0]!.acknowledge();
-    await Bun.sleep(110);
+    await Bun.sleep(510);
     expect(fixture.children[0]!.kill).not.toHaveBeenCalled();
     fixture.children[0]!.finish(0);
     expect(await watcher.exited).toBe(0);

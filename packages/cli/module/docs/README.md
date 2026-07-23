@@ -30,8 +30,8 @@ modules get database creation followed by one runtime-owned migration pass.
 Service-only modules skip PostgreSQL. The CLI supervises a plain Bun child,
 gracefully stops it before each reload, and keeps child readiness independent
 of the application logger. On foreground-terminal Ctrl-C, the child
-acknowledges its own shutdown before the parent decides whether signal
-forwarding is needed; parent-only signals still use a bounded forwarding
+acknowledges its own shutdown while the parent requests the same stop over IPC.
+The parent sends an operating-system signal only as a bounded unacknowledged
 fallback.
 
 Module command adapters pass the global verbose state into their handled-error

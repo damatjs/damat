@@ -27,6 +27,8 @@ written directly to the terminal and shutdown is ordered and idempotent.
 - Partial startup failures close all initialized resources.
 - Foreground-terminal shutdown acknowledges its idempotent stop before the
   watcher can forward a duplicate SIGINT.
+- Repeated interrupts and terminal SIGHUP cannot terminate worker cleanup
+  midway through an outer `bun run dev` shutdown.
 
 ## Breaking
 

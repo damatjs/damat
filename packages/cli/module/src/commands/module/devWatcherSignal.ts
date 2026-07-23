@@ -1,6 +1,9 @@
-import type { ModuleDevChild } from "./devWatcherChild";
+import {
+  MODULE_DEV_CHILD_STOP_MESSAGE,
+  type ModuleDevChild,
+} from "./devWatcherChild";
 
-const SIGNAL_FALLBACK_MS = 100;
+const SIGNAL_FALLBACK_MS = 500;
 
 export function forwardSignalUnlessHandled(
   child: ModuleDevChild,
@@ -8,6 +11,9 @@ export function forwardSignalUnlessHandled(
 ): void {
   const timer = setTimeout(() => child.kill(signal), SIGNAL_FALLBACK_MS);
   const cancel = () => clearTimeout(timer);
+  try {
+    child.send(MODULE_DEV_CHILD_STOP_MESSAGE);
+  } catch {}
   void child.shutdownStarted.then(cancel);
   void child.exited.then(cancel);
 }

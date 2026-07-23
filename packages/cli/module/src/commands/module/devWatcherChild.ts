@@ -1,12 +1,13 @@
 import { spawn } from "bun";
 
-export const MODULE_DEV_CHILD_STOPPING_MESSAGE =
-  "damat:module-entry-stopping";
+export const MODULE_DEV_CHILD_STOPPING_MESSAGE = "damat:module-entry-stopping";
+export const MODULE_DEV_CHILD_STOP_MESSAGE = "damat:module-entry-stop";
 
 export interface ModuleDevChild {
   exited: Promise<number>;
   shutdownStarted: Promise<void>;
   kill(signal?: number | NodeJS.Signals): void;
+  send(message: unknown): void;
 }
 
 export interface ModuleDevWatcherOptions {

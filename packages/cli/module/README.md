@@ -43,8 +43,9 @@ Ctrl-C guidance, and reports the actual port selected by `--port 0`. On a source
 change, the CLI asks the current child to shut down, awaits worker and resource
 cleanup, and only then starts its replacement.
 Interactive Ctrl-C may reach the foreground parent and child together. The
-child acknowledges that it has begun its idempotent shutdown, so the watcher
-does not forward a duplicate signal that could interrupt worker cleanup.
+watcher requests graceful stop over IPC, and the child acknowledges its
+idempotent shutdown. An operating-system signal is reserved for an
+unacknowledged fallback, avoiding duplicate signals during worker cleanup.
 
 All module failures honor the composed CLI's global verbose mode. Both
 `damat --verbose module dev` and `damat module dev --verbose` include the

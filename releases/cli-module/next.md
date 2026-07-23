@@ -8,9 +8,10 @@ The command resolves environment and runtime capabilities before creating
 `.damat` or a watcher. Fixed-port collisions return an actionable nonzero error
 without a child process or database pool. Database-backed modules get database
 creation before the child starts; the runtime then owns the single migration
-pass. Parent-only SIGINT/SIGTERM is forwarded after a bounded acknowledgement
-window. When a terminal already signals the parent and child process group, the
-child acknowledgement suppresses duplicate forwarding during worker cleanup.
+pass. Parent-only SIGINT/SIGTERM requests graceful stop over IPC and reserves
+signal delivery for a bounded unacknowledged fallback. When a terminal already
+signals the parent and child process group, the child acknowledgement suppresses
+duplicate delivery during worker cleanup.
 It also supervises reloads itself, awaiting the old HTTP/workers/resource
 shutdown before launching the next child.
 
@@ -37,6 +38,8 @@ Generated packages now use:
   durable work, reload, collision preflight, Ctrl-C, and port reuse.
 - A controlling-PTY regression writes an actual Ctrl-C and verifies child exit,
   worker stop timestamps, and immediate port reuse.
+- Module children keep idempotent interrupt and SIGHUP handlers installed until
+  terminal-driven worker cleanup completes.
 - Global verbose state reaches handled startup, migration, codegen, validation,
   installation, and build failures in module commands.
 - Fresh scaffolds declare only their implemented `module` and `tests`

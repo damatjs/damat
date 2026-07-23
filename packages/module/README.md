@@ -78,8 +78,9 @@ ports are checked before database or module startup; pass `--port 0` for an
 ephemeral port. Source reloads stop the current HTTP server and workers before
 starting the next runtime, so durable worker registrations do not accumulate.
 Foreground Ctrl-C shutdown is acknowledged to the watcher before asynchronous
-cleanup, preventing a duplicate forwarded SIGINT from abandoning active worker
-records.
+cleanup. Repeated interrupts and the terminal SIGHUP produced as an outer
+`bun run` exits share that idempotent cleanup, so worker records are not
+abandoned midway through shutdown.
 
 The explicit `database:setup` and `migration:*` commands remain module-scoped.
 Installed modules supply durable definitions only; the assembled backend owns

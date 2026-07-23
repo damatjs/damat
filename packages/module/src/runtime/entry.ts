@@ -7,18 +7,23 @@ interface ModuleEntryDependencies {
   log: (message: string) => void;
   error: (...values: unknown[]) => void;
   exit: (code: number) => void;
-  once: (signal: NodeJS.Signals, listener: () => void) => void;
+  on: (signal: NodeJS.Signals, listener: () => void) => void;
+  onMessage: (listener: (message: unknown) => void) => void;
   notifyStopping: () => void;
 }
 
 const MODULE_ENTRY_STOPPING_MESSAGE = "damat:module-entry-stopping";
+const MODULE_ENTRY_STOP_MESSAGE = "damat:module-entry-stop";
 
 const defaultDependencies: ModuleEntryDependencies = {
   start: startModuleApp,
   log: (message) => console.log(message),
   error: (...values) => console.error(...values),
   exit: (code) => process.exit(code),
-  once: (signal, listener) => void process.once(signal, listener),
+  on: (signal, listener) => void process.on(signal, listener),
+  onMessage: (listener) => {
+    if (process.connected) process.on("message", listener);
+  },
   notifyStopping: () => {
     try {
       if (process.connected) process.send?.(MODULE_ENTRY_STOPPING_MESSAGE);
@@ -64,8 +69,12 @@ function installShutdown(
       });
     return stopping;
   };
-  dependencies.once("SIGINT", () => void stop());
-  dependencies.once("SIGTERM", () => void stop());
+  dependencies.on("SIGINT", () => void stop());
+  dependencies.on("SIGTERM", () => void stop());
+  dependencies.on("SIGHUP", () => void stop());
+  dependencies.onMessage((message) => {
+    if (message === MODULE_ENTRY_STOP_MESSAGE) void stop();
+  });
 }
 
 export async function runModuleEntry(
