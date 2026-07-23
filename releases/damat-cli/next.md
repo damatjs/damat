@@ -22,6 +22,8 @@ the optional `pg-cloudflare` transport external during config bundling.
   against isolated PostgreSQL and verifies the full process lifecycle.
 - App and module builds no longer use `bun x` or registry resolution.
 - Consumers no longer add `pg-cloudflare` merely to run application codegen.
+- Composed app build/dev/start commands resolve the active Bun process launcher
+  when invoked, eliminating CI import-order races in their command tests.
 
 ## Breaking
 

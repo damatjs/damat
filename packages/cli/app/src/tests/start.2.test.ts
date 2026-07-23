@@ -1,7 +1,5 @@
-// IMPORTANT: import the shared setup FIRST. Its module body installs the stable
-// Bun.spawn dispatcher + the node:fs / load-env mocks BEFORE any command source
-// is evaluated, so `../start` snapshots the dispatcher/mock (not the real ones).
-// See setup.ts for the full rationale.
+// Import setup first so filesystem/environment mocks exist before command
+// evaluation. Process spawning is resolved from Bun when each command runs.
 import {
   state,
   spawnCalls,

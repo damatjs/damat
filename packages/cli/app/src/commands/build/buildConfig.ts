@@ -1,4 +1,3 @@
-import { spawn } from "bun";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { CliLogger } from "@damatjs/cli";
@@ -12,7 +11,7 @@ export async function buildConfig(
   const configPath = join(cwd, "damat.config.ts");
   if (!existsSync(configPath)) return 0;
   logger.info("Building config file...");
-  const result = spawn({
+  const result = Bun.spawn({
     cmd: [
       "bun",
       "build",

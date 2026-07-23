@@ -1,4 +1,3 @@
-import { spawn } from "bun";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { CommandContext, CommandResult } from "@damatjs/cli";
@@ -42,7 +41,7 @@ export async function handleBuild(ctx: CommandContext): Promise<CommandResult> {
     "external",
   ];
   if (ctx.options.minify) args.push("--minify");
-  const build = spawn({
+  const build = Bun.spawn({
     cmd: args,
     cwd: ctx.cwd,
     stdout: "inherit",

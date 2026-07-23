@@ -1,4 +1,3 @@
-import { spawn } from "bun";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
 import type { Command } from "@damatjs/cli";
@@ -28,7 +27,7 @@ export const startCommand: Command = {
     const { loadEnv } = await import("@damatjs/load-env");
     loadEnv(process.env.NODE_ENV || "production", process.cwd());
 
-    const result = spawn({
+    const result = Bun.spawn({
       cmd: ["bun", "run", distPath],
       cwd: ctx.cwd,
       stdout: "inherit",

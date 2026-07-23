@@ -13,6 +13,8 @@ The package depends on CLI contracts and explicit support helpers. It does not
 import the Damat executable composer, module, kit, or codegen capabilities.
 Build type-checking runs `bun run tsc --noEmit` from the application directory,
 using its installed compiler without registry resolution.
+Build, config-build, dev, and start resolve `Bun.spawn` when the command runs,
+so embedders and tests can supply the active process launcher deterministically.
 
 The create scaffold writes an optional receiver `damat.json` whose accepts map
 defines the backend's module, route, workflow, job, event, pipeline, link,

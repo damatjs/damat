@@ -8,6 +8,10 @@
   directory through `@damatjs/cli-support`.
 - `--no-typecheck`, inherited output, and nonzero build propagation are
   unchanged.
+- Build, config-build, dev, and start now resolve `Bun.spawn` at invocation
+  time, preventing test/import order from bypassing an installed launcher.
+- A regression exercises every app process-launch path after replacing the
+  runtime launcher.
 
 ## Release coordination
 
