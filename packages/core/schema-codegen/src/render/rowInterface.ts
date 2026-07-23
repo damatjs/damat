@@ -31,7 +31,10 @@ export const generateRowInterface = (
   }
 
   // Loaded relation fields (optional)
-  const relLines = relationFields(relations);
+  const relLines = relationFields(
+    relations,
+    table.columns.map(({ name }) => name),
+  );
   if (relLines.length > 0) {
     lines.push(`  // loaded relations`);
     lines.push(...relLines);

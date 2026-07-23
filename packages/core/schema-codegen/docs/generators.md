@@ -27,7 +27,10 @@ type GeneratedFilesMap = Map<string, string>; // filename → file contents
 
 ### `generateRowInterface(table, relations)` — `rowInterface.ts`
 
-Emits `export interface <Pascal(table)> { ... }`: every column as `name: columnToTsType(col);`, then — if the table has relations — a `// loaded relations` comment followed by the optional fields from `relationFields(relations)`.
+Emits `export interface <Pascal(table)> { ... }`: every column as
+`name: columnToTsType(col);`, then — if the table has relations — a
+`// loaded relations` comment followed by the optional fields from
+`relationFields(relations, columnNames)`.
 
 ### `generateNewType(table, autoFields)` — `newType.ts`
 
@@ -46,13 +49,21 @@ Emits `export type Update<Pascal> = Partial<Omit<<Pascal>, '<pk>'>>;` (omitting 
 ## Relations (`src/relation/`)
 
 - `buildRelationMap(relationships)` (`map.ts`) → `Map<fromTable, RelationSchema[]>`.
-- `relationFields(relations)` (`relationFields.ts`) → optional interface fields:
-  - `belongsTo` → singular `field?: Target` where `field` is the FK column with `_id` stripped (e.g. `user_id` → `user`), falling back to `rel.from` when no `linkedBy`.
+- `relationFields(relations, columnNames?)` (`relationFields.ts`) → optional
+  interface fields:
+  - `belongsTo` → singular `field?: Target` where `field` is the FK column with
+    `_id` stripped (for example, `user_id` → `user`). It falls back to
+    `rel.from` when there is no `linkedBy` value or when the derived name would
+    collide with a concrete scalar column.
   - `hasMany` → `field?: Target[]` using `rel.from` as the field name.
   - `hasOne` → `field?: Target` using `rel.from`.
   - `Target` type name is `toPascalCase(rel.to)`.
 
 Verified (from `tests/relation.test.ts`): a `belongsTo` with `linkedBy: ["user_id"]` and `to: "users"` yields `  user?: User;`; a `hasMany` with `from: "posts"`, `to: "posts"` yields `  posts?: Post[];`.
+
+For camel-case foreign keys such as `packageId`, a model relation named
+`package` emits `package?: Package` while retaining the scalar
+`packageId: string`; the generator never emits two `packageId` properties.
 
 ## Zod schema builders (`src/render/zod/`)
 

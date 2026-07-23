@@ -10,11 +10,15 @@ import type { RelationSchema } from "@damatjs/orm-type";
  * - `hasOne`     → `target?: TargetType`     (singular loaded entity)
  *
  * Field name derivation:
- *   - Uses `rel.from` (the property name in the model definition).
  *   - `belongsTo` — strip `_id` from the first `linkedBy` FK column if available.
+ *     Use `rel.from` when that derived name is already a concrete column.
  *   - `hasMany` / `hasOne` — directly uses `rel.from`.
  */
-export const relationFields = (relations: RelationSchema[]): string[] => {
+export const relationFields = (
+  relations: RelationSchema[],
+  columnNames: readonly string[] = [],
+): string[] => {
+  const columns = new Set(columnNames);
   return relations.map((rel) => {
     const targetType = toPascalCase(rel.to);
 
@@ -23,7 +27,8 @@ export const relationFields = (relations: RelationSchema[]): string[] => {
       // For belongsTo, prefer stripping _id from FK column for backward compat
       // Fall back to the "from" property name
       const fkCol = rel.linkedBy?.[0];
-      fieldName = fkCol ? fkCol.replace(/_id$/, "") : rel.from;
+      const derived = fkCol ? fkCol.replace(/_id$/, "") : rel.from;
+      fieldName = columns.has(derived) ? rel.from : derived;
     } else {
       // For hasMany / hasOne, use the "from" property name directly
       fieldName = rel.from;

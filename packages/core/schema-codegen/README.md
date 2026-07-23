@@ -47,7 +47,8 @@ const files = generateFilesMap(schema);
 - `generateNewZodSchema`, `generateUpdateZodSchema`,
   `generateQueryZodSchema`, `generateIdZodSchema`, and
   `generateParamsZodSchema` render focused Zod fragments.
-- `buildRelationMap` and `relationFields` render loaded relation fields.
+- `buildRelationMap` and `relationFields` render loaded relation fields without
+  overwriting concrete foreign-key columns.
 - `GenerationLogger` is the optional structural `debug`/`info` logging surface.
 
 See [the internals guide](./docs/README.md) for the source layout and invariants.
