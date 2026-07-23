@@ -54,7 +54,7 @@ export interface NewJobRun {
   payload: unknown;
   metadata: Record<string, unknown>;
   priority: number;
-  availableAt: Date;
+  delayMs: number;
   maxAttempts: number;
   backoffMs: number;
   backoffMultiplier: number;

@@ -51,7 +51,9 @@ const run = await enqueueJob(
 
 `enqueueJob` may receive an active durability transaction executor so the
 domain write and enqueue commit together. Without one it uses the configured
-durability client.
+durability client. PostgreSQL calculates relative enqueue delays from its own
+clock, so immediate jobs remain claimable when an application host's wall clock
+differs slightly from the database.
 
 ## Schedule jobs
 

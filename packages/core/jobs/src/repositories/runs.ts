@@ -12,7 +12,9 @@ export async function insertJobRun(
        "max_attempts","backoff_ms","backoff_multiplier",
        "deduplication_key","correlation_id","schedule_id","scheduled_for"
      ) VALUES (
-       $1,$2,$3,$4::jsonb,$5::jsonb,$6,$7,$8,$9,$10,$11,$12,$13,$14
+       $1,$2,$3,$4::jsonb,$5::jsonb,$6,
+       statement_timestamp()+($7::bigint*INTERVAL '1 millisecond'),
+       $8,$9,$10,$11,$12,$13,$14
      ) RETURNING *`,
     [
       run.id,
@@ -21,7 +23,7 @@ export async function insertJobRun(
       JSON.stringify(run.payload ?? null),
       JSON.stringify(run.metadata),
       run.priority,
-      run.availableAt,
+      run.delayMs,
       run.maxAttempts,
       run.backoffMs,
       run.backoffMultiplier,

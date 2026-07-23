@@ -32,6 +32,11 @@ controls are checked in the same query. Each accepted row receives a unique
 lease token, increments its attempt count, inserts the immutable attempt, and
 appends claim activity before commit.
 
+Relative enqueue delays are added to PostgreSQL's statement timestamp during
+insertion. The same database clock decides when a row is due, avoiding empty
+immediate claims when the application and PostgreSQL hosts have small wall-clock
+differences without inheriting the start time of a caller-owned transaction.
+
 Expired running work closes the previous attempt as `lost`. A recoverable row
 gets a new fenced attempt. An exhausted row dead-letters without exceeding
 `max_attempts`; a cancellation-requested row settles as cancelled without

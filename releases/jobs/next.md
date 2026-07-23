@@ -1,0 +1,23 @@
+# @damatjs/jobs Unreleased
+
+> Relative enqueue timing now remains correct across application and database
+> hosts with slightly different clocks.
+
+## Changed / improved
+
+- PostgreSQL calculates `available_at` for relative enqueue delays.
+- Immediate jobs can be claimed immediately after a fresh database starts even
+  when the Bun host clock is briefly ahead of PostgreSQL.
+- Absolute schedule occurrence times and retry timing retain their existing
+  semantics.
+
+## Action required
+
+No application changes are required. This fix is included in the unpublished
+lockstep release and requires a package version bump before publication.
+
+## References
+
+- Current behavior: [jobs README](../../packages/core/jobs/README.md)
+- Source: `packages/core/jobs/src/client/` and
+  `packages/core/jobs/src/repositories/`

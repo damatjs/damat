@@ -17,7 +17,7 @@ export function resolveJobRun(
     maxAttempts: options.maxAttempts ?? defaults.maxAttempts,
     backoffMs: options.backoffMs ?? defaults.backoffMs,
     backoffMultiplier: options.backoffMultiplier ?? defaults.backoffMultiplier,
-    availableAt: new Date(Date.now() + (options.delayMs ?? 0)),
+    delayMs: options.delayMs ?? 0,
     metadata: options.metadata ?? {},
     ...(options.correlationId ? { correlationId: options.correlationId } : {}),
     ...(options.deduplication

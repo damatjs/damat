@@ -6,6 +6,8 @@
 
 - Fixed
   - Real terminal Ctrl-C now drains workers and records stopping_at/stopped_at.
+  - Relative enqueue delays use PostgreSQL's clock, preventing startup clock
+    skew from making immediate jobs temporarily unclaimable.
   - MCP bare names resolve unique namespaced modules and report ambiguity.
   - Global --verbose works before or after module commands and exposes stack traces.
   - Fixed the Bun/Playwright compatibility issue
