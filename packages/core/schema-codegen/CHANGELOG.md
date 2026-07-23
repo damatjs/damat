@@ -1,5 +1,14 @@
 # @damatjs/schema-codegen
 
+## 1.0.3
+
+### Patch Changes
+
+- Validate one exact packed Damat dependency graph, exercise tarballs from a
+  clean consumer, preserve scalar foreign keys when relation names collide, and
+  remove duplicate verbose error headings.
+  - @damatjs/orm-type@1.0.3
+
 ## 1.0.2
 
 ### Patch Changes

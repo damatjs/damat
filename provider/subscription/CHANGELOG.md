@@ -1,5 +1,13 @@
 # @damatjs/provider-subscription
 
+## 1.0.3
+
+### Patch Changes
+
+- @damatjs/services@1.0.3
+- @damatjs/provider@1.0.3
+- @damatjs/deps@1.0.3
+
 ## 1.0.2
 
 ### Patch Changes

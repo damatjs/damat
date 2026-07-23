@@ -1,5 +1,18 @@
 # @damatjs/cli-module
 
+## 1.0.3
+
+### Patch Changes
+
+- Updated dependencies
+  - @damatjs/cli@1.0.3
+  - @damatjs/orm-cli@1.0.3
+  - @damatjs/framework@1.0.3
+  - @damatjs/module@1.0.3
+  - @damatjs/cli-support@1.0.3
+  - @damatjs/installer@1.0.3
+  - @damatjs/load-env@1.0.3
+
 ## 1.0.2
 
 ### Patch Changes

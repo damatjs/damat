@@ -1,5 +1,20 @@
 # @damatjs/damat-cli
 
+## 1.0.3
+
+### Patch Changes
+
+- Validate one exact packed Damat dependency graph, exercise tarballs from a
+  clean consumer, preserve scalar foreign keys when relation names collide, and
+  remove duplicate verbose error headings.
+- Updated dependencies
+  - @damatjs/logger@1.0.3
+  - @damatjs/cli@1.0.3
+  - @damatjs/cli-app@1.0.3
+  - @damatjs/cli-codegen@1.0.3
+  - @damatjs/cli-kit@1.0.3
+  - @damatjs/cli-module@1.0.3
+
 ## 1.0.2
 
 ### Patch Changes

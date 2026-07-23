@@ -1,5 +1,7 @@
 # @damatjs/registry-client
 
+## 1.0.3
+
 ## 1.0.2
 
 ### Patch Changes

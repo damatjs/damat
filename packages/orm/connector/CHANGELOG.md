@@ -1,5 +1,15 @@
 # @damatjs/orm-connector
 
+## 1.0.3
+
+### Patch Changes
+
+- Updated dependencies
+  - @damatjs/logger@1.0.3
+  - @damatjs/deps@1.0.3
+  - @damatjs/orm-type@1.0.3
+  - @damatjs/types@1.0.3
+
 ## 1.0.2
 
 ### Patch Changes
