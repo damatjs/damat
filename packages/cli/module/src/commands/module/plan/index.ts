@@ -1,7 +1,8 @@
-import { reportError, type Command } from "@damatjs/cli";
+import type { Command } from "@damatjs/cli";
 import {
   buildModuleInstallPlan,
   moduleInstallOptions,
+  reportModuleError,
   reportModulePlan,
 } from "../shared";
 
@@ -30,7 +31,7 @@ export function createModulePlanHandler(
       }
       return { exitCode: 0 };
     } catch (error) {
-      reportError(ctx.logger, error, { prefix: "Failed to plan module" });
+      reportModuleError(ctx, error, "Failed to plan module");
       return { exitCode: 1 };
     }
   };

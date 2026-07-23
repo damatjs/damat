@@ -1,5 +1,6 @@
-import { type Command, reportError } from "@damatjs/cli";
+import type { Command } from "@damatjs/cli";
 import { createModuleMigration } from "@damatjs/module";
+import { reportModuleError } from "./shared";
 
 export const moduleMigrationCreateCommand: Command = {
   name: "migration:create",
@@ -15,7 +16,7 @@ export const moduleMigrationCreateCommand: Command = {
       }
       return { exitCode: 0 };
     } catch (e) {
-      reportError(ctx.logger, e, { prefix: "Could not create migration" });
+      reportModuleError(ctx, e, "Could not create migration");
       return { exitCode: 1 };
     }
   },

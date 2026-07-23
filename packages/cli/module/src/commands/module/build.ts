@@ -1,6 +1,7 @@
-import { type Command, reportError } from "@damatjs/cli";
+import type { Command } from "@damatjs/cli";
 import { locateModuleDir, validateModuleDir } from "@damatjs/module";
 import { runTypeCheck } from "@damatjs/cli-support";
+import { reportModuleError } from "./shared";
 
 /**
  * Build a standalone module: a verification gate, not a bundle. A module ships
@@ -47,7 +48,7 @@ export const moduleBuildCommand: Command = {
       try {
         moduleDir = locateModuleDir(ctx.cwd);
       } catch (e) {
-        reportError(ctx.logger, e, { prefix: "Could not locate module" });
+        reportModuleError(ctx, e, "Could not locate module");
         return { exitCode: 1 };
       }
 

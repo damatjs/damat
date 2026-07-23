@@ -1,5 +1,6 @@
-import { type Command, reportError } from "@damatjs/cli";
+import type { Command } from "@damatjs/cli";
 import { runModuleMigration } from "@damatjs/module";
+import { reportModuleError } from "./shared";
 
 export const moduleMigrationRunCommand: Command = {
   name: "migration:run",
@@ -26,9 +27,11 @@ export const moduleMigrationRunCommand: Command = {
       }
 
       if (!result.success) {
-        reportError(ctx.logger, result.error ?? new Error("Migration failed"), {
-          prefix: `Migration failed for "${result.moduleName}"`,
-        });
+        reportModuleError(
+          ctx,
+          result.error ?? new Error("Migration failed"),
+          `Migration failed for "${result.moduleName}"`,
+        );
         return { exitCode: 1 };
       }
 
@@ -41,7 +44,7 @@ export const moduleMigrationRunCommand: Command = {
       }
       return { exitCode: 0 };
     } catch (e) {
-      reportError(ctx.logger, e, { prefix: "Could not run migrations" });
+      reportModuleError(ctx, e, "Could not run migrations");
       return { exitCode: 1 };
     }
   },

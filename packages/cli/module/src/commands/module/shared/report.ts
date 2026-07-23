@@ -1,6 +1,17 @@
-import type { CommandContext } from "@damatjs/cli";
+import { reportError, type CommandContext } from "@damatjs/cli";
 import type { DamatManifest, InstallerPlan } from "@damatjs/installer";
 import { moduleInstructions } from "../profile";
+
+export function reportModuleError(
+  ctx: CommandContext,
+  error: unknown,
+  prefix: string,
+): void {
+  reportError(ctx.logger, error, {
+    prefix,
+    verbose: Boolean(ctx.options.verbose),
+  });
+}
 
 export function reportModulePlan(
   ctx: CommandContext,

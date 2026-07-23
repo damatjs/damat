@@ -42,6 +42,21 @@ describe("module dev preflight and signals", () => {
     expect(logger.error.mock.calls[0]?.[0]).toContain(
       "Module development preflight failed",
     );
+    expect(logger.error.mock.calls[0]?.[1]).toBeUndefined();
+    expect(logger.info).toHaveBeenCalledWith(
+      "Run again with --verbose for the full stack trace.",
+    );
+    expect(writeCalls).toEqual([]);
+  });
+
+  it("includes the preflight error object in verbose mode", async () => {
+    const failure = new Error("DATABASE_URL is not set");
+    mm.databaseError = failure;
+    const { ctx, logger } = createContext({ verbose: true }, { cwd: "/m" });
+    const result = await (await getModuleDevCommand()).handler(ctx);
+    expect(result.exitCode).toBe(1);
+    expect(logger.error.mock.calls[0]?.[1]).toBe(failure);
+    expect(logger.info).not.toHaveBeenCalled();
     expect(writeCalls).toEqual([]);
   });
 

@@ -1,5 +1,6 @@
-import { type Command, reportError } from "@damatjs/cli";
+import type { Command } from "@damatjs/cli";
 import { locateModuleDir, validateModuleDir } from "@damatjs/module";
+import { reportModuleError } from "./shared";
 
 export const moduleValidateCommand: Command = {
   name: "validate",
@@ -9,7 +10,7 @@ export const moduleValidateCommand: Command = {
     try {
       moduleDir = locateModuleDir(ctx.cwd);
     } catch (e) {
-      reportError(ctx.logger, e, { prefix: "Could not locate module" });
+      reportModuleError(ctx, e, "Could not locate module");
       return { exitCode: 1 };
     }
 

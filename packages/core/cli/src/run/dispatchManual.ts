@@ -12,6 +12,7 @@ export async function dispatchManual(
   runtime: CliRuntime,
   registry: CommandRegistry,
   project?: ProjectConfigAccessor,
+  globalOptions: Record<string, unknown> = {},
 ): Promise<CliRunResult | undefined> {
   const [name, subcommand] = runtime.args;
   if (!name) return undefined;
@@ -27,7 +28,7 @@ export async function dispatchManual(
       fallback,
       fallback.name,
       parsed.positional,
-      parsed.options,
+      { ...parsed.options, ...globalOptions },
       definition,
       runtime,
       project,
@@ -41,7 +42,7 @@ export async function dispatchManual(
     child,
     `${command.name}:${subcommand}`,
     parsed.positional,
-    parsed.options,
+    { ...parsed.options, ...globalOptions },
     definition,
     runtime,
     project,

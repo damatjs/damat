@@ -1,5 +1,6 @@
-import { type Command, reportError } from "@damatjs/cli";
+import type { Command } from "@damatjs/cli";
 import { runModuleMigrationStatus } from "@damatjs/module";
+import { reportModuleError } from "./shared";
 
 export const moduleMigrationStatusCommand: Command = {
   name: "migration:status",
@@ -36,7 +37,7 @@ export const moduleMigrationStatusCommand: Command = {
 
       return { exitCode: 0 };
     } catch (e) {
-      reportError(ctx.logger, e, { prefix: "Could not read migration status" });
+      reportModuleError(ctx, e, "Could not read migration status");
       return { exitCode: 1 };
     }
   },

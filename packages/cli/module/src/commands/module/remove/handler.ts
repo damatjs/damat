@@ -1,6 +1,6 @@
-import { reportError, type Command } from "@damatjs/cli";
+import type { Command } from "@damatjs/cli";
 import { createRemovePlan, readInstallerLock } from "@damatjs/installer";
-import { executeModulePlan } from "../shared";
+import { executeModulePlan, reportModuleError } from "../shared";
 
 export interface RemoveDependencies {
   readLock: typeof readInstallerLock;
@@ -30,7 +30,7 @@ export function createModuleRemoveHandler(
       await deps.execute(ctx, plan);
       return { exitCode: 0 };
     } catch (error) {
-      reportError(ctx.logger, error, { prefix: "Failed to remove module" });
+      reportModuleError(ctx, error, "Failed to remove module");
       return { exitCode: 1 };
     }
   };

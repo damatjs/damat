@@ -1,6 +1,7 @@
-import { type Command, reportError } from "@damatjs/cli";
+import type { Command } from "@damatjs/cli";
 import { ensurePostgresDatabase } from "@damatjs/orm-cli";
 import { moduleMigrationRunCommand } from "./migrationRun";
+import { reportModuleError } from "./shared";
 
 interface SetupDependencies {
   ensure: typeof ensurePostgresDatabase;
@@ -34,9 +35,7 @@ export function createModuleDatabaseSetupCommand(
             : "Module PostgreSQL database already exists",
         );
       } catch (error) {
-        reportError(ctx.logger, error, {
-          prefix: "Module database setup failed",
-        });
+        reportModuleError(ctx, error, "Module database setup failed");
         return { exitCode: 1 };
       }
       return dependencies.migrate(ctx);

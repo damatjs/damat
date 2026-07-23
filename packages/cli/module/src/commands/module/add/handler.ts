@@ -1,7 +1,8 @@
-import { reportError, type Command } from "@damatjs/cli";
+import type { Command } from "@damatjs/cli";
 import {
   buildModuleInstallPlan,
   executeModulePlan,
+  reportModuleError,
   reportModulePlan,
 } from "../shared";
 
@@ -37,7 +38,7 @@ export function createModuleAddHandler(
       }
       return { exitCode: 0 };
     } catch (error) {
-      reportError(ctx.logger, error, { prefix: "Failed to add module" });
+      reportModuleError(ctx, error, "Failed to add module");
       return { exitCode: 1 };
     }
   };

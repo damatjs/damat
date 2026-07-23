@@ -1,6 +1,7 @@
-import { type Command, reportError } from "@damatjs/cli";
+import type { Command } from "@damatjs/cli";
 import { generateModuleTypes } from "@damatjs/module";
 import { asToolingLogger } from "../../toolingLogger";
+import { reportModuleError } from "./shared";
 
 export const moduleCodegenCommand: Command = {
   name: "codegen",
@@ -22,7 +23,7 @@ export const moduleCodegenCommand: Command = {
       }
       return { exitCode: 0 };
     } catch (e) {
-      reportError(ctx.logger, e, { prefix: "Codegen failed" });
+      reportModuleError(ctx, e, "Codegen failed");
       return { exitCode: 1 };
     }
   },

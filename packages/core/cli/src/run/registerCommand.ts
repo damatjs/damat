@@ -9,6 +9,7 @@ export function registerSingleCommand(
   definition: CliDefinition,
   runtime: CliRuntime,
   project?: ProjectConfigAccessor,
+  globalOptions: Record<string, unknown> = {},
 ): void {
   if (command.subcommands) return;
   const registered = cli.command(command.name, command.description);
@@ -21,7 +22,7 @@ export function registerSingleCommand(
   }
 
   registered.action(async (parsed: Record<string, unknown>) => {
-    const options = { ...parsed };
+    const options = { ...parsed, ...globalOptions };
     delete options._;
     return runCommand(
       command,

@@ -6,19 +6,28 @@ import { createRuntime } from "../runtime";
 import { printBanner } from "../utils/banner";
 import { createCli } from "./createCli";
 import { dispatchManual } from "./dispatchManual";
+import { consumeGlobalOptions } from "./globalOptions";
 
 export async function runCli(
   definition: CliDefinition,
   overrides: Partial<CliRuntime> = {},
 ): Promise<CliRunResult> {
   validateDefinition(definition);
-  const runtime = createRuntime(overrides);
+  const baseRuntime = createRuntime(overrides);
+  const global = consumeGlobalOptions(baseRuntime.args, definition);
+  const runtime = { ...baseRuntime, args: global.args };
   const registry = createCommandRegistry();
   for (const command of definition.commands) registry.register(command);
   const project = definition.configLoader
     ? withConfig(definition.configLoader, runtime.cwd)
     : undefined;
-  const cli = createCli(definition, runtime, registry, project);
+  const cli = createCli(
+    definition,
+    runtime,
+    registry,
+    project,
+    global.options,
+  );
 
   if (typeof definition.banner === "object") {
     printBanner(definition, runtime.output, definition.banner);
@@ -36,7 +45,13 @@ export async function runCli(
     return { exitCode: 0 };
   }
 
-  const manual = await dispatchManual(definition, runtime, registry, project);
+  const manual = await dispatchManual(
+    definition,
+    runtime,
+    registry,
+    project,
+    global.options,
+  );
   if (manual) return manual;
   cli.parse(["bun", definition.name, ...runtime.args], { run: false });
   const matched = (await cli.runMatchedCommand()) as CliRunResult | undefined;

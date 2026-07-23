@@ -1,10 +1,11 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { type Command, reportError } from "@damatjs/cli";
+import type { Command, CommandContext } from "@damatjs/cli";
 import { cleanupTempFile } from "@damatjs/cli-support";
 import { ModulePortInUseError } from "@damatjs/module";
 import { preflightModuleDev } from "./devPreflight";
 import { startModuleDevWatcher, type ModuleDevWatcher } from "./devWatcher";
+import { reportModuleError } from "./shared";
 
 interface DevDependencies {
   preflight: typeof preflightModuleDev;
@@ -29,15 +30,15 @@ function forwardSignals(child: ModuleDevWatcher): () => void {
 }
 
 function reportPreflightError(
-  logger: Parameters<typeof reportError>[0],
+  ctx: CommandContext,
   error: unknown,
 ) {
   if (error instanceof ModulePortInUseError) {
-    logger.error(error.message);
-    logger.error("Use: damat module dev --port <port>");
+    ctx.logger.error(error.message);
+    ctx.logger.error("Use: damat module dev --port <port>");
     return;
   }
-  reportError(logger, error, { prefix: "Module development preflight failed" });
+  reportModuleError(ctx, error, "Module development preflight failed");
 }
 
 export function createModuleDevCommand(
@@ -63,7 +64,7 @@ export function createModuleDevCommand(
       try {
         await dependencies.preflight(ctx.cwd, port, ctx.logger);
       } catch (error) {
-        reportPreflightError(ctx.logger, error);
+        reportPreflightError(ctx, error);
         return { exitCode: 1 };
       }
       const damatDir = join(ctx.cwd, ".damat");

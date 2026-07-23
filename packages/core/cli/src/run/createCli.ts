@@ -9,6 +9,7 @@ export function createCli(
   runtime: CliRuntime,
   registry: CommandRegistry,
   project?: ProjectConfigAccessor,
+  globalOptions: Record<string, unknown> = {},
 ): CAC {
   const cli = cac(definition.name);
   cli.version(definition.version);
@@ -18,7 +19,14 @@ export function createCli(
   }
   handleHelpCommand(cli, definition, runtime, registry);
   for (const command of registry.getAll()) {
-    registerSingleCommand(cli, command, definition, runtime, project);
+    registerSingleCommand(
+      cli,
+      command,
+      definition,
+      runtime,
+      project,
+      globalOptions,
+    );
   }
   return cli;
 }

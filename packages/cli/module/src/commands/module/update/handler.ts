@@ -1,6 +1,10 @@
-import { reportError, type Command } from "@damatjs/cli";
+import type { Command } from "@damatjs/cli";
 import { readInstallerLock } from "@damatjs/installer";
-import { buildModuleInstallPlan, executeModulePlan } from "../shared";
+import {
+  buildModuleInstallPlan,
+  executeModulePlan,
+  reportModuleError,
+} from "../shared";
 
 export interface UpdateDependencies {
   readLock: typeof readInstallerLock;
@@ -39,7 +43,7 @@ export function createModuleUpdateHandler(
       }
       return { exitCode: 0 };
     } catch (error) {
-      reportError(ctx.logger, error, { prefix: "Failed to update module" });
+      reportModuleError(ctx, error, "Failed to update module");
       return { exitCode: 1 };
     }
   };
