@@ -1,7 +1,7 @@
 import { NO_REGISTRY_MSG } from "../constants";
 import { registryLocation } from "../env";
 import {
-  AmbiguousModuleRefError,
+  type AmbiguousModuleRefError,
   fetchVerdict,
   formatModuleRef,
   loadRegistryIndex,
@@ -40,10 +40,10 @@ export const moduleInfo: ToolDef = {
     try {
       found = lookupEntry(index, parsed);
     } catch (error) {
-      if (error instanceof AmbiguousModuleRefError) {
-        return { text: error.message, isError: true };
-      }
-      throw error;
+      return {
+        text: (error as AmbiguousModuleRefError).message,
+        isError: true,
+      };
     }
     if (!found) {
       return {
