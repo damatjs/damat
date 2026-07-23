@@ -29,6 +29,12 @@ bun scripts/publish-packages.ts --dry-run
 
 Use the actual shared version in `RELEASE_TAG`. Prerelease packages are
 published under the npm `beta` dist-tag; the publisher must never move `latest`.
+`bun install` is mandatory after versioning and its updated `bun.lock` must be
+committed. Tag verification rejects workspace versions that differ from package
+manifests. Publication also opens every packed tarball and rejects any
+`@damatjs/*` runtime dependency that is not pinned to the coordinated version.
+The complete test gate installs those tarballs into a clean consumer and checks
+CLI, module PTY, MCP, and singleton framework behavior.
 Commit the prepared version, merge it to `main`, and tag that exact commit as
 `v<shared-version>`. The tag workflow repeats every release gate before publish.
 

@@ -1,7 +1,8 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { publicationVerb, publishCommand, run } from "./commands";
+import { inspectPackedTarball } from "./packed-manifest";
 import type { PublishOptions, WorkspacePackage } from "./types";
 
 export function publishPackage(
@@ -35,8 +36,19 @@ export function publishPackage(
       console.error(`- ${label}: pack returned no tarball`);
       return false;
     }
+    try {
+      inspectPackedTarball(resolve(destination, tarball), pkg);
+    } catch (error) {
+      console.error(`- ${label}: ${String(error)}`);
+      return false;
+    }
     const published = run(
-      publishCommand(tarball, pkg.version, options, process.env.NPM_DIST_TAG),
+      publishCommand(
+        resolve(destination, tarball),
+        pkg.version,
+        options,
+        process.env.NPM_DIST_TAG,
+      ),
       pkg.dir,
     );
     if (published.status !== 0) {

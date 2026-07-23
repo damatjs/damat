@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import type { WorkspacePackage } from "./publish/types";
 import { discoverPackages } from "./publish/workspaces";
+import { verifyWorkspaceLock } from "./release/workspace-lock";
 
 export function verifyReleaseTag(
   tag: string,
@@ -32,6 +33,8 @@ export function verifyReleaseTag(
 if (import.meta.main) {
   const root = resolve(import.meta.dir, "..");
   const tag = process.env.RELEASE_TAG ?? process.env.GITHUB_REF_NAME ?? "";
-  const version = verifyReleaseTag(tag, discoverPackages(root));
+  const packages = discoverPackages(root);
+  verifyWorkspaceLock(root, packages);
+  const version = verifyReleaseTag(tag, packages);
   console.log(`Release tag ${tag} matches shared package version ${version}.`);
 }

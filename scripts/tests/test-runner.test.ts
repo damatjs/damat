@@ -86,4 +86,6 @@ test("root tests reject unloaded production source", async () => {
   expect(runner).toContain("PostgreSQL test setup failed");
   expect(runner).toContain("scripts/check-coverage-sources.ts");
   expect(runner).toContain("turboArgs.length === 0");
+  expect(runner).toContain("DAMAT_RELEASE_CONSUMER_TEST");
+  expect(runner).toContain("release-consumer.test.ts");
 });

@@ -53,7 +53,22 @@ try {
     },
   );
   if (passed && turboArgs.length === 0) {
-    await run(["bun", "scripts/check-coverage-sources.ts"]);
+    const consumerPassed = await run(
+      [
+        "bun",
+        "test",
+        "--max-concurrency=1",
+        "scripts/tests/release-consumer.test.ts",
+      ],
+      {
+        ...process.env,
+        ...managed.packageUrls,
+        DATABASE_URL: databaseUrl,
+        DAMAT_RECOVERY_REDIS_URL: redis.url,
+        DAMAT_RELEASE_CONSUMER_TEST: "1",
+      },
+    );
+    if (consumerPassed) await run(["bun", "scripts/check-coverage-sources.ts"]);
   }
 } finally {
   if (redis?.name) await stopTestRedis(redis.name);

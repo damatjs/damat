@@ -254,6 +254,9 @@ synchronized.
   foreground process-group behavior.
 - Run affected package tests with coverage, then repository build, lint, changed
   line-limit check, and the canonical root test runner.
+- After a lockstep version change, run `bun install` and commit `bun.lock`.
+  Release validation must inspect packed manifests and exercise the tarballs
+  from a clean consumer; workspace-source tests alone are insufficient.
 
 ## References
 
