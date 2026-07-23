@@ -12,7 +12,9 @@ export interface RunningModuleDev {
   waitForReadiness: (count: number) => Promise<number>;
   stop: () => Promise<ProcessResult>;
 }
-function env(databaseUrl: string): Record<string, string | undefined> {
+export function moduleDevEnv(
+  databaseUrl: string,
+): Record<string, string | undefined> {
   return {
     ...process.env,
     DATABASE_URL: databaseUrl,
@@ -47,7 +49,7 @@ export function moduleDevChild(
 ): Child {
   return Bun.spawn([process.execPath, "run", "dev", "--port", String(port)], {
     cwd,
-    env: env(databaseUrl),
+    env: moduleDevEnv(databaseUrl),
     stdout: "pipe",
     stderr: "pipe",
   });

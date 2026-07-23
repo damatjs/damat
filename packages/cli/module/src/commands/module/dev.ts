@@ -12,8 +12,14 @@ interface DevDependencies {
 }
 
 function forwardSignals(child: ModuleDevWatcher): () => void {
-  const interrupt = () => child.kill?.("SIGINT");
-  const terminate = () => child.kill?.("SIGTERM");
+  let forwarded = false;
+  const forward = (signal: NodeJS.Signals) => {
+    if (forwarded) return;
+    forwarded = true;
+    child.kill?.(signal);
+  };
+  const interrupt = () => forward("SIGINT");
+  const terminate = () => forward("SIGTERM");
   process.once("SIGINT", interrupt);
   process.once("SIGTERM", terminate);
   return () => {

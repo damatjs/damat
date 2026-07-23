@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { MODULE_ENTRY_STOPPING_MESSAGE } from "@damatjs/module";
 import { spawnModuleDevChild } from "../commands/module/devWatcherChild";
 import { watcherFixture } from "./devWatcherFixture";
 
@@ -17,6 +18,7 @@ describe("module development watcher", () => {
     await Bun.sleep(0);
     expect(fixture.children).toHaveLength(2);
     watcher.kill("SIGINT");
+    await Bun.sleep(110);
     expect(fixture.children[1]!.kill).toHaveBeenCalledWith("SIGINT");
     fixture.children[1]!.finish(0);
     expect(await watcher.exited).toBe(0);
@@ -30,6 +32,17 @@ describe("module development watcher", () => {
     fixture.children[0]!.finish(7);
     expect(await watcher.exited).toBe(7);
     watcher.kill();
+  });
+
+  test("does not duplicate a foreground-process-group signal", async () => {
+    const fixture = watcherFixture();
+    const watcher = fixture.start();
+    watcher.kill("SIGINT");
+    fixture.children[0]!.acknowledge();
+    await Bun.sleep(110);
+    expect(fixture.children[0]!.kill).not.toHaveBeenCalled();
+    fixture.children[0]!.finish(0);
+    expect(await watcher.exited).toBe(0);
   });
 
   test("closes when initial launch fails", () => {
@@ -51,19 +64,27 @@ describe("module development watcher", () => {
     );
   });
 
-  test("spawns a plain Bun child with optional ports", () => {
+  test("spawns a Bun child with shutdown acknowledgement", async () => {
     const calls: unknown[] = [];
     const run = (options: unknown) => {
       calls.push(options);
       return {} as never;
     };
-    spawnModuleDevChild({ cwd: "/m", entryFile: "/m/entry.ts" }, run as never);
+    const child = spawnModuleDevChild(
+      { cwd: "/m", entryFile: "/m/entry.ts" },
+      run as never,
+    );
     spawnModuleDevChild(
       { cwd: "/m", entryFile: "/m/entry.ts", port: 0 },
       run as never,
     );
     expect(calls).toHaveLength(2);
+    expect(child.shutdownStarted).toBeInstanceOf(Promise);
     expect(calls[0]).not.toHaveProperty("env.PORT");
+    expect(calls[0]).toHaveProperty("ipc", expect.any(Function));
     expect(calls[1]).toHaveProperty("env.PORT", "0");
+    const ipc = (calls[0] as { ipc: (message: unknown) => void }).ipc;
+    ipc(MODULE_ENTRY_STOPPING_MESSAGE);
+    await expect(child.shutdownStarted).resolves.toBeUndefined();
   });
 });

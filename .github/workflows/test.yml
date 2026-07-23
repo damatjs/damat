@@ -43,6 +43,9 @@ jobs:
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
 
+      - name: Install PTY test runtime
+        run: sudo apt-get update && sudo apt-get install -y expect
+
       - name: Install browser test runtime
         run: bunx playwright install --with-deps chromium
 

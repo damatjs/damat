@@ -4,19 +4,18 @@ import {
   type ModuleDevWatcherOptions,
   spawnModuleDevChild,
 } from "./devWatcherChild";
-type Watch = ReturnType<typeof watch>;
+import { forwardSignalUnlessHandled } from "./devWatcherSignal";
 
+type Watch = ReturnType<typeof watch>;
 export interface ModuleDevWatcher {
   exited: Promise<number>;
   kill(signal?: number | NodeJS.Signals): void;
 }
-
 interface WatcherDependencies {
   launch: typeof spawnModuleDevChild;
   watch: typeof watch;
   error: (...values: unknown[]) => void;
 }
-
 const defaults: WatcherDependencies = {
   launch: spawnModuleDevChild,
   watch,
@@ -90,10 +89,11 @@ export function startModuleDevWatcher(
   return {
     exited,
     kill: (signal = "SIGTERM") => {
+      if (stopping) return;
       stopping = true;
       watcher?.close();
       if (timer) clearTimeout(timer);
-      if (child) child.kill(signal);
+      if (child) forwardSignalUnlessHandled(child, signal);
       else finish(0);
     },
   };

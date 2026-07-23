@@ -24,6 +24,9 @@ jobs:
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
 
+      - name: Install PTY test runtime
+        run: sudo apt-get update && sudo apt-get install -y expect
+
       - name: Run complete release gate
         run: bun run check:release
 

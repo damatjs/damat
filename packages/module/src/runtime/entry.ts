@@ -8,7 +8,10 @@ interface ModuleEntryDependencies {
   error: (...values: unknown[]) => void;
   exit: (code: number) => void;
   once: (signal: NodeJS.Signals, listener: () => void) => void;
+  notifyStopping: () => void;
 }
+
+export const MODULE_ENTRY_STOPPING_MESSAGE = "damat:module-entry-stopping";
 
 const defaultDependencies: ModuleEntryDependencies = {
   start: startModuleApp,
@@ -16,6 +19,11 @@ const defaultDependencies: ModuleEntryDependencies = {
   error: (...values) => console.error(...values),
   exit: (code) => process.exit(code),
   once: (signal, listener) => void process.once(signal, listener),
+  notifyStopping: () => {
+    try {
+      if (process.connected) process.send?.(MODULE_ENTRY_STOPPING_MESSAGE);
+    } catch {}
+  },
 };
 
 export function moduleReadyLines(running: RunningModuleApp): string[] {
@@ -45,8 +53,10 @@ function installShutdown(
 ): void {
   let stopping: Promise<void> | undefined;
   const stop = () => {
-    stopping ??= running
-      .stop()
+    if (stopping) return stopping;
+    dependencies.notifyStopping();
+    stopping = Promise.resolve()
+      .then(() => running.stop())
       .then(() => dependencies.exit(0))
       .catch((error) => {
         dependencies.error("Failed to stop module:", error);

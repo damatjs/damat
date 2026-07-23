@@ -3,14 +3,19 @@ import { startModuleDevWatcher } from "../commands/module/devWatcher";
 
 interface ControlledChild {
   exited: Promise<number>;
+  shutdownStarted: Promise<void>;
+  acknowledge(): void;
   finish(code: number): void;
   kill: ReturnType<typeof mock>;
 }
 
 function child(): ControlledChild {
   let finish!: (code: number) => void;
+  let acknowledge!: () => void;
   return {
     exited: new Promise((resolve) => void (finish = resolve)),
+    shutdownStarted: new Promise((resolve) => void (acknowledge = resolve)),
+    acknowledge,
     finish,
     kill: mock(() => {}),
   };

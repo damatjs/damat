@@ -69,7 +69,7 @@ describe("module dev preflight and signals", () => {
     listener!();
     terminate!();
     expect(kill).toHaveBeenCalledWith("SIGINT");
-    expect(kill).toHaveBeenCalledWith("SIGTERM");
+    expect(kill).toHaveBeenCalledTimes(1);
     finish(0);
     expect((await pending).exitCode).toBe(0);
     expect(process.listeners("SIGINT")).not.toContain(listener!);

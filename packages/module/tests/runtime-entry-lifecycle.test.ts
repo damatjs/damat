@@ -20,6 +20,7 @@ describe("runModuleEntry lifecycle", () => {
   test("prints readiness and stops once when signaled", async () => {
     const lines: string[] = [];
     const exits: number[] = [];
+    const notices: string[] = [];
     const signals = new Map<NodeJS.Signals, () => void>();
     const stop = mock(async () => {});
     await runModuleEntry({
@@ -27,6 +28,7 @@ describe("runModuleEntry lifecycle", () => {
       log: (line) => lines.push(line),
       exit: (code) => void exits.push(code),
       once: (signal, listener) => void signals.set(signal, listener),
+      notifyStopping: () => void notices.push("stopping"),
     });
     expect(lines).toEqual([
       '✓ Module "audio-aligner" ready at http://localhost:17662',
@@ -37,6 +39,7 @@ describe("runModuleEntry lifecycle", () => {
     signals.get("SIGTERM")!();
     await Bun.sleep(0);
     expect(stop).toHaveBeenCalledTimes(1);
+    expect(notices).toEqual(["stopping"]);
     expect(exits).toEqual([0]);
   });
 
