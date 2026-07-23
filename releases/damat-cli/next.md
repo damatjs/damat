@@ -24,6 +24,8 @@ the optional `pg-cloudflare` transport external during config bundling.
 - Consumers no longer add `pg-cloudflare` merely to run application codegen.
 - Composed app build/dev/start commands resolve the active Bun process launcher
   when invoked, eliminating CI import-order races in their command tests.
+- Standalone module process regressions now use a composer-owned TCP lifecycle
+  probe instead of importing an undeclared module implementation dependency.
 
 ## Breaking
 

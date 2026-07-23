@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
 import { readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { assertServerPortAvailable } from "@damatjs/module";
 import { createAndPlanFreshModule } from "./freshModuleFixture";
+import { assertPortAvailable } from "./moduleDevPort";
 import { startModuleDev, type RunningModuleDev } from "./moduleDevProcess";
 
 test("fresh module init plans, loads, and starts without PostgreSQL", async () => {
@@ -29,7 +29,7 @@ test("fresh module init plans, loads, and starts without PostgreSQL", async () =
     running = undefined;
     expect(result.code, result.stderr).toBe(0);
     expect(result.stdout).toContain('Module "fresh-module" ready at');
-    await assertServerPortAvailable(port, "127.0.0.1");
+    await assertPortAvailable(port);
   } finally {
     if (running) await running.stop().catch(() => undefined);
     rmSync(root, { recursive: true, force: true });

@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test";
 import { appendFileSync, readFileSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { assertServerPortAvailable } from "@damatjs/module";
 import { runCollidingModuleDev } from "./moduleDevCollision";
 import { copyModuleDevFixture } from "./moduleDevFixture";
+import { assertPortAvailable } from "./moduleDevPort";
 import {
   activeWorkerCount,
   exerciseModuleDev,
@@ -51,8 +51,7 @@ test("generated module dev survives reload and owns its process lifecycle", asyn
       },
     });
     expect(await activeWorkerCount(url)).toBe(workers);
-    if (port !== firstPort)
-      await assertServerPortAvailable(firstPort, "127.0.0.1");
+    if (port !== firstPort) await assertPortAvailable(firstPort);
     const writtenAt = statSync(entry).mtimeMs;
     const collision = await runCollidingModuleDev(cwd, databaseUrl, port);
     const collisionOutput = `${collision.stdout}${collision.stderr}`;
@@ -72,7 +71,7 @@ test("generated module dev survives reload and owns its process lifecycle", asyn
     );
     expect(result.stdout.match(/Press Ctrl-C to stop/g)).toHaveLength(2);
     expect(migrationCheckCount(result.stdout)).toBe(2);
-    await assertServerPortAvailable(port, "127.0.0.1");
+    await assertPortAvailable(port);
   } finally {
     if (running) await running.stop().catch(() => undefined);
     rmSync(cwd, { recursive: true, force: true });

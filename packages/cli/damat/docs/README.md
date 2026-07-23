@@ -11,3 +11,6 @@ that owns the command.
 
 Compatibility tests assert command order, representative aliases/options, help
 composition, runtime defaults, and console output.
+Standalone module process regressions keep their lifecycle probes local to the
+test fixture so a clean install does not depend on undeclared implementation
+packages.
