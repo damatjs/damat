@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/module-generator",
   "description": "Damat module discovery, code generation, scaffolding, and barrels",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

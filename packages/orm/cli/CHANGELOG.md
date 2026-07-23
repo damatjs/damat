@@ -1,5 +1,30 @@
 # @damatjs/orm-cli
 
+## 1.0.2
+
+### Patch Changes
+
+- Fixed
+  - Real terminal Ctrl-C now drains workers and records stopping_at/stopped_at.
+  - MCP bare names resolve unique namespaced modules and report ambiguity.
+  - Global --verbose works before or after module commands and exposes stack traces.
+  - Fixed the Bun/Playwright compatibility issue
+- Updated dependencies
+  - @damatjs/cli@1.0.2
+  - @damatjs/durability@1.0.2
+  - @damatjs/events@1.0.2
+  - @damatjs/jobs@1.0.2
+  - @damatjs/logger@1.0.2
+  - @damatjs/pipelines@1.0.2
+  - @damatjs/schema-codegen@1.0.2
+  - @damatjs/deps@1.0.2
+  - @damatjs/installer@1.0.2
+  - @damatjs/link@1.0.2
+  - @damatjs/orm-migration@1.0.2
+  - @damatjs/orm-model@1.0.2
+  - @damatjs/orm-processor@1.0.2
+  - @damatjs/orm-type@1.0.2
+
 ## 1.0.1
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @damatjs/mcp
 
+## 1.0.2
+
+### Patch Changes
+
+- Fixed
+  - Real terminal Ctrl-C now drains workers and records stopping_at/stopped_at.
+  - MCP bare names resolve unique namespaced modules and report ambiguity.
+  - Global --verbose works before or after module commands and exposes stack traces.
+  - Fixed the Bun/Playwright compatibility issue
+
 ## 1.0.1
 
 ### Patch Changes

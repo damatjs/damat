@@ -1,7 +1,7 @@
 {
   "name": "@damatjs/pipelines",
   "description": "Durable PostgreSQL orchestration across jobs, events, and workflows",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
