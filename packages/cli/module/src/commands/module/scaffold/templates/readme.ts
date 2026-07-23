@@ -53,6 +53,8 @@ bun run validate           # resolve every manifest readiness warning
 even with \`LOG_LEVEL=fatal\`. A fixed-port collision fails before the watcher or
 database starts; use \`damat module dev --port 0\` for an ephemeral port. Source
 reloads await the current server and workers stopping before restarting.
+Interactive Ctrl-C completes worker cleanup before exit. Use
+\`damat module dev --verbose\` or \`damat --verbose module dev\` for full stacks.
 
 ## Stay portable
 

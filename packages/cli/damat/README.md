@@ -31,4 +31,14 @@ projects do not need a direct dependency for codegen.
 For embedding a neutral command runtime, use `@damatjs/cli` directly. For
 command behavior and package-level APIs, use the owning capability README.
 
+`--verbose` is global and may appear before or after a command path:
+
+```bash
+damat --verbose module dev
+damat module dev --verbose
+```
+
+Both forms pass verbose mode to module command error handling and print the
+underlying stack. Without the flag, failures retain the concise retry hint.
+
 See [composer internals](./docs/README.md) and the [Damat guide](../../../docs/GUIDE.md).

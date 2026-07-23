@@ -84,6 +84,9 @@ Presentation is opt-in:
 
 - A banner renders only when `banner` is an object.
 - The global verbose option exists only when `verbose.enabled === true`.
+- Enabled global options are consumed before command routing, so both
+  `my-cli --verbose parent child` and `my-cli parent child --verbose` pass
+  `ctx.options.verbose === true` to the resolved handler.
 - Error detail depends on an explicit `verbose` value, not an environment name.
 
 ```ts

@@ -28,8 +28,14 @@ capabilities. Optional paths are not represented by empty placeholder folders.
 the port before creating `.damat` or starting its watcher; database-backed
 modules get database creation followed by one runtime-owned migration pass.
 Service-only modules skip PostgreSQL. The CLI supervises a plain Bun child,
-gracefully stops it before each reload, forwards SIGINT/SIGTERM, and keeps child
-readiness independent of the application logger.
+gracefully stops it before each reload, and keeps child readiness independent
+of the application logger. On foreground-terminal Ctrl-C, the child
+acknowledges its own shutdown before the parent decides whether signal
+forwarding is needed; parent-only signals still use a bounded forwarding
+fallback.
+
+Module command adapters pass the global verbose state into their handled-error
+reports. The flag can appear before `module` or after its subcommand.
 
 `databaseSetup.ts` remains an explicit module-only command: it creates the
 selected database and delegates to `migration:run`. Installed backends still

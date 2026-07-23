@@ -16,4 +16,6 @@ This is part of the six-package tooling chain: `@damatjs/orm-cli`,
 
 Together with the standalone-runtime work, the unpublished branch has a
 nine-package version-bump union: those six plus `@damatjs/module`,
-`@damatjs/framework`, and `@damatjs/services`. Do not publish from this change.
+`@damatjs/framework`, and `@damatjs/services`. The consumer-audit fixes add
+`@damatjs/cli` and `@damatjs/mcp`, making the union eleven. Do not publish from
+this change.

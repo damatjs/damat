@@ -1,0 +1,23 @@
+# @damatjs/cli Unreleased
+
+> Enabled global options are resolved before command dispatch.
+
+## Fixed
+
+- `--verbose` is consumed before leaf, default, or parent/child routing.
+- Both `damat --verbose module dev` and `damat module dev --verbose` deliver
+  `verbose: true` to the resolved command context.
+- CLIs that do not enable verbose mode continue to treat the flag as an
+  ordinary unknown argument.
+
+## Release
+
+- `@damatjs/cli` requires a version bump before release.
+- Together with the existing standalone-runtime and tooling changes plus the
+  MCP lookup fix, the unpublished branch has an eleven-package version-bump
+  union. Do not publish any member independently.
+
+## References
+
+- Current behavior: [CLI runtime](../../packages/core/cli/docs/run.md)
+- Source: `packages/core/cli/src/run/`

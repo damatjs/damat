@@ -54,6 +54,10 @@ your `DAMAT_MODULE_VERIFY` policy (see
 a source module's routes, jobs, events, and pipelines are distributed across
 the backend.
 
+`module_info` accepts a bare name even when the registry stores only namespaced
+keys, provided exactly one key or entry name matches. If two publishers expose
+the same name, use the canonical namespace from the ambiguity response.
+
 ## Using it
 
 Just ask: _"Find a Damat auth module and install it."_ The assistant chains

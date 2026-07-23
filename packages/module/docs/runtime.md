@@ -75,6 +75,11 @@ listening:
 
 This output does not use the application logger, so it remains visible with
 `LOG_LEVEL=fatal`. SIGINT and SIGTERM share one idempotent stop promise.
+The child notifies its supervising watcher as soon as that promise starts.
+When a terminal sends Ctrl-C to the whole foreground process group, the
+watcher therefore avoids sending the child a second SIGINT during asynchronous
+worker cleanup. A signal delivered only to the parent is still forwarded after
+a short acknowledgement window.
 The development watcher sends SIGTERM and awaits that promise before launching
 the next runtime, preventing duplicate worker registrations across reloads.
 

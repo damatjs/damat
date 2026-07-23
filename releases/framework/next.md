@@ -32,8 +32,9 @@ upgrade `@damatjs/module`, `@damatjs/cli-module`,
 `@damatjs/framework`, `@damatjs/damat-cli`, and `@damatjs/services` together.
 The current unpublished branch also includes `@damatjs/orm-cli`,
 `@damatjs/cli-support`, `@damatjs/cli-codegen`, and `@damatjs/cli-app`; with the
-two overlapping CLI packages, the version-bump union is nine. Do not publish
-any member from this change. Update exhaustive shutdown phase handling.
+two overlapping CLI packages, that union is nine. The consumer-audit fixes add
+`@damatjs/cli` and `@damatjs/mcp`, making the version-bump union eleven. Do not
+publish any member from this change. Update exhaustive shutdown phase handling.
 Application startup remains schema-read-only; use the callback only when the
 embedding runtime owns the pre-durability initialization and cleanup contract.
 

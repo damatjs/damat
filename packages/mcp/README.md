@@ -66,7 +66,7 @@ migrations.
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `list_modules`   | List every module in the configured registry (ref, description, latest version, verification, owner).                                                     |
 | `search_modules` | Filter the registry by a query matched against ref, description and keywords.                                                                             |
-| `module_info`    | Full registry details for one ref (e.g. `damatjs/user@0.2.0`) — read before installing.                                                                   |
+| `module_info`    | Full registry details for one ref (for example `user` or `damatjs/user@0.2.0`) — read before installing.                                                  |
 | `list_installed` | Read authoritative module installation records from `damat.lock.json`, including distributed source capabilities.                                         |
 | `add_module`     | Install a registry, path, Git, npm, or tarball source with the transactional installer. Security and experimental package modes require explicit opt-ins. |
 | `remove_module`  | Plan or remove installer-owned files and uniquely owned packages. Modified owned files require `yes: true`; database migrations are not rolled back.      |
@@ -91,6 +91,9 @@ All configuration is via environment variables (set them in `.mcp.json` → `env
 A sample registry index is provided in
 [`registry.example.json`](./registry.example.json). The registry schema matches
 [`@damatjs/module`'s registry entry types](../module/docs/registry.md).
+For a bare `module_info` ref, an exact bare key wins; otherwise the server
+resolves one unique namespaced key or matching entry name. Multiple namespace
+matches return an ambiguity error listing the canonical refs to choose from.
 
 ## How it fits
 

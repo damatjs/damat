@@ -40,6 +40,9 @@ defaults. After installation, the backend owner chooses migrations, workers,
 queues, concurrency, Redis, retention, and operations.
 During source reload, the development watcher awaits HTTP and worker shutdown
 before starting the next runtime.
+Use `damat module dev --verbose` or `damat --verbose module dev` for the full
+underlying stack when preflight, migration, codegen, validation, or build fails.
+Interactive Ctrl-C completes worker cleanup before the watcher exits.
 
 ## The blade rule
 

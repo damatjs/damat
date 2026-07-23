@@ -11,6 +11,10 @@ that owns the command.
 
 Compatibility tests assert command order, representative aliases/options, help
 composition, runtime defaults, and console output.
+The core runtime consumes enabled global options before capability dispatch, so
+the composer accepts `--verbose` before or after nested module commands and
+passes it to their handled-error reports.
 Standalone module process regressions keep their lifecycle probes local to the
 test fixture so a clean install does not depend on undeclared implementation
-packages.
+packages. Shutdown coverage uses a controlling PTY and writes an actual Ctrl-C
+character, then checks worker stop records and immediate port reuse.

@@ -29,6 +29,12 @@ An occupied fixed port fails before that work with a `--port <port>` hint. Use
 `damat module dev --port 0` to request an ephemeral port.
 If active worker rows increase after a source reload, upgrade the CLI; the
 watcher must await the old runtime's shutdown before starting its replacement.
+If interactive Ctrl-C leaves active worker rows, verify the CLI includes the
+foreground-process-group acknowledgement fix; parent-only signal tests do not
+exercise the duplicate-SIGINT race.
+
+For startup details, either `damat --verbose module dev` or
+`damat module dev --verbose` prints the full underlying stack.
 
 ## Unknown runtime mode or worker
 

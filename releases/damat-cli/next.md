@@ -10,6 +10,9 @@ capability-aware migration path, prints unconditional readiness, reports port 0,
 and forwards shutdown signals.
 Reloads are serialized through graceful child shutdown rather than Bun's hard
 process restart, so worker registrations do not accumulate.
+Foreground-terminal shutdown coordinates parent and child signal handling so
+interactive Ctrl-C completes worker cleanup. The global `--verbose` option now
+works both before and after nested command paths.
 The composed app and module build commands now select the target project's
 installed compiler with `bun run tsc --noEmit`. Application codegen also keeps
 the optional `pg-cloudflare` transport external during config bundling.
@@ -26,6 +29,9 @@ the optional `pg-cloudflare` transport external during config bundling.
   when invoked, eliminating CI import-order races in their command tests.
 - Standalone module process regressions now use a composer-owned TCP lifecycle
   probe instead of importing an undeclared module implementation dependency.
+- A controlling-PTY regression verifies interactive Ctrl-C worker timestamps
+  and port reuse; module failure regressions cover both global verbose
+  placements and concise non-verbose output.
 
 ## Breaking
 
@@ -40,9 +46,10 @@ tooling change is a six-package chain: `@damatjs/orm-cli`,
 `@damatjs/cli-support`, `@damatjs/cli-codegen`, `@damatjs/cli-app`,
 `@damatjs/cli-module`, and `@damatjs/damat-cli`.
 
-Those overlapping sets form a nine-package version-bump union. Do not publish
-any member from this change. Services is required for fresh database-free
-empty-model modules. Update consumer `scripts.dev` entries manually; the Damat
+Those overlapping sets form a nine-package union. The consumer-audit fixes
+add `@damatjs/cli` and `@damatjs/mcp`, producing an eleven-package version-bump
+union. Do not publish any member from this change. Services is required for
+fresh database-free empty-model modules. Update consumer `scripts.dev` entries manually; the Damat
 library's 142 module packages and generator have been migrated in source.
 
 ## References

@@ -81,6 +81,8 @@ App builds use the project's installed TypeScript compiler through
 `bun run tsc --noEmit`, without registry resolution. Application codegen keeps
 the optional `pg-cloudflare` transport external while loading config, so do not
 add it as a direct dependency solely to make codegen work.
+For CLI diagnostics, global verbose mode works on either side of the command
+path: `damat --verbose module dev` and `damat module dev --verbose`.
 
 ## Durable architecture
 
@@ -195,6 +197,10 @@ damat module plan <ref|path|git-url>
 damat module add <ref|path|git-url>
 bun run db:migrate
 ```
+
+For `module_info`, a bare name resolves one unique namespaced registry entry.
+If multiple publishers use that name, choose one of the canonical refs listed
+by the ambiguity response instead of guessing a namespace.
 
 The installer owns copied files and provenance but not shared config, aliases,
 environment values, barrels, or call sites. Review the integration report,

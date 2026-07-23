@@ -25,6 +25,8 @@ written directly to the terminal and shutdown is ordered and idempotent.
 - Standalone durable defaults use concurrency 1 and 250 ms PostgreSQL polling.
 - PostgreSQL-only jobs, events, and pipelines execute during module development.
 - Partial startup failures close all initialized resources.
+- Foreground-terminal shutdown acknowledges its idempotent stop before the
+  watcher can forward a duplicate SIGINT.
 
 ## Breaking
 
@@ -43,7 +45,9 @@ empty-model initialization.
 The current unpublished branch also carries the six-package tooling chain
 (`@damatjs/orm-cli`, `@damatjs/cli-support`, `@damatjs/cli-codegen`,
 `@damatjs/cli-app`, `@damatjs/cli-module`, `@damatjs/damat-cli`), producing a
-nine-package version-bump union. Do not publish any member from this change.
+nine-package union. The consumer-audit fixes add `@damatjs/cli` and
+`@damatjs/mcp`, producing an eleven-package version-bump union. Do not publish
+any member from this change.
 Ensure every declared capability path is intentional and set `DATABASE_URL`
 for modules that declare models, migrations, jobs, events, or pipelines.
 

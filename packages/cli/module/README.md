@@ -42,6 +42,13 @@ child prints readiness directly after listening, including the `/api` mount and
 Ctrl-C guidance, and reports the actual port selected by `--port 0`. On a source
 change, the CLI asks the current child to shut down, awaits worker and resource
 cleanup, and only then starts its replacement.
+Interactive Ctrl-C may reach the foreground parent and child together. The
+child acknowledges that it has begun its idempotent shutdown, so the watcher
+does not forward a duplicate signal that could interrupt worker cleanup.
+
+All module failures honor the composed CLI's global verbose mode. Both
+`damat --verbose module dev` and `damat module dev --verbose` include the
+underlying error and stack.
 
 `module build` type-checks with the module project's installed TypeScript
 compiler through `bun run tsc --noEmit`; it does not use registry resolution.

@@ -14,5 +14,6 @@
   member, not an incidental supporting bump.
 - The current unpublished branch also includes `@damatjs/orm-cli`,
   `@damatjs/cli-support`, `@damatjs/cli-codegen`, and `@damatjs/cli-app`. With
-  the two overlapping CLI packages, the version-bump union is nine. Do not
-  publish any member from this change.
+  the two overlapping CLI packages, that union is nine. The consumer-audit
+  fixes add `@damatjs/cli` and `@damatjs/mcp`, making the version-bump union
+  eleven. Do not publish any member from this change.

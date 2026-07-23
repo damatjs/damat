@@ -14,6 +14,11 @@ an isolated registry, configures CAC, applies presentation policy, dispatches
 one command, and returns its result. It creates a project-config accessor only
 when `definition.configLoader` is present.
 
+When verbose mode is enabled by the definition, `runCli` consumes
+`--verbose`, `--no-verbose`, and `--verbose=<boolean>` before routing. The
+resolved value is merged into leaf, default, and parent/child command options,
+regardless of whether the flag appears before or after the command path.
+
 Normal outcomes never terminate the process:
 
 - help and version return `{ exitCode: 0 }`;

@@ -22,7 +22,7 @@ your target version.
 All active Damat packages are released **in lockstep** — a release moves every
 published package to the same version, whether or not its own code changed.
 
-**Current source version: `1.0.0`** for every active public package.
+**Current source version: `1.0.1`** for every active public package.
 `@damatjs/codegen` is archived at its last npm release, `2.1.0`, and is not part
 of the workspace or active publication set.
 

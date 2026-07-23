@@ -77,6 +77,9 @@ readiness after HTTP binds even when application logs are suppressed. Fixed
 ports are checked before database or module startup; pass `--port 0` for an
 ephemeral port. Source reloads stop the current HTTP server and workers before
 starting the next runtime, so durable worker registrations do not accumulate.
+Foreground Ctrl-C shutdown is acknowledged to the watcher before asynchronous
+cleanup, preventing a duplicate forwarded SIGINT from abandoning active worker
+records.
 
 The explicit `database:setup` and `migration:*` commands remain module-scoped.
 Installed modules supply durable definitions only; the assembled backend owns

@@ -35,6 +35,10 @@
 | `damat kit init [name]`             | Describe the current codebase as a shareable kit by writing `damat.json`                                                                                                                                       |
 | `damat kit validate`                | Validate the universal kit profile                                                                                                                                                                             |
 
+The global `--verbose` flag works before or after a command path. For example,
+both `damat --verbose module dev` and `damat module dev --verbose` expose the
+underlying stack for handled module failures.
+
 ## `damat-orm` — migrations ([docs](../../packages/orm/cli/README.md))
 
 | Command                           | Description                    |

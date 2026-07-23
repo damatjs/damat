@@ -93,7 +93,9 @@ load damat.json + module.config.ts
 watcher. Service-only modules skip PostgreSQL even when a stray URL exists.
 Database-backed modules require `DATABASE_URL` before providers are imported.
 Each watched reload awaits the current runtime's ordered shutdown before
-starting a replacement.
+starting a replacement. Foreground-terminal shutdown uses a child
+acknowledgement so a Ctrl-C already delivered to both processes is not forwarded
+to the child a second time.
 
 ## Tooling flow
 

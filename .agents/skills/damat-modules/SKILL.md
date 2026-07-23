@@ -303,9 +303,11 @@ When changing standalone startup, add a real `damat module dev` subprocess test;
 mocked command handlers and direct `startModuleApp()` tests are not sufficient.
 Run with `LOG_LEVEL=fatal`, wait for terminal readiness, call `/health`, exercise
 declared custom-path capabilities, collide a second fixed-port invocation, and
-send Ctrl-C. Assert one migration pass, actionable collision output, watcher
-exit, and port reuse. Use `--port 0` so the test also verifies the reported
-bound port and `/api` mount.
+write Ctrl-C through a controlling PTY. Assert one migration pass, actionable
+collision output, child exit, worker `stopping_at`/`stopped_at` timestamps, and
+port reuse. A parent-only `child.kill("SIGINT")` test does not exercise
+foreground process-group delivery. Use `--port 0` so the test also verifies the
+reported bound port and `/api` mount.
 
 ## Validate and publish
 
