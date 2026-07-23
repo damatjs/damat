@@ -1,6 +1,7 @@
 import { NO_REGISTRY_MSG } from "../constants";
 import { registryLocation } from "../env";
 import {
+  AmbiguousModuleRefError,
   fetchVerdict,
   formatModuleRef,
   loadRegistryIndex,
@@ -35,7 +36,15 @@ export const moduleInfo: ToolDef = {
     if (!parsed)
       return { text: `"${ref}" is not a valid module ref`, isError: true };
     const index = await loadRegistryIndex(loc);
-    const found = lookupEntry(index, parsed);
+    let found: ReturnType<typeof lookupEntry>;
+    try {
+      found = lookupEntry(index, parsed);
+    } catch (error) {
+      if (error instanceof AmbiguousModuleRefError) {
+        return { text: error.message, isError: true };
+      }
+      throw error;
+    }
     if (!found) {
       return {
         text: `Registry has no module "${formatModuleRef(parsed)}"`,
